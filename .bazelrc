@@ -1,0 +1,23 @@
+# Default build
+build --cxxopt=-std=c++17
+build --cxxopt=-Wall
+build --cxxopt=-Werror
+build --cxxopt=-Wextra
+build --define=PROGR_NAME=dlinear
+build --define=PROGR_VERSION=0.0.1
+
+# G++ 11.3.0
+# bazel build --config=gcc //...
+# bazel build --cxxopt=-std=c++17 --cxxopt=-Wall --cxxopt=-Werror --cxxopt=-Wextra //...
+build:gcc --cxxopt=-std=c++17
+build:gcc --cxxopt=-Wall
+build:gcc --cxxopt=-Werror
+build:gcc --cxxopt=-Wextra
+
+# Clang 12.0.1
+# bazel build --config=clang //...
+# bazel build --cxxopt=-std=c++17 --cxxopt=-Wall --cxxopt=-Werror --cxxopt=-Wextra //...
+build:clang --cxxopt=-std=c++17
+build:clang --cxxopt=-Wall
+build:clang --cxxopt=-Werror
+build:clang --cxxopt=-Wextra

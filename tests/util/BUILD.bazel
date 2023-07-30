@@ -1,0 +1,9 @@
+cc_test(
+    name = "test_argparser",
+    size = "small",
+    srcs = ["TestArgParser.cpp"],
+    deps = [
+        "//dlinear/util:argparser",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

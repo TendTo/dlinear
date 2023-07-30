@@ -1,0 +1,29 @@
+workspace(name = "dlinear")
+
+# load("@bazel_skylib//lib:versions.bzl", "versions")
+load("//tools:github.bzl", "github_archive")
+
+# versions.check(minimum_bazel_version = "5.0.0")
+
+github_archive(
+    name = "spdlog",  # spdlog
+    build_file = "//third_party:spdlog.BUILD.bazel",
+    commit = "v1.12.0",
+    repository = "gabime/spdlog",
+    sha256 = "4dccf2d10f410c1e2feaff89966bfc49a1abb29ef6f08246335b110e001e09a9",
+)
+
+github_archive(
+    name = "com_google_googletest",  # Google Test suite
+    commit = "v1.13.0",
+    repository = "google/googletest",
+    sha256 = "ad7fdba11ea011c1d925b3289cf4af2c66a352e18d4c7264392fead75e919363",
+)
+
+github_archive(
+    name = "argparse",  # argparse for C++
+    build_file = "//third_party:argparse.BUILD.bazel",
+    commit = "v2.9",
+    repository = "p-ranav/argparse",
+    sha256 = "cd563293580b9dc592254df35b49cf8a19b4870ff5f611c7584cf967d9e6031e",
+)

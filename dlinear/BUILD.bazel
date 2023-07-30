@@ -1,0 +1,10 @@
+cc_binary(
+    name = "main",
+    srcs = ["main.cpp"],
+    deps = [
+        "//dlinear/util:argparser",
+        "//dlinear/util:assert",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
+    ],
+)

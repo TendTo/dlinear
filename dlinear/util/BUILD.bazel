@@ -1,0 +1,58 @@
+cc_library(
+    name = "argparser",
+    srcs = [
+        "ArgParser.cpp",
+    ],
+    hdrs = [
+        "ArgParser.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests/util:__subpackages__",
+    ],
+    deps = [
+        "config",
+        "logging",
+        "@argparse",
+        "@spdlog",
+    ],
+)
+
+cc_library(
+    name = "config",
+    srcs = [
+        "Config.cpp",
+    ],
+    hdrs = [
+        "Config.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests/util:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "assert",
+    hdrs = [
+        "assert.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests/util:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "logging",
+    hdrs = [
+        "logging.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests/util:__subpackages__",
+    ],
+    deps = [
+        "@spdlog",
+    ],
+)
