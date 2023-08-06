@@ -40,9 +40,10 @@ namespace dlinear {
 
         template<typename T = std::string>
         [[nodiscard]] T get(const std::string &key) const { return parser_.get<T>(key); }
+
+        friend ostream &operator<<(ostream &os, const dlinear::ArgParser &parser);
     };
 
-    ostream &operator<<(ostream &os, const dlinear::ArgParser &parser);
 } // dlinear
 
 

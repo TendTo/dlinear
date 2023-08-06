@@ -1,7 +1,3 @@
-//
-// Created by tend on 7/30/23.
-//
-
 #ifndef DLINEAR5_STATS_H
 #define DLINEAR5_STATS_H
 

@@ -7,11 +7,11 @@ namespace dlinear {
 
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) \
     (verbosity == 0 ? spdlog::level::critical :   \
-    (verbosity == 1 ? spdlog::level::err   :       \
+    (verbosity == 1 ? spdlog::level::err   :      \
     (verbosity == 2 ? spdlog::level::warn  :      \
-    (verbosity == 3 ? spdlog::level::info  :     \
-    (verbosity == 4 ? spdlog::level::debug :    \
-    (verbosity == 5 ? spdlog::level::trace :   \
+    (verbosity == 3 ? spdlog::level::info  :      \
+    (verbosity == 4 ? spdlog::level::debug :      \
+    (verbosity == 5 ? spdlog::level::trace :      \
     spdlog::level::off))))))
 #define DLINEAR_LOG_INIT(level) \
     do {                   \

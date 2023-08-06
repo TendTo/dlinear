@@ -1,7 +1,10 @@
 cc_library(
     name = "spdlog",
     hdrs = glob([
-        "include/**/*.h",
+        "include/spdlog/*.h",
+        "include/spdlog/fmt/**/*.h",
+        "include/spdlog/details/*.h",
+        "include/spdlog/sinks/*.h",
     ]),
     includes = ["include"],
     visibility = ["//visibility:public"],
