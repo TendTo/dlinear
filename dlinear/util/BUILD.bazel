@@ -1,4 +1,7 @@
-cc_library(
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
+
+dlinear_cc_library(
     name = "argparser",
     srcs = [
         "ArgParser.cpp",
@@ -8,7 +11,7 @@ cc_library(
     ],
     visibility = [
         "//dlinear:__subpackages__",
-        "//tests/util:__subpackages__",
+        "//tests:__subpackages__",
     ],
     deps = [
         "config",
@@ -18,7 +21,7 @@ cc_library(
     ],
 )
 
-cc_library(
+dlinear_cc_library(
     name = "config",
     srcs = [
         "Config.cpp",
@@ -28,31 +31,50 @@ cc_library(
     ],
     visibility = [
         "//dlinear:__subpackages__",
-        "//tests/util:__subpackages__",
+        "//tests:__subpackages__",
     ],
 )
 
-cc_library(
+dlinear_cc_library(
     name = "assert",
     hdrs = [
         "assert.h",
     ],
     visibility = [
         "//dlinear:__subpackages__",
-        "//tests/util:__subpackages__",
+        "//tests:__subpackages__",
     ],
 )
 
-cc_library(
+dlinear_cc_library(
     name = "logging",
     hdrs = [
         "logging.h",
     ],
     visibility = [
         "//dlinear:__subpackages__",
-        "//tests/util:__subpackages__",
+        "//tests:__subpackages__",
     ],
     deps = [
         "@spdlog",
     ],
 )
+
+dlinear_cc_library(
+    name = "stats",
+    srcs = [
+        "Stats.cpp",
+    ],
+    hdrs = [
+        "Stats.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests:__subpackages__",
+    ],
+    deps = [
+        "logging",
+    ],
+)
+
+cpplint()

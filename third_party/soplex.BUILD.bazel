@@ -1,0 +1,18 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+cmake(
+    name = "soplex",
+    lib_source = ":all_srcs",
+    lib_name = "libsoplex",
+    visibility = ["//visibility:public"],
+    cache_entries = {
+        "GMP": "on",
+    },
+    deps = ["@zlib", "@gmp"],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:private"],
+)

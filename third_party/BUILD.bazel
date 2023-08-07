@@ -1,8 +1,0 @@
-"""Allows the argparse header to be used in the project."""
-
-cc_library(
-    name = "argparse",
-    hdrs = ["//:include/argparse/argparse.hpp"],
-    includes = ["include"],
-    visibility = ["//visibility:public"],
-)

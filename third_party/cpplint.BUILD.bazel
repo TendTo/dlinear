@@ -1,0 +1,22 @@
+# Copied from https://github.com/martinjos/dlinear4/blob/master/tools/google_styleguide.BUILD.bazel
+package(default_visibility = ["//visibility:public"])
+
+# We can't set name="cpplint" here because that's the directory name so the
+# sandbox gets confused.  We'll give it a private name with a public alias.
+py_binary(
+    name = "cpplint",
+    srcs = ["cpplint.py"],
+    imports = ["cpplint"],
+    main = "cpplint.py",
+    visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "cpplint_unittest",
+    size = "small",
+    srcs = ["cpplint_unittest.py"],
+    deps = [
+        ":cpplint_py",
+    ],
+    srcs_version = "PY2AND3",
+)

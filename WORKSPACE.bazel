@@ -1,16 +1,21 @@
 workspace(name = "dlinear")
 
-# load("@bazel_skylib//lib:versions.bzl", "versions")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//tools:github.bzl", "github_archive")
 
-# versions.check(minimum_bazel_version = "5.0.0")
+github_archive(
+    name = "rules_foreign_cc",  # rules_foreign_cc for building C++ libraries with other build systems
+    commit = "0.9.0",
+    repository = "bazelbuild/rules_foreign_cc",
+    sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+)
 
 github_archive(
-    name = "spdlog",  # spdlog
-    build_file = "//third_party:spdlog.BUILD.bazel",
-    commit = "v1.12.0",
-    repository = "gabime/spdlog",
-    sha256 = "4dccf2d10f410c1e2feaff89966bfc49a1abb29ef6f08246335b110e001e09a9",
+    name = "cpplint",  # Google C++ Style Guide
+    build_file = "//third_party:cpplint.BUILD.bazel",
+    commit = "1.6.1",
+    repository = "cpplint/cpplint",
+    sha256 = "7be47998c4bd590e229cf94f3312c46563d3ee35ea037b4ed389720f510029d6",
 )
 
 github_archive(
@@ -21,9 +26,48 @@ github_archive(
 )
 
 github_archive(
+    name = "spdlog",  # spdlog
+    build_file = "//third_party:spdlog.BUILD.bazel",
+    commit = "v1.12.0",
+    repository = "gabime/spdlog",
+    sha256 = "4dccf2d10f410c1e2feaff89966bfc49a1abb29ef6f08246335b110e001e09a9",
+)
+
+github_archive(
     name = "argparse",  # argparse for C++
     build_file = "//third_party:argparse.BUILD.bazel",
     commit = "v2.9",
     repository = "p-ranav/argparse",
     sha256 = "cd563293580b9dc592254df35b49cf8a19b4870ff5f611c7584cf967d9e6031e",
 )
+
+github_archive(
+    name = "soplex",  # linear programming solver
+    build_file = "//third_party:soplex.BUILD.bazel",
+    commit = "release-603",
+    repository = "scipopt/soplex",
+    sha256 = "2bdf9adc9ac6ad48f98056679b7b852e626ac4aaaf277e7d4ce17794ed1097be",
+)
+
+github_archive(
+    name = "zlib",  # zlib compression library
+    build_file = "//third_party:zlib.BUILD.bazel",
+    commit = "v1.2.13",
+    repository = "madler/zlib",
+    sha256 = "1525952a0a567581792613a9723333d7f8cc20b87a81f920fb8bc7e3f2251428",
+)
+
+http_archive(
+    name = "gmp",  # GNU Multiple Precision Arithmetic Library
+    build_file = "//third_party:gmp.BUILD.bazel",
+    sha256 = "fd4829912cddd12f84181c3451cc752be224643e87fac497b69edddadc49b4f2",
+    strip_prefix = "gmp-6.2.1",
+    urls = [
+        "https://gmplib.org/download/gmp/gmp-6.2.1.tar.xz",
+        "https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.xz",
+    ],
+)
+
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+
+rules_foreign_cc_dependencies()

@@ -1,3 +1,14 @@
+/**
+ * @file Config.h
+ * @author tend
+ * @date 07 Aug 2023
+ * @copyright 2023 tend
+ * @brief Config class.
+ * Used to store the configuration of the program.
+ *
+ * Simple dataclass to store the configuration of the program.
+ * It is generated from @ref ArgParser.
+ */
 #ifndef DLINEAR5_CONFIG_H
 #define DLINEAR5_CONFIG_H
 
@@ -8,35 +19,35 @@ using std::endl;
 
 namespace dlinear {
 
-    class Config {
-    private:
-        int verbosity_;
-        double precision_;
-        bool produceModels_;
-        u_int32_t randomSeed_;
+class Config {
+ private:
+  int verbosity_;
+  double precision_;
+  bool produceModels_;
+  u_int32_t randomSeed_;
 
-    public:
-        Config() = default;
+ public:
+  Config() = default;
 
-        [[nodiscard]] int getVerbosity() const { return verbosity_; }
+  [[nodiscard]] int getVerbosity() const { return verbosity_; }
 
-        void setVerbosity(int verbosity) { verbosity_ = verbosity; }
+  void setVerbosity(int verbosity) { verbosity_ = verbosity; }
 
-        [[nodiscard]] double getPrecision() const { return precision_; }
+  [[nodiscard]] double getPrecision() const { return precision_; }
 
-        void setPrecision(double precision) { precision_ = precision; }
+  void setPrecision(double precision) { precision_ = precision; }
 
-        [[nodiscard]] bool getProduceModels() const { return produceModels_; }
+  [[nodiscard]] bool getProduceModels() const { return produceModels_; }
 
-        void setProduceModels(bool produceModels) { produceModels_ = produceModels; }
+  void setProduceModels(bool produceModels) { produceModels_ = produceModels; }
 
-        [[nodiscard]] u_int32_t getRandomSeed() const { return randomSeed_; }
+  [[nodiscard]] u_int32_t getRandomSeed() const { return randomSeed_; }
 
-        void setRandomSeed(u_int32_t randomSeed) { randomSeed_ = randomSeed; }
+  void setRandomSeed(u_int32_t randomSeed) { randomSeed_ = randomSeed; }
 
-        friend ostream &operator<<(ostream &os, const Config &config);
-    };
+  friend ostream &operator<<(ostream &os, const Config &config);
+};
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_CONFIG_H

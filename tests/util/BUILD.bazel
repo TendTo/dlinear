@@ -1,9 +1,15 @@
-cc_test(
+load("//tools:dlinear.bzl", "dlinear_cc_googletest")
+
+dlinear_cc_googletest(
     name = "test_argparser",
-    size = "small",
-    srcs = ["TestArgParser.cpp"],
     deps = [
         "//dlinear/util:argparser",
-        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_logging",
+    deps = [
+        "//dlinear/util:logging",
     ],
 )

@@ -1,10 +1,16 @@
-cc_binary(
-    name = "main",
+load("//tools:dlinear.bzl", "dlinear_cc_binary")
+load("//tools:cpplint.bzl", "cpplint")
+
+dlinear_cc_binary(
+    name = "dlinear",
     srcs = ["main.cpp"],
     deps = [
         "//dlinear/util:argparser",
         "//dlinear/util:assert",
         "//dlinear/util:config",
         "//dlinear/util:logging",
+        "@soplex",
     ],
 )
+
+cpplint()
