@@ -1,0 +1,38 @@
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
+
+dlinear_cc_library(
+    name = "gmp",
+    srcs = [
+        "gmp.cpp",
+    ],
+    hdrs = [
+        "gmp.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests:__subpackages__",
+    ],
+    deps = [
+        "@gmp//:gmpxx",
+    ],
+)
+
+dlinear_cc_library(
+    name = "soplex",
+    srcs = [
+        "soplex.cpp",
+    ],
+    hdrs = [
+        "soplex.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests:__subpackages__",
+    ],
+    deps = [
+        "@soplex",
+    ],
+)
+
+cpplint()

@@ -5,11 +5,11 @@ dlinear_cc_binary(
     name = "dlinear",
     srcs = ["main.cpp"],
     deps = [
+        "//dlinear/libs:gmp",
         "//dlinear/util:argparser",
         "//dlinear/util:assert",
         "//dlinear/util:config",
         "//dlinear/util:logging",
-        "@soplex",
     ],
 )
 

@@ -11,11 +11,16 @@
 #include <iostream>
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
+#include "dlinear/libs/gmp.h"
 
 using dlinear::ArgParser;
 using dlinear::Config;
+using dlinear::gmp::add;;
 
 int main(int argc, const char *argv[]) {
+  mpz_class a{1}, b{2};
+  mpz_class sum = add(a, b);
+  std::cout << sum << std::endl;
   ArgParser parser{};
   parser.parse(argc, argv);
   Config c = parser.toConfig();

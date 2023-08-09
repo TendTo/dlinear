@@ -1,4 +1,4 @@
-# Copied from https://github.com/llvm/llvm-project/blob/main/utils/bazel/third_party_build/gmp.BUILD
+# Copied from https://github.com/llvm/llvm-project/blob/main/utils/bazel/third_party_build/gmp.BUILD and https://github.com/bazelbuild/rules_foreign_cc/issues/296
 # This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -8,10 +8,22 @@ load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 configure_make(
     name = "gmp",
     configure_options = ["--with-pic"],
-    copts = ["-w"],
     lib_name = "libgmp",
     lib_source = ":all_srcs",
     visibility = ["//visibility:public"],
+)
+
+configure_make(
+    name = "gmpxx",
+    configure_options = ["--enable-cxx"],
+    env = {
+        "CXX": "g++",
+        "CXXFLAGS": "-lstdc++",
+    },
+    lib_name = "libgmpxx",
+    lib_source = ":all_srcs",
+    visibility = ["//visibility:public"],
+    deps = [":gmp"],
 )
 
 filegroup(

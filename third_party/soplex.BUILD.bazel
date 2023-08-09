@@ -1,14 +1,17 @@
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
+_CMAKE_PREFIX_PATH = "$(BINDIR)/external/gmp/libgmpxx/include"
+
 cmake(
     name = "soplex",
     lib_source = ":all_srcs",
     lib_name = "libsoplex",
-    visibility = ["//visibility:public"],
     cache_entries = {
         "GMP": "on",
+        "CMAKE_PREFIX_PATH": "${CMAKE_PREFIX_PATH:-};bazel-out/k8-fastbuild/bin/external/gmp/libgmpx/include;",
     },
-    deps = ["@zlib", "@gmp"],
+    deps = ["@zlib", "@gmp//:gmpxx"],
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
