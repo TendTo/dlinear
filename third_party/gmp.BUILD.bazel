@@ -2,7 +2,7 @@
 # This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
+# TODO: Remove this file if gmp remains a dependency to be installed in the system
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
 configure_make(

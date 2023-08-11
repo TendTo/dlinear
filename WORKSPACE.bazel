@@ -1,6 +1,5 @@
 workspace(name = "dlinear")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//tools:github.bzl", "github_archive")
 
 github_archive(
@@ -50,6 +49,14 @@ github_archive(
 )
 
 github_archive(
+    name = "qsoptex",  # delta-complete linear programming solver
+    build_file = "//third_party:qsoptex.BUILD.bazel",
+    commit = "cfcd4f285cd28ad3f76ff6691b134cae41baa230",
+    repository = "martinjos/qsopt-ex",
+    sha256 = "84c2ea9656e6ef75e957f888d6a044189859752fa586c2f8477c6707787491c3",
+)
+
+github_archive(
     name = "zlib",  # zlib compression library
     build_file = "//third_party:zlib.BUILD.bazel",
     commit = "v1.2.13",
@@ -57,15 +64,11 @@ github_archive(
     sha256 = "1525952a0a567581792613a9723333d7f8cc20b87a81f920fb8bc7e3f2251428",
 )
 
-http_archive(
-    name = "gmp",  # GNU Multiple Precision Arithmetic Library
-    build_file = "//third_party:gmp.BUILD.bazel",
-    sha256 = "fd4829912cddd12f84181c3451cc752be224643e87fac497b69edddadc49b4f2",
-    strip_prefix = "gmp-6.2.1",
-    urls = [
-        "https://gmplib.org/download/gmp/gmp-6.2.1.tar.xz",
-        "https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.xz",
-    ],
+# https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
+new_local_repository(
+    name = "linux_libs",
+    build_file = "//third_party:linux_libs.BUILD.bazel",
+    path = "/usr/lib/x86_64-linux-gnu",
 )
 
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")

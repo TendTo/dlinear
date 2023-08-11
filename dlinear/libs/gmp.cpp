@@ -34,4 +34,10 @@ mpz_class add(const mpz_class &a, const mpz_class &b) {
   return a + b;
 }
 
+void runExample() {
+  mpz_class a{1}, b{2};
+  mpz_class sum = add(a, b);
+  std::cout << sum << std::endl;
+}
+
 } // namespace dlinear::gmp

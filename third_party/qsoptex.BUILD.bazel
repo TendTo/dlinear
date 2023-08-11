@@ -1,0 +1,47 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+genrule(
+    name = "qsoptex_git",
+    srcs = [],
+    outs = [".git"],
+    cmd = """
+        git init
+        git config user.name 'Snail Mail'
+        git config user.email '<>'
+        git commit --allow-empty -m "Initial commit"
+        git tag -a v2.1.0 -m "Version 2.1.0"
+        mv .git $(location .git)
+    """,
+    visibility = ["//visibility:private"],
+)
+
+configure_make(
+    name = "qsoptex",
+    lib_name = "libqsopt_ex",
+    out_static_libs = ["libqsopt_ex.a"],
+    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
+    lib_source = ":all_srcs",
+    visibility = ["//visibility:public"],
+    configure_in_place = True,
+    autoreconf = True,
+    autoreconf_options = [
+        "--install",
+        "--force",
+        "--verbose",
+        "--warnings=all",
+    ],
+    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
+    args = [
+        "-j4",
+    ],
+    deps = [
+        #        "@linux_libs//:gmp",
+        "@zlib",
+    ],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:private"],
+)

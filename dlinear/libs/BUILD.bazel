@@ -14,7 +14,7 @@ dlinear_cc_library(
         "//tests:__subpackages__",
     ],
     deps = [
-        "@gmp//:gmpxx",
+        "@linux_libs//:gmpxx",
     ],
 )
 
@@ -32,6 +32,24 @@ dlinear_cc_library(
     ],
     deps = [
         "@soplex",
+    ],
+)
+
+dlinear_cc_library(
+    name = "qsoptex",
+    srcs = [
+        "qsoptex.cpp",
+    ],
+    hdrs = [
+        "qsoptex.h",
+    ],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests:__subpackages__",
+    ],
+    deps = [
+        "@linux_libs//:gmpxx",
+        "@qsoptex",
     ],
 )
 

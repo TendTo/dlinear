@@ -14,7 +14,11 @@
 
 #include <gmpxx.h>
 
+#include <iostream>
+
 namespace dlinear::gmp {
+
+void runExample();
 
 mpz_class floor(const mpq_class &val);
 mpz_class ceil(const mpq_class &val);

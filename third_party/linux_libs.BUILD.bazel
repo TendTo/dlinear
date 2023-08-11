@@ -1,0 +1,14 @@
+cc_import(
+    name = "gmpxx",
+    static_library = "libgmpxx.a",
+    shared_library = "libgmpxx.so",
+    visibility = ["//visibility:public"],
+    deps = [":gmp"],
+)
+
+cc_import(
+    name = "gmp",
+    shared_library = "libgmp.so",
+    static_library = "libgmp.a",
+    visibility = ["//visibility:public"],
+)

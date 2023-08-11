@@ -13,4 +13,14 @@ dlinear_cc_binary(
     ],
 )
 
+dlinear_cc_binary(
+    name = "test",
+    srcs = ["test.cpp"],
+    deps = [
+        "//dlinear/libs:gmp",
+        #        "//dlinear/libs:qsoptex",
+        "//dlinear/libs:soplex",
+    ],
+)
+
 cpplint()
