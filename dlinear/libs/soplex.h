@@ -15,6 +15,7 @@
 #include <soplex.h>
 
 namespace dlinear::soplex {
+
 void runExample();
 } // namespace dlinear::soplex
 

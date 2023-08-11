@@ -7,7 +7,14 @@
 
 #include "soplex.h"
 
-using namespace soplex;
+using soplex::SoPlex;
+using soplex::DSVectorRational;
+using soplex::LPColRational;
+using soplex::LPRowRational;
+using soplex::DVectorRational;
+using soplex::infinity;
+using soplex::SPxSolver;
+using soplex::Rational;
 
 namespace dlinear::soplex {
 void runExample() {

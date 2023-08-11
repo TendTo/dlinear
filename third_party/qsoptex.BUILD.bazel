@@ -19,7 +19,7 @@ configure_make(
     name = "qsoptex",
     lib_name = "libqsopt_ex",
     out_static_libs = ["libqsopt_ex.a"],
-    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
+    #    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
     lib_source = ":all_srcs",
     visibility = ["//visibility:public"],
     configure_in_place = True,

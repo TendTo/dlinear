@@ -1,6 +1,5 @@
 # Workspace status command
 build --workspace_status_command=scripts/workspace_status.sh
-build --sandbox_debug
 
 # Default build
 build --cxxopt=-std=c++17
