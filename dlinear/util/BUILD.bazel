@@ -25,9 +25,11 @@ dlinear_cc_library(
     name = "config",
     srcs = [
         "Config.cpp",
+        "OptionValue.cpp",
     ],
     hdrs = [
         "Config.h",
+        "OptionValue.h",
     ],
     visibility = [
         "//dlinear:__subpackages__",

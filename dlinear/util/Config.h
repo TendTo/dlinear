@@ -13,6 +13,7 @@
 #define DLINEAR5_CONFIG_H
 
 #include <iostream>
+#include "dlinear/util/OptionValue.h"
 
 using std::ostream;
 using std::endl;
