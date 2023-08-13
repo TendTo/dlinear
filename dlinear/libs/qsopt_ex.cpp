@@ -1,13 +1,13 @@
 /**
- * @file qsoptex.cpp
+ * @file qsopt_ex.cpp
  * @author tend
  * @date 10 Aug 2023
  * @copyright 2023 tend
  */
 
-#include "qsoptex.h"
+#include "qsopt_ex.h"
 
-namespace dlinear::qsoptex {
+namespace dlinear::qsopt_ex {
 
 mpq_class *StringToMpqPtr(const string &str) {
   mpq_t val;
@@ -73,4 +73,4 @@ void QSXFinish() {
   QSexactClear();
 }
 
-} // namespace dlinear::qsoptex
+} // namespace dlinear::qsopt_ex

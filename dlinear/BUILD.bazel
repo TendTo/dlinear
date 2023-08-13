@@ -1,5 +1,14 @@
-load("//tools:dlinear.bzl", "dlinear_cc_binary")
+load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+
+dlinear_cc_library(
+    name = "main_program",
+    srcs = ["MainProgram.cpp"],
+    hdrs = ["MainProgram.h"],
+    deps = [
+        "//dlinear/util:config",
+    ],
+)
 
 dlinear_cc_binary(
     name = "dlinear",
@@ -7,8 +16,8 @@ dlinear_cc_binary(
     deps = [
         "//dlinear/libs:gmp",
         "//dlinear/util:argparser",
-        "//dlinear/util:assert",
         "//dlinear/util:config",
+        "//dlinear/util:exception",
         "//dlinear/util:logging",
     ],
 )
@@ -19,9 +28,7 @@ dlinear_cc_binary(
     features = ["fully_static_link"],
     linkstatic = 1,
     deps = [
-        "//dlinear/libs:gmp",
-        "//dlinear/libs:qsoptex",
-        "//dlinear/libs:soplex",
+        "//dlinear/util:argparser",
     ],
 )
 

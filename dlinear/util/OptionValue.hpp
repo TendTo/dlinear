@@ -3,7 +3,7 @@
  * @author tend
  * @date 12 Aug 2023
  * @copyright 2023 tend
- * @brief OptionValue class.
+ * OptionValue class.
  *
  * It is used to wrap a value that can be set from multiple sources.
  * The value is overwritten only if it is not set from a higher priority source.
@@ -15,15 +15,18 @@
  * @see Type
  */
 
-#ifndef DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_H_
-#define DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_H_
+#ifndef DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_
+#define DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_
 
 #include <iostream>
+#include <utility>
+
+using std::ostream;
 
 namespace dlinear {
 
 /**
- * @brief Represents an optional value in dLinear.
+ * Represents an optional value in dLinear.
  *
  * There are four ways that an option can have its value -- by default, by a
  * command-line argument, by a set-info/set-option command from a .smt2 file,
@@ -44,78 +47,96 @@ class OptionValue {
   };
 
   /**
-   * @brief Constructs an option value with @p value.
-   *
+   * Constructs an option value with @p value.
    * @param value value to be held.
    */
   explicit OptionValue(T value)
       : value_{std::move(value)}, type_{Type::DEFAULT} {}
 
-  /**
-   * @brief Default copy constructor.
-   */
+  /** Default copy constructor */
   OptionValue(const OptionValue &) = default;
 
-  /**
-   * @brief Default move constructor.
-   */
+  /** Default move constructor */
   OptionValue(OptionValue &&) noexcept = default;
 
-  /**
-   * @brief Default copy assign operator.
-   */
+  /** Default copy assign operator */
   OptionValue &operator=(const OptionValue &) = default;
 
-  /**
-   * @brief Default move assign operator.
-   */
+  /** Default move assign operator */
   OptionValue &operator=(OptionValue &&) noexcept = default;
 
-  /**
-   * @brief Default destructor.
-   */
+  /** Default destructor */
   ~OptionValue() = default;
 
   /**
-   * @brief Copy-assign operator for T.
-   *
+   * Copy-assign operator for T.
    * @note It sets value with `Type::FROM_CODE` type.
    */
-  OptionValue &operator=(const T &value);
+  OptionValue &operator=(const T &value) {
+    value_ = value;
+    type_ = Type::FROM_CODE;
+    return *this;
+  }
 
   /**
-   * @brief Move-assign operator for T.
-   *
+   * Move-assign operator for T.
    * @note It sets value with `Type::FROM_CODE` type.
    */
-  OptionValue &operator=(T &&value);
+  OptionValue &operator=(T &&value) {
+    value_ = std::move(value);
+    type_ = Type::FROM_CODE;
+    return *this;
+  }
 
   /**
-   * @brief Returns the value.
+   * Returns the value.
+   * @return the value.
    */
   const T &get() const { return value_; }
 
   /**
-   * @brief Sets the value to @p value which is given by a command-line argument.
-   *
+   * Sets the value to @p value which is given by a command-line argument.
    * @param value new value, given by a command-line argument.
    */
-  void set_from_command_line(const T &value);
+  void set_from_command_line(const T &value) {
+    if (type_ != Type::FROM_CODE) {
+      value_ = value;
+      type_ = Type::FROM_COMMAND_LINE;
+    }
+  }
 
   /**
-   * @brief Sets the value to @p value which is provided from a file.
-   *
+   * Sets the value to @p value which is provided from a file.
    * @param value new value, provided from a file.
    */
-  void set_from_file(const T &value);
+  void set_from_file(const T &value) {
+    switch (type_) {
+      case Type::DEFAULT:
+      case Type::FROM_FILE:value_ = value;
+        type_ = Type::FROM_FILE;
+        return;
 
-  friend std::ostream &operator<<(std::ostream &os, Type type);
+      case Type::FROM_COMMAND_LINE:
+      case Type::FROM_CODE:
+        // No operation.
+        return;
+    }
+  }
+
+  friend ostream &operator<<(ostream &os, Type type) {
+    switch (type) {
+      case OptionValue<T>::Type::DEFAULT:return os << "DEFAULT";
+      case OptionValue<T>::Type::FROM_FILE:return os << "FROM_FILE";
+      case OptionValue<T>::Type::FROM_COMMAND_LINE:return os << "FROM_COMMAND_LINE";
+      case OptionValue<T>::Type::FROM_CODE:return os << "FROM_CODE";
+    }
+  }
 
  private:
   T value_; ///< Value the class holds.
   Type type_; ///< Type of the value.
 };
 
-} // dlinear
+} // namespace dlinear
 
-#endif //DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_H_
+#endif //DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_

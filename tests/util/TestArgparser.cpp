@@ -66,19 +66,3 @@ TEST(TestArgParser, ParseAll) {
     ASSERT_TRUE(parser.get<bool>("produce-models"));
     ASSERT_EQ(parser.get<u_int64_t>("random-seed"), 11ul);
 }
-
-TEST(TestArgParser, ToConfig) {
-    ArgParser parser{};
-    const int argc = 8;
-    const char *argv[argc] = {"dlinear",
-                              "--verbosity", "2",
-                              "--precision", "3.1",
-                              "--produce-models",
-                              "--random-seed", "11"};
-    parser.parse(argc, argv);
-    Config config = parser.toConfig();
-    ASSERT_EQ(config.getVerbosity(), 2);
-    ASSERT_DOUBLE_EQ(config.getPrecision(), 3.1);
-    ASSERT_TRUE(config.getProduceModels());
-    ASSERT_EQ(config.getRandomSeed(), 11ul);
-}

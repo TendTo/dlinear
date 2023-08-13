@@ -1,7 +1,7 @@
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
 genrule(
-    name = "qsoptex_git",
+    name = "qsopt_ex_git",
     srcs = [],
     outs = [".git"],
     cmd = """
@@ -16,7 +16,7 @@ genrule(
 )
 
 configure_make(
-    name = "qsoptex",
+    name = "qsopt_ex",
     lib_name = "libqsopt_ex",
     out_static_libs = ["libqsopt_ex.a"],
     #    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],

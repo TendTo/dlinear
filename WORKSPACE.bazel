@@ -49,8 +49,8 @@ github_archive(
 )
 
 github_archive(
-    name = "qsoptex",  # delta-complete linear programming solver
-    build_file = "//third_party:qsoptex.BUILD.bazel",
+    name = "qsopt_ex",  # delta-complete linear programming solver
+    build_file = "//third_party:qsopt_ex.BUILD.bazel",
     commit = "cfcd4f285cd28ad3f76ff6691b134cae41baa230",
     repository = "martinjos/qsopt-ex",
     sha256 = "84c2ea9656e6ef75e957f888d6a044189859752fa586c2f8477c6707787491c3",

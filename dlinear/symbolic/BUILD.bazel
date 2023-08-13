@@ -1,0 +1,46 @@
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//tests:__subpackages__",
+])
+
+dlinear_cc_library(
+    name = "prefix_printer",
+    srcs = [
+        "prefix_printer.cpp",
+    ],
+    hdrs = [
+        "prefix_printer.h",
+    ],
+    visibility = [
+        "//:__pkg__",
+        "//dlinear:__subpackages__",
+    ],
+    deps = [
+        ":symbolic",
+    ],
+)
+
+dlinear_cc_library(
+    name = "symbolic",
+    srcs = [
+        "symbolic.cpp",
+    ],
+    hdrs = [
+        "symbolic.h",
+    ],
+    visibility = [
+        "//:__pkg__",
+        "//dlinear:__subpackages__",
+    ],
+    deps = [
+        "//dlinear/util:assert",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
+    ],
+)
+
+cpplint()

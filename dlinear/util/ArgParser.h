@@ -3,7 +3,7 @@
  * @author tend
  * @date 07 Aug 2023
  * @copyright 2023 tend
- * @brief ArgParser class.
+ * ArgParser class.
  * Used to parse command line arguments.
  *
  * Parse the command line arguments and convert them to Config.
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string>
 #include <argparse/argparse.hpp>
+#include "dlinear/util/exception.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/logging.h"
 
@@ -23,7 +24,7 @@
 #define DLINEAR_NAME "dlinear"
 #endif
 #ifndef DLINEAR_VERSION
-#define DLINEAR_VERSION "file"
+#define DLINEAR_VERSION "0.0.1"
 #endif
 
 using std::string;
@@ -38,6 +39,8 @@ class ArgParser {
   argparse::ArgumentParser parser_;
 
   void addOptions();
+
+  void validateOptions();
 
  public:
   ArgParser();

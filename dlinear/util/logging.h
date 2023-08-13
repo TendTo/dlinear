@@ -3,7 +3,7 @@
  * @author tend
  * @date 07 Aug 2023
  * @copyright 2023 tend
- * @brief Logging macros.
+ * Logging macros.
  * Allows logging with different verbosity levels using spdlog.
  *
  * The verbosity level is set with the --verbosity flag.

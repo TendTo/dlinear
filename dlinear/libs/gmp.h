@@ -3,7 +3,7 @@
  * @author tend
  * @date 09 Aug 2023
  * @copyright 2023 tend
- * @brief GMP wrapper.
+ * GMP wrapper.
  *
  * This header includes the GMP library and provides a various helpers.
  * Other files in the library should depend on this header instead of the GMP library directly.
@@ -30,20 +30,20 @@ struct hash<mpq_class> {
 namespace dlinear::gmp {
 
 /**
- * @brief Calculate the floor of a rational number.
+ * Calculate the floor of a rational number.
  * @param val The rational number.
  * @return The floor of the rational number.
  */
 mpz_class floor(const mpq_class &val);
 /**
- * @brief Calculate the ceil of a rational number.
+ * Calculate the ceil of a rational number.
  * @param val The rational number.
  * @return The ceil of the rational number.
  */
 mpz_class ceil(const mpq_class &val);
 
 /**
- * @brief Cast a mpq_class to a mpq_t.
+ * Cast a mpq_class to a mpq_t.
  *
  * Important definitions from <gmpxx.h> and <gmp.h> (fair use):
  *
@@ -80,7 +80,7 @@ inline mpq_t &to_mpq_t(mpq_class &cla) {
 }
 
 /**
- * @brief Cast a mpq_t to a mpq_class.
+ * Cast a mpq_t to a mpq_class.
  *
  * This works because the internal representation of a mpq_class is exactly
  * the same as that of a mpq_t (and, because we only take a reference, no
@@ -93,7 +93,7 @@ const inline mpq_class &to_mpq_class(const mpq_t &mpq) {
 }
 
 /**
- * @brief Cast a mpq_t to a mpq_class.
+ * Cast a mpq_t to a mpq_class.
  *
  * This works because the internal representation of a mpq_class is exactly
  * the same as that of a mpq_t (and, because we only take a reference, no

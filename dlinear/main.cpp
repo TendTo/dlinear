@@ -3,26 +3,25 @@
  * @author tend
  * @date 07 Aug 2023
  * @copyright 2023 tend
- * @brief Main file.
+ * Entry point of dLinear.
  * Run the dLinear program.
  *
  * Use the @verbatim-h@verbatim flag to show the help tooltip.
  */
-#include <iostream>
+#include <csignal>
 #include "dlinear/util/ArgParser.h"
-#include "dlinear/util/Config.h"
-#include "dlinear/libs/gmp.h"
 
-using dlinear::ArgParser;
-using dlinear::Config;
-using dlinear::gmp::add;;
+namespace {
+void HandleSigInt(const int) {
+  // Properly exit so that we can see stat information produced by destructors
+  // even if a user press C-c.
+  std::exit(1);
+}
+}  // namespace
 
 int main(int argc, const char *argv[]) {
-  mpz_class a{1}, b{2};
-  mpz_class sum = add(a, b);
-  std::cout << sum << std::endl;
-  ArgParser parser{};
-  parser.parse(argc, argv);
-  Config c = parser.toConfig();
-  std::cout << c << std::endl;
+  std::signal(SIGINT, HandleSigInt);
+  dreal::main_timer.start();
+  dreal::MainProgram main_program{argc, argv};
+  return main_program.Run();
 }

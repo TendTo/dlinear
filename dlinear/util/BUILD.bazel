@@ -1,21 +1,19 @@
 load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//tests:__subpackages__",
+])
+
 dlinear_cc_library(
     name = "argparser",
-    srcs = [
-        "ArgParser.cpp",
-    ],
-    hdrs = [
-        "ArgParser.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
+    srcs = ["ArgParser.cpp"],
+    hdrs = ["ArgParser.h"],
     deps = [
-        "config",
-        "logging",
+        ":config",
+        ":exception",
+        ":logging",
         "@argparse",
         "@spdlog",
     ],
@@ -23,59 +21,43 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "config",
-    srcs = [
-        "Config.cpp",
-        "OptionValue.cpp",
-    ],
+    srcs = ["Config.cpp"],
     hdrs = [
         "Config.h",
-        "OptionValue.h",
+        "OptionValue.hpp",
     ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
+    deps = [":exception"],
 )
 
 dlinear_cc_library(
-    name = "assert",
-    hdrs = [
-        "assert.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
-)
-
-dlinear_cc_library(
-    name = "logging",
-    hdrs = [
-        "logging.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
+    name = "exception",
+    hdrs = ["exception.h"],
     deps = [
+        ":logging",
         "@spdlog",
     ],
 )
 
 dlinear_cc_library(
+    name = "logging",
+    hdrs = ["logging.h"],
+    deps = ["@spdlog"],
+)
+
+dlinear_cc_library(
     name = "stats",
-    srcs = [
-        "Stats.cpp",
-    ],
-    hdrs = [
-        "Stats.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
+    srcs = ["Stats.cpp"],
+    hdrs = ["Stats.h"],
+    deps = [":logging"],
+)
+
+dlinear_cc_library(
+    name = "context",
+    srcs = ["Context.cpp"],
+    hdrs = ["Context.h"],
     deps = [
-        "logging",
+        ":logging",
+        ":stats",
     ],
 )
 

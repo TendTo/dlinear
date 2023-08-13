@@ -3,7 +3,7 @@
  * @author tend
  * @date 07 Aug 2023
  * @copyright 2023 tend
- * @brief Stats class.
+ * Stats class.
  * Used as a base class for more specialized stats classes.
  *
  * Simple dataclass to store the statistics of a solver run.

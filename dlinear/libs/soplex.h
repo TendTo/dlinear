@@ -3,7 +3,7 @@
  * @author tend
  * @date 09 Aug 2023
  * @copyright 2023 tend
- * @brief Soplex wrapper.
+ * Soplex wrapper.
  *
  * This header includes the Soplex library and provides a various helpers.
  * Other files in the library should depend on this header instead of the Soplex library directly.

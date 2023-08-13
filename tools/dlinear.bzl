@@ -50,6 +50,13 @@ def _get_copts(rule_copts, cc_test = False):
 
     When cc_test is True, the GCC_CC_TEST_FLAGS will be added.
     It should only be set on cc_test rules or rules that are boil down to cc_test rules.
+
+    Args:
+        rule_copts: The copts passed to the rule.
+        cc_test: Whether the rule is a cc_test rule.
+
+    Returns:
+        A list of copts.
     """
     extra_gcc_flags = GCC_CC_TEST_FLAGS if cc_test else []
     return select({
@@ -64,8 +71,8 @@ def dlinear_cc_library(
         srcs = None,
         deps = None,
         copts = [],
-        linkstatic = 1,
-        alwayslink = 1,
+        linkstatic = True,
+        alwayslink = True,
         **kwargs):
     """Creates a rule to declare a C++ library.
     """
@@ -115,8 +122,7 @@ def dlinear_cc_test(
     if size == None:
         size = "small"
     if srcs == None:
-        srcs = [word.capitalize() for word in name.split("_")]
-        srcs = ["".join(srcs) + ".cpp"]
+        srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".cpp"]
     native.cc_test(
         name = name,
         size = size,
@@ -137,9 +143,8 @@ def dlinear_cc_googletest(
     (@com_google_googletest//:gtest_main).
 
     By default, sets size="small" because that indicates a unit test.
-    By default, sets use_default_main=True to use GTest's main, via
-    @com_google_googletest//:gtest_main. Otherwise, it will depend on
-    @com_google_googlegtest//:gtest.
+    By default, sets use_default_main=True to use GTest's main, via @com_google_googletest//:gtest_main.
+    Otherwise, it will depend on @com_google_googlegtest//:gtest.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
     For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
     """
