@@ -7,10 +7,9 @@
 #include <set>
 #include <string>
 
-#include "dreal/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variable.h"
 
-namespace dreal {
-namespace drake {
+namespace dlinear::drake {
 namespace symbolic {
 
 /** Represents a set of variables.
@@ -24,10 +23,10 @@ namespace symbolic {
 
 class Variables {
  public:
-  Variables(const Variables&) = default;
-  Variables& operator=(const Variables&) = default;
-  Variables(Variables&&) = default;
-  Variables& operator=(Variables&&) = default;
+  Variables(const Variables &) = default;
+  Variables &operator=(const Variables &) = default;
+  Variables(Variables &&) = default;
+  Variables &operator=(Variables &&) = default;
 
   typedef typename std::set<Variable>::size_type size_type;
   typedef typename std::set<Variable>::iterator iterator;
@@ -83,45 +82,45 @@ class Variables {
   const_reverse_iterator crend() const { return vars_.crend(); }
 
   /** Inserts a variable @p var into a set. */
-  void insert(const Variable& var) { vars_.insert(var); }
+  void insert(const Variable &var) { vars_.insert(var); }
   /** Inserts variables in [@p first, @p last) into a set. */
-  template <class InputIt>
+  template<class InputIt>
   void insert(InputIt first, InputIt last) {
     vars_.insert(first, last);
   }
   /** Inserts variables in @p vars into a set. */
-  void insert(const Variables& vars) { vars_.insert(vars.begin(), vars.end()); }
+  void insert(const Variables &vars) { vars_.insert(vars.begin(), vars.end()); }
 
   /** Erases @p key from a set. Return number of erased elements (0 or 1). */
-  size_type erase(const Variable& key) { return vars_.erase(key); }
+  size_type erase(const Variable &key) { return vars_.erase(key); }
 
   /** Erases variables in @p vars from a set. Return number of erased
       elements ([0, vars.size()]). */
-  size_type erase(const Variables& vars);
+  size_type erase(const Variables &vars);
 
   /** Finds element with specific key. */
-  iterator find(const Variable& key) { return vars_.find(key); }
-  const_iterator find(const Variable& key) const { return vars_.find(key); }
+  iterator find(const Variable &key) { return vars_.find(key); }
+  const_iterator find(const Variable &key) const { return vars_.find(key); }
 
   /** Return true if @p key is included in the Variables. */
-  bool include(const Variable& key) const { return find(key) != end(); }
+  bool include(const Variable &key) const { return find(key) != end(); }
 
   /** Return true if @p vars is a subset of the Variables. */
-  bool IsSubsetOf(const Variables& vars) const;
+  bool IsSubsetOf(const Variables &vars) const;
   /** Return true if @p vars is a superset of the Variables. */
-  bool IsSupersetOf(const Variables& vars) const;
+  bool IsSupersetOf(const Variables &vars) const;
   /** Return true if @p vars is a strict subset of the Variables. */
-  bool IsStrictSubsetOf(const Variables& vars) const;
+  bool IsStrictSubsetOf(const Variables &vars) const;
   /** Return true if @p vars is a strict superset of the Variables. */
-  bool IsStrictSupersetOf(const Variables& vars) const;
+  bool IsStrictSupersetOf(const Variables &vars) const;
 
-  friend bool operator==(const Variables& vars1, const Variables& vars2);
+  friend bool operator==(const Variables &vars1, const Variables &vars2);
 
-  friend bool operator<(const Variables& vars1, const Variables& vars2);
+  friend bool operator<(const Variables &vars1, const Variables &vars2);
 
-  friend std::ostream& operator<<(std::ostream&, const Variables& vars);
+  friend std::ostream &operator<<(std::ostream &, const Variables &vars);
 
-  friend Variables intersect(const Variables& vars1, const Variables& vars2);
+  friend Variables intersect(const Variables &vars1, const Variables &vars2);
 
  private:
   /* Constructs from std::set<Variable>. */
@@ -132,44 +131,44 @@ class Variables {
 
 /** Updates @p var1 with the result of set-union(@p var1, @p var2). */
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Variables operator+=(Variables& vars1, const Variables& vars2);
+Variables operator+=(Variables &vars1, const Variables &vars2);
 /** Updates @p vars with the result of set-union(@p vars, { @p var }). */
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Variables operator+=(Variables& vars, const Variable& var);
+Variables operator+=(Variables &vars, const Variable &var);
 /** Returns set-union of @p var1 and @p var2. */
-Variables operator+(Variables vars1, const Variables& vars2);
+Variables operator+(Variables vars1, const Variables &vars2);
 /** Returns set-union of @p vars and {@p var}. */
-Variables operator+(Variables vars, const Variable& var);
+Variables operator+(Variables vars, const Variable &var);
 /** Returns set-union of {@p var} and @p vars. */
-Variables operator+(const Variable& var, Variables vars);
+Variables operator+(const Variable &var, Variables vars);
 
 /** Updates @p var1 with the result of set-minus(@p var1, @p var2). */
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Variables operator-=(Variables& vars1, const Variables& vars2);
+Variables operator-=(Variables &vars1, const Variables &vars2);
 /** Updates @p vars with the result of set-minus(@p vars, {@p var}). */
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Variables operator-=(Variables& vars, const Variable& var);
+Variables operator-=(Variables &vars, const Variable &var);
 /** Returns set-minus(@p var1, @p vars2). */
-Variables operator-(Variables vars1, const Variables& vars2);
+Variables operator-(Variables vars1, const Variables &vars2);
 /** Returns set-minus(@p vars, { @p var }). */
-Variables operator-(Variables vars, const Variable& var);
+Variables operator-(Variables vars, const Variable &var);
 
 /** Returns the intersection of @p vars1 and @p vars2.
  *
  * This function has a time complexity of `O(N₁ + N₂)` where `N₁` and `N₂` are
  * the size of @p vars1 and @p vars2 respectively.
  */
-Variables intersect(const Variables& vars1, const Variables& vars2);
+Variables intersect(const Variables &vars1, const Variables &vars2);
 
 }  // namespace symbolic
 
 /** Computes the hash value of a symbolic variables. */
-template <>
+template<>
 struct hash_value<symbolic::Variables> {
-  size_t operator()(const symbolic::Variables& vars) const {
+  size_t operator()(const symbolic::Variables &vars) const {
     return vars.get_hash();
   }
 };
 
-}  // namespace drake
-}  // namespace dreal
+} // namespace dlinear::drake
+

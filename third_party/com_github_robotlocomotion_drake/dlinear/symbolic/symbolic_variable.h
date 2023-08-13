@@ -6,10 +6,9 @@
 #include <ostream>
 #include <string>
 
-#include "dreal/symbolic/hash.h"
+#include "dlinear/symbolic/hash.h"
 
-namespace dreal {
-namespace drake {
+namespace dlinear::drake {
 namespace symbolic {
 
 /** Represents a symbolic variable. */
@@ -26,10 +25,10 @@ class Variable {
     BOOLEAN,     ///< A BOOLEAN variable takes a `bool` value.
   };
 
-  Variable(const Variable&) = default;
-  Variable& operator=(const Variable&) = default;
-  Variable(Variable&&) = default;
-  Variable& operator=(Variable&&) = default;
+  Variable(const Variable &) = default;
+  Variable &operator=(const Variable &) = default;
+  Variable(Variable &&) = default;
+  Variable &operator=(Variable &&) = default;
 
   /** Default constructor. Constructs a dummy variable of CONTINUOUS type. This
    *  is needed to have Eigen::Matrix<Variable>. The objects created by the
@@ -66,12 +65,12 @@ class Variable {
   std::string to_string() const;
 
   /// Checks the equality of two variables based on their ID values.
-  bool equal_to(const Variable& v) const { return get_id() == v.get_id(); }
+  bool equal_to(const Variable &v) const { return get_id() == v.get_id(); }
 
   /// Compares two variables based on their ID values.
-  bool less(const Variable& v) const { return get_id() < v.get_id(); }
+  bool less(const Variable &v) const { return get_id() < v.get_id(); }
 
-  friend std::ostream& operator<<(std::ostream& os, const Variable& var);
+  friend std::ostream &operator<<(std::ostream &os, const Variable &var);
 
  private:
   // Produces a unique ID for a variable.
@@ -86,41 +85,41 @@ class Variable {
   std::shared_ptr<std::string> name_;  // Name of variable.
 };
 
-std::ostream& operator<<(std::ostream& os, Variable::Type type);
+std::ostream &operator<<(std::ostream &os, Variable::Type type);
 
 }  // namespace symbolic
 
 /** Computes the hash value of a variable. */
-template <>
+template<>
 struct hash_value<symbolic::Variable> {
-  size_t operator()(const symbolic::Variable& v) const { return v.get_hash(); }
+  size_t operator()(const symbolic::Variable &v) const { return v.get_hash(); }
 };
 
-}  // namespace drake
-}  // namespace dreal
+} // namespace dlinear::drake
+
 
 namespace std {
-/* Provides std::less<dreal::drake::symbolic::Variable>. */
-template <>
-struct less<dreal::drake::symbolic::Variable> {
-  bool operator()(const dreal::drake::symbolic::Variable& lhs,
-                  const dreal::drake::symbolic::Variable& rhs) const {
+/* Provides std::less<dlinear::drake::symbolic::Variable>. */
+template<>
+struct less<dlinear::drake::symbolic::Variable> {
+  bool operator()(const dlinear::drake::symbolic::Variable &lhs,
+                  const dlinear::drake::symbolic::Variable &rhs) const {
     return lhs.less(rhs);
   }
 };
 
-/* Provides std::equal_to<dreal::drake::symbolic::Variable>. */
-template <>
-struct equal_to<dreal::drake::symbolic::Variable> {
-  bool operator()(const dreal::drake::symbolic::Variable& lhs,
-                  const dreal::drake::symbolic::Variable& rhs) const {
+/* Provides std::equal_to<dlinear::drake::symbolic::Variable>. */
+template<>
+struct equal_to<dlinear::drake::symbolic::Variable> {
+  bool operator()(const dlinear::drake::symbolic::Variable &lhs,
+                  const dlinear::drake::symbolic::Variable &rhs) const {
     return lhs.equal_to(rhs);
   }
 };
 
-template <>
-struct hash<dreal::drake::symbolic::Variable> {
-  size_t operator()(const dreal::drake::symbolic::Variable& v) const {
+template<>
+struct hash<dlinear::drake::symbolic::Variable> {
+  size_t operator()(const dlinear::drake::symbolic::Variable &v) const {
     return v.get_hash();
   }
 };

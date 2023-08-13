@@ -36,7 +36,6 @@ dlinear_cc_library(
         "//dlinear:__subpackages__",
     ],
     deps = [
-        "//dlinear/util:assert",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",

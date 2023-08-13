@@ -21,7 +21,7 @@ void HandleSigInt(const int) {
 
 int main(int argc, const char *argv[]) {
   std::signal(SIGINT, HandleSigInt);
-  dreal::main_timer.start();
-  dreal::MainProgram main_program{argc, argv};
+  dlinear::main_timer.start();
+  dlinear::MainProgram main_program{argc, argv};
   return main_program.Run();
 }

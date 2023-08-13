@@ -21,13 +21,13 @@
 #include <string>
 #include <vector>
 
-#include "dreal/symbolic/symbolic_environment.h"
-#include "dreal/symbolic/symbolic_expression.h"
-#include "dreal/symbolic/symbolic_expression_visitor.h"
-#include "dreal/symbolic/symbolic_formula.h"
-#include "dreal/symbolic/symbolic_formula_visitor.h"
-#include "dreal/symbolic/symbolic_variable.h"
-#include "dreal/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/symbolic_environment.h"
+#include "dlinear/symbolic/symbolic_expression.h"
+#include "dlinear/symbolic/symbolic_expression_visitor.h"
+#include "dlinear/symbolic/symbolic_formula.h"
+#include "dlinear/symbolic/symbolic_formula_visitor.h"
+#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variables.h"
 
 namespace dlinear {
 

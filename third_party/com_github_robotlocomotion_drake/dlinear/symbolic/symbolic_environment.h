@@ -5,14 +5,12 @@
 #include <string>
 #include <unordered_map>
 
-#include "dreal/symbolic/symbolic_variable.h"
-#include "dreal/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variables.h"
 
-#include "dreal/gmp.h"
+#include "dlinear/libs/gmp.h"
 
-namespace dreal {
-namespace drake {
-namespace symbolic {
+namespace dlinear::drake::symbolic {
 /** Represents a symbolic environment (mapping from a variable to a value).
  *
  * This class is used when we evaluate symbolic expressions or formulas which
@@ -53,16 +51,16 @@ namespace symbolic {
  */
 class Environment {
  public:
-  Environment(const Environment&) = default;
-  Environment& operator=(const Environment&) = default;
-  Environment(Environment&&) = default;
-  Environment& operator=(Environment&&) = default;
+  Environment(const Environment &) = default;
+  Environment &operator=(const Environment &) = default;
+  Environment(Environment &&) = default;
+  Environment &operator=(Environment &&) = default;
 
   typedef Variable key_type;
   typedef mpq_class mapped_type;
   typedef
-      typename std::unordered_map<key_type, mapped_type, hash_value<key_type>>
-          map;
+  typename std::unordered_map<key_type, mapped_type, hash_value < key_type>>
+  map;
   /** std::pair<key_type, mapped_type> */
   typedef typename map::value_type value_type;
   typedef typename map::iterator iterator;
@@ -99,16 +97,16 @@ class Environment {
   const_iterator cend() const { return map_.cend(); }
 
   /** Inserts a pair (@p key, @p elem). */
-  void insert(const key_type& key, const mapped_type& elem);
+  void insert(const key_type &key, const mapped_type &elem);
   /** Checks whether the container is empty.  */
   bool empty() const { return map_.empty(); }
   /** Returns the number of elements. */
   size_t size() const { return map_.size(); }
 
   /** Finds element with specific key. */
-  iterator find(const key_type& key) { return map_.find(key); }
+  iterator find(const key_type &key) { return map_.find(key); }
   /** Finds element with specific key. */
-  const_iterator find(const key_type& key) const { return map_.find(key); }
+  const_iterator find(const key_type &key) const { return map_.find(key); }
 
   /** Returns the domain of this environment. */
   Variables domain() const;
@@ -119,17 +117,17 @@ class Environment {
   /** Returns a reference to the value that is mapped to a key equivalent to
    *  @p key, performing an insertion if such key does not already exist.
    */
-  mapped_type& operator[](const key_type& key);
+  mapped_type &operator[](const key_type &key);
 
   /** As above, but returns a constref and does not perform an insertion
    * (throwing a runtime error instead) if the key does not exist. */
-  const mapped_type& operator[](const key_type& key) const;
+  const mapped_type &operator[](const key_type &key) const;
 
-  friend std::ostream& operator<<(std::ostream& os, const Environment& env);
+  friend std::ostream &operator<<(std::ostream &os, const Environment &env);
 
  private:
   map map_;
 };
-}  // namespace symbolic
-}  // namespace drake
-}  // namespace dreal
+} // namespace dlinear::drake::symbolic
+
+

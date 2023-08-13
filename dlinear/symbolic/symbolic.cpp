@@ -1,12 +1,12 @@
-#include "dreal/symbolic/symbolic.h"
+#include "dlinear/symbolic/symbolic.h"
 
 #include <algorithm>
 #include <iterator>
 #include <utility>
 
-#include "dreal/util/assert.h"
-#include "dreal/util/exception.h"
-#include "dreal/util/logging.h"
+#include "dlinear/util/assert.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

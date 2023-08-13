@@ -7,14 +7,13 @@
 #include <string>
 #include <utility>
 
-#include "dreal/symbolic/hash.h"
-#include "dreal/symbolic/symbolic_environment.h"
-#include "dreal/symbolic/symbolic_expression.h"
-#include "dreal/symbolic/symbolic_variable.h"
-#include "dreal/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/hash.h"
+#include "dlinear/symbolic/symbolic_environment.h"
+#include "dlinear/symbolic/symbolic_expression.h"
+#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variables.h"
 
-namespace dreal {
-namespace drake {
+namespace dlinear::drake {
 namespace symbolic {
 
 /** Kinds of symbolic formulas. */
@@ -102,26 +101,26 @@ class Formula {
  public:
   /** Default constructor. */
   Formula();
-  Formula(const Formula&);
-  Formula& operator=(const Formula&);
-  Formula(Formula&&) noexcept;
-  Formula& operator=(Formula&&) noexcept;
+  Formula(const Formula &);
+  Formula &operator=(const Formula &);
+  Formula(Formula &&) noexcept;
+  Formula &operator=(Formula &&) noexcept;
   ~Formula();
 
   /** Constructs a formula from @p var.
    * @pre @p var is of BOOLEAN type and not a dummy variable.
    */
-  explicit Formula(const Variable& var);
+  explicit Formula(const Variable &var);
 
   FormulaKind get_kind() const;
   size_t get_hash() const;
 
   /** Gets free variables (unquantified variables).
    */
-  const Variables& GetFreeVariables() const;
+  const Variables &GetFreeVariables() const;
 
   /** Checks structural equality*/
-  bool EqualTo(const Formula& f) const;
+  bool EqualTo(const Formula &f) const;
 
   /** Checks lexicographical ordering between this and @p e.
    *
@@ -145,7 +144,7 @@ class Formula {
    * This function is used as a compare function in
    * std::map<symbolic::Formula> and std::set<symbolic::Formula> via
    * std::less<symbolic::Formula>. */
-  bool Less(const Formula& f) const;
+  bool Less(const Formula &f) const;
 
   /** Evaluates under a given environment (by default, an empty environment).
    *
@@ -157,19 +156,19 @@ class Formula {
    * results if @p env does not provide complete information to call Evaluate on
    * e₁ and e₂.
    */
-  bool Evaluate(const Environment& env = Environment{}) const;
+  bool Evaluate(const Environment &env = Environment{}) const;
 
   /** Returns a copy of this formula replacing all occurrences of @p var
    * with @p e.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Formula Substitute(const Variable& var, const Expression& e) const;
+  Formula Substitute(const Variable &var, const Expression &e) const;
 
   /** Returns a copy of this formula replacing all occurrences of @p var
    * with @p f.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Formula Substitute(const Variable& var, const Formula& f) const;
+  Formula Substitute(const Variable &var, const Formula &f) const;
 
   /** Returns a copy of this formula replacing all occurrences of the variables
    * in @p expr_subst with corresponding expressions in @p expr_subst and all
@@ -181,8 +180,8 @@ class Formula {
    *
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Formula Substitute(const ExpressionSubstitution& expr_subst,
-                     const FormulaSubstitution& formula_subst) const;
+  Formula Substitute(const ExpressionSubstitution &expr_subst,
+                     const FormulaSubstitution &formula_subst) const;
 
   /** Returns a copy of this formula replacing all occurrences of the variables
    * in @p expr_subst with corresponding expressions in @p expr_subst.
@@ -190,7 +189,7 @@ class Formula {
    * @note This is equivalent to `Substitute(expr_subst, {})`.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Formula Substitute(const ExpressionSubstitution& expr_subst) const;
+  Formula Substitute(const ExpressionSubstitution &expr_subst) const;
 
   /** Returns a copy of this formula replacing all
    * occurrences of the variables in @p formula_subst with corresponding
@@ -199,7 +198,7 @@ class Formula {
    * @note This is equivalent to `Substitute({}, formula_subst)`.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Formula Substitute(const FormulaSubstitution& formula_subst) const;
+  Formula Substitute(const FormulaSubstitution &formula_subst) const;
 
   /** Returns string representation of Formula. */
   std::string to_string() const;
@@ -210,73 +209,73 @@ class Formula {
   /** Conversion to bool. */
   explicit operator bool() const { return Evaluate(); }
 
-  friend std::ostream& operator<<(std::ostream& os, const Formula& f);
-  friend void swap(Formula& a, Formula& b) { std::swap(a.ptr_, b.ptr_); }
+  friend std::ostream &operator<<(std::ostream &os, const Formula &f);
+  friend void swap(Formula &a, Formula &b) { std::swap(a.ptr_, b.ptr_); }
 
-  friend bool is_false(const Formula& f);
-  friend bool is_true(const Formula& f);
-  friend bool is_variable(const Formula& f);
-  friend bool is_equal_to(const Formula& f);
-  friend bool is_not_equal_to(const Formula& f);
-  friend bool is_greater_than(const Formula& f);
-  friend bool is_greater_than_or_equal_to(const Formula& f);
-  friend bool is_less_than(const Formula& f);
-  friend bool is_less_than_or_equal_to(const Formula& f);
-  friend bool is_relational(const Formula& f);
-  friend bool is_conjunction(const Formula& f);
-  friend bool is_disjunction(const Formula& f);
-  friend bool is_negation(const Formula& f);
-  friend bool is_forall(const Formula& f);
+  friend bool is_false(const Formula &f);
+  friend bool is_true(const Formula &f);
+  friend bool is_variable(const Formula &f);
+  friend bool is_equal_to(const Formula &f);
+  friend bool is_not_equal_to(const Formula &f);
+  friend bool is_greater_than(const Formula &f);
+  friend bool is_greater_than_or_equal_to(const Formula &f);
+  friend bool is_less_than(const Formula &f);
+  friend bool is_less_than_or_equal_to(const Formula &f);
+  friend bool is_relational(const Formula &f);
+  friend bool is_conjunction(const Formula &f);
+  friend bool is_disjunction(const Formula &f);
+  friend bool is_negation(const Formula &f);
+  friend bool is_forall(const Formula &f);
 
   // Note that the following cast functions are only for low-level operations
   // and not exposed to the user of symbolic_formula.h. These functions are
   // declared in symbolic_formula_cell.h header.
-  friend const FormulaFalse* to_false(const Formula& f);
-  friend const FormulaTrue* to_true(const Formula& f);
-  friend const FormulaVar* to_variable(const Formula& f);
-  friend const RelationalFormulaCell* to_relational(const Formula& f);
-  friend const FormulaEq* to_equal_to(const Formula& f);
-  friend const FormulaNeq* to_not_equal_to(const Formula& f);
-  friend const FormulaGt* to_greater_than(const Formula& f);
-  friend const FormulaGeq* to_greater_than_or_equal_to(const Formula& f);
-  friend const FormulaLt* to_less_than(const Formula& f);
-  friend const FormulaLeq* to_less_than_or_equal_to(const Formula& f);
-  friend const NaryFormulaCell* to_nary(const Formula& f);
-  friend NaryFormulaCell* to_nary(Formula& f);
-  friend const FormulaAnd* to_conjunction(const Formula& f);
-  friend const FormulaOr* to_disjunction(const Formula& f);
-  friend const FormulaNot* to_negation(const Formula& f);
-  friend const FormulaForall* to_forall(const Formula& f);
+  friend const FormulaFalse *to_false(const Formula &f);
+  friend const FormulaTrue *to_true(const Formula &f);
+  friend const FormulaVar *to_variable(const Formula &f);
+  friend const RelationalFormulaCell *to_relational(const Formula &f);
+  friend const FormulaEq *to_equal_to(const Formula &f);
+  friend const FormulaNeq *to_not_equal_to(const Formula &f);
+  friend const FormulaGt *to_greater_than(const Formula &f);
+  friend const FormulaGeq *to_greater_than_or_equal_to(const Formula &f);
+  friend const FormulaLt *to_less_than(const Formula &f);
+  friend const FormulaLeq *to_less_than_or_equal_to(const Formula &f);
+  friend const NaryFormulaCell *to_nary(const Formula &f);
+  friend NaryFormulaCell *to_nary(Formula &f);
+  friend const FormulaAnd *to_conjunction(const Formula &f);
+  friend const FormulaOr *to_disjunction(const Formula &f);
+  friend const FormulaNot *to_negation(const Formula &f);
+  friend const FormulaForall *to_forall(const Formula &f);
 
   // Returns f1 = f1 && f2.
-  static Formula make_conjunction(Formula& f1, const Formula& f2);
+  static Formula make_conjunction(Formula &f1, const Formula &f2);
   // Returns f1 = f1 || f2.
-  static Formula make_disjunction(Formula& f1, const Formula& f2);
+  static Formula make_disjunction(Formula &f1, const Formula &f2);
 
   friend FormulaCell;
-  friend Formula forall(const Variables& vars, const Formula& f);
-  friend Formula make_conjunction(const std::set<Formula>& formulas);
-  friend Formula make_disjunction(const std::set<Formula>& formulas);
-  friend Formula operator!(const Formula& f);
-  friend Formula operator==(const Expression& e1, const Expression& e2);
-  friend Formula operator!=(const Expression& e1, const Expression& e2);
-  friend Formula operator<(const Expression& e1, const Expression& e2);
-  friend Formula operator<=(const Expression& e1, const Expression& e2);
-  friend Formula operator>(const Expression& e1, const Expression& e2);
-  friend Formula operator>=(const Expression& e1, const Expression& e2);
+  friend Formula forall(const Variables &vars, const Formula &f);
+  friend Formula make_conjunction(const std::set<Formula> &formulas);
+  friend Formula make_disjunction(const std::set<Formula> &formulas);
+  friend Formula operator!(const Formula &f);
+  friend Formula operator==(const Expression &e1, const Expression &e2);
+  friend Formula operator!=(const Expression &e1, const Expression &e2);
+  friend Formula operator<(const Expression &e1, const Expression &e2);
+  friend Formula operator<=(const Expression &e1, const Expression &e2);
+  friend Formula operator>(const Expression &e1, const Expression &e2);
+  friend Formula operator>=(const Expression &e1, const Expression &e2);
 
   /// Returns true if this symbolic formula includes an ITE (If-Then-Else)
   /// expression.
   bool include_ite() const;
 
  private:
-  explicit Formula(FormulaCell* ptr);
+  explicit Formula(FormulaCell *ptr);
 
-  FormulaCell* ptr_;
+  FormulaCell *ptr_;
 };
 
 /** Returns a formula @p f, universally quantified by variables @p vars. */
-Formula forall(const Variables& vars, const Formula& f);
+Formula forall(const Variables &vars, const Formula &f);
 
 /** Returns a conjunction of @p formulas. It performs the following
  * simplification:
@@ -288,17 +287,17 @@ Formula forall(const Variables& vars, const Formula& f);
  * - Nested conjunctions will be flattened. For example, make_conjunction({f₁,
  *   f₂ ∧ f₃}) returns f₁ ∧ f₂ ∧ f₃.
  */
-Formula make_conjunction(const std::set<Formula>& formulas);
-Formula operator&&(const Formula& f1, const Formula& f2);
-Formula operator&&(const Formula& f1, Formula&& f2);
-Formula operator&&(Formula&& f1, const Formula& f2);
-Formula operator&&(Formula&& f1, Formula&& f2);
+Formula make_conjunction(const std::set<Formula> &formulas);
+Formula operator&&(const Formula &f1, const Formula &f2);
+Formula operator&&(const Formula &f1, Formula &&f2);
+Formula operator&&(Formula &&f1, const Formula &f2);
+Formula operator&&(Formula &&f1, Formula &&f2);
 
-Formula operator&&(const Variable& v, const Formula& f);
-Formula operator&&(const Variable& v, Formula&& f);
-Formula operator&&(const Formula& f, const Variable& v);
-Formula operator&&(Formula&& f, const Variable& v);
-Formula operator&&(const Variable& v1, const Variable& v2);
+Formula operator&&(const Variable &v, const Formula &f);
+Formula operator&&(const Variable &v, Formula &&f);
+Formula operator&&(const Formula &f, const Variable &v);
+Formula operator&&(Formula &&f, const Variable &v);
+Formula operator&&(const Variable &v1, const Variable &v2);
 
 /** Returns a disjunction of @p formulas. It performs the following
  * simplification:
@@ -310,171 +309,171 @@ Formula operator&&(const Variable& v1, const Variable& v2);
  * - Nested disjunctions will be flattened. For example, make_disjunction({f₁,
  *   f₂ ∨ f₃}) returns f₁ ∨ f₂ ∨ f₃.
  */
-Formula make_disjunction(const std::set<Formula>& formulas);
-Formula operator||(const Formula& f1, const Formula& f2);
-Formula operator||(const Formula& f1, Formula&& f2);
-Formula operator||(Formula&& f1, const Formula& f2);
-Formula operator||(Formula&& f1, Formula&& f2);
+Formula make_disjunction(const std::set<Formula> &formulas);
+Formula operator||(const Formula &f1, const Formula &f2);
+Formula operator||(const Formula &f1, Formula &&f2);
+Formula operator||(Formula &&f1, const Formula &f2);
+Formula operator||(Formula &&f1, Formula &&f2);
 
-Formula operator||(const Variable& v, const Formula& f);
-Formula operator||(const Variable& v, Formula&& f);
-Formula operator||(const Formula& f, const Variable& v);
-Formula operator||(Formula&& f, const Variable& v);
-Formula operator||(const Variable& v1, const Variable& v2);
+Formula operator||(const Variable &v, const Formula &f);
+Formula operator||(const Variable &v, Formula &&f);
+Formula operator||(const Formula &f, const Variable &v);
+Formula operator||(Formula &&f, const Variable &v);
+Formula operator||(const Variable &v1, const Variable &v2);
 
-Formula operator!(const Formula& f);
-Formula operator!(const Variable& v);
+Formula operator!(const Formula &f);
+Formula operator!(const Variable &v);
 
 /** Returns a formula representing v1 and v2 are equivalent.
  * - When v1 and v2 are scalar variables (of type
  *   CONTINUOUS/BINARY/INTEGER), it forms `v1 == v2`.
  * - When v1 and v2 are boolean variables, it returns `v1 ↔ v2`.
  */
-Formula operator==(const Variable& v1, const Variable& v2);
+Formula operator==(const Variable &v1, const Variable &v2);
 
 /** Returns a formula representing (e1 = e2). */
-Formula operator==(const Expression& e1, const Expression& e2);
+Formula operator==(const Expression &e1, const Expression &e2);
 
 /** Returns a formula representing f1 ↔ f2. */
-Formula operator==(const Formula& f1, const Formula& f2);
+Formula operator==(const Formula &f1, const Formula &f2);
 
 /** Returns a formula representing v ↔ f. */
-Formula operator==(const Variable& v, const Formula& f);
+Formula operator==(const Variable &v, const Formula &f);
 
 /** Returns a formula representing f ↔ v. */
-Formula operator==(const Formula& f, const Variable& v);
+Formula operator==(const Formula &f, const Variable &v);
 
 /** Returns a formula representing v1 and v2 are *not* equivalent.
  * - When v1 and v2 are scalar variables (of type
  *   CONTINUOUS/BINARY/INTEGER), it forms `v1 ≠ v2`.
  * - When v1 and v2 are boolean variables, it returns `¬(v1 ↔ v2)`.
  */
-Formula operator!=(const Variable& v1, const Variable& v2);
+Formula operator!=(const Variable &v1, const Variable &v2);
 
 /** Returns a formula representing e1 ≠ e2. */
-Formula operator!=(const Expression& e1, const Expression& e2);
+Formula operator!=(const Expression &e1, const Expression &e2);
 
 /** Returns a formula representing ¬(f1 ↔ f2). */
-Formula operator!=(const Formula& f1, const Formula& f2);
+Formula operator!=(const Formula &f1, const Formula &f2);
 
 /** Returns a formula representing ¬(v ↔ f). */
-Formula operator!=(const Variable& v, const Formula& f);
+Formula operator!=(const Variable &v, const Formula &f);
 
 /** Returns a formula representing ¬(f ↔ v). */
-Formula operator!=(const Formula& f, const Variable& v);
+Formula operator!=(const Formula &f, const Variable &v);
 
-Formula operator<(const Expression& e1, const Expression& e2);
-Formula operator<=(const Expression& e1, const Expression& e2);
-Formula operator>(const Expression& e1, const Expression& e2);
-Formula operator>=(const Expression& e1, const Expression& e2);
+Formula operator<(const Expression &e1, const Expression &e2);
+Formula operator<=(const Expression &e1, const Expression &e2);
+Formula operator>(const Expression &e1, const Expression &e2);
+Formula operator>=(const Expression &e1, const Expression &e2);
 
-std::ostream& operator<<(std::ostream& os, const Formula& f);
+std::ostream &operator<<(std::ostream &os, const Formula &f);
 
 /** Checks if @p f is structurally equal to False formula. */
-bool is_false(const Formula& f);
+bool is_false(const Formula &f);
 /** Checks if @p f is structurally equal to True formula. */
-bool is_true(const Formula& f);
+bool is_true(const Formula &f);
 /** Checks if @p f is a variable formula. */
-bool is_variable(const Formula& f);
+bool is_variable(const Formula &f);
 /** Checks if @p f is a formula representing equality (==). */
-bool is_equal_to(const Formula& f);
+bool is_equal_to(const Formula &f);
 /** Checks if @p f is a formula representing disequality (!=). */
-bool is_not_equal_to(const Formula& f);
+bool is_not_equal_to(const Formula &f);
 /** Checks if @p f is a formula representing greater-than (>). */
-bool is_greater_than(const Formula& f);
+bool is_greater_than(const Formula &f);
 /** Checks if @p f is a formula representing greater-than-or-equal-to (>=). */
-bool is_greater_than_or_equal_to(const Formula& f);
+bool is_greater_than_or_equal_to(const Formula &f);
 /** Checks if @p f is a formula representing less-than (<). */
-bool is_less_than(const Formula& f);
+bool is_less_than(const Formula &f);
 /** Checks if @p f is a formula representing less-than-or-equal-to (<=). */
-bool is_less_than_or_equal_to(const Formula& f);
+bool is_less_than_or_equal_to(const Formula &f);
 /** Checks if @p f is a relational formula ({==, !=, >, >=, <, <=}). */
-bool is_relational(const Formula& f);
+bool is_relational(const Formula &f);
 /** Checks if @p f is a conjunction (∧). */
-bool is_conjunction(const Formula& f);
+bool is_conjunction(const Formula &f);
 /** Checks if @p f is a disjunction (∨). */
-bool is_disjunction(const Formula& f);
+bool is_disjunction(const Formula &f);
 /** Checks if @p f is a n-ary formula ({∧, ∨}). */
-bool is_nary(const Formula& f);
+bool is_nary(const Formula &f);
 /** Checks if @p f is a negation (¬). */
-bool is_negation(const Formula& f);
+bool is_negation(const Formula &f);
 /** Checks if @p f is a Forall formula (∀). */
-bool is_forall(const Formula& f);
+bool is_forall(const Formula &f);
 
 /** Returns the embedded variable in the variable formula @p f.
  *  @pre @p f is a variable formula.
  */
-const Variable& get_variable(const Formula& f);
+const Variable &get_variable(const Formula &f);
 
 /** Returns the lhs-argument of a relational formula @p f.
  *  @pre @p f is a relational formula.
  */
-const Expression& get_lhs_expression(const Formula& f);
+const Expression &get_lhs_expression(const Formula &f);
 
 /** Returns the rhs-argument of a relational formula @p f.
  *  @pre @p f is a relational formula.
  */
-const Expression& get_rhs_expression(const Formula& f);
+const Expression &get_rhs_expression(const Formula &f);
 
 /** Returns the set of formulas in a n-ary formula @p f.
  *  @pre @p f is a n-ary formula.
  */
-const std::set<Formula>& get_operands(const Formula& f);
+const std::set<Formula> &get_operands(const Formula &f);
 
 /** Returns the formula in a negation formula @p f.
  *  @pre @p f is a negation formula.
  */
-const Formula& get_operand(const Formula& f);
+const Formula &get_operand(const Formula &f);
 
 /** Returns the quantified variables in a forall formula @p f.
  *  @pre @p f is a forall formula.
  */
-const Variables& get_quantified_variables(const Formula& f);
+const Variables &get_quantified_variables(const Formula &f);
 
 /** Returns the quantified formula in a forall formula @p f.
  *  @pre @p f is a forall formula.
  */
-const Formula& get_quantified_formula(const Formula& f);
+const Formula &get_quantified_formula(const Formula &f);
 
 namespace detail {
 /// Returns @p f1 ∧ @p f2. We have it because gcc-4.8 does not have
 /// `std::logical_and`.
-inline Formula logic_and(const Formula& f1, const Formula& f2) {
+inline Formula logic_and(const Formula &f1, const Formula &f2) {
   return f1 && f2;
 }
 }  // namespace detail
 }  // namespace symbolic
 
 /** Computes the hash value of a symbolic formula. */
-template <>
+template<>
 struct hash_value<symbolic::Formula> {
-  size_t operator()(const symbolic::Formula& f) const { return f.get_hash(); }
+  size_t operator()(const symbolic::Formula &f) const { return f.get_hash(); }
 };
-}  // namespace drake
-}  // namespace dreal
+} // namespace dlinear::drake
+
 
 namespace std {
-/* Provides std::less<dreal::drake::symbolic::Formula>. */
-template <>
-struct less<dreal::drake::symbolic::Formula> {
-  bool operator()(const dreal::drake::symbolic::Formula& lhs,
-                  const dreal::drake::symbolic::Formula& rhs) const {
+/* Provides std::less<dlinear::drake::symbolic::Formula>. */
+template<>
+struct less<dlinear::drake::symbolic::Formula> {
+  bool operator()(const dlinear::drake::symbolic::Formula &lhs,
+                  const dlinear::drake::symbolic::Formula &rhs) const {
     return lhs.Less(rhs);
   }
 };
 
-/* Provides std::equal_to<dreal::drake::symbolic::Formula>. */
-template <>
-struct equal_to<dreal::drake::symbolic::Formula> {
-  bool operator()(const dreal::drake::symbolic::Formula& lhs,
-                  const dreal::drake::symbolic::Formula& rhs) const {
+/* Provides std::equal_to<dlinear::drake::symbolic::Formula>. */
+template<>
+struct equal_to<dlinear::drake::symbolic::Formula> {
+  bool operator()(const dlinear::drake::symbolic::Formula &lhs,
+                  const dlinear::drake::symbolic::Formula &rhs) const {
     return lhs.EqualTo(rhs);
   }
 };
 
-template <>
-struct hash<dreal::drake::symbolic::Formula> {
-  size_t operator()(const dreal::drake::symbolic::Formula& f) const {
+template<>
+struct hash<dlinear::drake::symbolic::Formula> {
+  size_t operator()(const dlinear::drake::symbolic::Formula &f) const {
     return f.get_hash();
   }
 };

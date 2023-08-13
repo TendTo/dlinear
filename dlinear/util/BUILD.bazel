@@ -57,7 +57,21 @@ dlinear_cc_library(
     hdrs = ["Context.h"],
     deps = [
         ":logging",
-        ":stats",
+    ],
+)
+
+dlinear_cc_library(
+    name = "infty",
+    srcs = ["infty.cpp"],
+    hdrs = ["infty.h"],
+    visibility = [
+        "//dlinear:__subpackages__",
+        "//tests:__subpackages__",
+        "//third_party:__subpackages__",
+    ],
+    deps = [
+        ":logging",
+        "//dlinear/libs:gmp",
     ],
 )
 

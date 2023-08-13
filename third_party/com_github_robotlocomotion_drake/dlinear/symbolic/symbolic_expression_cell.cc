@@ -1,4 +1,4 @@
-#include "dreal/symbolic/symbolic_expression_cell.h"
+#include "dlinear/symbolic/symbolic_expression_cell.h"
 
 #include <algorithm>
 #include <cassert>
@@ -14,14 +14,14 @@
 #include <string>
 #include <utility>
 
-#include "dreal/symbolic/hash.h"
-#include "dreal/symbolic/symbolic_environment.h"
-#include "dreal/symbolic/symbolic_expression.h"
-#include "dreal/symbolic/symbolic_expression_visitor.h"
-#include "dreal/symbolic/symbolic_variable.h"
-#include "dreal/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/hash.h"
+#include "dlinear/symbolic/symbolic_environment.h"
+#include "dlinear/symbolic/symbolic_expression.h"
+#include "dlinear/symbolic/symbolic_expression_visitor.h"
+#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variables.h"
 
-namespace dreal {
+namespace dlinear {
 namespace drake {
 namespace symbolic {
 
@@ -1172,7 +1172,7 @@ class DivExpandVisitor {
 
   // Makes VisitExpression a friend of this class so that VisitExpression can
   // use its private methods.
-  friend Expression dreal::drake::symbolic::VisitExpression<Expression>(
+  friend Expression dlinear::drake::symbolic::VisitExpression<Expression>(
       const DivExpandVisitor*, const Expression&, const mpq_class&);
 };
 }  // namespace
@@ -2446,4 +2446,4 @@ const ExpressionUninterpretedFunction* to_uninterpreted_function(
 
 }  // namespace symbolic
 }  // namespace drake
-}  // namespace dreal
+}  // namespace dlinear

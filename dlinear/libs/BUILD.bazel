@@ -1,52 +1,30 @@
 load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//tests:__subpackages__",
+    "//third_party:__subpackages__",
+])
+
 dlinear_cc_library(
     name = "gmp",
-    srcs = [
-        "gmp.cpp",
-    ],
-    hdrs = [
-        "gmp.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
-    deps = [
-        "@linux_libs//:gmpxx",
-    ],
+    srcs = ["gmp.cpp"],
+    hdrs = ["gmp.h"],
+    deps = ["@linux_libs//:gmpxx"],
 )
 
 dlinear_cc_library(
     name = "soplex",
-    srcs = [
-        "soplex.cpp",
-    ],
-    hdrs = [
-        "soplex.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
-    deps = [
-        "@soplex",
-    ],
+    srcs = ["soplex.cpp"],
+    hdrs = ["soplex.h"],
+    deps = ["@soplex"],
 )
 
 dlinear_cc_library(
     name = "qsopt_ex",
-    srcs = [
-        "qsopt_ex.cpp",
-    ],
-    hdrs = [
-        "qsopt_ex.h",
-    ],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
+    srcs = ["qsopt_ex.cpp"],
+    hdrs = ["qsopt_ex.h"],
     deps = [
         "@linux_libs//:gmpxx",
         "@qsopt_ex",

@@ -12,16 +12,15 @@
 #include <utility>
 #include <vector>
 
-#include "dreal/symbolic/hash.h"
-#include "dreal/symbolic/symbolic_environment.h"
-#include "dreal/symbolic/symbolic_variable.h"
-#include "dreal/symbolic/symbolic_variables.h"
-#include "dreal/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/hash.h"
+#include "dlinear/symbolic/symbolic_environment.h"
+#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/symbolic_variables.h"
 
-#include "dreal/gmp.h"
+#include "dlinear/libs/gmp.h"
 
-namespace dreal {
-namespace drake {
+namespace dlinear::drake {
 namespace symbolic {
 
 /** Kinds of symbolic expressions. */
@@ -93,13 +92,13 @@ class Expression;
 // is used in Expression::Substitute and Formula::Substitute methods as an
 // argument.
 using ExpressionSubstitution =
-    std::unordered_map<Variable, Expression, hash_value<Variable>>;
+    std::unordered_map<Variable, Expression, hash_value < Variable>>;
 
 // FormulaSubstitution is a map from a Variable to a symbolic formula. It
 // is used in Expression::Substitute and Formula::Substitute methods as an
 // argument.
 using FormulaSubstitution =
-    std::unordered_map<Variable, Formula, hash_value<Variable>>;
+    std::unordered_map<Variable, Formula, hash_value < Variable>>;
 
 /** Represents a symbolic form of an expression.
 
@@ -166,10 +165,10 @@ separate function, Expression::EqualTo, is provided.
 */
 class Expression {
  public:
-  Expression(const Expression&);
-  Expression& operator=(const Expression&);
-  Expression(Expression&&) noexcept;
-  Expression& operator=(Expression&&) noexcept;
+  Expression(const Expression &);
+  Expression &operator=(const Expression &);
+  Expression(Expression &&) noexcept;
+  Expression &operator=(Expression &&) noexcept;
   ~Expression();
 
   /** Default constructor. It constructs Zero(). */
@@ -177,20 +176,20 @@ class Expression {
 
   /** Constructs a constant (rational). */
   // NOLINTNEXTLINE(runtime/explicit): This conversion is desirable.
-  Expression(const mpq_class& d);
+  Expression(const mpq_class &d);
   // NOLINTNEXTLINE(runtime/explicit): This conversion is desirable.
   Expression(const double d);
   /** Constructs an expression from @p var.
    * @pre @p var is neither a dummy nor a BOOLEAN variable.
    */
   // NOLINTNEXTLINE(runtime/explicit): This conversion is desirable.
-  Expression(const Variable& var);
+  Expression(const Variable &var);
   /** Returns expression kind. */
   ExpressionKind get_kind() const;
   /** Returns hash value. */
   size_t get_hash() const;
   /** Collects variables in expression. */
-  const Variables& GetVariables() const;
+  const Variables &GetVariables() const;
 
   /** Must be called after QSexactStart(), and before Zero(), One(), Pi(), or E() */
   static void InitConstants();
@@ -225,12 +224,12 @@ class Expression {
    *
    *     (p1.Expand() - p2.Expand()).EqualTo(0).
    */
-  bool EqualTo(const Expression& e) const;
+  bool EqualTo(const Expression &e) const;
 
   /** Provides lexicographical ordering between expressions.
       This function is used as a compare function in map<Expression> and
-      set<Expression> via std::less<dreal::drake::symbolic::Expression>. */
-  bool Less(const Expression& e) const;
+      set<Expression> via std::less<dlinear::drake::symbolic::Expression>. */
+  bool Less(const Expression &e) const;
 
   /** Checks if this symbolic expression is convertible to Polynomial. */
   bool is_polynomial() const;
@@ -242,7 +241,7 @@ class Expression {
   /** Evaluates under a given environment (by default, an empty environment).
    *  @throws std::runtime_error if NaN is detected during evaluation.
    */
-  mpq_class Evaluate(const Environment& env = Environment{}) const;
+  mpq_class Evaluate(const Environment &env = Environment{}) const;
 
   /** Partially evaluates this expression using an environment @p
    * env. Internally, this method promotes @p env into a substitution
@@ -250,7 +249,7 @@ class Expression {
    *
    * @throws std::runtime_error if NaN is detected during evaluation.
    */
-  Expression EvaluatePartial(const Environment& env) const;
+  Expression EvaluatePartial(const Environment &env) const;
 
   /** Expands out products and positive integer powers in expression. For
    * example, `(x + 1) * (x - 1)` is expanded to `x^2 - 1` and `(x + y)^2` is
@@ -267,7 +266,7 @@ class Expression {
    * with @p e.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Expression Substitute(const Variable& var, const Expression& e) const;
+  Expression Substitute(const Variable &var, const Expression &e) const;
 
   /** Returns a copy of this expression replacing all occurrences of the
    * variables in @p expr_subst with corresponding expressions in @p expr_subst
@@ -279,8 +278,8 @@ class Expression {
    *
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Expression Substitute(const ExpressionSubstitution& expr_subst,
-                        const FormulaSubstitution& formula_subst) const;
+  Expression Substitute(const ExpressionSubstitution &expr_subst,
+                        const FormulaSubstitution &formula_subst) const;
 
   /** Returns a copy of this expression replacing all occurrences of the
    * variables in @p expr_subst with corresponding expressions in @p expr_subst.
@@ -288,7 +287,7 @@ class Expression {
    * @note This is equivalent to `Substitute(expr_subst, {})`.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Expression Substitute(const ExpressionSubstitution& expr_subst) const;
+  Expression Substitute(const ExpressionSubstitution &expr_subst) const;
 
   /** Returns a copy of this expression replacing all occurrences of the
    * variables in @p formula_subst with corresponding formulas in @p
@@ -297,13 +296,13 @@ class Expression {
    * @note This is equivalent to `Substitute({}, formula_subst)`.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Expression Substitute(const FormulaSubstitution& formula_subst) const;
+  Expression Substitute(const FormulaSubstitution &formula_subst) const;
 
   /** Differentiates this symbolic expression with respect to the variable @p
    * var.
    * @throws std::runtime_error if it is not differentiable.
    */
-  Expression Differentiate(const Variable& x) const;
+  Expression Differentiate(const Variable &x) const;
 
   /** Returns string representation of Expression. */
   std::string to_string() const;
@@ -323,69 +322,69 @@ class Expression {
   /** Returns negative infinity. */
   static Expression NInfty();
 
-  friend Expression operator+(const Expression& lhs, const Expression& rhs);
-  friend Expression operator+(const Expression& lhs, Expression&& rhs);
-  friend Expression operator+(Expression&& lhs, const Expression& rhs);
-  friend Expression operator+(Expression&& lhs, Expression&& rhs);
+  friend Expression operator+(const Expression &lhs, const Expression &rhs);
+  friend Expression operator+(const Expression &lhs, Expression &&rhs);
+  friend Expression operator+(Expression &&lhs, const Expression &rhs);
+  friend Expression operator+(Expression &&lhs, Expression &&rhs);
   // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-  friend Expression& operator+=(Expression& lhs, const Expression& rhs);
+  friend Expression &operator+=(Expression &lhs, const Expression &rhs);
 
   /** Provides prefix increment operator (i.e. ++x). */
-  Expression& operator++();
+  Expression &operator++();
   /** Provides postfix increment operator (i.e. x++). */
   Expression operator++(int);
 
-  friend Expression operator-(const Expression& lhs, const Expression& rhs);
-  friend Expression operator-(const Expression& lhs, Expression&& rhs);
-  friend Expression operator-(Expression&& lhs, const Expression& rhs);
-  friend Expression operator-(Expression&& lhs, Expression&& rhs);
+  friend Expression operator-(const Expression &lhs, const Expression &rhs);
+  friend Expression operator-(const Expression &lhs, Expression &&rhs);
+  friend Expression operator-(Expression &&lhs, const Expression &rhs);
+  friend Expression operator-(Expression &&lhs, Expression &&rhs);
   // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-  friend Expression& operator-=(Expression& lhs, const Expression& rhs);
+  friend Expression &operator-=(Expression &lhs, const Expression &rhs);
 
   /** Provides unary plus operator. */
-  friend Expression operator+(const Expression& e);
+  friend Expression operator+(const Expression &e);
 
   /** Provides unary minus operator. */
-  friend Expression operator-(const Expression& e);
-  friend Expression operator-(Expression&& e);
+  friend Expression operator-(const Expression &e);
+  friend Expression operator-(Expression &&e);
 
   /** Provides prefix decrement operator (i.e. --x). */
-  Expression& operator--();
+  Expression &operator--();
   /** Provides postfix decrement operator (i.e. x--). */
   Expression operator--(int);
 
-  friend Expression operator*(const Expression& lhs, const Expression& rhs);
-  friend Expression operator*(const Expression& lhs, Expression&& rhs);
-  friend Expression operator*(Expression&& lhs, const Expression& rhs);
-  friend Expression operator*(Expression&& lhs, Expression&& rhs);
+  friend Expression operator*(const Expression &lhs, const Expression &rhs);
+  friend Expression operator*(const Expression &lhs, Expression &&rhs);
+  friend Expression operator*(Expression &&lhs, const Expression &rhs);
+  friend Expression operator*(Expression &&lhs, Expression &&rhs);
   // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-  friend Expression& operator*=(Expression& lhs, const Expression& rhs);
+  friend Expression &operator*=(Expression &lhs, const Expression &rhs);
 
-  friend Expression operator/(Expression lhs, const Expression& rhs);
+  friend Expression operator/(Expression lhs, const Expression &rhs);
   // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-  friend Expression& operator/=(Expression& lhs, const Expression& rhs);
+  friend Expression &operator/=(Expression &lhs, const Expression &rhs);
 
   /// Creates an real-constant expression represented by [@p lb, @p
   /// ub]. @p use_lb_as_representative is used to select its
   /// representative value. If it is true, @p lb is used. Otherwise,
   /// @p ub is used.
-  friend Expression log(const Expression& e);
-  friend Expression abs(const Expression& e);
-  friend Expression exp(const Expression& e);
-  friend Expression sqrt(const Expression& e);
-  friend Expression pow(const Expression& e1, const Expression& e2);
-  friend Expression sin(const Expression& e);
-  friend Expression cos(const Expression& e);
-  friend Expression tan(const Expression& e);
-  friend Expression asin(const Expression& e);
-  friend Expression acos(const Expression& e);
-  friend Expression atan(const Expression& e);
-  friend Expression atan2(const Expression& e1, const Expression& e2);
-  friend Expression sinh(const Expression& e);
-  friend Expression cosh(const Expression& e);
-  friend Expression tanh(const Expression& e);
-  friend Expression min(const Expression& e1, const Expression& e2);
-  friend Expression max(const Expression& e1, const Expression& e2);
+  friend Expression log(const Expression &e);
+  friend Expression abs(const Expression &e);
+  friend Expression exp(const Expression &e);
+  friend Expression sqrt(const Expression &e);
+  friend Expression pow(const Expression &e1, const Expression &e2);
+  friend Expression sin(const Expression &e);
+  friend Expression cos(const Expression &e);
+  friend Expression tan(const Expression &e);
+  friend Expression asin(const Expression &e);
+  friend Expression acos(const Expression &e);
+  friend Expression atan(const Expression &e);
+  friend Expression atan2(const Expression &e1, const Expression &e2);
+  friend Expression sinh(const Expression &e);
+  friend Expression cosh(const Expression &e);
+  friend Expression tanh(const Expression &e);
+  friend Expression min(const Expression &e1, const Expression &e2);
+  friend Expression max(const Expression &e1, const Expression &e2);
 
   /** Constructs if-then-else expression.
 
@@ -424,145 +423,145 @@ class Expression {
      operator is available at
      http://en.cppreference.com/w/cpp/language/operator_other#Conditional_operator.
    */
-  friend Expression if_then_else(const Formula& f_cond,
-                                 const Expression& e_then,
-                                 const Expression& e_else);
-  friend Expression uninterpreted_function(const std::string& name,
-                                           const Variables& vars);
+  friend Expression if_then_else(const Formula &f_cond,
+                                 const Expression &e_then,
+                                 const Expression &e_else);
+  friend Expression uninterpreted_function(const std::string &name,
+                                           const Variables &vars);
 
-  friend std::ostream& operator<<(std::ostream& os, const Expression& e);
-  friend void swap(Expression& a, Expression& b) { std::swap(a.ptr_, b.ptr_); }
+  friend std::ostream &operator<<(std::ostream &os, const Expression &e);
+  friend void swap(Expression &a, Expression &b) { std::swap(a.ptr_, b.ptr_); }
 
-  friend bool is_constant(const Expression& e);
-  friend bool is_variable(const Expression& e);
-  friend bool is_addition(const Expression& e);
-  friend bool is_multiplication(const Expression& e);
-  friend bool is_division(const Expression& e);
-  friend bool is_log(const Expression& e);
-  friend bool is_abs(const Expression& e);
-  friend bool is_exp(const Expression& e);
-  friend bool is_sqrt(const Expression& e);
-  friend bool is_pow(const Expression& e);
-  friend bool is_sin(const Expression& e);
-  friend bool is_cos(const Expression& e);
-  friend bool is_tan(const Expression& e);
-  friend bool is_asin(const Expression& e);
-  friend bool is_acos(const Expression& e);
-  friend bool is_atan(const Expression& e);
-  friend bool is_atan2(const Expression& e);
-  friend bool is_sinh(const Expression& e);
-  friend bool is_cosh(const Expression& e);
-  friend bool is_tanh(const Expression& e);
-  friend bool is_min(const Expression& e);
-  friend bool is_max(const Expression& e);
-  friend bool is_if_then_else(const Expression& e);
-  friend bool is_uninterpreted_function(const Expression& e);
+  friend bool is_constant(const Expression &e);
+  friend bool is_variable(const Expression &e);
+  friend bool is_addition(const Expression &e);
+  friend bool is_multiplication(const Expression &e);
+  friend bool is_division(const Expression &e);
+  friend bool is_log(const Expression &e);
+  friend bool is_abs(const Expression &e);
+  friend bool is_exp(const Expression &e);
+  friend bool is_sqrt(const Expression &e);
+  friend bool is_pow(const Expression &e);
+  friend bool is_sin(const Expression &e);
+  friend bool is_cos(const Expression &e);
+  friend bool is_tan(const Expression &e);
+  friend bool is_asin(const Expression &e);
+  friend bool is_acos(const Expression &e);
+  friend bool is_atan(const Expression &e);
+  friend bool is_atan2(const Expression &e);
+  friend bool is_sinh(const Expression &e);
+  friend bool is_cosh(const Expression &e);
+  friend bool is_tanh(const Expression &e);
+  friend bool is_min(const Expression &e);
+  friend bool is_max(const Expression &e);
+  friend bool is_if_then_else(const Expression &e);
+  friend bool is_uninterpreted_function(const Expression &e);
 
   // Note that the following cast functions are only for low-level operations
   // and not exposed to the user of symbolic/symbolic_expression.h
   // header. These functions are declared in
   // symbolic/symbolic_expression_cell.h header.
-  friend const ExpressionConstant* to_constant(const Expression& e);
-  friend const ExpressionInfty* to_infty(const Expression& e);
-  friend const ExpressionVar* to_variable(const Expression& e);
-  friend const UnaryExpressionCell* to_unary(const Expression& e);
-  friend const BinaryExpressionCell* to_binary(const Expression& e);
-  friend const ExpressionAdd* to_addition(const Expression& e);
-  friend ExpressionAdd* to_addition(Expression& e);
-  friend const ExpressionMul* to_multiplication(const Expression& e);
-  friend ExpressionMul* to_multiplication(Expression& e);
-  friend const ExpressionDiv* to_division(const Expression& e);
-  friend const ExpressionLog* to_log(const Expression& e);
-  friend const ExpressionAbs* to_abs(const Expression& e);
-  friend const ExpressionExp* to_exp(const Expression& e);
-  friend const ExpressionSqrt* to_sqrt(const Expression& e);
-  friend const ExpressionPow* to_pow(const Expression& e);
-  friend const ExpressionSin* to_sin(const Expression& e);
-  friend const ExpressionCos* to_cos(const Expression& e);
-  friend const ExpressionTan* to_tan(const Expression& e);
-  friend const ExpressionAsin* to_asin(const Expression& e);
-  friend const ExpressionAcos* to_acos(const Expression& e);
-  friend const ExpressionAtan* to_atan(const Expression& e);
-  friend const ExpressionAtan2* to_atan2(const Expression& e);
-  friend const ExpressionSinh* to_sinh(const Expression& e);
-  friend const ExpressionCosh* to_cosh(const Expression& e);
-  friend const ExpressionTanh* to_tanh(const Expression& e);
-  friend const ExpressionMin* to_min(const Expression& e);
-  friend const ExpressionMax* to_max(const Expression& e);
-  friend const ExpressionIfThenElse* to_if_then_else(const Expression& e);
-  friend const ExpressionUninterpretedFunction* to_uninterpreted_function(
-      const Expression& e);
+  friend const ExpressionConstant *to_constant(const Expression &e);
+  friend const ExpressionInfty *to_infty(const Expression &e);
+  friend const ExpressionVar *to_variable(const Expression &e);
+  friend const UnaryExpressionCell *to_unary(const Expression &e);
+  friend const BinaryExpressionCell *to_binary(const Expression &e);
+  friend const ExpressionAdd *to_addition(const Expression &e);
+  friend ExpressionAdd *to_addition(Expression &e);
+  friend const ExpressionMul *to_multiplication(const Expression &e);
+  friend ExpressionMul *to_multiplication(Expression &e);
+  friend const ExpressionDiv *to_division(const Expression &e);
+  friend const ExpressionLog *to_log(const Expression &e);
+  friend const ExpressionAbs *to_abs(const Expression &e);
+  friend const ExpressionExp *to_exp(const Expression &e);
+  friend const ExpressionSqrt *to_sqrt(const Expression &e);
+  friend const ExpressionPow *to_pow(const Expression &e);
+  friend const ExpressionSin *to_sin(const Expression &e);
+  friend const ExpressionCos *to_cos(const Expression &e);
+  friend const ExpressionTan *to_tan(const Expression &e);
+  friend const ExpressionAsin *to_asin(const Expression &e);
+  friend const ExpressionAcos *to_acos(const Expression &e);
+  friend const ExpressionAtan *to_atan(const Expression &e);
+  friend const ExpressionAtan2 *to_atan2(const Expression &e);
+  friend const ExpressionSinh *to_sinh(const Expression &e);
+  friend const ExpressionCosh *to_cosh(const Expression &e);
+  friend const ExpressionTanh *to_tanh(const Expression &e);
+  friend const ExpressionMin *to_min(const Expression &e);
+  friend const ExpressionMax *to_max(const Expression &e);
+  friend const ExpressionIfThenElse *to_if_then_else(const Expression &e);
+  friend const ExpressionUninterpretedFunction *to_uninterpreted_function(
+      const Expression &e);
 
   friend class ExpressionAddFactory;
   friend class ExpressionMulFactory;
   friend class ExpressionCell;
 
  private:
-  static ExpressionCell* make_cell(const mpq_class& d);
-  static ExpressionCell* make_cell(const double d);
+  static ExpressionCell *make_cell(const mpq_class &d);
+  static ExpressionCell *make_cell(const double d);
 
-  explicit Expression(ExpressionCell* ptr);
+  explicit Expression(ExpressionCell *ptr);
 
-  ExpressionCell* ptr_{nullptr};
+  ExpressionCell *ptr_{nullptr};
 };
 
-Expression operator+(const Expression& lhs, const Expression& rhs);
-Expression operator+(const Expression& lhs, Expression&& rhs);
-Expression operator+(Expression&& lhs, const Expression& rhs);
-Expression operator+(Expression&& lhs, Expression&& rhs);
+Expression operator+(const Expression &lhs, const Expression &rhs);
+Expression operator+(const Expression &lhs, Expression &&rhs);
+Expression operator+(Expression &&lhs, const Expression &rhs);
+Expression operator+(Expression &&lhs, Expression &&rhs);
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Expression& operator+=(Expression& lhs, const Expression& rhs);
+Expression &operator+=(Expression &lhs, const Expression &rhs);
 
-Expression operator-(const Expression& lhs, const Expression& rhs);
-Expression operator-(const Expression& lhs, Expression&& rhs);
-Expression operator-(Expression&& lhs, const Expression& rhs);
-Expression operator-(Expression&& lhs, Expression&& rhs);
+Expression operator-(const Expression &lhs, const Expression &rhs);
+Expression operator-(const Expression &lhs, Expression &&rhs);
+Expression operator-(Expression &&lhs, const Expression &rhs);
+Expression operator-(Expression &&lhs, Expression &&rhs);
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Expression& operator-=(Expression& lhs, const Expression& rhs);
+Expression &operator-=(Expression &lhs, const Expression &rhs);
 
-Expression operator+(const Expression& e);
+Expression operator+(const Expression &e);
 
-Expression operator-(const Expression& e);
-Expression operator-(Expression&& e);
+Expression operator-(const Expression &e);
+Expression operator-(Expression &&e);
 
-Expression operator*(const Expression& lhs, const Expression& rhs);
-Expression operator*(const Expression& lhs, Expression&& rhs);
-Expression operator*(Expression&& lhs, const Expression& rhs);
-Expression operator*(Expression&& lhs, Expression&& rhs);
+Expression operator*(const Expression &lhs, const Expression &rhs);
+Expression operator*(const Expression &lhs, Expression &&rhs);
+Expression operator*(Expression &&lhs, const Expression &rhs);
+Expression operator*(Expression &&lhs, Expression &&rhs);
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Expression& operator*=(Expression& lhs, const Expression& rhs);
+Expression &operator*=(Expression &lhs, const Expression &rhs);
 
-Expression operator/(Expression lhs, const Expression& rhs);
+Expression operator/(Expression lhs, const Expression &rhs);
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Expression& operator/=(Expression& lhs, const Expression& rhs);
+Expression &operator/=(Expression &lhs, const Expression &rhs);
 
 /// Creates an expression for (∑ᵢ expressionsᵢ).
 /// @note When `expressions` is an empty vector, it returns Expression::Zero().
-Expression Sum(const std::vector<Expression>& expressions);
+Expression Sum(const std::vector<Expression> &expressions);
 
 /// Creates an expression for (∏ᵢ expressionsᵢ).
 /// @note When `expressions` is an empty vector, it returns Expression::One().
-Expression Prod(const std::vector<Expression>& expressions);
+Expression Prod(const std::vector<Expression> &expressions);
 
-Expression log(const Expression& e);
-Expression abs(const Expression& e);
-Expression exp(const Expression& e);
-Expression sqrt(const Expression& e);
-Expression pow(const Expression& e1, const Expression& e2);
-Expression sin(const Expression& e);
-Expression cos(const Expression& e);
-Expression tan(const Expression& e);
-Expression asin(const Expression& e);
-Expression acos(const Expression& e);
-Expression atan(const Expression& e);
-Expression atan2(const Expression& e1, const Expression& e2);
-Expression sinh(const Expression& e);
-Expression cosh(const Expression& e);
-Expression tanh(const Expression& e);
-Expression min(const Expression& e1, const Expression& e2);
-Expression max(const Expression& e1, const Expression& e2);
-Expression if_then_else(const Formula& f_cond, const Expression& e_then,
-                        const Expression& e_else);
+Expression log(const Expression &e);
+Expression abs(const Expression &e);
+Expression exp(const Expression &e);
+Expression sqrt(const Expression &e);
+Expression pow(const Expression &e1, const Expression &e2);
+Expression sin(const Expression &e);
+Expression cos(const Expression &e);
+Expression tan(const Expression &e);
+Expression asin(const Expression &e);
+Expression acos(const Expression &e);
+Expression atan(const Expression &e);
+Expression atan2(const Expression &e1, const Expression &e2);
+Expression sinh(const Expression &e);
+Expression cosh(const Expression &e);
+Expression tanh(const Expression &e);
+Expression min(const Expression &e1, const Expression &e2);
+Expression max(const Expression &e1, const Expression &e2);
+Expression if_then_else(const Formula &f_cond, const Expression &e_then,
+                        const Expression &e_else);
 
 /** Constructs an uninterpreted-function expression with @p name and @p vars.
  * An uninterpreted function is an opaque function that has no other property
@@ -573,189 +572,189 @@ Expression if_then_else(const Formula& f_cond, const Expression& e_then,
  * See also `FunctionalForm::Arbitrary(Variables v)` which shares the same
  * motivation.
  */
-Expression uninterpreted_function(const std::string& name,
-                                  const Variables& vars);
-void swap(Expression& a, Expression& b);
+Expression uninterpreted_function(const std::string &name,
+                                  const Variables &vars);
+void swap(Expression &a, Expression &b);
 
-std::ostream& operator<<(std::ostream& os, const Expression& e);
+std::ostream &operator<<(std::ostream &os, const Expression &e);
 
 /** Checks if @p e is a rational constant expression. */
-bool is_constant(const Expression& e);
+bool is_constant(const Expression &e);
 /** Checks if @p e is a rational constant expression representing @p v. */
-bool is_constant(const Expression& e, const mpq_class& v);
+bool is_constant(const Expression &e, const mpq_class &v);
 /** Checks if @p e is 0.0. */
-bool is_zero(const Expression& e);
+bool is_zero(const Expression &e);
 /** Checks if @p e is 1.0. */
-bool is_one(const Expression& e);
+bool is_one(const Expression &e);
 /** Checks if @p e is -1.0. */
-bool is_neg_one(const Expression& e);
+bool is_neg_one(const Expression &e);
 /** Checks if @p e is 2.0. */
-bool is_two(const Expression& e);
+bool is_two(const Expression &e);
 /** Checks if @p e is NaN. */
-bool is_nan(const Expression& e);
+bool is_nan(const Expression &e);
 /** Checks if @p e is positive or negative infinity. */
-bool is_infinite(const Expression& e);
+bool is_infinite(const Expression &e);
 /** Checks if @p e is positive infinity. */
-bool is_infinity(const Expression& e);
+bool is_infinity(const Expression &e);
 /** Checks if @p e is negative infinity. */
-bool is_negative_infinity(const Expression& e);
+bool is_negative_infinity(const Expression &e);
 /** Checks if @p e is a variable expression. */
-bool is_variable(const Expression& e);
+bool is_variable(const Expression &e);
 /** Checks if @p e is an addition expression. */
-bool is_addition(const Expression& e);
+bool is_addition(const Expression &e);
 /** Checks if @p e is a multiplication expression. */
-bool is_multiplication(const Expression& e);
+bool is_multiplication(const Expression &e);
 /** Checks if @p e is a division expression. */
-bool is_division(const Expression& e);
+bool is_division(const Expression &e);
 /** Checks if @p e is a log expression. */
-bool is_log(const Expression& e);
+bool is_log(const Expression &e);
 /** Checks if @p e is an abs expression. */
-bool is_abs(const Expression& e);
+bool is_abs(const Expression &e);
 /** Checks if @p e is an exp expression. */
-bool is_exp(const Expression& e);
+bool is_exp(const Expression &e);
 /** Checks if @p e is a square-root expression. */
-bool is_sqrt(const Expression& e);
+bool is_sqrt(const Expression &e);
 /** Checks if @p e is a power-function expression. */
-bool is_pow(const Expression& e);
+bool is_pow(const Expression &e);
 /** Checks if @p e is a sine expression. */
-bool is_sin(const Expression& e);
+bool is_sin(const Expression &e);
 /** Checks if @p e is a cosine expression. */
-bool is_cos(const Expression& e);
+bool is_cos(const Expression &e);
 /** Checks if @p e is a tangent expression. */
-bool is_tan(const Expression& e);
+bool is_tan(const Expression &e);
 /** Checks if @p e is an arcsine expression. */
-bool is_asin(const Expression& e);
+bool is_asin(const Expression &e);
 /** Checks if @p e is an arccosine expression. */
-bool is_acos(const Expression& e);
+bool is_acos(const Expression &e);
 /** Checks if @p e is an arctangent expression. */
-bool is_atan(const Expression& e);
+bool is_atan(const Expression &e);
 /** Checks if @p e is an arctangent2 expression. */
-bool is_atan2(const Expression& e);
+bool is_atan2(const Expression &e);
 /** Checks if @p e is a hyperbolic-sine expression. */
-bool is_sinh(const Expression& e);
+bool is_sinh(const Expression &e);
 /** Checks if @p e is a hyperbolic-cosine expression. */
-bool is_cosh(const Expression& e);
+bool is_cosh(const Expression &e);
 /** Checks if @p e is a hyperbolic-tangent expression. */
-bool is_tanh(const Expression& e);
+bool is_tanh(const Expression &e);
 /** Checks if @p e is a min expression. */
-bool is_min(const Expression& e);
+bool is_min(const Expression &e);
 /** Checks if @p e is a max expression. */
-bool is_max(const Expression& e);
+bool is_max(const Expression &e);
 /** Checks if @p e is an if-then-else expression. */
-bool is_if_then_else(const Expression& e);
+bool is_if_then_else(const Expression &e);
 /** Checks if @p e is an uninterpreted-function expression. */
-bool is_uninterpreted_function(const Expression& e);
+bool is_uninterpreted_function(const Expression &e);
 
 /** Returns the constant value of the rational constant expression @p e.
  *  @pre @p e is either a rational constant or real constant expression.
  */
-mpq_class get_constant_value(const Expression& e);
+mpq_class get_constant_value(const Expression &e);
 /** Returns the embedded variable in the variable expression @p e.
  *  @pre @p e is a variable expression.
  */
-const Variable& get_variable(const Expression& e);
+const Variable &get_variable(const Expression &e);
 /** Returns the argument in the unary expression @p e.
  *  @pre @p e is a unary expression.
  */
-const Expression& get_argument(const Expression& e);
+const Expression &get_argument(const Expression &e);
 /** Returns the first argument of the binary expression @p e.
  *  @pre @p e is a binary expression.
  */
-const Expression& get_first_argument(const Expression& e);
+const Expression &get_first_argument(const Expression &e);
 /** Returns the second argument of the binary expression @p e.
  *  @pre @p e is a binary expression.
  */
-const Expression& get_second_argument(const Expression& e);
+const Expression &get_second_argument(const Expression &e);
 /** Returns the constant part of the addition expression @p e. For instance,
  *  given 7 + 2 * x + 3 * y, it returns 7.
  *  @pre @p e is an addition expression.
  */
-mpq_class get_constant_in_addition(const Expression& e);
+mpq_class get_constant_in_addition(const Expression &e);
 /** Returns the map from an expression to its coefficient in the addition
  *  expression @p e. For instance, given 7 + 2 * x + 3 * y, the return value
  *  maps 'x' to 2 and 'y' to 3.
  *  @pre @p e is an addition expression.
  */
-const std::map<Expression, mpq_class>& get_expr_to_coeff_map_in_addition(
-    const Expression& e);
+const std::map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(
+    const Expression &e);
 /** Returns the constant part of the multiplication expression @p e. For
  *  instance, given 7 * x^2 * y^3, it returns 7.
  *  @pre @p e is a multiplication expression.
  */
-mpq_class get_constant_in_multiplication(const Expression& e);
+mpq_class get_constant_in_multiplication(const Expression &e);
 /** Returns the map from a base expression to its exponent expression in the
  * multiplication expression @p e. For instance, given 7 * x^2 * y^3 * z^x, the
  * return value maps 'x' to 2, 'y' to 3, and 'z' to 'x'.
  *  @pre @p e is a multiplication expression.
  */
-const std::map<Expression, Expression>&
-get_base_to_exponent_map_in_multiplication(const Expression& e);
+const std::map<Expression, Expression> &
+get_base_to_exponent_map_in_multiplication(const Expression &e);
 
 /** Returns the conditional formula in the if-then-else expression @p e.
  * @pre @p e is an if-then-else expression.
  */
-const Formula& get_conditional_formula(const Expression& e);
+const Formula &get_conditional_formula(const Expression &e);
 
 /** Returns the 'then' expression in the if-then-else expression @p e.
  * @pre @p e is an if-then-else expression.
  */
-const Expression& get_then_expression(const Expression& e);
+const Expression &get_then_expression(const Expression &e);
 
 /** Returns the 'else' expression in the if-then-else expression @p e.
  * @pre @p e is an if-then-else expression.
  */
-const Expression& get_else_expression(const Expression& e);
+const Expression &get_else_expression(const Expression &e);
 
 /** Returns the name of an uninterpreted-function expression @p e.
  *  @pre @p e is an uninterpreted-function expression.
  */
-const std::string& get_uninterpreted_function_name(const Expression& e);
+const std::string &get_uninterpreted_function_name(const Expression &e);
 
-Expression operator+(const Variable& var);
-Expression operator-(const Variable& var);
+Expression operator+(const Variable &var);
+Expression operator-(const Variable &var);
 
 }  // namespace symbolic
 
 /** Computes the hash value of a symbolic expression. */
-template <>
+template<>
 struct hash_value<symbolic::Expression> {
-  size_t operator()(const symbolic::Expression& e) const {
+  size_t operator()(const symbolic::Expression &e) const {
     return e.get_hash();
   }
 };
 
-}  // namespace drake
-}  // namespace dreal
+} // namespace dlinear::drake
+
 
 namespace std {
-/* Provides std::less<dreal::drake::symbolic::Expression>. */
-template <>
-struct less<dreal::drake::symbolic::Expression> {
-  bool operator()(const dreal::drake::symbolic::Expression& lhs,
-                  const dreal::drake::symbolic::Expression& rhs) const {
+/* Provides std::less<dlinear::drake::symbolic::Expression>. */
+template<>
+struct less<dlinear::drake::symbolic::Expression> {
+  bool operator()(const dlinear::drake::symbolic::Expression &lhs,
+                  const dlinear::drake::symbolic::Expression &rhs) const {
     return lhs.Less(rhs);
   }
 };
 
-/* Provides std::equal_to<dreal::drake::symbolic::Expression>. */
-template <>
-struct equal_to<dreal::drake::symbolic::Expression> {
-  bool operator()(const dreal::drake::symbolic::Expression& lhs,
-                  const dreal::drake::symbolic::Expression& rhs) const {
+/* Provides std::equal_to<dlinear::drake::symbolic::Expression>. */
+template<>
+struct equal_to<dlinear::drake::symbolic::Expression> {
+  bool operator()(const dlinear::drake::symbolic::Expression &lhs,
+                  const dlinear::drake::symbolic::Expression &rhs) const {
     return lhs.EqualTo(rhs);
   }
 };
 
-template <>
-struct hash<dreal::drake::symbolic::Expression> {
-  size_t operator()(const dreal::drake::symbolic::Expression& e) const {
+template<>
+struct hash<dlinear::drake::symbolic::Expression> {
+  size_t operator()(const dlinear::drake::symbolic::Expression &e) const {
     return e.get_hash();
   }
 };
 
-/* Provides std::numeric_limits<dreal::drake::symbolic::Expression>. */
-template <>
-struct numeric_limits<dreal::drake::symbolic::Expression>
+/* Provides std::numeric_limits<dlinear::drake::symbolic::Expression>. */
+template<>
+struct numeric_limits<dlinear::drake::symbolic::Expression>
     : public numeric_limits<mpq_class> {
   static const bool has_infinity = true;
   static mpq_class infinity();

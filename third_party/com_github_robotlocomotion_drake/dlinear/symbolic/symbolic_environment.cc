@@ -1,4 +1,4 @@
-#include "dreal/symbolic/symbolic_environment.h"
+#include "dlinear/symbolic/symbolic_environment.h"
 
 #include <cmath>
 #include <initializer_list>
@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-namespace dreal {
+namespace dlinear {
 namespace drake {
 namespace symbolic {
 
@@ -102,4 +102,4 @@ ostream& operator<<(ostream& os, const Environment& env) {
 }
 }  // namespace symbolic
 }  // namespace drake
-}  // namespace dreal
+}  // namespace dlinear

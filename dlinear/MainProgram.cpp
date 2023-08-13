@@ -12,8 +12,8 @@
 
 namespace dlinear {
 
-using dreal::util::InftyFinish;
-using dreal::util::InftyStart;
+using dlinear::util::InftyFinish;
+using dlinear::util::InftyStart;
 
 namespace {
 string get_version_string() {
