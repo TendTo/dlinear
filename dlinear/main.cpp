@@ -1,15 +1,17 @@
 /**
  * @file main.h
- * @author tend
+ * @author dlinear
  * @date 07 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * Entry point of dLinear.
  * Run the dLinear program.
  *
  * Use the @verbatim-h@verbatim flag to show the help tooltip.
  */
 #include <csignal>
-#include "dlinear/util/ArgParser.h"
+#include "dlinear/MainProgram.h"
+
+using dlinear::MainProgram;
 
 namespace {
 void HandleSigInt(const int) {
@@ -21,7 +23,6 @@ void HandleSigInt(const int) {
 
 int main(int argc, const char *argv[]) {
   std::signal(SIGINT, HandleSigInt);
-  dlinear::main_timer.start();
-  dlinear::MainProgram main_program{argc, argv};
+  MainProgram main_program{argc, argv};
   return main_program.Run();
 }

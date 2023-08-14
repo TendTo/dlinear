@@ -1,8 +1,8 @@
 /**
  * @file OptionValue.h
- * @author tend
+ * @author dlinear
  * @date 12 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * OptionValue class.
  *
  * It is used to wrap a value that can be set from multiple sources.

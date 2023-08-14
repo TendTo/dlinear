@@ -3,5 +3,5 @@ cc_library(
     name = "argparse",
     hdrs = ["//:include/argparse/argparse.hpp"],
     visibility = ["//visibility:public"],
-    includes = ["include"],
+    strip_include_prefix = "include",
 )

@@ -1,8 +1,8 @@
 /**
  * @file qsopt_ex.cpp
- * @author tend
+ * @author dlinear
  * @date 10 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  */
 
 #include "qsopt_ex.h"

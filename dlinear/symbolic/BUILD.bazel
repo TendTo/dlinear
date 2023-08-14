@@ -8,33 +8,15 @@ package(default_visibility = [
 
 dlinear_cc_library(
     name = "prefix_printer",
-    srcs = [
-        "prefix_printer.cpp",
-    ],
-    hdrs = [
-        "prefix_printer.h",
-    ],
-    visibility = [
-        "//:__pkg__",
-        "//dlinear:__subpackages__",
-    ],
-    deps = [
-        ":symbolic",
-    ],
+    srcs = ["prefix_printer.cpp"],
+    hdrs = ["prefix_printer.h"],
+    deps = [":symbolic"],
 )
 
 dlinear_cc_library(
     name = "symbolic",
-    srcs = [
-        "symbolic.cpp",
-    ],
-    hdrs = [
-        "symbolic.h",
-    ],
-    visibility = [
-        "//:__pkg__",
-        "//dlinear:__subpackages__",
-    ],
+    srcs = ["symbolic.cpp"],
+    hdrs = ["symbolic.h"],
     deps = [
         "//dlinear/util:exception",
         "//dlinear/util:logging",

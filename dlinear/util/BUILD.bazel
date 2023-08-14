@@ -56,7 +56,14 @@ dlinear_cc_library(
     srcs = ["Context.cpp"],
     hdrs = ["Context.h"],
     deps = [
+        ":box",
+        ":config",
         ":logging",
+        ":scoped_vector",
+        "//dlinear/libs:gmp",
+        "//dlinear/smt2:logic",
+        "//dlinear/symbolic",
+        "@tl_optional",
     ],
 )
 
@@ -73,6 +80,34 @@ dlinear_cc_library(
         ":logging",
         "//dlinear/libs:gmp",
     ],
+)
+
+dlinear_cc_library(
+    name = "box",
+    srcs = ["Box.cpp"],
+    hdrs = ["Box.h"],
+    deps = [
+        ":logging",
+        ":math",
+        "//dlinear/symbolic",
+    ],
+)
+
+dlinear_cc_library(
+    name = "math",
+    srcs = ["math.cpp"],
+    hdrs = ["math.h"],
+    deps = [
+        ":exception",
+        ":logging",
+        "//dlinear/libs:gmp",
+    ],
+)
+
+dlinear_cc_library(
+    name = "scoped_vector",
+    hdrs = ["ScopedVector.hpp"],
+    deps = [":exception"],
 )
 
 cpplint()

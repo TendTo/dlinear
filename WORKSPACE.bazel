@@ -64,6 +64,14 @@ github_archive(
     sha256 = "1525952a0a567581792613a9723333d7f8cc20b87a81f920fb8bc7e3f2251428",
 )
 
+github_archive(
+    name = "tl_optional",  # tl optional library that extends std::optional
+    build_file = "//third_party:tl_optional.BUILD.bazel",
+    commit = "v1.1.0",
+    repository = "TartanLlama/optional",
+    sha256 = "88ece79f3de5ccaec4191951a222f95cc80c4381dafd3163bdb1ff87cedf3118",
+)
+
 # https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
 new_local_repository(
     name = "linux_libs",

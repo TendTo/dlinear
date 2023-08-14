@@ -1,8 +1,8 @@
 /**
  * @file logging.h
- * @author tend
+ * @author dlinear
  * @date 07 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * Logging macros.
  * Allows logging with different verbosity levels using spdlog.
  *

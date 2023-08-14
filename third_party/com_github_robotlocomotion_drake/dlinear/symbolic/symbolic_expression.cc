@@ -29,8 +29,8 @@ using std::string;
 using std::vector;
 using std::isinf;
 using std::isnan;
-using dlinear::util::mpq_infty;
-using dlinear::util::mpq_ninfty;
+using dlinear::mpq_infty;
+using dlinear::mpq_ninfty;
 
 bool operator<(ExpressionKind k1, ExpressionKind k2) {
   return static_cast<int>(k1) < static_cast<int>(k2);
@@ -1038,5 +1038,5 @@ Expression operator-(const Variable &var) { return -Expression{var}; }
 
 
 mpq_class std::numeric_limits<dlinear::drake::symbolic::Expression>::infinity() {
-  return dlinear::util::mpq_infty();
+  return dlinear::mpq_infty();
 }

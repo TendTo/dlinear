@@ -1,8 +1,8 @@
 /**
  * @file soplex.cpp
- * @author tend
+ * @author dlinear
  * @date 09 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  */
 
 #include "soplex.h"

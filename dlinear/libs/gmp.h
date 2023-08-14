@@ -1,8 +1,8 @@
 /**
  * @file gmp.h
- * @author tend
+ * @author dlinear
  * @date 09 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * GMP wrapper.
  *
  * This header includes the GMP library and provides a various helpers.

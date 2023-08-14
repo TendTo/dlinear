@@ -1,19 +1,15 @@
-/// @file symbolic.h
-///
-/// This is the header file that we consolidate Drake's symbolic
-/// classes and expose them inside of dlinear namespace.
-///
-/// Other files in dlinear should include this file and should NOT
-/// include files in drake/common directory. Similarly, BUILD files
-/// should only have a dependency "//dlinear/symbolic:symbolic", not
-/// "@drake_symbolic//:symbolic".
-///
-/// Test cases which need predicates defined in
-/// "drake/common/test/symbolic_test_util.h" file should include
-/// "dlinear/symbolic/symbolic_test_util.h" file and include
-/// "//dlinear/symbolic:symbolic_test_util" in BUILD file.
-///
-#pragma once
+/**
+ * @file symbolic.h
+ * This is the header file that we consolidate Drake's symbolic
+ * classes and expose them inside of dlinear namespace.
+ *
+ * Other files in dlinear should include this file and should NOT
+ * include files in drake/common directory. Similarly, BUILD files
+ * should only have a dependency "//dlinear/symbolic:symbolic", not
+ * "@drake_symbolic//:symbolic".
+ */
+#ifndef DLINEAR_SYMBOLIC_SYMBOLIC_H_
+#define DLINEAR_SYMBOLIC_SYMBOLIC_H_
 
 #include <functional>
 #include <ostream>
@@ -21,6 +17,9 @@
 #include <string>
 #include <vector>
 
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+// From drake
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_expression_visitor.h"
@@ -29,96 +28,160 @@
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
 
+using std::function;
+using std::inserter;
+using std::ostream;
+using std::set;
+using std::string;
+using std::to_string;
+using std::transform;
+using std::vector;
+using std::all_of;
+
 namespace dlinear {
 
-using drake::hash_value;  // NOLINT
+using drake::hash_value;
+using drake::symbolic::Expression;
+using drake::symbolic::Formula;
+using drake::symbolic::Variables;
+using drake::symbolic::Variable;
+using drake::symbolic::Environment;
+using drake::symbolic::FormulaKind;
+using drake::symbolic::VisitExpression;
+using drake::symbolic::VisitFormula;
 
-// NOLINTNEXTLINE(build/namespaces)
-using namespace drake::symbolic;
+/** Return a formula @p f1 ⇒ @p f2. */
+Formula imply(const Formula &f1, const Formula &f2);
+/** Return a formula @p v ⇒ @p f. */
+Formula imply(const Variable &v, const Formula &f);
+/** Return a formula @p f ⇒ @p v. */
+Formula imply(const Formula &f, const Variable &v);
+/** Return a formula @p v1 ⇒ @p v2. */
+Formula imply(const Variable &v1, const Variable &v2);
 
-/// Returns a formula @p f1 ⇒ @p f2.
-Formula imply(const Formula& f1, const Formula& f2);
-/// Returns a formula @p v ⇒ @p f.
-Formula imply(const Variable& v, const Formula& f);
-/// Returns a formula @p f ⇒ @p v.
-Formula imply(const Formula& f, const Variable& v);
-/// Returns a formula @p v1 ⇒ @p v2.
-Formula imply(const Variable& v1, const Variable& v2);
+/** Return a formula @p f1 ⇔ @p f2. */
+Formula iff(const Formula &f1, const Formula &f2);
+/** Return a formula @p v ⇔ @p f. */
+Formula iff(const Variable &v, const Formula &f);
+/** Return a formula @p f ⇔ @p v. */
+Formula iff(const Formula &f, const Variable &v);
+/** Return a formula @p v1 ⇔ @p v2. */
+Formula iff(const Variable &v1, const Variable &v2);
 
-/// Returns a formula @p f1 ⇔ @p f2.
-Formula iff(const Formula& f1, const Formula& f2);
+/**
+ * Given @p formulas = {f₁, ..., fₙ} and a @p func : Formula → Formula,
+ * `map(formulas, func)` returns a set `{func(f₁), ... func(fₙ)}`.
+ * @param formulas set of formulas
+ * @param func function to apply to each formula
+ * @return set of formulas obtained by applying @p func to each formula in
+ */
+set <Formula> map(const set <Formula> &formulas, const function<Formula(const Formula &)> &func);
 
-/// Returns a formula @p v ⇔ @p f.
-Formula iff(const Variable& v, const Formula& f);
+/**
+ * Check if @p f is atomic.
+ * @param f formula to check
+ * @return whether @p f is atomic
+ */
+bool is_atomic(const Formula &f);
 
-/// Returns a formula @p f ⇔ @p v.
-Formula iff(const Formula& f, const Variable& v);
+/**
+ * Check if @p f is a clause.
+ * A clause is a disjunction of literals.
+ * @param f formula to check
+ * @return whether @p f is a clause
+ */
+bool is_clause(const Formula &f);
 
-/// Returns a formula @p v1 ⇔ @p v2.
-Formula iff(const Variable& v1, const Variable& v2);
+/**
+ * Returns the set of clauses in f.
+ * F is assumed to be in CNF. That is, f is either a single clause or a
+ * conjunction of clauses.
+ * @param f formula to get clauses from
+ * @return set of clauses in @p f
+ */
+std::set<Formula> get_clauses(const Formula &f);
 
-// Given @p formulas = {f₁, ..., fₙ} and a @p func : Formula →
-// Formula, `map(formulas, func)` returns a set `{func(f₁),
-// ... func(fₙ)}`.
-std::set<Formula> map(const std::set<Formula>& formulas,
-                      const std::function<Formula(const Formula&)>& func);
+/**
+ * Check if @p f is in CNF form.
+ * @param f formula to check
+ * @return whether @p f is in CNF form
+ */
+bool is_cnf(const Formula &f);
 
-/// Checks if @p f is atomic.
-bool is_atomic(const Formula& f);
+/**
+ * Check if the intersection of @p variables1 and @p variables2 is
+ * non-empty.
+ * @param variables1 set of variables
+ * @param variables2 set of variables
+ * @return true if @p variables1 and @p variables2 is an non-empty
+ * intersection.
+ */
+bool HaveIntersection(const Variables &variables1, const Variables &variables2);
 
-/// Checks if @p f is a clause.
-bool is_clause(const Formula& f);
+/**
+ * Strengthen the input formula @p f by @p delta.
+ * @param f formula to strengthen
+ * @param delta amount to strengthen by
+ * @return strengthened formula
+ */
+Formula DeltaStrengthen(const Formula &f, double delta);
 
-/// Returns the set of clauses in f.
-///
-/// @pre @p f is in CNF. That is, @p f is either a single clause or a
-/// conjunction of clauses.
-std::set<Formula> get_clauses(const Formula& f);
+/**
+ * Weaken the input formula @p f by @p delta.
+ * @param f formula to weaken
+ * @param delta amount to weaken by
+ * @return weakened formula
+ */
+Formula DeltaWeaken(const Formula &f, double delta);
 
-/// Checks if @p is in CNF form.
-bool is_cnf(const Formula& f);
+/**
+ * Check if the formula @p f is symbolic-differentiable.
+ * @param f formula to check
+ * @return true if @p f is symbolic-differentiable
+ */
+bool IsDifferentiable(const Formula &f);
 
-/// @return true if @p variables1 and @p variables2 is an non-empty
-/// intersection.
-bool HaveIntersection(const Variables& variables1, const Variables& variables2);
+/**
+ * Check if the expression @e f is symbolic-differentiable.
+ * @param e expression to check
+ * @return true if @p e is symbolic-differentiable
+ */
+bool IsDifferentiable(const Expression &e);
 
-/// Strengthen the input formula @p f by @p delta.
-/// @pre delta > 0
-Formula DeltaStrengthen(const Formula& f, double delta);
+/**
+ * Make conjunction of @p formulas.
+ * @note This is different from the one in Drake's symbolic
+ * library. It takes `std::vector<Formula>` while Drake's version
+ * takes `std::set<Formula>`.
+ * @param formulas input formulas
+ * @return conjunction of @p formulas
+ */
+Formula make_conjunction(const vector <Formula> &formulas);
 
-/// Weaken the input formula @p f by @p delta.
-/// @pre delta > 0
-Formula DeltaWeaken(const Formula& f, double delta);
+/**
+ * Make disjunction of @p formulas.
+ * @note This is different from the one in Drake's symbolic
+ * library. It takes `std::vector<Formula>` while Drake's version
+ * takes `std::set<Formula>`.
+ * @param formulas input formulas
+ * @return disjunction of @p formulas
+ */
+Formula make_disjunction(const vector <Formula> &formulas);
 
-/// Returns true if the formula @p f is symbolic-differentiable.
-bool IsDifferentiable(const Formula& f);
+/**
+ * Creates a vector of variables of @p type whose size is @p size.
+ * The variables are numbered with @p prefix. For example
+ * @code
+ * CreateVector("x", 5) // returns [x0, x1, x2, x3, x4]
+ * @endcode
+ * @param prefix prefix of variable names. Must not be empty.
+ * @param size size of vector. Must be >= 1.
+ * @param type type of variables
+ * @return vector of variables
+ */
+vector <Variable> CreateVector(const string &prefix, int size, Variable::Type type = Variable::Type::CONTINUOUS);
 
-/// Returns true if the expression @e f is symbolic-differentiable.
-bool IsDifferentiable(const Expression& e);
-
-/// Make conjunction of @p formulas.
-///
-/// @note This is different from the one in Drake's symbolic
-/// library. It takes `std::vector<Formula>` while Drake's version
-/// takes `std::set<Formula>`.
-Formula make_conjunction(const std::vector<Formula>& formulas);
-
-/// @note This is different from the one in Drake's symbolic
-/// library. It takes `std::vector<Formula>` while Drake's version
-/// takes `std::set<Formula>`.
-Formula make_disjunction(const std::vector<Formula>& formulas);
-
-/// Creates a vector of variables of @p type whose size is @p
-/// size. The variables are numbered with @p prefix. For example,
-/// `CreateVector("x", 5)` returns `[x0, x1, x2, x3, x4]`.
-///
-/// @pre @p prefix must not be an empty string.
-/// @pre @p size >= 1.
-std::vector<Variable> CreateVector(
-    const std::string& prefix, int size,
-    Variable::Type type = Variable::Type::CONTINUOUS);
-
-/// Represents relational operators.
+/** Relational operators are used in formulas */
 enum class RelationalOperator {
   EQ,   ///< =
   NEQ,  ///< !=
@@ -128,10 +191,15 @@ enum class RelationalOperator {
   LEQ,  ///< <=
 };
 
-/// Negates @p op.
+/**
+ * Negates @p op.
+ * @param op operator to negate
+ * @return negated operator
+ */
 RelationalOperator operator!(RelationalOperator op);
 
-/// Outputs @p op to @p os.
-std::ostream& operator<<(std::ostream& os, RelationalOperator op);
+ostream &operator<<(ostream &os, RelationalOperator op);
 
 }  // namespace dlinear
+
+#endif // DLINEAR_SYMBOLIC_SYMBOLIC_H_

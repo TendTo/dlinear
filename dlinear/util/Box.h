@@ -1,11 +1,8 @@
 /**
  * @file Box.h
- * @author tend
+ * @author dlinear
  * @date 13 Aug 2023
- * @copyright 2023 tend
- * @brief Brief description
- *
- * Long Description
+ * @copyright 2023 dlinear
  */
 
 #ifndef DLINEAR5_DLINEAR_UTIL_BOX_H_
@@ -13,8 +10,26 @@
 
 #include "dlinear/util/exception.h"
 #include "dlinear/libs/gmp.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/infty.h"
+#include "dlinear/util/logging.h"
+#include "dlinear/util/math.h"
+
+using std::equal;
+using std::find_if;
+using std::make_pair;
+using std::make_shared;
+using std::numeric_limits;
+using std::ostream;
+using std::pair;
+using std::unordered_map;
+using std::vector;
 
 namespace dlinear {
+
+using gmp::floor;
+using gmp::ceil;
+
 class Box {
  public:
   class Interval {
@@ -24,16 +39,16 @@ class Box {
     Interval(const Interval &other) : lb_(other.lb_), ub_(other.ub_) {}
     explicit Interval(const mpq_class &val) : lb_(val), ub_(val) {}
     Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
-      DREAL_ASSERT(lb <= ub);
+      DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
     }
-    bool is_empty() const { return lb_ == 1 && ub_ == 0; }
-    bool is_degenerated() const { return lb_ == ub_; }
-    bool is_bisectable() const { return lb_ < ub_; }
-    mpq_class lb() const { return lb_; }
-    mpq_class ub() const { return ub_; }
-    mpq_class mid() const { return (lb_ + ub_) / 2; }
-    mpq_class diam() const { return is_empty() ? mpq_class(0) : mpq_class(ub_ - lb_); }
-    std::pair<Interval, Interval> bisect(const mpq_class &p) const;
+    [[nodiscard]] bool is_empty() const { return lb_ == 1 && ub_ == 0; }
+    [[nodiscard]] bool is_degenerated() const { return lb_ == ub_; }
+    [[nodiscard]] bool is_bisectable() const { return lb_ < ub_; }
+    [[nodiscard]] mpq_class lb() const { return lb_; }
+    [[nodiscard]] mpq_class ub() const { return ub_; }
+    [[nodiscard]] mpq_class mid() const { return (lb_ + ub_) / 2; }
+    [[nodiscard]] mpq_class diam() const { return is_empty() ? mpq_class(0) : mpq_class(ub_ - lb_); }
+    [[nodiscard]] pair <Interval, Interval> bisect(const mpq_class &p) const;
     bool operator==(const Interval &other) const { return lb_ == other.lb_ && ub_ == other.ub_; }
     bool operator!=(const Interval &other) const { return lb_ != other.lb_ || ub_ != other.ub_; }
     Interval &operator=(const mpq_t &val) {
@@ -96,13 +111,13 @@ class Box {
   void Add(const Variable &v, const mpq_class &lb, const mpq_class &ub);
 
 /// Checks if this box is empty.
-  bool empty() const;
+  [[nodiscard]] bool empty() const;
 
 /// Make this box empty.
   void set_empty();
 
 /// Returns the size of the box.
-  int size() const;
+  [[nodiscard]] int size() const;
 
 /// Returns @p i -th interval in the box.
   Interval &operator[](int i);
@@ -117,33 +132,33 @@ class Box {
   const Interval &operator[](const Variable &var) const;
 
 /// Returns the variables in the box.
-  const std::vector<Variable> &variables() const;
+  [[nodiscard]] const vector<Variable> &variables() const;
 
 /// Returns i-th variable in the box.
-  const Variable &variable(int i) const;
+  [[nodiscard]] const Variable &variable(int i) const;
 
 /// Checks if this box has @p var.
-  bool has_variable(const Variable &var) const;
+  [[nodiscard]] bool has_variable(const Variable &var) const;
 
 /// Returns the interval vector of the box.
-  const IntervalVector &interval_vector() const;
+  [[nodiscard]] const IntervalVector &interval_vector() const;
 
 /// Returns the interval vector of the box.
   IntervalVector &mutable_interval_vector();
 
 /// Returns the index associated with @p var.
-  int index(const Variable &var) const;
+  [[nodiscard]] int index(const Variable &var) const;
 
 /// Returns the max diameter of the box and the associated index .
-  std::pair<mpq_class, int> MaxDiam() const;
+  [[nodiscard]] pair<mpq_class, int> MaxDiam() const;
 
 /// Bisects the box at @p i -th dimension.
 /// @throws std::runtime if @p i -th dimension is not bisectable.
-  std::pair<Box, Box> bisect(int i) const;
+  [[nodiscard]] pair <Box, Box> bisect(int i) const;
 
 /// Bisects the box at @p the dimension represented by @p var.
 /// @throws std::runtime if @p i -th dimension is not bisectable.
-  std::pair<Box, Box> bisect(const Variable &var) const;
+  [[nodiscard]] pair <Box, Box> bisect(const Variable &var) const;
 
 /// Updates the current box by taking union with @p b.
 ///
@@ -154,19 +169,19 @@ class Box {
 /// Bisects the box at @p i -th dimension.
 /// @pre i-th variable is bisectable.
 /// @pre i-th variable is of integer type.
-  std::pair<Box, Box> bisect_int(int i) const;
+  [[nodiscard]] pair <Box, Box> bisect_int(int i) const;
 
 /// Bisects the box at @p i -th dimension.
 /// @pre i-th variable is bisectable.
 /// @pre i-th variable is of continuous type.
-  std::pair<Box, Box> bisect_continuous(int i) const;
+  [[nodiscard]] pair <Box, Box> bisect_continuous(int i) const;
 
   std::shared_ptr<std::vector<Variable>> variables_;
 
   IntervalVector values_;
 
-  std::shared_ptr<std::unordered_map<Variable, int, hash_value < Variable>>>
-  var_to_idx_;
+  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>>
+      var_to_idx_;
 
   std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;
 

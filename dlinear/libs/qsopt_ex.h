@@ -1,8 +1,8 @@
 /**
  * @file qsopt_ex.h
- * @author tend
+ * @author dlinear
  * @date 10 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * Qsopt_ex wrapper.
  *
  * This header includes the Qsopt_ex library and provides a various helpers.

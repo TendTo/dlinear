@@ -1,8 +1,8 @@
 /**
  * @file ArgParser.cpp
- * @author tend
+ * @author dlinear
  * @date 07 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  */
 #include "ArgParser.h"
 

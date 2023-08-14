@@ -1,14 +1,16 @@
 load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//tests:__subpackages__",
+])
 
 dlinear_cc_library(
     name = "logic",
     srcs = ["logic.cpp"],
     hdrs = ["logic.h"],
-    visibility = [
-        "//dlinear:__subpackages__",
-        "//tests:__subpackages__",
-    ],
-    deps = [
-        "//dlinear/util:exception",
-    ],
+    deps = ["//dlinear/util:exception"],
 )
+
+cpplint()

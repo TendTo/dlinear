@@ -1,8 +1,8 @@
 /**
  * @file soplex.h
- * @author tend
+ * @author dlinear
  * @date 09 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * Soplex wrapper.
  *
  * This header includes the Soplex library and provides a various helpers.
@@ -17,7 +17,7 @@
 #define SOPLEX_WITH_GMP
 #include <soplex.h>
 
-namespace dlinear::soplex {
+namespace dlinear {
 
 } // namespace dlinear::soplex
 

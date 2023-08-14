@@ -1,8 +1,8 @@
 /**
  * @file Context.cpp
- * @author tend
+ * @author dlinear
  * @date 13 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * @brief Brief description
  *
  * Long Description
@@ -34,7 +34,7 @@ Context::Context(Config config) : impl_{make_impl(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
-optional <Box> Context::CheckSat(mpq_class *actual_precision) {
+optional<Box> Context::CheckSat(mpq_class *actual_precision) {
   return impl_->CheckSat(actual_precision);
 }
 
@@ -53,21 +53,20 @@ void Context::DeclareVariable(const Variable &v, const Expression &lb,
   impl_->SetDomain(v, lb, ub);
 }
 
-void Context::Exit() { DREAL_LOG_DEBUG("Context::Exit()"); }
+void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }
 
 void Context::Minimize(const Expression &f) { impl_->Minimize({f}); }
 
-void Context::Minimize(const vector <Expression> &functions) {
+void Context::Minimize(const vector<Expression> &functions) {
   impl_->Minimize(functions);
 }
 
 void Context::Maximize(const Expression &f) { impl_->Maximize({f}); }
 
 void Context::Pop(int n) {
-  DREAL_LOG_DEBUG("Context::Pop({})", n);
+  DLINEAR_DEBUG_FMT("Context::Pop({})", n);
   if (n <= 0) {
-    throw DREAL_RUNTIME_ERROR(
-        "Context::Pop(n) called with n = {} which is not positive.", n);
+    DLINEAR_RUNTIME_ERROR_FMT("Context::Pop(n) called with n = {} which is not positive.", n);
   }
   while (n-- > 0) {
     impl_->Pop();
@@ -75,10 +74,9 @@ void Context::Pop(int n) {
 }
 
 void Context::Push(int n) {
-  DREAL_LOG_DEBUG("Context::Push({})", n);
+  DLINEAR_DEBUG_FMT("Context::Push({})", n);
   if (n <= 0) {
-    throw DREAL_RUNTIME_ERROR(
-        "Context::Push(n) called with n = {} which is not positive.", n);
+    DLINEAR_RUNTIME_ERROR_FMT("Context::Push(n) called with n = {} which is not positive.", n);
   }
   while (n-- > 0) {
     impl_->Push();

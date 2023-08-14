@@ -1,8 +1,8 @@
 /**
  * @file Config.h
- * @author tend
+ * @author dlinear
  * @date 07 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * Config class.
  * Used to store the configuration of the program.
  *

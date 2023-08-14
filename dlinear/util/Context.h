@@ -1,8 +1,8 @@
 /**
  * @file Context.h
- * @author tend
+ * @author dlinear
  * @date 13 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * @brief Brief description
  *
  * Long Description
@@ -14,13 +14,19 @@
 #include <iostream>
 #include <memory>
 
+#include <tl/optional.hpp>
+
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
+#include "dlinear/smt2/logic.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/ScopedVector.hpp"
 
 using std::ostream;
 using std::unique_ptr;
 using std::make_unique;
+using tl::optional;
 
 namespace dlinear {
 
@@ -194,7 +200,7 @@ class Context {
 
   static unique_ptr <Context::Impl> make_impl(Config config);
 
-  unique_ptr<Impl> impl_;
+  unique_ptr <Impl> impl_;
 };
 
 } // dlinear

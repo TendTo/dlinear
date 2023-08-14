@@ -1,8 +1,8 @@
 /**
  * @file MainProgram.h
- * @author tend
+ * @author dlinear
  * @date 12 Aug 2023
- * @copyright 2023 tend
+ * @copyright 2023 dlinear
  * @brief Brief description
  *
  * Long Description

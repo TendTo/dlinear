@@ -1,0 +1,6 @@
+cc_library(
+    name = "tl_optional",
+    hdrs = ["include/tl/optional.hpp"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
