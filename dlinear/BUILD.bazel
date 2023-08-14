@@ -1,7 +1,21 @@
-load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "DLINEAR_VERSION", "dlinear_cc_binary", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 
 package(default_visibility = ["//visibility:public"])
+
+genrule(
+    name = "generate_version_header",
+    outs = ["version.h"],
+    cmd = "$(location //tools:generate_version_header) %s > $@" % DLINEAR_VERSION,
+    stamp = True,
+    tools = ["//tools:generate_version_header"],
+    visibility = ["//visibility:private"],
+)
+
+dlinear_cc_library(
+    name = "version",
+    hdrs = [":generate_version_header"],
+)
 
 dlinear_cc_library(
     name = "main_program",
@@ -27,9 +41,7 @@ dlinear_cc_binary(
     features = ["fully_static_link"],
     linkstatic = 1,
     deps = [
-        "//dlinear/libs:gmp",
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
+        ":version",
         "//dlinear/util:logging",
     ],
 )

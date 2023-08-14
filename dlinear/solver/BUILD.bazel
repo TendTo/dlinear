@@ -1,0 +1,34 @@
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//tests:__subpackages__",
+])
+
+dlinear_cc_library(
+    name = "context",
+    srcs = [
+        "Context.cpp",
+        "ContextImpl.cpp",
+        "QsoptexImpl.cpp",
+    ],
+    hdrs = [
+        "Context.h",
+        "ContextImpl.h",
+        "QsoptexImpl.h",
+    ],
+    deps = [
+        "//dlinear:version",
+        "//dlinear/libs:gmp",
+        "//dlinear/smt2:logic",
+        "//dlinear/symbolic",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
+        "//dlinear/util:scoped_vector",
+        "@tl_optional",
+    ],
+)
+
+cpplint()

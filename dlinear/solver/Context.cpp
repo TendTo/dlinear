@@ -3,12 +3,9 @@
  * @author dlinear
  * @date 13 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
  */
 
-#include "Context.h"
+#include "dlinear/solver/Context.h"
 
 namespace dlinear {
 
@@ -108,9 +105,9 @@ void Context::SetOption(const string &key, const string &val) {
 const Config &Context::config() const { return impl_->config(); }
 Config &Context::mutable_config() { return impl_->mutable_config(); }
 
-string Context::version() { return DREAL_VERSION_STRING; }
+string Context::version() { return DLINEAR_VERSION_STRING; }
 
-string Context::repository_status() { return DREAL_VERSION_REPOSTAT; }
+string Context::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
 
 const Box &Context::box() const { return impl_->box(); }
 

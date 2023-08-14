@@ -3,9 +3,11 @@
  * @author dlinear
  * @date 13 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Context holding the information about the resolution of the problem.
  *
- * Long Description
+ * While the solver is running, the context holds the information about the
+ * problem being solved. It also holds the information about the
+ * program version.
  */
 
 #ifndef DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
@@ -16,6 +18,7 @@
 
 #include <tl/optional.hpp>
 
+#include "dlinear/version.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
@@ -146,7 +149,7 @@ class Context {
   void SetOption(const std::string &key, const std::string &val);
 
   /** Returns a const reference of configuration */
-  const Config &config() const;
+  [[nodiscard]] const Config &config() const;
 
   /** Returns a mutable reference of configuration */
   Config &mutable_config();
@@ -165,30 +168,30 @@ class Context {
    * is updated to have this information (x <= 5) and this formula is
    * thrown away.
    */
-  const ScopedVector <Formula> &assertions() const;
+  [[nodiscard]] const ScopedVector <Formula> &assertions() const;
 
   /** Returns the const reference to the top box */
-  const Box &box() const;
+  [[nodiscard]] const Box &box() const;
 
   /**
    * Returns a representation of a model computed by the solver in
    * response to an invocation of the check-sat.
    */
-  const Box &get_model() const;
+  [[nodiscard]] const Box &get_model() const;
 
   /**
    * Returns whether or not there is an objective function (which may be
    * zero). If true, then CheckOpt() must be used, and not CheckSat(). If
    * false, then CheckSat() must be used, and not CheckOpt().
    */
-  bool have_objective() const;
+  [[nodiscard]] bool have_objective() const;
 
   /**
    * Returns whether or not the objective function (if present) is a
    * maximization. If true, the original objective function has been negated
    * to form a minimization problem.
    */
-  bool is_max() const;
+  [[nodiscard]] bool is_max() const;
 
  private:
   // This header is exposed to external users as a part of API. We use

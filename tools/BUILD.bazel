@@ -1,15 +1,15 @@
+package(default_visibility = ["//visibility:public"])
+
 config_setting(
     name = "clang_build",
     flag_values = {
         "@bazel_tools//tools/cpp:compiler": "clang",
     },
-    visibility = ["//visibility:public"],
 )
 
 config_setting(
     name = "debug",
     values = {"compilation_mode": "dbg"},
-    visibility = ["//visibility:public"],
 )
 
 config_setting(
@@ -17,5 +17,9 @@ config_setting(
     flag_values = {
         "@bazel_tools//tools/cpp:compiler": "gcc",
     },
-    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "generate_version_header",
+    srcs = ["generate_version_header.sh"],
 )
