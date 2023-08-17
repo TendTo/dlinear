@@ -42,8 +42,8 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
-    name = "test_scoped_vector",
-    deps = ["//dlinear/util:scoped_vector"],
+    name = "test_scoped_structures",
+    deps = ["//dlinear/util:scoped_structures"],
 )
 
 dlinear_cc_googletest(

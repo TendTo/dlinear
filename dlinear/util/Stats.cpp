@@ -6,6 +6,9 @@
  */
 #include "Stats.h"
 
+using std::ostream;
+using std::endl;
+
 namespace dlinear {
 
 ostream &operator<<(ostream &os, const Stats &stats) {

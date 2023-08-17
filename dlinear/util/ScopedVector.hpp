@@ -3,9 +3,10 @@
  * @author dlinear
  * @date 14 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Backtrackable scoped vector.
  *
- * Long Description
+ * This is a vector that supports backtracking. It is used to store
+ * intermediate results.
  */
 
 #ifndef DLINEAR5_DLINEAR_UTIL_SCOPEDVECTOR_HPP_
@@ -22,7 +23,6 @@
 
 namespace dlinear {
 
-// Backtrackable scoped vector.
 template<typename T>
 class ScopedVector {
  public:

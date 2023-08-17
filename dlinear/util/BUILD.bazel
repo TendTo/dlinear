@@ -92,8 +92,12 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "scoped_vector",
-    hdrs = ["ScopedVector.hpp"],
+    name = "scoped_structures",
+    hdrs = [
+        "ScopedUnorderedMap.hpp",
+        "ScopedUnorderedSet.hpp",
+        "ScopedVector.hpp",
+    ],
     deps = [":exception"],
 )
 

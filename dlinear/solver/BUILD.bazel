@@ -28,7 +28,7 @@ dlinear_cc_library(
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:logging",
-        "//dlinear/util:scoped_vector",
+        "//dlinear/util:scoped_structures",
         "@tl_optional",
     ],
 )

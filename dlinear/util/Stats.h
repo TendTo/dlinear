@@ -15,12 +15,6 @@
 #include <iostream>
 #include "dlinear/util/logging.h"
 
-using std::atomic;
-using std::ostream;
-using std::endl;
-using std::atomic_fetch_add_explicit;
-using std::memory_order_relaxed;
-
 namespace dlinear {
 
 class Stats {
@@ -29,10 +23,10 @@ class Stats {
 
  protected:
   template<typename T>
-  void increase(atomic <T> *v) {
+  void increase(std::atomic<T> *v) {
     if (enabled_) {
       DLINEAR_TRACE("Stats::increase");
-      atomic_fetch_add_explicit(v, 1, memory_order_relaxed);
+      atomic_fetch_add_explicit(v, 1, std::memory_order_relaxed);
     }
   }
 
@@ -58,7 +52,7 @@ class Stats {
    */
   [[nodiscard]] bool enabled() const { return enabled_; }
 
-  friend ostream &operator<<(ostream &os, const Stats &stats);
+  friend std::ostream &operator<<(std::ostream &os, const Stats &stats);
 };
 
 } // namespace dlinear
