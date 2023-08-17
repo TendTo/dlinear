@@ -19,6 +19,14 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
+    name = "test_predicate_abstractor",
+    deps = [
+        "//dlinear/util:predicate_abstractor",
+        "//tests/sybmolic:test_symbolic_utils",
+    ],
+)
+
+dlinear_cc_googletest(
     name = "test_exception",
     deps = ["//dlinear/util:exception"],
 )
@@ -41,4 +49,9 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_timer",
     deps = ["//dlinear/util:timer"],
+)
+
+dlinear_cc_googletest(
+    name = "test_config",
+    deps = ["//dlinear/util:config"],
 )

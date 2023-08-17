@@ -3,23 +3,17 @@
  * @author dlinear
  * @date 16 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
  */
 #include "dlinear/util/Box.h"
 #include "tests/sybmolic/TestSymbolicUtils.h"
 
-#include <iostream>
 #include <limits>
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <cmath>
 
 #include <gtest/gtest.h>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/infty.h"
 
 using std::is_nothrow_move_constructible;

@@ -6,11 +6,11 @@
  */
 #include "dlinear/util/filesystem.h"
 
-#include <filesystem>
 #include <gtest/gtest.h>
+#include <fstream>
 
 using std::string;
-using std::filesystem::directory_iterator;
+using std::ofstream;
 using dlinear::get_extension;
 using dlinear::file_exists;
 
@@ -40,11 +40,10 @@ TEST(TestFilesystem, GetExtension5) {
 }
 
 TEST(TestFilesystem, FileExists) {
-  for (const auto &entry : directory_iterator(".")) {
-    if (entry.is_regular_file()) {
-      EXPECT_TRUE(file_exists(entry.path().string()));
-    }
-  }
+  string filename{"TempFile.test.cpp"};
+  ofstream f{filename};
+  EXPECT_TRUE(file_exists(filename));
+  remove(filename.c_str());
 }
 
 TEST(TestFilesystem, FileNotExists) {

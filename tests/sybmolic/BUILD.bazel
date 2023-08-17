@@ -41,6 +41,6 @@ dlinear_cc_googletest(
     name = "test_prefix_printer",
     deps = [
         ":test_symbolic_utils",
-        "//dlinear/symbolic",
+        "//dlinear/symbolic:prefix_printer",
     ],
 )
