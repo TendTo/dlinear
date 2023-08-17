@@ -7,6 +7,8 @@
 
 #include "qsopt_ex.h"
 
+using std::string;
+
 namespace dlinear::qsopt_ex {
 
 mpq_class *StringToMpqPtr(const string &str) {

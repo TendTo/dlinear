@@ -21,8 +21,6 @@
 #include <iostream>
 #include <utility>
 
-using std::ostream;
-
 namespace dlinear {
 
 /**
@@ -123,7 +121,7 @@ class OptionValue {
     }
   }
 
-  friend ostream &operator<<(ostream &os, Type type) {
+  friend std::ostream &operator<<(std::ostream &os, Type type) {
     switch (type) {
       case OptionValue<T>::Type::DEFAULT:return os << "DEFAULT";
       case OptionValue<T>::Type::FROM_FILE:return os << "FROM_FILE";

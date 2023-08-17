@@ -8,6 +8,11 @@
 
 #include <utility>
 
+using std::endl;
+using std::cerr;
+using std::string;
+using std::ostream;
+
 namespace dlinear {
 ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
   DLINEAR_TRACE("ArgParser::ArgParser");

@@ -14,17 +14,15 @@
 #include <set>
 #include "dlinear/symbolic/symbolic.h"
 
-using std::set;
-
 namespace dlinear {
 
 using Literal = std::pair<Variable, bool>;
 
 struct LiteralComparator {
-  bool operator()(const Literal& a, const Literal& b) const;
+  bool operator()(const Literal &a, const Literal &b) const;
 };
 
-using LiteralSet = set<Literal, LiteralComparator>;
+using LiteralSet = std::set<Literal, LiteralComparator>;
 
 } // namespace dlinear
 

@@ -6,23 +6,26 @@
 
 using dlinear::ArgParser;
 using dlinear::Config;
+using std::string;
+using std::ofstream;
+using std::remove;
 
 class TestArgParser : public ::testing::Test {
  protected:
   dlinear::ArgParser parser_{};
-  const std::string filename_{"TempFile.smt2"};
-  const std::string bad_filename_{"TempFile.err"};
-  const std::string non_existing_filename_{"NotExistingTempFile.smt2"};
+  const string filename_{"TempFile.smt2"};
+  const string bad_filename_{"TempFile.err"};
+  const string non_existing_filename_{"NotExistingTempFile.smt2"};
   virtual void SetUp() {
     parser_ = ArgParser{};
-    std::ofstream f{filename_};
-    std::ofstream bf{bad_filename_};
+    ofstream f{filename_};
+    ofstream bf{bad_filename_};
     f.close();
     bf.close();
   }
   virtual void TearDown() {
-    std::remove(filename_.c_str());
-    std::remove(bad_filename_.c_str());
+    remove(filename_.c_str());
+    remove(bad_filename_.c_str());
   }
 };
 

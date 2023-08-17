@@ -1,5 +1,10 @@
 #include "PrefixPrinter.h"
 
+using std::string;
+using std::ostream;
+using std::ostringstream;
+using std::runtime_error;
+
 namespace dlinear {
 
 PrefixPrinter::PrefixPrinter(ostream &os) : os_{os}, old_precision_{os.precision()} {

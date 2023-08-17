@@ -8,9 +8,9 @@
 
 #include "Timer.h"
 
-namespace dlinear {
-using std::ostream;
 using std::runtime_error;
+
+namespace dlinear {
 
 template<class T>
 TimerBase<T>::TimerBase() : last_start_{now()} {}
@@ -64,8 +64,10 @@ user_clock::time_point user_clock::now() {
 }
 
 // Explicit instantiations
-template class TimerBase<chosen_steady_clock>;
-template class TimerBase<user_clock>;
+template
+class TimerBase<chosen_steady_clock>;
+template
+class TimerBase<user_clock>;
 
 TimerGuard::TimerGuard(Timer *const timer, const bool enabled, const bool start_timer) : timer_{timer},
                                                                                          enabled_{enabled} {

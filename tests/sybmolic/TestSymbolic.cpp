@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+using std::to_string;
+using std::vector;
 using dlinear::imply;
 using dlinear::iff;
 using dlinear::CreateVector;

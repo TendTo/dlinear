@@ -4,6 +4,16 @@
 #include <iterator>
 #include <utility>
 
+using std::function;
+using std::inserter;
+using std::ostream;
+using std::set;
+using std::string;
+using std::to_string;
+using std::transform;
+using std::vector;
+using std::all_of;
+
 namespace dlinear {
 
 Formula imply(const Formula &f1, const Formula &f2) { return !f1 || f2; }
@@ -29,7 +39,7 @@ Formula iff(const Variable &v1, const Variable &v2) {
   return iff(Formula{v1}, Formula{v2});
 }
 
-set<Formula> map(const set<Formula> &formulas, const function<Formula(const Formula &)> &func) {
+set <Formula> map(const set <Formula> &formulas, const function<Formula(const Formula &)> &func) {
   set<Formula> result;
   transform(formulas.cbegin(), formulas.cend(), inserter(result, result.begin()), func);
   return result;
@@ -78,7 +88,7 @@ bool is_clause(const Formula &f) {
   DLINEAR_UNREACHABLE();
 }
 
-set<Formula> get_clauses(const Formula &f) {
+set <Formula> get_clauses(const Formula &f) {
   if (is_conjunction(f)) {
 #ifndef NDEBUG
     for (const Formula &clause : get_operands(f)) {
@@ -497,7 +507,7 @@ bool IsDifferentiable(const Expression &e) {
   return IsDifferentiableVisitor{}.Visit(e);
 }
 
-Formula make_conjunction(const vector<Formula> &formulas) {
+Formula make_conjunction(const vector <Formula> &formulas) {
   Formula ret{Formula::True()};
   for (const auto &f_i : formulas) {
     ret = std::move(ret) && f_i;
@@ -505,7 +515,7 @@ Formula make_conjunction(const vector<Formula> &formulas) {
   return ret;
 }
 
-Formula make_disjunction(const vector<Formula> &formulas) {
+Formula make_disjunction(const vector <Formula> &formulas) {
   Formula ret{Formula::False()};
   for (const auto &f_i : formulas) {
     ret = std::move(ret) || f_i;
@@ -513,7 +523,7 @@ Formula make_disjunction(const vector<Formula> &formulas) {
   return ret;
 }
 
-vector<Variable> CreateVector(const string &prefix, const int size, const Variable::Type type) {
+vector <Variable> CreateVector(const string &prefix, const int size, const Variable::Type type) {
   DLINEAR_ASSERT(prefix.length() > 0, "prefix must not be empty.");
   DLINEAR_ASSERT(size >= 1, "size must be positive.");
   vector<Variable> v;

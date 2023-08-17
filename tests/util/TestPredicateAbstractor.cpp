@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+using std::set;
+
 namespace dlinear {
 
 class TestPredicateAbstractor : public ::testing::Test {

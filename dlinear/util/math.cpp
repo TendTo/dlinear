@@ -7,6 +7,9 @@
 
 #include "dlinear/util/math.h"
 
+using std::int64_t;
+using std::numeric_limits;
+
 namespace dlinear {
 bool is_integer(const double v) {
   // v should be in [int_min, int_max].

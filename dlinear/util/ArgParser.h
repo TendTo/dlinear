@@ -22,18 +22,13 @@
 #include "dlinear/util/filesystem.h"
 #include "dlinear/version.h"
 
-using std::string;
-using std::ostream;
-using std::endl;
-using std::cerr;
-
 namespace dlinear {
 
 class ArgParser {
  private:
   argparse::ArgumentParser parser_;
-  string qsoptex_hash_;
-  string soplex_hash_;
+  std::string qsoptex_hash_;
+  std::string soplex_hash_;
 
   void addOptions();
 
@@ -41,24 +36,24 @@ class ArgParser {
 
  public:
   ArgParser();
-  explicit ArgParser(string qsopt_exHash, string soplexHash = "");
+  explicit ArgParser(std::string qsopt_exHash, std::string soplexHash = "");
 
   void parse(int argc, const char **argv);
 
-  [[nodiscard]] string version() const;
+  [[nodiscard]] std::string version() const;
 
-  [[nodiscard]] string repositoryStatus() const;
+  [[nodiscard]] std::string repositoryStatus() const;
 
-  [[nodiscard]] string prompt() const;
+  [[nodiscard]] std::string prompt() const;
 
-  friend ostream &operator<<(ostream &os, const ArgParser &parser);
+  friend std::ostream &operator<<(std::ostream &os, const ArgParser &parser);
 
   [[nodiscard]] Config toConfig() const;
 
   template<typename T = std::string>
   [[nodiscard]] T get(const std::string &key) const { return parser_.get<T>(key); }
 
-  friend ostream &operator<<(ostream &os, const dlinear::ArgParser &parser);
+  friend std::ostream &operator<<(std::ostream &os, const dlinear::ArgParser &parser);
 };
 
 } // namespace dlinear

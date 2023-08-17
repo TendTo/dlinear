@@ -16,9 +16,6 @@
 
 #include "dlinear/util/exception.h"
 
-using std::ostream;
-using std::string;
-
 namespace dlinear {
 
 enum class Logic {
@@ -29,8 +26,8 @@ enum class Logic {
   QF_LIA, ///< Quantifier free linear integer arithmetic
 };
 
-Logic parseLogic(const string &s);
-ostream &operator<<(ostream &os, const Logic &logic);
+Logic parseLogic(const std::string &s);
+std::ostream &operator<<(std::ostream &os, const Logic &logic);
 
 }  // namespace dlinear
 

@@ -18,13 +18,6 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/filesystem.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::numeric_limits;
-using std::string;
-using std::vector;
-
 namespace dlinear {
 
 /**

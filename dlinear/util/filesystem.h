@@ -16,8 +16,6 @@
 
 #include "dlinear/util/logging.h"
 
-using std::string;
-
 namespace dlinear {
 
 /**
@@ -25,7 +23,7 @@ namespace dlinear {
  * @param name The name of the file.
  * @return whether or not the file exists.
  */
-bool file_exists(const string &name);
+bool file_exists(const std::string &name);
 
 /**
  * Get the extension of the file.
@@ -36,7 +34,7 @@ bool file_exists(const string &name);
  * @param name The name of the file.
  * @return The extension of the file.
  */
-string get_extension(const string &name);
+std::string get_extension(const std::string &name);
 
 } // namespace dlinear
 

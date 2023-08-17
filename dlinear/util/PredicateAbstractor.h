@@ -21,11 +21,6 @@
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 
-using std::unordered_map;
-using fmt::print;
-using std::cout;
-using std::stringstream;
-
 namespace dlinear {
 
 class PredicateAbstractor {
@@ -74,9 +69,8 @@ class PredicateAbstractor {
 
   void Add(const Variable &var, const Formula &f);
 
-  unordered_map <Variable, Formula, hash_value<Variable>>
-      var_to_formula_map_;
-  unordered_map <Formula, Variable> formula_to_var_map_;
+  std::unordered_map<Variable, Formula, hash_value<Variable>> var_to_formula_map_;
+  std::unordered_map<Formula, Variable> formula_to_var_map_;
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.

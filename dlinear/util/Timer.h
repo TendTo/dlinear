@@ -19,9 +19,6 @@
 
 #include "dlinear/util/logging.h"
 
-using std::ostream;
-using std::conditional;
-
 namespace dlinear {
 
 /**
@@ -87,9 +84,9 @@ class TimerBase {
 };
 
 // Use high_resolution clock if it's steady, otherwise use steady_clock.
-using chosen_steady_clock = conditional<std::chrono::high_resolution_clock::is_steady,
-                                        std::chrono::high_resolution_clock,
-                                        std::chrono::steady_clock>::type;
+using chosen_steady_clock = std::conditional<std::chrono::high_resolution_clock::is_steady,
+                                             std::chrono::high_resolution_clock,
+                                             std::chrono::steady_clock>::type;
 
 extern template
 class TimerBase<chosen_steady_clock>;
@@ -107,7 +104,6 @@ struct user_clock {  // Implements the Clock interface of std::chrono
 extern template
 class TimerBase<user_clock>;
 class UserTimer : public TimerBase<user_clock> {};
-
 
 /**
  * TimerGuard class.

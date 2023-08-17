@@ -17,10 +17,6 @@
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/exception.h"
 
-using std::int64_t;
-using std::modf;
-using std::numeric_limits;
-
 namespace dlinear {
 
 /// Returns true if @p v is represented by `int`.

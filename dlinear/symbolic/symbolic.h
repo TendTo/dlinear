@@ -28,16 +28,6 @@
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
 
-using std::function;
-using std::inserter;
-using std::ostream;
-using std::set;
-using std::string;
-using std::to_string;
-using std::transform;
-using std::vector;
-using std::all_of;
-
 namespace dlinear {
 
 using drake::hash_value;
@@ -75,7 +65,7 @@ Formula iff(const Variable &v1, const Variable &v2);
  * @param func function to apply to each formula
  * @return set of formulas obtained by applying @p func to each formula in
  */
-set <Formula> map(const set <Formula> &formulas, const function<Formula(const Formula &)> &func);
+std::set<Formula> map(const std::set<Formula> &formulas, const std::function<Formula(const Formula &)> &func);
 
 /**
  * Check if @p f is atomic.
@@ -156,7 +146,7 @@ bool IsDifferentiable(const Expression &e);
  * @param formulas input formulas
  * @return conjunction of @p formulas
  */
-Formula make_conjunction(const vector <Formula> &formulas);
+Formula make_conjunction(const std::vector<Formula> &formulas);
 
 /**
  * Make disjunction of @p formulas.
@@ -166,7 +156,7 @@ Formula make_conjunction(const vector <Formula> &formulas);
  * @param formulas input formulas
  * @return disjunction of @p formulas
  */
-Formula make_disjunction(const vector <Formula> &formulas);
+Formula make_disjunction(const std::vector<Formula> &formulas);
 
 /**
  * Creates a vector of variables of @p type whose size is @p size.
@@ -179,7 +169,9 @@ Formula make_disjunction(const vector <Formula> &formulas);
  * @param type type of variables
  * @return vector of variables
  */
-vector <Variable> CreateVector(const string &prefix, int size, Variable::Type type = Variable::Type::CONTINUOUS);
+std::vector<Variable> CreateVector(const std::string &prefix,
+                                   int size,
+                                   Variable::Type type = Variable::Type::CONTINUOUS);
 
 /** Relational operators are used in formulas */
 enum class RelationalOperator {
@@ -198,7 +190,7 @@ enum class RelationalOperator {
  */
 RelationalOperator operator!(RelationalOperator op);
 
-ostream &operator<<(ostream &os, RelationalOperator op);
+std::ostream &operator<<(std::ostream &os, RelationalOperator op);
 
 }  // namespace dlinear
 

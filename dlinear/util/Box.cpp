@@ -7,6 +7,18 @@
 
 #include "Box.h"
 
+using std::equal;
+using std::find_if;
+using std::make_pair;
+using std::make_shared;
+using std::numeric_limits;
+using std::ostream;
+using std::pair;
+using std::unordered_map;
+using std::vector;
+using dlinear::gmp::floor;
+using dlinear::gmp::ceil;
+
 namespace dlinear {
 
 Box::Interval::Interval() : lb_(mpq_ninfty()), ub_(mpq_infty()) {}
@@ -50,22 +62,22 @@ std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
 }
 
 Box::Box()
-    : variables_{make_shared<vector<Variable>>()},
+    : variables_{make_shared < vector < Variable >> ()},
     // We have this hack here because it is not allowed to have a
     // zero interval vector. Note that because of this special case,
     // `variables_->size() == values_.size()` do not hold. We should
     // rely on `values_.size()`.
       values_(1),
       var_to_idx_{
-          make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared<unordered_map<int, Variable >>()} {}
+          make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {}
 
-Box::Box(const vector<Variable> &variables)
-    : variables_{make_shared<vector<Variable>>()},
+Box::Box(const vector <Variable> &variables)
+    : variables_{make_shared < vector < Variable >> ()},
       values_(static_cast<int>(variables.size())),
       var_to_idx_{
-          make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared<unordered_map<int, Variable >>()} {
+          make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {
   for (const Variable &var : variables) {
     Add(var);
   }
@@ -154,7 +166,7 @@ const Box::Interval &Box::operator[](const Variable &var) const {
   return values_[(*var_to_idx_)[var]];
 }
 
-const vector<Variable> &Box::variables() const { return *variables_; }
+const vector <Variable> &Box::variables() const { return *variables_; }
 
 const Variable &Box::variable(const int i) const { return (*idx_to_var_)[i]; }
 
@@ -180,7 +192,7 @@ pair<mpq_class, int> Box::MaxDiam() const {
   return make_pair(max_diam, idx);
 }
 
-pair<Box, Box> Box::bisect(const int i) const {
+pair <Box, Box> Box::bisect(const int i) const {
   const Variable &var{(*idx_to_var_)[i]};
   if (!values_[i].is_bisectable()) {
     DLINEAR_RUNTIME_ERROR_FMT("Variable {} = {} is not bisectable but Box::bisect is called.", var, values_[i]);
@@ -194,7 +206,7 @@ pair<Box, Box> Box::bisect(const int i) const {
   DLINEAR_UNREACHABLE();
 }
 
-pair<Box, Box> Box::bisect(const Variable &var) const {
+pair <Box, Box> Box::bisect(const Variable &var) const {
   auto it = var_to_idx_->find(var);
   if (it != var_to_idx_->end()) {
     return bisect(it->second);
@@ -204,7 +216,7 @@ pair<Box, Box> Box::bisect(const Variable &var) const {
   return bisect((*var_to_idx_)[var]);
 }
 
-pair<Box, Box> Box::bisect_int(const int i) const {
+pair <Box, Box> Box::bisect_int(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::INTEGER
                      || idx_to_var_->at(i).get_type() == Variable::Type::BINARY,
                  "Variable must be integer or binary");
@@ -225,7 +237,7 @@ pair<Box, Box> Box::bisect_int(const int i) const {
   return make_pair(b1, b2);
 }
 
-pair<Box, Box> Box::bisect_continuous(const int i) const {
+pair <Box, Box> Box::bisect_continuous(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::CONTINUOUS, "Variable must be continuous");
   Box b1{*this};
   Box b2{*this};
@@ -302,7 +314,7 @@ bool operator==(const Box &b1, const Box &b2) {
 bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 
 ostream &DisplayDiff(ostream &os,
-                     const vector<Variable> &variables,
+                     const vector <Variable> &variables,
                      const Box::IntervalVector &old_iv,
                      const Box::IntervalVector &new_iv) {
   IosFmtFlagSaver saver{os};

@@ -8,9 +8,13 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/QsoptexImpl.h"
 
+using std::unique_ptr;
+using std::make_unique;
+using tl::optional;
+
 namespace dlinear {
 
-unique_ptr<Context::Impl> Context::make_impl(const Config& config) {
+unique_ptr <Context::Impl> Context::make_impl(const Config &config) {
   if (config.lp_solver() == Config::QSOPTEX)
     return make_unique<Context::QsoptexImpl>(config);
   if (config.lp_solver() == Config::SOPLEX)

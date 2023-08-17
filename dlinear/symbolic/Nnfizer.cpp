@@ -7,9 +7,10 @@
 
 #include "Nnfizer.h"
 
+using std::set;
+
 namespace dlinear {
 
-using std::set;
 
 Formula Nnfizer::Convert(const Formula &f, const bool push_negation_into_relationals) const {
   DLINEAR_TRACE_FMT("Nnfizer::Convert({}, {})", f, push_negation_into_relationals);

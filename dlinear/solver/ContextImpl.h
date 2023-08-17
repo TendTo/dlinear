@@ -17,10 +17,6 @@
 
 #include <unordered_set>
 
-using std::unordered_set;
-using std::string;
-using std::vector;
-
 namespace dlinear {
 
 class Context::Impl {

@@ -10,6 +10,8 @@
 
 #include "filesystem.h"
 
+using std::string;
+
 namespace dlinear {
 
 bool file_exists(const string &name) {

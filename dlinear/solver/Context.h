@@ -26,11 +26,6 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/ScopedVector.hpp"
 
-using std::ostream;
-using std::unique_ptr;
-using std::make_unique;
-using tl::optional;
-
 namespace dlinear {
 
 enum {
@@ -86,7 +81,7 @@ class Context {
    * @p actual_precision (write-only) to the actual max infeasibility where
    * appropriate.
    */
-  optional <Box> CheckSat(mpq_class *actual_precision);
+  tl::optional <Box> CheckSat(mpq_class *actual_precision);
 
   /**
    * Checks the satisfiability of the asserted formulas, and (where
@@ -168,7 +163,7 @@ class Context {
    * is updated to have this information (x <= 5) and this formula is
    * thrown away.
    */
-  [[nodiscard]] const ScopedVector <Formula> &assertions() const;
+  [[nodiscard]] const ScopedVector<Formula> &assertions() const;
 
   /** Returns the const reference to the top box */
   [[nodiscard]] const Box &box() const;
@@ -201,9 +196,9 @@ class Context {
   class SoplexImpl;
   class QsoptexImpl;
 
-  static unique_ptr <Context::Impl> make_impl(const Config& config);
+  static std::unique_ptr <Context::Impl> make_impl(const Config &config);
 
-  unique_ptr <Impl> impl_;
+  std::unique_ptr <Impl> impl_;
 };
 
 } // dlinear

@@ -7,6 +7,11 @@
 
 #include "ContextImpl.h"
 
+using std::unordered_set;
+using std::string;
+using std::vector;
+using tl::optional;
+
 namespace {
 
 bool ParseBooleanOption(const string &key, const string &val) {

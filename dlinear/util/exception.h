@@ -14,10 +14,6 @@
 
 #include <stdexcept>
 
-using std::runtime_error;
-using std::terminate;
-using std::invalid_argument;
-
 #ifdef NDEBUG
 
 #define DLINEAR_ASSERT(condition, msg) ((void)0)
@@ -35,29 +31,29 @@ using std::invalid_argument;
     do {                                                                                                          \
         if (!(condition)) {                                                                                       \
             DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}: {}", #condition, __FILE__, __LINE__, message);  \
-            terminate();                                                                                          \
+            std::terminate();                                                                                     \
         }                                                                                                         \
     } while (false)
 
 #define DLINEAR_UNREACHABLE()                                                   \
   do {                                                                          \
     DLINEAR_CRITICAL_FMT("{}:{} Should not be reachable.", __FILE__, __LINE__); \
-    terminate();                                                                \
+    std::terminate();                                                           \
   } while (false)
 
 #define DLINEAR_RUNTIME_ERROR(msg) \
   do {                             \
     DLINEAR_CRITICAL(msg);         \
-    throw runtime_error(msg);      \
+    throw std::runtime_error(msg); \
   } while (false)
 
-#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)               \
-  do {                                                    \
-    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);             \
-    throw runtime_error(fmt::format(msg, ##__VA_ARGS__)); \
+#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)                     \
+  do {                                                          \
+    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);                   \
+    throw std::runtime_error(fmt::format(msg, ##__VA_ARGS__));  \
   } while (false)
 
-#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
+#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
 
 #endif // NDEBUG
 

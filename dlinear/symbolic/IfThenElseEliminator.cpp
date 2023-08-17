@@ -7,6 +7,11 @@
 
 #include "IfThenElseEliminator.h"
 
+using std::unordered_set;
+using std::cout;
+using std::set;
+using std::to_string;
+
 namespace dlinear {
 
 class IfThenElseElimStat : public Stats {

@@ -21,10 +21,6 @@
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 
-using std::vector;
-using std::unordered_set;
-using std::cout;
-
 namespace dlinear {
 /**
  * IfThenElseEliminator class
@@ -92,8 +88,8 @@ class IfThenElseEliminator {
   // Member fields
   // ---------------
 
-  vector<Formula> added_formulas_; ///< The added formulas introduced by the elimination process
-  unordered_set<Variable, hash_value<Variable>>
+  std::vector<Formula> added_formulas_; ///< The added formulas introduced by the elimination process
+  std::unordered_set<Variable, hash_value<Variable>>
       ite_variables_; ///< The variables introduced by the elimination process.
 
   // Makes VisitFormula a friend of this class so that it can use private

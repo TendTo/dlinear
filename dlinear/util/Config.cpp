@@ -6,6 +6,9 @@
  */
 #include "dlinear/util/Config.h"
 
+using std::endl;
+using std::ostream;
+
 namespace dlinear {
 
 ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phase) {

@@ -26,8 +26,6 @@ extern "C" {
 #undef OPTIMAL
 #undef DUAL_INFEASIBLE
 
-using std::string;
-
 namespace dlinear::qsopt_ex {
 
 mpq_class *StringToMpqPtr(const std::string &str);

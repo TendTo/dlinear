@@ -27,10 +27,7 @@ enum class LoggerType {
   ERR
 };
 
-using std::shared_ptr;
-using std::string;
-
-shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
+std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 
 }  // namespace dlinear
 

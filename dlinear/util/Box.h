@@ -15,20 +15,7 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/util/math.h"
 
-using std::equal;
-using std::find_if;
-using std::make_pair;
-using std::make_shared;
-using std::numeric_limits;
-using std::ostream;
-using std::pair;
-using std::unordered_map;
-using std::vector;
-
 namespace dlinear {
-
-using gmp::floor;
-using gmp::ceil;
 
 class Box {
  public:
@@ -48,7 +35,7 @@ class Box {
     [[nodiscard]] mpq_class ub() const { return ub_; }
     [[nodiscard]] mpq_class mid() const { return (lb_ + ub_) / 2; }
     [[nodiscard]] mpq_class diam() const { return is_empty() ? mpq_class(0) : mpq_class(ub_ - lb_); }
-    [[nodiscard]] pair <Interval, Interval> bisect(const mpq_class &p) const;
+    [[nodiscard]] std::pair<Interval, Interval> bisect(const mpq_class &p) const;
     bool operator==(const Interval &other) const { return lb_ == other.lb_ && ub_ == other.ub_; }
     bool operator!=(const Interval &other) const { return lb_ != other.lb_ || ub_ != other.ub_; }
     Interval &operator=(const mpq_t &val) {
@@ -132,7 +119,7 @@ class Box {
   const Interval &operator[](const Variable &var) const;
 
 /// Returns the variables in the box.
-  [[nodiscard]] const vector<Variable> &variables() const;
+  [[nodiscard]] const std::vector<Variable> &variables() const;
 
 /// Returns i-th variable in the box.
   [[nodiscard]] const Variable &variable(int i) const;
@@ -150,15 +137,15 @@ class Box {
   [[nodiscard]] int index(const Variable &var) const;
 
 /// Returns the max diameter of the box and the associated index .
-  [[nodiscard]] pair<mpq_class, int> MaxDiam() const;
+  [[nodiscard]] std::pair<mpq_class, int> MaxDiam() const;
 
 /// Bisects the box at @p i -th dimension.
 /// @throws std::runtime if @p i -th dimension is not bisectable.
-  [[nodiscard]] pair <Box, Box> bisect(int i) const;
+  [[nodiscard]] std::pair<Box, Box> bisect(int i) const;
 
 /// Bisects the box at @p the dimension represented by @p var.
 /// @throws std::runtime if @p i -th dimension is not bisectable.
-  [[nodiscard]] pair <Box, Box> bisect(const Variable &var) const;
+  [[nodiscard]] std::pair<Box, Box> bisect(const Variable &var) const;
 
 /// Updates the current box by taking union with @p b.
 ///
@@ -169,12 +156,12 @@ class Box {
 /// Bisects the box at @p i -th dimension.
 /// @pre i-th variable is bisectable.
 /// @pre i-th variable is of integer type.
-  [[nodiscard]] pair <Box, Box> bisect_int(int i) const;
+  [[nodiscard]] std::pair<Box, Box> bisect_int(int i) const;
 
 /// Bisects the box at @p i -th dimension.
 /// @pre i-th variable is bisectable.
 /// @pre i-th variable is of continuous type.
-  [[nodiscard]] pair <Box, Box> bisect_continuous(int i) const;
+  [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
   std::shared_ptr<std::vector<Variable>> variables_;
 

@@ -39,9 +39,6 @@
 #define DLINEAR_DEFAULT_SAT_PHASE Config::SatDefaultPhase::JeroslowWang
 #define DLINEAR_DEFAULT_RANDOM_SEED 0u
 
-using std::ostream;
-using std::endl;
-
 namespace dlinear {
 
 class Config {
@@ -64,10 +61,10 @@ class Config {
   ~Config() = default;
 
   /** Input file name */
-  [[nodiscard]] string filename() const { return filename_.get(); }
+  [[nodiscard]] std::string filename() const { return filename_.get(); }
 
   /** Mutable input file name */
-  [[nodiscard]] OptionValue<string> &mutable_filename() { return filename_; }
+  [[nodiscard]] OptionValue<std::string> &mutable_filename() { return filename_; }
 
   /** Whether to read from stdin */
   [[nodiscard]] bool read_from_stdin() const { return read_from_stdin_.get(); }
@@ -202,7 +199,7 @@ class Config {
   static constexpr double kDefaultNloptMaxTime{DLINEAR_DEFAULT_NLOPT_MAX_TIME};
 
  private:
-  OptionValue<string> filename_{""};
+  OptionValue<std::string> filename_{""};
   OptionValue<bool> read_from_stdin_{DLINEAR_DEFAULT_READ_FROM_STDIN};
   OptionValue<double> precision_{kDefaultPrecision};
   OptionValue<bool> produce_models_{DLINEAR_DEFAULT_PRODUCE_MODELS};
@@ -275,8 +272,8 @@ class Config {
   /** Seed for Random Number Generator */
   OptionValue<uint32_t> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
 
-  friend ostream &operator<<(ostream &os, const Config &config);
-  friend ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phase);
+  friend std::ostream &operator<<(std::ostream &os, const Config &config);
+  friend std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
 };
 
 } // namespace dlinear

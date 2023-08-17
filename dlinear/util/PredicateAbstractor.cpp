@@ -10,6 +10,12 @@
 
 #include "PredicateAbstractor.h"
 
+using fmt::print;
+using std::cout;
+using std::stringstream;
+using std::set;
+using std::vector;
+
 namespace dlinear {
 
 /**
