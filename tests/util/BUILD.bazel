@@ -2,14 +2,33 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest")
 
 dlinear_cc_googletest(
     name = "test_argparser",
-    deps = [
-        "//dlinear/util:argparser",
-    ],
+    deps = ["//dlinear/util:argparser"],
 )
 
 dlinear_cc_googletest(
     name = "test_logging",
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_googletest(
+    name = "test_box",
     deps = [
-        "//dlinear/util:logging",
+        "//dlinear/util:box",
+        "//tests/sybmolic:test_symbolic_utils",
     ],
+)
+
+dlinear_cc_googletest(
+    name = "test_exception",
+    deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_googletest(
+    name = "test_filesystem",
+    deps = ["//dlinear/util:filesystem"],
+)
+
+dlinear_cc_googletest(
+    name = "test_math",
+    deps = ["//dlinear/util:math"],
 )

@@ -50,7 +50,7 @@ TEST(TestLogging, CriticalFmt) {
 }
 
 TEST(TestLogging, LogInit) {
-    EXPECT_NO_THROW(DLINEAR_LOG_INIT(spdlog::level::trace));
+    EXPECT_NO_THROW(DLINEAR_LOG_INIT_LEVEL(spdlog::level::trace));
 }
 
 TEST(TestLogging, VerbosityToLogLevel) {
