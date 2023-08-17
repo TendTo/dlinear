@@ -29,23 +29,33 @@ class Stats {
 
  protected:
   template<typename T>
-  void increase(atomic <T> *v);
+  void increase(atomic <T> *v) {
+    if (enabled_) {
+      DLINEAR_TRACE("Stats::increase");
+      atomic_fetch_add_explicit(v, 1, memory_order_relaxed);
+    }
+  }
 
  public:
   explicit Stats(bool enabled) : enabled_{enabled} {}
 
-  Stats(const Stats &) = default;
+  Stats(
+      const Stats &) = default;
 
-  Stats(Stats &&) = default;
+  Stats(Stats &&) =
+  default;
 
   Stats &operator=(const Stats &) = delete;
 
   Stats &operator=(Stats &&) = delete;
 
-  virtual ~Stats() = default;
+  virtual ~Stats() =
+  default;
 
-  /// \brief Returns whether the stats is enabled.
-  /// \return true if the stats is enabled, false otherwise.
+  /**
+   * Return whether the stats is enabled.
+   * @return whether the stats is enabled.
+   */
   [[nodiscard]] bool enabled() const { return enabled_; }
 
   friend ostream &operator<<(ostream &os, const Stats &stats);

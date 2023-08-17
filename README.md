@@ -73,7 +73,7 @@ void test_rational() {
 }
 
 int main([[maybe_unused]]int argc, [[maybe_unused]] const char **argv) {
-  DLINEAR_LOG_INIT(DLINEAR_VERBOSITY_TO_LOG_LEVEL(5));
+  DLINEAR_LOG_INIT_LEVEL(DLINEAR_VERBOSITY_TO_LOG_LEVEL(5));
   DLINEAR_TRACE("Start qsopt_ex");
   dlinear::qsopt_ex::QSXStart();
   dlinear::qsopt_ex::QSXFinish();

@@ -3,34 +3,46 @@
  * @author dlinear
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
- * Assert macro. Assert that the condition is true, otherwise abort.
+ * @brief Utilities that verify assumptions made by the program and aborts
+ * the program if those assumptions are not true.
  *
- * If NDEBUG is defined, the assert macro does nothing.
+ * If NDEBUG is defined, most of the macro do nothing and give no explanation.
+ * It makes the program faster, but less useful for debugging.
  */
 #ifndef DLINEAR5_ASSERT_H
 #define DLINEAR5_ASSERT_H
 
+#include <stdexcept>
+
+using std::runtime_error;
+using std::terminate;
+using std::invalid_argument;
+
 #ifdef NDEBUG
+
 #define DLINEAR_ASSERT(condition, msg) ((void)0)
+#define DLINEAR_UNREACHABLE() terminate()
+#define DLINEAR_RUNTIME_ERROR(msg) throw runtime_error(msg)
+#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...) throw runtime_error()
+#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw runtime_error()
+
 #else
 
-#include <cassert>
-#include <cstdlib>
-#include <stdexcept>
 #include "dlinear/util/logging.h"
 #include <spdlog/fmt/fmt.h>
 
-using std::abort;
-using std::runtime_error;
-using std::invalid_argument;
-
-#define DLINEAR_ASSERT(condition, msg) assert(condition &&msg)
-#endif
+#define DLINEAR_ASSERT(condition, message)                                                                        \
+    do {                                                                                                          \
+        if (!(condition)) {                                                                                       \
+            DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}: {}", #condition, __FILE__, __LINE__, message);  \
+            terminate();                                                                                          \
+        }                                                                                                         \
+    } while (false)
 
 #define DLINEAR_UNREACHABLE()                                                   \
   do {                                                                          \
     DLINEAR_CRITICAL_FMT("{}:{} Should not be reachable.", __FILE__, __LINE__); \
-    abort();                                                                    \
+    terminate();                                                                \
   } while (false)
 
 #define DLINEAR_RUNTIME_ERROR(msg) \
@@ -46,5 +58,7 @@ using std::invalid_argument;
   } while (false)
 
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) throw invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
+
+#endif // NDEBUG
 
 #endif // DLINEAR5_ASSERT_H

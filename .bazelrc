@@ -3,3 +3,8 @@ build --workspace_status_command=scripts/workspace_status.sh
 
 # Default build
 build --cxxopt=-std=c++17
+
+# Optimized build
+build:opt --cxxopt=-O3
+build:opt --cxxopt=-DNDEBUG
+build:opt --cxxopt=-DNLOG

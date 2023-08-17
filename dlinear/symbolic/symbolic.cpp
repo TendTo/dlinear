@@ -1,4 +1,4 @@
-#include "dlinear/symbolic/symbolic.h"
+#include "symbolic.h"
 
 #include <algorithm>
 #include <iterator>

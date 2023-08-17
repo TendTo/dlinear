@@ -92,13 +92,13 @@ class Expression;
 // is used in Expression::Substitute and Formula::Substitute methods as an
 // argument.
 using ExpressionSubstitution =
-    std::unordered_map<Variable, Expression, hash_value < Variable>>;
+    std::unordered_map<Variable, Expression, hash_value<Variable>>;
 
 // FormulaSubstitution is a map from a Variable to a symbolic formula. It
 // is used in Expression::Substitute and Formula::Substitute methods as an
 // argument.
 using FormulaSubstitution =
-    std::unordered_map<Variable, Formula, hash_value < Variable>>;
+    std::unordered_map<Variable, Formula, hash_value<Variable>>;
 
 /** Represents a symbolic form of an expression.
 
@@ -572,8 +572,7 @@ Expression if_then_else(const Formula &f_cond, const Expression &e_then,
  * See also `FunctionalForm::Arbitrary(Variables v)` which shares the same
  * motivation.
  */
-Expression uninterpreted_function(const std::string &name,
-                                  const Variables &vars);
+Expression uninterpreted_function(const std::string &name, const Variables &vars);
 void swap(Expression &a, Expression &b);
 
 std::ostream &operator<<(std::ostream &os, const Expression &e);

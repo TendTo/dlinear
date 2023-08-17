@@ -3,7 +3,7 @@
  * @author dlinear
  * @date 14 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Context implementation for the Qsoptex LP solver.
  *
  * Long Description
  */
@@ -14,7 +14,12 @@
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/logging.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/IfThenElseEliminator.h"
+
 #include <tl/optional.hpp>
+
+using tl::optional;
 
 namespace dlinear {
 

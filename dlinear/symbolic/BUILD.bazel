@@ -24,4 +24,34 @@ dlinear_cc_library(
     ],
 )
 
+dlinear_cc_library(
+    name = "literal",
+    srcs = ["literal.cpp"],
+    hdrs = ["literal.h"],
+    deps = [":symbolic"],
+)
+
+dlinear_cc_library(
+    name = "nnfizier",
+    srcs = ["Nnfizer.cpp"],
+    hdrs = ["Nnfizer.h"],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "if_then_else_eliminator",
+    srcs = ["IfThenElseEliminator.cpp"],
+    hdrs = ["IfThenElseEliminator.h"],
+    deps = [
+        ":nnfizier",
+        ":symbolic",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
+)
+
 cpplint()

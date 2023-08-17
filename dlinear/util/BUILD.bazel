@@ -14,6 +14,7 @@ dlinear_cc_library(
         ":config",
         ":exception",
         ":logging",
+        "//dlinear:version",
         "@argparse",
         "@spdlog",
     ],
@@ -40,6 +41,7 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "logging",
+    srcs = ["logging.cpp"],
     hdrs = ["logging.h"],
     deps = ["@spdlog"],
 )
@@ -92,6 +94,20 @@ dlinear_cc_library(
     name = "scoped_vector",
     hdrs = ["ScopedVector.hpp"],
     deps = [":exception"],
+)
+
+dlinear_cc_library(
+    name = "filesystem",
+    srcs = ["filesystem.cpp"],
+    hdrs = ["filesystem.h"],
+    deps = [":logging"],
+)
+
+dlinear_cc_library(
+    name = "timer",
+    srcs = ["Timer.cpp"],
+    hdrs = ["Timer.h"],
+    deps = [":logging"],
 )
 
 cpplint()

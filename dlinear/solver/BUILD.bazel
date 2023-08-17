@@ -23,6 +23,7 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/smt2:logic",
         "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:logging",

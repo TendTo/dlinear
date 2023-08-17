@@ -1,5 +1,7 @@
 licenses(["notice"])
 
+package(default_visibility = ["//visibility:public"])
+
 # Headers to expose.
 filegroup(
     name = "headers",
@@ -13,7 +15,6 @@ filegroup(
         "dlinear/symbolic/symbolic_variable.h",
         "dlinear/symbolic/symbolic_variables.h",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -32,11 +33,8 @@ cc_library(
         "dlinear/symbolic/symbolic_variable.cc",
         "dlinear/symbolic/symbolic_variables.cc",
     ],
-    hdrs = [
-        ":headers",
-    ],
+    hdrs = [":headers"],
     includes = ["."],
-    visibility = ["//visibility:public"],
     deps = [
         "//dlinear/libs:gmp",
         "//dlinear/util:infty",

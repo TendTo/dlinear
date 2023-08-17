@@ -7,7 +7,7 @@
 #include "ArgParser.h"
 
 namespace dlinear {
-ArgParser::ArgParser() : parser_{DLINEAR_NAME, DLINEAR_VERSION} {
+ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
   DLINEAR_TRACE("ArgParser::ArgParser");
   addOptions();
 }
@@ -15,7 +15,7 @@ ArgParser::ArgParser() : parser_{DLINEAR_NAME, DLINEAR_VERSION} {
 void ArgParser::parse(int argc, const char **argv) {
   try {
     parser_.parse_args(argc, argv);
-    DLINEAR_LOG_INIT(DLINEAR_VERBOSITY_TO_LOG_LEVEL(parser_.get<int>("verbosity")));
+    DLINEAR_LOG_INIT_LEVEL(DLINEAR_VERBOSITY_TO_LOG_LEVEL(parser_.get<int>("verbosity")));
     validateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   }
@@ -32,9 +32,9 @@ void ArgParser::parse(int argc, const char **argv) {
 
 void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::addOptions: adding options");
-  parser_.add_description(DLINEAR_NAME
+  parser_.add_description(DLINEAR_PROGRAM_NAME
   "("
-  DLINEAR_VERSION
+  DLINEAR_VERSION_STRING
   "): delta-complete SMT solver");
   parser_.add_argument("file")
       .help("input file");

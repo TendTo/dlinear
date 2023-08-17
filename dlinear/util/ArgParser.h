@@ -19,13 +19,7 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/logging.h"
-
-#ifndef DLINEAR_NAME
-#define DLINEAR_NAME "dlinear"
-#endif
-#ifndef DLINEAR_VERSION
-#define DLINEAR_VERSION "0.0.1"
-#endif
+#include "dlinear/version.h"
 
 using std::string;
 using std::ostream;

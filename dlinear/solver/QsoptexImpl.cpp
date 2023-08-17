@@ -11,8 +11,9 @@ namespace dlinear {
 
 Context::QsoptexImpl::QsoptexImpl() : Context::QsoptexImpl{Config{}} {}
 
-Context::QsoptexImpl::QsoptexImpl(Config config)
-    : Context::Impl{config}, sat_solver_{config_}, theory_solver_{config_} {}
+Context::QsoptexImpl::QsoptexImpl(Config config) : Context::Impl{config},
+                                                   sat_solver_{config_},
+                                                   theory_solver_{config_} {}
 
 void Context::QsoptexImpl::Assert(const Formula &f) {
   if (is_true(f)) {
@@ -108,7 +109,8 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
             // UNSAT from TheorySolver.
             DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNSAT");
           } else {
-            DLINEAR_ASSERT(theory_result == SAT_UNSOLVED, "Unexpected result from TheorySolver instead of SAT_UNSOLVED");
+            DLINEAR_ASSERT(theory_result == SAT_UNSOLVED,
+                           "Unexpected result from TheorySolver instead of SAT_UNSOLVED");
             DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNKNOWN");
             have_unsolved = true;  // Will prevent return of UNSAT
           }
@@ -201,8 +203,7 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
         return LP_UNBOUNDED;
       } else {
         if (LP_DELTA_OPTIMAL == theory_result) {
-          DLINEAR_DEBUG_FMT(
-              "Context::QsoptexImpl::CheckOptCore() - Theory Check = delta-OPTIMAL");
+          DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Theory Check = delta-OPTIMAL");
           // Within Context::Impl, the problem is always a minimization.
           if (!have_opt_cand || new_obj_lo < *obj_lo) {
             // This LP could yield the global optimum, which could therefore
@@ -238,10 +239,9 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
         }
         // Force SAT solver to find new regions.
         const LiteralSet &explanation{theory_solver_.GetExplanation()};
-        DLINEAR_DEBUG_FMT(
-            "Context::QsoptexImpl::CheckOptCore() - size of explanation = {} - stack "
-            "size = {}",
-            explanation.size(), stack.get_vector().size());
+        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - size of explanation = {} - stack size = {}",
+                          explanation.size(),
+                          stack.get_vector().size());
         sat_solver_.AddLearnedClause(explanation);
       }
     } else {

@@ -3,16 +3,69 @@
  * @author dlinear
  * @date 15 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief NNF (Negation Normal Form) conversion.
  *
- * Long Description
+ * NNFizer class converts a formula into an equivalent formula in NNF.
+ * @see https://en.wikipedia.org/wiki/Negation_normal_form
  */
 
 #ifndef DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
 #define DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
 
+#include "dlinear/symbolic/symbolic.h"
+
 namespace dlinear {
 
+/**
+ * NNFizer class
+ *
+ * Implementation of NNF (Negation Normal Form) conversion.
+ * When @code push_negation_into_relationals @endcode is true, it pushed
+ * negations into relational formulas by flipping relational
+ * @example ¬(x >= 10) becomes (x < 10).
+ *
+ * @see https://en.wikipedia.org/wiki/Negation_normal_form
+ */
+class Nnfizer {
+ public:
+  /// Converts @p f into an equivalent formula @c f' in NNF.
+  /**
+   * Convert a @p f into an equivalent formula @c f' in NNF.
+   * @param f Formula to be converted.
+   * @param push_negation_into_relationals Push negation into relational formulas.
+   * @return Converted formula.
+   */
+  [[nodiscard]] Formula Convert(const Formula &f, bool push_negation_into_relationals = false) const;
+
+ private:
+  /**
+   * Convert @p f into an equivalent formula @c f' in NNF. The parameter @p polarity
+   * is to indicate whether it processes @c f (if @p polarity is true) or @c ¬f (if @p polarity is false).
+   * @param f Formula to be converted.
+   * @param polarity Polarity.
+   * @param push_negation_into_relationals Push negation into relational formulas.
+   * @return Converted formula.
+   */
+  [[nodiscard]] Formula Visit(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+
+  [[nodiscard]] Formula VisitFalse(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitTrue(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitVariable(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitGreaterThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitLessThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitNegation(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]] Formula VisitForall(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+
+  // Makes VisitFormula a friend of this class so that it can use private
+  // methods.
+  friend Formula drake::symbolic::VisitFormula<Formula>(const Nnfizer *, const Formula &, const bool &, const bool &);
+};
 } // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
