@@ -32,3 +32,13 @@ dlinear_cc_googletest(
     name = "test_math",
     deps = ["//dlinear/util:math"],
 )
+
+dlinear_cc_googletest(
+    name = "test_scoped_vector",
+    deps = ["//dlinear/util:scoped_vector"],
+)
+
+dlinear_cc_googletest(
+    name = "test_timer",
+    deps = ["//dlinear/util:timer"],
+)

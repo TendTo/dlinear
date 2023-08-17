@@ -1,4 +1,4 @@
-#include "prefix_printer.h"
+#include "PrefixPrinter.h"
 
 namespace dlinear {
 

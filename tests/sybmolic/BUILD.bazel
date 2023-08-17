@@ -28,3 +28,19 @@ dlinear_cc_googletest(
         "//dlinear/symbolic:nnfizier",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_symbolic",
+    deps = [
+        ":test_symbolic_utils",
+        "//dlinear/symbolic",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_prefix_printer",
+    deps = [
+        ":test_symbolic_utils",
+        "//dlinear/symbolic",
+    ],
+)

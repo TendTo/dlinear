@@ -41,7 +41,7 @@ class TimerBase {
   /**
    * Start the timer.
    *
-   * If the timer is already running, this function does nothing.
+   * The timer is reset to zero.
    */
   void start();
 
