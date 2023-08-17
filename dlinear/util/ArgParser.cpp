@@ -6,8 +6,18 @@
  */
 #include "ArgParser.h"
 
+#include <utility>
+
 namespace dlinear {
 ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
+  DLINEAR_TRACE("ArgParser::ArgParser");
+  addOptions();
+}
+
+ArgParser::ArgParser(string qsopt_exHash, string soplexHash) : parser_{DLINEAR_PROGRAM_NAME,
+                                                                       DLINEAR_VERSION_STRING},
+                                                               qsoptex_hash_{std::move(qsopt_exHash)},
+                                                               soplex_hash_{std::move(soplexHash)} {
   DLINEAR_TRACE("ArgParser::ArgParser");
   addOptions();
 }
@@ -15,7 +25,7 @@ ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
 void ArgParser::parse(int argc, const char **argv) {
   try {
     parser_.parse_args(argc, argv);
-    DLINEAR_LOG_INIT_LEVEL(DLINEAR_VERBOSITY_TO_LOG_LEVEL(parser_.get<int>("verbosity")));
+    DLINEAR_LOG_INIT_VERBOSITY(parser_.get<int>("verbosity"));
     validateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   }
@@ -32,12 +42,10 @@ void ArgParser::parse(int argc, const char **argv) {
 
 void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::addOptions: adding options");
-  parser_.add_description(DLINEAR_PROGRAM_NAME
-  "("
-  DLINEAR_VERSION_STRING
-  "): delta-complete SMT solver");
+  parser_.add_description(prompt());
   parser_.add_argument("file")
-      .help("input file");
+      .help("input file")
+      .default_value("");
   parser_.add_argument("-j", "--jobs")
       .help("set the number of jobs")
       .default_value(DLINEAR_DEFAULT_NUMBER_OF_JOBS)
@@ -66,7 +74,7 @@ void ArgParser::addOptions() {
       .implicit_value(true);
   parser_.add_argument("--format")
       .help("file format. Any one of these: smt2, auto (use file extension)")
-      .default_value("auto") // TODO: check config
+      .default_value(string{"auto"}) // TODO: check config
       .action([](const std::string &value) {
         if (value != "smt2" && value != "auto") DLINEAR_INVALID_ARGUMENT("--format", value);
         return value;
@@ -178,6 +186,9 @@ ostream &operator<<(ostream &os, const ArgParser &parser) {
 Config ArgParser::toConfig() const {
   DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
   Config config{};
+  config.mutable_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<string>("file") : "");
+  if (parser_.is_used("in"))
+    config.mutable_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
   if (parser_.is_used("precision"))
     config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
   if (parser_.is_used("produce-models"))
@@ -218,6 +229,20 @@ Config ArgParser::toConfig() const {
 
 void ArgParser::validateOptions() {
   DLINEAR_TRACE("ArgParser::validateOptions: validating options");
+  if (parser_.is_used("in") && parser_.is_used("file"))
+    DLINEAR_INVALID_ARGUMENT("--in", "cannot be set if file is specified");
+  if (!parser_.is_used("in") && !parser_.is_used("file"))
+    DLINEAR_INVALID_ARGUMENT("file", "must be specified if --in is not used");
+  // Check file extension
+  string format = parser_.get<string>("format");
+  string extension{get_extension(parser_.get<string>("file"))};
+  if (format == "auto" && extension != "smt2") {
+    DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 if --format is auto");
+  } else if (format != "auto" && format != extension) {
+    DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
+  }
+  if (!file_exists(parser_.get<string>("file")))
+    DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
   if (parser_.is_used("exhaustive") && parser_.is_used("precision"))
     DLINEAR_INVALID_ARGUMENT("--exhaustive", "cannot be set if --precision is used");
   if (parser_.get<double>("precision") == 0)
@@ -238,6 +263,34 @@ void ArgParser::validateOptions() {
                                             "to find all delta-sat thresholds.");
   if (parser_.get<double>("precision") < 0)
     DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
+}
+string ArgParser::version() const {
+  return DLINEAR_VERSION_STRING;
+}
+
+string ArgParser::repositoryStatus() const {
+  return DLINEAR_VERSION_REPOSTAT;
+}
+
+string ArgParser::prompt() const {
+#ifndef NDEBUG
+  const string build_type{"Debug"};
+#else
+  const string build_type{"Release"};
+#endif
+  string repo_stat = repositoryStatus();
+  if (!repo_stat.empty()) {
+    repo_stat = " (repository: " + repo_stat + ")";
+  }
+
+  string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}",
+                            DLINEAR_PROGRAM_NAME,
+                            version(),
+                            build_type,
+                            repo_stat);
+  if (!qsoptex_hash_.empty()) vstr += fmt::format(" (qsopt-ex: {})", qsoptex_hash_);
+  if (!soplex_hash_.empty()) vstr += fmt::format(" (soplex: {})", soplex_hash_);
+  return vstr;
 }
 
 } // namespace dlinear

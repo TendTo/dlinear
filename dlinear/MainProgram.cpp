@@ -12,46 +12,6 @@
 
 namespace dlinear {
 
-using dlinear::util::InftyFinish;
-using dlinear::util::InftyStart;
-
-namespace {
-string get_version_string() {
-#ifndef NDEBUG
-  const string build_type{"Debug"};
-#else
-  const string build_type{"Release"};
-#endif
-  string repo_stat = Context::repository_status();
-  if (!repo_stat.empty()) {
-    repo_stat = " (repository: " + repo_stat + ")";
-  }
-  string vstr = fmt::format("v{} ({} Build){} (qsopt-ex: {})",
-                            Context::version(), build_type, repo_stat,
-                            qsopt_ex::QSopt_ex_repository_status());
-#if HAVE_SOPLEX
-  vstr += fmt::format(" (soplex: {})", soplex::getGitHash());
-#endif
-  return vstr;
-}
-}  // namespace
-
-void MainProgram::ExtractOptions() {
-
-  // --precision
-
-    string precision_str;
-    opt_.get("--precision")->getString(precision_str);
-    RoundingModeGuard guard(FE_DOWNWARD);
-    double precision = stod(precision_str);
-    // This allows us to replace strict inequalities with non-strict ones
-    precision = nextafter(precision, -numeric_limits<double>::infinity());
-    DREAL_ASSERT(precision >= 0);
-    config_.mutable_precision().set_from_command_line(precision);
-    DREAL_LOG_DEBUG("MainProgram::ExtractOptions() --precision = {} ({})",
-                    config_.precision(), mpq_class(config_.precision()));
-}
-
 void MainProgram::Init() {
   if (config_.lp_solver() == Config::QSOPTEX) {
     qsopt_ex::QSXStart();
@@ -73,6 +33,19 @@ void MainProgram::DeInit() {
   if (config_.lp_solver() == Config::QSOPTEX) {
     qsopt_ex::QSXFinish();
   }
+}
+
+int MainProgram::Run() {
+  if (config_.filename().empty()) {
+    PrintUsage();
+    return 1;
+  }
+}
+
+MainProgram::MainProgram(int argc, const char **argv) {
+  ArgParser parser{QSopt_ex_repository_status(), soplex::getGitHash()};
+  parser.parse(argc, argv);
+  config_ = parser.toConfig();
 }
 
 int MainProgram::Run() {

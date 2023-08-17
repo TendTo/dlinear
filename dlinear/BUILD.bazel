@@ -36,11 +36,12 @@ dlinear_cc_binary(
 )
 
 dlinear_cc_binary(
-    name = "test",
-    srcs = ["test.cpp"],
+    name = "argpatser",
+    srcs = ["argparser.cpp"],
     features = ["fully_static_link"],
     linkstatic = 1,
     deps = [
+        "//dlinear/util:argparser",
         "//dlinear/util:logging",
     ],
 )
@@ -54,6 +55,27 @@ dlinear_cc_binary(
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
+    ],
+)
+
+dlinear_cc_binary(
+    name = "argparser",
+    srcs = ["argparser.cpp"],
+    features = ["fully_static_link"],
+    linkstatic = 1,
+    deps = [
+        "//dlinear/util:argparser",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_binary(
+    name = "test",
+    srcs = ["test.cpp"],
+    features = ["fully_static_link"],
+    linkstatic = 1,
+    deps = [
+        "@picosat",
     ],
 )
 

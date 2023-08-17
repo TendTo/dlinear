@@ -6,7 +6,3 @@
  */
 
 #include "soplex.h"
-
-namespace dlinear::soplex {
-
-} // namespace dlinear::soplex

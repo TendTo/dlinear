@@ -17,6 +17,7 @@
 #include "dlinear/util/exception.h"
 
 #define DLINEAR_DEFAULT_PRECISION 9.999999999999996e-4
+#define DLINEAR_DEFAULT_READ_FROM_STDIN false
 #define DLINEAR_DEFAULT_EXHAUSTIVE false
 #define DLINEAR_DEFAULT_PRODUCE_MODELS false
 #define DLINEAR_DEFAULT_USE_POLYTOPE false
@@ -61,6 +62,18 @@ class Config {
   Config &operator=(const Config &) = default;
   Config &operator=(Config &&) = default;
   ~Config() = default;
+
+  /** Input file name */
+  [[nodiscard]] string filename() const { return filename_.get(); }
+
+  /** Mutable input file name */
+  [[nodiscard]] OptionValue<string> &mutable_filename() { return filename_; }
+
+  /** Whether to read from stdin */
+  [[nodiscard]] bool read_from_stdin() const { return read_from_stdin_.get(); }
+
+  /** Mutable option on whether to read from stdin */
+  [[nodiscard]] OptionValue<bool> &mutable_read_from_stdin() { return read_from_stdin_; }
 
   /** Precision option */
   [[nodiscard]] double precision() const { return precision_.get(); }
@@ -189,6 +202,8 @@ class Config {
   static constexpr double kDefaultNloptMaxTime{DLINEAR_DEFAULT_NLOPT_MAX_TIME};
 
  private:
+  OptionValue<string> filename_{""};
+  OptionValue<bool> read_from_stdin_{DLINEAR_DEFAULT_READ_FROM_STDIN};
   OptionValue<double> precision_{kDefaultPrecision};
   OptionValue<bool> produce_models_{DLINEAR_DEFAULT_PRODUCE_MODELS};
   OptionValue<bool> use_polytope_{DLINEAR_DEFAULT_USE_POLYTOPE};

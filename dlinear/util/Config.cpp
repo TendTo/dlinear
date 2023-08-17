@@ -20,6 +20,8 @@ ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phas
 
 ostream &operator<<(ostream &os, const Config &config) {
   return os << "Config {" << endl
+            << "filename = '" << config.filename_.get() << "', " << endl
+            << "read_from_stdin = " << config.read_from_stdin_.get() << ", " << endl
             << "precision = " << config.precision_.get() << ", " << endl
             << "produce_model = " << config.produce_models_.get() << ", " << endl
             << "use_polytope = " << config.use_polytope_.get() << ", " << endl

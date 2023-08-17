@@ -17,8 +17,4 @@
 #define SOPLEX_WITH_GMP
 #include <soplex.h>
 
-namespace dlinear {
-
-} // namespace dlinear::soplex
-
 #endif //DLINEAR5_DLINEAR_LIBS_SOPLEX_H_

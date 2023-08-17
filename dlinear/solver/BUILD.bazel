@@ -23,12 +23,39 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/smt2:logic",
         "//dlinear/symbolic",
+        "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/symbolic:literal",
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_vector",
         "@tl_optional",
+    ],
+)
+
+dlinear_cc_library(
+    name = "qsopt_ex_impl",
+    srcs = ["QsoptexImpl.cpp"],
+    hdrs = ["QsoptexImpl.h"],
+    deps = [
+        ":context",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:if_then_else_eliminator",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "qsopt_ex_sat_solver",
+    srcs = ["QsoptexSatSolver.cpp"],
+    hdrs = ["QsoptexSatSolver.h"],
+    deps = [
+        ":qsopt_ex_impl",
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:config",
+        "@picosat",
     ],
 )
 

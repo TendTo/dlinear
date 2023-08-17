@@ -72,6 +72,14 @@ github_archive(
     sha256 = "88ece79f3de5ccaec4191951a222f95cc80c4381dafd3163bdb1ff87cedf3118",
 )
 
+github_archive(
+    name = "picosat",  # MIT
+    build_file = "//third_party:picosat.BUILD.bazel",
+    commit = "4ee7aa1d1c645df8fa9daa07f2be17c6d03b35fc",  # master
+    repository = "dreal-deps/picosat",
+    sha256 = "1be461d3659d4e3dc957a718ed295941c38dc822fd22a67f4cb5d180f0b6a7a3",
+)
+
 # https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
 new_local_repository(
     name = "linux_libs",

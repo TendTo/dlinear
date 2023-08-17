@@ -19,6 +19,7 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/logging.h"
+#include "dlinear/util/filesystem.h"
 #include "dlinear/version.h"
 
 using std::string;
@@ -31,6 +32,8 @@ namespace dlinear {
 class ArgParser {
  private:
   argparse::ArgumentParser parser_;
+  string qsoptex_hash_;
+  string soplex_hash_;
 
   void addOptions();
 
@@ -38,8 +41,15 @@ class ArgParser {
 
  public:
   ArgParser();
+  explicit ArgParser(string qsopt_exHash, string soplexHash = "");
 
   void parse(int argc, const char **argv);
+
+  [[nodiscard]] string version() const;
+
+  [[nodiscard]] string repositoryStatus() const;
+
+  [[nodiscard]] string prompt() const;
 
   friend ostream &operator<<(ostream &os, const ArgParser &parser);
 

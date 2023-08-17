@@ -49,8 +49,7 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
 optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack,
                                                   Box box,
                                                   mpq_class *actual_precision) {
-  DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore()");
-  DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckSat: Box =\n{}", box);
+  DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckSatCore: Box =\n{}", box);
   if (box.empty()) {
     return {};
   }
@@ -89,7 +88,7 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
       const vector<pair<Variable, bool>> &theory_model{optional_model->second};
       if (!theory_model.empty()) {
         // SAT from SATSolver.
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Sat Check = SAT");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = SAT");
 
         // The selected assertions (and objective function, where applicable)
         // have already been enabled in the LP solver
@@ -100,26 +99,23 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
                                     actual_precision)};
         if (theory_result == SAT_DELTA_SATISFIABLE) {
           // SAT from TheorySolver.
-          DLINEAR_DEBUG_FMT(
-              "Context::QsoptexImpl::CheckSatCore() - Theory Check = delta-SAT");
+          DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = delta-SAT");
           Box model{theory_solver_.GetModel()};
           return model;
         } else {
           if (theory_result == SAT_UNSATISFIABLE) {
             // UNSAT from TheorySolver.
-            DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNSAT");
+            DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNSAT");
           } else {
             DLINEAR_ASSERT(theory_result == SAT_UNSOLVED,
                            "Unexpected result from TheorySolver instead of SAT_UNSOLVED");
-            DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNKNOWN");
+            DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = UNKNOWN");
             have_unsolved = true;  // Will prevent return of UNSAT
           }
           // Force SAT solver to find new regions
           const LiteralSet &explanation{theory_solver_.GetExplanation()};
-          DLINEAR_DEBUG_FMT(
-              "Context::QsoptexImpl::CheckSatCore() - size of explanation = {} - stack "
-              "size = {}",
-              explanation.size(), stack.get_vector().size());
+          DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - size of explanation = {} - stack size = {}",
+                            explanation.size(), stack.get_vector().size());
           sat_solver_.AddLearnedClause(explanation);
         }
       } else {
@@ -128,11 +124,11 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
     } else {
       if (have_unsolved) {
         // Can't assert UNSAT, because some branches were unsolved.
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Sat Check = UNKNOWN");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = UNKNOWN");
         DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
       }
       // UNSAT from SATSolver. Escape the loop.
-      DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Sat Check = UNSAT");
+      DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = UNSAT");
       return {};
     }
   }
@@ -141,7 +137,6 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
 int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
                                        mpq_class *obj_lo, mpq_class *obj_up,
                                        Box *box) {
-  DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore()");
   DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckOpt: Box =\n{}", *box);
   if (box->empty()) {
     return LP_INFEASIBLE;
@@ -189,7 +184,7 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
       // sat_solver.GetLinearVarMap().
 
       // SAT from SATSolver.
-      DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Sat Check = SAT");
+      DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Sat Check = SAT");
 
       // The selected assertions (and objective function, where applicable)
       // have already been enabled in the LP solver.
@@ -198,12 +193,12 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
                                   sat_solver_.GetLinearSolver(),
                                   sat_solver_.GetLinearVarMap())};
       if (LP_UNBOUNDED == theory_result) {
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNBOUNDED");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNBOUNDED");
         // Result is correct - can return immediately.
         return LP_UNBOUNDED;
       } else {
         if (LP_DELTA_OPTIMAL == theory_result) {
-          DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Theory Check = delta-OPTIMAL");
+          DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = delta-OPTIMAL");
           // Within Context::Impl, the problem is always a minimization.
           if (!have_opt_cand || new_obj_lo < *obj_lo) {
             // This LP could yield the global optimum, which could therefore
@@ -228,12 +223,11 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
           have_opt_cand = true;
           // Must continue - to ensure that this is the best across all feasible regions.
         } else if (LP_INFEASIBLE == theory_result) {
-          DLINEAR_DEBUG_FMT(
-              "Context::QsoptexImpl::CheckOptCore() - Theory Check = INFEASIBLE");
+          DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = INFEASIBLE");
           // Must continue - to ensure that all regions are infeasible.
         } else {
           DLINEAR_ASSERT(LP_UNSOLVED == theory_result, "Unexpected theory result instead of LP_UNSOLVED");
-          DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNKNOWN");
+          DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNKNOWN");
           have_unsolved = true;  // Will prevent return of INFEASIBLE or delta-OPTIMAL.
           // Problem may still be found to be unbounded.
         }
@@ -248,13 +242,13 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
       // UNSAT from SATSolver. Must escape the loop, one way or another.
       if (have_unsolved) {
         // Can't assert infeasible or optimal, because some branches were unsolved.
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Sat Check = UNKNOWN");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Sat Check = UNKNOWN");
         DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
       } else if (have_opt_cand) {
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Sat Check = delta-OPTIMAL");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Sat Check = delta-OPTIMAL");
         return LP_DELTA_OPTIMAL;
       } else {
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Sat Check = INFEASIBLE");
+        DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Sat Check = INFEASIBLE");
         return LP_INFEASIBLE;
       }
     }
@@ -268,14 +262,14 @@ void Context::QsoptexImpl::MinimizeCore(const Expression &obj_expr) {
 }
 
 void Context::QsoptexImpl::Pop() {
-  DLINEAR_DEBUG_FMT("Context::QsoptexImpl::Pop()");
+  DLINEAR_DEBUG("Context::QsoptexImpl::Pop()");
   stack_.pop();
   boxes_.pop();
   sat_solver_.Pop();
 }
 
 void Context::QsoptexImpl::Push() {
-  DLINEAR_DEBUG_FMT("Context::QsoptexImpl::Push()");
+  DLINEAR_DEBUG("Context::QsoptexImpl::Push()");
   sat_solver_.Push();
   boxes_.push();
   boxes_.push_back(boxes_.last());

@@ -4,6 +4,7 @@
  * @date 09 Aug 2023
  * @copyright 2023 dlinear
  */
+
 #include "gmp.h"
 
 namespace std {

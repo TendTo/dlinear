@@ -1,0 +1,7 @@
+cc_library(
+    name = "picosat",
+    srcs = ["picosat.c"],
+    hdrs = ["picosat.h"],
+    include_prefix = "picosat",
+    visibility = ["//visibility:public"],
+)

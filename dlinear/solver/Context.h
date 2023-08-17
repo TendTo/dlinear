@@ -201,7 +201,7 @@ class Context {
   class SoplexImpl;
   class QsoptexImpl;
 
-  static unique_ptr <Context::Impl> make_impl(Config config);
+  static unique_ptr <Context::Impl> make_impl(const Config& config);
 
   unique_ptr <Impl> impl_;
 };

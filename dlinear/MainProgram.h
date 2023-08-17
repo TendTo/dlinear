@@ -15,6 +15,8 @@
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/libs/soplex.h"
+#include "dlinear/solver/Context.h"
+#include "dlinear/util/filesystem.h"
 
 using std::cerr;
 using std::cout;
@@ -52,7 +54,6 @@ class MainProgram {
   void ExtractOptions();
 
   bool is_options_all_valid_{false};
-  ArgParser parser_;
   Config config_;
 };
 

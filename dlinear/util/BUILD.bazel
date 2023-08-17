@@ -13,6 +13,7 @@ dlinear_cc_library(
     deps = [
         ":config",
         ":exception",
+        ":filesystem",
         ":logging",
         "//dlinear:version",
         "@argparse",
@@ -108,6 +109,18 @@ dlinear_cc_library(
     srcs = ["Timer.cpp"],
     hdrs = ["Timer.h"],
     deps = [":logging"],
+)
+
+dlinear_cc_library(
+    name = "predicate_abstractor",
+    srcs = ["PredicateAbstractor.cpp"],
+    hdrs = ["PredicateAbstractor.h"],
+    deps = [
+        ":logging",
+        ":stats",
+        ":timer",
+        "//dlinear/symbolic",
+    ],
 )
 
 cpplint()

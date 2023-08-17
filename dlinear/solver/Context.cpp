@@ -6,10 +6,11 @@
  */
 
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/QsoptexImpl.h"
 
 namespace dlinear {
 
-unique_ptr<Context::Impl> Context::make_impl(Config config) {
+unique_ptr<Context::Impl> Context::make_impl(const Config& config) {
   if (config.lp_solver() == Config::QSOPTEX)
     return make_unique<Context::QsoptexImpl>(config);
   if (config.lp_solver() == Config::SOPLEX)
@@ -31,7 +32,7 @@ Context::Context(Config config) : impl_{make_impl(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
-optional<Box> Context::CheckSat(mpq_class *actual_precision) {
+optional <Box> Context::CheckSat(mpq_class *actual_precision) {
   return impl_->CheckSat(actual_precision);
 }
 
@@ -113,7 +114,7 @@ const Box &Context::box() const { return impl_->box(); }
 
 const Box &Context::get_model() const { return impl_->get_model(); }
 
-const ScopedVector <Formula> &Context::assertions() const {
+const ScopedVector<Formula> &Context::assertions() const {
   return impl_->assertions();
 }
 
