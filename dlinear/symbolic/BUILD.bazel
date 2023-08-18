@@ -33,8 +33,14 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "nnfizier",
-    srcs = ["Nnfizer.cpp"],
-    hdrs = ["Nnfizer.h"],
+    srcs = [
+        "NaiveCnfizer.cpp",
+        "Nnfizer.cpp",
+    ],
+    hdrs = [
+        "NaiveCnfizer.h",
+        "Nnfizer.h",
+    ],
     deps = [
         ":symbolic",
         "//dlinear/util:logging",

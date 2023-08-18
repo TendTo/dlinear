@@ -10,6 +10,8 @@
 
 using std::unique_ptr;
 using std::make_unique;
+using std::vector;
+using std::string;
 using tl::optional;
 
 namespace dlinear {

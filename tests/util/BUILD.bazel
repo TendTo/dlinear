@@ -27,6 +27,14 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
+    name = "test_plaisted_greenbaum_cnfizer",
+    deps = [
+        "//dlinear/util:plaisted_greenbaum_cnfizer",
+        "//tests/sybmolic:test_symbolic_utils",
+    ],
+)
+
+dlinear_cc_googletest(
     name = "test_exception",
     deps = ["//dlinear/util:exception"],
 )

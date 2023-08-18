@@ -127,4 +127,18 @@ dlinear_cc_library(
     ],
 )
 
+dlinear_cc_library(
+    name = "plaisted_greenbaum_cnfizer",
+    srcs = ["PlaistedGreenbaumCnfizer.cpp"],
+    hdrs = ["PlaistedGreenbaumCnfizer.h"],
+    deps = [
+        ":exception",
+        ":logging",
+        ":stats",
+        ":timer",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:nnfizier",
+    ],
+)
+
 cpplint()

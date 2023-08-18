@@ -19,13 +19,14 @@
 #include <unordered_map>
 
 #include <tl/optional.hpp>
-#include <picosat.h>
+#include <picosat/picosat.h>
 
+#include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dreal/util/predicate_abstractor.h"
-#include "dreal/util/scoped_unordered_map.h"
-#include "dlinear/util/scoped_unordered_set.h"
+#include "dlinear/util/PredicateAbstractor.h"
+#include "dlinear/util/ScopedUnorderedMap.hpp"
+#include "dlinear/util/ScopedUnorderedSet.hpp"
 #include "dlinear/util/plaisted_greenbaum_cnfizer.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/libs/qsopt_ex.h"
@@ -76,8 +77,7 @@ class QsoptexSatSolver {
   ///
   /// @returns a witness, satisfying model if the problem is satisfiable.
   /// @returns nullopt if UNSAT.
-  optional <Model> CheckSat(const Box &box,
-                            const optional <Expression> obj_expr = optional<Expression>());
+  tl::optional <Model> CheckSat(const Box &box, const tl::optional <Expression> obj_expr = tl::optional<Expression>());
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();
@@ -183,7 +183,7 @@ class QsoptexSatSolver {
 
   /// Set of temporary Boolean variables introduced by CNF
   /// transformations.
-  ScopedUnorderedSet <Variable::Id> cnf_variables_;
+  ScopedUnorderedSet<Variable::Id> cnf_variables_;
 
   // Exact LP solver (QSopt_ex)
   qsopt_ex::mpq_QSprob qsx_prob_;
