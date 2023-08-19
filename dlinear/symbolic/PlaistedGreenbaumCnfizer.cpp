@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "PlaistedGreenbaumCnfizer.h"
+#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 
 using std::cout;
 using std::to_string;
@@ -65,23 +65,10 @@ Formula PlaistedGreenbaumCnfizer::Visit(const Formula &f) {
   return VisitFormula<Formula>(this, f);
 }
 
-Formula PlaistedGreenbaumCnfizer::VisitFalse(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitTrue(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitVariable(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitEqualTo(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitNotEqualTo(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitGreaterThan(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitGreaterThanOrEqualTo(const Formula &f) {
-  return f;
-}
-Formula PlaistedGreenbaumCnfizer::VisitLessThan(const Formula &f) { return f; }
-Formula PlaistedGreenbaumCnfizer::VisitLessThanOrEqualTo(const Formula &f) { return f; }
-
 Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   // We always need a variable
   static size_t id{0};
-  const Variable bvar{string("forall") + to_string(id++),
-                      Variable::Type::BOOLEAN};
+  const Variable bvar{string("forall") + to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
 
   // Given: f := ∀y. φ(x, y), this process CNFizes φ(x, y), pushes the
@@ -92,8 +79,7 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
   const Formula &quantified_formula{get_quantified_formula(f)};  // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
-  const set<Formula> clauses{
-      get_clauses(naive_cnfizer_.Convert(quantified_formula))};
+  const set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
   for (const Formula &clause : clauses) {
     set<Formula> new_clause_set{!bvar};
     if (is_disjunction(clause)) {

@@ -1,21 +1,21 @@
 /**
- * @file TestPlaistedGreenbaumCnfizer.cpp
+ * @file TestTseitinCnfizer.cpp
  * @author dlinear
- * @date 18 Aug 2023
+ * @date 19 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/util/PlaistedGreenbaumCnfizer.h"
-#include "tests/sybmolic/TestSymbolicUtils.h"
+#include "dlinear/symbolic/TseitinCnfizer.h"
+#include "TestSymbolicUtils.h"
 
 #include <gtest/gtest.h>
 
 using std::vector;
 using std::set;
-using dlinear::PlaistedGreenbaumCnfizer;
 using dlinear::Formula;
 using dlinear::Variable;
-using dlinear::drake::symbolic::ExpressionSubstitution;
 using dlinear::is_cnf;
+using dlinear::TseitinCnfizer;
+using dlinear::drake::symbolic::ExpressionSubstitution;
 
 // Naive SAT solving process.
 bool IsSatisfiable(const Formula &f) {
@@ -26,19 +26,18 @@ bool IsSatisfiable(const Formula &f) {
     return false;
   }
   const Variables &vars{f.GetFreeVariables()};
-  DLINEAR_ASSERT(!vars.empty(), "Vars should not be empty.");
+  DLINEAR_ASSERT(!vars.empty(), "Variables should not be empty.");
   const Variable &first_var{*vars.begin()};
-  return IsSatisfiable(f.Substitute(first_var, Formula::True()))
-      || IsSatisfiable(f.Substitute(first_var, Formula::False()));
+  return IsSatisfiable(f.Substitute(first_var, Formula::True())) ||
+      IsSatisfiable(f.Substitute(first_var, Formula::False()));
 }
 
-class PlaistedGreenbaumCnfizerTest : public ::testing::Test {
+class TestTseitinCnfizer : public ::testing::Test {
   DrakeSymbolicGuard guard_;
  protected:
   ::testing::AssertionResult CnfChecker(const Formula &f) {
     const vector<Formula> clauses{cnfizer_.Convert(f)};
-    const Formula f_cnf{
-        make_conjunction(set<Formula>{clauses.begin(), clauses.end()})};
+    const Formula f_cnf{make_conjunction(set<Formula>{clauses.begin(), clauses.end()})};
     // Check1: f_cnf should be in CNF.
     if (!is_cnf(f_cnf)) {
       return ::testing::AssertionFailure() << f_cnf << " is not in CNF.";
@@ -49,12 +48,10 @@ class PlaistedGreenbaumCnfizerTest : public ::testing::Test {
     for (const Formula &b1_val : {Formula::True(), Formula::False()}) {
       for (const Formula &b2_val : {Formula::True(), Formula::False()}) {
         for (const Formula &b3_val : {Formula::True(), Formula::False()}) {
-          const bool sat_f{IsSatisfiable(f.Substitute(
-              ExpressionSubstitution{},
-              {{b1_, (b1_val)}, {b2_, (b2_val)}, {b3_, (b3_val)}}))};
-          const bool sat_f_cnf{IsSatisfiable(
-              f_cnf.Substitute(ExpressionSubstitution{},
-                               {{b1_, b1_val}, {b2_, b2_val}, {b3_, b3_val}}))};
+          const bool sat_f{IsSatisfiable(f.Substitute(ExpressionSubstitution{},
+                                                      {{b1_, (b1_val)}, {b2_, (b2_val)}, {b3_, (b3_val)}}))};
+          const bool sat_f_cnf{IsSatisfiable(f_cnf.Substitute(ExpressionSubstitution{},
+                                                              {{b1_, b1_val}, {b2_, b2_val}, {b3_, b3_val}}))};
           if (sat_f != sat_f_cnf) {
             return ::testing::AssertionFailure()
                 << "The following formulas are not equi-satisfiable:\n"
@@ -75,10 +72,10 @@ class PlaistedGreenbaumCnfizerTest : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  PlaistedGreenbaumCnfizer cnfizer_;
+  TseitinCnfizer cnfizer_;
 };
 
-TEST_F(PlaistedGreenbaumCnfizerTest, Test) {
+TEST_F(TestTseitinCnfizer, Test) {
   vector<Formula> formulas;
   formulas.emplace_back(b1_);
   formulas.push_back(!b1_);

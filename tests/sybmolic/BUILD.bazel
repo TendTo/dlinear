@@ -44,3 +44,27 @@ dlinear_cc_googletest(
         "//dlinear/symbolic:prefix_printer",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_predicate_abstractor",
+    deps = [
+        ":test_symbolic_utils",
+        "//dlinear/symbolic:predicate_abstractor",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_plaisted_greenbaum_cnfizer",
+    deps = [
+        ":test_symbolic_utils",
+        "//dlinear/symbolic:plaisted_greenbaum_cnfizer",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_tseitin_cnfizer",
+    deps = [
+        ":test_symbolic_utils",
+        "//dlinear/symbolic:tseitin_cnfizer",
+    ],
+)

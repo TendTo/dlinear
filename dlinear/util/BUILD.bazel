@@ -115,30 +115,4 @@ dlinear_cc_library(
     deps = [":logging"],
 )
 
-dlinear_cc_library(
-    name = "predicate_abstractor",
-    srcs = ["PredicateAbstractor.cpp"],
-    hdrs = ["PredicateAbstractor.h"],
-    deps = [
-        ":logging",
-        ":stats",
-        ":timer",
-        "//dlinear/symbolic",
-    ],
-)
-
-dlinear_cc_library(
-    name = "plaisted_greenbaum_cnfizer",
-    srcs = ["PlaistedGreenbaumCnfizer.cpp"],
-    hdrs = ["PlaistedGreenbaumCnfizer.h"],
-    deps = [
-        ":exception",
-        ":logging",
-        ":stats",
-        ":timer",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:nnfizier",
-    ],
-)
-
 cpplint()

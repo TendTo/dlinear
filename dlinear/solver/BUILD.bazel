@@ -39,6 +39,7 @@ dlinear_cc_library(
     hdrs = ["QsoptexImpl.h"],
     deps = [
         ":context",
+        ":qsopt_ex_sat_solver",
         "//dlinear/symbolic",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/symbolic:literal",
@@ -51,11 +52,15 @@ dlinear_cc_library(
     srcs = ["QsoptexSatSolver.cpp"],
     hdrs = ["QsoptexSatSolver.h"],
     deps = [
-        ":qsopt_ex_impl",
         "//dlinear/libs:qsopt_ex",
+        "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:box",
         "//dlinear/util:config",
+        "//dlinear/util:scoped_structures",
         "@picosat",
+        "@tl_optional",
     ],
 )
 

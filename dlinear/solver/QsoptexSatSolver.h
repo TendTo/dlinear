@@ -24,10 +24,10 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/PredicateAbstractor.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/ScopedUnorderedSet.hpp"
-#include "dlinear/util/plaisted_greenbaum_cnfizer.h"
+#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/libs/qsopt_ex.h"
 

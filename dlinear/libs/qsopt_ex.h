@@ -52,18 +52,20 @@ class MpqArray {
    *
    * @return internal mpq_t array as a constant pointer
    */
-  explicit operator const mpq_t *() const {
-    return array;
-  }
+  explicit operator const mpq_t *() const { return array; }
 
   /**
    * Obtain a pointer to the internal array.
    *
    * @return internal mpq_t array
    */
-  explicit operator mpq_t *() {
-    return array;
-  }
+  explicit operator mpq_t *() { return array; }
+
+  mpq_t &operator[](const int idx) { return array[idx]; }
+
+  const mpq_t &operator[](const int idx) const { return array[idx]; }
+
+  [[nodiscard]] size_t size() const { return array ? reinterpret_cast<size_t *>(array)[-1] : 0; }
 
  private:
   mpq_t *array; ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().

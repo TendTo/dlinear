@@ -1,0 +1,16 @@
+load("//tools:dlinear.bzl", "dlinear_cc_googletest")
+
+dlinear_cc_googletest(
+    name = "test_gmp",
+    deps = ["//dlinear/libs:gmp"],
+)
+
+dlinear_cc_googletest(
+    name = "test_soplex",
+    deps = ["//dlinear/libs:soplex"],
+)
+
+dlinear_cc_googletest(
+    name = "test_qsopt_ex",
+    deps = ["//dlinear/libs:qsopt_ex"],
+)

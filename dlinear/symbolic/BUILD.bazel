@@ -25,6 +25,12 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "formula_visitor",
+    hdrs = ["FormulaVisitor.h"],
+    deps = [":symbolic"],
+)
+
+dlinear_cc_library(
     name = "literal",
     srcs = ["literal.cpp"],
     hdrs = ["literal.h"],
@@ -33,15 +39,20 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "nnfizier",
-    srcs = [
-        "NaiveCnfizer.cpp",
-        "Nnfizer.cpp",
-    ],
-    hdrs = [
-        "NaiveCnfizer.h",
-        "Nnfizer.h",
-    ],
+    srcs = ["Nnfizer.cpp"],
+    hdrs = ["Nnfizer.h"],
     deps = [
+        ":symbolic",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "cnfizer",
+    srcs = ["NaiveCnfizer.cpp"],
+    hdrs = ["NaiveCnfizer.h"],
+    deps = [
+        ":nnfizier",
         ":symbolic",
         "//dlinear/util:logging",
     ],
@@ -54,6 +65,50 @@ dlinear_cc_library(
     deps = [
         ":nnfizier",
         ":symbolic",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
+)
+
+dlinear_cc_library(
+    name = "predicate_abstractor",
+    srcs = ["PredicateAbstractor.cpp"],
+    hdrs = ["PredicateAbstractor.h"],
+    deps = [
+        ":formula_visitor",
+        ":symbolic",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
+)
+
+dlinear_cc_library(
+    name = "plaisted_greenbaum_cnfizer",
+    srcs = ["PlaistedGreenbaumCnfizer.cpp"],
+    hdrs = ["PlaistedGreenbaumCnfizer.h"],
+    deps = [
+        ":cnfizer",
+        ":formula_visitor",
+        ":nnfizier",
+        ":symbolic",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
+)
+
+dlinear_cc_library(
+    name = "tseitin_cnfizer",
+    srcs = ["TseitinCnfizer.cpp"],
+    hdrs = ["TseitinCnfizer.h"],
+    deps = [
+        ":cnfizer",
+        ":formula_visitor",
+        ":symbolic",
+        "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
         "//dlinear/util:timer",

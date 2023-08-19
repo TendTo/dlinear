@@ -17,13 +17,14 @@
 #include <sstream>
 
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/symbolic/FormulaVisitor.h"
 #include "dlinear/util/logging.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 
 namespace dlinear {
 
-class PredicateAbstractor {
+class PredicateAbstractor : public FormulaVisitor {
  public:
   /// Converts a first-order logic formula @p f into a Boolean formula
   /// by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
@@ -51,21 +52,18 @@ class PredicateAbstractor {
   }
 
  private:
-  Formula Visit(const Formula &f);
-  Formula VisitFalse(const Formula &f);
-  Formula VisitTrue(const Formula &f);
-  Formula VisitVariable(const Formula &f);
+  Formula Visit(const Formula &f) override;
   Formula VisitAtomic(const Formula &f);
-  Formula VisitEqualTo(const Formula &f);
-  Formula VisitNotEqualTo(const Formula &f);
-  Formula VisitGreaterThan(const Formula &f);
-  Formula VisitGreaterThanOrEqualTo(const Formula &f);
-  Formula VisitLessThan(const Formula &f);
-  Formula VisitLessThanOrEqualTo(const Formula &f);
-  Formula VisitConjunction(const Formula &f);
-  Formula VisitDisjunction(const Formula &f);
-  Formula VisitNegation(const Formula &f);
-  Formula VisitForall(const Formula &f);
+  Formula VisitEqualTo(const Formula &f) override;
+  Formula VisitNotEqualTo(const Formula &f) override;
+  Formula VisitGreaterThan(const Formula &f) override;
+  Formula VisitGreaterThanOrEqualTo(const Formula &f) override;
+  Formula VisitLessThan(const Formula &f) override;
+  Formula VisitLessThanOrEqualTo(const Formula &f) override;
+  Formula VisitConjunction(const Formula &f) override;
+  Formula VisitDisjunction(const Formula &f) override;
+  Formula VisitNegation(const Formula &f) override;
+  Formula VisitForall(const Formula &f) override;
 
   void Add(const Variable &var, const Formula &f);
 

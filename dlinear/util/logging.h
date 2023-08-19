@@ -60,6 +60,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 #define DLINEAR_CRITICAL(msg) get_logger(::dlinear::LoggerType::ERR)->critical(msg)
 #define DLINEAR_CRITICAL_FMT(msg, ...) get_logger(::dlinear::LoggerType::ERR)->critical(msg, ##__VA_ARGS__)
 #define DLINEAR_INFO_ENABLED (get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::info))
+#define DLINEAR_TRACE_ENABLED (get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::trace))
 
 #else
 
@@ -78,6 +79,8 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 #define DLINEAR_ERROR_FMT(msg, ...) void(0)
 #define DLINEAR_CRITICAL(msg) void(0)
 #define DLINEAR_CRITICAL_FMT(msg, ...) void(0)
+#define DLINEAR_INFO_ENABLED false
+#define DLINEAR_TRACE_ENABLED false
 
 #endif
 

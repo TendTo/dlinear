@@ -8,7 +8,7 @@
  * Long Description
  */
 
-#include "PredicateAbstractor.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
 
 using fmt::print;
 using std::cout;
@@ -63,7 +63,7 @@ Formula PredicateAbstractor::Convert(const Formula &f) {
   return Visit(f);
 }
 
-Formula PredicateAbstractor::Convert(const vector<Formula> &formulas) {
+Formula PredicateAbstractor::Convert(const vector <Formula> &formulas) {
   return Convert(
       make_conjunction(set<Formula>{formulas.begin(), formulas.end()}));
 }
@@ -78,21 +78,6 @@ Formula PredicateAbstractor::Visit(const Formula &f) {
     // Yes, we have processed this formula before.
     return Formula{it->second};
   }
-}
-
-Formula PredicateAbstractor::VisitFalse(const Formula &f) {
-  // Do nothing.
-  return f;
-}
-
-Formula PredicateAbstractor::VisitTrue(const Formula &f) {
-  // Do nothing.
-  return f;
-}
-
-Formula PredicateAbstractor::VisitVariable(const Formula &f) {
-  // Nothing to do for Boolean variables.
-  return f;
 }
 
 Formula PredicateAbstractor::VisitAtomic(const Formula &f) {

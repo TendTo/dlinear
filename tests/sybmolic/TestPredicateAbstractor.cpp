@@ -5,8 +5,8 @@
  * @copyright 2023 dlinear
  */
 
-#include "dlinear/util/PredicateAbstractor.h"
-#include "tests/sybmolic/TestSymbolicUtils.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
+#include "TestSymbolicUtils.h"
 
 #include <gtest/gtest.h>
 
