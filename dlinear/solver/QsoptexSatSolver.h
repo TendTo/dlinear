@@ -35,49 +35,66 @@ namespace dlinear {
 
 class QsoptexSatSolver {
  public:
-  // Boolean model + Theory model.
-  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
+  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>; ///< Boolean model + Theory model.
 
-  /// Constructs a QsoptexSatSolver.
+  /**
+   * Construct a QsoptexSatSolver.
+   * @param config configuration
+   */
   explicit QsoptexSatSolver(const Config &config);
 
-  /// Constructs a QsoptexSatSolver while asserting @p clauses.
+  /**
+   * Construct a QsoptexSatSolver while asserting @p clauses.
+   * @param config configuration
+   * @param clauses clauses to assertla
+   */
   QsoptexSatSolver(const Config &config, const std::vector<Formula> &clauses);
 
-  /// Deleted copy constructor.
+  /** Deleted copy constructor. */
   QsoptexSatSolver(const QsoptexSatSolver &) = delete;
 
-  /// Deleted move constructor.
+  /** Deleted move constructor. */
   QsoptexSatSolver(QsoptexSatSolver &&) = delete;
 
-  /// Deleted copy-assignment operator.
+  /** Deleted copy constructor. */
   QsoptexSatSolver &operator=(const QsoptexSatSolver &) = delete;
 
-  /// Deleted move-assignment operator.
+  /** Deleted move-assignment operator. */
   QsoptexSatSolver &operator=(QsoptexSatSolver &&) = delete;
 
   ~QsoptexSatSolver();
 
-  /// Adds a formula @p f to the solver.
-  ///
-  /// @note If @p f is a clause, please use AddClause function. This
-  /// function does not assume anything about @p f and perform
-  /// pre-processings (CNFize and PredicateAbstraction).
+  /**
+   * Add a formula @p f to the solver.
+   * @note If @p f is a clause, please use @link AddClause function. This
+   * function does not assume anything about @p f and perform
+   * pre-processings (CNFize and PredicateAbstraction).
+   * @param f formula to be added
+   */
   void AddFormula(const Formula &f);
 
-  /// Adds formulas @p formulas to the solver.
+  /**
+   * Add a vector of formulas @p formulas to the solver.
+   * @note If @p f is a clause, please use @link AddClauses function. This
+   * @param formulas
+   */
   void AddFormulas(const std::vector<Formula> &formulas);
 
-  /// Given a @p formulas = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to
-  /// the solver.
+  /**
+   * Given a @p formulas = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to
+   * the solver.
+   * @param literals literals contained in the new clause
+   */
   void AddLearnedClause(const LiteralSet &literals);
 
-  /// Checks the satisfiability of the current configuration.
-  /// Also sets up the linear solver returned by GetLinearSolver().
-  ///
-  /// @returns a witness, satisfying model if the problem is satisfiable.
-  /// @returns nullopt if UNSAT.
-  tl::optional <Model> CheckSat(const Box &box, const tl::optional <Expression> obj_expr = tl::optional<Expression>());
+  /**
+   * Check the satisfiability of the current configuration.
+   * Also set up the linear solver returned by GetLinearSolver().
+   * @param box box of variables to check
+   * @param obj_expr the objective expression to minimize
+   * @return a witness, satisfying model if the problem is satisfiable, nullopt if UNSAT
+   */
+  tl::optional <Model> CheckSat(const Box &box, tl::optional <Expression> obj_expr = tl::optional<Expression>());
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();
@@ -88,31 +105,42 @@ class QsoptexSatSolver {
     return predicate_abstractor_[var];
   }
 
-  qsopt_ex::mpq_QSprob GetLinearSolver() const {
+  mpq_QSprob GetLinearSolver() const {
     return qsx_prob_;
   }
 
   const std::map<int, Variable> &GetLinearVarMap() const;
 
  private:
-  // Adds a formula @p f to the solver.
-  //
-  // @pre @p f is a clause. That is, it is either a literal (b or ¬b)
-  // or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
+  /**
+   * Add a clause @p f to the solver.
+   * @note @p f must be a clause. That is, it is either a literal (b or ¬b)
+   * or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
+   * @param f clause to be added
+   */
   void AddClause(const Formula &f);
 
-  // Adds a vector of formulas @p formulas to the solver.
-  //
-  // @pre Each formula fᵢ ∈ formulas is a clause.
+  /**
+   * Add a vector of formulas @p formulas to the solver.
+   * @note Each element of @p formulas must be a clause. That is, it is either
+   * a literal (b or ¬b) or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
+   * @param formulas set of clauses to be added
+   */
   void AddClauses(const std::vector<Formula> &formulas);
 
-  // Returns a corresponding literal ID of @p var. It maintains two
-  // maps `lit_to_var_` and `var_to_lit_` to keep track of the
-  // relationship between Variable ⇔ Literal (in SAT).
+  /**
+   * Return a corresponding literal ID of @p var.
+   * It maintains two maps `lit_to_var_` and `var_to_lit_` to keep track of the
+   * relationship between Variable ⇔ Literal (in SAT).
+   * @param var
+   */
   void MakeSatVar(const Variable &var);
 
-  // Disable all literals in the linear solver, restricting variables to the
-  // given @p box only.
+  /**
+   * Disable all literals in the linear solver restricting variables to the
+   * given @p box only.
+   * @param box box of variables to restrict
+   */
   void ResetLinearProblem(const Box &box);
 
   // Add a symbolic formula @p f to @p clause.
@@ -186,10 +214,10 @@ class QsoptexSatSolver {
   ScopedUnorderedSet<Variable::Id> cnf_variables_;
 
   // Exact LP solver (QSopt_ex)
-  qsopt_ex::mpq_QSprob qsx_prob_;
+  mpq_QSprob qsx_prob_;
 
   // Map symbolic::Variable <-> int (column in QSopt_ex problem).
-  // We don't used the scoped version because we'd like to be sure that we
+  // We don't use the scoped version because we'd like to be sure that we
   // won't create duplicate columns.  No two Variable objects ever have the
   // same Id.
   std::map<Variable::Id, int> to_qsx_col_;

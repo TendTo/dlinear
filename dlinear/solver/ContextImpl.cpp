@@ -7,6 +7,8 @@
 
 #include "ContextImpl.h"
 
+#include <utility>
+
 using std::unordered_set;
 using std::string;
 using std::vector;
@@ -21,13 +23,18 @@ bool ParseBooleanOption(const string &key, const string &val) {
     return false;
   DLINEAR_RUNTIME_ERROR_FMT("Unknown value {} is provided for option {}", val, key);
 }
+
 }  // namespace
 
 namespace dlinear {
 
 Context::Impl::Impl() : Impl{Config{}} {}
 
-Context::Impl::Impl(Config config) : config_{config}, have_objective_{false}, is_max_{false} {
+Context::Impl::Impl(const Config &config) : config_{config}, have_objective_{false}, is_max_{false} {
+  boxes_.push_back(Box{});
+}
+
+Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objective_{false}, is_max_{false} {
   boxes_.push_back(Box{});
 }
 
@@ -83,7 +90,7 @@ void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Exp
   SetInterval(v, lb_fp, ub_fp);
 }
 
-void Context::Impl::Minimize(const vector<Expression> &functions) {
+void Context::Impl::Minimize(const vector <Expression> &functions) {
   if (functions.size() != 1) {
     DLINEAR_RUNTIME_ERROR("Must have exactly one objective function");
   }
@@ -94,7 +101,7 @@ void Context::Impl::Minimize(const vector<Expression> &functions) {
   MinimizeCore(obj_expr);
 }
 
-void Context::Impl::Maximize(const vector<Expression> &functions) {
+void Context::Impl::Maximize(const vector <Expression> &functions) {
   if (functions.size() != 1)
     DLINEAR_RUNTIME_ERROR("Must have exactly one objective function");
 

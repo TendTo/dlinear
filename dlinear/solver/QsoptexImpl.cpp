@@ -7,13 +7,17 @@
 
 #include "QsoptexImpl.h"
 
+#include <utility>
+
 using tl::optional;
+using std::vector;
+using std::pair;
 
 namespace dlinear {
 
 Context::QsoptexImpl::QsoptexImpl() : Context::QsoptexImpl{Config{}} {}
 
-Context::QsoptexImpl::QsoptexImpl(Config config) : Context::Impl{config},
+Context::QsoptexImpl::QsoptexImpl(Config config) : Context::Impl{std::move(config)},
                                                    sat_solver_{config_},
                                                    theory_solver_{config_} {}
 
@@ -82,12 +86,14 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
     DLINEAR_ASSERT(!have_objective_, "Unexpected objective");
     const auto optional_model = sat_solver_.CheckSat(box);
     if (optional_model) {
-      const vector <pair<Variable, bool>> &boolean_model{optional_model->first};
+      const vector<pair<Variable, bool>>
+          &boolean_model{optional_model->first};
       for (const pair<Variable, bool> &p : boolean_model) {
         // Here, we modify Boolean variables only (not used by the LP solver).
         box[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
       }
-      const vector <pair<Variable, bool>> &theory_model{optional_model->second};
+      const vector<pair<Variable, bool>>
+          &theory_model{optional_model->second};
       if (!theory_model.empty()) {
         // SAT from SATSolver.
         DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = SAT");
@@ -174,12 +180,14 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
     const auto optional_model =
         sat_solver_.CheckSat(*box, optional<Expression>(obj_expr_));
     if (optional_model) {
-      const vector <pair<Variable, bool>> &boolean_model{optional_model->first};
+      const vector<pair<Variable, bool>>
+          &boolean_model{optional_model->first};
       for (const pair<Variable, bool> &p : boolean_model) {
         // Here, we modify Boolean variables only (not used by the LP solver).
         (*box)[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
       }
-      const vector <pair<Variable, bool>> &theory_model{optional_model->second};
+      const vector<pair<Variable, bool>>
+          &theory_model{optional_model->second};
       // It doesn't matter if theory_model_ is empty, because CheckOpt() can
       // handle the no-constraints and no-bounds case.  All necessary
       // information is passed through via sat_solver_.GetLinearSolver() and
@@ -258,7 +266,7 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
 }
 
 void Context::QsoptexImpl::MinimizeCore(const Expression &obj_expr) {
-  DLINEAR_DEBUG_FMT("ContextImpl::Minimize(): Objective function is of kind {}", obj_expr.get_kind());
+  DLINEAR_DEBUG_FMT("ContextImpl::Minimize(): Objective function is {}", obj_expr.to_string());
   obj_expr_ = obj_expr;
   have_objective_ = true;
 }

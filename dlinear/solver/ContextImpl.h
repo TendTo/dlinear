@@ -22,7 +22,8 @@ namespace dlinear {
 class Context::Impl {
  public:
   Impl();
-  explicit Impl(Config config);
+  explicit Impl(const Config &config);
+  explicit Impl(Config &&config);
   Impl(const Impl &) = delete;
   Impl(Impl &&) = delete;
   Impl &operator=(const Impl &) = delete;
@@ -33,18 +34,18 @@ class Context::Impl {
   virtual void Pop() = 0;
   virtual void Push() = 0;
 
-  optional <Box> CheckSat(mpq_class *actual_precision);
+  tl::optional <Box> CheckSat(mpq_class *actual_precision);
   int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model);
   void DeclareVariable(const Variable &v, bool is_model_variable);
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
-  void Minimize(const vector<Expression> &functions);
-  void Maximize(const vector<Expression> &functions);
-  void SetInfo(const string &key, double val);
-  void SetInfo(const string &key, const string &val);
+  void Minimize(const std::vector<Expression> &functions);
+  void Maximize(const std::vector<Expression> &functions);
+  void SetInfo(const std::string &key, double val);
+  void SetInfo(const std::string &key, const std::string &val);
   void SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub);
   void SetLogic(const Logic &logic);
-  void SetOption(const string &key, double val);
-  void SetOption(const string &key, const string &val);
+  void SetOption(const std::string &key, double val);
+  void SetOption(const std::string &key, const std::string &val);
   const Config &config() const { return config_; }
   Config &mutable_config() { return config_; }
   const ScopedVector<Formula> &assertions() const;
@@ -65,7 +66,7 @@ class Context::Impl {
   void AddToBox(const Variable &v);
 
   /** Return the current box in the stack. */
-  virtual optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) = 0;
+  virtual tl::optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) = 0;
   virtual int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) = 0;
 
   virtual void MinimizeCore(const Expression &obj_expr) = 0;
@@ -87,15 +88,15 @@ class Context::Impl {
   Box ExtractModel(const Box &box) const;
 
   Config config_;
-  optional <Logic> logic_{};
-  unordered_map<string, string> info_;
-  unordered_map<string, string> option_;
+  tl::optional <Logic> logic_{};
+  std::unordered_map<std::string, std::string> info_;
+  std::unordered_map<std::string, std::string> option_;
 
   ScopedVector<Box> boxes_; ///< Stack of boxes. The top one is the current box.
   ScopedVector<Formula> stack_; ///< Stack of asserted formulas.
-  unordered_set<Variable::Id> model_variables_; ///< Set of model variables.
+  std::unordered_set<Variable::Id> model_variables_; ///< Set of model variables.
 
-  Box model_; ///< Stores the result of the latest checksat. If the checksat result was UNSAT, this box holds an empty box.
+  Box model_; ///< Stores the result of the latest checksat. If the checksat result was UNSAT, the model is empty.
 
   bool have_objective_; ///< Keeps track of whether or not there is an objective function.
   bool is_max_; ///< Keeps track of whether or not the objective function is being maximized.

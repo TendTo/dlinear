@@ -34,7 +34,7 @@ Context::Context(Context &&context) noexcept: impl_{std::move(context.impl_)} {}
 
 Context::~Context() = default;
 
-Context::Context(Config config) : impl_{make_impl(config)} {}
+Context::Context(const Config &config) : impl_{make_impl(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
@@ -61,7 +61,7 @@ void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }
 
 void Context::Minimize(const Expression &f) { impl_->Minimize({f}); }
 
-void Context::Minimize(const vector<Expression> &functions) {
+void Context::Minimize(const vector <Expression> &functions) {
   impl_->Minimize(functions);
 }
 

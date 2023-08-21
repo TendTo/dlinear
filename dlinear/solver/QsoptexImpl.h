@@ -16,6 +16,8 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
+#include "dlinear/solver/QsoptexSatSolver.h"
+#include "dlinear/solver/QsoptexTheorySolver.h"
 
 #include <tl/optional.hpp>
 
@@ -37,9 +39,9 @@ class Context::QsoptexImpl : public Context::Impl {
 
   void MinimizeCore(const Expression &obj_expr);
 
-  QsoptexSatSolver sat_solver_; // TODO: QsoptexSatSolver sat_solver_;
-  QsoptexTheorySolver theory_solver_; // TODO: QsoptexTheorySolver theory_solver_;
-  Expression obj_expr_;
+  QsoptexSatSolver sat_solver_; ///< SAT solver.
+  QsoptexTheorySolver theory_solver_; ///< Theory solver.
+  Expression obj_expr_; ///< Objective expression.
 };
 
 } // dlinear

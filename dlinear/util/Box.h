@@ -77,8 +77,7 @@ class Box {
   Box(const Box &) = default;
 
 /// Default move constructor.
-  Box(Box
-      &&) = default;
+  Box(Box &&) = default;
 
 /// Default copy assign operator.
   Box &operator=(const Box &) = default;
@@ -88,8 +87,7 @@ class Box {
   = default;
 
 /// Default destructor.
-  ~
-  Box() = default;
+  ~Box() = default;
 
 /// Adds @p v to the box.
   void Add(const Variable &v);
@@ -167,8 +165,7 @@ class Box {
 
   IntervalVector values_;
 
-  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>>
-      var_to_idx_;
+  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;
 
   std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;
 

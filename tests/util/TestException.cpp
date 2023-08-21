@@ -15,8 +15,8 @@ using std::invalid_argument;
 
 class TestException : public ::testing::Test {
  protected:
-  virtual void SetUp() { DLINEAR_LOG_INIT_VERBOSITY(5); }
-  virtual void TearDown() { DLINEAR_LOG_INIT_VERBOSITY(-1); }
+  void SetUp() override { DLINEAR_LOG_INIT_VERBOSITY(5); }
+  void TearDown() override { DLINEAR_LOG_INIT_VERBOSITY(-1); }
 };
 
 TEST_F(TestException, AssertFail) {

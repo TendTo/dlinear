@@ -20,8 +20,7 @@ using tl::optional;
 
 namespace dlinear {
 
-QsoptexSatSolver::QsoptexSatSolver(const Config &config) : sat_{picosat_init()},
-                                                           cur_clause_start_{0}, config_(config) {
+QsoptexSatSolver::QsoptexSatSolver(const Config &config) : sat_{picosat_init()}, cur_clause_start_{0}, config_(config) {
   // Enable partial checks via picosat_deref_partial. See the call-site in
   // QsoptexSatSolver::CheckSat().
   picosat_save_original_clauses(sat_);
@@ -29,8 +28,7 @@ QsoptexSatSolver::QsoptexSatSolver(const Config &config) : sat_{picosat_init()},
     picosat_set_seed(sat_, config.random_seed());
     DLINEAR_DEBUG_FMT("QsoptexSatSolver::Set Random Seed {}", config.random_seed());
   }
-  picosat_set_global_default_phase(
-      sat_, static_cast<int>(config.sat_default_phase()));
+  picosat_set_global_default_phase(sat_, static_cast<int>(config.sat_default_phase()));
   DLINEAR_DEBUG_FMT("QsoptexSatSolver::Set Default Phase {}", config.sat_default_phase());
   qsx_prob_ = mpq_QScreate_prob(NULL, QS_MIN);
   DLINEAR_ASSERT(qsx_prob_, "Failed to create QSopt_ex problem");
@@ -103,10 +101,11 @@ class SatSolverStat : public Stats {
   ~SatSolverStat() override {
     if (enabled()) {
       using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat",
-            "SAT level", num_check_sat_);
-      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n",
-            "Total time spent in SAT checks", "SAT level",
+      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat", "SAT level", num_check_sat_);
+      print(cout,
+            "{:<45} @ {:<20} = {:>15f} sec\n",
+            "Total time spent in SAT checks",
+            "SAT level",
             timer_check_sat_.seconds());
     }
   }
@@ -121,8 +120,7 @@ class SatSolverStat : public Stats {
 set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
   set<int> lits;
   for (int i = 1; i <= picosat_variables(sat_); ++i) {
-    const int model_i{has_picosat_pop_used_ ? picosat_deref(sat_, i)
-                                            : picosat_deref_partial(sat_, i)};
+    const int model_i{has_picosat_pop_used_ ? picosat_deref(sat_, i) : picosat_deref_partial(sat_, i)};
     if (model_i == 0) {
       continue;
     }
@@ -131,7 +129,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
   for (auto it = lits.begin(); it != lits.end();) {
     int i = *it;
     int required = false;
-    // Determine whether literal `i' is required
+    // Determine whether literal `i` is required
     auto c_it = main_clause_lookup_.find(i);
     if (c_it != main_clause_lookup_.end()) {
       for (int c : c_it->second) {
@@ -147,7 +145,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
         DLINEAR_ASSERT(j < main_clauses_copy_.size(), "Buffer overrun");
         DLINEAR_ASSERT(count > 0, "Should contain at least 'i'");
         if (count == 1) {
-          // `i' is the only active literal in clause `c'; hence, required.
+          // `i` is the only active literal in clause `c`; hence, required.
           required = true;
           break;
         }
@@ -155,7 +153,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
     }
     if (!required) {
       // There is more than one literal in every main (non-learned) clause
-      // containing literal `i'.  Hence, it is not required.
+      // containing literal `i`.  Hence, it is not required.
       it = lits.erase(it);
     } else {
       ++it;
@@ -164,8 +162,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
   return lits;
 }
 
-optional <QsoptexSatSolver::Model>
-QsoptexSatSolver::CheckSat(const Box &box, const optional <Expression> obj_expr) {
+optional <QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, optional <Expression> obj_expr) {
   static SatSolverStat stat{DLINEAR_INFO_ENABLED};
   DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat(#vars = {}, #clauses = {})",
                     picosat_variables(sat_),
@@ -215,10 +212,10 @@ QsoptexSatSolver::CheckSat(const Box &box, const optional <Expression> obj_expr)
                           var);
       }
     }
-    DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat() Found a model.");
+    DLINEAR_DEBUG("QsoptexSatSolver::CheckSat() Found a model.");
     return model;
   } else if (ret == PICOSAT_UNSATISFIABLE) {
-    DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat() No solution.");
+    DLINEAR_DEBUG("QsoptexSatSolver::CheckSat() No solution.");
     // UNSAT Case.
     return {};
   } else {
@@ -230,7 +227,7 @@ QsoptexSatSolver::CheckSat(const Box &box, const optional <Expression> obj_expr)
 void QsoptexSatSolver::Pop() {
   // FIXME: disabled for QSopt_ex changes
   DLINEAR_RUNTIME_ERROR("QsoptexSatSolver::Pop() currently unsupported");
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::Pop()");
+  DLINEAR_DEBUG("QsoptexSatSolver::Pop()");
   cnf_variables_.pop();
   to_sym_var_.pop();
   to_sat_var_.pop();
@@ -241,7 +238,7 @@ void QsoptexSatSolver::Pop() {
 void QsoptexSatSolver::Push() {
   // FIXME: disabled for QSopt_ex changes
   DLINEAR_RUNTIME_ERROR("QsoptexSatSolver::Push() currently unsupported");
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::Push()");
+  DLINEAR_DEBUG("QsoptexSatSolver::Push()");
   picosat_push(sat_);
   to_sat_var_.push();
   to_sym_var_.push();
@@ -252,7 +249,7 @@ void QsoptexSatSolver::SetQSXVarCoef(int qsx_row, const Variable &var,
                                      const mpq_class &value) {
   const auto it = to_qsx_col_.find(var.get_id());
   if (it == to_qsx_col_.end()) {
-    DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}");
+    DLINEAR_RUNTIME_ERROR("Variable undefined: {}");
   }
   if (value <= mpq_ninfty() || value >= mpq_infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
@@ -280,8 +277,7 @@ void QsoptexSatSolver::SetQSXVarObjCoef(const Variable &var,
   mpq_clear(c_value);
 }
 
-void QsoptexSatSolver::SetQSXVarBound(const Variable &var, const char type,
-                                      const mpq_class &value) {
+void QsoptexSatSolver::SetQSXVarBound(const Variable &var, const char type, const mpq_class &value) {
   if (type == 'B') {
     // Both
     SetQSXVarBound(var, 'L', value);
@@ -484,9 +480,7 @@ void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) 
         || get_constant_value(map.begin()->second) != 1) {
       DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
     }
-    SetQSXVarCoef(qsx_row,
-                  get_variable(map.begin()->first),
-                  get_constant_in_multiplication(expr));
+    SetQSXVarCoef(qsx_row, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     for (const pair<const Expression, mpq_class> &pair : map) {
@@ -506,8 +500,7 @@ void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) 
   to_qsx_row_.emplace(make_pair(make_pair(formulaVar.get_id(), truth), qsx_row));
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == from_qsx_row_.size(), "Row count mismatch");
   from_qsx_row_.emplace_back(make_pair(formulaVar, truth));
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddLinearLiteral({}{} ↦ {})",
-                    truth ? "" : "¬", it->second, qsx_row);
+  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
 void QsoptexSatSolver::UpdateLookup(int lit, int learned) {
@@ -642,7 +635,7 @@ void QsoptexSatSolver::SetLinearObjective(const Expression &expr) {
 }
 
 const std::map<int, Variable> &QsoptexSatSolver::GetLinearVarMap() const {
-  DLINEAR_TRACE_FMT("QsoptexSatSolver::GetLinearVarMap(): from_qsx_col_ =");
+  DLINEAR_TRACE("QsoptexSatSolver::GetLinearVarMap(): from_qsx_col_ =");
   if (DLINEAR_TRACE_ENABLED) {
     for (const pair<int, Variable> kv : from_qsx_col_) {
       std::cerr << kv.first << ": " << kv.second << "\n";

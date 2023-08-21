@@ -61,16 +61,15 @@ std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
   }
 }
 
-Box::Box()
-    : variables_{make_shared < vector < Variable >> ()},
+Box::Box() : variables_{make_shared < vector < Variable >> ()},
     // We have this hack here because it is not allowed to have a
     // zero interval vector. Note that because of this special case,
     // `variables_->size() == values_.size()` do not hold. We should
     // rely on `values_.size()`.
-      values_(1),
-      var_to_idx_{
-          make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {}
+             values_(1),
+             var_to_idx_{
+                 make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
+             idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {}
 
 Box::Box(const vector <Variable> &variables)
     : variables_{make_shared < vector < Variable >> ()},

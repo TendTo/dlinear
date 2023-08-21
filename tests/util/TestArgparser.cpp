@@ -16,14 +16,14 @@ class TestArgParser : public ::testing::Test {
   const string filename_{"TempFile.smt2"};
   const string bad_filename_{"TempFile.err"};
   const string non_existing_filename_{"NotExistingTempFile.smt2"};
-  virtual void SetUp() {
+  void SetUp() override {
     parser_ = ArgParser{};
     ofstream f{filename_};
     ofstream bf{bad_filename_};
     f.close();
     bf.close();
   }
-  virtual void TearDown() {
+  void TearDown() override {
     remove(filename_.c_str());
     remove(bad_filename_.c_str());
   }
