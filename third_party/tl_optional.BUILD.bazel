@@ -1,3 +1,5 @@
+licenses(["notice"])  # Creative Commons Zero v1.0 Universal
+
 cc_library(
     name = "tl_optional",
     hdrs = ["include/tl/optional.hpp"],

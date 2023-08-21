@@ -1,4 +1,6 @@
 """Allows the argparse header to be used in the project."""
+licenses(["notice"])  # MIT
+
 cc_library(
     name = "argparse",
     hdrs = ["//:include/argparse/argparse.hpp"],

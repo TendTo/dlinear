@@ -1,3 +1,5 @@
+licenses(["notice"])  # GNU Lesser General Public License v3.0
+
 cc_import(
     name = "gmpxx",
     static_library = "libgmpxx.a",
