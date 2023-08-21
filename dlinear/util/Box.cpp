@@ -61,6 +61,13 @@ std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
   }
 }
 
+Box::Interval Box::Interval::fromString(const std::string &s) {
+  RoundingModeGuard guard(FE_UPWARD);
+  const double ub{stod(s)};
+  double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s); // TODO: shouldn't this be -stod(s) or even -ub?
+  return Box::Interval{lb, ub};
+}
+
 Box::Box() : variables_{make_shared < vector < Variable >> ()},
     // We have this hack here because it is not allowed to have a
     // zero interval vector. Note that because of this special case,

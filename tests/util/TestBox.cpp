@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 #include "dlinear/util/Box.h"
-#include "tests/sybmolic/TestSymbolicUtils.h"
+#include "tests/symbolic/TestSymbolicUtils.h"
 
 #include <limits>
 #include <type_traits>
@@ -22,7 +22,7 @@ using std::pair;
 using std::vector;
 using namespace dlinear;
 
-class BoxTest : public ::testing::Test {
+class TestBox : public ::testing::Test {
  protected:
   DrakeSymbolicGuard guard_;
   // Real Variables.
@@ -44,7 +44,7 @@ class BoxTest : public ::testing::Test {
   const mpq_class inf_{mpq_infty()};
 };
 
-TEST_F(BoxTest, AddHasVariable) {
+TEST_F(TestBox, AddHasVariable) {
   Box b1{{x_}};
   EXPECT_EQ(b1[x_].lb(), -inf_);
   EXPECT_EQ(b1[x_].ub(), inf_);
@@ -68,7 +68,7 @@ TEST_F(BoxTest, AddHasVariable) {
   EXPECT_TRUE(b1.has_variable(z_));
 }
 
-TEST_F(BoxTest, Empty) {
+TEST_F(TestBox, Empty) {
   Box b1{{x_}};
   EXPECT_FALSE(b1.empty());
 
@@ -76,7 +76,7 @@ TEST_F(BoxTest, Empty) {
   EXPECT_TRUE(b1.empty());
 }
 
-TEST_F(BoxTest, IndexOperator) {
+TEST_F(TestBox, IndexOperator) {
   Box b1;
   b1.Add(x_, 3, 5);
   b1.Add(y_, 6, 10);
@@ -90,7 +90,7 @@ TEST_F(BoxTest, IndexOperator) {
   EXPECT_EQ(b1[1], b2[y_]);
 }
 
-TEST_F(BoxTest, IntervalVector) {
+TEST_F(TestBox, IntervalVector) {
   Box b1;
   b1.Add(x_, 3, 5);
   b1.Add(y_, 6, 10);
@@ -106,7 +106,7 @@ TEST_F(BoxTest, IntervalVector) {
   EXPECT_EQ(b2.interval_vector()[0].ub(), 1);
 }
 
-TEST_F(BoxTest, VariableVariables) {
+TEST_F(TestBox, VariableVariables) {
   const Box b1{{x_, y_, z_}};
   vector<Variable> variables{x_, y_, z_};
   const vector<Variable> &variables_in_b1{b1.variables()};
@@ -116,14 +116,14 @@ TEST_F(BoxTest, VariableVariables) {
   EXPECT_EQ(variables_in_b1[2], z_);
 }
 
-TEST_F(BoxTest, Index) {
+TEST_F(TestBox, Index) {
   const Box b1{{x_, y_, z_}};
   EXPECT_EQ(b1.index(x_), 0);
   EXPECT_EQ(b1.index(y_), 1);
   EXPECT_EQ(b1.index(z_), 2);
 }
 
-TEST_F(BoxTest, MaxDiam) {
+TEST_F(TestBox, MaxDiam) {
   Box b1;
   b1.Add(x_, -10, 10);
   b1.Add(y_, 5, 5);
@@ -134,7 +134,7 @@ TEST_F(BoxTest, MaxDiam) {
   EXPECT_EQ(b1.variable(maxdiam_result.second), x_);
 }
 
-TEST_F(BoxTest, Sharing) {
+TEST_F(TestBox, Sharing) {
   Box b1{{x_, y_}};
   // b1 is not shared yet, so we should just update its internal
   // states.
@@ -152,7 +152,7 @@ TEST_F(BoxTest, Sharing) {
 }
 
 #if 0
-TEST_F(BoxTest, InplaceUnion) {
+TEST_F(TestBox, InplaceUnion) {
   Box b1{{x_, y_}};
   b1[x_] = Box::Interval(0, 1);
   b1[y_] = Box::Interval(0, 1);
@@ -171,7 +171,7 @@ TEST_F(BoxTest, InplaceUnion) {
 }
 #endif
 
-TEST_F(BoxTest, BisectReal) {
+TEST_F(TestBox, BisectReal) {
   Box box;
   box.Add(x_, -10, 10);
   box.Add(y_, -5, 5);
@@ -191,7 +191,7 @@ TEST_F(BoxTest, BisectReal) {
 
 // QSopt_ex changes: Integer variables not supported (for now)
 #if 0
-TEST_F(BoxTest, BisectInteger) {
+TEST_F(TestBox, BisectInteger) {
   Box box;
   box.Add(x_, -10, 10);
   box.Add(i_, -5, 5);
@@ -212,7 +212,7 @@ TEST_F(BoxTest, BisectInteger) {
   EXPECT_EQ(box2[b1_], box[b1_]);
 }
 
-TEST_F(BoxTest, BisectBinary) {
+TEST_F(TestBox, BisectBinary) {
   Box box;
   box.Add(x_, -10, 10);
   box.Add(i_, -5, 5);
@@ -236,7 +236,7 @@ TEST_F(BoxTest, BisectBinary) {
 
 // mpq_class changes: Non-zero intervals are _always_ bisectable!
 #if 0
-TEST_F(BoxTest, NotBisectable) {
+TEST_F(TestBox, NotBisectable) {
   Box box;
   // x = [10, 10 + ε]
   box.Add(x_, 10, std::nextafter(10, 11));
@@ -249,7 +249,7 @@ TEST_F(BoxTest, NotBisectable) {
 }
 #endif
 
-TEST_F(BoxTest, Equality) {
+TEST_F(TestBox, Equality) {
   Box b1;
   b1.Add(x_, -10, 10);
   b1.Add(y_, -5, 5);
@@ -273,11 +273,17 @@ TEST_F(BoxTest, Equality) {
 
 // Checks types in Box are nothrow move-constructible so that the
 // vectors including them can be processed efficiently.
-TEST_F(BoxTest, IsNothrowMoveConstructible) {
+TEST_F(TestBox, IsNothrowMoveConstructible) {
   static_assert(is_nothrow_move_constructible<Box::Interval>::value,
                 "Box::Interval should be nothrow_move_constructible.");
   static_assert(is_nothrow_move_constructible<Box::IntervalVector>::value,
                 "Box::IntervalVector should be nothrow_move_constructible.");
   static_assert(is_nothrow_move_constructible<Box>::value,
                 "Box should be nothrow_move_constructible.");
+}
+
+TEST_F(TestBox, IntervalFromString) {
+  Box::Interval interval = Box::Interval::fromString("100");
+  EXPECT_EQ(interval.lb(), 100); // TODO: should be -100??
+  EXPECT_EQ(interval.ub(), 100);
 }

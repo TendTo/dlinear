@@ -1,0 +1,3 @@
+load(":lexyacc.bzl", "setup_lexyacc_toolchain")
+
+setup_lexyacc_toolchain(os = "linux")

@@ -72,7 +72,10 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "box",
     srcs = ["Box.cpp"],
-    hdrs = ["Box.h"],
+    hdrs = [
+        "Box.h",
+        "RoundingModeGuard.hpp",
+    ],
     deps = [
         ":logging",
         ":math",

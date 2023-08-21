@@ -1,16 +1,91 @@
 load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+load("//tools/lexyacc:lexyacc.bzl", "gen_lex", "gen_yacc")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
     "//tests:__subpackages__",
 ])
 
+gen_lex(
+    name = "scanner",
+    src = "scanner.ll",
+    source_out = "scanner.ll.cc",
+)
+
+gen_yacc(
+    name = "parser",
+    src = "parser.yy",
+    extra_outs = ["location.hh"],
+    header_out = "parser.yy.hh",
+    source_out = "parser.yy.cc",
+)
+
 dlinear_cc_library(
     name = "logic",
     srcs = ["logic.cpp"],
     hdrs = ["logic.h"],
     deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
+    name = "sort",
+    srcs = ["sort.cpp"],
+    hdrs = ["sort.h"],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/util:exception",
+    ],
+)
+
+dlinear_cc_library(
+    name = "term",
+    srcs = ["Term.cpp"],
+    hdrs = ["Term.h"],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/util:exception",
+    ],
+)
+
+dlinear_cc_library(
+    name = "command",
+    srcs = [
+        "Command.cpp",
+        "CommandCell.cpp",
+    ],
+    hdrs = [
+        "Command.h",
+        "CommandCell.h",
+    ],
+    deps = [
+        ":logic",
+        "//dlinear/symbolic",
+    ],
+)
+
+dlinear_cc_library(
+    name = "smt2",
+    srcs = [
+        "Driver.cpp",
+        "run.cpp",
+        ":parser",
+        ":scanner",
+    ],
+    hdrs = [
+        "Driver.h",
+        "run.h",
+        "scanner.h",
+    ],
+    deps = [
+        ":logic",
+        ":sort",
+        ":term",
+        "//dlinear/symbolic",
+        "//dlinear/util:math",
+        "//dlinear/util:scoped_structures",
+        "@flex_lexer",
+    ],
 )
 
 cpplint()

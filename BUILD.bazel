@@ -1,1 +1,3 @@
+licenses(["notice"])  # Apache v2
+
 exports_files(["CPPLINT.cfg"])

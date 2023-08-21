@@ -8,6 +8,7 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_BOX_H_
 #define DLINEAR5_DLINEAR_UTIL_BOX_H_
 
+#include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -21,6 +22,13 @@ class Box {
  public:
   class Interval {
    public:
+    /**
+     * Constructs an interval from a string.
+     * @example Box::Interval::fromString("100"); // [-100, 100]
+     * @param s value used to construct the interval
+     * @return newly constructed interval
+     */
+    static Interval fromString(const std::string &s);
     Interval();
     Interval(Interval &&other) noexcept;
     Interval(const Interval &other) : lb_(other.lb_), ub_(other.ub_) {}
