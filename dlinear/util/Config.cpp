@@ -43,6 +43,8 @@ ostream &operator<<(ostream &os, const Config &config) {
             << "nlopt_maxtime = " << config.nlopt_maxtime_.get() << ", " << endl
             << "sat_default_phase = " << config.sat_default_phase_.get() << ", " << endl
             << "random_seed = " << config.random_seed_.get() << ", " << endl
+            << "debug_scanning = " << config.debug_scanning_.get() << ", " << endl
+            << "debug_parsing = " << config.debug_parsing_.get() << ", " << endl
             << '}';
 }
 } // namespace dlinear

@@ -31,18 +31,19 @@ bool is_integer(const mpq_class &v) {
 
 int convert_int64_to_int(const int64_t v) {
   if (numeric_limits<int>::min() <= v && v <= numeric_limits<int>::max())
-    return v;
+    return static_cast<int>(v);
   DLINEAR_RUNTIME_ERROR_FMT("Fail to convert a int64_t value {} to int", v);
 }
 
 double convert_int64_to_double(const int64_t v) {
   constexpr int64_t m{1UL << static_cast<unsigned>(numeric_limits<double>::digits)};
   if (-m <= v && v <= m)
-    return v;
+    return static_cast<double>(v);
   DLINEAR_RUNTIME_ERROR_FMT("Fail to convert a int64_t value {} to double", v);
 }
 
 mpq_class convert_int64_to_rational(const int64_t v) {
-  return {v, 1};
+  DLINEAR_TRACE_FMT("convert_int64_to_rational({})", v);
+  return mpq_class{v, 1};
 }
 } // namespace dlinear

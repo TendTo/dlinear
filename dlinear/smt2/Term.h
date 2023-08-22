@@ -7,6 +7,7 @@
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 /// Sum type of symbolic::Expression and symbolic::Formula.
 namespace dlinear {
@@ -27,7 +28,7 @@ class Term {
   explicit Term(Formula f);
 
   /** Default copy constructor. */
-  Term(Term &) = default;
+  Term(const Term &) = default;
 
   /** Default move constructor. */
   Term(Term &&) = default;

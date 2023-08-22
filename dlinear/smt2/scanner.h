@@ -23,7 +23,7 @@
 #include "dlinear/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
-#include "dlinear/smt2/parser.yy.hh"
+#include "dlinear/smt2/parser.yy.hpp"
 
 namespace dlinear {
 

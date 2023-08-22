@@ -5,8 +5,12 @@ using std::runtime_error;
 
 namespace dlinear {
 
-Term::Term(Expression e) : type_{Term::Type::EXPRESSION}, e_{std::move(e)} {}
-Term::Term(Formula f) : type_{Term::Type::FORMULA}, f_{std::move(f)} {}
+Term::Term(Expression e) : type_{Term::Type::EXPRESSION}, e_{std::move(e)} {
+  DLINEAR_TRACE_FMT("Term::Term({}) - Expression", e_);
+}
+Term::Term(Formula f) : type_{Term::Type::FORMULA}, f_{std::move(f)} {
+  DLINEAR_TRACE_FMT("Term::Term({}) - Formula", f_);
+}
 
 Term::Type Term::type() const { return type_; }
 

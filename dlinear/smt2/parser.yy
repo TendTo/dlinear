@@ -8,15 +8,15 @@
 #include <tuple>
 #include <utility>
 
-#include "dreal/smt2/logic.h"
-#include "dreal/smt2/sort.h"
-#include "dreal/smt2/term.h"
-#include "dreal/symbolic/symbolic.h"
-#include "dreal/util/math.h"
-#include "dreal/util/assert.h"
-#include "dreal/qsopt_ex.h"
+#include "dlinear/smt2/logic.h"
+#include "dlinear/smt2/sort.h"
+#include "dlinear/smt2/Term.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/math.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/libs/qsopt_ex.h"
 
-using dreal::qsopt_ex::StringToMpq;
+using dlinear::qsopt_ex::StringToMpq;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -45,7 +45,7 @@ using dreal::qsopt_ex::StringToMpq;
 %skeleton "lalr1.cc"
 
 /* namespace to enclose parser in */
-%define api.prefix {dreal}
+%define api.prefix {dlinear}
 
 /* set the parser's class identifier */
 %define api.parser.class {Smt2Parser}
@@ -69,7 +69,7 @@ using dreal::qsopt_ex::StringToMpq;
 
 %union
 {
-    dreal::Sort               sortVal;
+    dlinear::Sort             sortVal;
     std::int64_t              int64Val;
     std::string*              rationalVal;
     double                    hexfloatVal;
@@ -122,8 +122,8 @@ using dreal::qsopt_ex::StringToMpq;
 
 %{
 
-#include "dreal/smt2/driver.h"
-#include "dreal/smt2/scanner.h"
+#include "dlinear/smt2/Driver.h"
+#include "dlinear/smt2/scanner.h"
 
 /* this "connects" the bison parser in the driver to the flex scanner class
  * object. it defines the yylex() function call to pull the next token from the
@@ -136,14 +136,13 @@ using dreal::qsopt_ex::StringToMpq;
 %% /*** Grammar Rules ***/
 
 script:         command_list END
-                ;
+        ;
 
 command_list:   command
         |       command command_list
-                ;
+        ;
 
-command:
-                command_assert
+command:        command_assert
         |       command_check_sat
         |       command_declare_fun
         |       command_define_fun
@@ -163,13 +162,11 @@ command_assert: '('TK_ASSERT term ')' {
                     delete $3;
                 }
                 ;
-command_check_sat:
-                '('TK_CHECK_SAT ')' {
+command_check_sat: '('TK_CHECK_SAT ')' {
                     driver.CheckSat();
                 }
                 ;
-command_declare_fun:
-                '(' TK_DECLARE_FUN SYMBOL '(' ')' sort ')' {
+command_declare_fun: '(' TK_DECLARE_FUN SYMBOL '(' ')' sort ')' {
                     driver.DeclareVariable(*$3, $6);
                     delete $3;
                 }
@@ -256,7 +253,7 @@ command_set_logic:
                 '(' TK_SET_LOGIC SYMBOL ')' {
                     driver
                         .mutable_context()
-                        .SetLogic(dreal::parse_logic(*$3));
+                        .SetLogic(parseLogic(*$3));
                     delete $3;
                 }
                 ;
@@ -417,7 +414,7 @@ term:           TK_TRUE { $$ = new Term(Formula::True()); }
                   }
                 } else {
                   const Expression& expr = voc.expression();
-                  DREAL_ASSERT(is_constant(expr));
+                  DLINEAR_ASSERT(is_constant(expr), "Must be a constant");
                   $$ = new Term(expr);
                 }
             } catch (std::runtime_error& e) {
@@ -574,8 +571,7 @@ variable_sort_list: /* empty list */ { $$ = new std::pair<Variables, Formula>(Va
             const Variable& v = std::get<0>(*$1);
             const Expression& lb = std::get<1>(*$1);
             const Expression& ub = std::get<2>(*$1);
-            DREAL_ASSERT((is_negative_infinity(lb) || is_constant(lb))
-                      && (is_infinity(ub) || is_constant(ub)));
+            DLINEAR_ASSERT((is_negative_infinity(lb) || is_constant(lb)) && (is_infinity(ub) || is_constant(ub)), "Bounds must be constants");
             $2->first.insert(v);
             if (!is_infinite(lb)) {
                 $2->second = $2->second && (get_constant_value(lb) <= v);
@@ -626,8 +622,7 @@ var_binding: '(' SYMBOL term ')' {
 
 
 %% /*** Additional Code ***/
-void dreal::Smt2Parser::error(const Smt2Parser::location_type& l,
-                              const std::string& m) {
+void dlinear::Smt2Parser::error(const Smt2Parser::location_type& l, const std::string& m) {
     driver.error(l, m);
 }
 

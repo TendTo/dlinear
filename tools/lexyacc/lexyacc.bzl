@@ -83,7 +83,6 @@ def _gen_yacc_impl(ctx):
     _lex_yacc_info = ctx.toolchains["//tools/%s:%s" % (_toolchain_name, _toolchain_type)].lex_yacc_info
 
     outputs = [out_file for out_file in ctx.outputs.extra_outs] + [ctx.outputs.header_out, ctx.outputs.source_out]
-    print("outputs: %s" % outputs)
     ctx.actions.run(
         outputs = outputs,
         inputs = [ctx.files.src[0]],

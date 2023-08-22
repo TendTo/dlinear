@@ -9,7 +9,7 @@
 
 namespace dlinear {
 
-void RunSmt2(const std::string &filename, const Config &config, bool debug_scanning, bool debug_parsing);
+void RunSmt2(const Config &config);
 
 }  // namespace dlinear
 

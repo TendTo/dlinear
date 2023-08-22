@@ -14,11 +14,11 @@
 
 #include <string>
 
-#include "dreal/smt2/scanner.h"
+#include "dlinear/smt2/scanner.h"
 
 /* import the parser's token type into a local typedef */
-typedef dreal::Smt2Parser::token token;
-typedef dreal::Smt2Parser::token_type token_type;
+typedef dlinear::Smt2Parser::token token;
+typedef dlinear::Smt2Parser::token_type token_type;
 
 /* By default yylex returns int, we use token_type. Unfortunately yyterminate
  * by default returns 0, which is not of token_type. */
@@ -78,6 +78,8 @@ special_char    [+\-/*=%?!.$_~&^<>@]
 sym_begin       {letter}|{special_char}
 sym_continue    {sym_begin}|{digit}
 simple_symbol   {sym_begin}{sym_continue}*
+
+/*** End of Declarations ***/
 
 %x str
 %x quoted
@@ -186,8 +188,7 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 [-+]?(0|[1-9][0-9]*) {
     try {
-        static_assert(sizeof(std::int64_t) == sizeof(long),
-	              "sizeof(std::int64_t) != sizeof(long).");
+        static_assert(sizeof(std::int64_t) == sizeof(long), "sizeof(std::int64_t) != sizeof(long).");
         yylval->int64Val = std::stol(yytext);
         return token::INT;
     } catch(std::out_of_range& e) {
@@ -247,20 +248,19 @@ simple_symbol   {sym_begin}{sym_continue}*
 . {
     return static_cast<token_type>(*yytext);
 }
+
 %% /*** Additional Code ***/
 
-namespace dreal {
+namespace dlinear {
 
-Smt2Scanner::Smt2Scanner(std::istream* in,
-                         std::ostream* out)
-    : Smt2FlexLexer(in, out) {}
+Smt2Scanner::Smt2Scanner(std::istream* in, std::ostream* out) : Smt2FlexLexer(in, out) {}
 
 Smt2Scanner::~Smt2Scanner() {}
 
 void Smt2Scanner::set_debug(const bool b) {
     yy_flex_debug = b;
 }
-}  // namespace dreal
+}  // namespace dlinear
 
 /* This implementation of Smt2FlexLexer::yylex() is required to fill the
  * vtable of the class Smt2FlexLexer. We define the scanner's main yylex

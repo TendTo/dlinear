@@ -13,6 +13,7 @@ using std::string;
 using std::vector;
 using std::nextafter;
 using std::numeric_limits;
+using tl::optional;
 
 namespace dlinear {
 
@@ -79,7 +80,7 @@ void Smt2Driver::CheckSat() {
     }
   } else {
     mpq_class actual_precision = context_.config().precision();
-    const optional <Box> model{context_.CheckSat(&actual_precision)};
+    const optional<Box> model{context_.CheckSat(&actual_precision)};
     double actual_precision_upper = nextafter(actual_precision.get_d(),
                                               numeric_limits<double>::infinity());
     this->actual_precision_ = actual_precision.get_d();

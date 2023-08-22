@@ -1,4 +1,4 @@
-load("//tools:dlinear.bzl", "dlinear_cc_googletest")
+load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_googletest", "smt2_test")
 
 dlinear_cc_googletest(
     name = "test_sort",
@@ -13,4 +13,22 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_command",
     deps = ["//dlinear/smt2:command"],
+)
+
+dlinear_cc_binary(
+    name = "test_smt2_binary",
+    srcs = ["TestSmt2.cpp"],
+    deps = [
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/smt2",
+        "//dlinear/symbolic",
+        "//dlinear/util:argparser",
+        "//dlinear/util:config",
+        "//dlinear/util:infty",
+    ],
+)
+
+smt2_test(
+    name = "ite_02",
+    lp_solvers = ["qsoptex"],
 )

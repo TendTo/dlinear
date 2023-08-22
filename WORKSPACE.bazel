@@ -88,6 +88,13 @@ github_archive(
     sha256 = "4df278468142e457a9e5f6492a7d39fdb34bd7e7d42ec21b3c382889b34cfefe",
 )
 
+github_archive(
+    name = "bazel_skylib",
+    commit = "1.4.2",
+    repository = "bazelbuild/bazel-skylib",
+    sha256 = "de9d2cedea7103d20c93a5cc7763099728206bd5088342d0009315913a592cc0",
+)
+
 # https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
 new_local_repository(
     name = "linux_libs",

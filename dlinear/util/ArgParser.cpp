@@ -61,11 +61,11 @@ void ArgParser::addOptions() {
       .implicit_value(true);
   parser_.add_argument("--debug-parsing")
       .help("debug parsing")
-      .default_value(false) // TODO: check config
+      .default_value(DLINEAR_DEFAULT_DEBUG_PARSING)
       .implicit_value(true);
   parser_.add_argument("--debug-scanning")
       .help("debug scanning/lexing")
-      .default_value(false) // TODO: check config
+      .default_value(DLINEAR_DEFAULT_DEBUG_SCANNING)
       .implicit_value(true);
   parser_.add_argument("--exhaustive")
       .help("run the algorithm to completion, by setting the precision to 0"
@@ -228,6 +228,10 @@ Config ArgParser::toConfig() const {
     config.mutable_use_worklist_fixpoint().set_from_command_line(parser_.get<bool>("worklist-fixpoint"));
   if (parser_.is_used("local-optimization"))
     config.mutable_use_local_optimization().set_from_command_line(parser_.get<bool>("local-optimization"));
+  if (parser_.is_used("debug-scanning"))
+    config.mutable_debug_scanning().set_from_command_line(parser_.get<bool>("debug-scanning"));
+  if (parser_.is_used("debug-parsing"))
+    config.mutable_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
   DLINEAR_TRACE_FMT("ArgParser::toConfig: {}", config);
   return config;
 }

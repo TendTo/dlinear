@@ -38,6 +38,8 @@
 #define DLINEAR_DEFAULT_NLOPT_MAX_TIME 0.01
 #define DLINEAR_DEFAULT_SAT_PHASE Config::SatDefaultPhase::JeroslowWang
 #define DLINEAR_DEFAULT_RANDOM_SEED 0u
+#define DLINEAR_DEFAULT_DEBUG_SCANNING false
+#define DLINEAR_DEFAULT_DEBUG_PARSING false
 
 namespace dlinear {
 
@@ -192,6 +194,18 @@ class Config {
   /** Mutable random seed */
   [[nodiscard]]  OptionValue<uint32_t> &mutable_random_seed() { return random_seed_; }
 
+  /** Debug scanning */
+  [[nodiscard]]  bool debug_scanning() const { return debug_scanning_.get(); }
+
+  /** Mutable debug scanning */
+  [[nodiscard]]  OptionValue<bool> &mutable_debug_scanning() { return debug_scanning_; }
+
+  /** Debug parsing */
+  [[nodiscard]]  bool debug_parsing() const { return debug_parsing_.get(); }
+
+  /** Mutable debug parsing */
+  [[nodiscard]]  OptionValue<bool> &mutable_debug_parsing() { return debug_parsing_; }
+
   static constexpr double kDefaultPrecision{DLINEAR_DEFAULT_PRECISION};  // pred(floor("0.001"))
   static constexpr double kDefaultNloptFtolRel{DLINEAR_DEFAULT_NLOPTF_TO_REL};
   static constexpr double kDefaultNloptFtolAbs{DLINEAR_DEFAULT_NLOPTF_TO_ABS};
@@ -215,6 +229,8 @@ class Config {
   OptionValue<int> verbose_dlinear_{DLINEAR_DEFAULT_VERBOSE_DLINEAR};
   OptionValue<uint32_t> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
   OptionValue<bool> stack_left_box_first_{DLINEAR_DEFAULT_STACK_LEFT_BOX_FIRST};
+  OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
+  OptionValue<bool> debug_parsing_{DLINEAR_DEFAULT_DEBUG_PARSING};
 
   /**
    * NLopt options (stopping criteria)

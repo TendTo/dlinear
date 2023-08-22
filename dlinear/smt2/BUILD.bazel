@@ -1,4 +1,4 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 load("//tools/lexyacc:lexyacc.bzl", "gen_lex", "gen_yacc")
 
@@ -10,15 +10,15 @@ package(default_visibility = [
 gen_lex(
     name = "scanner",
     src = "scanner.ll",
-    source_out = "scanner.ll.cc",
+    source_out = "scanner.ll.cpp",
 )
 
 gen_yacc(
     name = "parser",
     src = "parser.yy",
     extra_outs = ["location.hh"],
-    header_out = "parser.yy.hh",
-    source_out = "parser.yy.cc",
+    header_out = "parser.yy.hpp",
+    source_out = "parser.yy.cpp",
 )
 
 dlinear_cc_library(
@@ -45,6 +45,7 @@ dlinear_cc_library(
     deps = [
         "//dlinear/symbolic",
         "//dlinear/util:exception",
+        "//dlinear/util:logging",
     ],
 )
 
@@ -81,10 +82,28 @@ dlinear_cc_library(
         ":logic",
         ":sort",
         ":term",
+        "//dlinear/solver:context",
         "//dlinear/symbolic",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
         "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
         "@flex_lexer",
+        "@tl_optional",
+    ],
+)
+
+dlinear_cc_binary(
+    name = "smt2_main",
+    srcs = ["main.cpp"],
+    data = [
+        "ite_02.smt2",
+    ],
+    deps = [
+        ":smt2",
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/util:infty",
     ],
 )
 

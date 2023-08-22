@@ -160,3 +160,75 @@ def dlinear_cc_googletest(
         deps = deps,
         **kwargs
     )
+
+def smt2_phased_test(
+        name,
+        smt2 = None,
+        options = [],
+        tags = [],
+        lp_solver = "qsoptex",
+        phase = None,
+        continuous = False,
+        exhaustive_ok = True,
+        main = "TestSmt2.py",
+        **kwargs):
+    """Create smt2 test."""
+    if lp_solver not in ("soplex", "qsoptex"):
+        fail("LP solver must be soplex or qsoptex", "lp_solver")
+    if phase not in (1, 2):
+        fail("Phase must be 1 or 2", "phase")
+    if not smt2:
+        smt2 = "smt2/%s.smt2" % name
+    data_files = native.glob([smt2 + "*"])
+    name_extra = "_continuous" if continuous else ""
+    native.py_test(
+        name = "{}_{}_phase_{}{}".format(name, lp_solver, phase, name_extra),
+        args = [
+            "$(location //tests/smt2:test_smt2_binary)",
+            "$(location %s)" % smt2,
+            lp_solver,
+            str(phase),
+            "$(SOPLEX_ENABLED)",
+            ("X" if exhaustive_ok else "C") if continuous else "N",
+        ] + options,
+        tags = tags + ["smt2"],
+        data = ["//tests/smt2:test_smt2_binary"] + data_files,
+        main = main,
+        srcs = [main],
+        srcs_version = "PY3",
+        toolchains = ["//tools:soplex-enabled-var"],
+        **kwargs
+    )
+
+def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
+    """Tests a SMT2 file.
+
+    Args:
+        name: The name of the test.
+        options: A list of options to pass to the solver.
+        lp_solvers: A list of LP solvers to test. If None, tests both soplex and qsoptex.
+        kwargs: Additional arguments to pass to smt2_test.
+    """
+    for lp_solver in ("soplex", "qsoptex") if lp_solvers == None else lp_solvers:
+        for phase in (1, 2):
+            smt2_phased_test(
+                name,
+                lp_solver = lp_solver,
+                phase = phase,
+                options = options,
+                size = size,
+                **kwargs
+            )
+
+    # Continuous tests are only supported for qsoptex.
+    if lp_solvers == None or "qsoptex" in lp_solvers:
+        for phase in (1, 2):
+            smt2_phased_test(
+                name,
+                lp_solver = "qsoptex",
+                phase = phase,
+                options = options,
+                continuous = True,
+                size = size,
+                **kwargs
+            )
