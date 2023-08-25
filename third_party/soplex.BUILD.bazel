@@ -8,6 +8,9 @@ cmake(
     lib_name = "libsoplex",
     cache_entries = {
         "GMP": "on",
+        "OPT": "Release",
+        "BOOST": "on",
+        "QUADMATH": "on",
     },
     deps = ["@zlib", "@linux_libs//:gmpxx"],
     visibility = ["//visibility:public"],

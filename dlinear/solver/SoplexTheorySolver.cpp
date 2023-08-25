@@ -113,7 +113,7 @@ int SoplexTheorySolver::CheckSat(const Box &box,
       }
       DLINEAR_ASSERT(to_mpq_t(model_[kv.second].lb()) <= val && val <= to_mpq_t(model_[kv.second].ub()),
                      "val must be in bounds");
-      model_[kv.second] = val.getMpqRef();
+      model_[kv.second] = val.backend().data();
     }
   }
   if (sat_status == SAT_UNSATISFIABLE || rowcount == 0) {
@@ -193,10 +193,10 @@ int SoplexTheorySolver::CheckSat(const Box &box,
       if (haveSoln) {
         // Copy delta-feasible point from x into model_
         for (const pair<const int, Variable> &kv : var_map) {
-          DLINEAR_ASSERT(model_[kv.second].lb() <= to_mpq_class(x[kv.first].getMpqRef())
-                             && to_mpq_class(x[kv.first].getMpqRef()) <= model_[kv.second].ub(),
+          DLINEAR_ASSERT(model_[kv.second].lb() <= to_mpq_class(x[kv.first].backend().data())
+                             && to_mpq_class(x[kv.first].backend().data()) <= model_[kv.second].ub(),
                          "val must be in bounds");
-          model_[kv.second] = x[kv.first].getMpqRef();
+          model_[kv.second] = x[kv.first].backend().data();
         }
       } else {
         DLINEAR_RUNTIME_ERROR("delta-sat but no solution available");

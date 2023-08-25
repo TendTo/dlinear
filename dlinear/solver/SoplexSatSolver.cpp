@@ -225,7 +225,7 @@ optional <SoplexSatSolver::Model> SoplexSatSolver::CheckSat(const Box &box) {
 void SoplexSatSolver::Pop() {
   // FIXME: disabled for QSopt_ex changes
   DLINEAR_RUNTIME_ERROR("SoplexSatSolver::Pop() currently unsupported");
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::Pop()");
+  DLINEAR_DEBUG("SoplexSatSolver::Pop()");
   cnf_variables_.pop();
   to_sym_var_.pop();
   to_sat_var_.pop();
@@ -236,7 +236,7 @@ void SoplexSatSolver::Pop() {
 void SoplexSatSolver::Push() {
   // FIXME: disabled for QSopt_ex changes
   DLINEAR_RUNTIME_ERROR("SoplexSatSolver::Push() currently unsupported");
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::Push()");
+  DLINEAR_DEBUG("SoplexSatSolver::Push()");
   picosat_push(sat_);
   to_sat_var_.push();
   to_sym_var_.push();

@@ -7,6 +7,7 @@
 
 #include "Context.h"
 #include "dlinear/solver/QsoptexImpl.h"
+#include "dlinear/solver/SoplexImpl.h"
 
 using std::unique_ptr;
 using std::make_unique;
@@ -20,11 +21,7 @@ unique_ptr <Context::Impl> Context::make_impl(const Config &config) {
   if (config.lp_solver() == Config::QSOPTEX)
     return make_unique<Context::QsoptexImpl>(config);
   if (config.lp_solver() == Config::SOPLEX)
-#if DLINEAR_HAVE_SOPLEX
     return make_unique<Context::SoplexImpl>(config);
-#else
-    DLINEAR_RUNTIME_ERROR("SoPlex not enabled at compile time");
-#endif
   DLINEAR_RUNTIME_ERROR("Unsupported LP solver");
 }
 

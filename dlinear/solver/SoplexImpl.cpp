@@ -92,7 +92,7 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
       const vector<pair<Variable, bool>> &theory_model{optional_model->second};
       if (!theory_model.empty()) {
         // SAT from SATSolver.
-        DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Sat Check = SAT");
+        DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = SAT");
 
         // The selected assertions have already been enabled in the LP solver
         int theory_result{
@@ -128,11 +128,11 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
     } else {
       if (have_unsolved) {
         // Can't assert UNSAT, because some branches were unsolved.
-        DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Sat Check = UNKNOWN");
+        DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = UNKNOWN");
         DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
       }
       // UNSAT from SATSolver. Escape the loop.
-      DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Sat Check = UNSAT");
+      DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = UNSAT");
       return {};
     }
   }
@@ -149,14 +149,14 @@ void Context::SoplexImpl::MinimizeCore(const Expression & /*obj_expr*/) {
 }
 
 void Context::SoplexImpl::Pop() {
-  DLINEAR_DEBUG_FMT("Context::SoplexImpl::Pop()");
+  DLINEAR_DEBUG("Context::SoplexImpl::Pop()");
   stack_.pop();
   boxes_.pop();
   sat_solver_.Pop();
 }
 
 void Context::SoplexImpl::Push() {
-  DLINEAR_DEBUG_FMT("Context::SoplexImpl::Push()");
+  DLINEAR_DEBUG("Context::SoplexImpl::Push()");
   sat_solver_.Push();
   boxes_.push();
   boxes_.push_back(boxes_.last());

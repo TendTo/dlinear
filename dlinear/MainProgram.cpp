@@ -14,11 +14,7 @@ void MainProgram::Init() {
     qsopt_ex::QSXStart();
     InftyStart(mpq_INFTY, mpq_NINFTY);
   } else if (config_.lp_solver() == Config::SOPLEX) {
-#if HAVE_SOPLEX
     InftyStart(soplex::infinity);
-#else
-    DLINEAR_RUNTIME_ERROR("SoPlex not enabled at compile time");
-#endif
   } else {
     DLINEAR_UNREACHABLE();
   }
