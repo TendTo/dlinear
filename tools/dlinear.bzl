@@ -200,19 +200,17 @@ def smt2_phased_test(
     native.py_test(
         name = "{}_{}_phase_{}{}".format(name, lp_solver, phase, name_extra),
         args = [
-            "$(location //tests/smt2:test_smt2_binary)",
+            "$(location //test/smt2:test_smt2_binary)",
             "$(location %s)" % smt2,
             lp_solver,
             str(phase),
-            "$(SOPLEX_ENABLED)",
             ("X" if exhaustive_ok else "C") if continuous else "N",
         ] + options,
         tags = tags + ["smt2"],
-        data = ["//tests/smt2:test_smt2_binary"] + data_files,
+        data = ["//test/smt2:test_smt2_binary"] + data_files,
         main = main,
         srcs = [main],
         srcs_version = "PY3",
-        toolchains = ["//tools:soplex-enabled-var"],
         **kwargs
     )
 

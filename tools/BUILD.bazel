@@ -1,4 +1,3 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load(":var.bzl", "provide_var")
 
 package(default_visibility = ["//visibility:public"])
@@ -20,25 +19,6 @@ config_setting(
     flag_values = {
         "@bazel_tools//tools/cpp:compiler": "gcc",
     },
-)
-
-bool_flag(
-    name = "enable-soplex",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "soplex-enabled",
-    flag_values = {":enable-soplex": "True"},
-)
-
-provide_var(
-    name = "soplex-enabled-var",
-    variables =
-        select({
-            ":soplex-enabled": {"SOPLEX_ENABLED": "True"},
-            "//conditions:default": {"SOPLEX_ENABLED": "False"},
-        }),
 )
 
 sh_binary(
