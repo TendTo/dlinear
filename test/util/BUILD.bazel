@@ -14,7 +14,7 @@ dlinear_cc_googletest(
     name = "test_box",
     deps = [
         "//dlinear/util:box",
-        "//tests/symbolic:test_symbolic_utils",
+        "//test/symbolic:test_symbolic_utils",
     ],
 )
 

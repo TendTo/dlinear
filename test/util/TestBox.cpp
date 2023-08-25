@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 #include "dlinear/util/Box.h"
-#include "tests/symbolic/TestSymbolicUtils.h"
+#include "test/symbolic/TestSymbolicUtils.h"
 
 #include <limits>
 #include <type_traits>

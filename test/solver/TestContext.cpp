@@ -6,7 +6,7 @@
  */
 
 #include "dlinear/solver/Context.h"
-#include "tests/symbolic/TestSymbolicUtils.h"
+#include "test/symbolic/TestSymbolicUtils.h"
 
 #include <gtest/gtest.h>
 

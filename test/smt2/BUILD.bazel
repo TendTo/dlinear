@@ -28,6 +28,4 @@ dlinear_cc_binary(
     ],
 )
 
-smt2_test_all(
-    lp_solvers = ["qsoptex"],
-)
+smt2_test_all()
