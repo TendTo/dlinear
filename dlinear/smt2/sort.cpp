@@ -1,3 +1,9 @@
+/**
+ * @file sort.cpp
+ * @author dlinear
+ * @date 22 Aug 2023
+ * @copyright 2023 dlinear
+ */
 #include "sort.h"
 
 using std::ostream;

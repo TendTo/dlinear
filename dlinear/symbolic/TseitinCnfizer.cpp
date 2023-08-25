@@ -232,5 +232,8 @@ void CnfizeDisjunction(const Variable &b, const Formula &f,
     Add(neg_b_i || b, clauses);
   }
 }
-}
-}// namespace dlinear
+
+} // namespace
+
+} // namespace dlinear
+

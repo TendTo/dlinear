@@ -100,4 +100,4 @@ Formula NaiveCnfizer::VisitNegation(const Formula &f) const {
   return f;
 }
 
-} // dlinear
+} // namespace dlinear

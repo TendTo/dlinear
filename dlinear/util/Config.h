@@ -13,6 +13,8 @@
 #define DLINEAR5_CONFIG_H
 
 #include <iostream>
+#include <string>
+
 #include "dlinear/util/OptionValue.hpp"
 #include "dlinear/util/exception.h"
 

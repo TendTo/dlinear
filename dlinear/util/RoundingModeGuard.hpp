@@ -1,3 +1,10 @@
+/**
+ * @file Box.h
+ * @author dlinear
+ * @date 13 Aug 2023
+ * @copyright 2023 dlinear
+ */
+
 #ifndef DLINEAR5_DLINEAR_UTIL_ROUNDINGMODEGUARD_HPP_
 #define DLINEAR5_DLINEAR_UTIL_ROUNDINGMODEGUARD_HPP_
 

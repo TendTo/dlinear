@@ -1,3 +1,13 @@
+/**
+ * @file CommandCell.h
+ * @author dlinear
+ * @date 22 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief A single command cell parsed from the smt2 file.
+ *
+ * Represents a valid command in the smt2 file.
+ */
+
 #ifndef DLINEAR_SMT2_COMMAND_CELL_H_
 #define DLINEAR_SMT2_COMMAND_CELL_H_
 

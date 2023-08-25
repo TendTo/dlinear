@@ -104,6 +104,6 @@ class IfThenElseEliminator {
                                                                  const Formula &);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SYMBOLIC_IFTHENELSEELIMINATOR_H_

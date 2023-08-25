@@ -24,6 +24,7 @@ dlinear_cc_library(
     deps = [
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
+        "//dlinear/smt2",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
     ],
@@ -32,51 +33,9 @@ dlinear_cc_library(
 dlinear_cc_binary(
     name = "dlinear",
     srcs = ["main.cpp"],
+    features = ["fully_static_link"],
+    linkstatic = 1,
     deps = [":main_program"],
-)
-
-dlinear_cc_binary(
-    name = "argpatser",
-    srcs = ["argparser.cpp"],
-    features = ["fully_static_link"],
-    linkstatic = 1,
-    deps = [
-        "//dlinear/util:argparser",
-        "//dlinear/util:logging",
-    ],
-)
-
-dlinear_cc_binary(
-    name = "libs-bin",
-    srcs = ["libs.cpp"],
-    features = ["fully_static_link"],
-    linkstatic = 1,
-    deps = [
-        "//dlinear/libs:gmp",
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
-    ],
-)
-
-dlinear_cc_binary(
-    name = "argparser",
-    srcs = ["argparser.cpp"],
-    features = ["fully_static_link"],
-    linkstatic = 1,
-    deps = [
-        "//dlinear/util:argparser",
-        "//dlinear/util:logging",
-    ],
-)
-
-dlinear_cc_binary(
-    name = "test",
-    srcs = ["test.cpp"],
-    features = ["fully_static_link"],
-    linkstatic = 1,
-    deps = [
-        "@picosat",
-    ],
 )
 
 cpplint()

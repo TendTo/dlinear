@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "dlinear/solver/Context.h"
+#include "Context.h"
 #include "dlinear/solver/QsoptexImpl.h"
 
 using std::unique_ptr;
@@ -128,4 +128,4 @@ bool Context::have_objective() const { return impl_->have_objective(); }
 
 bool Context::is_max() const { return impl_->is_max(); }
 
-} // dlinear
+} // namespace dlinear

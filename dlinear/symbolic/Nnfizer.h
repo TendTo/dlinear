@@ -12,6 +12,8 @@
 #ifndef DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
 #define DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
 
+#include <set>
+
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
@@ -54,9 +56,11 @@ class Nnfizer {
   [[nodiscard]] Formula VisitEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitNotEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitGreaterThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
-  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
-  [[nodiscard]] Formula VisitLessThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
-  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]]
+  Formula VisitGreaterThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]]   Formula VisitLessThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+  [[nodiscard]]
+  Formula VisitLessThanOrEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitConjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitDisjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitNegation(const Formula &f, bool polarity, bool push_negation_into_relationals) const;

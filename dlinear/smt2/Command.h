@@ -1,4 +1,16 @@
-#pragma once
+/**
+ * @file Command.h
+ * @author dlinear
+ * @date 22 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief A command parsed from the smt2 file.
+ *
+ * The command contains a reference to a specialized smt2 command,
+ * which is a subclass of CommandCell.
+ */
+
+#ifndef DLINEAR_SMT2_COMMAND_H_
+#define DLINEAR_SMT2_COMMAND_H_
 
 #include <memory>
 #include <ostream>
@@ -36,3 +48,5 @@ Command set_logic_command(Logic logic);
 Command set_option_command(const std::string &key, const std::string &val);
 
 }  // namespace dlinear
+
+#endif  // DLINEAR_SMT2_COMMAND_H_

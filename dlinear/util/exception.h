@@ -12,6 +12,8 @@
 #ifndef DLINEAR5_ASSERT_H
 #define DLINEAR5_ASSERT_H
 
+#include <spdlog/fmt/fmt.h>
+
 #include <stdexcept>
 
 #ifdef NDEBUG
@@ -25,7 +27,6 @@
 #else
 
 #include "dlinear/util/logging.h"
-#include <spdlog/fmt/fmt.h>
 
 #define DLINEAR_ASSERT(condition, message)                                                                        \
     do {                                                                                                          \
@@ -53,7 +54,8 @@
     throw std::runtime_error(fmt::format(msg, ##__VA_ARGS__));  \
   } while (false)
 
-#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
+#define DLINEAR_INVALID_ARGUMENT(argument, actual) \
+    throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
 
 #endif // NDEBUG
 

@@ -363,4 +363,4 @@ const LiteralSet &QsoptexTheorySolver::GetExplanation() const {
   return explanation_;
 }
 
-} // dlinear
+} // namespace dlinear

@@ -12,6 +12,8 @@
 #define DLINEAR5_DLINEAR_UTIL_PLAISTEDGREENBAUMCNFIZER_H_
 
 #include <vector>
+#include <set>
+#include <string>
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/NaiveCnfizer.h"
@@ -50,10 +52,10 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
       naive_cnfizer_{}; ///< Naive CNFizer. Used to transform nested formulas inside universal quantification.
 
   std::vector<Formula>
-      aux_; ///< Set of auxiliary clauses collected during conversion. @note aux_ is cleared at the beginning of `Convert` call.
+      aux_; ///< Auxiliary clauses collected during conversion. @note It is cleared at the beginning of `Convert` call.
 
   std::vector<Variable>
-      vars_; ///< Set of variables generated during conversion. @note vars_ is cleared at the beginning of `Convert` call.
+      vars_; ///< Variables generated during conversion. @note It is cleared at the beginning of `Convert` call.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
@@ -61,6 +63,6 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
                                                                                   const Formula &);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_PLAISTEDGREENBAUMCNFIZER_H_

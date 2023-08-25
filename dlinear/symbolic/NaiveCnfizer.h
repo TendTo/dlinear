@@ -11,10 +11,11 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_
 #define DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_
 
+#include <numeric>
+#include <set>
+
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/Nnfizer.h"
-
-#include <numeric>
 
 namespace dlinear {
 
@@ -52,6 +53,6 @@ class NaiveCnfizer {
   friend Formula drake::symbolic::VisitFormula<Formula>(const NaiveCnfizer *, const Formula &);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_

@@ -1,3 +1,14 @@
+/**
+ * @file Term.h
+ * @author dlinear
+ * @date 22 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief Term obtained by parsing the SMT2 file.
+ *
+ * Terms are the building blocks of a smt problem. They are either
+ * expressions or formulas.
+ */
+
 #ifndef DLINEAR_SMT2_TERM_H_
 #define DLINEAR_SMT2_TERM_H_
 
@@ -11,6 +22,7 @@
 
 /// Sum type of symbolic::Expression and symbolic::Formula.
 namespace dlinear {
+
 class Term {
  public:
   enum class Type { EXPRESSION, FORMULA };

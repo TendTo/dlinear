@@ -7,8 +7,6 @@
 
 #include "ContextImpl.h"
 
-#include <utility>
-
 using std::unordered_set;
 using std::string;
 using std::vector;
@@ -192,4 +190,4 @@ bool Context::Impl::have_objective() const {
 bool Context::Impl::is_max() const {
   return is_max_;
 }
-} // dlinear
+} // namespace dlinear

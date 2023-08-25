@@ -7,6 +7,9 @@
 
 #include "IfThenElseEliminator.h"
 
+#include <algorithm>
+#include <set>
+
 using std::unordered_set;
 using std::cout;
 using std::set;
@@ -277,4 +280,4 @@ Formula IfThenElseEliminator::VisitForall(const Formula &f, const Formula &) {
   return forall(quantified_variables, Nnfizer{}.Convert(!eliminated));
 }
 
-} // dlinear
+} // namespace dlinear

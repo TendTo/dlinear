@@ -333,4 +333,4 @@ ostream &DisplayDiff(ostream &os,
   return os;
 }
 
-} // dlinear
+} // namespace dlinear

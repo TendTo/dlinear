@@ -1,6 +1,9 @@
 /**
  * @file symbolic.h
- * This is the header file that we consolidate Drake's symbolic
+ * @author dlinear
+ * @date 14 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief This is the header file that we consolidate Drake's symbolic
  * classes and expose them inside of dlinear namespace.
  *
  * Other files in dlinear should include this file and should NOT

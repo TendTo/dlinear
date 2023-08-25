@@ -11,11 +11,12 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_TIMER_H_
 #define DLINEAR5_DLINEAR_UTIL_TIMER_H_
 
+#include <sys/resource.h>
+
 #include <chrono>
 #include <iostream>
 #include <type_traits>
 #include <cstdint>
-#include <sys/resource.h>
 
 #include "dlinear/util/logging.h"
 

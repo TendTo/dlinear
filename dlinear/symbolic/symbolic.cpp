@@ -1,3 +1,9 @@
+/**
+ * @file TseitinCnfizer.h
+ * @author dlinear
+ * @date 19 Aug 2023
+ * @copyright 2023 dlinear
+ */
 #include "symbolic.h"
 
 #include <algorithm>

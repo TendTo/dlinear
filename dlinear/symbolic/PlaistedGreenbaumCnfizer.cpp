@@ -135,4 +135,4 @@ Formula PlaistedGreenbaumCnfizer::VisitNegation(const Formula &f) {
   return f;
 }
 
-} // dlinear
+} // namespace dlinear

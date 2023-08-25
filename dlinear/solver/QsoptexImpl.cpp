@@ -50,7 +50,7 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
     return;
   }
 #endif
-}  // namespace dreal
+}  // namespace dlinear
 
 optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack,
                                                   Box box,
@@ -285,5 +285,4 @@ void Context::QsoptexImpl::Push() {
   boxes_.push_back(boxes_.last());
   stack_.push();
 }
-
-} // dlinear
+} // namespace dlinear

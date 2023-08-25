@@ -37,6 +37,6 @@ class FormulaVisitor {
   virtual Formula VisitForall(const Formula &f) { return f; }
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SYMBOLIC_FORMULAVISITOR_H_

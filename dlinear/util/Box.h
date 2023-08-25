@@ -8,6 +8,14 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_BOX_H_
 #define DLINEAR5_DLINEAR_UTIL_BOX_H_
 
+#include <memory>
+#include <unordered_map>
+#include <limits>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <string>
+
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/libs/gmp.h"
@@ -193,6 +201,6 @@ std::ostream &DisplayDiff(std::ostream &os,
                           const Box::IntervalVector &old_iv,
                           const Box::IntervalVector &new_iv);
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_BOX_H_

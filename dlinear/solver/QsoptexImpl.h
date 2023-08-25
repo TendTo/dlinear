@@ -11,6 +11,8 @@
 #ifndef DLINEAR5_DLINEAR_SOLVER_QSOPTEXIMPL_H_
 #define DLINEAR5_DLINEAR_SOLVER_QSOPTEXIMPL_H_
 
+#include <vector>
+
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/logging.h"
@@ -28,22 +30,22 @@ class Context::QsoptexImpl : public Context::Impl {
   QsoptexImpl();
   explicit QsoptexImpl(Config config);
 
-  void Assert(const Formula &f);
-  void Pop();
-  void Push();
+  void Assert(const Formula &f) override;
+  void Pop() override;
+  void Push() override;
 
  protected:
   // Returns the current box in the stack.
-  tl::optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision);
-  int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *box);
+  tl::optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) override;
+  int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *box) override;
 
-  void MinimizeCore(const Expression &obj_expr);
+  void MinimizeCore(const Expression &obj_expr) override;
 
   QsoptexSatSolver sat_solver_; ///< SAT solver.
   QsoptexTheorySolver theory_solver_; ///< Theory solver.
   Expression obj_expr_; ///< Objective expression.
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SOLVER_QSOPTEXIMPL_H_

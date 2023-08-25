@@ -52,11 +52,10 @@ def _add_linter_rules(source_labels, source_filenames, name, data = None):
     tags = ["cpplint"]
 
     # Google cpplint.
-    cpplint_cfg = ["//:CPPLINT.cfg"]
     native.py_test(
         name = name + "_cpplint",
         srcs = ["@cpplint"],
-        data = data + cpplint_cfg + source_labels,
+        data = data + source_labels + ["//:CPPLINT.cfg"],
         args = _EXTENSIONS_ARGS + source_filenames,
         main = "@cpplint//:cpplint.py",
         size = size,
@@ -82,12 +81,11 @@ def cpplint(data = None, extra_srcs = None):
             _extract_labels(rule.get("srcs", ())) +
             _extract_labels(rule.get("hdrs", ()))
         )
-        source_labels = [
-            label
-            for label in candidate_labels
-            if _is_source_label(label)
-        ]
+        source_labels = [label for label in candidate_labels if _is_source_label(label)]
         source_filenames = ["$(location %s)" % x for x in source_labels]
+
+        if len(source_filenames) == 0:
+            continue
 
         # Run the cpplint checker as a single unit test.
         _add_linter_rules(source_labels, source_filenames, rule["name"], data)

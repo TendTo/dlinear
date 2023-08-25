@@ -92,4 +92,4 @@ void TimerGuard::resume() {
 
 UserTimer main_timer;
 
-} // dlinear
+} // namespace dlinear

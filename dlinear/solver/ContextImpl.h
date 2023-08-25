@@ -11,11 +11,15 @@
 #ifndef DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_
 #define DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_
 
+#include <unordered_set>
+#include <vector>
+#include <utility>
+#include <string>
+#include <unordered_map>
+
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedVector.hpp"
 #include "dlinear/util/logging.h"
-
-#include <unordered_set>
 
 namespace dlinear {
 
@@ -102,6 +106,6 @@ class Context::Impl {
   bool is_max_; ///< Keeps track of whether or not the objective function is being maximized.
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_

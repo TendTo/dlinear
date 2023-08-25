@@ -11,6 +11,7 @@ gen_lex(
     name = "scanner",
     src = "scanner.ll",
     source_out = "scanner.ll.cpp",
+    visibility = ["//visibility:private"],
 )
 
 gen_yacc(
@@ -19,6 +20,7 @@ gen_yacc(
     extra_outs = ["location.hh"],
     header_out = "parser.yy.hpp",
     source_out = "parser.yy.cpp",
+    visibility = ["//visibility:private"],
 )
 
 dlinear_cc_library(
@@ -91,19 +93,6 @@ dlinear_cc_library(
         "//dlinear/util:scoped_structures",
         "@flex_lexer",
         "@tl_optional",
-    ],
-)
-
-dlinear_cc_binary(
-    name = "smt2_main",
-    srcs = ["main.cpp"],
-    data = [
-        "ite_02.smt2",
-    ],
-    deps = [
-        ":smt2",
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/util:infty",
     ],
 )
 

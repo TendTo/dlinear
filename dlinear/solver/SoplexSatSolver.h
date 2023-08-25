@@ -1,15 +1,15 @@
 /**
- * @file QsoptexSatSolver.h
+ * @file SoplexSatSolver.h
  * @author dlinear
- * @date 17 Aug 2023
+ * @date 24 Aug 2023
  * @copyright 2023 dlinear
  * @brief Brief description
  *
  * Long Description
  */
 
-#ifndef DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
-#define DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
+#ifndef DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_
+#define DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_
 
 #include <picosat/picosat.h>
 
@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <ostream>
+#include <cmath>
 
 #include <tl/optional.hpp>
 
@@ -30,54 +32,55 @@
 #include "dlinear/util/ScopedUnorderedSet.hpp"
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/soplex.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 
 namespace dlinear {
 
-class QsoptexSatSolver {
+class SoplexSatSolver {
  public:
-  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>; ///< Boolean model + Theory model.
+  // Boolean model + Theory model.
+  /** Boolean model + Theory model. */
+  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
 
   /**
-   * Construct a QsoptexSatSolver.
+   * Construct a SoplexSatSolver.
    * @param config configuration
    */
-  explicit QsoptexSatSolver(const Config &config);
+  explicit SoplexSatSolver(const Config &config);
 
+  /// Constructs a SoplexSatSolver while asserting @p clauses.
   /**
-   * Construct a QsoptexSatSolver while asserting @p clauses.
+   * Construct a SoplexSatSolver while asserting @p clauses.
    * @param config configuration
-   * @param clauses clauses to assertla
+   * @param clauses clauses to assert
    */
-  QsoptexSatSolver(const Config &config, const std::vector<Formula> &clauses);
+  SoplexSatSolver(const Config &config, const std::vector<Formula> &clauses);
 
-  /** Deleted copy constructor. */
-  QsoptexSatSolver(const QsoptexSatSolver &) = delete;
+  SoplexSatSolver(const SoplexSatSolver &) = delete;
+  SoplexSatSolver(SoplexSatSolver &&) = delete;
+  SoplexSatSolver &operator=(const SoplexSatSolver &) = delete;
+  SoplexSatSolver &operator=(SoplexSatSolver &&) = delete;
 
-  /** Deleted move constructor. */
-  QsoptexSatSolver(QsoptexSatSolver &&) = delete;
-
-  /** Deleted copy constructor. */
-  QsoptexSatSolver &operator=(const QsoptexSatSolver &) = delete;
-
-  /** Deleted move-assignment operator. */
-  QsoptexSatSolver &operator=(QsoptexSatSolver &&) = delete;
-
-  ~QsoptexSatSolver();
+  ~SoplexSatSolver();
 
   /**
    * Add a formula @p f to the solver.
-   * @note If @p f is a clause, please use @link AddClause function. This
+   *
+   * @note If @p f is a clause, please use AddClause function. This
    * function does not assume anything about @p f and perform
    * pre-processings (CNFize and PredicateAbstraction).
-   * @param f formula to be added
+   * @param f formula to add
    */
   void AddFormula(const Formula &f);
 
   /**
    * Add a vector of formulas @p formulas to the solver.
-   * @note If @p f is a clause, please use @link AddClauses function. This
-   * @param formulas
+   * @param formulas vector of formulas to add
    */
   void AddFormulas(const std::vector<Formula> &formulas);
 
@@ -89,13 +92,11 @@ class QsoptexSatSolver {
   void AddLearnedClause(const LiteralSet &literals);
 
   /**
-   * Check the satisfiability of the current configuration.
-   * Also set up the linear solver returned by GetLinearSolver().
+   * Check the satisfiability of the current configuration
    * @param box box of variables to check
-   * @param obj_expr the objective expression to minimize
-   * @return a witness, satisfying model if the problem is satisfiable, nullopt if UNSAT
+   * @return whether the problem is satisfiable as an optional
    */
-  tl::optional <Model> CheckSat(const Box &box, tl::optional <Expression> obj_expr = tl::optional<Expression>());
+  tl::optional <Model> CheckSat(const Box &box);
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();
@@ -106,8 +107,16 @@ class QsoptexSatSolver {
     return predicate_abstractor_[var];
   }
 
-  mpq_QSprob GetLinearSolver() const {
-    return qsx_prob_;
+  soplex::SoPlex *GetLinearSolverPtr() {
+    return &spx_prob_;
+  }
+
+  const soplex::VectorRational &GetLowerBounds() const {
+    return spx_lower_;
+  }
+
+  const soplex::VectorRational &GetUpperBounds() const {
+    return spx_upper_;
   }
 
   const std::map<int, Variable> &GetLinearVarMap() const;
@@ -115,17 +124,16 @@ class QsoptexSatSolver {
  private:
   /**
    * Add a clause @p f to the solver.
-   * @note @p f must be a clause. That is, it is either a literal (b or ¬b)
+   * @pre @p f is a clause. That is, it is either a literal (b or ¬b)
    * or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
-   * @param f clause to be added
+   * @param f clause to add
    */
   void AddClause(const Formula &f);
 
   /**
    * Add a vector of formulas @p formulas to the solver.
-   * @note Each element of @p formulas must be a clause. That is, it is either
-   * a literal (b or ¬b) or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
-   * @param formulas set of clauses to be added
+   * @pre Each element of @p formulas must be a clause.
+   * @param formulas vector of formulas to add
    */
   void AddClauses(const std::vector<Formula> &formulas);
 
@@ -133,7 +141,7 @@ class QsoptexSatSolver {
    * Return a corresponding literal ID of @p var.
    * It maintains two maps `lit_to_var_` and `var_to_lit_` to keep track of the
    * relationship between Variable ⇔ Literal (in SAT).
-   * @param var
+   * @param var variable to convert in the corresponding literal
    */
   void MakeSatVar(const Variable &var);
 
@@ -154,29 +162,23 @@ class QsoptexSatSolver {
   // Add a linear literal to the linear solver
   void AddLinearLiteral(const Variable &var, bool truth);
 
+  // Create (redundant) artificial variable for LP solver
+  void CreateArtificials(int spx_row);
+
   // Enable a linear literal in the linear solver
   void EnableLinearLiteral(const Variable &var, bool truth);
 
   // Add a variable to the linear solver
   void AddLinearVariable(const Variable &var);
 
-  // Clear the linear solver's objective function
-  void ClearLinearObjective();
-
-  // Set the linear solver's objective function
-  void SetLinearObjective(const Expression &obj_expr);
-
   // Set the variable's coefficient for the given constraint row in the linear
   // solver
-  void SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value);
-
-  // Set the variable's coefficient for the objective function in the linear
-  // solver
-  void SetQSXVarObjCoef(const Variable &var, const mpq_class &value);
+  void SetSPXVarCoef(soplex::DSVectorRational *coeffs, const Variable &var,
+                     const mpq_class &value);
 
   // Set one of the variable's bounds ('L' - lower or 'U' - upper) in the
   // linear solver, in addition to bounds already asserted.
-  void SetQSXVarBound(const Variable &var, const char type,
+  void SetSPXVarBound(const Variable &var, const char type,
                       const mpq_class &value);
 
   // Add a clause @p f to sat solver.
@@ -214,22 +216,24 @@ class QsoptexSatSolver {
   /// transformations.
   ScopedUnorderedSet<Variable::Id> cnf_variables_;
 
-  // Exact LP solver (QSopt_ex)
-  mpq_QSprob qsx_prob_;
+  // Exact LP solver (SoPlex)
+  soplex::SoPlex spx_prob_;
+  soplex::VectorRational spx_lower_;
+  soplex::VectorRational spx_upper_;
 
-  // Map symbolic::Variable <-> int (column in QSopt_ex problem).
+  // Map symbolic::Variable <-> int (column in SoPlex problem).
   // We don't use the scoped version because we'd like to be sure that we
   // won't create duplicate columns.  No two Variable objects ever have the
   // same Id.
-  std::map<Variable::Id, int> to_qsx_col_;
-  std::map<int, Variable> from_qsx_col_;
+  std::map<Variable::Id, int> to_spx_col_;
+  std::map<int, Variable> from_spx_col_;
 
-  // Map (symbolic::Variable, bool) <-> int (row in QSopt_ex problem).
-  std::map<std::pair<Variable::Id, bool>, int> to_qsx_row_;
-  std::vector<Literal> from_qsx_row_;
+  // Map (symbolic::Variable, bool) <-> int (row in SoPlex problem).
+  std::map<std::pair<Variable::Id, bool>, int> to_spx_row_; ///< Map (Variable, bool) <-> int (row)
+  std::vector<Literal> from_spx_row_; ///< Map int (row) <-> Literal
 
-  std::vector<mpq_class> qsx_rhs_;
-  std::vector<char> qsx_sense_;
+  std::vector<mpq_class> spx_rhs_;
+  std::vector<char> spx_sense_;
 
   /// @note We found an issue when picosat_deref_partial is used with
   /// picosat_pop. When this variable is true, we use `picosat_deref`
@@ -238,9 +242,9 @@ class QsoptexSatSolver {
   /// TODO(soonho): Remove this hack when it's not needed.
   bool has_picosat_pop_used_{false};
 
-  const Config &config_;
+  const Config &config_; ///< Solver configuration
 };
 
 } // namespace dlinear
 
-#endif //DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
+#endif //DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_

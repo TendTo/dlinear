@@ -163,24 +163,40 @@ def dlinear_cc_googletest(
 
 def smt2_phased_test(
         name,
+        phase,
         smt2 = None,
         options = [],
         tags = [],
         lp_solver = "qsoptex",
-        phase = None,
         continuous = False,
         exhaustive_ok = True,
         main = "TestSmt2.py",
         **kwargs):
-    """Create smt2 test."""
+    """Create smt2 test.
+    The SMT solver will parse the SMT2 file and produce an output.
+    If the output is the same as the one in the corresponding .expected file, the test passes.
+
+    Args:
+        name: The name of the test.
+        phase: The phase to use. Must be either 1 or 2.
+        smt2: The SMT2 file to test. If None, defaults to 'name.smt2'.
+        options: A list of options to pass to the solver.
+        tags: A list of tags to add to the test.
+        lp_solver: The LP solver to use. Must be either soplex or qsoptex.
+        continuous: Whether to run the solver in continuous mode.
+        exhaustive_ok: Whether to run the solver in exhaustive mode.
+        main: The main Python file to use.
+        kwargs: Additional arguments to pass to native.py_test.
+    """
     if lp_solver not in ("soplex", "qsoptex"):
         fail("LP solver must be soplex or qsoptex", "lp_solver")
     if phase not in (1, 2):
         fail("Phase must be 1 or 2", "phase")
-    if not smt2:
-        smt2 = "smt2/%s.smt2" % name
+
+    smt2 = smt2 if smt2 else "%s.smt2" % name
     data_files = native.glob([smt2 + "*"])
     name_extra = "_continuous" if continuous else ""
+
     native.py_test(
         name = "{}_{}_phase_{}{}".format(name, lp_solver, phase, name_extra),
         args = [
@@ -202,9 +218,11 @@ def smt2_phased_test(
 
 def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
     """Tests a SMT2 file.
+    It automatically tests both phases, and both LP solvers on the same input.
+    If the lp solver is qsoptex, it also tests continuous mode.
 
     Args:
-        name: The name of the test.
+        name: The name of the test. It will be used to find the SMT2 input file.
         options: A list of options to pass to the solver.
         lp_solvers: A list of LP solvers to test. If None, tests both soplex and qsoptex.
         kwargs: Additional arguments to pass to smt2_test.
@@ -232,3 +250,22 @@ def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
                 size = size,
                 **kwargs
             )
+
+def smt2_test_all(smt2_dir = "smt2", options = [], lp_solvers = None, **kwargs):
+    """Tests all SMT2 files from the smt2 directory.
+    Loops over all files in the directory and calls smt2_test on each .smt2 file.
+
+    Args:
+        smt2_dir: The directory containing the SMT2 files.
+        options: A list of options to pass to the solver.
+        lp_solvers: A list of LP solvers to test. If None, tests both soplex and qsoptex.
+        kwargs: Additional arguments to pass to smt2_test.
+    """
+    files = native.glob(["%s/*.smt2" % smt2_dir])
+    for file in files:
+        smt2_test(
+            name = file.removesuffix(".smt2"),
+            options = options,
+            lp_solvers = lp_solvers,
+            **kwargs
+        )

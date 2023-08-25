@@ -122,6 +122,6 @@ class ScopedVector {
   std::vector<size_t> scopes_;
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_SCOPEDVECTOR_HPP_

@@ -67,6 +67,6 @@ class TseitinCnfizer : public FormulaVisitor {
   friend Formula drake::symbolic::VisitFormula<Formula, TseitinCnfizer>(TseitinCnfizer *, const Formula &);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SYMBOLIC_TSEITINCNFIZER_H_

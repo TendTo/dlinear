@@ -3,9 +3,10 @@
  * @author dlinear
  * @date 12 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Entrypoint for the dlinear program.
  *
- * Long Description
+ * Runs the dlinear program.
+ * The command line options are used to produce the correct Configuration for the solver.
  */
 
 #ifndef DLINEAR5_DLINEAR_MAINPROGRAM_H_
@@ -16,7 +17,7 @@
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/libs/soplex.h"
 #include "dlinear/solver/Context.h"
-#include "dlinear/util/filesystem.h"
+#include "dlinear/smt2/run.h"
 
 namespace dlinear {
 
@@ -26,30 +27,28 @@ namespace dlinear {
  */
 class MainProgram {
  public:
-  /** Constructor.
+  /**
+   * Constructor.
    * @param argc Number of arguments.
    * @param argv Arguments.
    */
   MainProgram(int argc, const char *argv[]);
 
-  /** Executes the main program.
+  /**
+   * Executes the main program.
    * @return 0 if success, 1 if failure.
    */
   int Run();
 
  private:
-  void PrintUsage();
-  void AddOptions();
+  /** Initialize all the constants the libraries expect. */
   void Init();
+  /** Free all the constants used by the libraries. */
   void DeInit();
-  bool ValidateOptions();
 
-  void ExtractOptions();
-
-  bool is_options_all_valid_{false};
-  Config config_;
+  Config config_; ///< Configuration for the program. All default can be overridden by command line options.
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_MAINPROGRAM_H_

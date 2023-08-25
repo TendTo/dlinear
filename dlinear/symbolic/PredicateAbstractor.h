@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
+#include <set>
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
@@ -75,6 +76,6 @@ class PredicateAbstractor : public FormulaVisitor {
   friend Formula drake::symbolic::VisitFormula<Formula, PredicateAbstractor>(PredicateAbstractor *, const Formula &);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_PREDICATEABSTRACTOR_H_

@@ -1,3 +1,15 @@
+/**
+ * @file Driver.h
+ * @author dlinear
+ * @date 22 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief Driver form the parsing and execution of smt2 files.
+ *
+ * The driver puts in communication the parser and the scanner.
+ * In the end, it produces a context that can be used to solve the
+ * problem.
+ */
+
 #include <istream>
 #include <string>
 #include <vector>
@@ -14,6 +26,7 @@
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/smt2/Term.h"
 
 namespace dlinear {
 

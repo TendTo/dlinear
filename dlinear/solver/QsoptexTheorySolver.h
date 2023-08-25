@@ -16,6 +16,7 @@
 #include <map>
 #include <functional>
 #include <utility>
+#include <limits>
 
 #include "dlinear/util/Config.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -87,6 +88,6 @@ class QsoptexTheorySolver {
                                              void *data);
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_SOLVER_QSOPTEXTHEORYSOLVER_H_

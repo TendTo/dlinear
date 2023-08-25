@@ -644,4 +644,4 @@ const std::map<int, Variable> &QsoptexSatSolver::GetLinearVarMap() const {
   return from_qsx_col_;
 }
 
-} // dlinear
+} // namespace dlinear

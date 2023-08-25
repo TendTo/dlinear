@@ -12,6 +12,8 @@
 #define DLINEAR5_DLINEAR_SYMBOLIC_LITERAL_H_
 
 #include <set>
+#include <utility>
+
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {

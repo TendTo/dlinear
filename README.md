@@ -6,7 +6,8 @@
 - [Bazel](https://bazel.build/)
 - [gmp](https://gmplib.org/) to compile [qsopt_ex](https://gmplib.org/) and [soplex](https://soplex.zib.de/)
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
-- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` files
+- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser
+  for `.smt2` files
 
 ## TODO
 
@@ -25,6 +26,23 @@
 - [ ] Remove need for gmp-dev by compiling it with bazel
 - [ ] Make soplex and qsopt_ex depend on the compiled gmp withing bazel
 - [ ] Compile flex and bison with bazel
+
+### Useful commands
+
+```bash
+# Compile dlinear
+bazel build //dlinear:all
+```
+
+```bash
+# CPPlint
+bazel test //dlinear:cpplint_test
+```
+
+```bash
+# Run tests
+bazel test //tests:all
+```
 
 ## MWP
 

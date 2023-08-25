@@ -15,6 +15,9 @@
 
 #include <iostream>
 #include <memory>
+#include <utility>
+#include <vector>
+#include <string>
 
 #include <tl/optional.hpp>
 
@@ -201,6 +204,6 @@ class Context {
   std::unique_ptr <Impl> impl_;
 };
 
-} // dlinear
+} // namespace dlinear
 
 #endif //DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
