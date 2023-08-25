@@ -1,5 +1,5 @@
 # Workspace status command
-build --workspace_status_command=scripts/workspace_status.sh
+build --workspace_status_command=script/workspace_status.sh
 
 # Default build
 build --cxxopt=-std=c++17

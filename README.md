@@ -31,18 +31,23 @@
 
 ```bash
 # Compile dlinear
-bazel build //dlinear:all
+bazel build //dlinear
 ```
 
 ```bash
 # CPPlint
-bazel test //dlinear:cpplint_test
+bazel test //dlinear/...
 ```
 
 ```bash
 # Run tests
-bazel test //tests:all
+bazel test //test/...
 ```
+
+### Compilation flags
+
+- `--//tools:enable_soplex=[True|False]` to enable or disable soplex. Default is `True`
+- `--//tools:enable_qsoptex=[True|False]` to enable or disable qsopt_ex. Default is `True`
 
 ## MWP
 
