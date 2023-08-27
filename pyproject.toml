@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "pybind11~=2.6.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pydlinear"
+description = "SMT Solver for Linear Theories over the reals"
+authors = [
+    { name = "Ernesto Casablanca", email = "casablancaernesto@gmail.com" },
+    { name = "Soonho Kong", email = "soonho.kong@gmail.com" },
+    { name = "Martin", email = "marting@gmail.com" },
+]
+maintainers = [
+    { name = "Ernesto Casablanca", email = "casablancaernesto@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.6"
+keywords = ["smt", "solver", "linear", "theory", "reals"]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pydlinear.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["pydlinear"]
+
+[project.urls]
+Homepage = "https://github.com/TendTo/dlinear5"
+Source = "https://github.com/TendTo/dlinear5"
+Tracker = "https://github.com/TendTo/dlinear5/issues"

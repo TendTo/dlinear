@@ -1,4 +1,4 @@
-licenses(["notice"])  # GNU General Public License v3.0
+licenses(["notice"])  # BSD
 
 cc_library(
     name = "flex_lexer",

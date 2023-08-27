@@ -8,3 +8,6 @@ build --cxxopt=-std=c++17
 build:opt --cxxopt=-O3
 build:opt --cxxopt=-DNDEBUG
 build:opt --cxxopt=-DNLOG
+
+# Building python bindings
+build:pydlinear --cxxopt=-DLINEAR_CHECK_INTERRUPT
