@@ -1,0 +1,20 @@
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_cc_library(
+    name = "api",
+    srcs = ["api.cpp"],
+    hdrs = ["api.h"],
+    deps = [
+        "//dlinear/solver:context",
+        "//dlinear/symbolic",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+        "@tl_optional",
+    ],
+)
