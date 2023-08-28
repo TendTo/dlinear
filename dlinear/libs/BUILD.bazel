@@ -2,6 +2,7 @@ load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 
 package(default_visibility = [
+    "//benchmark:__subpackages__",
     "//dlinear:__subpackages__",
     "//pydlinear:__subpackages__",
     "//test:__subpackages__",

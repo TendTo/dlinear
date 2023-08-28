@@ -7,6 +7,8 @@ from abc import ABC, abstractmethod
 if TYPE_CHECKING:
     from typing import TypedDict, Literal
 
+    TimeUnit = Literal["ns", "us", "ms", "s", "m", "h"]
+
     class SloaneStufken(TypedDict):
         assertions: int
         precision: float
@@ -52,8 +54,23 @@ if TYPE_CHECKING:
 
 
 class BaseBenchmarkParser(ABC):
+    TIME_UNITS = ["ns", "us", "ms", "s", "m", "h"]
+    TIME_UNITS_TRANSITIONS = [
+        [1, 1e-3, 1e-6, 1e-9, 1e-9 / 60, 1e-9 / 3600],
+        [1e3, 1, 1e-3, 1e-6, 1e-6 / 60, 1e-6 / 3600],
+        [1e6, 1e3, 1, 1e-3, 1e-3 / 60, 1e-3 / 3600],
+        [1e9, 1e6, 1e3, 1, 1 / 60, 1 / 3600],
+        [1e9 * 60, 1e6 * 60, 1e3 * 60, 60, 1, 1 / 60],
+        [1e9 * 3600, 1e6 * 3600, 1e3 * 3600, 3600, 60, 1],
+    ]
+
     def __init__(
-        self, input_files: "str | list[str]", output_file: "str", smt2_folder: "str" = "", min_time: int = 0
+        self,
+        input_files: "str | list[str]",
+        output_file: "str",
+        smt2_folder: "str" = "",
+        min_time: int = 0,
+        time_unit: "TimeUnit" = "s",
     ) -> None:
         self.input_files: "list[str]" = input_files if isinstance(input_files, list) else [input_files]
         self.output_file: "str" = output_file
@@ -62,6 +79,7 @@ class BaseBenchmarkParser(ABC):
         self.slone_stufken_rows: "dict[str, SloaneStufken]" = {}
         self.smt_problem_rows: "dict[str, SMTProblem]" = {}
         self.min_time: "int" = min_time
+        self.time_unit: "TimeUnit" = time_unit
 
     @abstractmethod
     def load_benchmarks(self):
@@ -82,12 +100,15 @@ class BaseBenchmarkParser(ABC):
             case "lp":
                 file_row = self.lp_problem_rows
 
-        if len(file_row) > 0:
-            rows = [file_row for file_row in file_row.values() if self.should_add_row(file_row)]
-            with open(self.get_output_file_with_prefix(row_type), "w", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-                writer.writeheader()
-                writer.writerows(rows)
+        rows = [file_row for file_row in file_row.values() if self.should_add_row(file_row)]
+
+        if len(rows) == 0:
+            return
+
+        with open(self.get_output_file_with_prefix(row_type), "w", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
 
     @abstractmethod
     def parse_lp_problem(self, benchmark):
@@ -118,3 +139,15 @@ class BaseBenchmarkParser(ABC):
 
     def should_add_row(self, benchmark: "SloaneStufken | LPProblem | SMTProblem") -> "bool":
         return self.min_time == 0 or benchmark["timeQ"] >= self.min_time or benchmark["timeS"] >= self.min_time
+
+    def time_conversion(self, time: "float | str", time_unit: "TimeUnit | str") -> "float":
+        if isinstance(time, str):
+            time = float(time)
+        if time_unit not in self.TIME_UNITS or self.time_unit not in self.TIME_UNITS:
+            raise ValueError(f"Unknown time unit {time_unit}")
+
+        from_unit = self.TIME_UNITS.index(time_unit)
+        to_unit = self.TIME_UNITS.index(self.time_unit)
+
+        scale = self.TIME_UNITS_TRANSITIONS[from_unit][to_unit]
+        return time * scale

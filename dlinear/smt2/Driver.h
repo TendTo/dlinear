@@ -9,9 +9,12 @@
  * In the end, it produces a context that can be used to solve the
  * problem.
  */
+#ifndef DLINEAR5_DLINEAR_SMT2_DRIVER_H_
+#define DLINEAR5_DLINEAR_SMT2_DRIVER_H_
 
 #include <istream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -111,11 +114,11 @@ class Smt2Driver {
 
   class VariableOrConstant {
    public:
-    explicit VariableOrConstant(const Variable &var) : var_{var}, is_var_{true} {}
-    explicit VariableOrConstant(const Expression &expr) : expr_{expr}, is_var_{false} {}
-    const Variable &variable() const { return var_; }
-    const Expression &expression() const { return expr_; }
-    bool is_variable() const { return is_var_; }
+    explicit VariableOrConstant(Variable var) : var_{std::move(var)}, is_var_{true} {}
+    explicit VariableOrConstant(Expression expr) : expr_{std::move(expr)}, is_var_{false} {}
+    [[nodiscard]] const Variable &variable() const { return var_; }
+    [[nodiscard]] const Expression &expression() const { return expr_; }
+    [[nodiscard]] bool is_variable() const { return is_var_; }
    private:
     Variable var_;
     Expression expr_;
@@ -176,3 +179,5 @@ class Smt2Driver {
 };
 
 }  // namespace dlinear
+
+#endif  // DLINEAR5_DLINEAR_SMT2_DRIVER_H_

@@ -22,6 +22,14 @@ bool file_exists(const string &name) {
   return S_ISREG(buffer.st_mode);
 }
 
+bool dir_exists(const string &name) {
+  DLINEAR_TRACE_FMT("dir_exists({})", name);
+  struct stat buffer{};
+  if (stat(name.c_str(), &buffer) != 0)
+    return false;
+  return S_ISDIR(buffer.st_mode);
+}
+
 string get_extension(const string &name) {
   DLINEAR_TRACE_FMT("get_extension({})", name);
   const size_t idx = name.rfind('.');

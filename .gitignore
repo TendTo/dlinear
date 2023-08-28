@@ -75,6 +75,8 @@ coverage.xml
 *.cover
 
 # Benchmark
-benchmark/*.csv
-benchmark/*.json
-benchmark/smt2/*.smt2
+benchmark/smt2/*
+benchmark/csv/*
+
+
+!.gitkeep

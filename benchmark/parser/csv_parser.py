@@ -6,7 +6,7 @@ from .base_parser import BaseBenchmarkParser
 
 if TYPE_CHECKING:
     from typing import TypedDict
-    from base_parser import SloaneStufken, LPProblem, SMTProblem
+    from base_parser import SloaneStufken, LPProblem, SMTProblem, TimeUnit
 
     class Benchmark(TypedDict):
         file: str
@@ -21,9 +21,14 @@ if TYPE_CHECKING:
 
 class BenchmarkCsvParser(BaseBenchmarkParser):
     def __init__(
-        self, input_files: "str | list[str]", output_file: str, smt2_folder: "str" = "", min_time: int = 0
-    ) -> None:
-        super().__init__(input_files, output_file, smt2_folder, min_time)
+        self,
+        input_files: "str | list[str]",
+        output_file: "str",
+        smt2_folder: "str" = "",
+        min_time: "int" = 0,
+        time_unit: "TimeUnit" = "s",
+    ):
+        super().__init__(input_files, output_file, smt2_folder, min_time, time_unit)
         assert all(input_file.endswith(".csv") for input_file in self.input_files)
         self.benchmarks: "list[Benchmark]" = []
 
@@ -42,7 +47,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
         precision = float(benchmark["precision"])
         assertions = int(benchmark["assertions"])
         actual_precision = float(benchmark["actualPrecision"])
-        time = int(benchmark["time"])
+        time = self.time_conversion(benchmark["time"], benchmark["timeUnit"])
 
         key = f"{file}/{precision}"
         row: "LPProblem" = self.lp_problem_rows.get(
@@ -51,7 +56,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
                 "file": file,
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["timeUnit"],
+                "timeUnit": self.time_unit,
                 "iterations": 1,
                 "actualPrecisionS": -1,
                 "actualPrecisionQ": -1,
@@ -79,7 +84,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
         precision = float(benchmark["precision"])
         assertions = int(benchmark["assertions"])
         actual_precision = float(benchmark["actualPrecision"])
-        time = int(benchmark["time"])
+        time = self.time_conversion(benchmark["time"], benchmark["timeUnit"])
         s1, k1, s2, k2, t = (int(val) for val in file.split("-"))
 
         key = f"{file}/{precision}"
@@ -88,7 +93,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
             {
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["timeUnit"],
+                "timeUnit": self.time_unit,
                 "iterations": 1,
                 "s1": s1,
                 "k1": k1,
@@ -121,7 +126,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
         precision = float(benchmark["precision"])
         assertions = int(benchmark["assertions"])
         actual_precision = float(benchmark["actualPrecision"])
-        time = int(benchmark["time"])
+        time = self.time_conversion(benchmark["time"], benchmark["timeUnit"])
 
         key = f"{file}/{precision}"
         row: "SMTProblem" = self.smt_problem_rows.get(
@@ -130,7 +135,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
                 "file": file,
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["timeUnit"],
+                "timeUnit": self.time_unit,
                 "iterations": 1,
                 "actualPrecisionS": -1,
                 "actualPrecisionQ": -1,

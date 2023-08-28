@@ -6,7 +6,7 @@ from .base_parser import BaseBenchmarkParser
 
 if TYPE_CHECKING:
     from typing import TypedDict
-    from base_parser import SloaneStufken, LPProblem, SMTProblem
+    from base_parser import SloaneStufken, LPProblem, SMTProblem, TimeUnit
 
     class Benchmark(TypedDict):
         name: str
@@ -24,8 +24,15 @@ if TYPE_CHECKING:
 
 
 class BenchmarkJsonParser(BaseBenchmarkParser):
-    def __init__(self, input_file, output_file, smt2_folder: "str" = "", min_time: int = 0) -> None:
-        super().__init__(input_file, output_file, smt2_folder, min_time)
+    def __init__(
+        self,
+        input_file: "str | list[str]",
+        output_file: "str",
+        smt2_folder: "str" = "",
+        min_time: "int" = 0,
+        time_unit: "TimeUnit" = "s",
+    ):
+        super().__init__(input_file, output_file, smt2_folder, min_time, time_unit)
         assert all(input_file.endswith(".json") for input_file in self.input_files)
         self.benchmarks: "list[Benchmark]" = []
 
@@ -45,6 +52,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         precision = float(precision)
         assertions = int(assertions)
         actual_precision = float(actual_precision)
+        time = self.time_conversion(benchmark["cpu_time"], benchmark["time_unit"])
 
         key = f"{file}/{precision}"
         row: "LPProblem" = self.lp_problem_rows.get(
@@ -53,7 +61,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
                 "file": file,
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["time_unit"],
+                "timeUnit": self.time_unit,
                 "iterations": benchmark["iterations"],
                 "actualPrecisionS": -1,
                 "actualPrecisionQ": -1,
@@ -65,11 +73,11 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         )
         if solver == "soplex":
             row["actualPrecisionS"] = actual_precision
-            row["timeS"] = round(benchmark["cpu_time"], 3)
+            row["timeS"] = round(time, 3)
             row["resultS"] = result
         elif solver == "qsoptex":
             row["actualPrecisionQ"] = actual_precision
-            row["timeQ"] = round(benchmark["cpu_time"], 3)
+            row["timeQ"] = round(time, 3)
             row["resultQ"] = result
         self.lp_problem_rows[key] = row
 
@@ -82,6 +90,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         assertions = int(assertions)
         actual_precision = float(actual_precision)
         s1, k1, s2, k2, t = (int(val) for val in file.split("-"))
+        time = self.time_conversion(benchmark["cpu_time"], benchmark["time_unit"])
 
         key = f"{file}/{precision}"
         row: "SloaneStufken" = self.slone_stufken_rows.get(
@@ -89,7 +98,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
             {
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["time_unit"],
+                "timeUnit": self.time_unit,
                 "iterations": benchmark["iterations"],
                 "s1": s1,
                 "k1": k1,
@@ -106,11 +115,11 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         )
         if solver == "soplex":
             row["actualPrecisionS"] = actual_precision
-            row["timeS"] = round(benchmark["cpu_time"], 3)
+            row["timeS"] = round(time, 3)
             row["resultS"] = result
         elif solver == "qsoptex":
             row["actualPrecisionQ"] = actual_precision
-            row["timeQ"] = round(benchmark["cpu_time"], 3)
+            row["timeQ"] = round(time, 3)
             row["resultQ"] = result
         self.slone_stufken_rows[key] = row
 
@@ -123,6 +132,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         precision = float(precision)
         assertions = int(assertions)
         actual_precision = float(actual_precision)
+        time = self.time_conversion(benchmark["cpu_time"], benchmark["time_unit"])
 
         key = f"{file}/{precision}"
         row: "SMTProblem" = self.smt_problem_rows.get(
@@ -131,7 +141,7 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
                 "file": file,
                 "assertions": assertions,
                 "precision": precision,
-                "timeUnit": benchmark["time_unit"],
+                "timeUnit": self.time_unit,
                 "iterations": benchmark["iterations"],
                 "actualPrecisionS": -1,
                 "actualPrecisionQ": -1,
@@ -143,11 +153,11 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         )
         if solver == "soplex":
             row["actualPrecisionS"] = actual_precision
-            row["timeS"] = round(benchmark["cpu_time"], 3)
+            row["timeS"] = round(time, 3)
             row["resultS"] = result
         elif solver == "qsoptex":
             row["actualPrecisionQ"] = actual_precision
-            row["timeQ"] = round(benchmark["cpu_time"], 3)
+            row["timeQ"] = round(time, 3)
             row["resultQ"] = result
         self.smt_problem_rows[key] = row
 

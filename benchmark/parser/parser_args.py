@@ -18,6 +18,14 @@ def parse_command_line_args() -> "argparse.Namespace":
     parser.add_argument(
         "-m", "--min-time", type=int, help="minimum time to consider. If 0, consider all times", default=0
     )
+    parser.add_argument(
+        "-u",
+        "--time-unit",
+        type=str,
+        help="time unit to use. The time results will be converted in this time unit. Default is s",
+        default="s",
+        choices=["ns", "us", "ms", "s", "m", "h"],
+    )
 
     args = parser.parse_args()
     return args

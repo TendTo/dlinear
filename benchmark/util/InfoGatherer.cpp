@@ -150,7 +150,7 @@ std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer) {
             << info_gatherer.solver() << ","
             << info_gatherer.nAssertions() << ","
             << info_gatherer.precision() << ","
-            << "ms" << ","
+            << "s" << ","
             << info_gatherer.time() << ","
             << info_gatherer.actualPrecision() << ","
             << info_gatherer.isSat();
