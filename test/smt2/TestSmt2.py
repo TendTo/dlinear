@@ -55,11 +55,14 @@ def parse_command_line_args() -> "argparse.Namespace":
                         | N -> no continuous mode | Y -> continuous mode | X -> continuous mode with exhaustive""",
                         choices=["N", "Y", "X"])
     parser.add_argument("options", nargs=argparse.REMAINDER, help="options to pass through to solver")
+    parser.add_argument("--log-level", default="INFO", help="log level",
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
 
     parsed_args = parser.parse_args()
 
     if parsed_args.cont_mode != "N" and parsed_args.lp_solver == "soplex":
         parser.error("Only qsoptex supports continuous mode")
+    logger.setLevel(parsed_args.log_level)
 
     return parsed_args
 
@@ -77,25 +80,26 @@ def parse_dlinear_args(parsed_args: "argparse.Namespace") -> "list[str]":
 def get_expected_output(parsed_args: "argparse.Namespace") -> "list[str]":
     if parsed_args.cont_mode == "N":
         expected_output_filenames = (
-            "{}.{}.expected".format(parsed_args.smt2, parsed_args.lp_solver), # 1. (non-continuous mode)
-            "{}.expected".format(parsed_args.smt2), # 2. (non-continuous mode)
-            "{}.expected_phase_{}".format(parsed_args.smt2, parsed_args.phase), # 3. (non-continuous mode)
+            "{}.{}.expected".format(parsed_args.smt2, parsed_args.lp_solver),  # 1. (non-continuous mode)
+            "{}.expected".format(parsed_args.smt2),  # 2. (non-continuous mode)
+            "{}.expected_phase_{}".format(parsed_args.smt2, parsed_args.phase),  # 3. (non-continuous mode)
         )
     else:
         expected_output_filenames = (
-            "{}.expected_continuous".format(parsed_args.smt2), # 1. (continuous mode)
-            "{}.expected_continuous_phase_{}".format(parsed_args.smt2, parsed_args.phase), # 2. (continuous mode)
+            "{}.expected_continuous".format(parsed_args.smt2),  # 1. (continuous mode)
+            "{}.expected_continuous_phase_{}".format(parsed_args.smt2, parsed_args.phase),  # 2. (continuous mode)
         )
     for expected_output_filename in expected_output_filenames:
         if os.path.exists(expected_output_filename):
             with open(expected_output_filename, "r") as myfile:
-                return myfile.read().strip().splitlines() # File exists, return the contents
+                return myfile.read().strip().splitlines()  # File exists, return the contents
 
     if parsed_args.cont_mode != "N":
-        logger.info("No reference file '%s' in continuous mode - skipping test", expected_output_filenames) # 3. (continuous mode)
+        logger.info("No reference file '%s' in continuous mode - skipping test",
+                    expected_output_filenames)  # 3. (continuous mode)
         sys.exit(0)
 
-    raise FileNotFoundError("No reference file '{}'".format(expected_output_filenames)) # 4. (non-continuous mode)
+    raise FileNotFoundError("No reference file '{}'".format(expected_output_filenames))  # 4. (non-continuous mode)
 
 
 def test():
@@ -128,7 +132,7 @@ def test():
         sys.exit(1)
 
     # 4. They are the same.
-    logger.info("Test passed")
+    logger.debug("Test passed")
     sys.exit(0)
 
 

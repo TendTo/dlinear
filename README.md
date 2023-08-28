@@ -49,6 +49,37 @@ bazel test //test/...
 - `--//tools:enable_soplex=[True|False]` to enable or disable soplex. Default is `True`
 - `--//tools:enable_qsoptex=[True|False]` to enable or disable qsopt_ex. Default is `True`
 
+## Install Python bindings
+
+### Requirements
+
+- [python-dev](https://packages.ubuntu.com/bionic/python-dev)
+
+### Install
+
+```bash
+pip install .
+# For development
+pip install -e .
+```
+
+### Upload to PyPI
+
+```bash
+script/upload_pydlinear.sh
+```
+
+### References
+
+```asm
+@misc{pybind11,
+   author = {Wenzel Jakob and Jason Rhinelander and Dean Moldovan},
+   year = {2017},
+   note = {https://github.com/pybind/pybind11},
+   title = {pybind11 -- Seamless operability between C++11 and Python}
+}
+```
+
 ## MWP
 
 ```c++

@@ -31,10 +31,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dynamic = ["version"]
+version = "0.0.1"
+#dynamic = ["version"]
 
 [tool.setuptools.dynamic]
-version = { attr = "pydlinear.__version__" }
+#version = { attr = "pydlinear.__version__" }
 
 [tool.setuptools.packages.find]
 include = ["pydlinear"]

@@ -110,6 +110,13 @@ github_archive(
     sha256 = "d475978da0cdc2d43b73f30910786759d593a9d8ee05b1b6846d1eb16c6d2e0c",
 )
 
+github_archive(
+    name = "com_github_nelhage_rules_boost",  # Apache License 2.0 | Integration of Boost into Bazel
+    commit = "3649e5ea16a1ed85e45a809c165a3540bd701849",
+    repository = "nelhage/rules_boost",
+    sha256 = "e484ad49ceec1843c2fa0f6fcf90c631d52fd97a96105d2fb75d8f4c2fa58c0b",
+)
+
 # https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
 new_local_repository(
     name = "linux_libs",
@@ -117,17 +124,6 @@ new_local_repository(
     path = "/usr/lib/x86_64-linux-gnu",
 )
 
-load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+load("//tools:deps.bzl", "load_dependencies")
 
-rules_foreign_cc_dependencies()
-
-load("//tools/lexyacc:lexyacc.bzl", "register_toolchain")
-
-register_toolchain("linux")
-
-load("@pybind11_bazel//:python_configure.bzl", "python_configure")
-
-python_configure(
-    name = "local_config_python",
-    python_version = "3",
-)
+load_dependencies()

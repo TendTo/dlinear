@@ -30,6 +30,20 @@ dlinear_cc_library(
     ],
 )
 
+dlinear_cc_library(
+    name = "dlinear_header",
+    hdrs = ["dlinear.h"],
+    deps = [
+        ":version",
+        "//dlinear/api",
+        "//dlinear/smt2:logic",
+        "//dlinear/solver:context",
+        "//dlinear/symbolic",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+    ],
+)
+
 dlinear_cc_binary(
     name = "dlinear",
     srcs = ["main.cpp"],

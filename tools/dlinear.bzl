@@ -1,7 +1,7 @@
 # Based on Drake's drake.bzl file,
 # https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl.
 DLINEAR_NAME = "dlinear"
-DLINEAR_VERSION = "0.0.1-dev"
+DLINEAR_VERSION = "0.0.1"
 
 # The CXX_FLAGS will be enabled for all C++ rules in the project
 # building with any compiler.
@@ -18,8 +18,6 @@ CXX_FLAGS = [
     "-Wpedantic",
     "-Wshadow",
     "-Werror",
-    "-DDLINEAR_VERSION='\"%s\"'" % DLINEAR_VERSION,
-    "-DDLINEAR_NAME='\"%s\"'" % DLINEAR_NAME,
 ]
 
 # The CLANG_FLAGS will be enabled for all C++ rules in the project when

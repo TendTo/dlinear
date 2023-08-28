@@ -3,6 +3,7 @@ load("//tools:cpplint.bzl", "cpplint")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
+    "//pydlinear:__subpackages__",
     "//test:__subpackages__",
 ])
 

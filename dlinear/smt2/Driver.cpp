@@ -35,7 +35,7 @@ bool Smt2Driver::parse_stream(istream &in, const string &sname) {
 
   Smt2Parser parser(*this);
   parser.set_debug_level(trace_parsing_);
-  return (parser.parse() == 0);
+  return parser.parse() == 0;
 }
 
 bool Smt2Driver::parse_file(const string &filename) {
@@ -87,14 +87,13 @@ void Smt2Driver::CheckSat() {
     }
   } else {
     mpq_class actual_precision = context_.config().precision();
-    const optional<Box> model{context_.CheckSat(&actual_precision)};
+    const optional <Box> model{context_.CheckSat(&actual_precision)};
     double actual_precision_upper = nextafter(actual_precision.get_d(),
                                               numeric_limits<double>::infinity());
     this->actual_precision_ = actual_precision.get_d();
     if (model) {
       // fmt::print uses shortest round-trip format for doubles, by default
-      fmt::print("delta-sat with delta = {} ( > {})",
-                 actual_precision_upper, actual_precision);
+      fmt::print("delta-sat with delta = {} ( > {})", actual_precision_upper, actual_precision);
     } else {
       fmt::print("unsat");
     }
