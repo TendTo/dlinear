@@ -51,7 +51,7 @@ void InfoGatherer::StartIntermediateProcess(shared_results *results) {
       GatherInfo(results);
       DeInit();
       auto end = std::chrono::high_resolution_clock::now();
-      results->time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+      results->time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
       exit(0);
     }
     if (worker_pid == -1) {

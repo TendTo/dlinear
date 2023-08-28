@@ -8,6 +8,8 @@ dlinear_cc_binary(
         "main.cpp",
     ],
     data = glob(["smt2/**"]) + ["benchmark.conf"],
+    features = ["fully_static_link"],
+    linkstatic = 1,
     deps = [
         "//benchmark/util:bench_config",
         "//benchmark/util:info_gatherer",

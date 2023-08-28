@@ -3,9 +3,13 @@
  * @author dlinear
  * @date 28 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Read the configuration file for the benchmark.
  *
- * Long Description
+ * The configuration file is expected to be in the format
+ * parameter = value1 [value2 ...]
+ * where parameter is one of the following:
+ * - solver
+ * - precision
  */
 
 #ifndef DLINEAR5_BENCHMARK_UTIL_CONFIGFILEREADER_H_

@@ -37,6 +37,7 @@ __pycache__/
 *$py.class
 # C extensions
 *.so
+*.so.*
 # Distribution / packaging
 .Python
 build/
@@ -72,3 +73,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+
+# Benchmark
+benchmark/*.csv
+benchmark/*.json
+benchmark/smt2/*.smt2
