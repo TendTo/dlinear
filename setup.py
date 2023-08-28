@@ -18,11 +18,18 @@ SO_NAME = "_{}.so".format(MODULE_NAME)
 
 
 def _copy_so():
+    # copy the _pydlinear.so file to the pydlinear folder
     shutil.copy(
         os.path.join(SRC_DIR, "bazel-bin", MODULE_NAME, SO_NAME),
         os.path.join(ROOT_DIR, MODULE_NAME),
     )
-    os.chmod(os.path.join(ROOT_DIR, MODULE_NAME, SO_NAME.format(MODULE_NAME)), 436)
+    os.chmod(os.path.join(ROOT_DIR, MODULE_NAME, SO_NAME), 436)
+    # copy the libqsopt_ex.so.2 file to the pydlinear folder
+    shutil.copy(
+        os.path.join(SRC_DIR, "bazel-bin", "external", "qsopt_ex", "libqsopt_ex", "lib", "libqsopt_ex.so.2"),
+        os.path.join(ROOT_DIR, MODULE_NAME),
+    )
+    os.chmod(os.path.join(ROOT_DIR, MODULE_NAME, "libqsopt_ex.so.2"), 436)
 
 
 def _build_dlinear():
@@ -87,5 +94,5 @@ class sdist(_sdist):
 
 setup(
     cmdclass={"build": build, "develop": develop, "bdist_egg": bdist_egg, "sdist": sdist},
-    package_data={MODULE_NAME: [SO_NAME, "_{}.pyi".format(MODULE_NAME), "py.typed"]},
+    package_data={MODULE_NAME: [SO_NAME, "libqsopt_ex.so.2", "_{}.pyi".format(MODULE_NAME), "py.typed"]},
 )

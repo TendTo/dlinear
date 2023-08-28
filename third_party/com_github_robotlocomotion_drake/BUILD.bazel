@@ -35,6 +35,7 @@ cc_library(
     ],
     hdrs = [":headers"],
     includes = ["."],
+    linkstatic = 1,
     deps = [
         "//dlinear/libs:gmp",
         "//dlinear/util:infty",

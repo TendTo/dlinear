@@ -22,7 +22,12 @@ configure_make(
     lib_name = "libqsopt_ex",
     out_binaries = ["esolver"],
     out_static_libs = ["libqsopt_ex.a"],
-    #    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
+    out_shared_libs = select(
+        {
+            "@dlinear//tools:dynamic_build": ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
+            "//conditions:default": [],
+        },
+    ),
     lib_source = ":all_srcs",
     visibility = ["//visibility:public"],
     configure_in_place = True,

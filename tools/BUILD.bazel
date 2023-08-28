@@ -1,6 +1,17 @@
 load(":var.bzl", "provide_var")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
 package(default_visibility = ["//visibility:public"])
+
+bool_flag(
+    name = "enable_dynamic_build",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "dynamic_build",
+    flag_values = {":enable_dynamic_build": "True"},
+)
 
 config_setting(
     name = "clang_build",

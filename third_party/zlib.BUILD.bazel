@@ -93,4 +93,5 @@ cc_library(
     }),
     includes = ["zlib/include/"],
     visibility = ["//visibility:public"],
+    linkstatic = 1,
 )

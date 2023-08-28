@@ -12,7 +12,14 @@ cmake(
         "BOOST": "on",
         "QUADMATH": "on",
     },
-    deps = ["@zlib", "@linux_libs//:gmpxx"],
+    out_static_libs = ["libsoplex.a"],
+    out_shared_libs = select(
+        {
+            "@dlinear//tools:dynamic_build": ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
+            "//conditions:default": [],
+        },
+    ),
+    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision"],
     visibility = ["//visibility:public"],
 )
 
