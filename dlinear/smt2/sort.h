@@ -14,7 +14,6 @@
 #include <string>
 
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/exception.h"
 
 namespace dlinear {
 

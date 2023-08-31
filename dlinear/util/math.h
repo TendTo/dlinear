@@ -9,14 +9,7 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_MATH_H_
 #define DLINEAR5_DLINEAR_UTIL_MATH_H_
 
-#include <cstdint>
-#include <cmath>
-#include <iostream>
-#include <limits>
-
 #include "dlinear/libs/gmp.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

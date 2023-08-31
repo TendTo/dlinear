@@ -105,6 +105,8 @@ class BaseBenchmarkParser(ABC):
         if len(rows) == 0:
             return
 
+        print(f"Writing {len(rows)} {row_type} rows to {self.get_output_file_with_prefix(row_type)}")
+
         with open(self.get_output_file_with_prefix(row_type), "w", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=rows[0].keys())
             writer.writeheader()

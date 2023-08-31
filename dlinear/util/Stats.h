@@ -13,7 +13,6 @@
 
 #include <atomic>
 #include <iostream>
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -25,7 +24,6 @@ class Stats {
   template<typename T>
   void increase(std::atomic<T> *v) {
     if (enabled_) {
-      DLINEAR_TRACE("Stats::increase");
       atomic_fetch_add_explicit(v, 1, std::memory_order_relaxed);
     }
   }

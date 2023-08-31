@@ -10,6 +10,11 @@
 
 #include "SoplexSatSolver.h"
 
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
+
 using std::cout;
 using std::set;
 using std::vector;

@@ -20,9 +20,6 @@
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/solver/SoplexSatSolver.h"
 #include "dlinear/solver/SoplexTheorySolver.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/symbolic/IfThenElseEliminator.h"
 
 namespace dlinear {
 

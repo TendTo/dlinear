@@ -17,10 +17,6 @@
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/NaiveCnfizer.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
 
 namespace dlinear {

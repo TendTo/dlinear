@@ -6,6 +6,8 @@
  */
 #include "sort.h"
 
+#include "dlinear/util/exception.h"
+
 using std::ostream;
 using std::string;
 

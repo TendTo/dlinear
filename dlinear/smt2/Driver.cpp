@@ -7,6 +7,17 @@
 
 #include "Driver.h"
 
+#include <utility>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <limits>
+
+#include <tl/optional.hpp>
+
+#include "dlinear/util/Timer.h"
+#include "dlinear/util/exception.h"
+
 using std::cerr;
 using std::cin;
 using std::cout;

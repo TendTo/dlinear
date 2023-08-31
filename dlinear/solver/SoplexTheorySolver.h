@@ -19,11 +19,6 @@
 #include <atomic>
 #include <iostream>
 
-#include "dlinear/solver/Context.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"

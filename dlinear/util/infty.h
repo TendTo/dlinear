@@ -10,20 +10,19 @@
 #define DLINEAR5_DLINEAR_UTIL_INFTY_H_
 
 #include "dlinear/libs/gmp.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
-extern mpq_class* mpq_class_infinity;
-extern mpq_class* mpq_class_ninfinity;
+extern mpq_class *mpq_class_infinity;
+extern mpq_class *mpq_class_ninfinity;
 
 void InftyStart(const mpq_t infty, const mpq_t ninfty);
-void InftyStart(const mpq_class& val);
+void InftyStart(const mpq_class &val);
 void InftyStart(double val);
 void InftyFinish();
 
-const mpq_class& mpq_infty();
-const mpq_class& mpq_ninfty();
+const mpq_class &mpq_infty();
+const mpq_class &mpq_ninfty();
 
 } // namespace dlinear
 

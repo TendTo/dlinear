@@ -11,10 +11,7 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_FILESYSTEM_H_
 #define DLINEAR5_DLINEAR_UTIL_FILESYSTEM_H_
 
-#include <sys/stat.h>
 #include <string>
-
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

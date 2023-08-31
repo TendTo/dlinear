@@ -13,8 +13,8 @@
 
 ### Refactor
 
-- [ ] Port the whole dlinear4
-- [ ] Add tests
+- [x] Port the whole dlinear4
+- [x] Add tests
 - [ ] Add benchmark
 - [ ] Add python bindings
 - [ ] Add documentation

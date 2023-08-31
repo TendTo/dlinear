@@ -3,12 +3,15 @@
  * @author dlinear
  * @date 20 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
  */
 
 #include "QsoptexTheorySolver.h"
+
+#include "dlinear/util/logging.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/Timer.h"
+#include "dlinear/util/infty.h"
+#include "dlinear/solver/Context.h"
 
 using std::cout;
 using std::endl;

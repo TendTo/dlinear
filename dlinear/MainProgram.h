@@ -13,11 +13,6 @@
 #define DLINEAR5_DLINEAR_MAINPROGRAM_H_
 
 #include "dlinear/util/Config.h"
-#include "dlinear/util/ArgParser.h"
-#include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/libs/soplex.h"
-#include "dlinear/solver/Context.h"
-#include "dlinear/smt2/run.h"
 
 namespace dlinear {
 

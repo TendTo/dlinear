@@ -16,8 +16,6 @@
 
 #include <gmpxx.h>
 
-#include <functional>
-
 namespace std {
 
 template<>

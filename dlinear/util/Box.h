@@ -16,13 +16,8 @@
 #include <functional>
 #include <string>
 
-#include "dlinear/util/RoundingModeGuard.hpp"
-#include "dlinear/util/exception.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/infty.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/math.h"
 
 namespace dlinear {
 
@@ -41,9 +36,7 @@ class Box {
     Interval(Interval &&other) noexcept;
     Interval(const Interval &other) : lb_(other.lb_), ub_(other.ub_) {}
     explicit Interval(const mpq_class &val) : lb_(val), ub_(val) {}
-    Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
-      DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
-    }
+    Interval(const mpq_class &lb, const mpq_class &ub);
     [[nodiscard]] bool is_empty() const { return lb_ == 1 && ub_ == 0; }
     [[nodiscard]] bool is_degenerated() const { return lb_ == ub_; }
     [[nodiscard]] bool is_bisectable() const { return lb_ < ub_; }

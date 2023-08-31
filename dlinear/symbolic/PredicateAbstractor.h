@@ -19,24 +19,34 @@
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
 
 namespace dlinear {
 
 class PredicateAbstractor : public FormulaVisitor {
  public:
-  /// Converts a first-order logic formula @p f into a Boolean formula
-  /// by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
-  /// 0)` will be converted into `b₁ ∧ b₂` while `b₁` corresponds with
-  /// `x > 0` and `b₂` corresponds with `y < 0`. The class provides
-  /// `operator[b]` which looks up the corresponding formula for a
-  /// Boolean variable `b`.
+
+  /**
+   * Convert a first-order logic formula @p f into a Boolean formula
+   * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
+   * 0)` will be converted into `b₁ ∧ b₂` while `b₁` corresponds with
+   * `x > 0` and `b₂` corresponds with `y < 0`. The class provides
+   * `operator[b]` which looks up the corresponding formula for a
+   * Boolean variable `b`.
+   * @param f formula to be converted.
+   * @return boolean formula
+   */
   Formula Convert(const Formula &f);
 
-  /// Converts @p formulas into a conjunction of Boolean formulas. See
-  /// the above method.
+  /**
+   * Convert a first-order logic formula @p f into a Boolean formula
+   * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
+   * 0)` will be converted into `b₁ ∧ b₂` while `b₁` corresponds with
+   * `x > 0` and `b₂` corresponds with `y < 0`. The class provides
+   * `operator[b]` which looks up the corresponding formula for a
+   * Boolean variable `b`.
+   * @param formulas formulas to be converted.
+   * @return boolean formula
+   */
   Formula Convert(const std::vector<Formula> &formulas);
 
   const std::unordered_map<Variable, Formula, hash_value<Variable>> &

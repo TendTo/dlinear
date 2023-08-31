@@ -23,26 +23,29 @@
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/NaiveCnfizer.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
-#include "dlinear//util/Stats.h"
-#include "dlinear/util/Timer.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
 
 namespace dlinear {
 
-/// Transforms a symbolic formula @p f into an equi-satisfiable CNF
-/// formula by introducing extra Boolean variables (Tseitin transformation).
+/**
+ * Tsietin transformation is a method to convert a formula into an
+ * equi-satisfiable formula in CNF. The method introduces extra Boolean
+ * variables (Tseitin transformation).
+ */
 class TseitinCnfizer : public FormulaVisitor {
  public:
-  /// Convert @p f into an equi-satisfiable formula @c f' in CNF.
+  /**
+   * Convert @p f into an equi-satisfiable formula @c f' in CNF.
+   * @param f formula to convert
+   * @return equi-satisfiable formula in CNF
+   */
   std::vector<Formula> Convert(const Formula &f);
 
-  /// Returns a const reference of `map_` member.
-  ///
-  /// @note that this member `map_` is cleared at the beginning of `Convert`
-  /// method.
+  /**
+   * Return a const reference of `map_` member.
+   * @note map_ is cleared at the beginning of `Convert` call.
+   * @return const reference of `map_` member.n
+   */
   const std::map<Variable, Formula> &map() const { return map_; }
 
  private:
@@ -52,15 +55,16 @@ class TseitinCnfizer : public FormulaVisitor {
   Formula VisitNegation(const Formula &f) override;
   Formula VisitForall(const Formula &f) override;
 
-  // Maps a temporary variable, which is introduced by a Tseitin
-  // transformation, to a corresponding Formula.
-  //
-  // @note that this map_ is cleared at the beginning of `Convert`
-  // call.
+  /**
+   * Map a temporary variable, which is introduced by a Tseitin
+   * transformation, to a corresponding Formula.
+   *
+   * @note that this map_ is cleared at the beginning of `Convert`
+   * call.
+   */
   std::map<Variable, Formula> map_;
 
-  // To transform nested formulas inside of universal quantifications.
-  const NaiveCnfizer naive_cnfizer_{};
+  const NaiveCnfizer naive_cnfizer_{}; ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.

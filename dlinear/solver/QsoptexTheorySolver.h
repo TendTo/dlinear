@@ -25,10 +25,6 @@
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/solver/Context.h"
 
 namespace dlinear {
 

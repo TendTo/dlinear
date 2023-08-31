@@ -41,6 +41,7 @@ dlinear_cc_library(
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:box",
         "//dlinear/util:config",
+        "//dlinear/util:infty",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
         "@picosat",

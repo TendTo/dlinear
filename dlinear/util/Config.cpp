@@ -4,7 +4,9 @@
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/util/Config.h"
+#include "Config.h"
+
+#include "dlinear/util/exception.h"
 
 using std::endl;
 using std::ostream;

@@ -13,15 +13,12 @@
 
 #include <vector>
 
+#include <tl/optional.hpp>
+
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/symbolic/literal.h"
-#include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/solver/QsoptexSatSolver.h"
 #include "dlinear/solver/QsoptexTheorySolver.h"
-
-#include <tl/optional.hpp>
 
 namespace dlinear {
 

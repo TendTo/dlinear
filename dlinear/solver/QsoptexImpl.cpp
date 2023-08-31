@@ -7,7 +7,9 @@
 
 #include "QsoptexImpl.h"
 
-#include <utility>
+#include "dlinear/util/logging.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/IfThenElseEliminator.h"
 
 using tl::optional;
 using std::vector;

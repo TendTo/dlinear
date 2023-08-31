@@ -13,7 +13,6 @@
 
 #include <ostream>
 #include <string>
-#include <utility>
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/smt2/logic.h"

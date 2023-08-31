@@ -1,6 +1,6 @@
 #!/bin/bash
 readonly script_path="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-readonly max_size=1000000
+readonly max_size=100000000
 
 # Ensure that the folders exist
 pushd "$script_path" > /dev/null || exit
@@ -30,6 +30,7 @@ for file in $(find . -name "*.gz"); do
     rm $file
 done
 
+# Decompress the files using the emps program
 for file in $(find . -name "*.mps.compressed"); do
     if [ $(wc -c < "$file") -ge $max_size ]; then
         echo "Skipping $file because it is too large"
@@ -37,20 +38,15 @@ for file in $(find . -name "*.mps.compressed"); do
     fi
     mps_file="${file%.*}"
     ./emps -1 -b -m $file > $mps_file
-    sed -ri 's/([0-9]+)\.$/\1/' $mps_file
-    sed -ri 's/\.([0-9]+)$/0.\1/' $mps_file
     rm $file
 done
 
+# Convert from MPS to SMT-LIB2 format
 for file in $(find . -name "*.mps"); do
     smt2_file=LP_$(basename "$file" .mps).smt2
     echo "Converting $file to SMT-LIB2 format..."
-    toyconvert "$file" -o "$smt2_file" 2> /dev/null
-    sed -i 's/(set-option :produce-models true)/(set-logic QF_LRA)/' "$smt2_file"
-    sed -i 's/(!//' "$smt2_file"
-    sed -i 's/ *:named[^)]*)//' "$smt2_file"
-    # rm $file
-    rm -f "toyconvert.tix"
+    ../mps2smt2-py/mps2smt2.py -c "$file" > "$smt2_file" # could also add --max --delta for an objective function
+    rm $file
 done
 
 popd > /dev/null || exit
@@ -64,4 +60,3 @@ done
 popd > /dev/null || exit
 
 exit 0
-

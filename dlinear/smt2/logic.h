@@ -14,8 +14,6 @@
 #include <ostream>
 #include <string>
 
-#include "dlinear/util/exception.h"
-
 namespace dlinear {
 
 enum class Logic {

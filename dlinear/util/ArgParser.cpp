@@ -8,6 +8,11 @@
 
 #include <utility>
 
+#include "dlinear/version.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/filesystem.h"
+#include "dlinear/util/logging.h"
+
 using std::endl;
 using std::cerr;
 using std::string;

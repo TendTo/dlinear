@@ -10,6 +10,9 @@
 #include <iterator>
 #include <utility>
 
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+
 using std::function;
 using std::inserter;
 using std::ostream;

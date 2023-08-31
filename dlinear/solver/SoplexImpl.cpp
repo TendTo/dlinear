@@ -7,6 +7,10 @@
 
 #include "SoplexImpl.h"
 
+#include "dlinear/util/logging.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/symbolic/IfThenElseEliminator.h"
+
 using std::pair;
 using std::vector;
 using tl::optional;

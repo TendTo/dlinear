@@ -12,14 +12,11 @@
 #ifndef DLINEAR_SMT2_COMMAND_H_
 #define DLINEAR_SMT2_COMMAND_H_
 
-#include <memory>
 #include <ostream>
 #include <string>
-#include <utility>
 
-#include "dlinear/smt2/logic.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/smt2/CommandCell.h"
+#include "dlinear/smt2/logic.h"
 
 namespace dlinear {
 

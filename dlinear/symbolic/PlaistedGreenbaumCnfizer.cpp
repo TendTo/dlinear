@@ -5,7 +5,12 @@
  * @copyright 2023 dlinear
  */
 
-#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
+#include "PlaistedGreenbaumCnfizer.h"
+
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 
 using std::cout;
 using std::to_string;

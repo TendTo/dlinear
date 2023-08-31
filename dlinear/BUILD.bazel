@@ -27,6 +27,7 @@ dlinear_cc_library(
         "//dlinear/smt2",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
+        "//dlinear/util:infty",
     ],
 )
 

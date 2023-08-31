@@ -5,7 +5,13 @@
  * @copyright 2023 dlinear
  */
 
+#include <cmath>
+#include <iostream>
+#include <limits>
+
 #include "dlinear/util/math.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 using std::int64_t;
 using std::numeric_limits;

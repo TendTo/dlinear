@@ -13,12 +13,9 @@
 
 #include <picosat/picosat.h>
 
-#include <memory>
 #include <set>
 #include <map>
-#include <utility>
 #include <vector>
-#include <unordered_map>
 
 #include <tl/optional.hpp>
 

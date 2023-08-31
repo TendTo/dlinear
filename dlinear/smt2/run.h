@@ -13,8 +13,6 @@
 #include <string>
 
 #include "dlinear/util/Config.h"
-#include "dlinear/smt2/Driver.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

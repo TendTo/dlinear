@@ -6,8 +6,10 @@
  */
 
 #include "Context.h"
+
 #include "dlinear/solver/QsoptexImpl.h"
 #include "dlinear/solver/SoplexImpl.h"
+#include "dlinear/version.h"
 
 using std::unique_ptr;
 using std::make_unique;

@@ -14,22 +14,11 @@
 
 #include <istream>
 #include <string>
-#include <utility>
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <utility>
-#include <limits>
 
-#include <tl/optional.hpp>
-
-#include "dlinear/smt2/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
-#include "dlinear/util/Timer.h"
-#include "dlinear/util/exception.h"
 #include "dlinear/smt2/Term.h"
+#include "dlinear/smt2/scanner.h"
 
 namespace dlinear {
 

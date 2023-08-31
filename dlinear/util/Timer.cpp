@@ -8,6 +8,8 @@
 
 #include "Timer.h"
 
+#include "dlinear/util/logging.h"
+
 using std::runtime_error;
 
 namespace dlinear {

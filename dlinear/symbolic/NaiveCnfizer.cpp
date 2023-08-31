@@ -8,7 +8,9 @@
  * Long Description
  */
 
-#include "dlinear/symbolic/NaiveCnfizer.h"
+#include "NaiveCnfizer.h"
+
+#include "dlinear/util/exception.h"
 
 using std::set;
 using std::accumulate;

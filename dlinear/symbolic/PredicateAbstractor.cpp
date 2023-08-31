@@ -8,7 +8,11 @@
  * Long Description
  */
 
-#include "dlinear/symbolic/PredicateAbstractor.h"
+#include "PredicateAbstractor.h"
+
+#include "dlinear/util/logging.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 
 using fmt::print;
 using std::cout;

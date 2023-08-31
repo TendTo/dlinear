@@ -13,13 +13,11 @@
 
 #include <unordered_set>
 #include <vector>
-#include <utility>
 #include <string>
 #include <unordered_map>
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedVector.hpp"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

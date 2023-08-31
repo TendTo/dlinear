@@ -6,6 +6,9 @@
  */
 #include "run.h"
 
+#include "dlinear/smt2/Driver.h"
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 using std::string;

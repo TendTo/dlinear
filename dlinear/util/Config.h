@@ -16,7 +16,6 @@
 #include <string>
 
 #include "dlinear/util/OptionValue.hpp"
-#include "dlinear/util/exception.h"
 
 #define DLINEAR_DEFAULT_PRECISION 9.999999999999996e-4
 #define DLINEAR_DEFAULT_READ_FROM_STDIN false

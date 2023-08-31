@@ -7,6 +7,8 @@
 
 #include "ContextImpl.h"
 
+#include "dlinear/util/logging.h"
+
 using std::unordered_set;
 using std::string;
 using std::vector;

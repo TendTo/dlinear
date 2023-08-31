@@ -7,6 +7,8 @@
 
 #include "Nnfizer.h"
 
+#include "dlinear/util/logging.h"
+
 using std::set;
 
 namespace dlinear {

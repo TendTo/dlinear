@@ -13,20 +13,16 @@
 #ifndef DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
 #define DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
 
-#include <iostream>
-#include <memory>
-#include <utility>
 #include <vector>
 #include <string>
 
 #include <tl/optional.hpp>
 
-#include "dlinear/version.h"
-#include "dlinear/libs/gmp.h"
-#include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/smt2/logic.h"
+#include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
+#include "dlinear/smt2/logic.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
@@ -74,7 +70,7 @@ class Context {
   Context &operator=(Context &&) = delete;
 
   /** Constructs a context with @p config. */
-  explicit Context(const Config& config);
+  explicit Context(const Config &config);
 
   /** Asserts a formula @p f. */
   void Assert(const Formula &f);
@@ -199,9 +195,9 @@ class Context {
   class SoplexImpl;
   class QsoptexImpl;
 
-  static std::unique_ptr <Context::Impl> make_impl(const Config &config);
+  static std::unique_ptr<Context::Impl> make_impl(const Config &config);
 
-  std::unique_ptr <Impl> impl_;
+  std::unique_ptr<Impl> impl_;
 };
 
 } // namespace dlinear

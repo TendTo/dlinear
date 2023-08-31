@@ -7,6 +7,12 @@
 
 #include "Box.h"
 
+#include "dlinear/util/RoundingModeGuard.hpp"
+#include "dlinear/util/infty.h"
+#include "dlinear/util/logging.h"
+#include "dlinear/util/math.h"
+#include "dlinear/util/exception.h"
+
 using std::equal;
 using std::find_if;
 using std::make_pair;
@@ -22,6 +28,10 @@ using dlinear::gmp::ceil;
 namespace dlinear {
 
 Box::Interval::Interval() : lb_(mpq_ninfty()), ub_(mpq_infty()) {}
+
+Box::Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
+  DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
+}
 
 Box::Interval::Interval(Interval &&other) noexcept try {
   try {

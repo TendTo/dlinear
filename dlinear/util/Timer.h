@@ -18,8 +18,6 @@
 #include <type_traits>
 #include <cstdint>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear {
 
 /**

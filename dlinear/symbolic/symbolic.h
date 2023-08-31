@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 // From drake
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"

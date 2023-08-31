@@ -10,6 +10,11 @@
 #include <algorithm>
 #include <set>
 
+#include "dlinear/symbolic/Nnfizer.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
+#include "dlinear/util/logging.h"
+
 using std::unordered_set;
 using std::cout;
 using std::set;

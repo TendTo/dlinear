@@ -10,6 +10,10 @@
 
 #include "filesystem.h"
 
+#include <sys/stat.h>
+
+#include "dlinear/util/logging.h"
+
 using std::string;
 
 namespace dlinear {

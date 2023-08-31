@@ -13,12 +13,8 @@
 #define DLINEAR_SMT2_TERM_H_
 
 #include <iostream>
-#include <stdexcept>
-#include <utility>
 
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 /// Sum type of symbolic::Expression and symbolic::Formula.
 namespace dlinear {

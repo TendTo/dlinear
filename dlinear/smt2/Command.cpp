@@ -7,6 +7,10 @@
 
 #include "Command.h"
 
+#include <memory>
+
+#include "dlinear/smt2/CommandCell.h"
+
 using std::make_shared;
 using std::ostream;
 using std::string;
@@ -17,7 +21,7 @@ ostream &operator<<(ostream &os, const Command &c) {
   return c.ptr_->Display(os);
 }
 
-Command assert_command(const Formula &f)  {
+Command assert_command(const Formula &f) {
   return Command{make_shared<AssertCommand>(f)};
 }
 

@@ -7,6 +7,8 @@
 
 #include "infty.h"
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 mpq_class *mpq_class_infinity = nullptr;

@@ -7,6 +7,13 @@
 
 #include "MainProgram.h"
 
+#include "dlinear/util/ArgParser.h"
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/soplex.h"
+#include "dlinear/solver/Context.h"
+#include "dlinear/smt2/run.h"
+#include "dlinear/util/infty.h"
+
 namespace dlinear {
 
 void MainProgram::Init() {

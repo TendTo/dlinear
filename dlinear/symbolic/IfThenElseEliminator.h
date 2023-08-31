@@ -16,10 +16,6 @@
 #include <iostream>
 
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/symbolic/Nnfizer.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 /**

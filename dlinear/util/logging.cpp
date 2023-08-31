@@ -9,6 +9,8 @@
 
 #ifndef NDEBUG
 
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace dlinear {
 
 std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type) {
