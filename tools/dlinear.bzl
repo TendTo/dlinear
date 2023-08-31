@@ -1,5 +1,7 @@
 # Based on Drake's drake.bzl file,
 # https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl.
+load("@rules_python//python:defs.bzl", "py_test")
+
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"
 
@@ -195,7 +197,7 @@ def smt2_phased_test(
     data_files = native.glob([smt2 + "*"])
     name_extra = "_continuous" if continuous else ""
 
-    native.py_test(
+    py_test(
         name = "{}_{}_phase_{}{}".format(name, lp_solver, phase, name_extra),
         args = [
             "$(location //test/smt2:test_smt2_binary)",

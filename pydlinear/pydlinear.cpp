@@ -6,50 +6,49 @@
  */
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
+#include <pybind11/stl.h>
 
 #include "dlinear/version.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/symbolic/symbolic.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 namespace py = pybind11;
 
 using namespace dlinear;
 
-using std::pair;
-using std::vector;
+typedef typename std::unordered_map<Variable, double> ExpressionMap;
 
 PYBIND11_MODULE(_pydlinear, m) {
   m.attr("__version__") = DLINEAR_VERSION_STRING;
   m.doc() = "dlinear python bindings";
 
-  m.def("gmp_floor", [](double v) {
-        return gmp::floor(v).get_d();
-      })
-      .def("gmp_ceil", [](double v) {
-        return gmp::ceil(v).get_d();
-      });
+  auto MpqArrayClass = py::class_<qsopt_ex::MpqArray>(m, "MpqArray");
+  auto FormulaClass = py::class_<Formula>(m, "Formula");
+  auto VariableClass = py::class_<Variable>(m, "Variable");
+  auto VariableTypeEnum = py::enum_<Variable::Type>(m, "VariableType");
+  auto ExpressionClass = py::class_<Expression>(m, "Expression");
+  auto VariablesClass = py::class_<Variables>(m, "Variables");
+  auto LPSolverEnum = py::enum_<Config::LPSolver>(m, "LPSolver");
+  auto SatDefaultPhaseEnum = py::enum_<Config::SatDefaultPhase>(m, "SatDefaultPhase");
+  auto ConfigClass = py::class_<Config>(m, "Config");
 
-  m.def("create_mpq_problem", []() {
-    return mpq_QScreate_prob(nullptr, QS_MIN);
-  });
-
-  py::class_<qsopt_ex::MpqArray>(m, "MpqArray")
-      .def(py::init<size_t>())
+  MpqArrayClass.def(py::init<size_t>())
       .def("__len__", &qsopt_ex::MpqArray::size)
       .def("__getitem__", [](const qsopt_ex::MpqArray &self, int i) { return mpq_get_d(self[i]); });
 
-  py::class_<Formula>(m, "Formula")
-      .def(py::init<const Variable &>())
+  FormulaClass.def(py::init<const Variable &>())
       .def("GetFreeVariables", &Formula::GetFreeVariables)
       .def("EqualTo", &Formula::EqualTo)
       .def("Evaluate", [](const Formula &self) { return self.Evaluate(); })
-      .def("Evaluate",
-           [](const Formula &self, const Environment::map &env) {
-             Environment e;
-             return self.Evaluate(Environment{env});
-           })
+//      .def("Evaluate",
+//           [](const Formula &self, const Environment::map &env) {
+//             Environment e;
+//             return self.Evaluate(Environment{env});
+//           })
       .def("Substitute",
            [](const Formula &self, const Variable &var, const Expression &e) { return self.Substitute(var, e); })
       .def("to_string", &Formula::to_string)
@@ -66,15 +65,69 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def_static("TRUE", &Formula::True)
       .def_static("FALSE", &Formula::False);
 
-  py::enum_<Variable::Type>(m, "VariableType")
-      .value("Real", Variable::Type::CONTINUOUS)
+  VariableClass.def(py::init<const std::string &>())
+      .def(py::init<const std::string &, Variable::Type>())
+      .def("__abs__", [](const Variable &self) { return abs(self); })
+      .def("get_id", &Variable::get_id)
+      .def("get_type", &Variable::get_type)
+      .def("__str__", &Variable::to_string)
+      .def("__repr__", [](const Variable &self) { return fmt::format("Variable('{}')", self.to_string()); })
+      .def("__hash__", [](const Variable &self) { return std::hash<Variable>{}(self); })
+          // Addition.
+      .def(py::self + py::self)
+      .def(py::self + double())
+      .def(double() + py::self)
+          // Subtraction.
+      .def(py::self - py::self)
+      .def(py::self - double())
+      .def(double() - py::self)
+          // Multiplication.
+      .def(py::self * py::self)
+      .def(py::self * double())
+      .def(double() * py::self)
+          // Division.
+      .def(py::self / py::self)
+      .def(py::self / double())
+      .def(double() / py::self)
+          // Pow.
+//      .def(
+//          "__pow__",
+//          [](const Variable &self, const Expression &other) {
+//            return pow(self, other);
+//          },
+//          py::is_operator())
+          // Unary Plus.
+      .def(+py::self)
+          // Unary Minus.
+      .def(-py::self)
+          // LT(<).
+          // Note that for `double < Variable` case, the reflected op ('>' in this
+          // case) is called. For example, `1 < x` will return `x > 1`.
+      .def(py::self < py::self)
+      .def(py::self < double())
+          // LE(<=).
+      .def(py::self <= py::self)
+      .def(py::self <= double())
+          // GT(>).
+      .def(py::self > py::self)
+      .def(py::self > double())
+          // GE(>=).
+      .def(py::self >= py::self)
+      .def(py::self >= double())
+          // EQ(==).
+      .def(py::self == py::self)
+      .def(py::self == double())
+          // NE(!=).
+      .def(py::self != py::self)
+      .def(py::self != double());
+
+  VariableTypeEnum.value("Real", Variable::Type::CONTINUOUS)
       .value("Int", Variable::Type::INTEGER)
       .value("Bool", Variable::Type::BOOLEAN)
       .value("Binary", Variable::Type::BINARY)
       .export_values();
 
-  py::class_<Variables>(m, "Variables")
-      .def(py::init<>())
+  VariablesClass.def(py::init<>())
       .def(py::init([](const std::vector<Variable> &vec) {
         Variables variables;
         variables.insert(vec.begin(), vec.end());
@@ -90,13 +143,20 @@ PYBIND11_MODULE(_pydlinear, m) {
            })
       .def("to_string", &Variables::to_string)
       .def("__hash__",
-           [](const Variables &self) { return hash_value<Variables>{}(self); })
+           [](const Variables &self) {
+             return hash_value<Variables>{}(self);
+           })
       .def("insert",
-           [](Variables &self, const Variable &var) { self.insert(var); })
+           [](Variables &self, const Variable &var) {
+             self.insert(var);
+           })
       .def("insert",
-           [](Variables &self, const Variables &vars) { self.insert(vars); })
+           [](Variables &self, const Variables &vars) {
+             self.insert(vars);
+           })
       .def("erase",
-           [](Variables &self, const Variable &var) { return self.erase(var); })
+           [](Variables &self,
+              const Variable &var) { return self.erase(var); })
       .def("erase", [](Variables &self,
                        const Variables &vars) { return self.erase(vars); })
       .def("include", &Variables::include)
@@ -120,12 +180,7 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def(py::self - py::self)
       .def(py::self - Variable());
 
-  m.def("intersect", [](const Variables &vars1, const Variables &vars2) {
-    return intersect(vars1, vars2);
-  });
-
-  py::class_<Expression>(m, "Expression")
-      .def(py::init<>())
+  ExpressionClass.def(py::init<>())
       .def(py::init<double>())
       .def(py::init<const Variable &>())
       .def("__abs__", [](const Expression &self) { return abs(self); })
@@ -136,14 +191,15 @@ PYBIND11_MODULE(_pydlinear, m) {
            })
       .def("to_string", &Expression::to_string)
       .def("Expand", &Expression::Expand)
-      .def("Evaluate", [](const Expression &self) { return self.Evaluate(); })
+      .def("Evaluate", [](const Expression &self) { return self.Evaluate().get_d(); })
       .def("Evaluate",
-           [](const Expression &self, const Environment::map &env) {
-             Environment e;
-             return self.Evaluate(Environment{env});
+           [](const Expression &self,
+              const Environment::double_map &env) {
+             return self.Evaluate(Environment{env}).get_d();
            })
       .def("EvaluatePartial",
-           [](const Expression &self, const Environment::map &env) {
+           [](const Expression &self,
+              const Environment::double_map &env) {
              return self.EvaluatePartial(Environment{env});
            })
       .def("Substitute",
@@ -222,20 +278,17 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def(py::self != double())
       .def("Differentiate", &Expression::Differentiate);
 
-  py::enum_<Config::LPSolver>(m, "LPSolver")
-      .value("QSOPTEX", Config::LPSolver::QSOPTEX)
+  LPSolverEnum.value("QSOPTEX", Config::LPSolver::QSOPTEX)
       .value("SOPLEX", Config::LPSolver::SOPLEX)
       .export_values();
 
-  py::enum_<Config::SatDefaultPhase>(m, "SatDefaultPhase")
-      .value("RANDOM_INITIAL_PHASE", Config::SatDefaultPhase::RandomInitialPhase)
+  SatDefaultPhaseEnum.value("RANDOM_INITIAL_PHASE", Config::SatDefaultPhase::RandomInitialPhase)
       .value("FALSE", Config::SatDefaultPhase::False)
       .value("TRUE", Config::SatDefaultPhase::True)
       .value("JEROS_LOW_WANG", Config::SatDefaultPhase::JeroslowWang)
       .export_values();
 
-  py::class_<Config>(m, "Config")
-      .def(py::init<>())
+  ConfigClass.def(py::init<>())
       .def_property("precision", &Config::precision,
                     [](Config &self, const double prec) {
                       self.mutable_precision() = prec;
@@ -318,4 +371,5 @@ PYBIND11_MODULE(_pydlinear, m) {
                     })
       .def("__str__", [](const Config &self) { return fmt::format("{}", self); }
       );
+
 }

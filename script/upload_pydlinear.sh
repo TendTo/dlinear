@@ -5,7 +5,7 @@
 # HEADER
 #================================================================
 #% SYNOPSIS
-#+    ${SCRIPT_NAME} [-hv] [--cleanup] [--dry-run] [--test]
+#+    ${SCRIPT_NAME} [-hv] [--cleanup] [--stub] [--dry-run] [--test]
 #%
 #% DESCRIPTION
 #%    Upload pydlinear python package to pypi.
@@ -151,14 +151,16 @@ function generate_stubs() {
         echo "Missing pybind11-stubgen. Please install it with pip if you want to generate stubs"
         return
     fi
-
+    rm -f pydlinear/_pydlinear.pyi pydlinear/_pydlinear.so
+    pip3 install .
     pybind11-stubgen pydlinear --output-dir pydlinear/stubs
+    mv pydlinear/stubs/pydlinear-stubs/_pydlinear/__init__.pyi pydlinear
+    rm -rf pydlinear/stubs
     popd || exit
 }
 
 function build() {
     pushd "$workspace_path" || exit
-    (pip3 show build > /dev/null && pip3 show twine >/dev/null) || (echo "Please install build and twine with pip first" && exit 1)
 
     bazel build //pydlinear --config pydlinear
 
@@ -167,6 +169,7 @@ function build() {
         exit 0
     fi
 
+    (pip3 show build > /dev/null && pip3 show twine >/dev/null) || (echo "Please install build and twine with pip first" && exit 1)
     python3 -m build
     python3 -m twine upload $test_upload dist/*
 

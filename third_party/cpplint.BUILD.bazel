@@ -1,4 +1,6 @@
 # Copied from https://github.com/martinjos/dlinear4/blob/master/tools/google_styleguide.BUILD.bazel
+load("@rules_python//python:defs.bzl", "py_binary")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])

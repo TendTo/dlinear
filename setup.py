@@ -40,18 +40,14 @@ def _build_dlinear():
         bool: True if the build failed but the user wants to continue, False otherwise.
         If true is returned, the copy step should be skipped.
     """
-    new_env = os.environ.copy()
-    new_env["PYTHON_BIN_PATH"] = sys.executable
     res = subprocess.call(
         [
             "bazel",
             "build",
             "//{name}:_{name}.so".format(name=MODULE_NAME),
-            "--python_path={}".format(sys.executable),
             "--config",
             "pydlinear",
         ],
-        env=new_env,
     )
     if res != 0:
         if SO_NAME in os.listdir(os.path.join(ROOT_DIR, MODULE_NAME)):
@@ -94,5 +90,5 @@ class sdist(_sdist):
 
 setup(
     cmdclass={"build": build, "develop": develop, "bdist_egg": bdist_egg, "sdist": sdist},
-    package_data={MODULE_NAME: [SO_NAME, "libqsopt_ex.so.2", "_{}.pyi".format(MODULE_NAME), "py.typed"]},
+    package_data={MODULE_NAME: [SO_NAME, "libqsopt_ex.so.2", "__init__.pyi", "py.typed"]},
 )

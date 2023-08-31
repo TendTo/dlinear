@@ -58,9 +58,8 @@ class Environment {
 
   typedef Variable key_type;
   typedef mpq_class mapped_type;
-  typedef
-  typename std::unordered_map<key_type, mapped_type, hash_value < key_type>>
-  map;
+  typedef typename std::unordered_map<key_type, mapped_type, hash_value<key_type>> map;
+  typedef typename std::unordered_map<key_type, double> double_map;
   /** std::pair<key_type, mapped_type> */
   typedef typename map::value_type value_type;
   typedef typename map::iterator iterator;
@@ -82,6 +81,7 @@ class Environment {
 
   /** Constructs an environment from @p m*/
   explicit Environment(map m);
+  explicit Environment(const double_map& m);
 
   /** Returns an iterator to the beginning. */
   iterator begin() { return map_.begin(); }

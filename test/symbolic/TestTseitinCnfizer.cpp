@@ -4,10 +4,12 @@
  * @date 19 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/symbolic/TseitinCnfizer.h"
 #include "TestSymbolicUtils.h"
 
 #include <gtest/gtest.h>
+
+#include "dlinear/symbolic/TseitinCnfizer.h"
+#include "dlinear/util/exception.h"
 
 using std::vector;
 using std::set;

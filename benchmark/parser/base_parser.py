@@ -152,4 +152,9 @@ class BaseBenchmarkParser(ABC):
         to_unit = self.TIME_UNITS.index(self.time_unit)
 
         scale = self.TIME_UNITS_TRANSITIONS[from_unit][to_unit]
-        return time * scale
+        new_time = time * scale
+
+        if from_unit >= to_unit:
+            new_time = int(new_time)
+
+        return new_time

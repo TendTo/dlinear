@@ -48,6 +48,13 @@ Environment::Environment(Environment::map m) : map_{std::move(m)} {
   }
 }
 
+Environment::Environment(const Environment::double_map& m) : map_{m.size()} {
+  for (const auto &p : m) {
+    throw_if_dummy(p.first);
+    map_.emplace(p.first, p.second);
+  }
+}
+
 void Environment::insert(const key_type &key, const mapped_type &elem) {
   throw_if_dummy(key);
   map_.emplace(key, elem);

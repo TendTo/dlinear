@@ -37,8 +37,14 @@ version = "0.0.1"
 [tool.setuptools.dynamic]
 #version = { attr = "pydlinear.__version__" }
 
+[project.optional-dependencies]
+style = ["black", "bumpver", "pylint", "isort", "mypy"]
+test = ["pytest"]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinx-rtd-dark-mode", "sphinx_autodoc_typehints"]
+
 [tool.setuptools.packages.find]
 include = ["pydlinear"]
+exclude = ["doc*", "test*"]
 
 [project.urls]
 Homepage = "https://github.com/TendTo/dlinear5"
