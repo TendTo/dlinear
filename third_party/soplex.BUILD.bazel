@@ -12,7 +12,12 @@ cmake(
         "BOOST": "on",
         "QUADMATH": "on",
     },
-    out_static_libs = ["libsoplex.a"],
+    out_static_libs = select(
+        {
+            "@dlinear//tools:dynamic_build": [],
+            "//conditions:default": ["libsoplex.a"],
+        },
+    ),
     out_shared_libs = select(
         {
             "@dlinear//tools:dynamic_build": ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],

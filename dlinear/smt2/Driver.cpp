@@ -50,7 +50,7 @@ bool Smt2Driver::parse_stream(istream &in, const string &sname) {
 }
 
 bool Smt2Driver::parse_file(const string &filename) {
-  if (filename.empty()) {
+  if (context_.config().read_from_stdin()) {
     // Option --in passed to dreal.
     return parse_stream(cin, "(stdin)");
   }

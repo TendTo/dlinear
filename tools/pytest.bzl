@@ -23,3 +23,30 @@ def pytest_test(name, srcs, deps = [], args = [], data = [], **kwargs):
         data = data,
         **kwargs
     )
+
+def pydlinear_py_test(name, srcs = None, deps = [], args = [], data = [], size = "small", **kwargs):
+    """Call pytest from a py_test rule, taking care of the common arguments and dependencies.
+
+    By default, sets size="small" because that indicates a unit test.
+    If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .py.
+    For example, pydlinear_py_test(name = "test_foo_bar") will look for TestFooBar.py.
+
+    Args:
+        name: The name of the rule.
+        srcs: The source files to test.
+        deps: The dependencies of the rule.
+        args: The arguments to pass to pytest.
+        data: The data dependencies of the rule.
+        kwargs: Additional arguments to pass to py_test.
+    """
+    if srcs == None:
+        srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".py"]
+    pytest_test(
+        name = name,
+        srcs = srcs,
+        args = args,
+        deps = deps + ["//pydlinear"],
+        data = data,
+        size = size,
+        **kwargs
+    )

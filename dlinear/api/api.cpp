@@ -4,10 +4,42 @@
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/util/infty.h"
+#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/soplex.h"
 
 using tl::optional;
 
 namespace dlinear {
+
+void InitSolver(const Config &config) {
+  InitSolver(config.lp_solver());
+}
+
+void InitSolver(Config::LPSolver lp_solver) {
+  if (lp_solver == Config::QSOPTEX) {
+    qsopt_ex::QSXStart();
+    InftyStart(mpq_INFTY, mpq_NINFTY);
+  } else if (lp_solver == Config::SOPLEX) {
+    InftyStart(soplex::infinity);
+  } else {
+    DLINEAR_UNREACHABLE();
+  }
+  Expression::InitConstants();
+}
+
+void DeInitSolver(const Config &config) {
+  DeInitSolver(config.lp_solver());
+}
+
+void DeInitSolver(Config::LPSolver lp_solver) {
+  Expression::DeInitConstants();
+  InftyFinish();
+  if (lp_solver == Config::QSOPTEX) {
+    qsopt_ex::QSXFinish();
+  }
+}
 
 optional <Box> CheckSatisfiability(const Formula &f, const double delta) {
   Config config;

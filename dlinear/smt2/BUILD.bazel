@@ -5,6 +5,7 @@ load("//tools/lexyacc:lexyacc.bzl", "gen_lex", "gen_yacc")
 package(default_visibility = [
     "//benchmark:__subpackages__",
     "//dlinear:__subpackages__",
+    "//pydlinear:__subpackages__",
     "//test:__subpackages__",
 ])
 

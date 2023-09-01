@@ -9,6 +9,13 @@
 
 namespace dlinear {
 
+/** Initialize the solver. Must be called before any other API calls. */
+void InitSolver(const Config &config);
+void InitSolver(Config::LPSolver lp_solver);
+
+void DeInitSolver(const Config &config);
+void DeInitSolver(Config::LPSolver lp_solver);
+
 /**
  * Check the satisfiability of a given formula @p f with a given precision
  * @p delta.
@@ -25,7 +32,7 @@ tl::optional <Box> CheckSatisfiability(const Formula &f, double delta);
  * @param config configuration used to run the solver.
  * @return a model if @p f is δ-satisfiable or nullopt if @p f is unsatisfiable.
  */
-tl::optional <Box> CheckSatisfiability(const Formula &f, const Config& config);
+tl::optional <Box> CheckSatisfiability(const Formula &f, const Config &config);
 
 /**
  * Check the satisfiability of a given formula @p f with a given precision

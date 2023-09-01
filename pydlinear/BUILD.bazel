@@ -3,17 +3,16 @@ load("@rules_python//python:defs.bzl", "py_library")
 
 pybind_extension(
     name = "_pydlinear",
-    srcs = [
-        "pydlinear.cpp",
-    ],
-    linkopts = [
-        "-Wl,-rpath,'$$ORIGIN'",
-    ],
+    srcs = ["pydlinear.cpp"],
+    linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
     linkstatic = 0,
     deps = [
         "//dlinear:version",
+        "//dlinear/api",
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
+        "//dlinear/libs:soplex",
+        "//dlinear/smt2",
         "//dlinear/symbolic",
         "//dlinear/util:config",
     ],
