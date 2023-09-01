@@ -1,0 +1,15 @@
+@startuml Design pattern - Composite
+
+!include ./classes.puml
+
+'Composite
+Component <|.down. Leaf
+Component <|.down. Composite
+
+Composite o-down-> Component
+
+note "The operation is called for each\nComponent in the sub-structure" as Note1
+
+Note1 ..> Composite::Operation
+
+@enduml

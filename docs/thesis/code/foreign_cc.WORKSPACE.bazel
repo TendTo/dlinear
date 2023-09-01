@@ -1,0 +1,10 @@
+load("//tools:github.bzl", "github_archive")
+
+# Apache License 2.0
+# rules_foreign_cc for c++ libraries with other build systems
+github_archive(
+    name = "rules_foreign_cc",
+    commit = "0.9.0",
+    repository = "bazelbuild/rules_foreign_cc",
+    sha256 = "2a4d07.......f7c51",
+)

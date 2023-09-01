@@ -1,0 +1,17 @@
+@startuml Design pattern - Pimpl
+
+!include ./classes.puml
+
+'Pimpl
+Abstraction <|.. ConcreteAbstraction
+Implementor <|.. ConcreteImplementorA
+Implementor <|.. ConcreteImplementorB
+
+ConcreteAbstraction *-> Implementor : impl_.OperationImpl()
+
+note "Usually wrapped\nin a smart pointer" as Note1
+
+Note1 .right. ConcreteAbstraction::impl
+
+@enduml
+

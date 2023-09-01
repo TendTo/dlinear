@@ -1,0 +1,76 @@
+\begin{appendices}
+    \chapter{Benchmarks}\label{appendix:benchmarks}
+    The problems used in the benchmarks comprises of samples from:
+
+    \begin{itemize}
+        \item Csaba Mészáros LP collection  \footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}
+    \end{itemize}
+    The benchmarking suite has been run on a machine with the following specifications.
+    Each run utilized only one core.
+
+    \begin{itemize}
+        \item 2 Intel Xeon E5-2699 v4 processors (2.2 GHz, 22 cores, 55 MB cache)
+        \item 44 cores (2 processors * 22 cores), totalling 4840 across the standard nodes
+        \item 128 GB memory - (8 DDR4 RDIMMs, each with 16GB) - ie. 2.9 GB per core
+    \end{itemize}
+    The results were then filtered to only include runs in which at least one solver took longer than 10 seconds to output the result.
+    Legend:
+
+    \begin{itemize}
+        \item \textbf{File}: the name of the file that was used for the benchmark.
+        \item \textbf{Solver}: the solver that was used for the benchmark. Can be either \textit{soplex} or \textit{qsoptex}.
+        \item \textbf{\#a}: the number of assertions contained within the file.
+        \item \textbf{Result}: the result of the benchmark. Can be either \textit{delta-sat} or \textit{unsat}.
+        \item \textbf{$\delta_i$}: the precision that was given to the solver.
+        \item \textbf{$\delta_a$}: the achieved precision of the solver.
+        \item \textbf{Time}: the time that was needed to solve the file, in seconds.
+    \end{itemize}
+
+    \subsection*{QF_LRA}
+
+    % \begin{longtable}{l|ll|lll|lll}
+    %     \hline
+    %                    &                      &               & \multicolumn{3}{c}{QSoptex} & \multicolumn{3}{c}{Soplex}                                                                                 \\
+    %     \bfseries File & \bfseries $\delta_i$ & \bfseries \#a & \bfseries $\delta_a$        & \bfseries Time             & \bfseries Result & \bfseries $\delta_a$ & \bfseries Time & \bfseries Result   \\
+    %     \hline
+    %     \endhead
+    %     \csvreader[head to column names]{data/smtbenchmark.csv}{}
+    %     {                                                                                                                                                                                                \\
+    %     \file          & \precision           & \assertions   & \actualPrecisionQ           & \timeQ                     & \resultQ         & \actualPrecisionS    & \timeS         & \resultS         }
+    % \end{longtable}
+
+    \subsection*{LP}
+
+    \begin{longtable}{l|ll|lll|lll}
+        \hline
+                       &                      &               & \multicolumn{3}{c}{QSoptex} & \multicolumn{3}{c}{Soplex}                                                                                 \\
+        \bfseries File & \bfseries $\delta_i$ & \bfseries \#a & \bfseries $\delta_a$        & \bfseries Time             & \bfseries Result & \bfseries $\delta_a$ & \bfseries Time & \bfseries Result   \\
+        \hline
+        \endhead
+        \csvreader[head to column names]{data/lpbenchmark.csv}{}
+        {                                                                                                                                                                                                \\
+        \file          & \precision           & \assertions   & \actualPrecisionQ           & \timeQ                     & \resultQ         & \actualPrecisionS    & \timeS         & \resultS         }
+    \end{longtable}
+
+    \subsection*{Sloane-Stufken}
+
+    % \begin{longtable}{lllll|ll|lll|lll}
+    %     \hline
+    %                  &              &              &              &             &                      &               & \multicolumn{3}{c}{QSoptex} & \multicolumn{3}{c}{Soplex}                                                                                 \\
+    %     \bfseries s1 & \bfseries k1 & \bfseries s2 & \bfseries k2 & \bfseries t & \bfseries $\delta_i$ & \bfseries \#a & \bfseries $\delta_a$        & \bfseries Time             & \bfseries Result & \bfseries $\delta_a$ & \bfseries Time & \bfseries Result   \\
+    %     \hline
+    %     \endhead
+    %     \csvreader[head to column names]{data/ssbenchmark.csv}{}
+    %     {                                                                                                                                                                                                                                                         \\
+    %     \si          & \ki          & \sii         & \kii         & \t          & \precision           & \assertions   & \actualPrecisionQ           & \timeQ                     & \resultQ         & \actualPrecisionS    & \timeS         & \resultS         }
+    % \end{longtable}
+
+    \chapter{Detailed UML diagrams}
+
+    The following are the same diagrams described in \autoref{sec:patterns} but with more details.
+
+    \plantuml{diagrams/dlinear/pimpl}{UML diagram of the Pimpl patter as it is used in \dlinear}{dlinear-pimpl}
+
+    \plantuml{diagrams/dlinear/visitor}{UML diagram of the visitor pattern as it is used in \dlinear}{dlinear-visitor}
+
+\end{appendices}

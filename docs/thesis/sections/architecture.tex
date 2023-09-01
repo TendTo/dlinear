@@ -1,0 +1,129 @@
+\chapter{Software architecture}
+
+\section{Overview}
+
+The software is written in \texttt{c++} and it is composed of two main components: the \textit{dlinear library} and the \textit{python bindings}.
+The project includes a \textit{benchmarking suite} and a \textit{test suite}, which are used to verify the correctness measure the performance of the application.
+The \texttt{python} bindings provide a more user-friendly interface to the library, and to allow the faster prototyping in a \texttt{python} environment.
+
+\subsection{Filesystem tree}
+
+The project is organized in a structure (\autoref{fig:filesystem}) that is common to find in \texttt{bazel} projects.
+
+The root directory contains the \texttt{WORKSPACE} file, marking the root of the workspace.
+The \dlinear folder contains the \texttt{c++} source code of the library.
+It is further divided into subfolders, each containing the source code of a specific and mostly isolated component.
+The same structure can be found in the \texttt{test} directory, where all the unit tests are placed.
+The \pydlinear folder contains the configurations needed to create the \texttt{python} bindings and some tests to ensure their correctness, while \texttt{benchmark} folder contains the benchmarking suite, which is used to measure the performance of the solver.
+
+Following \texttt{bazel} conventions, the \texttt{third\_party} folder contains the external dependencies.
+All the build tools and Starlark rules/macros are made available from the \texttt{tools}.
+
+
+\begin{figure}[ht]
+        \begin{adjustbox}{width=0.5\textwidth,center}
+                \centering
+                \begin{forest}
+                        pic dir tree,
+                        where level=0{}{% folder icons by default; override using file for file icons
+                                        directory,
+                                },
+                        [dlinear5
+                                                [benchmark \qquad\qquad Benchmarking utilities
+                                                ]
+                                                [dlinear \qquad\qquad\ \ Sources
+                                                                [api
+                                                                ]
+                                                                [libs
+                                                                ]
+                                                                [smt2
+                                                                ]
+                                                                [solver
+                                                                ]
+                                                                [symbolic
+                                                                ]
+                                                                [util
+                                                                ]
+                                                                [main.cpp, file
+                                                                ]
+                                                ]
+                                                [pydlinear \qquad\qquad Python bindings
+                                                                [test
+                                                                ]
+                                                                [pydlinear.cpp, file
+                                                                ]
+                                                ]
+                                                [test \quad\qquad\qquad\qquad Unit tests
+                                                ]
+                                                [script \qquad\qquad\qquad Utility scripts
+                                                ]
+                                                [third\_party \qquad\quad\  External dependencies
+                                                                [com_github_robotlocomotion_drake
+                                                                ]
+                                                ]
+                                                [tools \qquad\qquad\qquad\  Build tools and Starlark macros
+                                                ]
+                                ]
+                \end{forest}
+        \end{adjustbox}
+        \caption{Filesystem tree of the project}\label{fig:filesystem}
+\end{figure}
+
+\section{Design patterns}
+\label{sec:patterns}
+
+\subsection{Pimpl idiom}
+
+The \textit{pimpl idiom} \cite{man:pimpl} is a technique used to hide the implementation details of a class from the user.
+The acronym stands for \textit{Pointer to IMPLementation}, and it is a common practice in \texttt{c++}.
+The result is a reduction in compilation time upon changes in the private implementation and avoiding exposing the internal details of a class to the client (\autoref{dg:pattern-pimpl}).
+This pattern can be seen as a specialization of the \textit{bridge pattern} \cite{book:gof}: the actual implementation of the class can be changed freely, decoupled from the abstraction.
+The main difference is that in the \textit{pimpl idiom} there is usually only one concrete abstraction.
+
+\plantuml{diagrams/pattern/pimpl}{Generalized UML diagram of the Pimpl idiom}{pattern-pimpl}
+
+In \dlinear the implementation of the solver changes drastically between \texttt{soplex} and \texttt{qsoptex}.
+While the interface remains the same, the underlying implementation is chosen at runtime, based on the configuration.
+Therefore, the \texttt{Context} class, instantiated when the satisfiability problem needs to be verified, uses the \textit{pimpl idiom} (\autoref{dg:simplified-pimpl}).
+To achieve this result, the \texttt{Context} header defines a forward declaration of the \texttt{ContextImpl} class and adds it as a private member of \texttt{Context}.
+The \texttt{ContextImpl} class is then defined in its own file, not exposed in the public header.
+Other classes can still extend from \texttt{ContextImpl}, allowing the implementation of the solver to be changed without affecting the rest of the codebase.
+
+\plantuml{diagrams/simplified/pimpl}{Simplified UML diagram of the implementation of the Pimpl idiom as it is used within \dlinear}{simplified-pimpl}
+
+\subsection{Composite and Visitor patterns}
+
+The Composite pattern allows to treat both objects and their compositions uniformly \cite{book:gof}.
+It achieves this by defining a common interface that both Leaves and Composites implement (\autoref{dg:pattern-composite}).
+The approach greatly simplifies the interaction with complex data structure, as the the difference between a single object and a collection of objects is kept hidden.
+
+\plantuml{diagrams/pattern/composite}{Generalized UML diagram of the Composite pattern}{pattern-composite}
+
+The intent of the Visitor pattern is to represent an operation to be performed on the elements of an object structure.
+The Visitor lets you define a new operation without changing the classes of the elements on which it operates \cite{book:gof}.
+A common application is traversing an object structure an applying an operation to each element based on its type (\autoref{dg:pattern-visitor}).
+The ObjectStructure can be a simple collection or a Composite object.
+
+\plantuml{diagrams/pattern/visitor}{Generalized UML diagram of the Visitor pattern}{pattern-visitor}
+
+The latter is the case of \dlinear, where the \texttt{Formula} class is a Composite object, and the \texttt{FormulaVisitor} is used to traverse the structure and perform operations on each element (\autoref{dg:simplified-visitor}).
+Through the Visitors, the input formula is converted in \gls{nnf}, \gls{cnf} or in a boolean formula, where each linear constraint is substituted with a boolean variable.
+
+\plantuml{diagrams/simplified/visitor}{Simplified UML diagram of the Visitor pattern as it is used within \dlinear}{simplified-visitor}
+
+\section{Smt2 parser}
+
+The input files \dlinear accepts are in the format standardized by SMT-LIB \cite{docs:smtlib}.
+The parser itself is generated by \texttt{bison} and \texttt{flex} and can be divided into two main parts: the lexer and the parser.
+The lexer is responsible for tokenizing the input file by matching the input stream with the regular expressions defined in the \texttt{scanner.ll} file (\autoref{code:example.yy}).
+The result is then fed to the parser, which uses the grammar defined in the \texttt{parser.yy} file to build an abstract syntax tree (\autoref{code:example.yy}).
+
+Additionally, a \texttt{Driver} class is used to coordinate the two components and to provide an interface to the rest of the application, allowing it to start the parsing process and to retrieve the result.
+Each rule in the grammar is associated with an action, usually a \texttt{Driver}'s method call.
+
+\lstinputlisting[language=flex,frame=single,showstringspaces=false,caption={Simplified example of a rule tokenizing the smt2 input file to reconnize the "check-sat" directive},captionpos=b,label={code:example.ll}]{code/example.ll}
+
+\lstinputlisting[language=yacc,frame=single,showstringspaces=false,caption={Simplified example of a rule parsing the check-sat token and calling the \texttt{Driver} accordingly},captionpos=b,label={code:example.yy}]{code/example.yy}
+
+\section{Solvers}
+

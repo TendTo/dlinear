@@ -1,0 +1,261 @@
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Imports
+%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+% \usepackage{minted} % Package for syntax highlighting (https://ctan.org/pkg/minted)
+\usepackage{amsfonts} % TeX fonts from the American Mathematical Society (https://ctan.org/pkg/amsfonts)
+\usepackage{titlesec} % Remove chapter header
+\usepackage{color}
+\usepackage{hyperref} % Extensive support for hypertext in LATEX (https://ctan.org/pkg/hyperref)
+\usepackage{csquotes}
+\usepackage{graphicx} % Enhanced support for graphics (https://ctan.org/pkg/graphicx)
+\usepackage{framed} % Framed or shaded regions that can break across pages (https://ctan.org/pkg/framed)
+\usepackage[acronyms,style=altlist,nopostdot]{glossaries}
+\usepackage[font=small,labelfont=bf,tableposition=top]{caption}
+\usepackage[style=numeric,useprefix,hyperref,backend=bibtex,sorting=none]{biblatex} % Sophisticated Bibliographies in LATEX (https://ctan.org/pkg/biblatex)
+\usepackage{subfig}
+\usepackage{geometry} % Change page size at any point
+\usepackage[edges]{forest} % Drat tree like data structures (https://ctan.org/pkg/forest)
+\usepackage{pgffor} % Loops in LaTeX (https://ctan.org/pkg/pgffor)
+\usepackage{csvsimple} % Simple CSV file processing (https://ctan.org/pkg/csvsimple)
+\usepackage{underscore} % Control the behaviour of "_" in text (https://ctan.org/pkg/underscore)
+\usepackage{listings} % Typeset source code listings using LATEX (https://ctan.org/pkg/listings)
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage[title]{appendix}
+\usepackage{changepage}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage{environ}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Settings
+%%%%%%%%%%%%%%%%%%%%%%%%
+\addto\extrasenglish{%
+    \providecommand*{\lstlistingautorefname}{List.}
+    % \renewcommand*{\listingscaption}{Code}
+    \renewcommand*{\figureautorefname}{Fig.}
+    \renewcommand*{\chapterautorefname}{Chap.}
+    \renewcommand*{\sectionautorefname}{Sec.}
+    \renewcommand*{\subsectionautorefname}{Sub-sez.}
+}
+\graphicspath{ {./img/} } % Base image path
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Environments
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{examplecounter}
+\newenvironment{example}{\begin{quote}%
+        \refstepcounter{examplecounter}%
+        \textbf{Example \arabic{examplecounter}}%
+        \quad
+        }{%
+    \end{quote}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% References
+%%%%%%%%%%%%%%%%%%%%%%%%
+\addbibresource{resources.bib} %Import the bibliography file
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Glossary
+%%%%%%%%%%%%%%%%%%%%%%%%
+\makeglossaries
+\loadglsentries{glossary}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Minted
+%%%%%%%%%%%%%%%%%%%%%%%%
+% \setminted[solidity]{tabsize=2,breaklines,fontsize=\footnotesize}
+% \setminted[typescript]{tabsize=2,breaklines,fontsize=\footnotesize}
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% Filesystem tree
+%%%%%%%%%%%%%%%%%%%%%%%
+\definecolor{folderbg}{RGB}{124,166,198}
+\definecolor{folderborder}{RGB}{110,144,169}
+\newlength\Size
+\setlength\Size{4pt}
+\tikzset{%
+    folder/.pic={%
+            \filldraw [draw=folderborder, top color=folderbg!50, bottom color=folderbg] (-1.05*\Size,0.2\Size+5pt) rectangle ++(.75*\Size,-0.2\Size-5pt);
+            \filldraw [draw=folderborder, top color=folderbg!50, bottom color=folderbg] (-1.15*\Size,-\Size) rectangle (1.15*\Size,\Size);
+        },
+    file/.pic={%
+            \filldraw [draw=folderborder, top color=folderbg!5, bottom color=folderbg!10] (-\Size,.4*\Size+5pt) coordinate (a) |- (\Size,-1.2*\Size) coordinate (b) -- ++(0,1.6*\Size) coordinate (c) -- ++(-5pt,5pt) coordinate (d) -- cycle (d) |- (c) ;
+        },
+}
+\forestset{%
+declare autowrapped toks={pic me}{},
+pic dir tree/.style={%
+for tree={%
+        folder,
+        font=\ttfamily,
+        grow'=0,
+    },
+before typesetting nodes={%
+for tree={%
+edge label+/.option={pic me},
+},
+},
+},
+pic me set/.code n args=2{%
+        \forestset{%
+            #1/.style={%
+                    inner xsep=2\Size,
+                    pic me={pic {#2}},
+                }
+        }
+    },
+pic me set={directory}{folder},
+pic me set={file}{file},
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Listings
+%%%%%%%%%%%%%%%%%%%%%%%%
+\definecolor{keywords}{HTML}{C586C0}
+\definecolor{type}{HTML}{0000FF}
+\definecolor{operator}{HTML}{569CD6}
+\definecolor{comments}{HTML}{6a9955}
+\definecolor{variable}{HTML}{9e9b00}
+\definecolor{number}{HTML}{098658}
+\definecolor{function}{HTML}{795E26}
+
+
+\lstdefinelanguage{SMT2}{
+    alsoletter=-, % Include dashes as letters
+    sensitive=true,
+    morekeywords={set-logic, declare-fun, assert, check-sat, get-model},
+    morekeywords=[2]{Int, Bool, Real},
+    morekeywords=[3]{and, or, not, imply, ite},
+    morekeywords=[4]{a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z},
+    morecomment=[l]{;},
+    morestring=[b]",
+}
+\lstset{
+    language=SMT2,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords},
+    keywordstyle={[2]\color{type}},
+    keywordstyle={[3]\color{operator}},
+    keywordstyle={[4]\color{variable}},
+    commentstyle=\color{comments},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=2,
+    breaklines=true,
+}
+\lstdefinelanguage{bazel}{
+    alsoletter=-, % Include dashes as letters
+    sensitive=true,
+    morekeywords={load, workspace, http_archive, cc_binary, cc_library, cc_test, cc_toolchain, cc_toolchain_suite, filegroup, genrule, package_group, package, sh_binary, sh_library, sh_test},
+    morekeywords=[2]{glob},
+    morecomment=[l]{\#},
+    morestring=[b]",
+}
+\lstset{
+    language=bazel,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords},
+    keywordstyle={[2]\color{function}},
+    commentstyle=\color{comments},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=2,
+    breaklines=true,
+}
+\lstdefinelanguage{yacc}{
+    alsoletter={\#, \%, -, _, :}, % Include dashes as letters
+    morekeywords={\#include, \#define, \#ifdef, \#endif},
+    morekeywords=[2]{% Bison keywords
+        \%union, \%token, \%type, \%nonassoc, \%left, \%prec, \%right, \%start,
+        \%grammar, \%pure_parser, \%define, \%expect, \%expect-rr, \%file, \%glr-parser, 
+        \%parse-param, \%parse-param-rr, \%skeleton, \%debug, \%output,
+        \%locations, \%skeleton
+    },
+    morekeywords=[3]{% Bison variables
+        , stringVal,
+    }
+    keywordstyle=\color{keywords}\bfseries,
+    morecomment=[l][\color{comments}]{//}, % single-line comments
+    morecomment=[s][\color{comments}]{/*}{*/}, % multi-line comments
+    morestring=[b]",
+    morestring=[b]',
+}
+\lstset{
+    language=yacc,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords},
+    keywordstyle={[2]\color{type}},
+    keywordstyle={[3]\color{variable}},
+    commentstyle=\color{comments},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=2,
+    breaklines=true,
+}
+\lstdefinelanguage{flex}{
+    alsoletter={\#, \%, -, _, :}, % Include dashes as letters
+    morekeywords={\#include, \#define, \#ifdef, \#endif},
+    morekeywords=[2]{% Bison keywords
+        typedef
+    },
+    morekeywords=[3]{% Bison variables
+        , stringVal,
+    }
+    keywordstyle=\color{keywords}\bfseries,
+    morecomment=[l][\color{comments}]{//}, % single-line comments
+    morecomment=[s][\color{comments}]{/***}{*/}, % multi-line comments
+    morestring=[b]",
+    morestring=[b]',
+}
+\lstset{
+    language=flex,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords},
+    keywordstyle={[2]\color{type}},
+    keywordstyle={[3]\color{variable}},
+    commentstyle=\color{comments},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=2,
+    breaklines=true,
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Remove chapter header
+%%%%%%%%%%%%%%%%%%%%%%%%
+\titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
+\newpagestyle{mystyle}
+{\sethead[\thepage][][\chaptertitle]{}{}{\thepage}}
+\pagestyle{mystyle}
+\AddToHook{env/appendices/begin}{%
+    \titleformat{\chapter}{\normalfont\LARGE\bfseries}{Appendix \thechapter}{10pt}{}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% PlantUML
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\plantuml}[4][1]{
+    \begin{figure}[ht]
+        \begin{adjustbox}{width=#1\textwidth,center}
+            \input{#2}
+        \end{adjustbox}
+        \caption{#3}\label{dg:#4}
+    \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Common definitions
+%%%%%%%%%%%%%%%%%%%%%%%%
+\def\dlinear{\textit{dLinear}}
+\def\pydlinear{\textit{pydLinear}}
+\def\dlinearfive{\textit{dLinear5}}
+\def\dlinearfour{\textit{dLinear4}}
+\def\bazel{\textit{Bazel}}
+\def\dreal{\textit{dReal4}}

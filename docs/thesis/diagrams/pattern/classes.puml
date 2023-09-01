@@ -1,0 +1,69 @@
+@startuml pattern-classes
+
+remove @unlinked
+skinparam Shadowing false
+
+interface Abstraction {
+    +Operation()
+}
+
+class ConcreteAbstraction {
+    -Implementor impl
+    +Operation()
+}
+
+
+interface Implementor {
+    +OperationImpl()
+}
+
+class ConcreteImplementorA {
+    +OperationImpl()
+}
+
+class ConcreteImplementorB {
+    +OperationImpl()
+}
+
+interface Visitor {
+    +VisitConcreteElement(ConcreteElement)
+}
+
+class ConcreteVisitorA {
+    +VisitConcreteElement(ConcreteElement)
+}
+
+class ConcreteVisitorB {
+    +VisitConcreteElement(ConcreteElement)
+}
+
+class OjbectStructure {
+}
+
+interface Element {
+    +Operation()
+}
+
+class ConcreteElement {
+    +Operation()
+}
+
+interface Component {
+    +Operation()
+    +Add(Component)
+    +Remove(Component)
+    +GetChild(int)
+}
+
+class Leaf {
+    +Operation()
+}
+
+class Composite {
+    +Operation()
+    +Add(Component)
+    +Remove(Component)
+    +GetChild(int)
+}
+
+@enduml

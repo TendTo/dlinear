@@ -1,0 +1,81 @@
+\chapter{Libraries and tools}
+
+\section{External libraries}
+
+\subsection{gmp}
+
+gmp is a free library for arbitrary precision arithmetic, operating on signed integers, rational numbers, and floating-point numbers.
+There is great focus on being to be as fast as possible, both for small operands and for huge operands.
+Such speed is achieved by using fullwords as the basic arithmetic type and by using fast algorithms, with highly optimised assembly \cite{man:gmp}.
+It is used in many application dealing with any kind of mathematical computation with large numbers or very high precision.
+
+There are several categories of functions provided by the library.
+For the purpose of this project, the most relevant ones are the \textit{high-level rational arithmetic} function using the \texttt{mpq} type.
+The \texttt{mpz} functions can be used too, by applying them to the numerator and denominator separately.
+
+\subsection{Soplex}
+
+SoPlex is an open-source optimization solver for \gls{lp} problems based on an advanced implementation of the primal and dual revised simplex algorithm.
+It provides special support for the exact solution of LPs with rational input data.
+Can be easily embedded into other programs via a C++ class library.
+
+SoPlex has been used in numerous research and industry projects and is the standard LP solver linked to the mixed-integer nonlinear programming and constraint integer programming solver SCIP \cite{man:soplex}.
+
+\subsection{Qsopt\_ex}
+
+Qsopt\_ex was developed as a specialization of the Qsopt library to obtain exact solutions to \gls{lp} problems \footnote{\url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/}}.
+The original library has then be forked and extended two times.
+The first fork, under the Debian Med group, updated the software and the build system, to be more friendly \footnote{\url{https://salsa.debian.org/med-team/qsopt-ex}}.
+Finally, Martin Sidaway adapted the software to support solving the delta-weakening of the problem \cite{repo:qsopt-ex}.
+The last one is the version used in \dlinear.
+
+\section{Build tools}
+
+When dealing with large projects written in \texttt{c++}, it is common to use a build system to automate the compilation process, to manage dependencies and to run tests.
+Some of the most popular build systems are \textit{CMake} \footnote{\url{https://cmake.org/}}, \textit{msbuild} \footnote{\url{https://learn.microsoft.com/visualstudio/msbuild/msbuild}} and \textit{Makefiles} (\autoref{fig:cpp_build_systems}).
+Still, less conventional tools find their niche, such as \textit{Bazel} \footnote{\url{https://bazel.build/}}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.65\textwidth]{cpp_build_systems}
+    \caption{Comparison of the most popular build systems for \texttt{c++} projects \cite{art:cpp-build-system}}\label{fig:cpp_build_systems}
+\end{figure}
+
+Following the footsteps of the original authors, the choice fell on \textit{Bazel} \cite{repo:bazel}.
+It is an open-source build system developed and maintained by Google.
+It supports multiple languages and platforms, and it is designed to scale well with large project, thanks to its incremental builds and caching mechanisms.
+
+\bazel's main goal are reproducibility and correctness, which are achieved by using a declarative language to define the build process and by using a sandboxed environment to run the build actions.
+This ensures that the build process is deterministic and that the build actions do not have side effects: all inputs and outputs must be explicitly declared for each rule.
+
+It also features a domain specific language \texttt{starlark} \cite{repo:starlark}, used to further customize the build process, adding support for personalized rules and macros.
+Such scripts can also be shared among user, allowing the creation of packages of specialized rules for many use-cases.
+
+\subsection{Configuration}
+
+The \textit{Bazel} \textit{workspace} is the top-level directory that contains both source files and outputs.
+It is defined by a \texttt{WORKSPACE.bazel} file, which specifies the name of the project and is a common place where to define the external dependencies.
+
+\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{WORKSPACE.bazel} file},captionpos=b,label={code:workspace}]{code/example.WORKSPACE.bazel}
+
+The project can be split into multiple \textit{packages}, each one defined by a \texttt{BUILD.bazel} file.
+This greatly simplifies the build process, as it is possible to build a complete dependency graph and rebuild only the smallest subset of the project when it has been modified, using the cache for the rest.
+
+\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{Build.bazel} file},captionpos=b,label={code:build}]{code/example.BUILD.bazel}
+
+\subsection{Dependencies}
+
+\textit{Bazel} provides the means to manage dependencies, both internal and external.
+To ensure isolation and reproducibility, the external dependencies are downloaded and built from source.
+Most libraries do not provide a \texttt{BUILD.bazel} file, since they employ a different build system.
+In those cases, it is necessary to write one manually, specifying the source files, the dependencies and the compilation flags.
+To aid in the compilation, there exist several rules that ensure interoperability with the most common tools, such as \textit{CMake}, \textit{configure-make}, \textit{GNU Make}, \textit{boost}, \textit{ninja} and \textit{Meson} \cite{repo:rules-foreign-cc}.
+
+\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Inclusion of the foreign_rules_cc in the WORKSPACE.bazel file},captionpos=b,label={code:foreign_cc.WORKSPACE.bazel}]{code/foreign\_cc.WORKSPACE.bazel}
+
+The two solvers that \dlinear uses needs to be included as dependencies of the project.
+In the original setup, it was necessary to download the source code and compile them manually, which was a tedious process.
+This step was automated by creating an ad hoc \texttt{BUILD.bazel} file for each one of them, which is then used when building the project.
+It also allows to specify whether to use them as static libraries, for the main executable, or as dynamic libraries, for the python bindings.
+
+\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={\texttt{BUILD.bazel} file for the SoPlex library},captionpos=b,label={code:soplex.BUILD.bazel}]{code/soplex.BUILD.bazel}

@@ -1,0 +1,16 @@
+# BUILD.bazel file
+cc_library(
+    # create the library target
+    name = "hello-greet",  # name of the library
+    srcs = ["hello-greet.cpp"],  # source files
+    hdrs = ["hello-greet.h"],  # header files
+)
+
+cc_binary(
+    # create the executable target
+    name = "hello-world",  # name of the executable
+    srcs = ["hello-world.cpp"],  # source files
+    deps = [
+        ":hello-greet",  # link the library
+    ],
+)

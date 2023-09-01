@@ -1,0 +1,8 @@
+sat
+(model
+  (define-fun x () Real 0)
+  (define-fun y () Real 3/2)
+  (define-fun z () Real 0)
+  (define-fun u () Real [ ENTIRE ])
+  (define-fun v () Real 1)
+)

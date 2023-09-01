@@ -1,0 +1,11 @@
+@startuml Visitor pattern in Context
+
+!include ./classes.puml
+
+'Visitors
+FormulaVisitor <|-left- TseitinCnfizer
+FormulaVisitor <|-- PlaistedGreenbaumCnfizer
+FormulaVisitor <|-- PredicateAbstractor
+FormulaVisitor -> Formula
+
+@enduml

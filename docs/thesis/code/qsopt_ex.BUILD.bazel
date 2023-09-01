@@ -1,0 +1,19 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+configure_make(
+    name = "qsopt_ex",
+    lib_name = "libqsopt_ex",
+    out_binaries = ["esolver"],
+    out_static_libs = ["libqsopt_ex.a"],
+    out_shared_libs = select(
+        {"@dlinear//tools:dynamic_build": ["libqsopt_ex.so"], "//conditions:default": []},
+    ),
+    lib_source = ":all_srcs",
+    visibility = ["//visibility:public"],
+    configure_in_place = True,
+    autoreconf = True,
+    autoreconf_options = ["--install", "--force", "--verbose", "--warnings=all"],
+    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
+    args = ["-j4"],
+    deps = ["@zlib"],
+)

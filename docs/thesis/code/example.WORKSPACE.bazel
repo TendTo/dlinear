@@ -1,0 +1,12 @@
+# custom macro to download library from github
+load("//tools:github.bzl", "github_archive")
+
+# WORKSPACE.bazel file
+workspace(name = "dlinear5")  # name of the project
+
+github_archive(
+    name = "com_google_googletest",  # Google Test suite
+    commit = "v1.13.0",
+    repository = "google/googletest",
+    sha256 = "ad7fdba11ea011c1d925b3289cf4af2c66a352e18d4c72",
+)

@@ -1,0 +1,13 @@
+@startuml Design pattern - Visitor
+
+!include ./classes.puml
+
+'Visitor
+Visitor <|.. ConcreteVisitorA
+Visitor <|.. ConcreteVisitorB
+Element <|.. ConcreteElement
+ObjectStructure o-> Element
+
+Visitor -> ObjectStructure
+
+@enduml

@@ -1,0 +1,339 @@
+@article{art:cpp-build-system,
+  author  = {Anastasia Kazakova},
+  journal = {The CLion Blog},
+  title   = {C++ Ecosystem in 2022: Fast Adoption of C++17 and C++20, C++ Toolset Landscape, and Better Code Analysis Practices},
+  year    = {2023}
+}
+@book{book:gof,
+  title     = {Design Patterns: Elements of Reusable Object-Oriented Software},
+  author    = {Erich, Gamma and Helm Richard and Johnson Ralph and Vlissides John},
+  publisher = {Addison-Wesley Professional},
+  year      = {1994},
+  month     = {10},
+  day       = {31},
+  date      = {1994-10-31},
+  edition   = {Kindle Edition},
+  language  = {English},
+  pages     = {617},
+  keywords  = {Computer Vision & Pattern Recognition, Object-Oriented Design, Software Reuse}
+}
+@book{book:handbook-sat,
+  title     = {Handbook of satisfiability},
+  author    = {Biere, Armin and Heule, Marijn and van Maaren, Hans},
+  volume    = {185},
+  year      = {2009},
+  publisher = {IOS press}
+}
+@book{book:lp,
+  author    = {Pardalos, Panos M.},
+  editor    = {Floudas, Christodoulos A.
+               and Pardalos, Panos M.},
+  title     = {Linear programming},
+  booktitle = {Encyclopedia of Optimization},
+  year      = {2001},
+  publisher = {Springer US},
+  address   = {Boston, MA},
+  pages     = {1276--1278},
+  isbn      = {978-0-306-48332-5},
+  doi       = {10.1007/0-306-48332-7_261},
+  url       = {https://doi.org/10.1007/0-306-48332-7_261}
+}
+@misc{docs:smtlib,
+  title     = {SMT-LIB: Logics},
+  publisher = {SMT-LIB},
+  url       = {https://smtlib.cs.uiowa.edu/logics.shtml}
+}
+@manual{man:gmp,
+  title   = {{GNU MP}: {T}he {GNU} {M}ultiple {P}recision
+             {A}rithmetic {L}ibrary},
+  author  = {Torbjörn Granlund and {the GMP development team}},
+  edition = {6.3.0},
+  year    = 2012,
+  note    = {\url{http://gmplib.org/}}
+}
+@manual{man:pimpl,
+  author = {cppreference.com},
+  title  = {PImpl},
+  url    = {https://en.cppreference.com/w/cpp/language/pimpl}
+}
+@misc{man:pybind11,
+  author = {Wenzel Jakob and Jason Rhinelander and Dean Moldovan},
+  year   = {2017},
+  note   = {https://github.com/pybind/pybind11},
+  title  = {pybind11 -- Seamless operability between C++11 and Python}
+}
+@techreport{man:soplex,
+  author      = {Ambros Gleixner and Daniel Steffy and Kati Wolter},
+  title       = {Iterative Refinement for Linear Programming},
+  institution = {ZIB},
+  address     = {Takustr. 7, 14195 Berlin},
+  number      = {15-15},
+  language    = {eng},
+  year        = {2015},
+  url         = {https://soplex.zib.de/}
+}
+@inproceedings{paper:delta-complete,
+  author    = {Gao, Sicun
+               and Avigad, Jeremy
+               and Clarke, Edmund M.},
+  editor    = {Gramlich, Bernhard
+               and Miller, Dale
+               and Sattler, Uli},
+  title     = {$\delta$-Complete Decision Procedures for Satisfiability over the Reals},
+  booktitle = {Automated Reasoning},
+  year      = {2012},
+  publisher = {Springer Berlin Heidelberg},
+  address   = {Berlin, Heidelberg},
+  pages     = {286--300},
+  abstract  = {We introduce the notion of ``$\delta$-complete decision procedures'' for solving SMT problems over the real numbers, with the aim of handling a wide range of nonlinear functions including transcendental functions and solutions of Lipschitz-continuous ODEs. Given an SMT problem ϕ and a positive rational number $\delta$, a $\delta$-complete decision procedure determines either that ϕ is unsatisfiable, or that the ``$\delta$-weakening'' of ϕ is satisfiable. Here, the $\delta$-weakening of ϕ is a variant of ϕ that allows $\delta$-bounded numerical perturbations on ϕ. We establish the existence and complexity of $\delta$-complete decision procedures for bounded SMT over reals with functions mentioned above. We propose to use $\delta$-completeness as an ideal requirement for numerically-driven decision procedures. As a concrete example, we formally analyze the DPLL{\textlangle}ICP{\textrangle} framework, which integrates Interval Constraint Propagation in DPLL(T), and establish necessary and sufficient conditions for its $\delta$-completeness. We discuss practical applications of $\delta$-complete decision procedures for correctness-critical applications including formal verification and theorem proving.},
+  isbn      = {978-3-642-31365-3}
+}
+@article{paper:dpll,
+  author     = {Davis, Martin and Logemann, George and Loveland, Donald},
+  title      = {A Machine Program for Theorem-Proving},
+  year       = {1962},
+  issue_date = {July 1962},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {5},
+  number     = {7},
+  issn       = {0001-0782},
+  url        = {https://doi.org/10.1145/368273.368557},
+  doi        = {10.1145/368273.368557},
+  abstract   = {The programming of a proof procedure is discussed in connection with trial runs and possible improvements.},
+  journal    = {Commun. ACM},
+  month      = {jul},
+  pages      = {394-397},
+  numpages   = {4}
+}
+@article{paper:dpll(t),
+  author     = {Nieuwenhuis, Robert and Oliveras, Albert and Tinelli, Cesare},
+  title      = {Solving SAT and SAT Modulo Theories: From an Abstract Davis-Putnam-Logemann-Loveland Procedure to DPLL(T)},
+  year       = {2006},
+  issue_date = {November 2006},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {53},
+  number     = {6},
+  issn       = {0004-5411},
+  url        = {https://doi.org/10.1145/1217856.1217859},
+  doi        = {10.1145/1217856.1217859},
+  abstract   = {We first introduce Abstract DPLL, a rule-based formulation of the Davis-Putnam-Logemann-Loveland (DPLL) procedure for propositional satisfiability. This abstract framework allows one to cleanly express practical DPLL algorithms and to formally reason about them in a simple way. Its properties, such as soundness, completeness or termination, immediately carry over to the modern DPLL implementations with features such as backjumping or clause learning.We then extend the framework to Satisfiability Modulo background Theories (SMT) and use it to model several variants of the so-called lazy approach for SMT. In particular, we use it to introduce a few variants of a new, efficient and modular approach for SMT based on a general DPLL(X) engine, whose parameter X can be instantiated with a specialized solver SolverT for a given theory T, thus producing a DPLL(T) system. We describe the high-level design of DPLL(X) and its cooperation with SolverT, discuss the role of theory propagation, and describe different DPLL(T) strategies for some theories arising in industrial applications.Our extensive experimental evidence, summarized in this article, shows that DPLL(T) systems can significantly outperform the other state-of-the-art tools, frequently even in orders of magnitude, and have better scaling properties.},
+  journal    = {J. ACM},
+  month      = {nov},
+  pages      = {937-977},
+  numpages   = {41},
+  keywords   = {Satisfiability Modulo Theories, SAT solvers}
+}
+@inproceedings{paper:dreal,
+  author    = {Gao, Sicun
+               and Kong, Soonho
+               and Clarke, Edmund M.},
+  editor    = {Bonacina, Maria Paola},
+  title     = {dReal: An SMT Solver for Nonlinear Theories over the Reals},
+  booktitle = {Automated Deduction -- CADE-24},
+  year      = {2013},
+  publisher = {Springer Berlin Heidelberg},
+  address   = {Berlin, Heidelberg},
+  pages     = {208--214},
+  abstract  = {We describe the open-source tool dReal, an SMT solver for nonlinear formulas over the reals. The tool can handle various nonlinear real functions such as polynomials, trigonometric functions, exponential functions, etc. dReal implements the framework of $\delta$-complete decision procedures: It returns either unsat or $\delta$-sat on input formulas, where $\delta$ is a numerical error bound specified by the user. dReal also produces certificates of correctness for both $\delta$-sat (a solution) and unsat answers (a proof of unsatisfiability).},
+  isbn      = {978-3-642-38574-2}
+}
+@article{paper:interior-point,
+  author  = {Astfalk, G. and Lustig, I. and Marsten, R. and Shanno, D.},
+  journal = {IEEE Software},
+  title   = {The interior-point method for linear programming},
+  year    = {1992},
+  volume  = {9},
+  number  = {4},
+  pages   = {61-68},
+  doi     = {10.1109/52.143109}
+}
+@inproceedings{paper:lp-for-smt,
+  author    = {King, Tim and Barrett, Clark and Tinelli, Cesare},
+  booktitle = {2014 Formal Methods in Computer-Aided Design (FMCAD)},
+  title     = {Leveraging linear and mixed integer programming for SMT},
+  year      = {2014},
+  volume    = {},
+  number    = {},
+  pages     = {139-146},
+  doi       = {10.1109/FMCAD.2014.6987606}
+}
+@misc{paper:nn-smt-learning,
+  title         = {Learning Modulo Theories},
+  author        = {Matt Fredrikson and Kaiji Lu and Saranya Vijayakumar and Somesh Jha and Vijay Ganesh and Zifan Wang},
+  year          = {2023},
+  eprint        = {2301.11435},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.LG}
+}
+@inproceedings{paper:nn-smt-verification,
+  author    = {Xiaowu Sun and
+               Haitham Khedr and
+               Yasser Shoukry},
+  editor    = {Necmiye Ozay and
+               Pavithra Prabhakar},
+  title     = {Formal verification of neural network controlled autonomous systems},
+  booktitle = {Proceedings of the 22nd {ACM} International Conference on Hybrid Systems:
+               Computation and Control, {HSCC} 2019, Montreal, QC, Canada, April
+               16-18, 2019},
+  pages     = {147--156},
+  publisher = {{ACM}},
+  year      = {2019},
+  url       = {https://doi.org/10.1145/3302504.3311802},
+  doi       = {10.1145/3302504.3311802},
+  timestamp = {Mon, 15 Jun 2020 17:03:52 +0200},
+  biburl    = {https://dblp.org/rec/conf/hybrid/SunKS19.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inproceedings{paper:survey-smt,
+  author    = {David Monniaux},
+  editor    = {Vladimir P. Gerdt and
+               Wolfram Koepf and
+               Werner M. Seiler and
+               Evgenii V. Vorozhtsov},
+  title     = {A Survey of Satisfiability Modulo Theory},
+  booktitle = {Computer Algebra in Scientific Computing - 18th International Workshop,
+               {CASC} 2016, Bucharest, Romania, September 19-23, 2016, Proceedings},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {9890},
+  pages     = {401--425},
+  publisher = {Springer},
+  year      = {2016},
+  url       = {https://doi.org/10.1007/978-3-319-45641-6\_26},
+  doi       = {10.1007/978-3-319-45641-6\_26},
+  timestamp = {Tue, 14 May 2019 10:00:46 +0200},
+  biburl    = {https://dblp.org/rec/conf/casc/Monniaux16.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inbook{paper:tseitin,
+  author    = {Tseitin, G. S.},
+  editor    = {Siekmann, J{\"o}rg H.
+               and Wrightson, Graham},
+  title     = {On the Complexity of Derivation in Propositional Calculus},
+  booktitle = {Automation of Reasoning: 2: Classical Papers on Computational Logic 1967--1970},
+  year      = {1983},
+  publisher = {Springer Berlin Heidelberg},
+  address   = {Berlin, Heidelberg},
+  pages     = {466--483},
+  abstract  = {The question of the minimum complexity of derivation of a given formula in classical propositional calculus is considered in this article and it is proved that estimates of complexity may vary considerably among the various forms of propositional calculus. The forms of propositional calculus used in the present article are somewhat unusual, {\textdagger} but the results obtained for them can, in principle, be extended to the usual forms of propositional calculus.},
+  isbn      = {978-3-642-81955-1},
+  doi       = {10.1007/978-3-642-81955-1_28},
+  url       = {https://doi.org/10.1007/978-3-642-81955-1_28}
+}
+@misc{repo:bazel,
+  author       = {Google},
+  title        = {bazel},
+  year         = {2015},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/bazelbuild/bazel/}},
+  commit       = {6.3.1}
+}
+@misc{repo:dlinear,
+  author       = {Martin Sidaway
+                  Soonho Kong
+                  Sicun Gao
+                  em-mcg},
+  title        = {dReal4},
+  year         = {2017},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/martinjos/dlinear4}},
+  commit       = {c0569f49762393eab2cd5d8823db8decb3cbe15e}
+}
+@misc{repo:dreal,
+  author       = {Soonho Kong
+                  Martin Sidaway
+                  Jeremy Nimmer
+                  Sicun Gao
+                  em-mcg},
+  title        = {dReal4},
+  year         = {2017},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/dreal/dreal4}},
+  commit       = {2c5b118e8e67317d35d8674c04ab113319368818}
+}
+@misc{repo:java-smt,
+  author       = {Karlheinz Friedberger
+                  George Karpenkov
+                  Baier D.
+                  Philipp Wendler},
+  title        = {java-smt},
+  year         = {2015},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/sosy-lab/java-smt}},
+  commit       = {e748acee211bcb54bc8497e0761520e8a27fb59d}
+}
+@misc{repo:qsopt-ex,
+  author       = {Martin Sidaway},
+  title        = {qsopt-ex},
+  year         = {2019},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/martinjos/qsopt-ex}},
+  commit       = {cfcd4f285cd28ad3f76ff6691b134cae41baa230}
+}
+@misc{repo:rules-foreign-cc,
+  author       = {Bazel team},
+  title        = {rules\_foreign\_cc},
+  year         = {2023},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/bazelbuild/rules_foreign_cc}},
+  commit       = {0.9.0}
+}
+@misc{repo:starlark,
+  author       = {Google},
+  title        = {starlark},
+  year         = {2015},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/bazelbuild/starlark/}},
+  commit       = {97042f0c32fb5ffbda076f46171f82cb401cc625}
+}
+@misc{repo:stp,
+  author       = {Vijay Ganesh
+                  Trevor Hansen
+                  Mate Soos
+                  Dan Liew
+                  Ryan Govostes
+                  Andrew V. Jones},
+  title        = {STP},
+  year         = {2020},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/stp/stp}},
+  commit       = {a9bc247d98cd98213b2d0f6821dc51b823c50483}
+}
+@misc{repo:z3,
+  author       = {Nikolaj Bjorner
+                  Christoph M. Wintersteiger
+                  Lev Nachmanson
+                  Leonardo de Moura
+                  Murphy Berzish
+                  Nuno Lopes
+                  Arie Gurfinkel},
+  title        = {Z3},
+  year         = {2015},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/Z3Prover/z3}},
+  commit       = {e8a38c548235d21c9f075cc9cdbe473fc68ef8bd}
+}
+@article{paper:simplex,
+  title    = {An overview on the simplex algorithm},
+  journal  = {Applied Mathematics and Computation},
+  volume   = {210},
+  number   = {2},
+  pages    = {479-489},
+  year     = {2009},
+  issn     = {0096-3003},
+  doi      = {https://doi.org/10.1016/j.amc.2009.01.013},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0096300309000198},
+  author   = {Hédi Nabli},
+  keywords = {Linear programming, Simplex algorithm, Dual-simplex algorithm, Big-M method, Two-phase method},
+  abstract = {In this paper, the simplex algorithm and its variants are investigated. First, we define a new concept called formal tableau, which leads to derive easily the dual solution from the latest primal table; without any distinction between the original variables and the slack ones. Second, we propose a new method for initializing the simplex algorithm. Unlike the two-phase and the big-M methods, our technique does not involve artificial variables. The computational results reveal that this new method is very favorable especially when the number of artificial variables is significant. Finally, this method will be combined with the notion of formal tableau leading naturally to a second new approach.}
+}

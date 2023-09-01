@@ -1,0 +1,94 @@
+\subsection{Satisfiability}
+
+Propositional logic is a branch of logic that deals with propositions and relations among them.
+It is concerned with validity and consistency of arguments.
+To reach a valid conclusion $q$ derived from the arguments $p_1, \dots, p_n$ is the same as saying that the set $\{p_1, \dots, p_n\} \cup \{\neg q\}$ is inconsistent. \\
+Proofs to a formula are derived with respect to an axiom system which is a set of consistent axioms and inference rules. \\
+Given an axiom system, derivability is defined as $p_1, \dots, p_n \vdash q$ when there is a finite sequence of application of such rules that produces $q$ from $p_1, \dots, p_n$ with respect to the axiom system. \\
+A set of propositions is consistent if and only if it is not possible to derive a contradiction from it.
+On the other hand, if a set of propositions is inconsistent, it is possible to derive $q \land \neg q$. \\
+This justifies the initial claim that, for $p_1, \dots, p_n$ to be a valid argument, $\{p_1, \dots, p_n\} \cup \{\neg q\}$ must be inconsistent. \\
+\\
+Applying semantics to such a system means to assign a truth value to each proposition based on a given \textit{algebraic structure} $\mathcal{A}$. \\
+$\mathcal{A}$ is a set $D$ and a function $R$, called \textit{interpolation}, that maps each constant to an element of $D$, each functor to a function between elements of $D$ and each predicate to a relationship between elements of $D$. \\
+A proposition is true in the wold $D$ if and only if the elements chosen for each term and functors denote the same relationship as the one specified by the predicate. \\
+To indicate a proposition is true in $\mathcal{A}$ we write $\mathcal{A} \models p$. \\
+Reasoning in terms of semantics, an argument is \textit{valid} if whenever the premises are true the conclusion is also true.
+In notation: $p_1, \dots, p_n \models q \iff \mathcal{A} \models p_1, \dots, p_n \implies \mathcal{A} \models q$. \\
+This leads us to the key concept for this thesis: \textit{satisfiability}.
+A set of formulas is satisfiable if there exists a model $\mathcal{A}$ such that all its component are true: $\mathcal{A} \models p_1, \dots, p_n$. \\
+This means that both \textit{validity} and \textit{satisfiability} are closely related: $p_1, \dots, p_n \models q \iff \not\exists \mathcal{A} : \mathcal{A} \models p_1, \dots, p_n, \neg q$. \\
+
+Another distinction can be made: a sentence is \textit{necessary} indicates a formula which is true in all possible worlds, while \textit{possible} is used to indicate a sentence which is true in at least one world. \\
+It is sufficient for a sentence to be possible to consider it satisfiable. \\
+A necessary formula is often called a tautology and indicated with $\models p$.
+It is also a theorem if it can be derived only from the axioms of the system. \\
+
+To sum up:
+\begin{itemize}
+    \item Consistency: it is not possible to derive a contradiction from a set of propositions following the rules of an axiom system, unless starting from a contradiction.
+    \item Validity: a set of propositions is valid when it impossible for the premises to be true and the conclusion nevertheless to be false.
+    \item Satisfiability: a set of propositions is satisfiable when there exists a model $\mathcal{A}$ such that all its component are true.
+    \item Necessary: a sentence which is true in all possible worlds.
+    \item Possible: a sentence which is true in at least one world. It is sufficient for a sentence to be possible to consider it satisfiable.
+\end{itemize}
+
+\subsection{CNF encoding}
+
+To be able to be tackled efficiently by modern solvers, a formula is often transformed in its \gls{cnf}.
+By doing so, it becomes a conjunction of clauses, where a clause is a disjunction of literals. Each literal is either a boolean variable or its negation. \\
+
+\begin{gather*}
+    \bigwedge_{i=1}^n \bigvee_{j=1}^{m_i} l_{ij} \\
+    ( l_{00} \lor l_{01} \lor \dots \lor l_{0m_0}) \land (l_{10} \lor l_{11} \lor \dots \lor l_{1m_1}) \land \dots \land (l_{n0} \lor l_{n1} \lor \dots \lor l_{nm_n})
+\end{gather*}
+
+A naive approach would be to use \textit{De Morgan's laws} and the distributive property.
+This, unfortunately, would lead to an exponential blowup in the size of the formula. \\
+The algorithm usually used to convert a formula in \gls{cnf} is the Tseitin transformation \cite{paper:tseitin}.
+It changes the formula in one that uses a linear number of new variables, one for each subformula of the original, along with the clauses that define the relationship between the new variables and the subformulae. \\
+The key property is that the new formula is satisfiable if and only if the original one is. \\
+The transformation uses three basic operators:
+
+
+\begin{tabular}{ |c|c|c| }
+    \hline
+    \textbf{Original} & $p \iff \text{formula}$                               & \textbf{In CNF}                                                           \\
+    \hline
+    $\neg a$          & $(\neg a \implies p) \land (p \implies \neg a)$       & $(a \lor p) \land (\neg a \lor \neg p)$                                   \\
+    \hline
+    $a \land b$       & $(a \land b \implies p) \land (p \implies a \land b)$ & $(\neg a \lor \neg b \lor p) \land (a \lor \neg p) \land (b \lor \neg p)$ \\
+    \hline
+    $a \lor b$        & $(a \lor b \implies p) \land (p \implies a \lor b)$   & $(a \lor b \lor \neg p) \land (\neg a \lor p) \land (\neg b \lor p)$      \\
+    \hline
+\end{tabular}
+
+\begin{multline*}
+    \text{Example} \\
+    \text{Original formula} \\
+    \underbrace{\underbrace{(a \land \neg b)}_{p_1} \lor \neg \underbrace{(c \land d)}_{p_2}}_{p_3} \\
+    \\
+    \text{New variables} \\
+    p_1 \iff a \land \neg b \\
+    p_2 \iff c \land d \\
+    p_3 \iff p_1 \lor \neg p_2 \\
+    \\
+    \text{CNF formula} \\
+    \underbrace{(\neg a \lor b \lor p_1) \land (a \lor \neg p_1) \land (\neg b \lor \neg p_1)}_{p_1} \land \underbrace{(\neg c \lor \neg d \lor p_2) \land (c \lor \neg p_2) \land (d \lor \neg p_2)}_{p_2} \land \underbrace{(p_1 \lor \neg p_2)}_{p_3}
+\end{multline*}
+
+\subsection{Satisfiability algorithms}
+
+To approach the problem of satisfiability, we can use different algorithms.
+It becomes useful to frame what we have seen so far in a way more suited for a computer to understand. \\
+Since we expect to deal with \gls{cnf} formulas, we can represent them as a set of clauses linked by conjunction, where each clause is a set of literals linked by disjunction. \\
+A formula $\Delta$ is satisfiable by definition if it is the empty set: $\Delta = \emptyset$.
+Moreover, a \gls{cnf} $\Delta$ is unsatisfiable if it contains an empty clause: $\emptyset \in \Delta$. \\
+Encountering any of these two cases cause the termination of any algorithm, providing a solution. \\
+
+\begin{multline*}
+    \text{Example} \\
+    (A \lor B \lor \neg C) \land (\neg A \lor D) \land (B \lor C \lor D) \\
+    \{ \{A, B, \neg C\}, \{\neg A, D\}, \{B, C, D\}\} \\
+\end{multline*}
+

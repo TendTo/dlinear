@@ -1,0 +1,99 @@
+@startuml simplified-classes
+
+remove @unlinked
+skinparam Shadowing false
+
+class Context {
+    +Assert(Formula)
+    +CheckSat(mpq_class*): tl::optional<Box>
+    +CheckOpt(mpq_class*, mpq_class*, Box*): int
+
+    -impl_: unique_ptr<ContextImpl>
+}
+
+abstract ContextImpl {
+    +{abstract} Assert(const Formula&)
+    +{abstract} Pop()
+    +{abstract} Push()
+    +CheckSat(mpq_class*): tl::optional<Box>
+    +CheckOpt(mpq_class*, mpq_class*, Box*): int
+
+    #AddToBox(Variable)
+    #CheckSatCore(ScopedVector<Formula>, Box, mpq_class*): tl::optional<Box>
+    #MinimizeCore(Expression)
+    #ExtractModel(Box): Box
+
+    #config_: Config
+    #stack_: ScopedVector<Formula>
+    #model_variables_: unordered_set<Variable::Id>
+    #model_: Box
+}
+
+class QsoptexImpl {
+    +Assert(const Formula&)
+    +Pop()
+    +Push()
+
+    #sat_solver_: QsoptexSatSolver
+    #theory_solver_: QsoptexTheorySolver
+}
+
+class SoplexImpl {
+    +Assert(const Formula&)
+    +Pop()
+    +Push()
+
+    #sat_solver_: SoplexSatSolver
+    #theory_solver_: SoplexTheorySolver
+}
+
+abstract FormulaVisitor {
+    +Convert(Formula): Formula
+    +Visit(Formula): Formula
+
+    #VisitFalse(Formula): Formula
+    #VisitTrue(Formula): Formula
+    #VisitVariable(Formula): Formula
+    #VisitEqualTo(Formula): Formula
+    #VisitNotEqualTo(Formula): Formula
+}
+
+class PredicateAbstractor {
+    +Convert(Formula): std::vector<Formula>
+    +Convert(std::vector<Formula>): Formula
+    +var_to_formula_map(): unordered_map<Variable, Formula, hash_value<Variable>>
+
+    -var_to_formula_map_: unordered_map<Variable, Formula, hash_value<Variable>>
+    -formula_to_var_map_: unordered_map<Formula, Variable>
+}
+
+class TseitinCnfizer {
+    +Convert(Formula): std::vector<Formula>
+    +map(): const unordered_map<Variable, Formula>&
+
+    -map_: unordered_map<Variable, Formula>
+    -naive_cnfizer_: NaiveCnfizer
+}
+
+class PlaistedGreenbaumCnfizer {
+    +Convert(Formula): std::vector<Formula>
+    +vars(): const std::vector<Variable>&
+
+    -nnfizer_: Nnfizer
+    -naive_cnfizer_: NaiveCnfizer
+    -aux_: std::vector<Formula>
+    -vars_: std::vector<Variable>
+}
+
+class Formula {
+    +{static} True(): Formula
+    +{static} False(): Formula
+    +{static} make_conjunction(Formula, Formula): Formula
+    +{static} make_disjunction(Formula, Formula): Formula
+    +GetFreeVariables(): Variables
+    +Substitute(Variable, Formula): Formula
+
+    -ptr_: FormulaCell*
+}
+
+@enduml

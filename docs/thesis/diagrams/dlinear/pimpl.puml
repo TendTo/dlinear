@@ -1,0 +1,10 @@
+@startuml Pimpl pattern in Context
+
+!include ./classes.puml
+
+'Context
+Context *-right-> ContextImpl
+ContextImpl <|-- QsoptexImpl
+ContextImpl <|-- SoplexImpl
+
+@enduml

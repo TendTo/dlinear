@@ -1,0 +1,42 @@
+\documentclass[12pt]{report}
+
+\input{setup}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Begin document
+%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+% Metadata
+\title{dLinear4.1}
+\def\subtitle{Analysis of the SMT delta-solver dLinear4 software aimed at improving efficiency and usability}
+\def\documenttype{Master thesis}
+% Comma separated list of reviewers
+\def\reviewers{Chair: Emiliano Tramontana, Co-chair: Andrea Calvagna}
+\author{Ernesto Casablanca}
+\date{\today}
+\makeatletter
+
+% Title page
+\include{sections/titlepage}
+
+% Index
+\tableofcontents
+\newpage
+
+% Abstract
+\input{sections/abstract}
+
+\input{sections/background}
+\input{sections/tools}
+\input{sections/architecture}
+
+% Bibliography
+\printglossary
+\pagebreak
+\printbibliography
+\pagebreak
+
+\input{sections/appendix}
+
+\end{document}

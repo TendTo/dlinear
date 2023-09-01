@@ -1,0 +1,198 @@
+@startuml dlinear-classes
+
+remove @unlinked
+skinparam Shadowing false
+
+class Context {
+    +Assert(Formula)
+    +CheckSat(mpq_class*): tl::optional<Box>
+    +CheckOpt(mpq_class*, mpq_class*, Box*): int
+    +DeclareVariable(Variable, bool)
+    +DeclareVariable(Variable, Expression, Expression, bool)
+    +Exit()
+    +Minimize(Expression)
+    +Minimize(List<Expression>)
+    +Maximize(Expression)
+    +Pop(int)
+    +Push(int)
+    +SetInfo(string, double)
+    +SetInfo(string, string)
+    +SetInterval(Variable, mpq_class, mpq_class)
+    +SetLogic(Logic)
+    +SetOption(string, double)
+    +SetOption(string, string)
+    +config(): Config
+    +mutable_config(): Config
+    +version(): string
+    +repository_status(): string
+    +assertions(): ScopedVector<Formula>
+    +box(): Box
+    +get_model(): Box
+    +have_objective(): bool
+    +is_max(): bool
+
+    -impl_: unique_ptr<ContextImpl>
+}
+
+abstract ContextImpl {
+    +{abstract} Assert(const Formula&)
+    +{abstract} Pop()
+    +{abstract} Push()
+    +CheckSat(mpq_class*): tl::optional<Box>
+    +CheckOpt(mpq_class*, mpq_class*, Box*): int
+    +DeclareVariable(Variable, bool)
+    +SetDomain(Variable, Expression, Expression)
+    +MinimizeCore(Expression)
+    +SetInfo(string, double)
+    +SetInfo(string, string)
+    +SetInterval(Variable, mpq_class, mpq_class)
+    +SetLogic(Logic)
+    +SetOption(string, double)
+    +SetOption(string, string)
+    +config(): Config
+    +mutable_config(): Config
+    +assertions(): ScopedVector<Formula>
+    +box(): Box
+    +get_model(): Box
+    +have_objective(): bool
+    +is_max(): bool
+
+    #AddToBox(Variable)
+    #CheckSatCore(ScopedVector<Formula>, Box, mpq_class*): tl::optional<Box>
+    #MinimizeCore(Expression)
+    #ExtractModel(Box): Box
+    #mark_model_variable(Variable)
+    #is_model_variable(Variable): bool
+
+    #config_: Config
+    #logic_: tl::optional<Logic>
+    #info_: unordered_map<string, string>
+    #option_: unordered_map<string, string>
+    #boxes_: ScopedVector<Box>
+    #stack_: ScopedVector<Formula>
+    #model_variables_: unordered_set<Variable::Id>
+    #model_: Box
+    #have_objective_: bool
+    #is_max_: bool
+}
+
+class QsoptexImpl {
+    +Assert(const Formula&)
+    +Pop()
+    +Push()
+
+    #CheckSatCore(ScopedVector<Formula>, Box, mpq_class*): tl::optional<Box>
+    #CheckSatCore(ScopedVector<Formula>, mpq_class*, mpq_class*, Box*): int
+    #MinimizeCore(Expression)
+
+    #sat_solver_: QsoptexSatSolver
+    #theory_solver_: QsoptexTheorySolver
+    #obj_expr_: Expression
+}
+
+class SoplexImpl {
+    +Assert(const Formula&)
+    +Pop()
+    +Push()
+
+    #CheckSatCore(ScopedVector<Formula>, Box, mpq_class*): tl::optional<Box>
+    #CheckSatCore(ScopedVector<Formula>, mpq_class*, mpq_class*, Box*): int
+    #MinimizeCore(Expression)
+
+    #sat_solver_: SoplexSatSolver
+    #theory_solver_: SoplexTheorySolver
+}
+
+abstract FormulaVisitor {
+    +Visit(Formula): Formula
+    #VisitFalse(Formula): Formula
+    #VisitTrue(Formula): Formula
+    #VisitVariable(Formula): Formula
+    #VisitEqualTo(Formula): Formula
+    #VisitNotEqualTo(Formula): Formula
+    #VisitGreaterThan(Formula): Formula
+    #VisitGreaterThanOrEqualTo(Formula): Formula
+    #VisitLessThan(Formula): Formula
+    #VisitLessThanOrEqualTo(Formula): Formula
+    #VisitConjunction(Formula): Formula
+    #VisitDisjunction(Formula): Formula
+    #VisitNegation(Formula): Formula
+    #VisitForall(Formula): Formula
+}
+
+class PredicateAbstractor {
+    +Convert(Formula): std::vector<Formula>
+    +Convert(std::vector<Formula>): Formula
+    +var_to_formula_map(): unordered_map<Variable, Formula, hash_value<Variable>>
+
+    -Visit(Formula): Formula
+    -VisitAtomic(Formula): Formula
+    -VisitEqualTo(Formula): Formula
+    -VisitNotEqualTo(Formula): Formula
+    -VisitGreaterThan(Formula): Formula
+    -VisitGreaterThanOrEqualTo(Formula): Formula
+    -VisitLessThan(Formula): Formula
+    -VisitLessThanOrEqualTo(Formula): Formula
+    -VisitConjunction(Formula): Formula
+    -VisitDisjunction(Formula): Formula
+    -VisitNegation(Formula): Formula
+    -VisitForall(Formula): Formula
+    -Add(Variable, Formula)
+
+    -var_to_formula_map_: unordered_map<Variable, Formula, hash_value<Variable>>
+    -formula_to_var_map_: unordered_map<Formula, Variable>
+}
+
+class TseitinCnfizer {
+    +Convert(Formula): std::vector<Formula>
+    +map(): const unordered_map<Variable, Formula>&
+
+    -Visit(Formula): Formula
+    -VisitConjunction(Formula): Formula
+    -VisitDisjunction(Formula): Formula
+    -VisitNegation(Formula): Formula
+    -VisitForall(Formula): Formula
+
+    -map_: unordered_map<Variable, Formula>
+    -naive_cnfizer_: NaiveCnfizer
+}
+
+class PlaistedGreenbaumCnfizer {
+    +Convert(Formula): std::vector<Formula>
+    +vars(): const std::vector<Variable>&
+
+    -Visit(Formula): Formula
+    -VisitConjunction(Formula): Formula
+    -VisitDisjunction(Formula): Formula
+    -VisitNegation(Formula): Formula
+    -VisitForall(Formula): Formula
+
+    -nnfizer_: Nnfizer
+    -naive_cnfizer_: NaiveCnfizer
+    -aux_: std::vector<Formula>
+    -vars_: std::vector<Variable>
+}
+
+class Formula {
+    +{static} True(): Formula
+    +{static} False(): Formula
+    +{static} make_conjunction(Formula, Formula): Formula
+    +{static} make_disjunction(Formula, Formula): Formula
+    +get_kind(): FormulaKind
+    +get_hash(): size_t
+    +GetFreeVariables(): Variables
+    +EqualTo(Formula): bool
+    +Less(Formula): bool
+    +Evaluate(Environment): bool
+    +Substitute(Variable, Expression): Formula
+    +Substitute(Variable, Formula): Formula
+    +Substitute(ExpressionSubstitution, FormulaSubstitution): Formula
+    +Substitute(ExpressionSubstitution): Formula
+    +Substitute(FormulaSubstitution): Formula
+    +to_string(): string
+    +include_ite(): bool
+
+    -ptr_: FormulaCell*
+}
+
+@enduml
