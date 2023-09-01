@@ -14,7 +14,7 @@ InfoGatherer::InfoGatherer(string filename, string solver, const string &precisi
   config_.mutable_precision().set_from_command_line(precision_);
 }
 
-InfoGatherer::InfoGatherer(string filename, string solver, const string &precision, uint32_t timeout)
+InfoGatherer::InfoGatherer(string filename, string solver, const string &precision, uint timeout)
     : config_{}, filename_{std::move(filename)}, solver_{std::move(solver)}, timeout_{timeout} {
   precision_ = stod(precision);
   config_.mutable_lp_solver().set_from_command_line(GetLPSolver(solver_));

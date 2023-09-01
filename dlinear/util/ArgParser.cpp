@@ -59,7 +59,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("-j", "--jobs")
       .help("set the number of jobs")
       .default_value(DLINEAR_DEFAULT_NUMBER_OF_JOBS)
-      .scan<'i', uint32_t>();
+      .scan<'i', uint>();
   parser_.add_argument("--continuous-output")
       .help("report partial results continuously, as and when available")
       .default_value(DLINEAR_DEFAULT_CONTINUOUS_OUTPUT)
@@ -120,7 +120,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("--nlopt-maxeval")
       .help("set the maximum number of function evaluations")
       .default_value(DLINEAR_DEFAULT_NLOPT_MAX_EVAL)
-      .scan<'i', uint32_t>();
+      .scan<'i', uint>();
   parser_.add_argument("--nlopt-maxtime")
       .help("set the maximum optimization time (in second)")
       .default_value(DLINEAR_DEFAULT_NLOPT_MAX_TIME)
@@ -136,7 +136,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("-r", "--random-seed")
       .help("set the random seed")
       .default_value(DLINEAR_DEFAULT_RANDOM_SEED)
-      .scan<'i', uint32_t>();
+      .scan<'i', uint>();
   parser_.add_argument("--sat-default-phase")
       .help("set default initial phase for SAT solver.\n"
             "\t\t\t0 = false\n"
@@ -206,13 +206,13 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("verbosity"))
     config.mutable_verbose_dlinear().set_from_command_line(parser_.get<int>("verbosity"));
   if (parser_.is_used("jobs"))
-    config.mutable_number_of_jobs().set_from_command_line(parser_.get<uint32_t>("jobs"));
+    config.mutable_number_of_jobs().set_from_command_line(parser_.get<uint>("jobs"));
   if (parser_.is_used("timings"))
     config.mutable_with_timings().set_from_command_line(parser_.get<bool>("timings"));
   if (parser_.is_used("continuous-output"))
     config.mutable_continuous_output().set_from_command_line(parser_.get<bool>("continuous-output"));
   if (parser_.is_used("random-seed"))
-    config.mutable_random_seed().set_from_command_line(parser_.get<uint32_t>("random-seed"));
+    config.mutable_random_seed().set_from_command_line(parser_.get<uint>("random-seed"));
   if (parser_.is_used("lp-solver"))
     config.mutable_lp_solver().set_from_command_line(parser_.get<Config::LPSolver>("lp-solver"));
   if (parser_.is_used("verbose-simplex"))
@@ -222,7 +222,7 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("nlopt-ftol-abs"))
     config.mutable_nlopt_ftol_abs().set_from_command_line(parser_.get<double>("nlopt-ftol-abs"));
   if (parser_.is_used("nlopt-maxeval"))
-    config.mutable_nlopt_maxeval().set_from_command_line(parser_.get<uint32_t>("nlopt-maxeval"));
+    config.mutable_nlopt_maxeval().set_from_command_line(parser_.get<uint>("nlopt-maxeval"));
   if (parser_.is_used("nlopt-maxtime"))
     config.mutable_nlopt_maxtime().set_from_command_line(parser_.get<double>("nlopt-maxtime"));
   if (parser_.is_used("sat-default-phase"))

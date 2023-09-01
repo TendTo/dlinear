@@ -18,27 +18,27 @@
 namespace dlinear::benchmark {
 
 struct shared_results {
-  uint32_t nAssertions;
+  uint nAssertions;
   bool isSat;
   double actualPrecision;
-  uint32_t time;
+  uint time;
 };
 
 class InfoGatherer {
  public:
   InfoGatherer() = delete;
   InfoGatherer(std::string filename, std::string solver, const std::string &precision);
-  InfoGatherer(std::string filename, std::string solver, const std::string &precision, uint32_t timeout);
+  InfoGatherer(std::string filename, std::string solver, const std::string &precision, uint timeout);
   bool run();
 
   [[nodiscard]] const std::string &filename() const { return filename_; }
   [[nodiscard]] const std::string &solver() const { return solver_; }
   [[nodiscard]] double precision() const { return precision_; }
   [[nodiscard]] double actualPrecision() const { return actualPrecision_; }
-  [[nodiscard]] uint32_t nAssertions() const { return nAssertions_; }
+  [[nodiscard]] uint nAssertions() const { return nAssertions_; }
   [[nodiscard]] bool isSat() const { return isSat_; }
-  [[nodiscard]] uint32_t timeout() const { return timeout_; }
-  [[nodiscard]] uint32_t time() const { return time_; }
+  [[nodiscard]] uint timeout() const { return timeout_; }
+  [[nodiscard]] uint time() const { return time_; }
 
  private:
   Config config_;
@@ -46,11 +46,11 @@ class InfoGatherer {
   const std::string solver_;
   double precision_{0.0};
   double actualPrecision_{0.0};
-  uint32_t nAssertions_{0};
+  uint nAssertions_{0};
   bool isSat_{false};
   pid_t intermediate_pid_{-1};
-  uint32_t timeout_{0};
-  uint32_t time_{0};
+  uint timeout_{0};
+  uint time_{0};
 
   std::string GetSolverName(const Config::LPSolver solver);
   Config::LPSolver GetLPSolver(const std::string &solver);

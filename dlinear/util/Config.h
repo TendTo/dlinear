@@ -148,10 +148,10 @@ class Config {
   [[nodiscard]] OptionValue<bool> &mutable_with_timings() { return with_timings_; }
 
   /** Number of parallel jobs */
-  [[nodiscard]] uint32_t number_of_jobs() const { return number_of_jobs_.get(); }
+  [[nodiscard]] uint number_of_jobs() const { return number_of_jobs_.get(); }
 
   /** Mutable number of parallel jobs */
-  [[nodiscard]] OptionValue<uint32_t> &mutable_number_of_jobs() { return number_of_jobs_; }
+  [[nodiscard]] OptionValue<uint> &mutable_number_of_jobs() { return number_of_jobs_; }
 
   /** Whether the ICP algorithm stacks the left box first after branching */
   [[nodiscard]] bool stack_left_box_first() const { return stack_left_box_first_.get(); }
@@ -172,10 +172,10 @@ class Config {
   [[nodiscard]] OptionValue<double> &mutable_nlopt_ftol_abs() { return nlopt_ftol_abs_; }
 
   /** Number of maximum function evaluations allowed in NLopt */
-  [[nodiscard]] uint32_t nlopt_maxeval() const { return nlopt_maxeval_.get(); }
+  [[nodiscard]] uint nlopt_maxeval() const { return nlopt_maxeval_.get(); }
 
   /** Mutable number of maximum function evaluations allowed in NLopt */
-  [[nodiscard]] OptionValue<uint32_t> &mutable_nlopt_maxeval() { return nlopt_maxeval_; }
+  [[nodiscard]] OptionValue<uint> &mutable_nlopt_maxeval() { return nlopt_maxeval_; }
 
   /** Maxtime in NLopt */
   [[nodiscard]] double nlopt_maxtime() const { return nlopt_maxtime_.get(); }
@@ -190,10 +190,10 @@ class Config {
   [[nodiscard]]  OptionValue<SatDefaultPhase> &mutable_sat_default_phase() { return sat_default_phase_; }
 
   /** Random seed */
-  [[nodiscard]]  uint32_t random_seed() const { return random_seed_.get(); }
+  [[nodiscard]]  uint random_seed() const { return random_seed_.get(); }
 
   /** Mutable random seed */
-  [[nodiscard]]  OptionValue<uint32_t> &mutable_random_seed() { return random_seed_; }
+  [[nodiscard]]  OptionValue<uint> &mutable_random_seed() { return random_seed_; }
 
   /** Debug scanning */
   [[nodiscard]]  bool debug_scanning() const { return debug_scanning_.get(); }
@@ -228,7 +228,7 @@ class Config {
   OptionValue<int> simplex_sat_phase_{DLINEAR_DEFAULT_SIMPLEX_SAT_PHASE};
   OptionValue<int> verbose_simplex_{DLINEAR_DEFAULT_VERBOSE_SIMPLEX};
   OptionValue<int> verbose_dlinear_{DLINEAR_DEFAULT_VERBOSE_DLINEAR};
-  OptionValue<uint32_t> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
+  OptionValue<uint> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
   OptionValue<bool> stack_left_box_first_{DLINEAR_DEFAULT_STACK_LEFT_BOX_FIRST};
   OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
   OptionValue<bool> debug_parsing_{DLINEAR_DEFAULT_DEBUG_PARSING};
@@ -265,7 +265,7 @@ class Config {
    * evaluations may exceed maxeval slightly, depending upon the
    * algorithm.) Criterion is disabled if maxeval is non-positive.
    */
-  OptionValue<uint32_t> nlopt_maxeval_{kDefaultNloptMaxEval};
+  OptionValue<uint> nlopt_maxeval_{kDefaultNloptMaxEval};
 
   /**
    * Stop when the optimization time (in seconds) exceeds
@@ -287,7 +287,7 @@ class Config {
   OptionValue<SatDefaultPhase> sat_default_phase_{DLINEAR_DEFAULT_SAT_PHASE};
 
   /** Seed for Random Number Generator */
-  OptionValue<uint32_t> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
+  OptionValue<uint> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
 
   friend std::ostream &operator<<(std::ostream &os, const Config &config);
   friend std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);

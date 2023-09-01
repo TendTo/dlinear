@@ -48,7 +48,7 @@ void BenchArgParser::addOptions() {
             "Only problems taking less than the timeout are benchmarked. If set "
             "to 0, it is disabled.")
       .default_value(0u)
-      .scan<'i', uint32_t>();
+      .scan<'i', uint>();
   parser_.add_argument("-c", "--config")
       .help("path to the configuration file")
       .default_value(string{CONF_FILE});
@@ -76,7 +76,7 @@ BenchConfig BenchArgParser::toConfig() const {
   config.setConfigFile(parser_.get<string>("config"));
   config.setPath(parser_.get<string>("path"));
   config.setDryRun(parser_.get<bool>("dry-run"));
-  config.setTimeout(parser_.get<uint32_t>("timeout"));
+  config.setTimeout(parser_.get<uint>("timeout"));
   config.setExtension(parser_.get<string>("extension"));
   config.setOutputFile(parser_.get<string>("output"));
   config.setFiles(getFilesVector());

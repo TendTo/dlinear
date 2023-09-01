@@ -33,7 +33,7 @@ class BenchConfig {
   [[nodiscard]] bool filesProvided() const { return !files_.empty(); }
   [[nodiscard]] const std::vector<std::string> &files() const { return files_; }
   [[nodiscard]] std::vector<std::string> copyFiles() const { return files_; }
-  [[nodiscard]] uint32_t timeout() const { return timeout_; }
+  [[nodiscard]] uint timeout() const { return timeout_; }
   [[nodiscard]] const std::string &config_file() const { return config_file_; }
   [[nodiscard]] const std::string &path() const { return path_; }
   [[nodiscard]] const std::string &extension() const { return extension_; }
@@ -41,7 +41,7 @@ class BenchConfig {
 
   void setDryRun(bool isDryRun) { isDryRun_ = isDryRun; }
   void setFiles(const std::vector<std::string> &files) { files_ = files; }
-  void setTimeout(uint32_t timeout) { timeout_ = timeout; }
+  void setTimeout(uint timeout) { timeout_ = timeout; }
   void setConfigFile(const std::string &configFile) { config_file_ = configFile; }
   void setPath(const std::string &path) { path_ = path; }
   void setFiles(std::vector<std::string> &&files) { files_ = std::move(files); }
@@ -57,7 +57,7 @@ class BenchConfig {
   std::vector<std::string> files_;
   std::string output_file_;
   bool isDryRun_{};
-  uint32_t timeout_{};
+  uint timeout_{};
 
   friend std::ostream &operator<<(std::ostream &os, const BenchConfig &config);
 };

@@ -39,8 +39,8 @@ TEST_F(TestArgParser, DefaultValues) {
   parser_.parse(argc, argv);
   EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 9.999999999999996e-4);
   EXPECT_FALSE(parser_.get<bool>("produce-models"));
-  EXPECT_EQ(parser_.get<uint32_t>("random-seed"), 0u);
-  EXPECT_EQ(parser_.get<uint32_t>("jobs"), 1u);
+  EXPECT_EQ(parser_.get<uint>("random-seed"), 0u);
+  EXPECT_EQ(parser_.get<uint>("jobs"), 1u);
   EXPECT_FALSE(parser_.get<bool>("continuous-output"));
   EXPECT_FALSE(parser_.get<bool>("debug-parsing"));
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
@@ -51,7 +51,7 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::QSOPTEX);
   EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-abs"), 1e-6);
   EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-rel"), 1e-6);
-  EXPECT_EQ(parser_.get<uint32_t>("nlopt-maxeval"), 100u);
+  EXPECT_EQ(parser_.get<uint>("nlopt-maxeval"), 100u);
   EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-maxtime"), 0.01);
   EXPECT_FALSE(parser_.get<bool>("polytope"));
   EXPECT_EQ(parser_.get<Config::SatDefaultPhase>("sat-default-phase"), Config::SatDefaultPhase::JeroslowWang);
@@ -86,7 +86,7 @@ TEST_F(TestArgParser, ParseJobs) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", filename_.c_str(), "--jobs", "2"};
   parser_.parse(argc, argv);
-  EXPECT_EQ(parser_.get<uint32_t>("jobs"), 2u);
+  EXPECT_EQ(parser_.get<uint>("jobs"), 2u);
 }
 
 TEST_F(TestArgParser, ParseInvalidJobs) {
@@ -113,7 +113,7 @@ TEST_F(TestArgParser, ParseRandomSeed) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", filename_.c_str(), "--random-seed", "10"};
   parser_.parse(argc, argv);
-  EXPECT_EQ(parser_.get<uint32_t>("random-seed"), 10ul);
+  EXPECT_EQ(parser_.get<uint>("random-seed"), 10ul);
 }
 
 TEST_F(TestArgParser, InvalidInAndFile) {
