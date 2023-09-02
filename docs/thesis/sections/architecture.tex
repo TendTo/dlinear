@@ -6,18 +6,18 @@ The software is written in \texttt{c++} and it is composed of two main component
 The project includes a \textit{benchmarking suite} and a \textit{test suite}, which are used to verify the correctness measure the performance of the application.
 The \texttt{python} bindings provide a more user-friendly interface to the library, and to allow the faster prototyping in a \texttt{python} environment.
 
-\subsection{Filesystem tree}
+\subsection*{Filesystem tree}
 
 The project is organized in a structure (\autoref{fig:filesystem}) that is common to find in \texttt{bazel} projects.
 
 The root directory contains the \texttt{WORKSPACE} file, marking the root of the workspace.
 The \dlinear folder contains the \texttt{c++} source code of the library.
 It is further divided into subfolders, each containing the source code of a specific and mostly isolated component.
-The same structure can be found in the \texttt{test} directory, where all the unit tests are placed.
+The same structure is mimicked in the \texttt{test} directory, where all the unit tests are placed.
 The \pydlinear folder contains the configurations needed to create the \texttt{python} bindings and some tests to ensure their correctness, while \texttt{benchmark} folder contains the benchmarking suite, which is used to measure the performance of the solver.
 
 Following \texttt{bazel} conventions, the \texttt{third\_party} folder contains the external dependencies.
-All the build tools and Starlark rules/macros are made available from the \texttt{tools}.
+All the build tools and Starlark rules/macros are made available from the \texttt{tools} package.
 
 
 \begin{figure}[ht]
@@ -72,7 +72,7 @@ All the build tools and Starlark rules/macros are made available from the \textt
 \section{Design patterns}
 \label{sec:patterns}
 
-\subsection{Pimpl idiom}
+\subsection*{Pimpl idiom}
 
 The \textit{pimpl idiom} \cite{man:pimpl} is a technique used to hide the implementation details of a class from the user.
 The acronym stands for \textit{Pointer to IMPLementation}, and it is a common practice in \texttt{c++}.
@@ -91,7 +91,7 @@ Other classes can still extend from \texttt{ContextImpl}, allowing the implement
 
 \plantuml{diagrams/simplified/pimpl}{Simplified UML diagram of the implementation of the Pimpl idiom as it is used within \dlinear}{simplified-pimpl}
 
-\subsection{Composite and Visitor patterns}
+\subsection*{Composite and Visitor patterns}
 
 The Composite pattern allows to treat both objects and their compositions uniformly \cite{book:gof}.
 It achieves this by defining a common interface that both Leaves and Composites implement (\autoref{dg:pattern-composite}).
@@ -127,3 +127,21 @@ Each rule in the grammar is associated with an action, usually a \texttt{Driver}
 
 \section{Solvers}
 
+
+\section{Python bindings}
+
+As a programming language, \texttt{python} is widely used in the scientific community.
+While its abstractions make it very easy to read and write, this comes at the expenses of performance, which is usually abysmal when compared to other languages, such as \texttt{c++}.
+Actually, there are multiple \texttt{python} implementation.
+The most popular one is \texttt{CPython}, which is also the one this project targets, but some alternatives include \texttt{Jython}, \texttt{IronPython} and \texttt{PyPy} \cite{man:python-implementations}.
+
+The \texttt{CPython} implementation also allow for extensions.
+The Python API defines a set of functions, macros and variables that provide access to the aspects of the Python run-time system. 
+To access them, it is sufficient to include the header file \texttt{Python.h}.
+In other words, Python bindings (or extensions) are a way to write \texttt{c++} code that integrates seamlessly and can called from a \texttt{python} program.
+Instead of using the standard \texttt{python} API, though, the much more convenient \texttt{pybind11} library is used \cite{man:pybind11}.
+The main appeal of \texttt{pybind11} is that it allows to expose \texttt{c++} classes and functions to \texttt{python} with a very minimalistic syntax.
+It also provides a very reach builtin type conversion system, by inferring type information using compile-time introspection.
+The user can extend it even further to support custom types.
+
+\lstinputlisting[language=c++,frame=single,showstringspaces=false,caption={Simplified example of \pydlinear's bindings},captionpos=b,label={code:example_python_bindings}]{code/example\_python\_bindings.cpp}

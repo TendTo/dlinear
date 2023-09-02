@@ -14,6 +14,8 @@
 
 #include <ostream>
 #include <string>
+#include <utility>
+#include <memory>
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/smt2/logic.h"

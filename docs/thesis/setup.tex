@@ -36,6 +36,7 @@
 \addto\extrasenglish{%
     \providecommand*{\lstlistingautorefname}{List.}
     % \renewcommand*{\listingscaption}{Code}
+    \renewcommand*{\equationautorefname}{Eq.}
     \renewcommand*{\figureautorefname}{Fig.}
     \renewcommand*{\chapterautorefname}{Chap.}
     \renewcommand*{\sectionautorefname}{Sec.}
@@ -126,7 +127,13 @@ pic me set={file}{file},
 \definecolor{number}{HTML}{098658}
 \definecolor{function}{HTML}{795E26}
 
-
+\lstset{language=C++,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords}\ttfamily,
+    stringstyle=\color{orange}\ttfamily,
+    commentstyle=\color{comments}\ttfamily,
+    morecomment=[l][\color{comments}]{\#}
+}
 \lstdefinelanguage{SMT2}{
     alsoletter=-, % Include dashes as letters
     sensitive=true,
@@ -173,14 +180,14 @@ pic me set={file}{file},
     alsoletter={\#, \%, -, _, :}, % Include dashes as letters
     morekeywords={\#include, \#define, \#ifdef, \#endif},
     morekeywords=[2]{% Bison keywords
-        \%union, \%token, \%type, \%nonassoc, \%left, \%prec, \%right, \%start,
-        \%grammar, \%pure_parser, \%define, \%expect, \%expect-rr, \%file, \%glr-parser, 
-        \%parse-param, \%parse-param-rr, \%skeleton, \%debug, \%output,
-        \%locations, \%skeleton
-    },
+            \%union, \%token, \%type, \%nonassoc, \%left, \%prec, \%right, \%start,
+            \%grammar, \%pure_parser, \%define, \%expect, \%expect-rr, \%file, \%glr-parser,
+            \%parse-param, \%parse-param-rr, \%skeleton, \%debug, \%output,
+            \%locations, \%skeleton
+        },
     morekeywords=[3]{% Bison variables
-        , stringVal,
-    }
+            , stringVal,
+        }
     keywordstyle=\color{keywords}\bfseries,
     morecomment=[l][\color{comments}]{//}, % single-line comments
     morecomment=[s][\color{comments}]{/*}{*/}, % multi-line comments
@@ -203,11 +210,11 @@ pic me set={file}{file},
     alsoletter={\#, \%, -, _, :}, % Include dashes as letters
     morekeywords={\#include, \#define, \#ifdef, \#endif},
     morekeywords=[2]{% Bison keywords
-        typedef
-    },
+            typedef
+        },
     morekeywords=[3]{% Bison variables
-        , stringVal,
-    }
+            , stringVal,
+        }
     keywordstyle=\color{keywords}\bfseries,
     morecomment=[l][\color{comments}]{//}, % single-line comments
     morecomment=[s][\color{comments}]{/***}{*/}, % multi-line comments
@@ -253,9 +260,9 @@ pic me set={file}{file},
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Common definitions
 %%%%%%%%%%%%%%%%%%%%%%%%
-\def\dlinear{\textit{dLinear}}
-\def\pydlinear{\textit{pydLinear}}
-\def\dlinearfive{\textit{dLinear5}}
-\def\dlinearfour{\textit{dLinear4}}
-\def\bazel{\textit{Bazel}}
-\def\dreal{\textit{dReal4}}
+\def\dlinear{\textit{dLinear }}
+\def\pydlinear{\textit{pydLinear }}
+\def\dlinearfive{\textit{dLinear5 }}
+\def\dlinearfour{\textit{dLinear4 }}
+\def\bazel{\textit{Bazel }}
+\def\dreal{\textit{dReal4 }}

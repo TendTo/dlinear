@@ -74,7 +74,7 @@ Complete algorithms, on the other hand, are guaranteed to find a solution if one
 Properties of \gls{sat} problems can be exploited to produce different solving techniques.
 
 The \gls{dp} algorithm, for example, is based on the \textit{resolution} inference rule.
-The latter states that if a formula $\Delta$ contains clauses $C_i$ and $C_j$ and a variable $P$ such that $P \in C_i$ and $\neg P \in C_j$, then $\Delta' = \Delta \setminus \{ C_i, C_j \} \cup \{(C_i \setminus \{ P \}) \cup (C_j \setminus \{\neg p\})\}$ is equisatisfiable with $\Delta$.
+The latter states that if a formula $F$ contains clauses $C_i$ and $C_j$ and a variable $P$ such that $P \in C_i$ and $\neg P \in C_j$, then $F' = F \setminus \{ C_i, C_j \} \cup \{(C_i \setminus \{ P \}) \cup (C_j \setminus \{\neg p\})\}$ is equisatisfiable with $F$.
 By iterating the resolution rule, it is possible to simplify the formula until it is either empty (SAT) or it contains an empty clause (UNSAT).
 
 A common implementation of the \gls{dp} algorithm defines an order on the variables and puts all clause on a bucket corresponding to the smallest variable they contain.
@@ -82,9 +82,38 @@ Then, each bucket is processed in order, and the resolution rule is applied to a
 The resolvents are then put in the bucket corresponding to the smallest variable they contain.
 The process halts when either the empty clause is found or all buckets are empty.
 
-One of the most widely used algorithms to solve \gls{sat} problems in \gls{cnf} is the \gls{dpll} algorithm \cite{paper:dpll}.
+\subsection*{DPLL}
 
-Unfortunately, \gls{sat} remains a NP-complete problem, meaning that all known algorithms to solve it are exponential in the worst case.
+One of the most widely used algorithms to solve \gls{sat} problems in \gls{cnf} is the \gls{dpll} algorithm \cite{paper:dpll}.
+During its execution, the state of the solver keeps track of a partial assignment $M$ over the formula $F$.
+In practice, $M$ is a set of literal, either $l$ or $\neg l$, where $l$ is a variable.
+The literal can also be marked as a decision literal $l^d$.
+In addition, if a literal is in $M$, its negation must not: $l \in M \implies \neg l \not\in M$.
+Given the state $M \parallel F$, a clause $C$ is conflicting if $M \models \neg C$.
+
+Each state of the algorithm can transition to the next by following a \textit{transition rule}.
+If the transition system $R$ does not admit any transition from the current state $S$, then $S$ is final with respect to $R$.
+The classical \gls{dpll} algorithm uses the following transition rules:
+
+\begin{itemize}
+    \item \textbf{Unit propagate}: $M \parallel F, C \lor l \implies M l \parallel F, C \lor l \quad \text{if} \begin{cases} M \models \neg C \\ l \not \in M \end{cases}$ \\
+          If a clause contains a single variable $l$ not yet in $M$ and all the others have been marked as \textit{false}, $M$ must be extended to mark $l$ as \textit{true}.
+    \item \textbf{Pure literal}: $M \parallel F \implies M l \parallel F  \quad \text{if} \begin{cases} l \in F \\ \neg l \not \in F \\ l \not \in M \end{cases}$ \\
+          If a literal $l$ is pure, meaning it only occurs with the same polarity, it can be safely marked to make it \textit{true}.
+    \item \textbf{Decide}: $M \parallel F \implies M l^d \parallel F  \quad \text{if} \begin{cases} l \text{(or } \neg l \text{)} \in F \\ l \not \in M \end{cases}$
+          A literal $l$ not yet in $M$ is chosen to be put in $M$ and is marked as a decision literal. If a contradiction is found later in the execution, the algorithm can backtrack to this decision and try the opposite value.
+    \item \textbf{Fail}: $M \parallel F, C \implies \bot  \quad \text{if} \begin{cases} M \models \neg C \\ \not \exists l: l^d \in M \end{cases}$
+          If a conflicting clause is detected while no decision literals are in $M$, the formula is unsatisfiable.
+    \item \textbf{Backtrack}: $M l^d N \parallel F, C \implies M \neg l \parallel F, C  \quad \text{if} \begin{cases} M l^d N \models \neg C \\ \not \exists l: l^d \in N \end{cases}$
+          If a conflicting clause is detected while there are decision literals in $M$, the algorithm backtracks to the last decision literal, negates it and tries again. Note that the negation of a decision literal is not a decision literal.
+\end{itemize}
+
+Using the transition system described, is possible to evaluate the satisfiability of a formula $F$ by starting from the state $\emptyset \parallel F$ and applying the transition rules until a final state is reached.
+
+Most modern \gls{dpll}-based solvers do not implement the classical algorithm exactly as described \cite{paper:dpll(t)}.
+The variable to include in the \textbf{Decide} step is chosen with some specialized heuristics and the \textbf{Backtrack} becomes a special case of the more efficient \textbf{Backjump} rule.
+Those are just a few examples of the many optimizations that can be applied to the \gls{dpll} algorithm.
+Unfortunately, \gls{sat} remains a NP-complete problem, meaning that all known algorithms to solve it are exponential in the worst case, although it usually performs much better in practice.
 
 \subsection*{Applications}
 
@@ -119,8 +148,23 @@ An example of a \gls{smt} solver that supports the lazy approach is Z3 \cite{rep
 \subsection*{DPLL(T)}
 
 Given a theory $\mathcal{T}$, a theory solver, or T-solver, is a tool that can decide whether a set of assertions over $\mathcal{T}$ is satisfiable.
-If those atoms are then combined in a boolean formula $\Phi$, its satisfiability can then be evaluated by a \gls{sat} solver.
-The \gls{dpll}(T) approach represents an efficient method for integrating a theory solver and the \gls{dpll} procedure.
+If those atoms are then combined in a boolean formula $F$, its satisfiability can then be evaluated by a \gls{sat} solver.
+The \gls{dpll}(T) approach represents an efficient method for integrating a theory solver and the \gls{dpll} procedure. \cite{paper:dpll-t}.
+The T-solver's job is to keep track of the theory atoms and their consistency with any new inclusion.
+Optionally, it could also identify an include atoms implied by the current state, with a technique called \textit{theory propagation}.
+
+Given a formula $F$, we denote with $\mathcal{A}$ the set of atoms in $F$ and with $\alpha$ the set of atoms currently asserted.
+Similarly to the \gls{dpll} algorithm, the \gls{dpll}(T) algorithm maintains a stack of checkpoints used for backtracking when an inconsistency arises.
+A simple API can be used to interact with the \gls{dpll} procedure:
+
+\begin{itemize}
+    \item \textbf{Assert($\gamma$)}: tries to add $\gamma$ to $\alpha$. After checking for consistency, it returns either \texttt{OK} or \texttt{UNSAT}$\langle{\Gamma}\rangle$, where $\Gamma$ is a set of asserted atoms inconsistent with $\gamma$. The operation must be sound, but not necessarily complete.
+    \item \textbf{Check}: verifies whether $\alpha$ is consistent. It returns either \texttt{OK}, and a new checkpoint is created, or \texttt{UNSAT}$\langle{\Gamma}\rangle$, where $\Gamma \subseteq \alpha$ is a set of inconsistent atoms. The operation must be sound and complete.
+    \item \textbf{Backtrack}: the state is restored to the last checkpoint.
+    \item \textbf{Propagate}: performs a theory propagation, by finding a set $\{\langle \Gamma_1, \gamma_1 \rangle, \dots, \langle \Gamma_t, \gamma_t \rangle\}$ where $\Gamma_i \subseteq \alpha$ and $\gamma_i \in \mathcal{A} \setminus \alpha$. The operation must be sound, but not necessarily complete.
+\end{itemize}
+
+This generic approach can be applied to any theory by using a specialized T-solver for that theory.
 
 \subsection*{SMT2-LIB}
 
@@ -145,7 +189,6 @@ The standard form of a \gls{lp} problem is the following:
          &                   & x \geq 0
     \end{aligned}
 \end{equation*}
-
 where $x \in \mathbb{R}^d$ is the vector of variables to be determined, $c \in \mathbb{R}^d$ and $b \in \mathbb{R}^n$ are vectors of coefficients, and $A \in \mathbb{R}^{n \times d}$ is a matrix of coefficients.
 It is always possible rewrite a \gls{lp} problem in standard form following these steps:
 \begin{itemize}
@@ -164,7 +207,7 @@ The slack variables must also be non-negative.
 It is possible to extract an invertible squared matrix $B$ from $A$ of dimension $n \times n$ called basis.
 The remaining columns of $A$ form the $N$ matrix.
 
-\begin{equation}
+\begin{equation*}
     A = \begin{bmatrix}
         B & N
     \end{bmatrix}
@@ -173,8 +216,7 @@ The remaining columns of $A$ form the $N$ matrix.
         B \in \mathbb{R}^{n \times n} \\
         N \in \mathbb{R}^{n \times (d - n)}
     \end{cases}
-\end{equation}
-
+\end{equation*}
 The variables $x_i$ corresponding to the columns of $B$ are called \textit{basic variables}, while the ones that end up in $N$ \textit{non-basic variables}.
 
 With this framework, it is possible to define a tableau.
@@ -182,7 +224,7 @@ Each row of the tableau corresponds to a constraint.
 An additional row, called \textit{objective row}, is added to represent the objective function associated to a special variable $z$.
 All the original variables are considered \textit{non-basic}, while the slack variables are \textit{basic}.
 
-\begin{equation}
+\begin{equation*}
     \begin{array}{c}
         \\
         z   \\
@@ -199,8 +241,7 @@ All the original variables are considered \textit{non-basic}, while the slack va
             0 & a_{31} & a_{23} & a_{33} & 0   & 0   & 1   & b_3 \\
         \end{array}
     \end{bmatrix}
-\end{equation}
-
+\end{equation*}
 To iterate the simplex method, the following steps are performed:
 
 \begin{enumerate}
@@ -221,7 +262,13 @@ Even when working within the same problem space, there are many differences betw
 Some approximations errors are introduced when operating with floating point arithmetic.
 But after years or research and interest in the subject, modern \gls{lp} solvers have become extremely efficient and reliable.
 On the other hand, \gls{smt} solvers can deal with arbitrary boolean combinations of constraints and focus on finding an assignment that satisfies the formula, without any guarantee on the optimality of the solution.
-
 There has been a lot of interest in incorporating \gls{lp} solvers into a modern SMT solver \cite{paper:lp-for-smt}.
 
-\cite{paper:lp-for-smt} \cite{paper:delta-complete}
+In \gls{qf-lra} the atoms of a formula propositional variables defined by equalities or inequalities in the form:
+
+\begin{equation*}
+    a_1 x_1 + a_2 x_2 + \dots + a_n x_n \bowtie b
+\end{equation*}
+where $a_1, a_2, \dots, a_n, x_1, x_2, \dots, x_n, b \in \mathbb{Q}$ and $\bowtie \in \{ =, \neq, \leq, \geq, <, > \}$.
+
+Deciding the satisfiability of these components is usually done through the use of a \gls{lp} solver which, in turn, usually relies on the simplex method.

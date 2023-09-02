@@ -4,6 +4,10 @@ build --workspace_status_command=script/workspace_status.sh
 # Default build
 build --cxxopt=-std=c++17
 
+# Debug build
+build:debug --cxxopt=-O0
+build:debug --compilation_mode=dbg
+
 # Optimized build
 build:opt --cxxopt=-O3
 build:opt --cxxopt=-DNDEBUG

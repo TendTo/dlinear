@@ -14,6 +14,7 @@
 
 #include <istream>
 #include <string>
+#include <utility>
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"

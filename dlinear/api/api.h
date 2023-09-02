@@ -1,3 +1,13 @@
+/**
+ * @file gmp.cpp
+ * @author dlinear
+ * @date 09 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief Public api of dlinear.
+ *
+ * Provides an easy-to-use interface to dlinear and it's functionalities.
+ */
+
 #ifndef DREAL_API_API_H_
 #define DREAL_API_API_H_
 

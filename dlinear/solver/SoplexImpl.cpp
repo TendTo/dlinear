@@ -75,9 +75,9 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
   }
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DREAL_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DREAL_CHECK_INTERRUPT
+#ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
       DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");

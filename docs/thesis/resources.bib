@@ -51,6 +51,12 @@
   year    = 2012,
   note    = {\url{http://gmplib.org/}}
 }
+@manual{man:python-implementations,
+  title   = {Python Implementations},
+  author  = {MaxBernstein},
+  year    = 2023,
+  note    = {\url{https://wiki.python.org/moin/PythonImplementations}}
+}
 @manual{man:pimpl,
   author = {cppreference.com},
   title  = {PImpl},
@@ -105,6 +111,20 @@
   month      = {jul},
   pages      = {394-397},
   numpages   = {4}
+}
+@inproceedings{paper:dpll-t,
+  author    = {Dutertre, Bruno
+               and de Moura, Leonardo},
+  editor    = {Ball, Thomas
+               and Jones, Robert B.},
+  title     = {A Fast Linear-Arithmetic Solver for DPLL(T)},
+  booktitle = {Computer Aided Verification},
+  year      = {2006},
+  publisher = {Springer Berlin Heidelberg},
+  address   = {Berlin, Heidelberg},
+  pages     = {81--94},
+  abstract  = {We present a new Simplex-based linear arithmetic solver that can be integrated efficiently in the DPLL(T) framework. The new solver improves over existing approaches by enabling fast backtracking, supporting a priori simplification to reduce the problem size, and providing an efficient form of theory propagation. We also present a new and simple approach for solving strict inequalities. Experimental results show substantial performance improvements over existing tools that use other Simplex-based solvers in DPLL(T) decision procedures. The new solver is even competitive with state-of-the-art tools specialized for the difference logic fragment.},
+  isbn      = {978-3-540-37411-4}
 }
 @article{paper:dpll(t),
   author     = {Nieuwenhuis, Robert and Oliveras, Albert and Tinelli, Cesare},
@@ -185,6 +205,20 @@
   timestamp = {Mon, 15 Jun 2020 17:03:52 +0200},
   biburl    = {https://dblp.org/rec/conf/hybrid/SunKS19.bib},
   bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@article{paper:simplex,
+  title    = {An overview on the simplex algorithm},
+  journal  = {Applied Mathematics and Computation},
+  volume   = {210},
+  number   = {2},
+  pages    = {479-489},
+  year     = {2009},
+  issn     = {0096-3003},
+  doi      = {https://doi.org/10.1016/j.amc.2009.01.013},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0096300309000198},
+  author   = {Hédi Nabli},
+  keywords = {Linear programming, Simplex algorithm, Dual-simplex algorithm, Big-M method, Two-phase method},
+  abstract = {In this paper, the simplex algorithm and its variants are investigated. First, we define a new concept called formal tableau, which leads to derive easily the dual solution from the latest primal table; without any distinction between the original variables and the slack ones. Second, we propose a new method for initializing the simplex algorithm. Unlike the two-phase and the big-M methods, our technique does not involve artificial variables. The computational results reveal that this new method is very favorable especially when the number of artificial variables is significant. Finally, this method will be combined with the notion of formal tableau leading naturally to a second new approach.}
 }
 @inproceedings{paper:survey-smt,
   author    = {David Monniaux},
@@ -323,17 +357,21 @@
   howpublished = {\url{https://github.com/Z3Prover/z3}},
   commit       = {e8a38c548235d21c9f075cc9cdbe473fc68ef8bd}
 }
-@article{paper:simplex,
-  title    = {An overview on the simplex algorithm},
-  journal  = {Applied Mathematics and Computation},
-  volume   = {210},
-  number   = {2},
-  pages    = {479-489},
-  year     = {2009},
-  issn     = {0096-3003},
-  doi      = {https://doi.org/10.1016/j.amc.2009.01.013},
-  url      = {https://www.sciencedirect.com/science/article/pii/S0096300309000198},
-  author   = {Hédi Nabli},
-  keywords = {Linear programming, Simplex algorithm, Dual-simplex algorithm, Big-M method, Two-phase method},
-  abstract = {In this paper, the simplex algorithm and its variants are investigated. First, we define a new concept called formal tableau, which leads to derive easily the dual solution from the latest primal table; without any distinction between the original variables and the slack ones. Second, we propose a new method for initializing the simplex algorithm. Unlike the two-phase and the big-M methods, our technique does not involve artificial variables. The computational results reveal that this new method is very favorable especially when the number of artificial variables is significant. Finally, this method will be combined with the notion of formal tableau leading naturally to a second new approach.}
+@misc{repo:argparse},
+  author       = {p-ranav},
+  title        = {argparse},
+  year         = {2019},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/p-ranav/argparse}},
+  commit       = {v2.9},
+}
+@misc{repo:spdlog,
+  author       = {gabime},
+  title        = {spdlog},
+  year         = {2016},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/gabime/spdlog}},
+  commit       = {v1.12.0},
 }

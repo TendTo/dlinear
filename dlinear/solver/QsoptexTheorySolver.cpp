@@ -228,8 +228,7 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
                                   mpq_class *actual_precision) {
   static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
-  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(),
-                                   true /* start_timer */);
+  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
 
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::CheckSat: Box = \n{}", box);
 

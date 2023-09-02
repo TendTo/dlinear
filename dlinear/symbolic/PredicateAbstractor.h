@@ -24,7 +24,6 @@ namespace dlinear {
 
 class PredicateAbstractor : public FormulaVisitor {
  public:
-
   /**
    * Convert a first-order logic formula @p f into a Boolean formula
    * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <

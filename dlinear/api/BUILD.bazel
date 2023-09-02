@@ -1,4 +1,5 @@
 load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:cpplint.bzl", "cpplint")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
@@ -19,3 +20,5 @@ dlinear_cc_library(
         "@tl_optional",
     ],
 )
+
+cpplint()

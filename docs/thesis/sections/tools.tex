@@ -1,8 +1,24 @@
-\chapter{Libraries and tools}
+\chapter{Groundwork, Libraries and tools}
+
+\section{Existing work}
+
+As it often happens in this field, most of the results presented stem from the work that other talented people have done before.
+This is particularly true since the goal of the project is to refactor an existing codebase, understanding the algorithms used and extending the software with some commodities and functionalities.
+While most of the inner workings of the project have not changed, if not for some slight modifications for the sake of clarity or performance, the integration with the build system and the dependencies has bee altered significantly.
+Furthermore, since the repository started as a fork of \dreal \cite{repo:dreal}, many of the original files had been kept even when unused, needlessly cluttering the filesystem.
+Another important aspect is the addition of a benchmark framework an the python bindings, which facilitates use for the end user.
 
 \section{External libraries}
 
-\subsection{gmp}
+\subsection*{spdlog and argparse}
+
+spdlog is a very fast, header-only/compiled logging library \cite{repo:spdlog}.
+It makes used of the \texttt{fmt} formatting library to ease the creation of the log messages and supports many log targets and levels.
+
+argparse is a \texttt{c++17} header-only library for parsing command line arguments \cite{repo:argparse}.
+It provides an interface very reminiscent of the \texttt{python} library with the same name, and it is very easy to use.
+
+\subsection*{gmp}
 
 gmp is a free library for arbitrary precision arithmetic, operating on signed integers, rational numbers, and floating-point numbers.
 There is great focus on being to be as fast as possible, both for small operands and for huge operands.
@@ -13,7 +29,7 @@ There are several categories of functions provided by the library.
 For the purpose of this project, the most relevant ones are the \textit{high-level rational arithmetic} function using the \texttt{mpq} type.
 The \texttt{mpz} functions can be used too, by applying them to the numerator and denominator separately.
 
-\subsection{Soplex}
+\subsection*{Soplex}
 
 SoPlex is an open-source optimization solver for \gls{lp} problems based on an advanced implementation of the primal and dual revised simplex algorithm.
 It provides special support for the exact solution of LPs with rational input data.
@@ -21,7 +37,7 @@ Can be easily embedded into other programs via a C++ class library.
 
 SoPlex has been used in numerous research and industry projects and is the standard LP solver linked to the mixed-integer nonlinear programming and constraint integer programming solver SCIP \cite{man:soplex}.
 
-\subsection{Qsopt\_ex}
+\subsection*{Qsopt\_ex}
 
 Qsopt\_ex was developed as a specialization of the Qsopt library to obtain exact solutions to \gls{lp} problems \footnote{\url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/}}.
 The original library has then be forked and extended two times.
@@ -49,12 +65,14 @@ It supports multiple languages and platforms, and it is designed to scale well w
 This ensures that the build process is deterministic and that the build actions do not have side effects: all inputs and outputs must be explicitly declared for each rule.
 
 It also features a domain specific language \texttt{starlark} \cite{repo:starlark}, used to further customize the build process, adding support for personalized rules and macros.
-Such scripts can also be shared among user, allowing the creation of packages of specialized rules for many use-cases.
+The syntax is intentionally very similar to the familiar \texttt{python}, although some more advanced features of the language are not included.
+Custom scripts can also be shared among user, allowing the creation of packages of specialized rules for many use-cases.
 
-\subsection{Configuration}
+\subsection*{Configuration}
 
-The \textit{Bazel} \textit{workspace} is the top-level directory that contains both source files and outputs.
-It is defined by a \texttt{WORKSPACE.bazel} file, which specifies the name of the project and is a common place where to define the external dependencies.
+The \textit{Bazel} \textit{workspace} is the top-level directory.
+It contains all the source files of the project, as well as scripts and configuration files.
+It is defined by the presence of a \texttt{WORKSPACE.bazel} file, which specifies the name of the project and is a common place where to define the external dependencies.
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{WORKSPACE.bazel} file},captionpos=b,label={code:workspace}]{code/example.WORKSPACE.bazel}
 
@@ -63,7 +81,7 @@ This greatly simplifies the build process, as it is possible to build a complete
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{Build.bazel} file},captionpos=b,label={code:build}]{code/example.BUILD.bazel}
 
-\subsection{Dependencies}
+\subsection*{Dependencies}
 
 \textit{Bazel} provides the means to manage dependencies, both internal and external.
 To ensure isolation and reproducibility, the external dependencies are downloaded and built from source.
@@ -78,4 +96,13 @@ In the original setup, it was necessary to download the source code and compile 
 This step was automated by creating an ad hoc \texttt{BUILD.bazel} file for each one of them, which is then used when building the project.
 It also allows to specify whether to use them as static libraries, for the main executable, or as dynamic libraries, for the python bindings.
 
-\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={\texttt{BUILD.bazel} file for the SoPlex library},captionpos=b,label={code:soplex.BUILD.bazel}]{code/soplex.BUILD.bazel}
+\lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Simplified \texttt{BUILD.bazel} file for the SoPlex library},captionpos=b,label={code:soplex.BUILD.bazel}]{code/soplex.BUILD.bazel}
+
+\bazel includes a utility that shows the dependency graph of the project, which gives a good overview of the couplings between the different components.
+The end result is \autoref{fig:dlinear-deps}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{dlinear_deps}
+    \caption{Visualization of the dependency graph of \dlinear as seen by \bazel}\label{fig:dlinear-deps}
+\end{figure}

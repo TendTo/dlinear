@@ -7,6 +7,8 @@
 
 #include "QsoptexImpl.h"
 
+#include <utility>
+
 #include "dlinear/util/logging.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
@@ -74,9 +76,9 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
   }
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DREAL_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DREAL_CHECK_INTERRUPT
+#ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
       DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
@@ -88,14 +90,12 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
     DLINEAR_ASSERT(!have_objective_, "Unexpected objective");
     const auto optional_model = sat_solver_.CheckSat(box);
     if (optional_model) {
-      const vector<pair<Variable, bool>>
-          &boolean_model{optional_model->first};
+      const vector<pair<Variable, bool>> &boolean_model{optional_model->first};
       for (const pair<Variable, bool> &p : boolean_model) {
         // Here, we modify Boolean variables only (not used by the LP solver).
         box[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
       }
-      const vector<pair<Variable, bool>>
-          &theory_model{optional_model->second};
+      const vector<pair<Variable, bool>> &theory_model{optional_model->second};
       if (!theory_model.empty()) {
         // SAT from SATSolver.
         DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = SAT");
@@ -167,9 +167,9 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
   bool have_opt_cand = false;  // optimality candidate
   mpq_class new_obj_up, new_obj_lo;  // Upper and lower bounds of new optimality candidate
   while (true) {
-    // Note that 'DREAL_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DREAL_CHECK_INTERRUPT
+#ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
       DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");

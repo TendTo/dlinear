@@ -7,6 +7,9 @@
 
 #include "Context.h"
 
+#include <memory>
+#include <utility>
+
 #include "dlinear/solver/QsoptexImpl.h"
 #include "dlinear/solver/SoplexImpl.h"
 #include "dlinear/version.h"

@@ -1,4 +1,4 @@
-\subsection{Satisfiability}
+\subsection*{Satisfiability}
 
 Propositional logic is a branch of logic that deals with propositions and relations among them.
 It is concerned with validity and consistency of arguments.
@@ -33,7 +33,7 @@ To sum up:
     \item Possible: a sentence which is true in at least one world. It is sufficient for a sentence to be possible to consider it satisfiable.
 \end{itemize}
 
-\subsection{CNF encoding}
+\subsection*{CNF encoding}
 
 To be able to be tackled efficiently by modern solvers, a formula is often transformed in its \gls{cnf}.
 By doing so, it becomes a conjunction of clauses, where a clause is a disjunction of literals. Each literal is either a boolean variable or its negation. \\
@@ -77,7 +77,7 @@ The transformation uses three basic operators:
     \underbrace{(\neg a \lor b \lor p_1) \land (a \lor \neg p_1) \land (\neg b \lor \neg p_1)}_{p_1} \land \underbrace{(\neg c \lor \neg d \lor p_2) \land (c \lor \neg p_2) \land (d \lor \neg p_2)}_{p_2} \land \underbrace{(p_1 \lor \neg p_2)}_{p_3}
 \end{multline*}
 
-\subsection{Satisfiability algorithms}
+\subsection*{Satisfiability algorithms}
 
 To approach the problem of satisfiability, we can use different algorithms.
 It becomes useful to frame what we have seen so far in a way more suited for a computer to understand. \\

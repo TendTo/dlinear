@@ -345,11 +345,7 @@ static bool is_simple_bound(const Formula &formula) {
 // inequalities, and ignore not-equal constraints altogether.
 
 static bool is_equal_or_whatever(const Formula &formula, bool truth) {
-  if (truth) {
-    return is_equal_to(formula);
-  } else {
-    return is_not_equal_to(formula);
-  }
+  return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
 static bool is_not_equal_or_whatever(const Formula &formula, bool truth) {

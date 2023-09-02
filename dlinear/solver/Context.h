@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <tl/optional.hpp>
 
