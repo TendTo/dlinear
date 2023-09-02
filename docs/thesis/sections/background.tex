@@ -7,20 +7,20 @@ For a more in-depth introduction to all the topics mentioned in this section, pl
 First of all, it is necessary to introduce a few core concepts from propositional logic.
 A propositional formula is a construct that uses \textit{variables} (or \textit{unknowns}), which are assigned a semantic value \textbf{True} or \textbf{False}, and \textit{logical connectives}, such as $\lor$ (or), $\land$ (and) and $\neg$ (not).
 A literal is a variable or its negation.
-A formula is in \gls{nnf} if the negation operator $\neg$ is only applied to variables and not larger formulas.
-The most used representation of a propositional formula is the \gls{cnf}, which is a conjunction of clauses, where a clause is a disjunction of literals.
+A formula is in \gls{nnf} if the negation operator $\neg$ is only applied to variables and not more extensive formulas.
+The most used representation of a propositional formula is the \gls{cnf}, a conjunction of clauses, where a clause is a disjunction of literals.
 
-Solving a \gls{sat} problem means determining whether an assignment of values to the variables that makes the formula true exists or prove that such an assignment does not exist.
+Solving a \gls{sat} problem means determining whether assigning values to the variables that make the formula true is possible or proving that such an assignment does not exist.
 A \gls{sat} solver is a tool that takes as input a propositional formula and returns \textbf{sat} with a valid assignment if the input was satisfiable, or \textbf{unsat} with an unsatisfiable subset of conjunctions otherwise.
 
 When in \gls{cnf}, a clause is satisfied if at least one of its variables is assigned the value \textbf{true}.
-On the other hand, a clause unsatisfied if all of the variables are assigned the value \textbf{false}.
-Furthermore, a clause is unit if it contains a single unassigned variables, while all the others are \textbf{false}.
+On the other hand, a clause is unsatisfied if all of the variables are assigned the value \textbf{false}.
+Furthermore, a clause is unit if it contains a single unassigned variable, while all the others are \textbf{false}.
 A formula is satisfied if all its clauses are satisfied and unsatisfied if at least one clause is unsatisfied.
 
 \subsection*{CNF encoding}
 
-To be able to be tackled efficiently by modern solvers, formulas are often transformed in their \gls{cnf}.
+To be tackled efficiently by modern solvers, formulas are often transformed in their \gls{cnf}.
 
 \begin{gather*}
     \bigwedge_{i=1}^n \bigvee_{j=1}^{m_i} l_{ij} \\
@@ -33,7 +33,7 @@ A naive approach to obtain such a form would be to use \textit{De Morgan's laws}
 This, unfortunately, would lead to an exponential blowup in the size of the formula.
 Hence, the Tseitin transformation is usually utilized \cite{paper:tseitin}.
 It introduces a linear number of new variables, one for each subformula of the original, along with the clauses that define the relationship between the new variables and the subformulae.
-The key property is that the new formula is satisfiable if and only if the original one is.
+The fundamental property is that the new formula is satisfiable if and only if the original one is.
 
 The transformation uses three basic operators:
 
@@ -66,21 +66,21 @@ The transformation uses three basic operators:
 \subsection*{SAT algorithms}
 
 Solving a \gls{sat} problem is no easy task.
-Since the number of possible assignment is finite, a naive approach would be to loop over them an verify if they satisfy the formula.
-This technique, called \textit{Local search}, has seen some use when combined with specialized heuristics to guide the next assignment to try.
+Since the number of possible assignments is finite, a naive approach would be to loop over them and verify if they satisfy the formula.
+This technique called \textit{Local search}, has seen some use when combined with specialized heuristics to guide the next assignment to try.
 Regardless, proving that a formula is unsatisfiable would require evaluating all possibilities, which is unfeasible for large formulas.
 
-Complete algorithms, on the other hand, are guaranteed to find a solution if one exists, and to prove that no solution exists otherwise.
+Complete algorithms, on the other hand, are guaranteed to find a solution if one exists and to prove that no solution exists otherwise.
 Properties of \gls{sat} problems can be exploited to produce different solving techniques.
 
-The \gls{dp} algorithm, for example, is based on the \textit{resolution} inference rule.
+For example, the \gls{dp} algorithm is based on the \textit{resolution} inference rule.
 The latter states that if a formula $F$ contains clauses $C_i$ and $C_j$ and a variable $P$ such that $P \in C_i$ and $\neg P \in C_j$, then $F' = F \setminus \{ C_i, C_j \} \cup \{(C_i \setminus \{ P \}) \cup (C_j \setminus \{\neg p\})\}$ is equisatisfiable with $F$.
-By iterating the resolution rule, it is possible to simplify the formula until it is either empty (SAT) or it contains an empty clause (UNSAT).
+By iterating the resolution rule, it is possible to simplify the formula until it is either empty (SAT) or contains an empty clause (UNSAT).
 
-A common implementation of the \gls{dp} algorithm defines an order on the variables and puts all clause on a bucket corresponding to the smallest variable they contain.
+A typical implementation of the \gls{dp} algorithm defines an order on the variables and puts all clauses on a bucket corresponding to the smallest variable they contain.
 Then, each bucket is processed in order, and the resolution rule is applied to all pairs of clauses in the bucket.
 The resolvents are then put in the bucket corresponding to the smallest variable they contain.
-The process halts when either the empty clause is found or all buckets are empty.
+The process halts when the empty clause is found, or all buckets are empty.
 
 \subsection*{DPLL}
 
@@ -89,7 +89,7 @@ During its execution, the state of the solver keeps track of a partial assignmen
 In practice, $M$ is a set of literal, either $l$ or $\neg l$, where $l$ is a variable.
 The literal can also be marked as a decision literal $l^d$.
 In addition, if a literal is in $M$, its negation must not: $l \in M \implies \neg l \not\in M$.
-Given the state $M \parallel F$, a clause $C$ is conflicting if $M \models \neg C$.
+Given the state $M \parallel F$, a clause $C$ conflicts if $M \models \neg C$.
 
 Each state of the algorithm can transition to the next by following a \textit{transition rule}.
 If the transition system $R$ does not admit any transition from the current state $S$, then $S$ is final with respect to $R$.
@@ -97,79 +97,79 @@ The classical \gls{dpll} algorithm uses the following transition rules:
 
 \begin{itemize}
     \item \textbf{Unit propagate}: $M \parallel F, C \lor l \implies M l \parallel F, C \lor l \quad \text{if} \begin{cases} M \models \neg C \\ l \not \in M \end{cases}$ \\
-          If a clause contains a single variable $l$ not yet in $M$ and all the others have been marked as \textit{false}, $M$ must be extended to mark $l$ as \textit{true}.
+          If a clause contains a single variable $l$ not yet in $M$ and all others marked as \textit{false}, $M$ must be extended to mark $l$ as \textit{true}.
     \item \textbf{Pure literal}: $M \parallel F \implies M l \parallel F  \quad \text{if} \begin{cases} l \in F \\ \neg l \not \in F \\ l \not \in M \end{cases}$ \\
           If a literal $l$ is pure, meaning it only occurs with the same polarity, it can be safely marked to make it \textit{true}.
     \item \textbf{Decide}: $M \parallel F \implies M l^d \parallel F  \quad \text{if} \begin{cases} l \text{(or } \neg l \text{)} \in F \\ l \not \in M \end{cases}$
           A literal $l$ not yet in $M$ is chosen to be put in $M$ and is marked as a decision literal. If a contradiction is found later in the execution, the algorithm can backtrack to this decision and try the opposite value.
     \item \textbf{Fail}: $M \parallel F, C \implies \bot  \quad \text{if} \begin{cases} M \models \neg C \\ \not \exists l: l^d \in M \end{cases}$
-          If a conflicting clause is detected while no decision literals are in $M$, the formula is unsatisfiable.
+          The formula is unsatisfiable if a conflicting clause is detected while no decision literals are in $M$.
     \item \textbf{Backtrack}: $M l^d N \parallel F, C \implies M \neg l \parallel F, C  \quad \text{if} \begin{cases} M l^d N \models \neg C \\ \not \exists l: l^d \in N \end{cases}$
           If a conflicting clause is detected while there are decision literals in $M$, the algorithm backtracks to the last decision literal, negates it and tries again. Note that the negation of a decision literal is not a decision literal.
 \end{itemize}
 
-Using the transition system described, is possible to evaluate the satisfiability of a formula $F$ by starting from the state $\emptyset \parallel F$ and applying the transition rules until a final state is reached.
+Using the transition system described, it is possible to evaluate the satisfiability of a formula $F$ by starting from the state $\emptyset \parallel F$ and applying the transition rules until a final state is reached.
 
-Most modern \gls{dpll}-based solvers do not implement the classical algorithm exactly as described \cite{paper:dpll(t)}.
-The variable to include in the \textbf{Decide} step is chosen with some specialized heuristics and the \textbf{Backtrack} becomes a special case of the more efficient \textbf{Backjump} rule.
+Most modern \gls{dpll}-based solvers do not implement the classical algorithm precisely as described \cite{paper:dpll(t)}.
+The variable to include in the \textbf{Decide} step is chosen with some specialized heuristics, and the \textbf{Backtrack} becomes a particular case of the more efficient \textbf{Backjump} rule.
 Those are just a few examples of the many optimizations that can be applied to the \gls{dpll} algorithm.
-Unfortunately, \gls{sat} remains a NP-complete problem, meaning that all known algorithms to solve it are exponential in the worst case, although it usually performs much better in practice.
+Unfortunately, \gls{sat} remains an NP-complete problem, meaning that all known algorithms to solve it are exponential in the worst case, although it usually performs much better in practice.
 
 \subsection*{Applications}
 
 Satisfiability problems arise in many different fields.
-\gls{sat} solvers find their applications in computationally hard problems, such as traveling salesman, planning, scheduling, and many others.
-They are also a key component in formal methods such as model checking and automated theorem proving, by verifying a property in a system.
-Hence they are often employed in software verification, where the system is a program and the property is a specification of its behavior.
-This becomes ever more important in the context of safety-critical systems, such as medical devices or autonomous vehicles, or cryptographic systems.
+\gls{sat} solvers find their applications in computationally demanding problems, such as travelling salesman, planning, scheduling, and many others.
+They are also a key component in formal methods, such as model checking and automated theorem proving, by verifying a property in a system.
+Hence, they are often employed in software verification, where the system is a program, and the property is a specification of its behaviour.
+This becomes even more important in safety-critical systems like medical devices, autonomous vehicles, or cryptographic systems.
 
 \section{SMT}
 
 \gls{smt} is a family of decision problems in propositional logic.
-Instead of considering all possible interpretation that could be applied to a formula, it restricts the possible interpretations to only those that respect a given theory.
+Instead of considering all possible interpretations that could be applied to a formula, it restricts the possible arrangements to only those that respect a given theory.
 
 The theories we are interested in are \gls{qf-lra} and \gls{qf-lia}.
 The former describes quantifier-free linear real arithmetic, while the latter describes quantifier-free linear integer arithmetic.
 
 \subsection*{SMT approaches}
 
-A general \gls{sat} solver could, in principle, solve any \gls{smt} problem, provided it was given all the axioms of the theory as input, but it could be extremely inefficient.
-There are two main approaches to solve \gls{smt} problems.
+A general \gls{sat} solver could, in principle, solve any \gls{smt} problem, provided it was given all the axioms of the theory as input, but it could be highly inefficient.
+There are two main approaches to solving \gls{smt} problems.
 
-The \textit{eager} approach traduces the problem into a \gls{sat} problem, by translating the formula into an equisatisfiable propositional formula.
-Such translated formula can them be fed to any efficient \gls{sat} solver.
-Although always possible in principle, sometimes may lead to an exponential blowup in the size of the formula.
-An example of a eager \gls{smt} solver is STP \cite{repo:stp}.
+The \textit{eager} approach traduces the problem into a \gls{sat} problem by translating the formula into an equisatisfiable propositional formula.
+Such a translated formula can be fed to any efficient \gls{sat} solver.
+Although always possible in principle, it may sometimes lead to an exponential blowup in the size of the formula.
+An example of an eager \gls{smt} solver is STP \cite{repo:stp}.
 
-The \textit{lazy} approach, instead, embraces the theory fully and implements an specialized inference system for it.
-At the cost of a less general solver, it is possible to use specific algorithms and data structures, which could lead to better performance.
+Instead, the \textit{lazy} approach embraces the theory fully and implements a specialized inference system for it.
+It is possible to use specific algorithms and data structures at the cost of a less general solver, which could lead to better performance.
 An example of a \gls{smt} solver that supports the lazy approach is Z3 \cite{repo:z3}.
 
 \subsection*{DPLL(T)}
 
 Given a theory $\mathcal{T}$, a theory solver, or T-solver, is a tool that can decide whether a set of assertions over $\mathcal{T}$ is satisfiable.
-If those atoms are then combined in a boolean formula $F$, its satisfiability can then be evaluated by a \gls{sat} solver.
+If those atoms are combined in a boolean formula $F$, their satisfiability can be evaluated by a \gls{sat} solver.
 The \gls{dpll}(T) approach represents an efficient method for integrating a theory solver and the \gls{dpll} procedure. \cite{paper:dpll-t}.
 The T-solver's job is to keep track of the theory atoms and their consistency with any new inclusion.
-Optionally, it could also identify an include atoms implied by the current state, with a technique called \textit{theory propagation}.
+It could also identify and include atoms implied by the current state, with a technique called \textit{theory propagation}.
 
 Given a formula $F$, we denote with $\mathcal{A}$ the set of atoms in $F$ and with $\alpha$ the set of atoms currently asserted.
 Similarly to the \gls{dpll} algorithm, the \gls{dpll}(T) algorithm maintains a stack of checkpoints used for backtracking when an inconsistency arises.
 A simple API can be used to interact with the \gls{dpll} procedure:
 
 \begin{itemize}
-    \item \textbf{Assert($\gamma$)}: tries to add $\gamma$ to $\alpha$. After checking for consistency, it returns either \texttt{OK} or \texttt{UNSAT}$\langle{\Gamma}\rangle$, where $\Gamma$ is a set of asserted atoms inconsistent with $\gamma$. The operation must be sound, but not necessarily complete.
+    \item \textbf{Assert($\gamma$)}: tries to add $\gamma$ to $\alpha$. After checking for consistency, it returns either \texttt{OK} or \texttt{UNSAT}$\langle{\Gamma}\rangle$, where $\Gamma$ is a set of asserted atoms inconsistent with $\gamma$. The operation must be sound but not necessarily complete.
     \item \textbf{Check}: verifies whether $\alpha$ is consistent. It returns either \texttt{OK}, and a new checkpoint is created, or \texttt{UNSAT}$\langle{\Gamma}\rangle$, where $\Gamma \subseteq \alpha$ is a set of inconsistent atoms. The operation must be sound and complete.
     \item \textbf{Backtrack}: the state is restored to the last checkpoint.
-    \item \textbf{Propagate}: performs a theory propagation, by finding a set $\{\langle \Gamma_1, \gamma_1 \rangle, \dots, \langle \Gamma_t, \gamma_t \rangle\}$ where $\Gamma_i \subseteq \alpha$ and $\gamma_i \in \mathcal{A} \setminus \alpha$. The operation must be sound, but not necessarily complete.
+    \item \textbf{Propagate}: performs a theory propagation, by finding a set $\{\langle \Gamma_1, \gamma_1 \rangle, \dots, \langle \Gamma_t, \gamma_t \rangle\}$ where $\Gamma_i \subseteq \alpha$ and $\gamma_i \in \mathcal{A} \setminus \alpha$. The operation must be sound but not necessarily complete.
 \end{itemize}
 
 This generic approach can be applied to any theory by using a specialized T-solver for that theory.
 
 \subsection*{SMT2-LIB}
 
-APIs for SMT-solvers are not standardized, though there have been efforts to provide a common layer for several solvers has been developed \cite{repo:java-smt}.
-In contrast, the SMT-LIB initiative, aimed at facilitating research and development in \gls{smt}, was successful in creating the de-facto standard format used to represent \gls{smt} problems.
+APIs for \gls{smt} solvers are not standardized, though efforts have been made to provide a standard layer for several solvers that have been developed \cite{repo:java-smt}.
+In contrast, the SMT-LIB initiative, aimed at facilitating research and development in \gls{smt}, successfully created the de facto standard format used to represent \gls{smt} problems.
 Nearly all modern \gls{smt} solvers support the SMT-LIB format, in addition to some more specific ones.
 
 \lstinputlisting[language=smt2,frame=single,showstringspaces=false,caption={Sample .smt2 file},label={code:example.smt2},captionpos=b]{code/example.smt2}
@@ -179,7 +179,7 @@ Nearly all modern \gls{smt} solvers support the SMT-LIB format, in addition to s
 \section{Linear Programming}
 
 A \gls{lp} problem is an optimization problem where the objective function and the constraints are linear equalities or inequalities.
-The objective function is what we want to maximize or minimize, while the constraints are the conditions that the solution must satisfy.
+The objective function is what we want to maximize or minimize, while the constraints are the conditions the solution must satisfy.
 The standard form of a \gls{lp} problem is the following:
 
 \begin{equation*}
@@ -190,18 +190,18 @@ The standard form of a \gls{lp} problem is the following:
     \end{aligned}
 \end{equation*}
 where $x \in \mathbb{R}^d$ is the vector of variables to be determined, $c \in \mathbb{R}^d$ and $b \in \mathbb{R}^n$ are vectors of coefficients, and $A \in \mathbb{R}^{n \times d}$ is a matrix of coefficients.
-It is always possible rewrite a \gls{lp} problem in standard form following these steps:
+It is always possible to rewrite a \gls{lp} problem in standard form following these steps:
 \begin{itemize}
     \item If the problem is a minimization problem, it is sufficient to multiply the objective function by $-1$ to obtain the corresponding maximization problem.
-    \item If some variables have no lower bound, they can be substituted with the difference of two variables, both with a lower bound of $0$ (ie. $x = x_1 - x_2$ and $x_1, x_2 \geq 0$).
-    \item If there are some strict equalities, they can be substituted with two inequalities (ie. $x = 0$ becomes $x \leq 0$ and $x \geq 0$).
-    \item If there are some inequalities with different signs, one of them can be multiplied by $-1$ to obtain the same sign.
+    \item If some variables have no lower bound, they can be substituted with the difference of two variables, both with a lower bound of $0$ (i.e. $x = x_1 - x_2$ and $x_1, x_2 \geq 0$).
+    \item If strict equalities exist, they can be substituted with two inequalities (i.e. $x = 0$ becomes $x \leq 0$ and $x \geq 0$).
+    \item If there are some inequalities with different signs, one can be multiplied by $-1$ to ensure both have the same sign.
 \end{itemize}
 
-\gls{lp} problems are usually solved via the simplex method, although some interior-point method \cite{paper:interior-point} may be used as well.
+\gls{lp} problems are usually solved via the simplex method, although some interior-point methods \cite{paper:interior-point} may be used as well.
 The simplex method is an iterative algorithm developed by George Dantzig in 1947 \cite{paper:simplex}.
-To apply the simplex method, the problem must be converted in \textit{slack form}.
-Starting with a \gls{lp} problem in standard form, the slack form is obtained by introducing a slack variable for each constraint in such a way that the inequality becomes an equality.
+To apply the simplex method, the problem must be converted in \textit{slack form} to use the simplex method.
+Starting with a \gls{lp} problem in standard form, the slack form is obtained by introducing a slack variable for each constraint so that the inequality becomes an equality.
 The slack variables must also be non-negative.
 
 It is possible to extract an invertible squared matrix $B$ from $A$ of dimension $n \times n$ called basis.
@@ -221,7 +221,7 @@ The variables $x_i$ corresponding to the columns of $B$ are called \textit{basic
 
 With this framework, it is possible to define a tableau.
 Each row of the tableau corresponds to a constraint.
-An additional row, called \textit{objective row}, is added to represent the objective function associated to a special variable $z$.
+An additional row called \textit{objective row}, is added to represent the objective function associated with a special variable $z$.
 All the original variables are considered \textit{non-basic}, while the slack variables are \textit{basic}.
 
 \begin{equation*}
@@ -247,28 +247,28 @@ To iterate the simplex method, the following steps are performed:
 \begin{enumerate}
     \item Find the pivot column $j$, which is the column with the most negative coefficient in the objective row.
     \item Find the pivot row $i$, which is the row with the smallest ratio between the constant term $b_i$ and the coefficient of the pivot column.
-    \item Divide the pivot row by the coefficient of the pivot column, so that the value in position $(i, j)$ becomes $1$.
-    \item All other rows must contain the value $0$ along the pivot column. This is achieved by subtract the pivot row multiplied by the coefficient of the pivot column.
-    \item The variable corresponding to the pivot column becomes basic, while the one corresponding to the pivot row, on the left of the tableau, becomes non-basic.
+    \item Divide the pivot row by the coefficient of the pivot column so that the value in position $(i, j)$ becomes $1$.
+    \item All other rows must contain the value $0$ along the pivot column. This is achieved by subtracting the pivot row multiplied by the coefficient of the pivot column.
+    \item The variable corresponding to the pivot column becomes basic, while the one corresponding to the pivot row on the left of the tableau becomes non-basic.
     \item Repeat until the objective row has no negative coefficients.
 \end{enumerate}
 
-The solution is obtained by reading the corresponding value from the last column of the tableau, while the value of the objective function can be found in the top right corner.
+The solution is obtained by reading the corresponding value from the tableau's last column, while the objective function's value can be found in the top right corner.
 
 \section{SMT and Linear Programming}
 
-Even when working within the same problem space, there are many differences between \gls{lp} and \gls{smt} solvers.
-\gls{lp} solvers can only deal with conjunctions of constraints (ie. all constraints must be satisfied) and focus on finding the optimal solution to the problem.
-Some approximations errors are introduced when operating with floating point arithmetic.
-But after years or research and interest in the subject, modern \gls{lp} solvers have become extremely efficient and reliable.
-On the other hand, \gls{smt} solvers can deal with arbitrary boolean combinations of constraints and focus on finding an assignment that satisfies the formula, without any guarantee on the optimality of the solution.
+Even when working within the same problem space, many differences exist between \gls{lp} and \gls{smt} solvers.
+\gls{lp} solvers can only deal with conjunctions of constraints (i.e. all constraints must be satisfied) and focus on finding the optimal solution to the problem.
+Some approximation errors are introduced when operating with floating point arithmetic.
+But after years of research and interest in the subject, modern \gls{lp} solvers have become highly efficient and reliable.
+On the other hand, \gls{smt} solvers can deal with arbitrary boolean combinations of constraints and focus on finding an assignment that satisfies the formula without any guarantee of the solution's optimality.
 There has been a lot of interest in incorporating \gls{lp} solvers into a modern SMT solver \cite{paper:lp-for-smt}.
 
-In \gls{qf-lra} the atoms of a formula propositional variables defined by equalities or inequalities in the form:
+In \gls{qf-lra}, the atoms of a formula propositional variables defined by equalities or inequalities in the form:
 
 \begin{equation*}
     a_1 x_1 + a_2 x_2 + \dots + a_n x_n \bowtie b
 \end{equation*}
 where $a_1, a_2, \dots, a_n, x_1, x_2, \dots, x_n, b \in \mathbb{Q}$ and $\bowtie \in \{ =, \neq, \leq, \geq, <, > \}$.
 
-Deciding the satisfiability of these components is usually done through the use of a \gls{lp} solver which, in turn, usually relies on the simplex method.
+Deciding the satisfiability of these components is usually done using a \gls{lp} solver, which, in turn, usually relies on the simplex method.

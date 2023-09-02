@@ -25,11 +25,13 @@ They support the most common tools, such as CMake, make and the autotools, such 
 Since each project is different, a long and tedious process of trial and error is required to make the rules work with all the configurations.
 The results of this process are the \texttt{soplex.BUILD.bazel} and \texttt{qsoptex.BUILD.bazel} files in the \texttt{third\_party} directory.
 
-### Soplex
+## TODO
 
-Soplex is a \texttt{c++} library for solving linear programs.
-
-
-### PIMPL idiom
-
-Pointer to implementation" or "pImpl" is a C++ programming technique that removes implementation details of a class from its object representation by placing them in a separate class, accessed through an opaque pointer. This way the client code is unaware of the class's implementation details. Most importantly, it does not have to be recompiled when 
+- [ ] Use of the executable
+- [ ] Pip install
+- [ ] Solver's sequence diagram
+- [ ] Solver's architecture
+- [ ] Linux limitations
+- [ ] Singleton for initialization of the library
+- [ ] Complete benchmarks
+- [ ] Fix Readme.md

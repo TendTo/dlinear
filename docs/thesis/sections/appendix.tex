@@ -1,6 +1,6 @@
 \begin{appendices}
     \chapter{Benchmarks}\label{appendix:benchmarks}
-    The problems used in the benchmarks comprises of samples from:
+    The problems used in the benchmarks are comprised of samples from:
 
     \begin{itemize}
         \item Csaba Mészáros LP collection  \footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}
@@ -13,17 +13,17 @@
         \item 44 cores (2 processors * 22 cores), totalling 4840 across the standard nodes
         \item 128 GB memory - (8 DDR4 RDIMMs, each with 16GB) - ie. 2.9 GB per core
     \end{itemize}
-    The results were then filtered to only include runs in which at least one solver took longer than 10 seconds to output the result.
+    The results were then filtered only to include runs in which at least one solver took longer than 10 seconds to output the result.
     Legend:
 
     \begin{itemize}
-        \item \textbf{File}: the name of the file that was used for the benchmark.
-        \item \textbf{Solver}: the solver that was used for the benchmark. Can be either \textit{soplex} or \textit{qsoptex}.
+        \item \textbf{File}: the name of the file used for the benchmark.
+        \item \textbf{Solver}: the solver used for the benchmark. It can be either \textit{soplex} or \textit{qsoptex}.
         \item \textbf{\#a}: the number of assertions contained within the file.
-        \item \textbf{Result}: the result of the benchmark. Can be either \textit{delta-sat} or \textit{unsat}.
+        \item \textbf{Result}: the result of the benchmark. It can be either \textit{delta-sat} or \textit{unsat}.
         \item \textbf{$\delta_i$}: the precision that was given to the solver.
         \item \textbf{$\delta_a$}: the achieved precision of the solver.
-        \item \textbf{Time}: the time that was needed to solve the file, in seconds.
+        \item \textbf{Time}: the time needed to solve the file in seconds.
     \end{itemize}
 
     \subsection*{QF_LRA}
@@ -69,7 +69,7 @@
 
     The following are the same diagrams described in \autoref{sec:patterns} but with more details.
 
-    \plantuml{diagrams/dlinear/pimpl}{UML diagram of the Pimpl patter as it is used in \dlinear}{dlinear-pimpl}
+    \plantuml{diagrams/dlinear/pimpl}{UML diagram of the Pimpl pattern as it is used in \dlinear}{dlinear-pimpl}
 
     \plantuml{diagrams/dlinear/visitor}{UML diagram of the visitor pattern as it is used in \dlinear}{dlinear-visitor}
 

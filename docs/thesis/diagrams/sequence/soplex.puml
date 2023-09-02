@@ -1,0 +1,12 @@
+@startuml soplex
+
+autoactivate on
+
+participant Driver
+participant SoplexImpl
+participant SoplexTheorySolver
+participant SoplexSatSolver
+participant Picosat
+
+
+@enduml

@@ -1,0 +1,21 @@
+\chapter{Conclusions}
+
+After a meticulous analysis of the codebase, the project has been successfully refactored.
+The resulting architecture is much easier to work with, especially regarding managing and installing external dependencies, thanks to the improved integration with the \bazel build system.
+
+The tests have been extended to cover more functionalities and to be more robust, improving the software's resilience to regressions.
+Finally, the benchmark framework allows for an easy and automated way to test the software's performance and gather the results using the common \texttt{csv} format.
+
+While the final product is a perfectly functioning \gls{smt} solver, there is still much room for improvement.
+
+First, many problems in this field are presented using the \texttt{mps} file format, which is not natively supported by the software.
+This means that a conversion needs to take place before running the executable.
+
+Furthermore, different implementations of the theory solver algorithm could be considered, such as \textit{interior-point methods}.
+They are more suitable for parallelization and can outperform the simplex approach, provided the problem is enormous and it is possible to exploit specific structures, often represented as nested sets of blocks in a tree-like structure \cite{paper:parallel-interior-point}.
+Switching to the interior-point method could be beneficial when it would lead to a faster solution.
+However, the decision would probably require some form of input analysis, with the cost that this entails.
+
+Once all the issues have been addressed, more complete documentation will need to be produced to allow for a more straightforward approach for interested newcomers.
+
+I hope I will have the chance to mark all these points as done in the future.

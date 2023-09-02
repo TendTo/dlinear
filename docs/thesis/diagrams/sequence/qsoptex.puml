@@ -1,0 +1,12 @@
+@startuml qsoptex
+
+autoactivate on
+
+participant Driver
+participant QsoptexImpl
+participant QsoptexTheorySolver
+participant QsoptexSatSolver
+participant Picosat
+
+
+@enduml
