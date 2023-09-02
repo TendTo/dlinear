@@ -1,0 +1,10 @@
+load("//tools:pytest.bzl", "pydlinear_py_test")
+
+pydlinear_py_test(name = "test_variable")
+
+pydlinear_py_test(
+    name = "test_smt2_driver",
+    data = glob(["smt2/*.smt2"]),
+)
+
+pydlinear_py_test(name = "test_expression")

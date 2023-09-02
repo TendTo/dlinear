@@ -24,6 +24,5 @@ void HandleSigInt(const int) {
 int main(int argc, const char *argv[]) {
   std::signal(SIGINT, HandleSigInt);
   MainProgram main_program{argc, argv};
-  throw std::runtime_error("test");
   return main_program.Run();
 }
