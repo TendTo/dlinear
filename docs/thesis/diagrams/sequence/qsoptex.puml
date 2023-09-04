@@ -4,28 +4,44 @@ participant Driver
 participant QsoptexImpl
 participant QsoptexSatSolver
 participant QsoptexTheorySolver
-participant Picosat
 
 Driver -> QsoptexImpl ++: SetLogic(Context::Logic)
 return
 
 loop for each variable
     Driver -> QsoptexImpl ++: DeclareVariable(Variable)
-    return
-    Driver -> QsoptexImpl ++: AddToBox(Variable)
+    QsoptexImpl -> QsoptexImpl : AddToBox(Variable)
     return
 end
 
-loop for each formula
+loop for each assertion
     Driver -> QsoptexImpl ++: Assert(Formula)
     QsoptexImpl -> QsoptexSatSolver ++: AddFormula(Formula)
-    QsoptexSatSolver -> QsoptexSatSolver : AddClause(?)
-    QsoptexSatSolver -> QsoptexSatSolver : MakeSatVar(?)
-    QsoptexSatSolver -> QsoptexSatSolver : AddLinearVariable(?)
+    QsoptexSatSolver -> QsoptexSatSolver : AddClause(Formula)
+    loop for each variable in formula
+        QsoptexSatSolver -> QsoptexSatSolver : MakeSatVar(Variable)
+        QsoptexSatSolver -> QsoptexSatSolver : AddLinearVariable(Variable)
+    end
     return
     return
 end
 
-Driver -> QsoptexImpl ++: CheckSatCore()
+loop untill the theory solver returns SAT | UNSOLVED or the SAT solver returns UNSAT
+    Driver -> QsoptexImpl ++: CheckSatCore()
+    QsoptexImpl -> QsoptexSatSolver ++: CheckSat()
+    return SAT | UNSAT
+
+    alt SAT
+        QsoptexImpl -> QsoptexTheorySolver ++: CheckSat()
+        return SATISFIABLE | UNSATISFIABLE | UNSOLVED
+        alt SATISFIABLE
+            QsoptexImpl --> Driver : SAT
+        else UNSOLVED
+            QsoptexImpl --> Driver : UNKNOWN
+        end
+    else UNSAT
+        return UNSAT
+    end
+end
 
 @enduml

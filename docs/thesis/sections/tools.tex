@@ -29,7 +29,13 @@ There are several categories of functions provided by the library.
 For this project, the most relevant ones are the \textit{high-level rational arithmetic} function using the \texttt{mpq} type.
 The \texttt{mpz} functions can be used, too, by applying them to the numerator and denominator separately.
 
-\subsection*{Soplex}
+\subsection*{Drake}
+
+Drake is a \texttt{c++} toolbox by the Robot Locomotion Group at MIT. 
+It contains a collection of tools for analyzing the dynamics of our robots and building control systems for them, with a heavy emphasis on optimization-based design/analysis \cite{paper:drake}.
+In the context of this project, many of the class that abstract the components of the \gls{smt} problem, such as variables and expressions, are taken from this library.
+
+\subsection*{SoPlex}
 
 SoPlex is an open-source optimisation solver for \gls{lp} problems based on an advanced implementation of the primal and dual revised simplex algorithm.
 It provides special support for the exact solution of LPs with rational input data.
@@ -76,15 +82,18 @@ It is defined by the presence of a \texttt{WORKSPACE.bazel} file, which specifie
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{WORKSPACE.bazel} file},captionpos=b,label={code:workspace}]{code/example.WORKSPACE.bazel}
 
-The project can be split into multiple \textit{packages}, each defined by a \texttt{BUILD.bazel} file.
-This greatly simplifies the build process, as it is possible to build a complete dependency graph and rebuild only the smallest subset of the project when it has been modified, using the cache for the rest.
+The project is further split into multiple \textit{packages}, each defined by a \texttt{BUILD.bazel} file.
+This allows for a targeted rebuild of only the smallest subset of the dependencies when a package has been modified, using the cache for the rest.
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{Build.bazel} file},captionpos=b,label={code:build}]{code/example.BUILD.bazel}
 
 \subsection*{Dependencies}
 
 \textit{Bazel} provides the means to manage internal and external dependencies.
-The external dependencies are downloaded and built from source to ensure isolation and reproducibility.
+This is done by downloading an archive to be included in the build process.
+This step can be Simplified further by using some custom macros like \texttt{github\_archive} (\autoref{code:foreign_cc.WORKSPACE.bazel}).
+The external dependencies are then built from source in a sandbox to ensure isolation and reproducibility.
+
 Most libraries do not provide a \texttt{BUILD.bazel} file since they employ a different build system.
 In those cases, it is necessary to write one manually, specifying the source files, the dependencies and the compilation flags.
 To aid in the compilation, there exist several rules that ensure interoperability with the most common tools, such as \textit{CMake}, \textit{configure-make}, \textit{GNU Make}, \textit{boost}, \textit{ninja} and \textit{Meson} \cite{repo:rules-foreign-cc}.
@@ -93,7 +102,7 @@ To aid in the compilation, there exist several rules that ensure interoperabilit
 
 The two solvers that \dlinear uses need to be included as the project's dependencies.
 In the original setup, it was necessary to download the source code and compile it manually, which was a tedious process.
-This step was automated by creating an ad hoc \texttt{BUILD.bazel} file for each of them, which is used when building the project.
+This step was automated by creating an ad hoc \texttt{BUILD.bazel} file for each of them, which is used when building the project and uses either \textit{cMake} and \textit{configure-make} for SoPlex and QSoptex respectively.
 It also allows us to specify whether to use them as static libraries for the main executable or as dynamic libraries for the \texttt{python} bindings.
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Simplified \texttt{BUILD.bazel} file for the SoPlex library},captionpos=b,label={code:soplex.BUILD.bazel}]{code/soplex.BUILD.bazel}

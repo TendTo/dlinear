@@ -1,0 +1,40 @@
+Usage: dlinear [-h] [--jobs VAR] [--continuous-output] [--debug-parsing] [--debug-scanning] [--exhaustive] [--forall-polytope] [--format VAR] [--in] [--local-optimization] [--lp-solver VAR] [--produce-models] [--nlopt-ftol-abs VAR] [--nlopt-ftol-rel VAR] [--nlopt-maxeval VAR] [--nlopt-maxtime VAR] [--polytope] [--precision VAR] [--random-seed VAR] [--sat-default-phase VAR] [--simplex-sat-phase VAR] [--timings] [--verbosity VAR] [--verbose-simplex VAR] [--worklist-fixpoint] file
+
+dlinear (v0.0.1): delta-complete SMT solver (Debug Build)  (repository: setup-41-g5089086-dirty) (qsopt-ex: v2.1.0) (soplex: NoGitInfo)
+
+Positional arguments:
+  file                	input file [default: ""]
+
+Optional arguments:
+  -h, --help          	shows help message and exits 
+  -v, --version       	prints version information and exits 
+  -j, --jobs          	set the number of jobs [default: 1]
+  --continuous-output 	report partial results continuously, as and when available 
+  --debug-parsing     	debug parsing 
+  --debug-scanning    	debug scanning/lexing 
+  --exhaustive        	run the algorithm to completion, by setting the precision to 0 This may not solve the problem exactly in all cases; try --precision 0 for an explanation. 
+  --forall-polytope   	use polytope contractor in forall contractor 
+  --format            	file format. Any one of these: smt2, auto (use file extension) [default: "auto"]
+  --in                	read from standard input. Uses smt2 by default. 
+  --local-optimization	use local optimization algorithm for exist-forall problems 
+  --lp-solver         	set the LP solver. One of: soplex (or 1), qsoptex (or 2) [default: 1]
+  -m, --produce-models	produce models 
+  --nlopt-ftol-abs    	set the absolute tolerance on function value [default: 1e-06]
+  --nlopt-ftol-rel    	set the relative tolerance on function value [default: 1e-06]
+  --nlopt-maxeval     	set the maximum number of function evaluations [default: 100]
+  --nlopt-maxtime     	set the maximum optimization time (in second) [default: 0.01]
+  --polytope          	use polytope contractor 
+  -p, --precision     	set the precision of the solver [default: 0.001]
+  -r, --random-seed   	set the random seed [default: 0]
+  --sat-default-phase 	set default initial phase for SAT solver.
+			0 = false
+			1 = true
+			2 = Jeroslow-Wang
+			3 = random initial phase
+			 [default: Jeroslow-Wang]
+  --simplex-sat-phase 	set default initial phase for simplex. Either 1 or 2 [default: 1]
+  -t, --timings       	report timings alongside results 
+  --verbosity         	set verbosity level.0 for critical, 1 for error, 2 for warn, 3 for info, 4 for debug, 5 for trace.Any other value will disable logging. [default: 2]
+  --verbose-simplex   	set the verbosity level for simplex. In the range [0, 5] [default: 0]
+  --worklist-fixpoint 	use worklist fixpoint algorithm in ICP 
+    

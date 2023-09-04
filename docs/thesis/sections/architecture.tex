@@ -127,7 +127,15 @@ Each rule in the grammar is associated with an action, usually a \texttt{Driver}
 
 \section{Solvers}
 
-TODO
+The two solvers supported by \dlinear are \texttt{soplex} and \texttt{qsoptex}.
+Both represent the heart of the software.
+They are responsible for solving the \gls{lp} part of the problem, while being directed by the \texttt{picosat} \gls{sat} solver.
+
+While the \texttt{smt2} file is being parsed, each variable encountered is stored and added to the \texttt{Context} object.
+The same is true for all the assertion regarding the constraints of the problem, which represent the theory's atoms.
+When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem, to be passed to either \texttt{soplex} or \texttt{qsoptex} (\autoref{dg:qsoptex}).
+
+\plantuml{diagrams/sequence/qsoptex}{Simplified sequence diagram of the interactions between the \gls{sat} and theory solvers}{qsoptex}
 
 \section{Python bindings}
 
