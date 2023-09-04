@@ -102,11 +102,11 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
 
         // The selected assertions (and objective function, where applicable)
         // have already been enabled in the LP solver
-        int theory_result{
-            theory_solver_.CheckSat(box, theory_model,
-                                    sat_solver_.GetLinearSolver(),
-                                    sat_solver_.GetLinearVarMap(),
-                                    actual_precision)};
+        int theory_result{theory_solver_.CheckSat(box,
+                                                  theory_model,
+                                                  sat_solver_.GetLinearSolver(),
+                                                  sat_solver_.GetLinearVarMap(),
+                                                  actual_precision)};
         if (theory_result == SAT_DELTA_SATISFIABLE) {
           // SAT from TheorySolver.
           DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = delta-SAT");
@@ -179,17 +179,14 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
     DLINEAR_ASSERT(have_objective_, "Unexpected objective");
-    const auto optional_model =
-        sat_solver_.CheckSat(*box, optional<Expression>(obj_expr_));
+    const auto optional_model = sat_solver_.CheckSat(*box, optional<Expression>(obj_expr_));
     if (optional_model) {
-      const vector<pair<Variable, bool>>
-          &boolean_model{optional_model->first};
+      const vector<pair<Variable, bool>> &boolean_model{optional_model->first};
       for (const pair<Variable, bool> &p : boolean_model) {
         // Here, we modify Boolean variables only (not used by the LP solver).
         (*box)[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
       }
-      const vector<pair<Variable, bool>>
-          &theory_model{optional_model->second};
+      const vector<pair<Variable, bool>> &theory_model{optional_model->second};
       // It doesn't matter if theory_model_ is empty, because CheckOpt() can
       // handle the no-constraints and no-bounds case.  All necessary
       // information is passed through via sat_solver_.GetLinearSolver() and

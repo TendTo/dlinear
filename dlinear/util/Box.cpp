@@ -100,15 +100,14 @@ Box::Box(const vector <Variable> &variables)
 }
 
 void Box::Add(const Variable &v) {
-  if (v.get_type() == Variable::Type::BINARY ||
-      v.get_type() == Variable::Type::INTEGER) {
+  if (v.get_type() == Variable::Type::BINARY || v.get_type() == Variable::Type::INTEGER) {
     // QSopt_ex changes
     DLINEAR_RUNTIME_ERROR("Integer variables not supported");
   }
 
   // Duplicate variables are not allowed.
-  DLINEAR_ASSERT(find_if(variables_->begin(), variables_->end(),
-                         [&v](const Variable &var) { return v.equal_to(var); }) == variables_->end(),
+  DLINEAR_ASSERT(find_if(variables_->begin(), variables_->end(), [&v](const Variable &var) { return v.equal_to(var); })
+                     == variables_->end(),
                  "Duplicate variables are not allowed");
 
   if (!variables_.unique()) {
@@ -116,9 +115,7 @@ void Box::Add(const Variable &v) {
     // entity, we need to clone this before adding the variable `v`
     // so that these changes remain local.
     variables_ = make_shared<vector<Variable>>(*variables_);
-    var_to_idx_ =
-        make_shared<unordered_map<Variable, int, hash_value<Variable>>>(
-            *var_to_idx_);
+    var_to_idx_ = make_shared<unordered_map<Variable, int, hash_value<Variable>>>(*var_to_idx_);
     idx_to_var_ = make_shared<unordered_map<int, Variable >>(*idx_to_var_);
   }
   const int n{size()};
@@ -129,12 +126,10 @@ void Box::Add(const Variable &v) {
 
   // Set up Domain.
   // TODO(soonho): For now, we allow Boolean variables in a box. Change this.
-  if (v.get_type() == Variable::Type::BOOLEAN ||
-      v.get_type() == Variable::Type::BINARY) {
+  if (v.get_type() == Variable::Type::BOOLEAN || v.get_type() == Variable::Type::BINARY) {
     values_[n] = Interval(0, 1);
   } else if (v.get_type() == Variable::Type::INTEGER) {
-    values_[n] =
-        Interval(-numeric_limits<int>::max(), numeric_limits<int>::max());
+    values_[n] = Interval(-numeric_limits<int>::max(), numeric_limits<int>::max());
   }
 }
 
@@ -155,8 +150,7 @@ void Box::Add(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
 }
 
 bool Box::empty() const {
-  return std::any_of(values_.begin(), values_.end(),
-                     [](const Interval &iv) { return iv.is_empty(); });
+  return std::any_of(values_.begin(), values_.end(), [](const Interval &iv) { return iv.is_empty(); });
 }
 
 void Box::set_empty() {

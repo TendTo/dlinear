@@ -70,32 +70,24 @@ int Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model) {
 
 void Context::Impl::AddToBox(const Variable &v) {
   DLINEAR_DEBUG_FMT("ContextImpl::AddToBox({})", v);
-  const auto &variables = box().variables();
-  if (find_if(variables.begin(), variables.end(), [&v](const Variable &v_) {
-    return v.equal_to(v_);
-  }) == variables.end()) {
-    // v is not in box.
-    box().Add(v);
-  }
+  if (!box().has_variable(v)) box().Add(v);
 }
 
 void Context::Impl::DeclareVariable(const Variable &v, const bool is_model_variable) {
   DLINEAR_DEBUG_FMT("ContextImpl::DeclareVariable({})", v);
   AddToBox(v);
-  if (is_model_variable)
-    mark_model_variable(v);
+  if (is_model_variable) mark_model_variable(v);
 }
 
 void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Expression &ub) {
+  DLINEAR_TRACE_FMT("ContextImpl::SetDomain({}, [{}, {}])", v, lb, ub);
   const mpq_class &lb_fp = lb.Evaluate();
   const mpq_class &ub_fp = ub.Evaluate();
   SetInterval(v, lb_fp, ub_fp);
 }
 
 void Context::Impl::Minimize(const vector <Expression> &functions) {
-  if (functions.size() != 1) {
-    DLINEAR_RUNTIME_ERROR("Must have exactly one objective function");
-  }
+  DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   const Expression &obj_expr{functions[0].Expand()};
 
@@ -104,9 +96,7 @@ void Context::Impl::Minimize(const vector <Expression> &functions) {
 }
 
 void Context::Impl::Maximize(const vector <Expression> &functions) {
-  if (functions.size() != 1)
-    DLINEAR_RUNTIME_ERROR("Must have exactly one objective function");
-
+  DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   // Negate objective function
   const Expression &obj_expr{(-functions[0]).Expand()};
@@ -176,7 +166,7 @@ Box Context::Impl::ExtractModel(const Box &box) const {
 }
 
 bool Context::Impl::is_model_variable(const Variable &v) const {
-  return (model_variables_.find(v.get_id()) != model_variables_.end());
+  return model_variables_.find(v.get_id()) != model_variables_.end();
 }
 
 void Context::Impl::mark_model_variable(const Variable &v) {
