@@ -153,10 +153,15 @@ This particular archive contains all the shared libraries that make up the packa
 
 \lstinputlisting[language=c++,frame=single,showstringspaces=false,caption={Simplified example of \pydlinear's bindings},captionpos=b,label={code:example_python_bindings}]{code/example\_python\_bindings.cpp}
 
-The package has been uploaded to the \texttt{PyPI} repository, making it available to anyone with a \texttt{Linux x86\_64} machine.
-The package can be installed with the command \texttt{pip install pydlinear}.
+The package has been uploaded to the \texttt{PyPI} repository, making it available to anyone with a \texttt{Linux x86\_64} machine and \texttt{python 3.10}.
+It can be installed with the command
 
-TODO: pip
+\begin{lstlisting}[language=bash,frame=single,showstringspaces=false]
+$ pip install -i https://test.pypi.org/simple/ pydlinear==0.0.1
+\end{lstlisting}
+Once installed, the solver's API are accessible by importing the \pydlinear package in the script (\autoref{code:pydlinear.py}).
+
+\lstinputlisting[language=python,frame=single,showstringspaces=false,caption={Minimal python program using \pydlinear},captionpos=b,label={code:pydlinear.py}]{code/pydlinear.py}
 
 \section{Targets}
 

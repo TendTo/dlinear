@@ -1,12 +1,31 @@
 @startuml qsoptex
 
-autoactivate on
-
 participant Driver
 participant QsoptexImpl
-participant QsoptexTheorySolver
 participant QsoptexSatSolver
+participant QsoptexTheorySolver
 participant Picosat
 
+Driver -> QsoptexImpl ++: SetLogic(Context::Logic)
+return
+
+loop for each variable
+    Driver -> QsoptexImpl ++: DeclareVariable(Variable)
+    return
+    Driver -> QsoptexImpl ++: AddToBox(Variable)
+    return
+end
+
+loop for each formula
+    Driver -> QsoptexImpl ++: Assert(Formula)
+    QsoptexImpl -> QsoptexSatSolver ++: AddFormula(Formula)
+    QsoptexSatSolver -> QsoptexSatSolver : AddClause(?)
+    QsoptexSatSolver -> QsoptexSatSolver : MakeSatVar(?)
+    QsoptexSatSolver -> QsoptexSatSolver : AddLinearVariable(?)
+    return
+    return
+end
+
+Driver -> QsoptexImpl ++: CheckSatCore()
 
 @enduml
