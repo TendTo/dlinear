@@ -72,6 +72,26 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "infinity",
+    srcs = ["Infinity.cpp"],
+    hdrs = ["Infinity.h"],
+    visibility = [
+        "//benchmark:__subpackages__",
+        "//dlinear:__subpackages__",
+        "//test:__subpackages__",
+        "//third_party:__subpackages__",
+    ],
+    deps = [
+        ":config",
+        ":exception",
+        ":logging",
+        "//dlinear/libs:gmp",
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/libs:soplex",
+    ],
+)
+
+dlinear_cc_library(
     name = "box",
     srcs = ["Box.cpp"],
     hdrs = [

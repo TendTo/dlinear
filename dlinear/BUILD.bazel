@@ -18,20 +18,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "main_program",
-    srcs = ["MainProgram.cpp"],
-    hdrs = ["MainProgram.h"],
-    deps = [
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
-        "//dlinear/smt2",
-        "//dlinear/util:argparser",
-        "//dlinear/util:config",
-        "//dlinear/util:infty",
-    ],
-)
-
-dlinear_cc_library(
     name = "dlinear_header",
     hdrs = ["dlinear.h"],
     deps = [
@@ -50,7 +36,12 @@ dlinear_cc_binary(
     srcs = ["main.cpp"],
     features = ["fully_static_link"],
     linkstatic = 1,
-    deps = [":main_program"],
+    deps = [
+        "//dlinear/smt2",
+        "//dlinear/util:argparser",
+        "//dlinear/util:config",
+        "//dlinear/util:infinity",
+    ],
 )
 
 cpplint()

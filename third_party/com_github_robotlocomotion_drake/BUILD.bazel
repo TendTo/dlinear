@@ -38,6 +38,6 @@ cc_library(
     linkstatic = 1,
     deps = [
         "//dlinear/libs:gmp",
-        "//dlinear/util:infty",
+        "//dlinear/util:infinity",
     ],
 )

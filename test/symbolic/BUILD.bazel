@@ -8,7 +8,7 @@ dlinear_cc_library(
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
         "//dlinear/symbolic",
-        "//dlinear/util:infty",
+        "//dlinear/util:infinity",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
     ],
 )

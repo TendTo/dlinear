@@ -7,16 +7,16 @@
 
 #include "QsoptexSatSolver.h"
 
-#include "dlinear/util/infty.h"
+#include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 
+using std::abs;
 using std::cout;
+using std::make_pair;
+using std::pair;
 using std::set;
 using std::vector;
-using std::pair;
-using std::make_pair;
-using std::abs;
 using tl::optional;
 
 namespace dlinear {
@@ -39,8 +39,7 @@ QsoptexSatSolver::QsoptexSatSolver(const Config &config) : sat_{picosat_init()},
   mpq_QSset_param(qsx_prob_, QS_PARAM_SIMPLEX_DISPLAY, config_.verbose_simplex());
 }
 
-QsoptexSatSolver::QsoptexSatSolver(const Config &config, const vector <Formula> &clauses)
-    : QsoptexSatSolver{config} {
+QsoptexSatSolver::QsoptexSatSolver(const Config &config, const vector<Formula> &clauses) : QsoptexSatSolver{config} {
   AddClauses(clauses);
 }
 
@@ -62,7 +61,7 @@ void QsoptexSatSolver::AddFormula(const Formula &f) {
   AddClauses(clauses);
 }
 
-void QsoptexSatSolver::AddFormulas(const vector <Formula> &formulas) {
+void QsoptexSatSolver::AddFormulas(const vector<Formula> &formulas) {
   for (const Formula &f : formulas) {
     AddFormula(f);
   }
@@ -75,7 +74,7 @@ void QsoptexSatSolver::AddLearnedClause(const LiteralSet &literals) {
   picosat_add(sat_, 0);
 }
 
-void QsoptexSatSolver::AddClauses(const vector <Formula> &formulas) {
+void QsoptexSatSolver::AddClauses(const vector<Formula> &formulas) {
   for (const Formula &f : formulas) {
     AddClause(f);
   }
@@ -103,10 +102,7 @@ class SatSolverStat : public Stats {
     if (enabled()) {
       using fmt::print;
       print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat", "SAT level", num_check_sat_);
-      print(cout,
-            "{:<45} @ {:<20} = {:>15f} sec\n",
-            "Total time spent in SAT checks",
-            "SAT level",
+      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n", "Total time spent in SAT checks", "SAT level",
             timer_check_sat_.seconds());
     }
   }
@@ -136,8 +132,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
       for (int c : c_it->second) {
         int count = 0;
         size_t j;
-        for (j = c; j < main_clauses_copy_.size() &&
-            main_clauses_copy_[j]; ++j) {
+        for (j = c; j < main_clauses_copy_.size() && main_clauses_copy_[j]; ++j) {
           int k{main_clauses_copy_[j]};
           if (lits.find(k) != lits.end()) {
             ++count;
@@ -163,10 +158,9 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
   return lits;
 }
 
-optional <QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, optional <Expression> obj_expr) {
+optional<QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, optional<Expression> obj_expr) {
   static SatSolverStat stat{DLINEAR_INFO_ENABLED};
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat(#vars = {}, #clauses = {})",
-                    picosat_variables(sat_),
+  DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
 
   if (obj_expr.has_value()) {
@@ -208,8 +202,7 @@ optional <QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, op
         auto &boolean_model = model.first;
         boolean_model.emplace_back(var, i > 0);
       } else {
-        DLINEAR_TRACE_FMT("QsoptexSatSolver::CheckSat: Skip {}{} which is a temporary variable.",
-                          i > 0 ? "" : "¬",
+        DLINEAR_TRACE_FMT("QsoptexSatSolver::CheckSat: Skip {}{} which is a temporary variable.", i > 0 ? "" : "¬",
                           var);
       }
     }
@@ -246,13 +239,12 @@ void QsoptexSatSolver::Push() {
   cnf_variables_.push();
 }
 
-void QsoptexSatSolver::SetQSXVarCoef(int qsx_row, const Variable &var,
-                                     const mpq_class &value) {
+void QsoptexSatSolver::SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value) {
   const auto it = to_qsx_col_.find(var.get_id());
   if (it == to_qsx_col_.end()) {
     DLINEAR_RUNTIME_ERROR("Variable undefined: {}");
   }
-  if (value <= mpq_ninfty() || value >= mpq_infty()) {
+  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
   mpq_t c_value;
@@ -262,13 +254,12 @@ void QsoptexSatSolver::SetQSXVarCoef(int qsx_row, const Variable &var,
   mpq_clear(c_value);
 }
 
-void QsoptexSatSolver::SetQSXVarObjCoef(const Variable &var,
-                                        const mpq_class &value) {
+void QsoptexSatSolver::SetQSXVarObjCoef(const Variable &var, const mpq_class &value) {
   const auto it = to_qsx_col_.find(var.get_id());
   if (it == to_qsx_col_.end()) {
     DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
   }
-  if (value <= mpq_ninfty() || value >= mpq_infty()) {
+  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
   mpq_t c_value;
@@ -290,7 +281,7 @@ void QsoptexSatSolver::SetQSXVarBound(const Variable &var, const char type, cons
   if (it == to_qsx_col_.end()) {
     DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
   }
-  if (value <= mpq_ninfty() || value >= mpq_infty()) {
+  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
   }
   mpq_t c_value;
@@ -318,9 +309,9 @@ void QsoptexSatSolver::ResetLinearProblem(const Box &box) {
   DLINEAR_ASSERT(static_cast<size_t>(qsx_cols) == from_qsx_col_.size(), "Column count mismatch");
   for (const pair<int, Variable> kv : from_qsx_col_) {
     if (box.has_variable(kv.second)) {
-      DLINEAR_ASSERT(mpq_ninfty() <= box[kv.second].lb(), "Lower bound too low");
+      DLINEAR_ASSERT(Infinity::Ninfty() <= box[kv.second].lb(), "Lower bound too low");
       DLINEAR_ASSERT(box[kv.second].lb() <= box[kv.second].ub(), "Lower bound must be smaller than upper bound");
-      DLINEAR_ASSERT(box[kv.second].ub() <= mpq_infty(), "Upper bound too high");
+      DLINEAR_ASSERT(box[kv.second].ub() <= Infinity::Infty(), "Upper bound too high");
       mpq_QSchange_bound(qsx_prob_, kv.first, 'L', box[kv.second].lb().get_mpq_t());
       mpq_QSchange_bound(qsx_prob_, kv.first, 'U', box[kv.second].ub().get_mpq_t());
     } else {
@@ -336,8 +327,7 @@ static bool is_simple_bound(const Formula &formula) {
   }
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
-  return ((is_constant(lhs) && is_variable(rhs)) ||
-      (is_variable(lhs) && is_constant(rhs)));
+  return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
 }
 
 // Because the input precision > 0, and we have reduced this by a small amount,
@@ -360,9 +350,7 @@ static bool is_greater_or_whatever(const Formula &formula, bool truth) {
   }
 }
 
-static bool is_less_or_whatever(const Formula &formula, bool truth) {
-  return is_greater_or_whatever(formula, !truth);
-}
+static bool is_less_or_whatever(const Formula &formula, bool truth) { return is_greater_or_whatever(formula, !truth); }
 
 void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
   const auto it_row = to_qsx_row_.find(make_pair(var.get_id(), truth));
@@ -416,8 +404,7 @@ void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
   }
   // Either a learned literal, or a not-equal literal from the input
   // problem.
-  DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral: ignoring ({}, {})",
-                    var, truth);
+  DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
 }
 
 void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) {
@@ -473,8 +460,8 @@ void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) 
     SetQSXVarCoef(qsx_row, get_variable(expr), 1);
   } else if (is_multiplication(expr)) {
     std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second)
-        || get_constant_value(map.begin()->second) != 1) {
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
       DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
     }
     SetQSXVarCoef(qsx_row, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
@@ -490,7 +477,7 @@ void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) 
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
   }
-  if (qsx_rhs_.back() <= mpq_ninfty() || qsx_rhs_.back() >= mpq_infty()) {
+  if (qsx_rhs_.back() <= Infinity::Ninfty() || qsx_rhs_.back() >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", qsx_rhs_.back());
   }
   // Update indexes
@@ -579,8 +566,7 @@ void QsoptexSatSolver::AddLinearVariable(const Variable &var) {
     return;
   }
   const int qsx_col{mpq_QSget_colcount(qsx_prob_)};
-  int status = mpq_QSnew_col(qsx_prob_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY,
-                             var.get_name().c_str());
+  int status = mpq_QSnew_col(qsx_prob_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY, var.get_name().c_str());
   DLINEAR_ASSERT(!status, "Invalid status");
   to_qsx_col_.emplace(make_pair(var.get_id(), qsx_col));
   from_qsx_col_[qsx_col] = var;
@@ -607,14 +593,11 @@ void QsoptexSatSolver::SetLinearObjective(const Expression &expr) {
     SetQSXVarObjCoef(get_variable(expr), 1);
   } else if (is_multiplication(expr)) {
     std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1
-        || !is_variable(map.begin()->first)
-        || !is_constant(map.begin()->second)
-        || get_constant_value(map.begin()->second) != 1) {
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
       DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
     }
-    SetQSXVarObjCoef(get_variable(map.begin()->first),
-                     get_constant_in_multiplication(expr));
+    SetQSXVarObjCoef(get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     if (0 != get_constant_in_addition(expr)) {
@@ -641,4 +624,4 @@ const std::map<int, Variable> &QsoptexSatSolver::GetLinearVarMap() const {
   return from_qsx_col_;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

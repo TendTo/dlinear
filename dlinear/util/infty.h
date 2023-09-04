@@ -22,7 +22,7 @@ void InftyStart(double val);
 void InftyFinish();
 
 const mpq_class &mpq_infty();
-const mpq_class &mpq_ninfty();
+const mpq_class &Infinity::Ninfty();
 
 } // namespace dlinear
 

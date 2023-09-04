@@ -7,28 +7,25 @@
 
 #include "QsoptexTheorySolver.h"
 
-#include "dlinear/util/logging.h"
-#include "dlinear/util/exception.h"
-#include "dlinear/util/Timer.h"
-#include "dlinear/util/infty.h"
 #include "dlinear/solver/Context.h"
+#include "dlinear/util/Infinity.h"
+#include "dlinear/util/Timer.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 using std::cout;
 using std::endl;
-using std::set;
-using std::vector;
-using std::pair;
 using std::nextafter;
 using std::numeric_limits;
+using std::pair;
+using std::set;
+using std::vector;
 
 using dlinear::qsopt_ex::MpqArray;
-using dlinear::mpq_infty;
-using dlinear::mpq_ninfty;
 
 namespace dlinear {
 
-QsoptexTheorySolver::QsoptexTheorySolver(const Config &config) : config_{config} {
-}
+QsoptexTheorySolver::QsoptexTheorySolver(const Config &config) : config_{config} {}
 
 namespace {
 class TheorySolverStat : public Stats {
@@ -42,10 +39,7 @@ class TheorySolverStat : public Stats {
     if (enabled()) {
       using fmt::print;
       print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat", "Theory level", num_check_sat_);
-      print(cout,
-            "{:<45} @ {:<20} = {:>15f} sec\n",
-            "Total time spent in CheckSat",
-            "Theory level",
+      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n", "Total time spent in CheckSat", "Theory level",
             timer_check_sat_.seconds());
     }
   }
@@ -60,16 +54,12 @@ class TheorySolverStat : public Stats {
 
 }  // namespace
 
-int QsoptexTheorySolver::CheckOpt(const Box &box,
-                                  mpq_class *obj_lo,
-                                  mpq_class *obj_up,
-                                  const std::vector<Literal> &assertions,
-                                  const mpq_QSprob prob,
+int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *obj_up,
+                                  const std::vector<Literal> &assertions, const mpq_QSprob prob,
                                   const std::map<int, Variable> &var_map) {
   static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
-  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(),
-                                   true /* start_timer */);
+  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
 
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::CheckOpt: Box = \n{}", box);
 
@@ -124,17 +114,17 @@ int QsoptexTheorySolver::CheckOpt(const Box &box,
       mpq_class obj_coef{obj[kv.first]};
       if (obj_coef > 0) {
         val = ub;
-        if (ub >= mpq_infty()) {
+        if (ub >= Infinity::Infty()) {
           lp_status = LP_UNBOUNDED;
         }
       } else if (obj_coef < 0) {
         val = lb;
-        if (lb <= mpq_ninfty()) {
+        if (lb <= Infinity::Ninfty()) {
           lp_status = LP_UNBOUNDED;
         }
-      } else if (mpq_ninfty() < lb) {
+      } else if (Infinity::Ninfty() < lb) {
         val = lb;
-      } else if (ub < mpq_infty()) {
+      } else if (ub < Infinity::Infty()) {
         val = ub;
       } else {
         val = 0;
@@ -153,9 +143,9 @@ int QsoptexTheorySolver::CheckOpt(const Box &box,
   int qs_lp_status = -1;
   DLINEAR_DEBUG("QsoptexTheorySolver::CheckOpt: calling QSopt_ex (full LP solver)");
 
-  status = QSdelta_full_solver(prob, precision_.get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(y),
-                               obj_lo->get_mpq_t(), obj_up->get_mpq_t(), NULL,
-                               PRIMAL_SIMPLEX, &qs_lp_status, NULL, NULL);
+  status =
+      QSdelta_full_solver(prob, precision_.get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(y),
+                          obj_lo->get_mpq_t(), obj_up->get_mpq_t(), NULL, PRIMAL_SIMPLEX, &qs_lp_status, NULL, NULL);
 
   if (status) {
     DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
@@ -195,37 +185,33 @@ int QsoptexTheorySolver::CheckOpt(const Box &box,
       explanation_.insert(assertions.begin(), assertions.end());
       lp_status = LP_UNSOLVED;
       break;
-    case QS_LP_UNBOUNDED:lp_status = LP_UNBOUNDED;
+    case QS_LP_UNBOUNDED:
+      lp_status = LP_UNBOUNDED;
       break;
-    case QS_LP_ITER_LIMIT:DLINEAR_RUNTIME_ERROR("Iteration limit reached");
-    default:DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned LP status {}", qs_lp_status);
+    case QS_LP_ITER_LIMIT:
+      DLINEAR_RUNTIME_ERROR("Iteration limit reached");
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned LP status {}", qs_lp_status);
   }
 
   return lp_status;
 }
 
-extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/,
-                                               mpq_t *const /*x*/,
-                                               const mpq_t infeas,
-                                               const mpq_t /*delta*/,
-                                               void *data) {
+extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_t *const /*x*/, const mpq_t infeas,
+                                               const mpq_t /*delta*/, void *data) {
   auto *theory_solver = static_cast<QsoptexTheorySolver *>(data);
   // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
   double infeas_gt = nextafter(mpq_get_d(infeas), numeric_limits<double>::infinity());
   // fmt::print uses shortest round-trip format for doubles, by default
-  fmt::print("PARTIAL: delta-sat with delta = {} ( > {})",
-             infeas_gt, mpq_class(infeas));
+  fmt::print("PARTIAL: delta-sat with delta = {} ( > {})", infeas_gt, mpq_class(infeas));
   if (theory_solver->config_.with_timings()) {
     fmt::print(" after {} seconds", main_timer.seconds());
   }
   fmt::print("\n");
 }
 
-int QsoptexTheorySolver::CheckSat(const Box &box,
-                                  const std::vector<Literal> &assertions,
-                                  const mpq_QSprob prob,
-                                  const std::map<int, Variable> &var_map,
-                                  mpq_class *actual_precision) {
+int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &assertions, const mpq_QSprob prob,
+                                  const std::map<int, Variable> &var_map, mpq_class *actual_precision) {
   static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
   TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
@@ -276,9 +262,9 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
     }
     if (rowcount == 0) {
       mpq_class val;
-      if (mpq_ninfty() < lb) {
+      if (Infinity::Ninfty() < lb) {
         val = lb;
-      } else if (ub < mpq_infty()) {
+      } else if (ub < Infinity::Infty()) {
         val = ub;
       } else {
         val = 0;
@@ -301,15 +287,13 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
 
   *actual_precision = precision_;
   if (1 == config_.simplex_sat_phase()) {
-    status = QSdelta_solver(prob, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), nullptr, nullptr,
-                            PRIMAL_SIMPLEX, &lp_status,
-                            config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr,
-                            this);
+    status =
+        QSdelta_solver(prob, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX,
+                       &lp_status, config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr, this);
   } else {
-    status = QSexact_delta_solver(prob, static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX,
-                                  &lp_status, actual_precision->get_mpq_t(),
-                                  config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr,
-                                  this);
+    status = QSexact_delta_solver(prob, static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX, &lp_status,
+                                  actual_precision->get_mpq_t(),
+                                  config_.continuous_output() ? QsoptexCheckSatPartialSolution : nullptr, this);
   }
 
   if (status) {
@@ -320,13 +304,17 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
 
   switch (lp_status) {
     case QS_LP_FEASIBLE:
-    case QS_LP_DELTA_FEASIBLE:sat_status = SAT_DELTA_SATISFIABLE;
+    case QS_LP_DELTA_FEASIBLE:
+      sat_status = SAT_DELTA_SATISFIABLE;
       break;
-    case QS_LP_INFEASIBLE:sat_status = SAT_UNSATISFIABLE;
+    case QS_LP_INFEASIBLE:
+      sat_status = SAT_UNSATISFIABLE;
       break;
-    case QS_LP_UNSOLVED:sat_status = SAT_UNSOLVED;
+    case QS_LP_UNSOLVED:
+      sat_status = SAT_UNSOLVED;
       break;
-    default:DLINEAR_UNREACHABLE();
+    default:
+      DLINEAR_UNREACHABLE();
   }
 
   if (sat_status == SAT_UNSOLVED) {
@@ -338,8 +326,9 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
     case SAT_DELTA_SATISFIABLE:
       // Copy delta-feasible point from x into model_
       for (const pair<const int, Variable> &kv : var_map) {
-        DLINEAR_ASSERT(model_[kv.second].lb() <= mpq_class(x[kv.first]) &&
-            mpq_class(x[kv.first]) <= model_[kv.second].ub(), "x[kv.first] must be in bounds");
+        DLINEAR_ASSERT(
+            model_[kv.second].lb() <= mpq_class(x[kv.first]) && mpq_class(x[kv.first]) <= model_[kv.second].ub(),
+            "x[kv.first] must be in bounds");
         model_[kv.second] = x[kv.first];
       }
       sat_status = SAT_DELTA_SATISFIABLE;
@@ -350,7 +339,8 @@ int QsoptexTheorySolver::CheckSat(const Box &box,
       explanation_.clear();
       explanation_.insert(assertions.begin(), assertions.end());
       break;
-    default:DLINEAR_UNREACHABLE();
+    default:
+      DLINEAR_UNREACHABLE();
   }
 
   return sat_status;
@@ -361,8 +351,6 @@ const Box &QsoptexTheorySolver::GetModel() const {
   return model_;
 }
 
-const LiteralSet &QsoptexTheorySolver::GetExplanation() const {
-  return explanation_;
-}
+const LiteralSet &QsoptexTheorySolver::GetExplanation() const { return explanation_; }
 
-} // namespace dlinear
+}  // namespace dlinear

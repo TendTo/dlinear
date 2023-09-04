@@ -9,9 +9,14 @@
  * Use the @verbatim-h@verbatim flag to show the help tooltip.
  */
 #include <csignal>
-#include "dlinear/MainProgram.h"
 
-using dlinear::MainProgram;
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/soplex.h"
+#include "dlinear/smt2/run.h"
+#include "dlinear/solver/Context.h"
+#include "dlinear/util/ArgParser.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/Infinity.h"
 
 namespace {
 void HandleSigInt(const int) {
@@ -22,7 +27,21 @@ void HandleSigInt(const int) {
 }  // namespace
 
 int main(int argc, const char *argv[]) {
+  // Handle C-c.
   std::signal(SIGINT, HandleSigInt);
-  MainProgram main_program{argc, argv};
-  return main_program.Run();
+
+  // Initialize the command line parser.
+  dlinear::ArgParser parser{QSopt_ex_repository_status(), soplex::getGitHash()};
+  // Parse the command line arguments.
+  parser.parse(argc, argv);
+  // Get the configuration from the command line arguments.
+  dlinear::Config config_ = parser.toConfig();
+
+  // Initialize the infinity values for the chosen LP solver.
+  dlinear::Infinity::InftyStart(config_);
+  // Run the smt2 parser on the input file.
+  dlinear::RunSmt2(config_);
+  // Clean up the infinity values.
+  dlinear::Infinity::InftyFinish();
+  return 0;
 }

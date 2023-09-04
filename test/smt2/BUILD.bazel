@@ -24,7 +24,7 @@ dlinear_cc_binary(
         "//dlinear/symbolic",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
-        "//dlinear/util:infty",
+        "//dlinear/util:infinity",
     ],
 )
 

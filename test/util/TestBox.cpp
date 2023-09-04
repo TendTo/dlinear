@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "dlinear/util/infty.h"
+#include "dlinear/util/Infinity.h"
 
 using std::is_nothrow_move_constructible;
 using std::numeric_limits;
@@ -41,7 +41,7 @@ class TestBox : public ::testing::Test {
   const Variable b2_{"j", Variable::Type::BINARY};
 #endif
 
-  const mpq_class inf_{mpq_infty()};
+  const mpq_class inf_{Infinity::Infty()};
 };
 
 TEST_F(TestBox, AddHasVariable) {

@@ -41,12 +41,8 @@ void InftyFinish() {
 // Important: must call InftyStart() first!
 // Also, if using QSXStart(), must call it before InftyStart().
 
-const mpq_class &mpq_infty() {
-  return *mpq_class_infinity;
-}
+const mpq_class &mpq_infty() { return *mpq_class_infinity; }
 
-const mpq_class &mpq_ninfty() {
-  return *mpq_class_ninfinity;
-}
+const mpq_class &Infinity::Ninfty() { return *mpq_class_ninfinity; }
 
-} // namespace dlinear
+}  // namespace dlinear

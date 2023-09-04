@@ -7,12 +7,14 @@
 
 #include "Box.h"
 
+#include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
-#include "dlinear/util/infty.h"
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 #include "dlinear/util/math.h"
-#include "dlinear/util/exception.h"
 
+using dlinear::gmp::ceil;
+using dlinear::gmp::floor;
 using std::equal;
 using std::find_if;
 using std::make_pair;
@@ -22,12 +24,10 @@ using std::ostream;
 using std::pair;
 using std::unordered_map;
 using std::vector;
-using dlinear::gmp::floor;
-using dlinear::gmp::ceil;
 
 namespace dlinear {
 
-Box::Interval::Interval() : lb_(mpq_ninfty()), ub_(mpq_infty()) {}
+Box::Interval::Interval() : lb_(Infinity::Ninfty()), ub_(Infinity::Infty()) {}
 
 Box::Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
   DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
@@ -52,17 +52,17 @@ std::pair<Box::Interval, Box::Interval> Box::Interval::bisect(const mpq_class &p
 std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
   if (iv.is_empty()) {
     return os << "[ empty ]";
-  } else if (iv.lb() <= mpq_ninfty() && iv.ub() >= mpq_infty()) {
+  } else if (iv.lb() <= Infinity::Ninfty() && iv.ub() >= Infinity::Infty()) {
     return os << "[ ENTIRE ]";
   } else {
     os << "[";
-    if (iv.lb() <= mpq_ninfty()) {
+    if (iv.lb() <= Infinity::Ninfty()) {
       os << "-inf";
     } else {
       os << iv.lb();
     }
     os << ", ";
-    if (iv.ub() >= mpq_infty()) {
+    if (iv.ub() >= Infinity::Infty()) {
       os << "inf";
     } else {
       os << iv.ub();
@@ -74,26 +74,25 @@ std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
 Box::Interval Box::Interval::fromString(const std::string &s) {
   RoundingModeGuard guard(FE_UPWARD);
   const double ub{stod(s)};
-  double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s); // TODO: shouldn't this be -stod(s) or even -ub?
+  double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s);  // TODO: shouldn't this be -stod(s) or even -ub?
   return Box::Interval{lb, ub};
 }
 
-Box::Box() : variables_{make_shared < vector < Variable >> ()},
-    // We have this hack here because it is not allowed to have a
-    // zero interval vector. Note that because of this special case,
-    // `variables_->size() == values_.size()` do not hold. We should
-    // rely on `values_.size()`.
-             values_(1),
-             var_to_idx_{
-                 make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
-             idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {}
+Box::Box()
+    : variables_{make_shared<vector<Variable>>()},
+      // We have this hack here because it is not allowed to have a
+      // zero interval vector. Note that because of this special case,
+      // `variables_->size() == values_.size()` do not hold. We should
+      // rely on `values_.size()`.
+      values_(1),
+      var_to_idx_{make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{make_shared<unordered_map<int, Variable>>()} {}
 
-Box::Box(const vector <Variable> &variables)
-    : variables_{make_shared < vector < Variable >> ()},
+Box::Box(const vector<Variable> &variables)
+    : variables_{make_shared<vector<Variable>>()},
       values_(static_cast<int>(variables.size())),
-      var_to_idx_{
-          make_shared < unordered_map < Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared < unordered_map < int, Variable >> ()} {
+      var_to_idx_{make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{make_shared<unordered_map<int, Variable>>()} {
   for (const Variable &var : variables) {
     Add(var);
   }
@@ -106,8 +105,8 @@ void Box::Add(const Variable &v) {
   }
 
   // Duplicate variables are not allowed.
-  DLINEAR_ASSERT(find_if(variables_->begin(), variables_->end(), [&v](const Variable &var) { return v.equal_to(var); })
-                     == variables_->end(),
+  DLINEAR_ASSERT(find_if(variables_->begin(), variables_->end(),
+                         [&v](const Variable &var) { return v.equal_to(var); }) == variables_->end(),
                  "Duplicate variables are not allowed");
 
   if (!variables_.unique()) {
@@ -116,7 +115,7 @@ void Box::Add(const Variable &v) {
     // so that these changes remain local.
     variables_ = make_shared<vector<Variable>>(*variables_);
     var_to_idx_ = make_shared<unordered_map<Variable, int, hash_value<Variable>>>(*var_to_idx_);
-    idx_to_var_ = make_shared<unordered_map<int, Variable >>(*idx_to_var_);
+    idx_to_var_ = make_shared<unordered_map<int, Variable>>(*idx_to_var_);
   }
   const int n{size()};
   idx_to_var_->emplace(n, v);
@@ -165,24 +164,18 @@ Box::Interval &Box::operator[](const int i) {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-Box::Interval &Box::operator[](const Variable &var) {
-  return values_[(*var_to_idx_)[var]];
-}
+Box::Interval &Box::operator[](const Variable &var) { return values_[(*var_to_idx_)[var]]; }
 const Box::Interval &Box::operator[](const int i) const {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-const Box::Interval &Box::operator[](const Variable &var) const {
-  return values_[(*var_to_idx_)[var]];
-}
+const Box::Interval &Box::operator[](const Variable &var) const { return values_[(*var_to_idx_)[var]]; }
 
-const vector <Variable> &Box::variables() const { return *variables_; }
+const vector<Variable> &Box::variables() const { return *variables_; }
 
 const Variable &Box::variable(const int i) const { return (*idx_to_var_)[i]; }
 
-bool Box::has_variable(const Variable &var) const {
-  return var_to_idx_->count(var) > 0;
-}
+bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(var) > 0; }
 
 int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
 
@@ -202,21 +195,24 @@ pair<mpq_class, int> Box::MaxDiam() const {
   return make_pair(max_diam, idx);
 }
 
-pair <Box, Box> Box::bisect(const int i) const {
+pair<Box, Box> Box::bisect(const int i) const {
   const Variable &var{(*idx_to_var_)[i]};
   if (!values_[i].is_bisectable()) {
     DLINEAR_RUNTIME_ERROR_FMT("Variable {} = {} is not bisectable but Box::bisect is called.", var, values_[i]);
   }
   switch (var.get_type()) {
-    case Variable::Type::CONTINUOUS:return bisect_continuous(i);
+    case Variable::Type::CONTINUOUS:
+      return bisect_continuous(i);
     case Variable::Type::INTEGER:
-    case Variable::Type::BINARY:return bisect_int(i);
-    case Variable::Type::BOOLEAN:DLINEAR_UNREACHABLE();
+    case Variable::Type::BINARY:
+      return bisect_int(i);
+    case Variable::Type::BOOLEAN:
+      DLINEAR_UNREACHABLE();
   }
   DLINEAR_UNREACHABLE();
 }
 
-pair <Box, Box> Box::bisect(const Variable &var) const {
+pair<Box, Box> Box::bisect(const Variable &var) const {
   auto it = var_to_idx_->find(var);
   if (it != var_to_idx_->end()) {
     return bisect(it->second);
@@ -226,9 +222,9 @@ pair <Box, Box> Box::bisect(const Variable &var) const {
   return bisect((*var_to_idx_)[var]);
 }
 
-pair <Box, Box> Box::bisect_int(const int i) const {
-  DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::INTEGER
-                     || idx_to_var_->at(i).get_type() == Variable::Type::BINARY,
+pair<Box, Box> Box::bisect_int(const int i) const {
+  DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::INTEGER ||
+                     idx_to_var_->at(i).get_type() == Variable::Type::BINARY,
                  "Variable must be integer or binary");
   const Interval &intv_i{values_[i]};
   const mpz_class &lb{ceil(intv_i.lb())};
@@ -247,7 +243,7 @@ pair <Box, Box> Box::bisect_int(const int i) const {
   return make_pair(b1, b2);
 }
 
-pair <Box, Box> Box::bisect_continuous(const int i) const {
+pair<Box, Box> Box::bisect_continuous(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::CONTINUOUS, "Variable must be continuous");
   Box b1{*this};
   Box b2{*this};
@@ -297,7 +293,8 @@ ostream &operator<<(ostream &os, const Box &box) {
     switch (var.get_type()) {
       case Variable::Type::INTEGER:
       case Variable::Type::BINARY:
-      case Variable::Type::CONTINUOUS:os << interval;
+      case Variable::Type::CONTINUOUS:
+        os << interval;
         break;
       case Variable::Type::BOOLEAN:
         if (interval.ub() == 0.0)
@@ -308,33 +305,28 @@ ostream &operator<<(ostream &os, const Box &box) {
           os << "Unassigned";
         break;
     }
-    if (i != box.size())
-      os << "\n";
+    if (i != box.size()) os << "\n";
   }
   return os;
 }
 
 bool operator==(const Box &b1, const Box &b2) {
-  return equal(b1.variables().begin(), b1.variables().end(),
-               b2.variables().begin(), b2.variables().end(),
+  return equal(b1.variables().begin(), b1.variables().end(), b2.variables().begin(), b2.variables().end(),
                std::equal_to<Variable>{}) &&
-      (b1.interval_vector() == b2.interval_vector());
+         (b1.interval_vector() == b2.interval_vector());
 }
 
 bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 
-ostream &DisplayDiff(ostream &os,
-                     const vector <Variable> &variables,
-                     const Box::IntervalVector &old_iv,
+ostream &DisplayDiff(ostream &os, const vector<Variable> &variables, const Box::IntervalVector &old_iv,
                      const Box::IntervalVector &new_iv) {
   IosFmtFlagSaver saver{os};
   for (size_t i = 0; i < variables.size(); ++i) {
     const Box::Interval &old_i{old_iv[i]};
     const Box::Interval &new_i{new_iv[i]};
-    if (old_i != new_i)
-      os << variables[i] << " : " << old_i << " -> " << new_i << "\n";
+    if (old_i != new_i) os << variables[i] << " : " << old_i << " -> " << new_i << "\n";
   }
   return os;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

@@ -16,7 +16,7 @@
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
-#include "dlinear/util/infty.h"
+#include "dlinear/util/Infinity.h"
 
 namespace dlinear::drake::symbolic {
 
@@ -29,8 +29,8 @@ using std::string;
 using std::vector;
 using std::isinf;
 using std::isnan;
-using dlinear::mpq_infty;
-using dlinear::mpq_ninfty;
+using dlinear::Infinity;
+using dlinear::Infinity;
 
 bool operator<(ExpressionKind k1, ExpressionKind k2) {
   return static_cast<int>(k1) < static_cast<int>(k2);
@@ -125,7 +125,7 @@ ExpressionCell *Expression::make_cell(const mpq_class &d) {
     return Expression::Pi().ptr_;
   } else if (d == M_E) {
     return Expression::E().ptr_;
-  } else if (d <= mpq_ninfty() || d >= mpq_infty()) {
+  } else if (d <= Infinity::Ninfty() || d >= Infinity::Infty()) {
     throw runtime_error("Number too large for QSopt_ex");
   } else {
     return new ExpressionConstant(d);
@@ -1038,5 +1038,5 @@ Expression operator-(const Variable &var) { return -Expression{var}; }
 
 
 mpq_class std::numeric_limits<dlinear::drake::symbolic::Expression>::infinity() {
-  return dlinear::mpq_infty();
+  return dlinear::Infinity::Infty();
 }
