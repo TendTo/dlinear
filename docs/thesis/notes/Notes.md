@@ -23,7 +23,7 @@ This is a very common scenario.
 For this reason, there exists a set of rules called \textit{ForeignCc} \footnote{\url{https://github.com/bazelbuild/rules_foreign_cc}} meant to easy the process and automate it as much as possible.
 They support the most common tools, such as CMake, make and the autotools, such as autoconf and autoreconf.
 Since each project is different, a long and tedious process of trial and error is required to make the rules work with all the configurations.
-The results of this process are the \texttt{soplex.BUILD.bazel} and \texttt{qsoptex.BUILD.bazel} files in the \texttt{third\_party} directory.
+The results of this process are the \texttt{soplex.BUILD.bazel} and \texttt{qsoptex.BUILD.bazel} files in the \texttt{third_party} directory.
 
 ## TODO
 
@@ -35,3 +35,24 @@ The results of this process are the \texttt{soplex.BUILD.bazel} and \texttt{qsop
 - [ ] Singleton for initialization of the library
 - [ ] Complete benchmarks
 - [ ] Fix Readme.md
+
+### Refactor
+
+- [x] Port the whole dlinear4
+- [x] Add tests
+- [ ] Add benchmark
+- [ ] Add python bindings
+- [ ] Add documentation
+- [ ] Add examples
+- [ ] Add CI
+
+### Compile-side
+
+- [ ] Remove need for gmp-dev by compiling it with bazel
+- [ ] Make soplex and qsopt_ex depend on the compiled gmp withing bazel
+- [ ] Compile flex and bison with bazel
+
+### Compilation flags
+
+- `--//tools:enable_soplex=[True|False]` to enable or disable soplex. Default is `True`
+- `--//tools:enable_qsoptex=[True|False]` to enable or disable qsopt_ex. Default is `True`
