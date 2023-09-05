@@ -14,6 +14,7 @@ pybind_extension(
         "//dlinear/libs:soplex",
         "//dlinear/smt2",
         "//dlinear/symbolic",
+        "//dlinear/util:argparser",
         "//dlinear/util:config",
     ],
 )
