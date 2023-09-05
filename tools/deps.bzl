@@ -1,5 +1,4 @@
-"""Load all dependencies for the project.
-"""
+"""Load all dependencies for the project."""
 
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 load("//tools/lexyacc:lexyacc.bzl", "register_toolchain")
@@ -11,7 +10,12 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 # Create a central repo that knows about the dependencies needed from
 # requirements_lock.txt.
 
-def load_dependencies():
+def load_dependencies(name):
+    """Load all dependencies for the project.
+
+    Args:
+        name: Unused.
+    """
     rules_foreign_cc_dependencies()
     register_toolchain("linux")
     python_configure(

@@ -1,5 +1,5 @@
-# Based on Drake's drake.bzl file,
-# https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl.
+"""Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
+
 load("@rules_python//python:defs.bzl", "py_test")
 
 DLINEAR_NAME = "dlinear"

@@ -1,3 +1,5 @@
+"""Flex header library. Used by the C++ lexer class."""
+
 licenses(["notice"])  # BSD
 
 cc_library(

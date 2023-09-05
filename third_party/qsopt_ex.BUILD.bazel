@@ -1,6 +1,8 @@
-licenses(["notice"])  # GNU General Public License v3.0
+"""Include the qsopt-ex LP solver library in the project."""
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+licenses(["notice"])  # GNU General Public License v3.0
 
 genrule(
     name = "qsopt_ex_git",

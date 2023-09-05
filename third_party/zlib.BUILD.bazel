@@ -1,4 +1,4 @@
-# Copied from https://github.com/protocolbuffers/protobuf/blob/master/third_party/zlib.BUILD
+"""Copied from https://github.com/protocolbuffers/protobuf/blob/master/third_party/zlib.BUILD
 
 #  Copyright 2008 Google Inc.  All rights reserved.
 #
@@ -32,7 +32,7 @@
 #  of the input file used when generating it.  This code is not
 #  standalone and requires a support library to be linked with it.  This
 #  support library is itself covered by the above license.
-
+"""
 licenses(["notice"])  # BSD/MIT-like license (for zlib)
 
 _ZLIB_HEADERS = [

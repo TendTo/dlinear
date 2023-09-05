@@ -1,3 +1,7 @@
+"""Builds the tl-optional library.
+It offers a better abstraction for the optional type than the one in the
+standard library.
+"""
 licenses(["notice"])  # Creative Commons Zero v1.0 Universal
 
 cc_library(

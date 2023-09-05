@@ -1,6 +1,8 @@
-licenses(["notice"])  # Apache 2.0 License
+"""Include the soplex LP solver library in the build."""
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+licenses(["notice"])  # Apache 2.0 License
 
 cmake(
     name = "soplex",

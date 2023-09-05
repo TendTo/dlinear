@@ -1,11 +1,13 @@
-# Copied from https://github.com/llvm/llvm-project/blob/main/utils/bazel/third_party_build/gmp.BUILD and https://github.com/bazelbuild/rules_foreign_cc/issues/296
-# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
-# See https://llvm.org/LICENSE.txt for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-# TODO: Remove this file if gmp remains a dependency to be installed in the system
-licenses(["notice"])
+"""Copied from https://github.com/llvm/llvm-project/blob/main/utils/bazel/third_party_build/gmp.BUILD and https://github.com/bazelbuild/rules_foreign_cc/issues/296
+This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+See https://llvm.org/LICENSE.txt for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+TODO: Remove this file if gmp remains a dependency to be installed in the system
+"""
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+licenses(["notice"])
 
 configure_make(
     name = "gmp",

@@ -1,3 +1,4 @@
+"""Include the picosat SAT solver in the build."""
 licenses(["notice"])  # MIT
 
 cc_library(

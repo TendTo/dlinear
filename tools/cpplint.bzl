@@ -1,4 +1,7 @@
-# From https://bazel.build/versions/master/docs/be/c-cpp.html#cc_library.srcs
+"""From https://bazel.build/versions/master/docs/be/c-cpp.html#cc_library.srcs
+Used to lint all C++ files in the targets of a BUILD file
+"""
+
 load("@rules_python//python:defs.bzl", "py_test")
 
 _SOURCE_EXTENSIONS = [
@@ -65,7 +68,9 @@ def _add_linter_rules(source_labels, source_filenames, name, data = None):
     )
 
 def cpplint(data = None, extra_srcs = None):
-    """For every rule in the BUILD file so far, adds a test rule that runs
+    """Add a cpplint target for every c++ source file in each target in the BUILD file so far.
+
+    For every rule in the BUILD file so far, adds a test rule that runs
     cpplint over the C++ sources listed in that rule.  Thus, BUILD file authors
     should call this function at the *end* of every C++-related BUILD file.
 
@@ -74,6 +79,10 @@ def cpplint(data = None, extra_srcs = None):
 
     Sources that are not discoverable through the "sources so far" heuristic can
     be passed in as extra_srcs=[].
+
+    Args:
+        data: additional data to include in the py_test() rule.
+        extra_srcs: additional sources to lint.
     """
 
     # Iterate over all rules.
