@@ -129,11 +129,11 @@ Each rule in the grammar is associated with an action, usually a \texttt{Driver}
 
 The two solvers supported by \dlinear are \texttt{soplex} and \texttt{qsoptex}.
 Both represent the heart of the software.
-They are responsible for solving the \gls{lp} part of the problem, while being directed by the \texttt{picosat} \gls{sat} solver.
+They are responsible for solving the \gls{lp} part of the problem while being directed by the \texttt{picosat} \gls{sat} solver.
 
 While the \texttt{smt2} file is being parsed, each variable encountered is stored and added to the \texttt{Context} object.
-The same is true for all the assertion regarding the constraints of the problem, which represent the theory's atoms.
-When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem, to be passed to either \texttt{soplex} or \texttt{qsoptex} (\autoref{dg:qsoptex}).
+The same is true for all the assertions regarding the problem's constraints, which represent the theory's atoms.
+When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex} (\autoref{dg:qsoptex}).
 
 \plantuml{diagrams/sequence/qsoptex}{Simplified sequence diagram of the interactions between the \gls{sat} and theory solvers}{qsoptex}
 
@@ -167,7 +167,7 @@ It can be installed with the command
 \begin{lstlisting}[language=bash,frame=single,showstringspaces=false]
 $ pip install -i https://test.pypi.org/simple/ pydlinear==0.0.1
 \end{lstlisting}
-Once installed, the solver's API are accessible by importing the \pydlinear package in the script (\autoref{code:pydlinear.py}).
+Once installed, the solver's APIs are accessible by importing the \pydlinear package in the script (\autoref{code:pydlinear.py}).
 
 \lstinputlisting[language=python,frame=single,showstringspaces=false,caption={Minimal python program using \pydlinear},captionpos=b,label={code:pydlinear.py}]{code/pydlinear.py}
 
@@ -179,7 +179,7 @@ What follows is a synopsis of the most essential targets used in \dlinear and th
 
 \begin{itemize}
         \item \textbf{//dlinear}: supports both \textit{build} and \textit{run} actions.
-              It is the project's main target, and it is used by the \texttt{benchmark} and \texttt{test} targets.
+              It is the project's main target, used by the \texttt{benchmark} and \texttt{test} targets.
               It produces the fully static binary \texttt{dlinea5}, located in the \texttt{bazel-bin/dlinear} folder.
         \item \textbf{//benchmark}: supports both \textit{build} and \textit{run} actions.
               It creates a binary that wraps the \texttt{dlinear} and measures the time it takes to run the program on a set of problems with a given solver and precision.
