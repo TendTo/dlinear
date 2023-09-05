@@ -56,22 +56,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "infty",
-    srcs = ["infty.cpp"],
-    hdrs = ["infty.h"],
-    visibility = [
-        "//benchmark:__subpackages__",
-        "//dlinear:__subpackages__",
-        "//test:__subpackages__",
-        "//third_party:__subpackages__",
-    ],
-    deps = [
-        ":logging",
-        "//dlinear/libs:gmp",
-    ],
-)
-
-dlinear_cc_library(
     name = "infinity",
     srcs = ["Infinity.cpp"],
     hdrs = ["Infinity.h"],

@@ -19,13 +19,6 @@
 
 namespace dlinear {
 
-/** Initialize the solver. Must be called before any other API calls. */
-void InitSolver(const Config &config);
-void InitSolver(Config::LPSolver lp_solver);
-
-void DeInitSolver(const Config &config);
-void DeInitSolver(Config::LPSolver lp_solver);
-
 /**
  * Check the satisfiability of a given formula @p f with a given precision
  * @p delta.

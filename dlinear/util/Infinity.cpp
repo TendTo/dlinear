@@ -26,29 +26,24 @@ Infinity::~Infinity() {
 
 void Infinity::InftyStart(Config::LPSolver lp_solver, double value) {
   mpq_class new_infty{value};
-  if (instance_ == nullptr) [[likely]]
-    instance_ = new Infinity(lp_solver, new_infty, -new_infty);
-  else
-    DLINEAR_WARN("Infinity already initialized! No action taken.");
+  instance_ = new Infinity(lp_solver, new_infty, -new_infty);
 }
 
 void Infinity::InftyStart(Config::LPSolver lp_solver, const mpq_class& value) {
-  if (instance_ == nullptr) [[likely]]
-    instance_ = new Infinity(lp_solver, value, -value);
-  else
-    DLINEAR_WARN("Infinity already initialized! No action taken.");
+  instance_ = new Infinity(lp_solver, value, -value);
 }
 
 void Infinity::InftyStart(Config::LPSolver lp_solver, const mpq_t infty, const mpq_t ninfty) {
-  if (instance_ == nullptr) [[likely]]
-    instance_ = new Infinity(lp_solver, mpq_class{infty}, mpq_class{ninfty});
-  else
-    DLINEAR_WARN("Infinity already initialized! No action taken.");
+  instance_ = new Infinity(lp_solver, mpq_class{infty}, mpq_class{ninfty});
 }
 
 void Infinity::InftyStart(const Config& config) { InftyStart(config.lp_solver()); }
 
 void Infinity::InftyStart(Config::LPSolver lp_solver) {
+  if (instance_ != nullptr) [[unlikely]] {
+    DLINEAR_WARN("Infinity already initialized! No action taken.");
+    return;
+  }
   switch (lp_solver) {
     case Config::QSOPTEX:
       qsopt_ex::QSXStart();

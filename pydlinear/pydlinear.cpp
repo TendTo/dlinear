@@ -18,6 +18,7 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
+#include "dlinear/util/Infinity.h"
 #include "dlinear/version.h"
 
 namespace py = pybind11;
@@ -42,10 +43,9 @@ PYBIND11_MODULE(_pydlinear, m) {
   auto Smt2DriverClass = py::class_<Smt2Driver>(m, "Smt2Driver");
   auto ContextClass = py::class_<Context>(m, "Context");
 
-  m.def("init_solver", py::overload_cast<const Config &>(&InitSolver), "Initialize solver")
-      .def("init_solver", py::overload_cast<Config::LPSolver>(&InitSolver), "Initialize solver")
-      .def("de_init_solver", py::overload_cast<const Config &>(&DeInitSolver), "De-initialize solver")
-      .def("de_init_solver", py::overload_cast<Config::LPSolver>(&DeInitSolver), "De-initialize solver");
+  m.def("init_solver", py::overload_cast<const Config &>(&Infinity::InftyStart), "Initialize solver")
+      .def("init_solver", py::overload_cast<Config::LPSolver>(&Infinity::InftyStart), "Initialize solver")
+      .def("de_init_solver", &Infinity::InftyFinish, "De-initialize solver");
 
   ContextClass.def(py::init<>()).def(py::init<const Config &>());
 
