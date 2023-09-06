@@ -7,7 +7,7 @@ package(default_visibility = [
 ])
 
 dlinear_cc_library(
-    name = "context",
+    name = "solver",
     srcs = [
         "Context.cpp",
         "ContextImpl.cpp",
@@ -28,6 +28,10 @@ dlinear_cc_library(
         "SoplexSatSolver.h",
         "SoplexTheorySolver.h",
     ],
+    local_defines = select({
+        "//tools:dynamic_build": ["DLINEAR_CHECK_INTERRUPT"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//dlinear:version",
         "//dlinear/libs:gmp",
@@ -42,8 +46,10 @@ dlinear_cc_library(
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:infinity",
+        "//dlinear/util:interrupt",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
+        "//dlinear/util:signal_handler_guard",
         "@picosat",
         "@tl_optional",
     ],

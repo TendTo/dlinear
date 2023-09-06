@@ -40,12 +40,10 @@ void MpqArray::AllocateMpqArray(size_t nElements) {
     }
   }
   size_t *sizeArray = nElements ? static_cast<size_t *>(newArray) : nullptr;
-  if (nElements)
-    sizeArray[0] = nElements;
+  if (nElements) sizeArray[0] = nElements;
 
   array = reinterpret_cast<mpq_t *>(nElements ? (sizeArray + 1) : nullptr);
-  for (size_t i = 0; i < nElements; ++i)
-    mpq_init(array[i]);
+  for (size_t i = 0; i < nElements; ++i) mpq_init(array[i]);
 }
 
 void MpqArray::FreeMpqArray() {
@@ -53,26 +51,17 @@ void MpqArray::FreeMpqArray() {
   if (sizeArray) sizeArray--;
   size_t nElements = sizeArray ? sizeArray[0] : 0;
 
-  for (size_t i = 0; i < nElements; ++i)
-    mpq_clear(array[i]);
+  for (size_t i = 0; i < nElements; ++i) mpq_clear(array[i]);
   free(sizeArray);
   array = nullptr;
 }
 
-MpqArray::MpqArray(size_t nElements) : array{nullptr} {
-  AllocateMpqArray(nElements);
-}
+MpqArray::MpqArray(size_t nElements) : array{nullptr} { AllocateMpqArray(nElements); }
 
-MpqArray::~MpqArray() {
-  FreeMpqArray();
-}
+MpqArray::~MpqArray() { FreeMpqArray(); }
 
-void QSXStart() {
-  QSexactStart();
-}
+void QSXStart() { QSexactStart(); }
 
-void QSXFinish() {
-  QSexactClear();
-}
+void QSXFinish() { QSexactClear(); }
 
-} // namespace dlinear::qsopt_ex
+}  // namespace dlinear::qsopt_ex

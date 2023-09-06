@@ -24,7 +24,7 @@ dlinear_cc_library(
         ":version",
         "//dlinear/api",
         "//dlinear/smt2:logic",
-        "//dlinear/solver:context",
+        "//dlinear/solver",
         "//dlinear/symbolic",
         "//dlinear/util:box",
         "//dlinear/util:config",
@@ -34,8 +34,11 @@ dlinear_cc_library(
 dlinear_cc_binary(
     name = "dlinear",
     srcs = ["main.cpp"],
-    features = ["fully_static_link"],
-    linkstatic = 1,
+    features = select({
+        "//tools:dynamic_build": [],
+        "//conditions:default": ["fully_static_link"],
+    }),
+    linkstatic = True,
     deps = [
         "//dlinear/smt2",
         "//dlinear/util:argparser",

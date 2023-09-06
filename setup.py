@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import subprocess
 from warnings import warn
@@ -63,27 +62,27 @@ def _build_dlinear():
         bool: True if the build failed but the user wants to continue, False otherwise.
         If true is returned, the copy step should be skipped.
     """
-    # res = subprocess.call(
-    #     [
-    #         "bazel",
-    #         "build",
-    #         "//{name}:_{name}.so".format(name=MODULE_NAME),
-    #         "--config",
-    #         "pydlinear",
-    #     ],
-    # )
-    # if res != 0:
-    #     if SO_NAME in os.listdir(os.path.join(ROOT_DIR, MODULE_NAME)):
-    #         warn("Bazel build failed, but found existing .so. Result may be outdated")
-    #         return
-    #     raise LibError(
-    #         """Unable to build dlinear.
-    #         Please visit https://pypi.org/project/dlinear and follow the instructions to install the prerequisites.
-    #         Current folder: {}
-    #         """.format(
-    #             os.getcwd()
-    #         )
-    #     )
+    res = subprocess.call(
+        [
+            "bazel",
+            "build",
+            "//{name}:_{name}.so".format(name=MODULE_NAME),
+            "--config",
+            "pydlinear",
+        ],
+    )
+    if res != 0:
+        if SO_NAME in os.listdir(os.path.join(ROOT_DIR, MODULE_NAME)):
+            warn("Bazel build failed, but found existing .so. Result may be outdated")
+            return
+        raise LibError(
+            """Unable to build dlinear.
+            Please visit https://pypi.org/project/dlinear and follow the instructions to install the prerequisites.
+            Current folder: {}
+            """.format(
+                os.getcwd()
+            )
+        )
     _copy_so()
 
 

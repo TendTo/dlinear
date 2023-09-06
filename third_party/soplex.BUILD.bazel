@@ -5,7 +5,7 @@ load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 licenses(["notice"])  # Apache 2.0 License
 
 cmake(
-    name = "soplex",
+    name = "soplex.a",
     lib_source = ":all_srcs",
     lib_name = "libsoplex",
     cache_entries = {
@@ -14,18 +14,22 @@ cmake(
         "BOOST": "on",
         "QUADMATH": "on",
     },
-    out_static_libs = select(
-        {
-            "@dlinear//tools:dynamic_build": [],
-            "//conditions:default": ["libsoplex.a"],
-        },
-    ),
-    out_shared_libs = select(
-        {
-            "@dlinear//tools:dynamic_build": ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
-            "//conditions:default": [],
-        },
-    ),
+    out_static_libs = ["libsoplex.a"],
+    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision"],
+    visibility = ["//visibility:public"],
+)
+
+cmake(
+    name = "soplex.so",
+    lib_source = ":all_srcs",
+    lib_name = "libsoplex",
+    cache_entries = {
+        "GMP": "on",
+        "OPT": "Release",
+        "BOOST": "on",
+        "QUADMATH": "on",
+    },
+    out_shared_libs = ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
     deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision"],
     visibility = ["//visibility:public"],
 )

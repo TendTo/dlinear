@@ -1,11 +1,11 @@
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 
 pybind_extension(
     name = "_pydlinear",
     srcs = ["pydlinear.cpp"],
     linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
-    linkstatic = 0,
+    linkstatic = False,
     deps = [
         "//dlinear:version",
         "//dlinear/api",
@@ -26,4 +26,13 @@ py_library(
     imports = ["."],
     srcs_version = "PY3",
     visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "pydlinear_main",
+    srcs = ["__main__.py"],
+    imports = ["."],
+    main = "__main__.py",
+    python_version = "PY3",
+    deps = [":pydlinear"],
 )

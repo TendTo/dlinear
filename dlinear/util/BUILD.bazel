@@ -124,4 +124,16 @@ dlinear_cc_library(
     deps = [":logging"],
 )
 
+dlinear_cc_library(
+    name = "interrupt",
+    srcs = ["interrupt.cpp"],
+    hdrs = ["interrupt.h"],
+)
+
+dlinear_cc_library(
+    name = "signal_handler_guard",
+    srcs = ["SignalHandlerGuard.cpp"],
+    hdrs = ["SignalHandlerGuard.h"],
+)
+
 cpplint()

@@ -12,7 +12,7 @@ dlinear_cc_library(
     srcs = ["api.cpp"],
     hdrs = ["api.h"],
     deps = [
-        "//dlinear/solver:context",
+        "//dlinear/solver",
         "//dlinear/symbolic",
         "//dlinear/util:box",
         "//dlinear/util:config",

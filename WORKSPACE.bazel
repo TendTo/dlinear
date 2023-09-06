@@ -133,7 +133,7 @@ new_local_repository(
 
 load("//tools:deps.bzl", "load_dependencies")
 
-load_dependencies()
+load_dependencies("third_party")
 
 load("@pip//:requirements.bzl", "install_deps")
 

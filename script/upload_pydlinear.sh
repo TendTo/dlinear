@@ -5,7 +5,7 @@
 # HEADER
 #================================================================
 #% SYNOPSIS
-#+    ${SCRIPT_NAME} [-hv] [--cleanup] [--stub] [--dry-run] [--test]
+#+    ${SCRIPT_NAME} [-c/--cleanup] [-s/--stub] [-d/--dry-run] [-t/--test] [-b/--build]
 #%
 #% DESCRIPTION
 #%    Upload pydlinear python package to pypi.
@@ -15,9 +15,9 @@
 #%    -h, --help                  Print this help tooltip
 #%    -v, --version               Print script information
 #%    -c, --cleanup               Cleanup build and dist folders. Does not continue with the build
-#%    -s, --stub                  Generate stubs for pydlinear. Requires pybind11-stubgen to be installed and pydlinear
-#%                                to be built first
-#%    -d, --dry-run               Do not upload to pypi, just build using bazel
+#%    -s, --stub                  Generate stubs for pydlinear
+#%    -d, --dry-run               Stop before building with python and uploading to pypi
+#%    -b, --build                 Force a build with bazel. Normally, the build step is included in the pip install command
 #%    -t, --test                  Upload to testpypi instead of pypi
 #%
 #% EXAMPLES
@@ -97,6 +97,7 @@ function parse_args
     dry_run=false
     cleanup=false
     stub=false
+    build=false
 
     # Named args
     while [ $# -gt 0 ]; do
@@ -127,6 +128,9 @@ function parse_args
             -t | --test)
                 test_upload="--repository testpypi"
             ;;
+            -b | --build)
+                build=true
+            ;;
             * )
                 args+=("$param")
             ;;
@@ -139,13 +143,16 @@ function parse_args
 
 function cleanup() {
     pushd "$workspace_path" || exit
+
     rm -rf build
     rm -rf dist
+
     popd || exit
 }
 
 function generate_stubs() {
     pushd "$workspace_path" || exit
+
     # check if pybind11-stubgen is installed
     if [[ ! $(pip3 show pybind11-stubgen) ]]; then
         echo "Missing pybind11-stubgen. Please install it with pip if you want to generate stubs"
@@ -156,6 +163,7 @@ function generate_stubs() {
     pybind11-stubgen pydlinear --output-dir pydlinear/stubs
     mv pydlinear/stubs/pydlinear-stubs/_pydlinear/__init__.pyi pydlinear
     rm -rf pydlinear/stubs
+
     popd || exit
 }
 
@@ -164,10 +172,11 @@ function build() {
 
     bazel build //pydlinear --config pydlinear
 
-    if [[ $dry_run = true ]]; then
-        echo "Stopping here. The prerequisites needed for the build are met"
-        exit 0
-    fi
+    popd || exit
+}
+
+function upload() {
+    pushd "$workspace_path" || exit
 
     (pip3 show build > /dev/null && pip3 show twine >/dev/null) || (echo "Please install build and twine with pip first" && exit 1)
     python3 -m build
@@ -190,12 +199,20 @@ function main() {
         exit 0
     fi
 
+    if [[ $build = true ]]; then
+        build
+    fi
+
     if [[ $stub = true ]]; then
         generate_stubs
         exit 0
     fi
 
-    build
+    if [[ $dry_run = true ]]; then
+        exit 0
+    fi
+
+    upload
 }
 
 # Invoke main with args if not sourced

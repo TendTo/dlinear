@@ -7,9 +7,14 @@
 
 #include "SoplexImpl.h"
 
-#include "dlinear/util/logging.h"
-#include "dlinear/util/exception.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+
+#ifdef DLINEAR_CHECK_INTERRUPT
+#include "dlinear/util/SignalHandlerGuard.h"
+#include "dlinear/util/interrupt.h"
+#endif
 
 using std::pair;
 using std::vector;
@@ -19,9 +24,8 @@ namespace dlinear {
 
 Context::SoplexImpl::SoplexImpl() : Context::SoplexImpl{Config{}} {}
 
-Context::SoplexImpl::SoplexImpl(const Config &config) : Context::Impl{config},
-                                                        sat_solver_{config_},
-                                                        theory_solver_{config_} {}
+Context::SoplexImpl::SoplexImpl(const Config &config)
+    : Context::Impl{config}, sat_solver_{config_}, theory_solver_{config_} {}
 
 void Context::SoplexImpl::Assert(const Formula &f) {
   if (is_true(f)) {
@@ -34,7 +38,7 @@ void Context::SoplexImpl::Assert(const Formula &f) {
     box().set_empty();
     return;
   }
-  //if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
+  // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
   DLINEAR_DEBUG_FMT("Context::SoplexImpl::Assert: {} is added.", f);
   IfThenElseEliminator ite_eliminator;
   const Formula no_ite{ite_eliminator.Process(f)};
@@ -54,9 +58,8 @@ void Context::SoplexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack,
-                                                 Box box,
-                                                 mpq_class * /*actual_precision*/) {
+optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
+                                                mpq_class * /*actual_precision*/) {
   DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("Context::SoplexImpl::CheckSat: Box =\n{}", box);
   if (box.empty()) {
@@ -73,13 +76,17 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
     DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Found Model\n{}", box);
     return box;
   }
+#ifdef dlinear_check_interrupt
+  // install a signal handler for sigint for this scope.
+  signalhandlerguard guard{sigint, interrupt_handler, &g_interrupted};
+#endif
   bool have_unsolved = false;
   while (true) {
     // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
 #ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
-      DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
+      DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
     }
 #endif
@@ -99,12 +106,9 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
         DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = SAT");
 
         // The selected assertions have already been enabled in the LP solver
-        int theory_result{
-            theory_solver_.CheckSat(box, theory_model,
-                                    sat_solver_.GetLinearSolverPtr(),
-                                    sat_solver_.GetLowerBounds(),
-                                    sat_solver_.GetUpperBounds(),
-                                    sat_solver_.GetLinearVarMap())};
+        int theory_result{theory_solver_.CheckSat(box, theory_model, sat_solver_.GetLinearSolverPtr(),
+                                                  sat_solver_.GetLowerBounds(), sat_solver_.GetUpperBounds(),
+                                                  sat_solver_.GetLinearVarMap())};
         if (theory_result == SAT_DELTA_SATISFIABLE) {
           // SAT from TheorySolver.
           DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Theory Check = delta-SAT");
@@ -142,15 +146,12 @@ optional <Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &st
   }
 }
 
-int Context::SoplexImpl::CheckOptCore(const ScopedVector<Formula> & /*stack*/,
-                                      mpq_class * /*obj_lo*/,
+int Context::SoplexImpl::CheckOptCore(const ScopedVector<Formula> & /*stack*/, mpq_class * /*obj_lo*/,
                                       mpq_class * /*obj_up*/, Box * /*model*/) {
   DLINEAR_RUNTIME_ERROR("Not implemented.");
 }
 
-void Context::SoplexImpl::MinimizeCore(const Expression & /*obj_expr*/) {
-  DLINEAR_RUNTIME_ERROR("Not implemented.");
-}
+void Context::SoplexImpl::MinimizeCore(const Expression & /*obj_expr*/) { DLINEAR_RUNTIME_ERROR("Not implemented."); }
 
 void Context::SoplexImpl::Pop() {
   DLINEAR_DEBUG("Context::SoplexImpl::Pop()");
@@ -166,4 +167,4 @@ void Context::SoplexImpl::Push() {
   boxes_.push_back(boxes_.last());
   stack_.push();
 }
-} // namespace dlinear
+}  // namespace dlinear

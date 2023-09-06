@@ -140,6 +140,14 @@ class Config():
     def random_seed(self, arg1: int) -> None:
         pass
     @property
+    def read_from_stdin(self) -> bool:
+        """
+        :type: bool
+        """
+    @read_from_stdin.setter
+    def read_from_stdin(self, arg1: bool) -> None:
+        pass
+    @property
     def sat_default_phase(self) -> SatDefaultPhase:
         """
         :type: SatDefaultPhase
@@ -154,6 +162,14 @@ class Config():
         """
     @simplex_sat_phase.setter
     def simplex_sat_phase(self, arg1: int) -> None:
+        pass
+    @property
+    def stack_left_box_first(self) -> bool:
+        """
+        :type: bool
+        """
+    @stack_left_box_first.setter
+    def stack_left_box_first(self, arg1: int) -> None:
         pass
     @property
     def use_local_optimization(self) -> bool:
@@ -188,12 +204,20 @@ class Config():
     def use_worklist_fixpoint(self, arg1: bool) -> None:
         pass
     @property
+    def verbose_dlinear(self) -> int:
+        """
+        :type: int
+        """
+    @verbose_dlinear.setter
+    def verbose_dlinear(self, arg1: int) -> None:
+        pass
+    @property
     def verbose_simplex(self) -> int:
         """
         :type: int
         """
     @verbose_simplex.setter
-    def verbose_simplex(self, arg1: bool) -> None:
+    def verbose_simplex(self, arg1: int) -> None:
         pass
     @property
     def with_timings(self) -> bool:
@@ -594,16 +618,10 @@ class Variables():
     def size(self) -> int: ...
     def to_string(self) -> str: ...
     pass
-@typing.overload
-def de_init_solver(arg0: Config) -> None:
+def de_init_solver() -> None:
     """
     De-initialize solver
-
-    De-initialize solver
     """
-@typing.overload
-def de_init_solver(arg0: LPSolver) -> None:
-    pass
 @typing.overload
 def init_solver(arg0: Config) -> None:
     """

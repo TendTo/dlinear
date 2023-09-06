@@ -72,7 +72,6 @@ def dlinear_cc_library(
         deps = None,
         copts = [],
         linkstatic = True,
-        alwayslink = True,
         **kwargs):
     """Creates a rule to declare a C++ library.
     """
@@ -81,9 +80,8 @@ def dlinear_cc_library(
         hdrs = hdrs,
         srcs = srcs,
         deps = deps,
-        linkstatic = linkstatic,
-        alwayslink = alwayslink,
         copts = _get_copts(copts),
+        linkstatic = linkstatic,
         **kwargs
     )
 
@@ -92,7 +90,6 @@ def dlinear_cc_binary(
         srcs = None,
         deps = None,
         copts = [],
-        testonly = False,
         **kwargs):
     """Creates a rule to declare a C++ binary.
     """
@@ -101,7 +98,6 @@ def dlinear_cc_binary(
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
-        testonly = testonly,
         **kwargs
     )
 
@@ -118,6 +114,13 @@ def dlinear_cc_test(
     By default, sets size="small" because that indicates a unit test.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
     For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
+
+    Args:
+        name: The name of the test.
+        size: The size of the test. Defaults to "small".
+        srcs: A list of source files to compile.
+        copts: A list of compiler options.
+        **kwargs: Additional arguments to pass to native.cc_test.
     """
     if size == None:
         size = "small"
@@ -147,6 +150,13 @@ def dlinear_cc_googletest(
     Otherwise, it will depend on @com_google_googlegtest//:gtest.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
     For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
+
+    Args:
+        name: The name of the test.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        use_default_main: Whether to use googletest's main.
+        **kwargs: Additional arguments to pass to dlinear_cc_test.
     """
     if deps == None:
         deps = []
@@ -173,6 +183,7 @@ def smt2_phased_test(
         main = "TestSmt2.py",
         **kwargs):
     """Create smt2 test.
+
     The SMT solver will parse the SMT2 file and produce an output.
     If the output is the same as the one in the corresponding .expected file, the test passes.
 
@@ -186,7 +197,7 @@ def smt2_phased_test(
         continuous: Whether to run the solver in continuous mode.
         exhaustive_ok: Whether to run the solver in exhaustive mode.
         main: The main Python file to use.
-        kwargs: Additional arguments to pass to native.py_test.
+        **kwargs: Additional arguments to pass to native.py_test.
     """
     if lp_solver not in ("soplex", "qsoptex"):
         fail("LP solver must be soplex or qsoptex", "lp_solver")
@@ -216,6 +227,7 @@ def smt2_phased_test(
 
 def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
     """Tests a SMT2 file.
+
     It automatically tests both phases, and both LP solvers on the same input.
     If the lp solver is qsoptex, it also tests continuous mode.
 
@@ -223,7 +235,8 @@ def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
         name: The name of the test. It will be used to find the SMT2 input file.
         options: A list of options to pass to the solver.
         lp_solvers: A list of LP solvers to test. If None, tests both soplex and qsoptex.
-        kwargs: Additional arguments to pass to smt2_test.
+        size: The size of the test. Defaults to "small".
+        **kwargs: Additional arguments to pass to smt2_test.
     """
     for lp_solver in ("soplex", "qsoptex") if lp_solvers == None else lp_solvers:
         for phase in (1, 2):
@@ -251,13 +264,14 @@ def smt2_test(name, options = [], lp_solvers = None, size = "small", **kwargs):
 
 def smt2_test_all(smt2_dir = "smt2", options = [], lp_solvers = None, **kwargs):
     """Tests all SMT2 files from the smt2 directory.
+
     Loops over all files in the directory and calls smt2_test on each .smt2 file.
 
     Args:
         smt2_dir: The directory containing the SMT2 files.
         options: A list of options to pass to the solver.
         lp_solvers: A list of LP solvers to test. If None, tests both soplex and qsoptex.
-        kwargs: Additional arguments to pass to smt2_test.
+        **kwargs: Additional arguments to pass to smt2_test.
     """
     files = native.glob(["%s/*.smt2" % smt2_dir])
     for file in files:

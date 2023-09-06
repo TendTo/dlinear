@@ -181,31 +181,31 @@ class Config {
   [[nodiscard]] double nlopt_maxtime() const { return nlopt_maxtime_.get(); }
 
   /** Mutable maxtime in NLopt */
-  [[nodiscard]]  OptionValue<double> &mutable_nlopt_maxtime() { return nlopt_maxtime_; }
+  [[nodiscard]] OptionValue<double> &mutable_nlopt_maxtime() { return nlopt_maxtime_; }
 
   /** Default phase for SAT solver */
   [[nodiscard]] SatDefaultPhase sat_default_phase() const { return sat_default_phase_.get(); }
 
   /** Mutable default phase for SAT solver */
-  [[nodiscard]]  OptionValue<SatDefaultPhase> &mutable_sat_default_phase() { return sat_default_phase_; }
+  [[nodiscard]] OptionValue<SatDefaultPhase> &mutable_sat_default_phase() { return sat_default_phase_; }
 
   /** Random seed */
-  [[nodiscard]]  uint random_seed() const { return random_seed_.get(); }
+  [[nodiscard]] uint random_seed() const { return random_seed_.get(); }
 
   /** Mutable random seed */
-  [[nodiscard]]  OptionValue<uint> &mutable_random_seed() { return random_seed_; }
+  [[nodiscard]] OptionValue<uint> &mutable_random_seed() { return random_seed_; }
 
   /** Debug scanning */
-  [[nodiscard]]  bool debug_scanning() const { return debug_scanning_.get(); }
+  [[nodiscard]] bool debug_scanning() const { return debug_scanning_.get(); }
 
   /** Mutable debug scanning */
-  [[nodiscard]]  OptionValue<bool> &mutable_debug_scanning() { return debug_scanning_; }
+  [[nodiscard]] OptionValue<bool> &mutable_debug_scanning() { return debug_scanning_; }
 
   /** Debug parsing */
-  [[nodiscard]]  bool debug_parsing() const { return debug_parsing_.get(); }
+  [[nodiscard]] bool debug_parsing() const { return debug_parsing_.get(); }
 
   /** Mutable debug parsing */
-  [[nodiscard]]  OptionValue<bool> &mutable_debug_parsing() { return debug_parsing_; }
+  [[nodiscard]] OptionValue<bool> &mutable_debug_parsing() { return debug_parsing_; }
 
   static constexpr double kDefaultPrecision{DLINEAR_DEFAULT_PRECISION};  // pred(floor("0.001"))
   static constexpr double kDefaultNloptFtolRel{DLINEAR_DEFAULT_NLOPTF_TO_REL};
@@ -222,16 +222,17 @@ class Config {
   OptionValue<bool> use_polytope_in_forall_{DLINEAR_DEFAULT_USE_POLYTOPE_IN_FORALL};
   OptionValue<bool> use_worklist_fixpoint_{DLINEAR_DEFAULT_USE_WORKLIST_FIXPOINT};
   OptionValue<bool> use_local_optimization_{DLINEAR_DEFAULT_USE_LOCAL_OPTIMIZATION};
-  OptionValue<bool> continuous_output_{DLINEAR_DEFAULT_CONTINUOUS_OUTPUT};
-  OptionValue<bool> with_timings_{DLINEAR_DEFAULT_WITH_TIMINGS};
-  OptionValue<LPSolver> lp_solver_{DLINEAR_DEFAULT_LP_SOLVER};
   OptionValue<int> simplex_sat_phase_{DLINEAR_DEFAULT_SIMPLEX_SAT_PHASE};
+  OptionValue<LPSolver> lp_solver_{DLINEAR_DEFAULT_LP_SOLVER};
   OptionValue<int> verbose_simplex_{DLINEAR_DEFAULT_VERBOSE_SIMPLEX};
   OptionValue<int> verbose_dlinear_{DLINEAR_DEFAULT_VERBOSE_DLINEAR};
+  OptionValue<bool> continuous_output_{DLINEAR_DEFAULT_CONTINUOUS_OUTPUT};
+  OptionValue<bool> with_timings_{DLINEAR_DEFAULT_WITH_TIMINGS};
   OptionValue<uint> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
   OptionValue<bool> stack_left_box_first_{DLINEAR_DEFAULT_STACK_LEFT_BOX_FIRST};
   OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
   OptionValue<bool> debug_parsing_{DLINEAR_DEFAULT_DEBUG_PARSING};
+  OptionValue<uint> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
 
   /**
    * NLopt options (stopping criteria)
@@ -286,13 +287,10 @@ class Config {
    */
   OptionValue<SatDefaultPhase> sat_default_phase_{DLINEAR_DEFAULT_SAT_PHASE};
 
-  /** Seed for Random Number Generator */
-  OptionValue<uint> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
-
   friend std::ostream &operator<<(std::ostream &os, const Config &config);
   friend std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
 };
 
-} // namespace dlinear
+}  // namespace dlinear
 
-#endif //DLINEAR5_CONFIG_H
+#endif  // DLINEAR5_CONFIG_H

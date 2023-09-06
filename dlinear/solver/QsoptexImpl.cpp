@@ -9,21 +9,25 @@
 
 #include <utility>
 
-#include "dlinear/util/logging.h"
-#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/util/logging.h"
 
-using tl::optional;
-using std::vector;
+#ifdef DLINEAR_CHECK_INTERRUPT
+#include "dlinear/util/SignalHandlerGuard.h"
+#include "dlinear/util/interrupt.h"
+#endif
+
 using std::pair;
+using std::vector;
+using tl::optional;
 
 namespace dlinear {
 
 Context::QsoptexImpl::QsoptexImpl() : Context::QsoptexImpl{Config{}} {}
 
-Context::QsoptexImpl::QsoptexImpl(Config config) : Context::Impl{std::move(config)},
-                                                   sat_solver_{config_},
-                                                   theory_solver_{config_} {}
+Context::QsoptexImpl::QsoptexImpl(Config config)
+    : Context::Impl{std::move(config)}, sat_solver_{config_}, theory_solver_{config_} {}
 
 void Context::QsoptexImpl::Assert(const Formula &f) {
   if (is_true(f)) {
@@ -36,7 +40,7 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
     box().set_empty();
     return;
   }
-  //if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
+  // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
   DLINEAR_DEBUG_FMT("Context::QsoptexImpl::Assert: {} is added.", f);
   IfThenElseEliminator ite_eliminator;
   const Formula no_ite{ite_eliminator.Process(f)};
@@ -56,9 +60,8 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack,
-                                                  Box box,
-                                                  mpq_class *actual_precision) {
+optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
+                                                 mpq_class *actual_precision) {
   DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckSatCore: Box =\n{}", box);
   if (box.empty()) {
     return {};
@@ -74,13 +77,17 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
     DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Found Model\n{}", box);
     return box;
   }
+#ifdef DLINEAR_CHECK_INTERRUPT
+  // Install a signal handler for SIGINT for this scope.
+  SignalHandlerGuard guard{SIGINT, interrupt_handler, &g_interrupted};
+#endif
   bool have_unsolved = false;
   while (true) {
     // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
 #ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
-      DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
+      DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
     }
 #endif
@@ -102,11 +109,8 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
 
         // The selected assertions (and objective function, where applicable)
         // have already been enabled in the LP solver
-        int theory_result{theory_solver_.CheckSat(box,
-                                                  theory_model,
-                                                  sat_solver_.GetLinearSolver(),
-                                                  sat_solver_.GetLinearVarMap(),
-                                                  actual_precision)};
+        int theory_result{theory_solver_.CheckSat(box, theory_model, sat_solver_.GetLinearSolver(),
+                                                  sat_solver_.GetLinearVarMap(), actual_precision)};
         if (theory_result == SAT_DELTA_SATISFIABLE) {
           // SAT from TheorySolver.
           DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = delta-SAT");
@@ -144,8 +148,7 @@ optional <Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &s
   }
 }
 
-int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
-                                       mpq_class *obj_lo, mpq_class *obj_up,
+int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up,
                                        Box *box) {
   DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckOpt: Box =\n{}", *box);
   if (box->empty()) {
@@ -159,19 +162,19 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
   }
   // If stack = ∅ or stack = {true}, it's trivially SAT - but we still need to
   // optimize!
-  //if (stack.empty() || (stack.size() == 1 && is_true(stack.first()))) {
+  // if (stack.empty() || (stack.size() == 1 && is_true(stack.first()))) {
   //  DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Found Model\n{}", *box);
   //  return *box;
   //}
   bool have_unsolved = false;
-  bool have_opt_cand = false;  // optimality candidate
+  bool have_opt_cand = false;        // optimality candidate
   mpq_class new_obj_up, new_obj_lo;  // Upper and lower bounds of new optimality candidate
   while (true) {
     // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
     // when we build dReal python package.
 #ifdef DLINEAR_CHECK_INTERRUPT
     if (g_interrupted) {
-      DLINEAR_DEBUG_FMT("KeyboardInterrupt(SIGINT) Detected.");
+      DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
     }
 #endif
@@ -197,10 +200,8 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
 
       // The selected assertions (and objective function, where applicable)
       // have already been enabled in the LP solver.
-      int theory_result{
-          theory_solver_.CheckOpt(*box, &new_obj_lo, &new_obj_up, theory_model,
-                                  sat_solver_.GetLinearSolver(),
-                                  sat_solver_.GetLinearVarMap())};
+      int theory_result{theory_solver_.CheckOpt(*box, &new_obj_lo, &new_obj_up, theory_model,
+                                                sat_solver_.GetLinearSolver(), sat_solver_.GetLinearVarMap())};
       if (LP_UNBOUNDED == theory_result) {
         DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNBOUNDED");
         // Result is correct - can return immediately.
@@ -243,8 +244,7 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack,
         // Force SAT solver to find new regions.
         const LiteralSet &explanation{theory_solver_.GetExplanation()};
         DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - size of explanation = {} - stack size = {}",
-                          explanation.size(),
-                          stack.get_vector().size());
+                          explanation.size(), stack.get_vector().size());
         sat_solver_.AddLearnedClause(explanation);
       }
     } else {
@@ -284,4 +284,4 @@ void Context::QsoptexImpl::Push() {
   boxes_.push_back(boxes_.last());
   stack_.push();
 }
-} // namespace dlinear
+}  // namespace dlinear

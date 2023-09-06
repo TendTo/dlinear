@@ -4,6 +4,52 @@ load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
 licenses(["notice"])  # GNU General Public License v3.0
 
+configure_make(
+    name = "qsopt_ex.a",
+    lib_name = "libqsopt_ex",
+    out_binaries = ["esolver"],
+    out_static_libs = ["libqsopt_ex.a"],
+    lib_source = ":all_srcs",
+    visibility = ["//visibility:public"],
+    configure_in_place = True,
+    autoreconf = True,
+    autoreconf_options = [
+        "--install",
+        "--force",
+        "--verbose",
+        "--warnings=all",
+    ],
+    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
+    args = ["-j4"],
+    deps = ["@zlib"],
+)
+
+configure_make(
+    name = "qsopt_ex.so",
+    lib_name = "libqsopt_ex",
+    out_binaries = ["esolver"],
+    out_shared_libs = ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
+    lib_source = ":all_srcs",
+    visibility = ["//visibility:public"],
+    configure_in_place = True,
+    autoreconf = True,
+    autoreconf_options = [
+        "--install",
+        "--force",
+        "--verbose",
+        "--warnings=all",
+    ],
+    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
+    args = ["-j4"],
+    deps = ["@zlib"],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:private"],
+)
+
 genrule(
     name = "qsopt_ex_git",
     srcs = [],
@@ -16,42 +62,5 @@ genrule(
         git tag -a v2.1.0 -m "Version 2.1.0"
         mv .git $(location .git)
     """,
-    visibility = ["//visibility:private"],
-)
-
-configure_make(
-    name = "qsopt_ex",
-    lib_name = "libqsopt_ex",
-    out_binaries = ["esolver"],
-    out_static_libs = ["libqsopt_ex.a"],
-    out_shared_libs = select(
-        {
-            "@dlinear//tools:dynamic_build": ["libqsopt_ex.so", "libqsopt_ex.so.2", "libqsopt_ex.so.2.1.0"],
-            "//conditions:default": [],
-        },
-    ),
-    lib_source = ":all_srcs",
-    visibility = ["//visibility:public"],
-    configure_in_place = True,
-    autoreconf = True,
-    autoreconf_options = [
-        "--install",
-        "--force",
-        "--verbose",
-        "--warnings=all",
-    ],
-    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
-    args = [
-        "-j4",
-    ],
-    deps = [
-        #        "@linux_libs//:gmp",
-        "@zlib",
-    ],
-)
-
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
     visibility = ["//visibility:private"],
 )

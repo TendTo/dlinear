@@ -4,6 +4,12 @@ build --workspace_status_command=script/workspace_status.sh
 # Default build
 build --cxxopt=-std=c++17
 
+# Ignore env vars from shell. Avoids rebuilding when env vars change.
+build --incompatible_strict_action_env
+
+# Build with ccache
+build --disk_cache=~/.cache/dlinear_bazel
+
 # Debug build
 build:debug --cxxopt=-O0
 build:debug --compilation_mode=dbg
@@ -14,5 +20,5 @@ build:opt --cxxopt=-DNDEBUG
 build:opt --cxxopt=-DNLOG
 
 # Building python bindings
-build:pydlinear --cxxopt=-DLINEAR_CHECK_INTERRUPT
+build:pydlinear --disk_cache=~/.cache/dlinear_bazel_pybind
 build:pydlinear --//tools:enable_dynamic_build=True
