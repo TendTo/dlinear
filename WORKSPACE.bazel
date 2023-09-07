@@ -124,11 +124,19 @@ github_archive(
     sha256 = "e484ad49ceec1843c2fa0f6fcf90c631d52fd97a96105d2fb75d8f4c2fa58c0b",
 )
 
+github_archive(
+    name = "bzip2lib",  # https://github.com/libarchive/bzip2/blob/master/COPYING | Compression library
+    build_file = "//third_party:bzip2lib.BUILD.bazel",
+    commit = "bzip2-1.0.8",
+    repository = "libarchive/bzip2",
+    sha256 = "db106b740252669664fd8f3a1c69fe7f689d5cd4b132f82ba82b9afba27627df",
+)
+
 # https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
 new_local_repository(
     name = "linux_libs",
     build_file = "//third_party:linux_libs.BUILD.bazel",
-    path = "/usr/lib/x86_64-linux-gnu",
+    path = "/usr/lib",
 )
 
 load("//tools:deps.bzl", "load_dependencies")

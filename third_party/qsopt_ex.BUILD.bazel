@@ -22,7 +22,7 @@ configure_make(
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
     args = ["-j4"],
-    deps = ["@zlib"],
+    deps = ["@zlib", "@bzip2lib"],
 )
 
 configure_make(
@@ -43,7 +43,7 @@ configure_make(
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
     args = ["-j4"],
-    deps = ["@zlib"],
+    deps = ["@zlib", "@bzip2lib"],
 )
 
 filegroup(
