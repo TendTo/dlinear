@@ -1,0 +1,28 @@
+name: Thesis CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/thesis/**"
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: xu-cheng/latex-action@v2
+        with:
+          working_directory: docs/thesis
+          root_file: index.tex
+          post_compile: mv index.pdf ../../dlinear.pdf
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dlinear.pdf
+          path: dlinear.pdf
+          if-no-files-found: error

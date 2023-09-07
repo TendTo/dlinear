@@ -1,0 +1,45 @@
+name: dlinear CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dlinear/**"
+      - "test/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "dlinear/**"
+      - "test/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: build-essential g++ libgmp-dev autoconf flex bison
+          version: 1.0
+
+      - name: Build
+        run: bazel build //dlinear
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: build-essential g++ libgmp-dev autoconf flex bison
+          version: 1.0
+
+      - name: Test
+        run: bazel test //test/...
