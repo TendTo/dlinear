@@ -20,9 +20,6 @@
 
 namespace dlinear::drake::symbolic {
 
-using dlinear::Infinity;
-using std::isinf;
-using std::isnan;
 using std::map;
 using std::ostream;
 using std::ostringstream;
@@ -30,15 +27,22 @@ using std::pair;
 using std::runtime_error;
 using std::string;
 using std::vector;
+using std::isinf;
+using std::isnan;
+using dlinear::Infinity;
+using dlinear::Infinity;
 
-bool operator<(ExpressionKind k1, ExpressionKind k2) { return static_cast<int>(k1) < static_cast<int>(k2); }
+bool operator<(ExpressionKind k1, ExpressionKind k2) {
+  return static_cast<int>(k1) < static_cast<int>(k2);
+}
 
 namespace {
 
 // Returns true if @p v is represented by `int`.
 bool is_integer(const mpq_class &v) {
   // v should be in [int_min, int_max].
-  if (!((std::numeric_limits<int>::lowest() <= v) && (v <= std::numeric_limits<int>::max()))) {
+  if (!((std::numeric_limits<int>::lowest() <= v) &&
+      (v <= std::numeric_limits<int>::max()))) {
     return false;
   }
   mpz_class f{v};
@@ -47,24 +51,30 @@ bool is_integer(const mpq_class &v) {
 
 // Negates an addition expression.
 // - (E_1 + ... + E_n) => (-E_1 + ... + -E_n)
-Expression NegateAddition(const ExpressionAdd *e) { return ExpressionAddFactory{e}.Negate().GetExpression(); }
+Expression NegateAddition(const ExpressionAdd *e) {
+  return ExpressionAddFactory{e}.Negate().GetExpression();
+}
 
 // Negates an addition expression.
 // - (E_1 + ... + E_n) => (-E_1 + ... + -E_n)
 Expression NegateAddition(ExpressionAdd *e) {
-  return ExpressionAddFactory{e->get_constant(), std::move(e->get_mutable_expr_to_coeff_map())}
+  return ExpressionAddFactory{e->get_constant(),
+                              std::move(e->get_mutable_expr_to_coeff_map())}
       .Negate()
       .GetExpression();
 }
 
 // Negates a multiplication expression.
 // - (c0 * E_1 * ... * E_n) => (-c0 * E_1 * ... * E_n)
-Expression NegateMultiplication(const ExpressionMul *e) { return ExpressionMulFactory{e}.Negate().GetExpression(); }
+Expression NegateMultiplication(const ExpressionMul *e) {
+  return ExpressionMulFactory{e}.Negate().GetExpression();
+}
 
 // Negates a multiplication expression.
 // - (c0 * E_1 * ... * E_n) => (-c0 * E_1 * ... * E_n)
 Expression NegateMultiplication(ExpressionMul *e) {
-  return ExpressionMulFactory{e->get_constant(), std::move(e->get_mutable_base_to_exponent_map())}
+  return ExpressionMulFactory{e->get_constant(),
+                              std::move(e->get_mutable_base_to_exponent_map())}
       .Negate()
       .GetExpression();
 }
@@ -80,7 +90,7 @@ Expression &Expression::operator=(const Expression &e) {
   return *this = Expression{e};  // move-assign
 }
 
-Expression::Expression(Expression &&e) noexcept : ptr_{e.ptr_} {
+Expression::Expression(Expression &&e) noexcept: ptr_{e.ptr_} {
   assert(ptr_ != nullptr);
   e.ptr_ = nullptr;
 }
@@ -103,7 +113,8 @@ Expression::~Expression() {
 
 Expression::Expression() : Expression{Zero().ptr_} {}
 
-Expression::Expression(const Variable &var) : Expression{new ExpressionVar(var)} {}
+Expression::Expression(const Variable &var)
+    : Expression{new ExpressionVar(var)} {}
 
 ExpressionCell *Expression::make_cell(const mpq_class &d) {
   if (d == 0.0) {
@@ -153,37 +164,54 @@ size_t Expression::get_hash() const {
   return ptr_->get_hash();
 }
 
-const Expression &Expression::Zero() {
-  static const Expression zero{new ExpressionConstant(0.0)};
+// These must be initialized separately to prevent problems with QSopt_ex's
+// heap allocation of mpq_t.
+static Expression zero{Expression::NaN()};
+static Expression one{Expression::NaN()};
+static Expression pi{Expression::NaN()};
+static Expression e{Expression::NaN()};
+
+void Expression::InitConstants() {
+  zero = Expression(new ExpressionConstant(0.0));
+  one = Expression(new ExpressionConstant(1.0));
+  pi = Expression(new ExpressionConstant(M_PI));
+  e = Expression(new ExpressionConstant(M_E));
+}
+
+void Expression::DeInitConstants() {
+  zero = Expression::NaN();
+  one = Expression::NaN();
+  pi = Expression::NaN();
+  e = Expression::NaN();
+}
+
+Expression Expression::Zero() {
   return zero;
 }
 
-const Expression &Expression::One() {
-  static const Expression one{new ExpressionConstant(1.0)};
+Expression Expression::One() {
   return one;
 }
 
-const Expression &Expression::Pi() {
-  static const Expression pi{new ExpressionConstant(M_PI)};
+Expression Expression::Pi() {
   return pi;
 }
 
-const Expression &Expression::E() {
-  static const Expression e{new ExpressionConstant(M_E)};
+Expression Expression::E() {
   return e;
 }
 
-const Expression &Expression::NaN() {
+Expression Expression::NaN() {
   static const Expression nan{new ExpressionNaN()};
   return nan;
 }
 
-const Expression &Expression::Infty() {
+Expression Expression::Infty() {
   static const Expression infty{new ExpressionInfty(1)};
   return infty;
 }
 
-const Expression &Expression::NInfty() {
+Expression Expression::NInfty() {
   static const Expression ninfty{new ExpressionInfty(-1)};
   return ninfty;
 }
@@ -259,13 +287,15 @@ Expression Expression::Expand() const {
   return ptr_->Expand();
 }
 
-Expression Expression::Substitute(const Variable &var, const Expression &e) const {
+Expression Expression::Substitute(const Variable &var,
+                                  const Expression &e) const {
   assert(ptr_ != nullptr);
   return ptr_->Substitute({{var, e}}, FormulaSubstitution{});
 }
 
-Expression Expression::Substitute(const ExpressionSubstitution &expr_subst,
-                                  const FormulaSubstitution &formula_subst) const {
+Expression Expression::Substitute(
+    const ExpressionSubstitution &expr_subst,
+    const FormulaSubstitution &formula_subst) const {
   assert(ptr_ != nullptr);
   if (!expr_subst.empty() || !formula_subst.empty()) {
     return ptr_->Substitute(expr_subst, formula_subst);
@@ -273,7 +303,8 @@ Expression Expression::Substitute(const ExpressionSubstitution &expr_subst,
   return *this;
 }
 
-Expression Expression::Substitute(const ExpressionSubstitution &expr_subst) const {
+Expression Expression::Substitute(
+    const ExpressionSubstitution &expr_subst) const {
   assert(ptr_ != nullptr);
   if (!expr_subst.empty()) {
     return ptr_->Substitute(expr_subst, FormulaSubstitution{});
@@ -281,7 +312,8 @@ Expression Expression::Substitute(const ExpressionSubstitution &expr_subst) cons
   return *this;
 }
 
-Expression Expression::Substitute(const FormulaSubstitution &formula_subst) const {
+Expression Expression::Substitute(
+    const FormulaSubstitution &formula_subst) const {
   assert(ptr_ != nullptr);
   if (!formula_subst.empty()) {
     return ptr_->Substitute(ExpressionSubstitution{}, formula_subst);
@@ -305,13 +337,18 @@ Expression operator+(const Expression &lhs, const Expression &rhs) {
   return lhs_copy += rhs;
 }
 
-Expression operator+(const Expression &lhs, Expression &&rhs) { return rhs += lhs; }
+Expression operator+(const Expression &lhs, Expression &&rhs) {
+  return rhs += lhs;
+}
 
-Expression operator+(Expression &&lhs, const Expression &rhs) { return lhs += rhs; }
+Expression operator+(Expression &&lhs, const Expression &rhs) {
+  return lhs += rhs;
+}
 
 Expression operator+(Expression &&lhs, Expression &&rhs) {
   if (is_addition(lhs) && is_addition(rhs)) {
-    if (to_addition(rhs)->get_expr_to_coeff_map().size() > to_addition(lhs)->get_expr_to_coeff_map().size()) {
+    if (to_addition(rhs)->get_expr_to_coeff_map().size() >
+        to_addition(lhs)->get_expr_to_coeff_map().size()) {
       return rhs += lhs;
     }
   }
@@ -341,20 +378,30 @@ Expression &operator+=(Expression &lhs, const Expression &rhs) {
   // simplifications internally.
   if (is_addition(lhs)) {
     if (lhs.ptr_->use_count() == 1) {
-      return lhs = ExpressionAddFactory{get_constant_in_addition(lhs),
-                                        std::move(to_addition(lhs)->get_mutable_expr_to_coeff_map())}
-                       .AddExpression(rhs)
-                       .GetExpression();
+      return lhs =
+                 ExpressionAddFactory{
+                     get_constant_in_addition(lhs),
+                     std::move(
+                         to_addition(lhs)->get_mutable_expr_to_coeff_map())}
+                     .AddExpression(rhs)
+                     .GetExpression();
     } else {
-      return lhs = ExpressionAddFactory{to_addition(lhs)}.AddExpression(rhs).GetExpression();
+      return lhs = ExpressionAddFactory{to_addition(lhs)}
+          .AddExpression(rhs)
+          .GetExpression();
     }
   }
   if (is_addition(rhs)) {
     // 2. lhs + (e_1 + ... + e_n)
-    return lhs = ExpressionAddFactory{to_addition(rhs)}.AddExpression(lhs).GetExpression();
+    return lhs = ExpressionAddFactory{to_addition(rhs)}
+        .AddExpression(lhs)
+        .GetExpression();
   } else {
     // nothing to flatten: return lhs + rhs
-    return lhs = ExpressionAddFactory{}.AddExpression(lhs).AddExpression(rhs).GetExpression();
+    return lhs = ExpressionAddFactory{}
+        .AddExpression(lhs)
+        .AddExpression(rhs)
+        .GetExpression();
   }
 }
 
@@ -374,14 +421,22 @@ Expression operator-(const Expression &lhs, const Expression &rhs) {
   return lhs_copy -= rhs;
 }
 
-Expression operator-(const Expression &lhs, Expression &&rhs) { return lhs + (-std::move(rhs)); }
+Expression operator-(const Expression &lhs, Expression &&rhs) {
+  return lhs + (-std::move(rhs));
+}
 
-Expression operator-(Expression &&lhs, const Expression &rhs) { return lhs -= rhs; }
+Expression operator-(Expression &&lhs, const Expression &rhs) {
+  return lhs -= rhs;
+}
 
-Expression operator-(Expression &&lhs, Expression &&rhs) { return std::move(lhs) + (-std::move(rhs)); }
+Expression operator-(Expression &&lhs, Expression &&rhs) {
+  return std::move(lhs) + (-std::move(rhs));
+}
 
 // NOLINTNEXTLINE(runtime/references) per C++ standard signature.
-Expression &operator-=(Expression &lhs, const Expression &rhs) { return lhs += -rhs; }
+Expression &operator-=(Expression &lhs, const Expression &rhs) {
+  return lhs += -rhs;
+}
 
 Expression operator+(const Expression &e) { return e; }
 
@@ -432,9 +487,13 @@ Expression operator*(const Expression &lhs, const Expression &rhs) {
   return lhs_copy;
 }
 
-Expression operator*(const Expression &lhs, Expression &&rhs) { return rhs *= lhs; }
+Expression operator*(const Expression &lhs, Expression &&rhs) {
+  return rhs *= lhs;
+}
 
-Expression operator*(Expression &&lhs, const Expression &rhs) { return lhs *= rhs; }
+Expression operator*(Expression &&lhs, const Expression &rhs) {
+  return lhs *= rhs;
+}
 
 Expression operator*(Expression &&lhs, Expression &&rhs) {
   if (is_multiplication(lhs) && is_multiplication(rhs)) {
@@ -463,7 +522,7 @@ Expression &operator*=(Expression &lhs, const Expression &rhs) {
   // Simplification: (E1 / E2) * (E3 / E4) => (E1 * E3) / (E2 * E4)
   if (is_division(lhs) && is_division(rhs)) {
     return lhs = (get_first_argument(lhs) * get_first_argument(rhs)) /
-                 (get_second_argument(lhs) * get_second_argument(rhs));
+        (get_second_argument(lhs) * get_second_argument(rhs));
   }
   // Simplification: lhs * (c / E) => (c * lhs) / E
   if (is_division(rhs) && is_constant(get_first_argument(rhs))) {
@@ -552,12 +611,17 @@ Expression &operator*=(Expression &lhs, const Expression &rhs) {
   if (is_multiplication(lhs)) {
     // (e_1 * ... * e_n) * rhs
     if (lhs.ptr_->use_count() == 1) {
-      return lhs = ExpressionMulFactory{get_constant_in_multiplication(lhs),
-                                        std::move(to_multiplication(lhs)->get_mutable_base_to_exponent_map())}
-                       .AddExpression(rhs)
-                       .GetExpression();
+      return lhs =
+                 ExpressionMulFactory{
+                     get_constant_in_multiplication(lhs),
+                     std::move(to_multiplication(lhs)
+                                   ->get_mutable_base_to_exponent_map())}
+                     .AddExpression(rhs)
+                     .GetExpression();
     } else {
-      return lhs = ExpressionMulFactory{to_multiplication(lhs)}.AddExpression(rhs).GetExpression();
+      return lhs = ExpressionMulFactory{to_multiplication(lhs)}
+          .AddExpression(rhs)
+          .GetExpression();
     }
   } else {
     if (is_multiplication(rhs)) {
@@ -668,7 +732,7 @@ Expression exp(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::exp(get_constant_value(e))};
+    //return Expression{std::exp(get_constant_value(e))};
   }
   return Expression{new ExpressionExp(e)};
 }
@@ -735,7 +799,7 @@ Expression sin(const Expression &e) {
   // simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::sin(get_constant_value(e))};
+    //return Expression{std::sin(get_constant_value(e))};
   }
   return Expression{new ExpressionSin(e)};
 }
@@ -744,7 +808,7 @@ Expression cos(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::cos(get_constant_value(e))};
+    //return Expression{std::cos(get_constant_value(e))};
   }
 
   return Expression{new ExpressionCos(e)};
@@ -754,7 +818,7 @@ Expression tan(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::tan(get_constant_value(e))};
+    //return Expression{std::tan(get_constant_value(e))};
   }
   return Expression{new ExpressionTan(e)};
 }
@@ -789,7 +853,7 @@ Expression atan(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::atan(get_constant_value(e))};
+    //return Expression{std::atan(get_constant_value(e))};
   }
   return Expression{new ExpressionAtan(e)};
 }
@@ -810,7 +874,7 @@ Expression sinh(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::sinh(get_constant_value(e))};
+    //return Expression{std::sinh(get_constant_value(e))};
   }
   return Expression{new ExpressionSinh(e)};
 }
@@ -819,7 +883,7 @@ Expression cosh(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::cosh(get_constant_value(e))};
+    //return Expression{std::cosh(get_constant_value(e))};
   }
   return Expression{new ExpressionCosh(e)};
 }
@@ -828,7 +892,7 @@ Expression tanh(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
     throw runtime_error("Not implemented");  // Because of mpq_class
-    // return Expression{std::tanh(get_constant_value(e))};
+    //return Expression{std::tanh(get_constant_value(e))};
   }
   return Expression{new ExpressionTanh(e)};
 }
@@ -857,7 +921,8 @@ Expression max(const Expression &e1, const Expression &e2) {
   return Expression{new ExpressionMax(e1, e2)};
 }
 
-Expression if_then_else(const Formula &f_cond, const Expression &e_then, const Expression &e_else) {
+Expression if_then_else(const Formula &f_cond, const Expression &e_then,
+                        const Expression &e_else) {
   // simplification:: if(true, e1, e2) => e1
   if (f_cond.EqualTo(Formula::True())) {
     return e_then;
@@ -883,13 +948,19 @@ bool is_neg_one(const Expression &e) { return is_constant(e, -1.0); }
 bool is_two(const Expression &e) { return is_constant(e, 2.0); }
 bool is_nan(const Expression &e) { return e.get_kind() == ExpressionKind::NaN; }
 bool is_infinite(const Expression &e) { return e.get_kind() == ExpressionKind::Infty; }
-bool is_infinity(const Expression &e) { return e.get_kind() == ExpressionKind::Infty && to_infty(e)->GetSign() == 1; }
+bool is_infinity(const Expression &e) {
+  return e.get_kind() == ExpressionKind::Infty
+      && to_infty(e)->GetSign() == 1;
+}
 bool is_negative_infinity(const Expression &e) {
-  return e.get_kind() == ExpressionKind::Infty && to_infty(e)->GetSign() == -1;
+  return e.get_kind() == ExpressionKind::Infty
+      && to_infty(e)->GetSign() == -1;
 }
 bool is_variable(const Expression &e) { return is_variable(*e.ptr_); }
 bool is_addition(const Expression &e) { return is_addition(*e.ptr_); }
-bool is_multiplication(const Expression &e) { return is_multiplication(*e.ptr_); }
+bool is_multiplication(const Expression &e) {
+  return is_multiplication(*e.ptr_);
+}
 bool is_division(const Expression &e) { return is_division(*e.ptr_); }
 bool is_log(const Expression &e) { return is_log(*e.ptr_); }
 bool is_abs(const Expression &e) { return is_abs(*e.ptr_); }
@@ -909,33 +980,63 @@ bool is_tanh(const Expression &e) { return is_tanh(*e.ptr_); }
 bool is_min(const Expression &e) { return is_min(*e.ptr_); }
 bool is_max(const Expression &e) { return is_max(*e.ptr_); }
 bool is_if_then_else(const Expression &e) { return is_if_then_else(*e.ptr_); }
-bool is_uninterpreted_function(const Expression &e) { return is_uninterpreted_function(*e.ptr_); }
+bool is_uninterpreted_function(const Expression &e) {
+  return is_uninterpreted_function(*e.ptr_);
+}
 
-mpq_class get_constant_value(const Expression &e) { return to_constant(e)->get_value(); }
-const Variable &get_variable(const Expression &e) { return to_variable(e)->get_variable(); }
-const Expression &get_argument(const Expression &e) { return to_unary(e)->get_argument(); }
-const Expression &get_first_argument(const Expression &e) { return to_binary(e)->get_first_argument(); }
-const Expression &get_second_argument(const Expression &e) { return to_binary(e)->get_second_argument(); }
-mpq_class get_constant_in_addition(const Expression &e) { return to_addition(e)->get_constant(); }
-const map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(const Expression &e) {
+mpq_class get_constant_value(const Expression &e) {
+  return to_constant(e)->get_value();
+}
+const Variable &get_variable(const Expression &e) {
+  return to_variable(e)->get_variable();
+}
+const Expression &get_argument(const Expression &e) {
+  return to_unary(e)->get_argument();
+}
+const Expression &get_first_argument(const Expression &e) {
+  return to_binary(e)->get_first_argument();
+}
+const Expression &get_second_argument(const Expression &e) {
+  return to_binary(e)->get_second_argument();
+}
+mpq_class get_constant_in_addition(const Expression &e) {
+  return to_addition(e)->get_constant();
+}
+const map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(
+    const Expression &e) {
   return to_addition(e)->get_expr_to_coeff_map();
 }
-mpq_class get_constant_in_multiplication(const Expression &e) { return to_multiplication(e)->get_constant(); }
-const map<Expression, Expression> &get_base_to_exponent_map_in_multiplication(const Expression &e) {
+mpq_class get_constant_in_multiplication(const Expression &e) {
+  return to_multiplication(e)->get_constant();
+}
+const map<Expression, Expression> &get_base_to_exponent_map_in_multiplication(
+    const Expression &e) {
   return to_multiplication(e)->get_base_to_exponent_map();
 }
 
-const Formula &get_conditional_formula(const Expression &e) { return to_if_then_else(e)->get_conditional_formula(); }
+const Formula &get_conditional_formula(const Expression &e) {
+  return to_if_then_else(e)->get_conditional_formula();
+}
 
-const Expression &get_then_expression(const Expression &e) { return to_if_then_else(e)->get_then_expression(); }
+const Expression &get_then_expression(const Expression &e) {
+  return to_if_then_else(e)->get_then_expression();
+}
 
-const Expression &get_else_expression(const Expression &e) { return to_if_then_else(e)->get_else_expression(); }
+const Expression &get_else_expression(const Expression &e) {
+  return to_if_then_else(e)->get_else_expression();
+}
 
-const string &get_uninterpreted_function_name(const Expression &e) { return to_uninterpreted_function(e)->get_name(); }
+const string &get_uninterpreted_function_name(const Expression &e) {
+  return to_uninterpreted_function(e)->get_name();
+}
 
 Expression operator+(const Variable &var) { return Expression{var}; }
 Expression operator-(const Variable &var) { return -Expression{var}; }
 
-}  // namespace dlinear::drake::symbolic
+} // namespace dlinear::drake::symbolic
 
-mpq_class std::numeric_limits<dlinear::drake::symbolic::Expression>::infinity() { return dlinear::Infinity::Infty(); }
+
+
+mpq_class std::numeric_limits<dlinear::drake::symbolic::Expression>::infinity() {
+  return dlinear::Infinity::Infty();
+}

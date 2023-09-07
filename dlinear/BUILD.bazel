@@ -41,6 +41,7 @@ dlinear_cc_binary(
     linkstatic = True,
     deps = [
         "//dlinear/smt2",
+        "//dlinear/symbolic",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
         "//dlinear/util:infinity",

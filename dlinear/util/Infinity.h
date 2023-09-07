@@ -25,15 +25,13 @@ class Infinity {
   static Infinity *instance_;
 
   Config::LPSolver lp_solver_;
-  mpq_class infty_;
-  mpq_class ninfty_;
+  mpq_class *infty_;
+  mpq_class *ninfty_;
 
-  Infinity(Config::LPSolver lp_solver, mpq_class infty, mpq_class ninfty);
+  Infinity(Config::LPSolver lp_solver, double value);
+  Infinity(Config::LPSolver lp_solver, const mpq_class &value);
+  Infinity(Config::LPSolver lp_solver, const mpq_t infty, const mpq_t ninfty);
   ~Infinity();
-
-  static void InftyStart(Config::LPSolver lp_solver, double value);
-  static void InftyStart(Config::LPSolver lp_solver, const mpq_class &value);
-  static void InftyStart(Config::LPSolver lp_solver, const mpq_t infty, const mpq_t ninfty);
 
  public:
   Infinity(Infinity &other) = delete;

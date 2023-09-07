@@ -13,6 +13,7 @@ configure_make(
     visibility = ["//visibility:public"],
     configure_in_place = True,
     autoreconf = True,
+    copts = ["CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"], # should disable the different memory allocators
     autoreconf_options = [
         "--install",
         "--force",
@@ -33,6 +34,7 @@ configure_make(
     visibility = ["//visibility:public"],
     configure_in_place = True,
     autoreconf = True,
+    copts = ["CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"], # shoud disable the different memory allocators
     autoreconf_options = [
         "--install",
         "--force",

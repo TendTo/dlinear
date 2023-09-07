@@ -12,11 +12,13 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/hash.h"
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
+#include "dlinear/symbolic/symbolic_variables.h"
+
+#include "dlinear/libs/gmp.h"
 
 namespace dlinear::drake {
 namespace symbolic {
@@ -274,7 +276,8 @@ class Expression {
    *
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) const;
+  Expression Substitute(const ExpressionSubstitution &expr_subst,
+                        const FormulaSubstitution &formula_subst) const;
 
   /** Returns a copy of this expression replacing all occurrences of the
    * variables in @p expr_subst with corresponding expressions in @p expr_subst.
@@ -303,19 +306,19 @@ class Expression {
   std::string to_string() const;
 
   /** Returns zero. */
-  static const Expression &Zero();
+  static Expression Zero();
   /** Returns one. */
-  static const Expression &One();
+  static Expression One();
   /** Returns Pi, the ratio of a circle’s circumference to its diameter. */
-  static const Expression &Pi();
+  static Expression Pi();
   /** Return e, the base of natural logarithms. */
-  static const Expression &E();
+  static Expression E();
   /** Returns NaN (Not-a-Number). */
-  static const Expression &NaN();
+  static Expression NaN();
   /** Returns positive infinity. */
-  static const Expression &Infty();
+  static Expression Infty();
   /** Returns negative infinity. */
-  static const Expression &NInfty();
+  static Expression NInfty();
 
   friend Expression operator+(const Expression &lhs, const Expression &rhs);
   friend Expression operator+(const Expression &lhs, Expression &&rhs);
@@ -418,8 +421,11 @@ class Expression {
      operator is available at
      http://en.cppreference.com/w/cpp/language/operator_other#Conditional_operator.
    */
-  friend Expression if_then_else(const Formula &f_cond, const Expression &e_then, const Expression &e_else);
-  friend Expression uninterpreted_function(const std::string &name, const Variables &vars);
+  friend Expression if_then_else(const Formula &f_cond,
+                                 const Expression &e_then,
+                                 const Expression &e_else);
+  friend Expression uninterpreted_function(const std::string &name,
+                                           const Variables &vars);
 
   friend std::ostream &operator<<(std::ostream &os, const Expression &e);
   friend void swap(Expression &a, Expression &b) { std::swap(a.ptr_, b.ptr_); }
@@ -481,7 +487,8 @@ class Expression {
   friend const ExpressionMin *to_min(const Expression &e);
   friend const ExpressionMax *to_max(const Expression &e);
   friend const ExpressionIfThenElse *to_if_then_else(const Expression &e);
-  friend const ExpressionUninterpretedFunction *to_uninterpreted_function(const Expression &e);
+  friend const ExpressionUninterpretedFunction *to_uninterpreted_function(
+      const Expression &e);
 
   friend class ExpressionAddFactory;
   friend class ExpressionMulFactory;
@@ -551,7 +558,8 @@ Expression cosh(const Expression &e);
 Expression tanh(const Expression &e);
 Expression min(const Expression &e1, const Expression &e2);
 Expression max(const Expression &e1, const Expression &e2);
-Expression if_then_else(const Formula &f_cond, const Expression &e_then, const Expression &e_else);
+Expression if_then_else(const Formula &f_cond, const Expression &e_then,
+                        const Expression &e_else);
 
 /** Constructs an uninterpreted-function expression with @p name and @p vars.
  * An uninterpreted function is an opaque function that has no other property
@@ -664,7 +672,8 @@ mpq_class get_constant_in_addition(const Expression &e);
  *  maps 'x' to 2 and 'y' to 3.
  *  @pre @p e is an addition expression.
  */
-const std::map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(const Expression &e);
+const std::map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(
+    const Expression &e);
 /** Returns the constant part of the multiplication expression @p e. For
  *  instance, given 7 * x^2 * y^3, it returns 7.
  *  @pre @p e is a multiplication expression.
@@ -675,7 +684,8 @@ mpq_class get_constant_in_multiplication(const Expression &e);
  * return value maps 'x' to 2, 'y' to 3, and 'z' to 'x'.
  *  @pre @p e is a multiplication expression.
  */
-const std::map<Expression, Expression> &get_base_to_exponent_map_in_multiplication(const Expression &e);
+const std::map<Expression, Expression> &
+get_base_to_exponent_map_in_multiplication(const Expression &e);
 
 /** Returns the conditional formula in the if-then-else expression @p e.
  * @pre @p e is an if-then-else expression.
@@ -703,16 +713,19 @@ Expression operator-(const Variable &var);
 }  // namespace symbolic
 
 /** Computes the hash value of a symbolic expression. */
-template <>
+template<>
 struct hash_value<symbolic::Expression> {
-  size_t operator()(const symbolic::Expression &e) const { return e.get_hash(); }
+  size_t operator()(const symbolic::Expression &e) const {
+    return e.get_hash();
+  }
 };
 
-}  // namespace dlinear::drake
+} // namespace dlinear::drake
+
 
 namespace std {
 /* Provides std::less<dlinear::drake::symbolic::Expression>. */
-template <>
+template<>
 struct less<dlinear::drake::symbolic::Expression> {
   bool operator()(const dlinear::drake::symbolic::Expression &lhs,
                   const dlinear::drake::symbolic::Expression &rhs) const {
@@ -721,7 +734,7 @@ struct less<dlinear::drake::symbolic::Expression> {
 };
 
 /* Provides std::equal_to<dlinear::drake::symbolic::Expression>. */
-template <>
+template<>
 struct equal_to<dlinear::drake::symbolic::Expression> {
   bool operator()(const dlinear::drake::symbolic::Expression &lhs,
                   const dlinear::drake::symbolic::Expression &rhs) const {
@@ -729,14 +742,17 @@ struct equal_to<dlinear::drake::symbolic::Expression> {
   }
 };
 
-template <>
+template<>
 struct hash<dlinear::drake::symbolic::Expression> {
-  size_t operator()(const dlinear::drake::symbolic::Expression &e) const { return e.get_hash(); }
+  size_t operator()(const dlinear::drake::symbolic::Expression &e) const {
+    return e.get_hash();
+  }
 };
 
 /* Provides std::numeric_limits<dlinear::drake::symbolic::Expression>. */
-template <>
-struct numeric_limits<dlinear::drake::symbolic::Expression> : public numeric_limits<mpq_class> {
+template<>
+struct numeric_limits<dlinear::drake::symbolic::Expression>
+    : public numeric_limits<mpq_class> {
   static const bool has_infinity = true;
   static mpq_class infinity();
 };

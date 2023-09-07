@@ -17,6 +17,7 @@
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Infinity.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace {
 void HandleSigInt(const int) {
@@ -35,13 +36,18 @@ int main(int argc, const char *argv[]) {
   // Parse the command line arguments.
   parser.parse(argc, argv);
   // Get the configuration from the command line arguments.
-  dlinear::Config config_ = parser.toConfig();
+  dlinear::Config config = parser.toConfig();
 
-  // Initialize the infinity values for the chosen LP solver.
-  dlinear::Infinity::InftyStart(config_);
+  // Setup the infinity values.
+  dlinear::Infinity::InftyStart(config);
+  dlinear::Expression::InitConstants();
+
   // Run the smt2 parser on the input file.
-  dlinear::RunSmt2(config_);
+  dlinear::RunSmt2(config);
+
   // Clean up the infinity values.
+  dlinear::Expression::DeInitConstants();
   dlinear::Infinity::InftyFinish();
+
   return 0;
 }
