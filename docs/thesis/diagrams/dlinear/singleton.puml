@@ -1,0 +1,20 @@
+@startuml Design pattern - Singleton
+
+class Infinity {
+  -{static} instance_: Infinity;
+  -lp_solver_: Config::LPSolver;
+  -infty_: mpq_class;
+  -ninfty_: mpq_class;
+
+  -Infinity(Config::LPSolver, double);
+  -Infinity(Config::LPSolver, mpq_class);
+  -Infinity(Config::LPSolver, mpq_t, mpq_t);
+
+  +{static} InftyStart(Config)
+  +{static} InftyStart(Config::LPSolver)
+  +{static} InftyFinish()
+  +{static} Infty(): mpq_class
+  +{static} Ninfty(): mpq_class
+}
+
+@enduml

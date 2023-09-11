@@ -1,0 +1,9 @@
+@startuml Design pattern - Singleton
+
+class Singleton {
+    -{static} instance: Singleton
+    -Singleton()
+    +{static} GetInstance(): Singleton
+}
+
+@enduml

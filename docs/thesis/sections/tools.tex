@@ -31,9 +31,14 @@ The \texttt{mpz} functions can be used, too, by applying them to the numerator a
 
 \subsection*{Drake}
 
-Drake is a \texttt{c++} toolbox by the Robot Locomotion Group at MIT. 
+Drake is a \texttt{c++} toolbox by the Robot Locomotion Group at MIT.
 It contains a collection of tools for analyzing the dynamics of our robots and building control systems for them, with a heavy emphasis on optimization-based design/analysis \cite{paper:drake}.
-In the context of this project, many of the class that abstract the components of the \gls{smt} problem, such as variables and expressions, are taken from this library.
+In the context of this project, many of the classes that abstract the components of the \gls{smt} problem, such as variables and expressions, are taken from this library.
+
+\subsection*{PicoSAT}
+
+PicoSAT is a \gls{sat} solver written in \texttt{c} \cite{paper:picosat}.
+It uses customized restart and phase assignment heuristics, besides a fast and efficient low-level data structure, meant to improve performance in the context of industrial benchmarks.
 
 \subsection*{SoPlex}
 
@@ -82,14 +87,14 @@ It is defined by the presence of a \texttt{WORKSPACE.bazel} file, which specifie
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{WORKSPACE.bazel} file},captionpos=b,label={code:workspace}]{code/example.WORKSPACE.bazel}
 
-The project is further split into multiple \textit{packages}, each defined by a \texttt{BUILD.bazel} file.
+The project is split into multiple \textit{packages}, each defined by a \texttt{BUILD.bazel} file.
 This allows for a targeted rebuild of only the smallest subset of the dependencies when a package has been modified, using the cache for the rest.
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Example of a \texttt{Build.bazel} file},captionpos=b,label={code:build}]{code/example.BUILD.bazel}
 
-\subsection*{Dependencies}
+\subsection*{External dependencies}
 
-\textit{Bazel} provides the means to manage internal and external dependencies.
+\textit{Bazel} provides the means to easily manage external dependencies.
 This is done by downloading an archive to be included in the build process.
 This step can be Simplified further by using some custom macros like \texttt{github\_archive} (\autoref{code:foreign_cc.WORKSPACE.bazel}).
 The external dependencies are then built from source in a sandbox to ensure isolation and reproducibility.
@@ -107,11 +112,45 @@ It also allows us to specify whether to use them as static libraries for the mai
 
 \lstinputlisting[language=bazel,frame=single,showstringspaces=false,caption={Simplified \texttt{BUILD.bazel} file for the SoPlex library},captionpos=b,label={code:soplex.BUILD.bazel}]{code/soplex.BUILD.bazel}
 
+\section*{Dependency graph}
+\label{sec:dependency_graph}
+
 \bazel includes a utility that shows the project's dependency graph, which gives a good overview of the couplings between the different components.
-The result is \autoref{fig:dlinear-deps}.
+Components can represent a variety of things.
+In the most basic case, they are a \bazel package, but they can also include the \textit{tools} used for compilation and the \textit{platform constraints}.
+To avoid cluttering the graph, the visualization only includes the components inside \dlinear, which are usually a class or small groups of logically coherent functions, and the external dependencies.
+
+The graph produced by \dlinearfour is shown in \autoref{fig:dlinear4-deps}.
+It is worth noting that the graph is incomplete, as some transitive dependencies are not included in the \bazel build system but instead installed through other means.
+As an example, both \texttt{zlib} and \texttt{bzip2lib} are needed for building \texttt{SoPlex} and \texttt{QSopt\_ex}, but \bazel ignores their existence.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[angle=90,height=0.8\paperheight]{dlinear4_deps}
+    \caption{Visualization of the dependency graph of \dlinearfour as seen by \bazel}\label{fig:dlinear4-deps}
+\end{figure}
+
+\clearpage
+
+The same kind of graph for \dlinear is shown in \autoref{fig:dlinear-deps}.
+What follows is a very brief overview of the project's main components.
+The main target, \texttt{//dlinear}, obtains the \texttt{Configuration} of the program from the custom \texttt{Argparser}.
+The settings are then used to invoke the \texttt{smt2} parser, which will parse the input file to produce an intermediate symbolic representation of the problem to be handled by the chosen \texttt{solver}, but not before passing it through a number utility classes, such as \texttt{nnfizier} and \texttt{cnfizier}, which apply all the required transformations to the input formula, to ensure that it is in the correct form.
+
+One of the goals of the refactor was to lift the burden of installing most of the dependencies from the user and let \bazel handle it.
+As a result, the bulk of the main third-party libraries are now located in the bottom-left corner.
+
+The \texttt{//tools:dynamic_build} configuration setting has been added to differentiate between a completely static build and a dynamic one.
+The former produces a fully static executable, which can be run on any system without depending on any library or tool on the machine.
+This ensures the portability of the software, although it comes at the cost of a larger executable.
+If the \texttt{dynamic\_build} flag is set, the executable will be dynamically linked to the libraries, which will be loaded at runtime.
+This approach is used to build the Python bindings.
+The python script will load the resulting shared library and all its dependencies packaged in the \texttt{wheel} archive.
+
+Last but not least, all unused components carried from the \dreal fork have been removed.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{dlinear_deps}
+    \includegraphics[angle=90,height=0.8\paperheight]{dlinear_deps}
     \caption{Visualization of the dependency graph of \dlinear as seen by \bazel}\label{fig:dlinear-deps}
 \end{figure}

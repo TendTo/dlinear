@@ -2,9 +2,11 @@
 
 \section{Overview}
 
-The software is written in \texttt{c++}, and it is formed by two main components: the \textit{dlinear library} and the \textit{python bindings}.
-The project includes a \textit{benchmarking suite} and a \textit{test suite}, which are used to verify the correctness and measure the application's performance.
-The \texttt{python} bindings provide a more user-friendly interface to the library and allow faster prototyping in a \texttt{python} environment.
+The software is written in \texttt{c++}, and it is formed by two main components: the \textit{dlinear library} and the \textit{pydlinear python bindings}.
+The former is the result of the refactoring of the \dlinearfour project.
+The latter is a new addition, inspired by the \dreal project, to provide a more user-friendly interface to the library and allow faster prototyping in a \texttt{python} environment.
+A \textit{benchmarking suite} has been added to the project, and the \textit{test suite} has been improved with additional coverage.
+Their combination allows us to verify the correctness and measure the application's performance.
 
 \subsection*{Filesystem tree}
 
@@ -72,15 +74,21 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
 \section{Design patterns}
 \label{sec:patterns}
 
+When a software project inevitably grows in size and complexity, it becomes increasingly difficult to maintain and extend.
+A common approach to combat this trend is following some design patterns, often described as solutions to common problems in software engineering.
+
+Being quite a complex project, \dreal uses various design patterns, like the \textit{pimpl idiom} or the \textit{Composite}, which have been ported over to \dlinearfour and \dlinear .
+In the refactoring of the project, some patterns have then been either improved (\textit{Visitor}) or introduced (\textit{Singleton}).
+
 \subsection*{Pimpl idiom}
 
 The \textit{pimpl idiom} \cite{man:pimpl} is a technique used to hide the implementation details of a class from the user.
 The acronym stands for \textit{Pointer to IMPLementation}, and it is a common practice in \texttt{c++}.
 The result is a reduction in compilation time upon changes in the private implementation and avoiding exposing the internal details of a class to the client (\autoref{dg:pattern-pimpl}).
-This pattern can be seen as a specialization of the \textit{bridge pattern} \cite{book:gof}: the actual implementation of the class can be changed freely, decoupled from the abstraction.
+This pattern can be seen as a specialization of the \textit{Bridge pattern} \cite{book:gof}: the actual implementation of the class can be changed freely, decoupled from the abstraction.
 The main difference is that there is usually only one concrete abstraction in the \textit{pimpl idiom}.
 
-\plantuml{diagrams/pattern/pimpl}{Generalized UML diagram of the Pimpl idiom}{pattern-pimpl}
+\plantuml{diagrams/pattern/pimpl}{Generalized UML class diagram of the Pimpl idiom}{pattern-pimpl}
 
 In \dlinear, the implementation of the solver changes drastically between \texttt{soplex} and \texttt{qsoptex}.
 While the interface remains the same, the underlying implementation is chosen based on the configuration at runtime.
@@ -89,7 +97,7 @@ To achieve this result, the \texttt{Context} header defines a forward declaratio
 The \texttt{ContextImpl} class is then defined in its file, not exposed in the public header.
 Other classes can still extend from \texttt{ContextImpl}, allowing the implementation of the solver to be changed without affecting the rest of the codebase.
 
-\plantuml{diagrams/simplified/pimpl}{Simplified UML diagram of the implementation of the Pimpl idiom as it is used within \dlinear}{simplified-pimpl}
+\plantuml{diagrams/simplified/pimpl}{Simplified UML class diagram of the implementation of the Pimpl idiom as it is used within \dlinear}{simplified-pimpl}
 
 \subsection*{Composite and Visitor patterns}
 
@@ -97,19 +105,40 @@ The Composite pattern allows to treat both objects and their compositions unifor
 It achieves this by defining a common interface that both Leaves and Composites implement (\autoref{dg:pattern-composite}).
 The approach dramatically simplifies the interaction with complex data structures, as the difference between a single object and a collection of objects is hidden.
 
-\plantuml{diagrams/pattern/composite}{Generalized UML diagram of the Composite pattern}{pattern-composite}
+\plantuml[0.6]{diagrams/pattern/composite}{Generalized UML class diagram of the Composite pattern}{pattern-composite}
 
 The intent of the Visitor pattern is to represent an operation to be performed on the elements of an object structure.
 The Visitor lets you define a new operation without changing the classes of the elements on which it operates \cite{book:gof}.
 A typical application is traversing an object structure and applying an operation to each element based on its type (\autoref{dg:pattern-visitor}).
 The ObjectStructure can be a simple collection or a Composite object.
 
-\plantuml{diagrams/pattern/visitor}{Generalized UML diagram of the Visitor pattern}{pattern-visitor}
+\plantuml{diagrams/pattern/visitor}{Generalized UML class diagram of the Visitor pattern}{pattern-visitor}
 
 The latter is the case of \dlinear, where the \texttt{Formula} class is a Composite object, and the \texttt{FormulaVisitor} is used to traverse the structure and perform operations on each element (\autoref{dg:simplified-visitor}).
-Through the Visitors, the input formula is converted in \gls{nnf}, \gls{cnf} or in a boolean formula, where each linear constraint is substituted with a boolean variable.
+By using the pattern, the Client is exposed to a simplified interface, where the only method to call over a \texttt{FormulaVisitor} object is \texttt{Convert} with the input \texttt{Formula}.
+The conversion happens internally, with a sequence of recursive calls to the specialized \texttt{Visit} methods.
+Using these classes, it is possible to convert an input formula in \gls{nnf}, \gls{cnf} or in a boolean formula, where each linear constraint is substituted with a boolean variable.
 
-\plantuml{diagrams/simplified/visitor}{Simplified UML diagram of the Visitor pattern as it is used within \dlinear}{simplified-visitor}
+\plantuml{diagrams/simplified/visitor}{Simplified UML class diagram of the Visitor pattern as it is used within \dlinear}{simplified-visitor}
+
+\subsection*{Singleton}
+
+The Singleton pattern is used when there is the need to ensure that a class only has one instance and to provide a global point of access to it \cite{book:gof}.
+It is one of the most straightforward design patterns and only requires a class with a private constructor, a private static reference to a Singleton object and a public static method to retrieve the instance \autoref{dg:pattern-singleton}.
+
+\plantuml[0.3]{diagrams/pattern/singleton}{Generalized UML class diagram of the Singleton pattern}{pattern-singleton}
+
+This pattern has seen a fair share of criticisms over the years, mainly because it is often used as a global variable in disguise.
+However, it still represents a valid solution to make the code cleaner when such a situation is unavoidable.
+This is the case in the initialization of the lower and upper bounds infinity constants in \dlinear.
+They ensure that at no time during execution an intermediate result can be greater (or smaller) than these global constants.
+What complicates matters is the fact that the \texttt{gmp} library allows for the definition of a set of custom functions to be used when performing dynamic memory allocation, reallocation and deallocation with the \texttt{mp\_set\_memory\_functions} function.
+It is a feature that \texttt{QSopt\_ex} uses internally.
+Whenever the function is called, all the previously created \texttt{gmp} objects are invalidated.
+Hence, using the Singleton pattern allows for centralized control over the state of the \texttt{gmp} library, ensuring that the initialization happens only once and in the correct order \autoref{dg:dlinear-singleton}.
+Since memory management must be handled manually, the \texttt{Infinity} class also includes a method to free the currently allocated resources, preventing memory leaks.
+
+\plantuml[0.45]{diagrams/dlinear/singleton}{UML class diagram of the Singleton pattern as it is used within \dlinear}{dlinear-singleton}
 
 \section{Smt2 parser}
 
@@ -132,7 +161,7 @@ Both represent the heart of the software.
 They are responsible for solving the \gls{lp} part of the problem while being directed by the \texttt{picosat} \gls{sat} solver.
 
 While the \texttt{smt2} file is being parsed, each variable encountered is stored and added to the \texttt{Context} object.
-The same is true for all the assertions regarding the problem's constraints, which represent the theory's atoms.
+The same is true for all the assertions regarding the problem's constraints, representing the theory's atoms.
 When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex} (\autoref{dg:qsoptex}).
 
 \plantuml{diagrams/sequence/qsoptex}{Simplified sequence diagram of the interactions between the \gls{sat} and theory solvers}{qsoptex}
@@ -156,8 +185,8 @@ The user can extend it even further to support custom types.
 In the context of \dlinear, the main functionalities of the solver, as well as some of the most valuable data manipulation classes, have been exposed in a \texttt{python} package called, unsurprisingly, \pydlinear.
 The bindings are defined in the \texttt{pydlinear.cpp} file (\autoref{code:example_python_bindings}).
 The \texttt{setup.py}, with the configuration options provided by the \texttt{pyproject.toml} file, defines the steps needed for building the package to make it available to the \texttt{python} interpreter.
-While the ideal scenario would be to build it on the target machine, it is possible to include a pre-build version called a \textit{wheel}.
-This particular archive contains all the shared libraries that make up the package, and provided that the architecture of both the distributor's machine and the user's machine is the same, it can be used without any need for compilation by the final user.
+While the ideal scenario would be to build the \dlinear library on the target machine, it is possible to include a pre-build version called a \textit{wheel}.
+This specialized archive contains all the shared libraries that make up the package and, provided that the architecture of both the distributor's machine and the user's machine is the same, it can be used without any need for compilation by the final user.
 
 \lstinputlisting[language=c++,frame=single,showstringspaces=false,caption={Simplified example of \pydlinear's bindings},captionpos=b,label={code:example_python_bindings}]{code/example\_python\_bindings.cpp}
 

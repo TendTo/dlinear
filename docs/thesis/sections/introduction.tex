@@ -1,4 +1,4 @@
-\chapter{Background}
+\chapter{Introduction}
 
 For a more in-depth introduction to all the topics mentioned in this section, please refer to \cite{book:handbook-sat,paper:survey-smt,book:lp}, from which most of the information presented here is taken.
 
@@ -21,6 +21,7 @@ A formula is satisfied if all its clauses are satisfied and unsatisfied if at le
 \subsection*{CNF encoding}
 
 To be tackled efficiently by modern solvers, formulas are often transformed in their \gls{cnf}.
+In a formal notation, \gls{cnf} formulas can be defined as follows:
 
 \begin{gather*}
     \bigwedge_{i=1}^n \bigvee_{j=1}^{m_i} l_{ij} \\

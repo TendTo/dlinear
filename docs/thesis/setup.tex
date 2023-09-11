@@ -237,19 +237,19 @@ pic me set={file}{file},
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Remove chapter header
 %%%%%%%%%%%%%%%%%%%%%%%%
-\titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
-\newpagestyle{mystyle}
-{\sethead[\thepage][][\chaptertitle]{}{}{\thepage}}
-\pagestyle{mystyle}
-\AddToHook{env/appendices/begin}{%
-    \titleformat{\chapter}{\normalfont\LARGE\bfseries}{Appendix \thechapter}{10pt}{}%
-}
+% \titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
+% \newpagestyle{mystyle}
+% {\sethead[\thepage][][\chaptertitle]{}{}{\thepage}}
+% \pagestyle{mystyle}
+% \AddToHook{env/appendices/begin}{%
+%     \titleformat{\chapter}{\normalfont\LARGE\bfseries}{Appendix \thechapter}{10pt}{}%
+% }
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % PlantUML
 %%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\plantuml}[4][1]{
-    \begin{figure}[ht]
+    \begin{figure}[h]
         \begin{adjustbox}{width=#1\textwidth,center}
             \input{#2}
         \end{adjustbox}
