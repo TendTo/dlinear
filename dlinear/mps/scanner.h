@@ -18,7 +18,7 @@
 #ifndef YY_DECL
 
 #define YY_DECL                                                \
-  int dlinear::MpsParser::token_type dlinear::MpsScanner::lex( \
+  dlinear::MpsParser::token_type dlinear::MpsScanner::lex( \
       dlinear::MpsParser::semantic_type *yylval,               \
       dlinear::MpsParser::location_type *yylloc)
 #endif
@@ -31,11 +31,7 @@
 
 // The following include should come first before parser.yy.hh.
 // Do not alpha-sort them.
-#include "dlinear/smt2/sort.h"
-#include "dlinear/smt2/Term.h"
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Box.h"
-#include "parser.yy.hpp"
+#include "dlinear/mps/parser.yy.hpp"
 
 namespace dlinear
 {
@@ -70,7 +66,7 @@ namespace dlinear
      * the macro declaration YY_DECL above. The generated bison parser then
      * calls this virtual function to fetch new tokens.
      */
-    virtual int MpsParser::token_type lex(MpsParser::semantic_type *yylval, MpsParser::location_type *yylloc);
+    virtual MpsParser::token_type lex(MpsParser::semantic_type *yylval, MpsParser::location_type *yylloc);
 
     /** Enable debug output (via arg_yyout) if compiled into the scanner. */
     void set_debug(bool b);

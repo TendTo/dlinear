@@ -1,11 +1,11 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_cc_binary")
+load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
 load("//tools/lexyacc:lexyacc.bzl", "gen_lex", "gen_yacc")
 
 gen_lex(
     name = "scanner",
-    src = "scanner.l",
-    source_out = "scanner.l.c",
+    src = "scanner.ll",
+    source_out = "scanner.ll.cpp",
     visibility = ["//visibility:private"],
 )
 
@@ -20,10 +20,19 @@ gen_yacc(
 
 dlinear_cc_library(
     name = "mps_lib",
-    srcs = [":scanner"]
+    srcs = [":scanner"],
 )
 
 dlinear_cc_binary(
     name = "mps",
-    srcs = [":scanner"]
+    srcs = [
+        "Driver.cpp",
+        "test.cpp",
+        ":parser",
+        ":scanner",
+        "Driver.h",
+        "scanner.h",
+    ],
 )
+
+cpplint()
