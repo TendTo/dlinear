@@ -136,7 +136,7 @@ github_archive(
 new_local_repository(
     name = "linux_libs",
     build_file = "//third_party:linux_libs.BUILD.bazel",
-    path = "/usr/lib",
+    path = "/usr/lib/x86_64-linux-gnu",
 )
 
 load("//tools:deps.bzl", "load_dependencies")

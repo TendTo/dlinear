@@ -13,7 +13,6 @@
 #include "dlinear/smt2/run.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/libs/soplex.h"
-#include "dlinear/util/infty.h"
 
 namespace dlinear::benchmark {
 

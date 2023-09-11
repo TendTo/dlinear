@@ -33,6 +33,6 @@ dlinear_cc_library(
         "//dlinear/smt2",
         "//dlinear/util:config",
         "//dlinear/util:exception",
-        "//dlinear/util:infty",
+        "//dlinear/util:infinity",
     ],
 )

@@ -1,7 +1,9 @@
 #include "InfoGatherer.h"
 
-#include <utility>
 #include <chrono>
+#include <utility>
+
+#include "dlinear/util/Infinity.h"
 
 using std::string;
 
@@ -24,10 +26,8 @@ InfoGatherer::InfoGatherer(string filename, string solver, const string &precisi
 bool InfoGatherer::run() {
   std::cout << "Running " << filename_ << " with " << solver_ << " and " << precision_ << std::endl;
   // Shared memory to store the results of the child process.
-  auto *results = static_cast<shared_results *>(mmap(nullptr, sizeof(shared_results),
-                                                     PROT_READ | PROT_WRITE,
-                                                     MAP_SHARED | MAP_ANONYMOUS, -1,
-                                                     0));
+  auto *results = static_cast<shared_results *>(
+      mmap(nullptr, sizeof(shared_results), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
   // Fork an intermediate process to fork a worker process and a timer process.
   StartIntermediateProcess(results);
   // Wait for the child process to finish and get the exit status
@@ -102,9 +102,12 @@ void InfoGatherer::ParseResults(shared_results *results) {
 
 string InfoGatherer::GetSolverName(const Config::LPSolver solver) {
   switch (solver) {
-    case Config::SOPLEX:return "soplex";
-    case Config::QSOPTEX:return "qsoptex";
-    default:DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
+    case Config::SOPLEX:
+      return "soplex";
+    case Config::QSOPTEX:
+      return "qsoptex";
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
   }
 }
 
@@ -118,21 +121,13 @@ Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) {
 }
 
 void InfoGatherer::Init() {
-  if (config_.lp_solver() == Config::QSOPTEX) {
-    qsopt_ex::QSXStart();
-    InftyStart(mpq_INFTY, mpq_NINFTY);
-  } else if (config_.lp_solver() == Config::SOPLEX) {
-    InftyStart(soplex::infinity);
-  }
+  Infinity::InftyStart(config_);
   Expression::InitConstants();
 }
 
 void InfoGatherer::DeInit() {
   Expression::DeInitConstants();
-  InftyFinish();
-  if (config_.lp_solver() == Config::QSOPTEX) {
-    qsopt_ex::QSXFinish();
-  }
+  Infinity::InftyFinish();
 }
 
 void InfoGatherer::GatherInfo(shared_results *results) {
@@ -146,14 +141,10 @@ void InfoGatherer::GatherInfo(shared_results *results) {
 }
 
 std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer) {
-  return os << info_gatherer.filename() << ","
-            << info_gatherer.solver() << ","
-            << info_gatherer.nAssertions() << ","
+  return os << info_gatherer.filename() << "," << info_gatherer.solver() << "," << info_gatherer.nAssertions() << ","
             << info_gatherer.precision() << ","
-            << "s" << ","
-            << info_gatherer.time() << ","
-            << info_gatherer.actualPrecision() << ","
-            << info_gatherer.isSat();
+            << "s"
+            << "," << info_gatherer.time() << "," << info_gatherer.actualPrecision() << "," << info_gatherer.isSat();
 }
 
-}  // namespace dreal
+}  // namespace dlinear::benchmark

@@ -19,7 +19,6 @@ dlinear_cc_library(
         ":logging",
         "//dlinear:version",
         "@argparse",
-        "@spdlog",
     ],
 )
 
