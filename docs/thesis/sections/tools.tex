@@ -120,14 +120,14 @@ Components can represent a variety of things.
 In the most basic case, they are a \bazel package, but they can also include the \textit{tools} used for compilation and the \textit{platform constraints}.
 To avoid cluttering the graph, the visualization only includes the components inside \dlinear, which are usually a class or small groups of logically coherent functions, and the external dependencies.
 
-The graph produced by \dlinearfour is shown in \autoref{fig:dlinear4-deps}.
+The simplified graph produced by \dlinearfour is shown in \autoref{fig:dlinear4-deps-simp}.
 It is worth noting that the graph is incomplete, as some transitive dependencies are not included in the \bazel build system but instead installed through other means.
 As an example, both \texttt{zlib} and \texttt{bzip2lib} are needed for building \texttt{SoPlex} and \texttt{QSopt\_ex}, but \bazel ignores their existence.
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[angle=90,height=0.8\paperheight]{dlinear4_deps}
-    \caption{Visualization of the dependency graph of \dlinearfour as seen by \bazel}\label{fig:dlinear4-deps}
+    \includegraphics[angle=90,height=0.8\paperheight]{dlinear4_deps_simp}
+    \caption{Visualization of the dependency graph of \dlinearfour as seen by \bazel}\label{fig:dlinear4-deps-simp}
 \end{figure}
 
 \clearpage
