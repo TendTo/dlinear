@@ -7,7 +7,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(_pydlinear, m) {
   m.attr("__version__") = DLINEAR_VERSION_STRING;
-  m.doc() = "dlinear python bindings";
+  m.doc() = "dlinear Python bindings";
 
   auto FormulaC = py::class_<Formula>(m, "Formula");
   auto LPSolverE = py::enum_<Config::LPSolver>(m, "LPSolver");

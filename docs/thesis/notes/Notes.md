@@ -17,7 +17,7 @@ Most of them are not used anymore, but they are still present in the codebase.
 
 ## Building dependecies
 
-Building and linking dependencies in a \texttt{c++} project can be a daunting task.
+Building and linking dependencies in a C++ project can be a daunting task.
 Although Bazel provides a very powerful tool to manage dependencies, it is not always easy to use, expecially when the dependencies are not managed by Bazel itself but by other tools.
 This is a very common scenario.
 For this reason, there exists a set of rules called \textit{ForeignCc} \footnote{\url{https://github.com/bazelbuild/rules_foreign_cc}} meant to easy the process and automate it as much as possible.

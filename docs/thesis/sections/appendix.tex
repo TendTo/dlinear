@@ -77,8 +77,10 @@
 
     \chapter{Program usage}
 
-    The \dlinear executable is built by \bazel and will be placed in the \texttt{bazel-bin/dlinear} directory.
-    The following is the output of the \texttt{--help} flag and lists all the options available to the user.
+    The \dlinear executable built by \bazel using the \texttt{bazel build //dlinear} command will be placed in the \texttt{bazel-bin/dlinear} directory.
+    Sine the binary is statically linked by default, it can be moved to any destination without problems.
+    The following is the output obtained by running \dlinear with the \texttt{--help} flag.
+    It lists all the options available to the user.
 
     \lstinputlisting[basicstyle=\tiny,language=bash,frame=single,showstringspaces=false,caption={Output using the \texttt{--help} flag},captionpos=b,label={code:help}]{code/help}
 

@@ -2,7 +2,7 @@
 load("//tools:github.bzl", "github_archive")
 
 # WORKSPACE.bazel file
-workspace(name = "dlinear5")  # name of the project
+workspace(name = "dlinear")  # name of the project
 
 github_archive(
     name = "com_google_googletest",  # Google Test suite

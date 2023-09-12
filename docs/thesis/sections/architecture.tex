@@ -2,21 +2,61 @@
 
 \section{Overview}
 
-The software is written in \texttt{c++}, and it is formed by two main components: the \textit{dlinear library} and the \textit{pydlinear python bindings}.
+The software is written in C++ and is formed by two main components: the \textit{dlinear library} and the \textit{pydlinear Python bindings}.
 The former is the result of the refactoring of the \dlinearfour project.
-The latter is a new addition, inspired by the \dreal project, to provide a more user-friendly interface to the library and allow faster prototyping in a \texttt{python} environment.
-A \textit{benchmarking suite} has been added to the project, and the \textit{test suite} has been improved with additional coverage.
+The process involved a deep study of the codebase, which led to a delicate but rewarding migration to the latest C++17 standard, as well as the update of most external libraries to their latest version.
+During the refactoring, all the leftovers from the \dreal project have been removed, while some design patterns, such as Singleton and Visitor, have been introduced to improve the code quality and future extensibility.
+
+\pydlinear is a new addition inspired by the \dreal project to provide a more user-friendly interface to the library and allow faster prototyping in a Python environment.
+Furthermore, a customized \textit{benchmarking suite} has been introduced to the project, and the \textit{test suite} has been improved with additional coverage.
 Their combination allows us to verify the correctness and measure the application's performance.
+
+The build system has also received a lot of attention.
+Instead of relying on a manual installation of all the direct and transitive dependencies, the process is now integrated into \bazel.
+
+See \autoref{tab:changes} for a summary of the changes introduced.
+
+\begin{table}[h]
+        \centering
+        \begin{tabular}{l|l}
+                \textbf{\dlinearfour}               & \textbf{\dlinear}                                   \\
+                \hline
+                \hline
+                C++14 standard                      & C++17 standard ([[nodiscard]], [[likely]])          \\
+                \hline
+                \dreal leftovers                    & Removed unused code,                                \\
+                                                    & changed namespace to \dlinear                       \\
+                \hline
+                Manual dependencies building        & \bazel handles all external dependencies            \\
+                \hline
+                Old dependency version              & Updated dependencies to the latest version          \\
+                \hline
+                Old ezoptionparser                  & Modern argparse                                     \\
+                command-line parser library         & command-line parser library                         \\
+                \hline
+                Multiple independent classes        & FormulaVisitor superclass with virtual methods      \\
+                to perform formula conversions      &                                                     \\
+                \hline
+                Multiple functions to initialize     & Singleton instance in charge or the                 \\
+                and deinitialize the global state   & global state of the program. Ensures                \\
+                of the program with no safety check & the validity of the initialization/deinitialization \\
+                \hline
+                                                    & \pydlinear Python bindings                          \\
+                \hline
+                                                    & Benchmarking suite with CSV output                  \\
+        \end{tabular}
+        \caption{Summary of the changes made to the original \dlinearfour project}\label{tab:changes}
+\end{table}
 
 \subsection*{Filesystem tree}
 
 The project is organized in a structure (\autoref{fig:filesystem}) that is common to find in \texttt{bazel} projects.
 
 The root directory contains the \texttt{WORKSPACE} file, marking the workspace's root.
-The \dlinear folder contains the \texttt{c++} source code of the library.
+The \dlinear folder contains the C++ source code of the library.
 It is further divided into subfolders, each containing the source code of a specific and primarily isolated component.
 The same structure is mimicked in the \texttt{test} directory, where all the unit tests are placed.
-The \pydlinear folder contains the configurations needed to create the \texttt{python} bindings and some tests to ensure their correctness. In contrast, the \texttt{benchmark} folder contains the benchmarking suite used to measure the solver's performance.
+The \pydlinear folder contains the configurations needed to create the Python bindings and some tests to ensure their correctness. In contrast, the \texttt{benchmark} folder contains the benchmarking suite used to measure the solver's performance.
 
 Following \texttt{bazel} conventions, the \texttt{third\_party} folder contains the external dependencies.
 All the build tools and Starlark rules/macros are stored in the \texttt{tools} package.
@@ -30,7 +70,7 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
                         where level=0{}{% folder icons by default; override using file for file icons
                                         directory,
                                 },
-                        [dlinear5
+                        [dlinear
                                                 [benchmark \qquad\qquad Benchmarking utilities
                                                 ]
                                                 [dlinear \qquad\qquad\ \ Sources
@@ -77,14 +117,14 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
 When a software project inevitably grows in size and complexity, it becomes increasingly difficult to maintain and extend.
 A common approach to combat this trend is following some design patterns, often described as solutions to common problems in software engineering.
 
-Being quite a complex project, \dreal uses various design patterns, like the \textit{pimpl idiom} or the \textit{Composite}, which have been ported over to \dlinearfour and \dlinear .
+Being quite a complex project, \dreal uses various design patterns, like the \textit{pimpl idiom} or the \textit{Composite}, which have been ported to \dlinearfour and \dlinear.
 In the refactoring of the project, some patterns have then been either improved (\textit{Visitor}) or introduced (\textit{Singleton}).
 
 \subsection*{Pimpl idiom}
 
 The \textit{pimpl idiom} \cite{man:pimpl} is a technique used to hide the implementation details of a class from the user.
-The acronym stands for \textit{Pointer to IMPLementation}, and it is a common practice in \texttt{c++}.
-The result is a reduction in compilation time upon changes in the private implementation and avoiding exposing the internal details of a class to the client (\autoref{dg:pattern-pimpl}).
+The acronym stands for \textit{Pointer to IMPLementation}, and it is a common practice in C++.
+The result is a reduction in compilation time upon changes in the private implementation and avoiding exposing the internal details of a class to the Client (\autoref{dg:pattern-pimpl}).
 This pattern can be seen as a specialization of the \textit{Bridge pattern} \cite{book:gof}: the actual implementation of the class can be changed freely, decoupled from the abstraction.
 The main difference is that there is usually only one concrete abstraction in the \textit{pimpl idiom}.
 
@@ -162,43 +202,50 @@ They are responsible for solving the \gls{lp} part of the problem while being di
 
 While the \texttt{smt2} file is being parsed, each variable encountered is stored and added to the \texttt{Context} object.
 The same is true for all the assertions regarding the problem's constraints, representing the theory's atoms.
-When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex} (\autoref{dg:qsoptex}).
+When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex}.
+If the \gls{sat} solver returns \texttt{unsat}, the program halts immediately, for the problem is trivially unsatisfiable.
+Otherwise, the output of the \gls{lp} solver will determine the final result.
+If the \gls{lp} problem is solved, then \dlinear will return \texttt{sat} and a model.
+If the input is found to be unfeasible, an explanation containing the unsatisfiable core will be returned.
+By negating and integrating it in the input of the \gls{sat} solver, another iteration will be performed, and the process will repeat (\autoref{dg:qsoptex}).
 
 \plantuml{diagrams/sequence/qsoptex}{Simplified sequence diagram of the interactions between the \gls{sat} and theory solvers}{qsoptex}
 
+\clearpage
+
 \section{Python bindings}
 
-As a programming language, \texttt{python} is widely used in the scientific community.
-While its abstractions make it very easy to read and write, this comes at the expense of performance, which is usually abysmal compared to other languages, such as \texttt{c++}.
-There are several \texttt{python} implementations.
+As a programming language, Python is widely used in the scientific community.
+While its abstractions make it very easy to read and write, this comes at the expense of performance, which is usually abysmal compared to other languages, such as C++.
+There are several Python implementations.
 The most popular one is \texttt{CPython}, which is also the one this project targets, but some alternatives include \texttt{Jython}, \texttt{IronPython} and \texttt{PyPy} \cite{man:python-implementations}.
 
 The \texttt{CPython} implementation also allows for extensions.
 The Python API defines a set of functions, macros and variables that provide access to the aspects of the Python run-time system.
 To access them, it is sufficient to include the header file \texttt{Python.h}.
-In other words, Python bindings (or extensions) are a way to write \texttt{c++} code that integrates seamlessly and can called from a \texttt{python} program.
-Instead of using the standard \texttt{python} API, though, the much more convenient \texttt{pybind11} library is used \cite{man:pybind11}.
-The main appeal of \texttt{pybind11} is that it exposes \texttt{c++} classes and functions to \texttt{python} with a very minimalistic syntax.
+In other words, Python bindings (or extensions) are a way to write C++ code that integrates seamlessly and can called from a Python program.
+Instead of using the standard Python API, though, the much more convenient \texttt{pybind11} library is used \cite{man:pybind11}.
+The main appeal of \texttt{pybind11} is that it exposes C++ classes and functions to Python with a very minimalistic syntax.
 It also provides a rich built-in type conversion system by inferring type information using compile-time introspection.
 The user can extend it even further to support custom types.
 
-In the context of \dlinear, the main functionalities of the solver, as well as some of the most valuable data manipulation classes, have been exposed in a \texttt{python} package called, unsurprisingly, \pydlinear.
+In the context of \dlinear, the main functionalities of the solver, as well as some of the most valuable data manipulation classes, have been exposed in a Python package called, unsurprisingly, \pydlinear.
 The bindings are defined in the \texttt{pydlinear.cpp} file (\autoref{code:example_python_bindings}).
-The \texttt{setup.py}, with the configuration options provided by the \texttt{pyproject.toml} file, defines the steps needed for building the package to make it available to the \texttt{python} interpreter.
+The \texttt{setup.py}, with the configuration options provided by the \texttt{pyproject.toml} file, defines the steps needed for building the package to make it available to the Python interpreter.
 While the ideal scenario would be to build the \dlinear library on the target machine, it is possible to include a pre-build version called a \textit{wheel}.
 This specialized archive contains all the shared libraries that make up the package and, provided that the architecture of both the distributor's machine and the user's machine is the same, it can be used without any need for compilation by the final user.
 
 \lstinputlisting[language=c++,frame=single,showstringspaces=false,caption={Simplified example of \pydlinear's bindings},captionpos=b,label={code:example_python_bindings}]{code/example\_python\_bindings.cpp}
 
-The package has been uploaded to the \texttt{PyPI} repository, making it available to anyone with a \texttt{Linux x86\_64} machine and \texttt{python 3.10}.
+The package has been uploaded to the \texttt{PyPI} repository, making it available to anyone with a \texttt{Linux x86\_64} machine and \texttt{Python 3.10}.
 It can be installed with the command
 
 \begin{lstlisting}[language=bash,frame=single,showstringspaces=false]
 $ pip install -i https://test.pypi.org/simple/ pydlinear==0.0.1
 \end{lstlisting}
-Once installed, the solver's APIs are accessible by importing the \pydlinear package in the script (\autoref{code:pydlinear.py}).
+Once installed, the solver's APIs are accessible by importing the \pydlinear package in the script (\autoref{code:pydlinear.py}). \\ \\ \\ \\
 
-\lstinputlisting[language=python,frame=single,showstringspaces=false,caption={Minimal python program using \pydlinear},captionpos=b,label={code:pydlinear.py}]{code/pydlinear.py}
+\lstinputlisting[language=python,frame=single,showstringspaces=false,caption={Minimal Python program using \pydlinear},captionpos=b,label={code:pydlinear.py}]{code/pydlinear.py}
 
 \section{Targets}
 
@@ -219,5 +266,5 @@ What follows is a synopsis of the most essential targets used in \dlinear and th
               The logs will be saved in the \texttt{bazel-testlogs} folder.
         \item \textbf{//pydlinear}: supports the \textit{build} action.
               It creates the \texttt{pydlinear} extension.
-              It can be a dependency within \bazel for other \texttt{python} targets.
+              It can be a dependency within \bazel for other Python targets.
 \end{itemize}
