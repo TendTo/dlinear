@@ -9,7 +9,7 @@
 
 using std::ostream;
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 // -------------
 // AssertCommand
@@ -101,4 +101,4 @@ ostream &SetLogicCommand::Display(ostream &os) const { return os << "(set-logic 
 // ----------------
 ostream &SetOptionCommand::Display(ostream &os) const { return os << "(set-option " << key_ << " " << value_ << ")"; }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

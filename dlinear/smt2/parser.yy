@@ -8,7 +8,7 @@
 #include <tuple>
 #include <utility>
 
-#include "dlinear/smt2/logic.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/smt2/sort.h"
 #include "dlinear/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -45,7 +45,7 @@ using dlinear::qsopt_ex::StringToMpq;
 %skeleton "lalr1.cc"
 
 /* namespace to enclose parser in */
-%define api.prefix {dlinear}
+%define api.namespace {dlinear::smt2}
 
 /* set the parser's class identifier */
 %define api.parser.class {Smt2Parser}
@@ -69,7 +69,7 @@ using dlinear::qsopt_ex::StringToMpq;
 
 %union
 {
-    dlinear::Sort             sortVal;
+    dlinear::smt2::Sort             sortVal;
     std::int64_t              int64Val;
     std::string*              rationalVal;
     double                    hexfloatVal;
@@ -622,7 +622,7 @@ var_binding: '(' SYMBOL term ')' {
 
 
 %% /*** Additional Code ***/
-void dlinear::Smt2Parser::error(const Smt2Parser::location_type& l, const std::string& m) {
+void dlinear::smt2::Smt2Parser::error(const Smt2Parser::location_type& l, const std::string& m) {
     driver.error(l, m);
 }
 

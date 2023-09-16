@@ -16,9 +16,9 @@
 
 #ifndef YY_DECL
 
-#define YY_DECL                                                                                         \
-  dlinear::Smt2Parser::token_type dlinear::Smt2Scanner::lex(dlinear::Smt2Parser::semantic_type *yylval, \
-                                                            dlinear::Smt2Parser::location_type *yylloc)
+#define YY_DECL                                                          \
+  dlinear::smt2::Smt2Parser::token_type dlinear::smt2::Smt2Scanner::lex( \
+      dlinear::smt2::Smt2Parser::semantic_type *yylval, dlinear::smt2::Smt2Parser::location_type *yylloc)
 #endif
 
 #ifndef __FLEX_LEXER_H
@@ -35,7 +35,7 @@
 // Do not alpha-sort them.
 #include "dlinear/smt2/parser.yy.hpp"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 /**
  * Smt2Scanner is a derived class to add some extra function to the scanner
@@ -72,4 +72,4 @@ class Smt2Scanner : public Smt2FlexLexer {
   void set_debug(bool b);
 };
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

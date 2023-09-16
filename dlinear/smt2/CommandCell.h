@@ -13,10 +13,10 @@
 #include <string>
 #include <utility>
 
-#include "dlinear/smt2/logic.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/symbolic/symbolic.h"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 /**
  * CommandCell class. It is the abstract base class of the classes
@@ -217,4 +217,4 @@ class SetOptionCommand : public CommandCell {
 // class DefineSortCommand : public CommandCell {};
 // class GetValueCommand : public CommandCell { };
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

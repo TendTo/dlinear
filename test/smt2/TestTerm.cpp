@@ -11,7 +11,7 @@
 
 using dlinear::Formula;
 using dlinear::Expression;
-using dlinear::Term;
+using dlinear::smt2::Term;
 using std::runtime_error;
 
 class TestTerm : public ::testing::Test {

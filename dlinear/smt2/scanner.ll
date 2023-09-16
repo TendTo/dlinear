@@ -17,8 +17,8 @@
 #include "dlinear/smt2/scanner.h"
 
 /* import the parser's token type into a local typedef */
-typedef dlinear::Smt2Parser::token token;
-typedef dlinear::Smt2Parser::token_type token_type;
+typedef dlinear::smt2::Smt2Parser::token token;
+typedef dlinear::smt2::Smt2Parser::token_type token_type;
 
 /* By default yylex returns int, we use token_type. Unfortunately yyterminate
  * by default returns 0, which is not of token_type. */
@@ -251,7 +251,7 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 %% /*** Additional Code ***/
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 Smt2Scanner::Smt2Scanner(std::istream* in, std::ostream* out) : Smt2FlexLexer(in, out) {}
 
@@ -260,7 +260,7 @@ Smt2Scanner::~Smt2Scanner() {}
 void Smt2Scanner::set_debug(const bool b) {
     yy_flex_debug = b;
 }
-}  // namespace dlinear
+}  // namespace dlinear::smt2
 
 /* This implementation of Smt2FlexLexer::yylex() is required to fill the
  * vtable of the class Smt2FlexLexer. We define the scanner's main yylex

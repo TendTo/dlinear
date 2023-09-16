@@ -18,7 +18,7 @@
 #include <tl/optional.hpp>
 
 #include "dlinear/libs/gmp.h"
-#include "dlinear/smt2/logic.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"

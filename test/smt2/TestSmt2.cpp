@@ -15,7 +15,7 @@ using dlinear::ArgParser;
 using dlinear::qsopt_ex::QSXStart;
 using dlinear::Expression;
 using dlinear::Config;
-using dlinear::RunSmt2;
+using dlinear::smt2::RunSmt2;
 using dlinear::Infinity;
 using dlinear::qsopt_ex::QSXFinish;
 

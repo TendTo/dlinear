@@ -7,6 +7,13 @@ package(default_visibility = [
 ])
 
 dlinear_cc_library(
+    name = "logic",
+    srcs = ["Logic.cpp"],
+    hdrs = ["Logic.h"],
+    deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
     name = "solver",
     srcs = [
         "Context.cpp",
@@ -33,11 +40,11 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     deps = [
+        ":logic",
         "//dlinear:version",
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
-        "//dlinear/smt2:logic",
         "//dlinear/symbolic",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/symbolic:literal",

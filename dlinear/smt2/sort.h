@@ -14,7 +14,7 @@
 
 #include "dlinear/symbolic/symbolic.h"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 // TODO(soonho): Extend this.
 enum class Sort {
@@ -30,4 +30,4 @@ std::ostream &operator<<(std::ostream &os, const Sort &sort);
 
 Variable::Type SortToType(Sort sort);
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

@@ -33,7 +33,7 @@ using std::string;
 using std::vector;
 using tl::optional;
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 Smt2Driver::Smt2Driver(Context context) : context_{std::move(context)} {}
 
@@ -202,4 +202,4 @@ void Smt2Driver::DefineLocalConstant(const string &name, const Expression &value
   scope_.insert(name, VariableOrConstant(value));
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

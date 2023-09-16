@@ -9,7 +9,7 @@
 #include "dlinear/smt2/Driver.h"
 #include "dlinear/util/logging.h"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 using std::string;
 
@@ -28,4 +28,4 @@ void RunSmt2(const Config &config) {
   DLINEAR_TRACE("RunSmt2() -- Finished parsing file.");
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

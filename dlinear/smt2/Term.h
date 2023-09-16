@@ -15,7 +15,7 @@
 #include "dlinear/symbolic/symbolic.h"
 
 /// Sum type of symbolic::Expression and symbolic::Formula.
-namespace dlinear {
+namespace dlinear::smt2 {
 
 class Term {
  public:
@@ -86,6 +86,6 @@ class Term {
 };
 
 std::ostream &operator<<(std::ostream &os, const Term &t);
-}  // namespace dlinear
+}  // namespace dlinear::smt2
 
 #pragma once

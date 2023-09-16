@@ -15,10 +15,10 @@
 #include <string>
 #include <utility>
 
-#include "dlinear/smt2/logic.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/symbolic/symbolic.h"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 class CommandCell;
 
@@ -44,4 +44,4 @@ Command set_info_command(const std::string &key, const std::string &val);
 Command set_logic_command(Logic logic);
 Command set_option_command(const std::string &key, const std::string &val);
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

@@ -11,7 +11,7 @@
 using std::ostream;
 using std::string;
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 Sort ParseSort(const string &s) {
   if (s == "Real") {
@@ -49,4 +49,4 @@ Variable::Type SortToType(Sort sort) {
   DLINEAR_UNREACHABLE();
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

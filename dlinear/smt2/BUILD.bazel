@@ -27,13 +27,6 @@ gen_yacc(
 )
 
 dlinear_cc_library(
-    name = "logic",
-    srcs = ["logic.cpp"],
-    hdrs = ["logic.h"],
-    deps = ["//dlinear/util:exception"],
-)
-
-dlinear_cc_library(
     name = "sort",
     srcs = ["sort.cpp"],
     hdrs = ["sort.h"],
@@ -65,7 +58,7 @@ dlinear_cc_library(
         "CommandCell.h",
     ],
     deps = [
-        ":logic",
+        "//dlinear/solver:logic",
         "//dlinear/symbolic",
     ],
 )
@@ -83,10 +76,10 @@ dlinear_cc_library(
         "run.h",
     ],
     deps = [
-        ":logic",
         ":sort",
         ":term",
         "//dlinear/solver",
+        "//dlinear/solver:logic",
         "//dlinear/symbolic",
         "//dlinear/util:box",
         "//dlinear/util:config",

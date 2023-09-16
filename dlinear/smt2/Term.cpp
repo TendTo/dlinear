@@ -15,7 +15,7 @@
 using std::ostream;
 using std::runtime_error;
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 Term::Term(Expression e) : type_{Term::Type::EXPRESSION}, e_{std::move(e)} {
   DLINEAR_TRACE_FMT("Term::Term({}) - Expression", e_);
@@ -54,4 +54,4 @@ ostream &operator<<(ostream &os, const Term &t) {
   DLINEAR_UNREACHABLE();
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

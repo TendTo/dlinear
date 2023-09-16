@@ -10,9 +10,9 @@
 
 #include <gtest/gtest.h>
 
-using dlinear::Command;
-using dlinear::CommandCell;
-using dlinear::exit_command;
+using dlinear::smt2::Command;
+using dlinear::smt2::CommandCell;
+using dlinear::smt2::exit_command;
 
 TEST(TestCommand, Test) {
   EXPECT_NO_THROW(exit_command());

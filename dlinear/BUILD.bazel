@@ -23,8 +23,8 @@ dlinear_cc_library(
     deps = [
         ":version",
         "//dlinear/api",
-        "//dlinear/smt2:logic",
         "//dlinear/solver",
+        "//dlinear/solver:logic",
         "//dlinear/symbolic",
         "//dlinear/util:box",
         "//dlinear/util:config",

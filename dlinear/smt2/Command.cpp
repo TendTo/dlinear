@@ -15,7 +15,7 @@ using std::make_shared;
 using std::ostream;
 using std::string;
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 ostream &operator<<(ostream &os, const Command &c) {
   return c.ptr_->Display(os);
@@ -51,4 +51,4 @@ Command pop_command(int level) {
 
 Command reset_command() { return Command{make_shared<ResetCommand>()}; }
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

@@ -9,11 +9,11 @@
 
 #include <gtest/gtest.h>
 
-using dlinear::ParseSort;
-using dlinear::Sort;
+using dlinear::smt2::ParseSort;
+using dlinear::smt2::Sort;
 using std::runtime_error;
 using dlinear::Variable;
-using dlinear::SortToType;
+using dlinear::smt2::SortToType;
 
 TEST(TestSort, ParseSort) {
   EXPECT_EQ(ParseSort("Real"), Sort::Real);

@@ -20,7 +20,7 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 /**
  * The Smt2Driver class brings together all components. It creates an
@@ -170,4 +170,4 @@ class Smt2Driver {
   double actual_precision_{-1};
 };
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

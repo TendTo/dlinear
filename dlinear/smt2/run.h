@@ -13,8 +13,8 @@
 
 #include "dlinear/util/Config.h"
 
-namespace dlinear {
+namespace dlinear::smt2 {
 
 void RunSmt2(const Config &config);
 
-}  // namespace dlinear
+}  // namespace dlinear::smt2

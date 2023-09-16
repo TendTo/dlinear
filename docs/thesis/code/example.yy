@@ -1,5 +1,5 @@
 %{ /*** C++ Code ***/
-#include "dlinear/smt2/logic.h"
+#include "dlinear/solver/Logic.h"
 %}
 
 /*** yacc/bison Declarations ***/
