@@ -25,6 +25,15 @@ jobs:
           packages: build-essential g++ libgmp-dev autoconf flex bison
           version: 1.0
 
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/dlinear_bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+
       - name: Build
         run: bazel build //dlinear
 
@@ -44,6 +53,15 @@ jobs:
           packages: build-essential g++ libgmp-dev autoconf flex bison
           version: 1.0
 
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/dlinear_bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+
       - name: Lint
         run: bazel test --test_tag_filters=cpplint //dlinear/...
 
@@ -60,6 +78,15 @@ jobs:
           packages: build-essential g++ libgmp-dev autoconf flex bison
           version: 1.0
 
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/dlinear_bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+
       - name: Test
         run: bazel test --test_tag_filters=dlinear //test/...
 
@@ -72,6 +99,15 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/dlinear_bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
 
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
