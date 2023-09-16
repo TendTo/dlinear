@@ -1,5 +1,11 @@
-#ifndef DLINEAR_UTIL_INTERRUPT_H_
-#define DLINEAR_UTIL_INTERRUPT_H_
+/**
+ * @file interrupt.h
+ * @author dlinear
+ * @date 14 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief Interrupt handler used by pydlinear to handle SIGINT.
+ */
+#pragma once
 
 #include <atomic>
 
@@ -15,5 +21,3 @@ extern volatile std::atomic_bool g_interrupted;  ///< Flag to indicate an interr
 void interrupt_handler(int);
 
 }  // namespace dlinear
-
-#endif  // DLINEAR_UTIL_INTERRUPT_H_

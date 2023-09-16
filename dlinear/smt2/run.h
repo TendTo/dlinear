@@ -7,8 +7,7 @@
  *
  * Runs the smt2 driver.
  */
-#ifndef DLINEAR_SMT2_RUN_H_
-#define DLINEAR_SMT2_RUN_H_
+#pragma once
 
 #include <string>
 
@@ -19,5 +18,3 @@ namespace dlinear {
 void RunSmt2(const Config &config);
 
 }  // namespace dlinear
-
-#endif  // DLINEAR_SMT2_RUN_H_

@@ -11,9 +11,10 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
-#include <tl/optional.hpp>
 #include <utility>
 #include <vector>
+// Optional is a header-only library for optional/maybe values.
+#include <tl/optional.hpp>
 
 #include "dlinear/mps/parser.yy.hpp"
 #include "dlinear/util/Timer.h"
@@ -63,10 +64,10 @@ bool MpsDriver::parse_string(const string &input, const string &sname) {
 }
 
 bool MpsDriver::VerifyStrictBound(const std::string &bound) {
-  if (strict_mps_) [[unlikely]] {
-    if (bound_name_.empty()) [[unlikely]] {
+  if (strict_mps_) [[unlikely]] {            // NOLINT
+    if (bound_name_.empty()) [[unlikely]] {  // NOLINT
       bound_name_ = bound;
-    } else if (bound_name_ != bound) [[unlikely]] {
+    } else if (bound_name_ != bound) [[unlikely]] {  // NOLINT
       DLINEAR_WARN_FMT("First bound was '{}', found new bound '{}'. Skipping", bound_name_, bound);
       return false;
     }
@@ -75,10 +76,10 @@ bool MpsDriver::VerifyStrictBound(const std::string &bound) {
 }
 
 bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
-  if (strict_mps_) [[unlikely]] {
-    if (rhs_name_.empty()) [[unlikely]] {
+  if (strict_mps_) [[unlikely]] {          // NOLINT
+    if (rhs_name_.empty()) [[unlikely]] {  // NOLINT
       rhs_name_ = rhs;
-    } else if (rhs_name_ != rhs) [[unlikely]] {
+    } else if (rhs_name_ != rhs) [[unlikely]] {  // NOLINT
       DLINEAR_WARN_FMT("First RHS was '{}', found new RHS '{}'. Skipping", rhs_name_, rhs);
       return false;
     }
@@ -95,7 +96,7 @@ void MpsDriver::AddRow(Sense sense, const std::string &row) {
   row_senses_[row] = sense;
 }
 
-void MpsDriver::AddColumn(const std::string &row, const std::string &column, double value) {
+void MpsDriver::AddColumn(const std::string &column, const std::string &row, double value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
@@ -107,7 +108,7 @@ void MpsDriver::AddColumn(const std::string &row, const std::string &column, dou
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
 }
 
-void MpsDriver::AddRhs(const std::string &row, const std::string &rhs, double value) {
+void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, double value) {
   DLINEAR_TRACE_FMT("Driver::AddRhs {} {} {}", row, rhs, value);
   if (!VerifyStrictRhs(rhs)) return;
   rhs_values_[row] = value;
@@ -127,11 +128,11 @@ void MpsDriver::AddRhs(const std::string &row, const std::string &rhs, double va
       break;
     default:
       DLINEAR_UNREACHABLE();
-  };
+  }
   DLINEAR_TRACE_FMT("Updated rhs {}", rhs_[row]);
 }
 
-void MpsDriver::AddRange(const std::string &row, const std::string &rhs, double value) {
+void MpsDriver::AddRange(const std::string &rhs, const std::string &row, double value) {
   DLINEAR_TRACE_FMT("Driver::AddRange {} {} {}", row, rhs, value);
   if (!VerifyStrictRhs(rhs)) return;
   switch (row_senses_[row]) {
@@ -150,10 +151,10 @@ void MpsDriver::AddRange(const std::string &row, const std::string &rhs, double 
       break;
     default:
       DLINEAR_UNREACHABLE();
-  };
+  }
 }
 
-void MpsDriver::AddBound(const std::string &column, const std::string &bound, double value, BoundType bound_type) {
+void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column, double value) {
   DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", column, bound, value, bound_type);
   if (!VerifyStrictBound(bound)) return;
   if (bounds_.find(column) == bounds_.end())
@@ -187,22 +188,22 @@ void MpsDriver::AddBound(const std::string &column, const std::string &bound, do
       break;
     default:
       DLINEAR_UNREACHABLE();
-  };
+  }
   DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
 }
 
 void MpsDriver::End() {
   DLINEAR_TRACE("Driver::EndData");
-  for (const auto &[name, sense] : row_senses_) {
-    if (rhs_.find(name) == rhs_.end()) {
-      DLINEAR_DEBUG_FMT("Row {} has no RHS. Adding 0", name);
-      AddRhs(name, rhs_name_, 0);
+  for (const auto &[row, sense] : row_senses_) {
+    if (rhs_.find(row) == rhs_.end()) {
+      DLINEAR_DEBUG_FMT("Row {} has no RHS. Adding 0", row);
+      AddRhs(rhs_name_, row, 0);
     }
   }
-  for (const auto &[name, column] : columns_) {
-    if (skip_lower_bound_.find(name) == skip_lower_bound_.end()) {
-      DLINEAR_DEBUG_FMT("Column has no lower bound. Adding 0 <= {}", name);
-      AddBound(name, bound_name_, 0, BoundType::LO);
+  for (const auto &[column, var] : columns_) {
+    if (skip_lower_bound_.find(column) == skip_lower_bound_.end()) {
+      DLINEAR_DEBUG_FMT("Column has no lower bound. Adding 0 <= {}", column);
+      AddBound(BoundType::LO, bound_name_, column, 0);
     }
   }
   DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());

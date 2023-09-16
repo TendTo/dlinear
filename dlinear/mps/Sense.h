@@ -18,7 +18,7 @@
 
 namespace dlinear::mps {
 
-enum class Sense : short {
+enum class Sense {
   L,  ///< Less or equal to
   E,  ///< Equal to
   G,  ///< Greater or equal to

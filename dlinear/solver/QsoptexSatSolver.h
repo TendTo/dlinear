@@ -7,34 +7,32 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
-#define DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
+#pragma once
 
 #include <picosat/picosat.h>
 
-#include <set>
 #include <map>
-#include <vector>
+#include <set>
 #include <utility>
-
+#include <vector>
+// Optional is a header-only library for optional values.
 #include <tl/optional.hpp>
 
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/ScopedUnorderedSet.hpp"
-#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
-#include "dlinear/symbolic/literal.h"
-#include "dlinear/libs/qsopt_ex.h"
 
 namespace dlinear {
 
 class QsoptexSatSolver {
  public:
-  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>; ///< Boolean model + Theory model.
+  using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;  ///< Boolean model + Theory model.
 
   /**
    * Construct a QsoptexSatSolver.
@@ -93,20 +91,16 @@ class QsoptexSatSolver {
    * @param obj_expr the objective expression to minimize
    * @return a witness, satisfying model if the problem is satisfiable, nullopt if UNSAT
    */
-  tl::optional <Model> CheckSat(const Box &box, tl::optional <Expression> obj_expr = tl::optional<Expression>());
+  tl::optional<Model> CheckSat(const Box &box, tl::optional<Expression> obj_expr = tl::optional<Expression>());
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();
 
   void Push();
 
-  Formula theory_literal(const Variable &var) const {
-    return predicate_abstractor_[var];
-  }
+  Formula theory_literal(const Variable &var) const { return predicate_abstractor_[var]; }
 
-  mpq_QSprob GetLinearSolver() const {
-    return qsx_prob_;
-  }
+  mpq_QSprob GetLinearSolver() const { return qsx_prob_; }
 
   const std::map<int, Variable> &GetLinearVarMap() const;
 
@@ -174,8 +168,7 @@ class QsoptexSatSolver {
 
   // Set one of the variable's bounds ('L' - lower or 'U' - upper) in the
   // linear solver, in addition to bounds already asserted.
-  void SetQSXVarBound(const Variable &var, const char type,
-                      const mpq_class &value);
+  void SetQSXVarBound(const Variable &var, const char type, const mpq_class &value);
 
   // Add a clause @p f to sat solver.
   void DoAddClause(const Formula &f);
@@ -239,6 +232,4 @@ class QsoptexSatSolver {
   const Config &config_;
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_QSOPTEXSATSOLVER_H_
+}  // namespace dlinear

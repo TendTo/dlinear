@@ -617,8 +617,8 @@ void QsoptexSatSolver::SetLinearObjective(const Expression &expr) {
 const std::map<int, Variable> &QsoptexSatSolver::GetLinearVarMap() const {
   DLINEAR_TRACE("QsoptexSatSolver::GetLinearVarMap(): from_qsx_col_ =");
   if (DLINEAR_TRACE_ENABLED) {
-    for (const pair<int, Variable> kv : from_qsx_col_) {
-      std::cerr << kv.first << ": " << kv.second << "\n";
+    for (const auto &[idx, var] : from_qsx_col_) {
+      DLINEAR_TRACE_FMT("{}: {}", idx, var);
     }
   }
   return from_qsx_col_;

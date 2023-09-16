@@ -9,8 +9,7 @@
  * If NDEBUG is defined, most of the macro do nothing and give no explanation.
  * It makes the program faster, but less useful for debugging.
  */
-#ifndef DLINEAR5_ASSERT_H
-#define DLINEAR5_ASSERT_H
+#pragma once
 
 #include <spdlog/fmt/fmt.h>
 
@@ -28,13 +27,13 @@
 
 #include "dlinear/util/logging.h"
 
-#define DLINEAR_ASSERT(condition, message)                                                                        \
-    do {                                                                                                          \
-        if (!(condition)) {                                                                                       \
-            DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}: {}", #condition, __FILE__, __LINE__, message);  \
-            std::terminate();                                                                                     \
-        }                                                                                                         \
-    } while (false)
+#define DLINEAR_ASSERT(condition, message)                                                                 \
+  do {                                                                                                     \
+    if (!(condition)) {                                                                                    \
+      DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}: {}", #condition, __FILE__, __LINE__, message); \
+      std::terminate();                                                                                    \
+    }                                                                                                      \
+  } while (false)
 
 #define DLINEAR_UNREACHABLE()                                                   \
   do {                                                                          \
@@ -48,15 +47,13 @@
     throw std::runtime_error(msg); \
   } while (false)
 
-#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)                     \
-  do {                                                          \
-    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);                   \
-    throw std::runtime_error(fmt::format(msg, ##__VA_ARGS__));  \
+#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)                    \
+  do {                                                         \
+    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);                  \
+    throw std::runtime_error(fmt::format(msg, ##__VA_ARGS__)); \
   } while (false)
 
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) \
-    throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
+  throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
 
-#endif // NDEBUG
-
-#endif // DLINEAR5_ASSERT_H
+#endif  // NDEBUG

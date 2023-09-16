@@ -10,12 +10,13 @@
  * The config object will then be used throughout the program.
  * The default values are defined in the configuration of the parser.
  */
-#ifndef DLINEAR5_ARGPARSER_H
-#define DLINEAR5_ARGPARSER_H
+#pragma once
 
 #include <iostream>
 #include <string>
+// Argparse is a header-only library for parsing command line arguments.
 #include <argparse/argparse.hpp>
+
 #include "dlinear/util/Config.h"
 
 namespace dlinear {
@@ -46,14 +47,12 @@ class ArgParser {
 
   [[nodiscard]] Config toConfig() const;
 
-  template<typename T = std::string>
-  [[nodiscard]] T get(const std::string &key) const { return parser_.get<T>(key); }
+  template <typename T = std::string>
+  [[nodiscard]] T get(const std::string &key) const {
+    return parser_.get<T>(key);
+  }
 
   friend std::ostream &operator<<(std::ostream &os, const dlinear::ArgParser &parser);
 };
 
-} // namespace dlinear
-
-
-
-#endif //DLINEAR5_ARGPARSER_H
+}  // namespace dlinear

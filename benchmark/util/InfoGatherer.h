@@ -1,5 +1,4 @@
-#ifndef DLINEAR5_BENCHMARK_UTIL_INFOGATHERER_H_
-#define DLINEAR5_BENCHMARK_UTIL_INFOGATHERER_H_
+#pragma once
 
 #include <sys/mman.h>
 #include <sys/wait.h>
@@ -9,10 +8,10 @@
 #include <regex>
 
 #include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/soplex.h"
 #include "dlinear/smt2/Driver.h"
 #include "dlinear/smt2/run.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/libs/soplex.h"
 
 namespace dlinear::benchmark {
 
@@ -64,5 +63,3 @@ class InfoGatherer {
 std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer);
 
 }  // namespace dlinear::benchmark
-
-#endif //DLINEAR5_BENCHMARK_UTIL_INFOGATHERER_H_

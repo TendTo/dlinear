@@ -10,11 +10,7 @@
  * Instead of including <soplex.h>, include "dlinear/libs/soplex.h".
  * In the build files, instead of depending on "@soplex", depend on "//dlinear/libs:soplex".
  */
-
-#ifndef DLINEAR5_DLINEAR_LIBS_SOPLEX_H_
-#define DLINEAR5_DLINEAR_LIBS_SOPLEX_H_
+#pragma once
 
 #define SOPLEX_WITH_GMP
 #include <soplex.h>
-
-#endif //DLINEAR5_DLINEAR_LIBS_SOPLEX_H_

@@ -4,9 +4,7 @@
  * @date 28 Aug 2023
  * @copyright 2023 dlinear
  */
-
-#ifndef DLINEAR5_BENCHMARK_BENCHMARKPROGRAM_H_
-#define DLINEAR5_BENCHMARK_BENCHMARKPROGRAM_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -63,5 +61,3 @@ class BenchmarkProgram {
 };
 
 } // namespace dlinear::benchmark
-
-#endif //DLINEAR5_BENCHMARK_BENCHMARKPROGRAM_H_

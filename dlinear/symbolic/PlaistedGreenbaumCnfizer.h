@@ -7,17 +7,15 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_UTIL_PLAISTEDGREENBAUMCNFIZER_H_
-#define DLINEAR5_DLINEAR_UTIL_PLAISTEDGREENBAUMCNFIZER_H_
-
-#include <vector>
 #include <set>
 #include <string>
+#include <vector>
 
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/symbolic/NaiveCnfizer.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
+#include "dlinear/symbolic/NaiveCnfizer.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -45,13 +43,13 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
   const Nnfizer nnfizer_{};
 
   const NaiveCnfizer
-      naive_cnfizer_{}; ///< Naive CNFizer. Used to transform nested formulas inside universal quantification.
+      naive_cnfizer_{};  ///< Naive CNFizer. Used to transform nested formulas inside universal quantification.
 
   std::vector<Formula>
-      aux_; ///< Auxiliary clauses collected during conversion. @note It is cleared at the beginning of `Convert` call.
+      aux_;  ///< Auxiliary clauses collected during conversion. @note It is cleared at the beginning of `Convert` call.
 
   std::vector<Variable>
-      vars_; ///< Variables generated during conversion. @note It is cleared at the beginning of `Convert` call.
+      vars_;  ///< Variables generated during conversion. @note It is cleared at the beginning of `Convert` call.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
@@ -59,6 +57,4 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
                                                                                   const Formula &);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_PLAISTEDGREENBAUMCNFIZER_H_
+}  // namespace dlinear

@@ -8,9 +8,7 @@
  * This is a unordered_map that supports backtracking. It is used to store
  * intermediate results.
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDMAP_HPP_
-#define DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDMAP_HPP_
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -24,8 +22,8 @@
 
 namespace dlinear {
 
-template<class Key, class T, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<std::pair<const Key, T>>>
+template <class Key, class T, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
+          class Allocator = std::allocator<std::pair<const Key, T>>>
 
 class ScopedUnorderedMap {
  public:
@@ -136,12 +134,9 @@ class ScopedUnorderedMap {
   }
 
  private:
-  std::vector<Action> actions_; ///< Vector of actions that have been applied.
+  std::vector<Action> actions_;  ///< Vector of actions that have been applied.
   std::vector<size_type> stack_;
-  UnorderedMapType map_; ///< Actual map.
+  UnorderedMapType map_;  ///< Actual map.
 };
 
 }  // namespace dlinear
-
-
-#endif //DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDMAP_HPP_

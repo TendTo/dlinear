@@ -10,20 +10,18 @@
  * The config object will then be used throughout the program.
  * The default values are defined in the configuration of the parser.
  */
-#ifndef DLINEAR5_BENCHMARK_UTIL_BENCHARGPARSER_H_
-#define DLINEAR5_BENCHMARK_UTIL_BENCHARGPARSER_H_
+#pragma once
 
 #include <dirent.h>
 
+#include <argparse/argparse.hpp>
 #include <iostream>
 #include <string>
 
-#include <argparse/argparse.hpp>
-
 #include "benchmark/util/BenchConfig.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 #include "dlinear/util/filesystem.h"
+#include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
 #define CONF_FILE "benchmark/benchmark.conf"
@@ -63,14 +61,12 @@ class BenchArgParser {
 
   [[nodiscard]] BenchConfig toConfig() const;
 
-  template<typename T = std::string>
-  [[nodiscard]] T get(const std::string &key) const { return parser_.get<T>(key); }
+  template <typename T = std::string>
+  [[nodiscard]] T get(const std::string &key) const {
+    return parser_.get<T>(key);
+  }
 
   friend std::ostream &operator<<(std::ostream &os, const BenchArgParser &parser);
 };
 
-} // namespace dlinear
-
-
-
-#endif //DLINEAR5_BENCHMARK_UTIL_BENCHARGPARSER_H_
+}  // namespace dlinear::benchmark

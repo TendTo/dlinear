@@ -9,8 +9,7 @@
  * Simple dataclass to store the configuration of the program.
  * It is generated from @ref ArgParser.
  */
-#ifndef DLINEAR5_BENCHMARK_UTIL_BENCHACONFIG_H_
-#define DLINEAR5_BENCHMARK_UTIL_BENCHACONFIG_H_
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -62,6 +61,4 @@ class BenchConfig {
   friend std::ostream &operator<<(std::ostream &os, const BenchConfig &config);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_BENCHMARK_UTIL_BENCHACONFIG_H_
+}  // namespace dlinear::benchmark

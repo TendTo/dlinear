@@ -9,8 +9,7 @@
  * Simple dataclass to store the configuration of the program.
  * It is generated from @ref ArgParser.
  */
-#ifndef DLINEAR5_CONFIG_H
-#define DLINEAR5_CONFIG_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -292,5 +291,3 @@ class Config {
 };
 
 }  // namespace dlinear
-
-#endif  // DLINEAR5_CONFIG_H

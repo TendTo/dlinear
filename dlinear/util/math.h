@@ -5,9 +5,7 @@
  * @copyright 2023 dlinear
  * @brief Math utilities
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_MATH_H_
-#define DLINEAR5_DLINEAR_UTIL_MATH_H_
+#pragma once
 
 #include "dlinear/libs/gmp.h"
 
@@ -51,5 +49,3 @@ double convert_int64_to_double(int64_t v);
 mpq_class convert_int64_to_rational(int64_t v);
 
 }  // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_MATH_H_

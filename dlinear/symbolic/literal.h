@@ -7,9 +7,7 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_SYMBOLIC_LITERAL_H_
-#define DLINEAR5_DLINEAR_SYMBOLIC_LITERAL_H_
+#pragma once
 
 #include <set>
 #include <utility>
@@ -26,6 +24,4 @@ struct LiteralComparator {
 
 using LiteralSet = std::set<Literal, LiteralComparator>;
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SYMBOLIC_LITERAL_H_
+}  // namespace dlinear

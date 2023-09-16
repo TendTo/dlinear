@@ -8,17 +8,15 @@
  * The command contains a reference to a specialized smt2 command,
  * which is a subclass of CommandCell.
  */
+#pragma once
 
-#ifndef DLINEAR_SMT2_COMMAND_H_
-#define DLINEAR_SMT2_COMMAND_H_
-
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
-#include <memory>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/smt2/logic.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -47,5 +45,3 @@ Command set_logic_command(Logic logic);
 Command set_option_command(const std::string &key, const std::string &val);
 
 }  // namespace dlinear
-
-#endif  // DLINEAR_SMT2_COMMAND_H_

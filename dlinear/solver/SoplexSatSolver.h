@@ -7,33 +7,31 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_
-#define DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_
+#pragma once
 
 #include <picosat/picosat.h>
 
-#include <memory>
-#include <set>
+#include <cmath>
 #include <map>
+#include <memory>
+#include <ostream>
+#include <set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
-#include <ostream>
-#include <cmath>
-
+// Optional is a header-only library for optional/maybe values.
 #include <tl/optional.hpp>
 
-#include "dlinear/util/Box.h"
-#include "dlinear/util/Config.h"
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/symbolic/PredicateAbstractor.h"
-#include "dlinear/util/ScopedUnorderedMap.hpp"
-#include "dlinear/util/ScopedUnorderedSet.hpp"
-#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
-#include "dlinear/symbolic/literal.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/soplex.h"
+#include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/ScopedUnorderedMap.hpp"
+#include "dlinear/util/ScopedUnorderedSet.hpp"
 
 namespace dlinear {
 
@@ -92,28 +90,20 @@ class SoplexSatSolver {
    * @param box box of variables to check
    * @return whether the problem is satisfiable as an optional
    */
-  tl::optional <Model> CheckSat(const Box &box);
+  tl::optional<Model> CheckSat(const Box &box);
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();
 
   void Push();
 
-  Formula theory_literal(const Variable &var) const {
-    return predicate_abstractor_[var];
-  }
+  Formula theory_literal(const Variable &var) const { return predicate_abstractor_[var]; }
 
-  soplex::SoPlex *GetLinearSolverPtr() {
-    return &spx_prob_;
-  }
+  soplex::SoPlex *GetLinearSolverPtr() { return &spx_prob_; }
 
-  const soplex::VectorRational &GetLowerBounds() const {
-    return spx_lower_;
-  }
+  const soplex::VectorRational &GetLowerBounds() const { return spx_lower_; }
 
-  const soplex::VectorRational &GetUpperBounds() const {
-    return spx_upper_;
-  }
+  const soplex::VectorRational &GetUpperBounds() const { return spx_upper_; }
 
   const std::map<int, Variable> &GetLinearVarMap() const;
 
@@ -169,13 +159,11 @@ class SoplexSatSolver {
 
   // Set the variable's coefficient for the given constraint row in the linear
   // solver
-  void SetSPXVarCoef(soplex::DSVectorRational *coeffs, const Variable &var,
-                     const mpq_class &value);
+  void SetSPXVarCoef(soplex::DSVectorRational *coeffs, const Variable &var, const mpq_class &value);
 
   // Set one of the variable's bounds ('L' - lower or 'U' - upper) in the
   // linear solver, in addition to bounds already asserted.
-  void SetSPXVarBound(const Variable &var, const char type,
-                      const mpq_class &value);
+  void SetSPXVarBound(const Variable &var, const char type, const mpq_class &value);
 
   // Add a clause @p f to sat solver.
   void DoAddClause(const Formula &f);
@@ -225,8 +213,8 @@ class SoplexSatSolver {
   std::map<int, Variable> from_spx_col_;
 
   // Map (symbolic::Variable, bool) <-> int (row in SoPlex problem).
-  std::map<std::pair<Variable::Id, bool>, int> to_spx_row_; ///< Map (Variable, bool) <-> int (row)
-  std::vector<Literal> from_spx_row_; ///< Map int (row) <-> Literal
+  std::map<std::pair<Variable::Id, bool>, int> to_spx_row_;  ///< Map (Variable, bool) <-> int (row)
+  std::vector<Literal> from_spx_row_;                        ///< Map int (row) <-> Literal
 
   std::vector<mpq_class> spx_rhs_;
   std::vector<char> spx_sense_;
@@ -238,9 +226,7 @@ class SoplexSatSolver {
   /// TODO(soonho): Remove this hack when it's not needed.
   bool has_picosat_pop_used_{false};
 
-  const Config &config_; ///< Solver configuration
+  const Config &config_;  ///< Solver configuration
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_SOPLEXSATSOLVER_H_
+}  // namespace dlinear

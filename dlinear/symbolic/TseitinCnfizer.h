@@ -7,23 +7,21 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SYMBOLIC_TSEITINCNFIZER_H_
-#define DLINEAR5_DLINEAR_SYMBOLIC_TSEITINCNFIZER_H_
-
-#include <map>
-#include <unordered_map>
-#include <vector>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/symbolic/NaiveCnfizer.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
+#include "dlinear/symbolic/NaiveCnfizer.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -64,13 +62,11 @@ class TseitinCnfizer : public FormulaVisitor {
    */
   std::map<Variable, Formula> map_;
 
-  const NaiveCnfizer naive_cnfizer_{}; ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
+  const NaiveCnfizer naive_cnfizer_{};  ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
   friend Formula drake::symbolic::VisitFormula<Formula, TseitinCnfizer>(TseitinCnfizer *, const Formula &);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SYMBOLIC_TSEITINCNFIZER_H_
+}  // namespace dlinear

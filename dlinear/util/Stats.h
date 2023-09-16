@@ -8,8 +8,7 @@
  *
  * Simple dataclass to store the statistics of a solver run.
  */
-#ifndef DLINEAR5_STATS_H
-#define DLINEAR5_STATS_H
+#pragma once
 
 #include <atomic>
 #include <iostream>
@@ -21,7 +20,7 @@ class Stats {
   const bool enabled_{false};
 
  protected:
-  template<typename T>
+  template <typename T>
   void increase(std::atomic<T> *v) {
     if (enabled_) {
       atomic_fetch_add_explicit(v, 1, std::memory_order_relaxed);
@@ -31,18 +30,15 @@ class Stats {
  public:
   explicit Stats(bool enabled) : enabled_{enabled} {}
 
-  Stats(
-      const Stats &) = default;
+  Stats(const Stats &) = default;
 
-  Stats(Stats &&) =
-  default;
+  Stats(Stats &&) = default;
 
   Stats &operator=(const Stats &) = delete;
 
   Stats &operator=(Stats &&) = delete;
 
-  virtual ~Stats() =
-  default;
+  virtual ~Stats() = default;
 
   /**
    * Return whether the stats is enabled.
@@ -53,6 +49,4 @@ class Stats {
   friend std::ostream &operator<<(std::ostream &os, const Stats &stats);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_STATS_H
+}  // namespace dlinear

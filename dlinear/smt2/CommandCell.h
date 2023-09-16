@@ -7,16 +7,14 @@
  *
  * Represents a valid command in the smt2 file.
  */
-
-#ifndef DLINEAR_SMT2_COMMAND_CELL_H_
-#define DLINEAR_SMT2_COMMAND_CELL_H_
+#pragma once
 
 #include <ostream>
 #include <string>
 #include <utility>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/smt2/logic.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -178,8 +176,7 @@ class ResetAssertionsCommand : public CommandCell {
 /// "set-info" command.
 class SetInfoCommand : public CommandCell {
  public:
-  SetInfoCommand(std::string key, std::string value)
-      : key_{std::move(key)}, value_{std::move(value)} {}
+  SetInfoCommand(std::string key, std::string value) : key_{std::move(key)}, value_{std::move(value)} {}
   const std::string &get_key() const { return key_; }
   const std::string &get_value() const { return value_; }
   std::ostream &Display(std::ostream &os) const override;
@@ -201,8 +198,7 @@ class SetLogicCommand : public CommandCell {
 
 class SetOptionCommand : public CommandCell {
  public:
-  SetOptionCommand(std::string key, std::string value)
-      : key_{std::move(key)}, value_{std::move(value)} {}
+  SetOptionCommand(std::string key, std::string value) : key_{std::move(key)}, value_{std::move(value)} {}
   std::ostream &Display(std::ostream &os) const override;
 
  private:
@@ -222,5 +218,3 @@ class SetOptionCommand : public CommandCell {
 // class GetValueCommand : public CommandCell { };
 
 }  // namespace dlinear
-
-#endif  // DLINEAR_SMT2_COMMAND_CELL_H_

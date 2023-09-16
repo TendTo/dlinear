@@ -7,9 +7,7 @@
  *
  * Simple utilities that make operations on the filesystem easier.
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_FILESYSTEM_H_
-#define DLINEAR5_DLINEAR_UTIL_FILESYSTEM_H_
+#pragma once
 
 #include <string>
 
@@ -40,6 +38,4 @@ bool dir_exists(const std::string &name);
  */
 std::string get_extension(const std::string &name);
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_FILESYSTEM_H_
+}  // namespace dlinear

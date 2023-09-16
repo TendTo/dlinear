@@ -7,14 +7,12 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_
-#define DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_
-
-#include <unordered_set>
-#include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedVector.hpp"
@@ -36,7 +34,7 @@ class Context::Impl {
   virtual void Pop() = 0;
   virtual void Push() = 0;
 
-  tl::optional <Box> CheckSat(mpq_class *actual_precision);
+  tl::optional<Box> CheckSat(mpq_class *actual_precision);
   int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model);
   void DeclareVariable(const Variable &v, bool is_model_variable);
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
@@ -68,7 +66,7 @@ class Context::Impl {
   void AddToBox(const Variable &v);
 
   /** Return the current box in the stack. */
-  virtual tl::optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) = 0;
+  virtual tl::optional<Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) = 0;
   virtual int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) = 0;
 
   virtual void MinimizeCore(const Expression &obj_expr) = 0;
@@ -90,20 +88,18 @@ class Context::Impl {
   Box ExtractModel(const Box &box) const;
 
   Config config_;
-  tl::optional <Logic> logic_{};
+  tl::optional<Logic> logic_{};
   std::unordered_map<std::string, std::string> info_;
   std::unordered_map<std::string, std::string> option_;
 
-  ScopedVector<Box> boxes_; ///< Stack of boxes. The top one is the current box.
-  ScopedVector<Formula> stack_; ///< Stack of asserted formulas.
-  std::unordered_set<Variable::Id> model_variables_; ///< Set of model variables.
+  ScopedVector<Box> boxes_;                           ///< Stack of boxes. The top one is the current box.
+  ScopedVector<Formula> stack_;                       ///< Stack of asserted formulas.
+  std::unordered_set<Variable::Id> model_variables_;  ///< Set of model variables.
 
-  Box model_; ///< Stores the result of the latest checksat. If the checksat result was UNSAT, the model is empty.
+  Box model_;  ///< Stores the result of the latest checksat. If the checksat result was UNSAT, the model is empty.
 
-  bool have_objective_; ///< Keeps track of whether or not there is an objective function.
-  bool is_max_; ///< Keeps track of whether or not the objective function is being maximized.
+  bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
+  bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_CONTEXTIMPL_H_
+}  // namespace dlinear

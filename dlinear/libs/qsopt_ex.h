@@ -10,9 +10,7 @@
  * Instead of including <qsopt_ex/Qsopt_ex.h>, include "dlinear/libs/qsopt_ex.h".
  * In the build files, instead of depending on "@qsopt_ex", depend on "//dlinear/libs:qsopt_ex".
  */
-
-#ifndef DLINEAR5_DLINEAR_LIBS_QSOPT_EX_H_
-#define DLINEAR5_DLINEAR_LIBS_QSOPT_EX_H_
+#pragma once
 
 #include <gmpxx.h>
 
@@ -28,8 +26,32 @@ extern "C" {
 
 namespace dlinear::qsopt_ex {
 
+/**
+ * Convert a string to a mpq_class.
+ * @param str string representation of a rational number
+ * @return pointer to a dynamically allocated mpq_class. Must be freed with delete.
+ * @warning The caller is responsible for freeing the returned pointer.
+ */
 mpq_class *StringToMpqPtr(const std::string &str);
+/**
+ * Convert a string to a mpq_class.
+ * @param str string representation of a rational number
+ * @return mpq_class object
+ */
 mpq_class StringToMpq(const std::string &str);
+/**
+ * Convert a C-string to a mpq_class.
+ * @param str C-string representation of a rational number
+ * @return pointer to a dynamically allocated mpq_class. Must be freed with delete.
+ * @warning The caller is responsible for freeing the returned pointer.
+ */
+mpq_class *CStringToMpqPtr(const char str[]);
+/**
+ * Convert a string to a mpq_class.
+ * @param str C-string representation of a rational number
+ * @return mpq_class object
+ */
+mpq_class CStringToMpq(const char str[]);
 
 /**
  * A wrapper around an array of mpq_t elements.
@@ -68,7 +90,7 @@ class MpqArray {
   [[nodiscard]] size_t size() const { return array ? reinterpret_cast<size_t *>(array)[-1] : 0; }
 
  private:
-  mpq_t *array; ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
+  mpq_t *array;  ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
 
   /**
    * Allocate the array with @p nElements elements.
@@ -85,6 +107,4 @@ class MpqArray {
 void QSXStart();
 void QSXFinish();
 
-} // namespace dlinear::qsopt_ex
-
-#endif // DLINEAR5_DLINEAR_LIBS_QSOPT_EX_H_
+}  // namespace dlinear::qsopt_ex

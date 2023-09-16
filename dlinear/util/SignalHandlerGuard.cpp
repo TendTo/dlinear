@@ -1,3 +1,10 @@
+/**
+ * @file SignalHandlerGuard.cpp
+ * @author dlinear
+ * @version 0.1
+ * @date 14 Aug 2023
+ * @copyright 2023 dlinear
+ */
 #include "SignalHandlerGuard.h"
 
 #include <iostream>

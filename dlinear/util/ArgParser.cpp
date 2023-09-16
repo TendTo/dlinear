@@ -8,15 +8,15 @@
 
 #include <utility>
 
-#include "dlinear/version.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 #include "dlinear/util/logging.h"
+#include "dlinear/version.h"
 
-using std::endl;
 using std::cerr;
-using std::string;
+using std::endl;
 using std::ostream;
+using std::string;
 
 namespace dlinear {
 ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
@@ -24,10 +24,10 @@ ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
   addOptions();
 }
 
-ArgParser::ArgParser(string qsopt_exHash, string soplexHash) : parser_{DLINEAR_PROGRAM_NAME,
-                                                                       DLINEAR_VERSION_STRING},
-                                                               qsoptex_hash_{std::move(qsopt_exHash)},
-                                                               soplex_hash_{std::move(soplexHash)} {
+ArgParser::ArgParser(string qsopt_exHash, string soplexHash)
+    : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING},
+      qsoptex_hash_{std::move(qsopt_exHash)},
+      soplex_hash_{std::move(soplexHash)} {
   DLINEAR_TRACE("ArgParser::ArgParser");
   addOptions();
 }
@@ -38,8 +38,7 @@ void ArgParser::parse(int argc, const char **argv) {
     DLINEAR_LOG_INIT_VERBOSITY(parser_.get<int>("verbosity"));
     validateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
-  }
-  catch (const std::runtime_error &err) {
+  } catch (const std::runtime_error &err) {
     cerr << err.what() << endl;
     cerr << parser_;
     exit(EXIT_FAILURE);
@@ -53,9 +52,7 @@ void ArgParser::parse(int argc, const char **argv) {
 void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::addOptions: adding options");
   parser_.add_description(prompt());
-  parser_.add_argument("file")
-      .help("input file")
-      .default_value("");
+  parser_.add_argument("file").help("input file").default_value("");
   parser_.add_argument("-j", "--jobs")
       .help("set the number of jobs")
       .default_value(DLINEAR_DEFAULT_NUMBER_OF_JOBS)
@@ -73,9 +70,10 @@ void ArgParser::addOptions() {
       .default_value(DLINEAR_DEFAULT_DEBUG_SCANNING)
       .implicit_value(true);
   parser_.add_argument("--exhaustive")
-      .help("run the algorithm to completion, by setting the precision to 0"
-            " This may not solve the problem exactly in all cases;"
-            " try --precision 0 for an explanation.")
+      .help(
+          "run the algorithm to completion, by setting the precision to 0"
+          " This may not solve the problem exactly in all cases;"
+          " try --precision 0 for an explanation.")
       .default_value(DLINEAR_DEFAULT_EXHAUSTIVE)
       .implicit_value(true);
   parser_.add_argument("--forall-polytope")
@@ -84,14 +82,14 @@ void ArgParser::addOptions() {
       .implicit_value(true);
   parser_.add_argument("--format")
       .help("file format. Any one of these: smt2, auto (use file extension)")
-      .default_value(string{"auto"}) // TODO: check config
+      .default_value(string{"auto"})  // TODO: check config
       .action([](const std::string &value) {
         if (value != "smt2" && value != "auto") DLINEAR_INVALID_ARGUMENT("--format", value);
         return value;
       });
   parser_.add_argument("--in")
       .help("read from standard input. Uses smt2 by default.")
-      .default_value(false) // TODO: check
+      .default_value(false)  // TODO: check
       .implicit_value(true);
   parser_.add_argument("--local-optimization")
       .help("use local optimization algorithm for exist-forall problems")
@@ -138,20 +136,26 @@ void ArgParser::addOptions() {
       .default_value(DLINEAR_DEFAULT_RANDOM_SEED)
       .scan<'i', uint>();
   parser_.add_argument("--sat-default-phase")
-      .help("set default initial phase for SAT solver.\n"
-            "\t\t\t0 = false\n"
-            "\t\t\t1 = true\n"
-            "\t\t\t2 = Jeroslow-Wang\n"
-            "\t\t\t3 = random initial phase\n\t\t\t")
+      .help(
+          "set default initial phase for SAT solver.\n"
+          "\t\t\t0 = false\n"
+          "\t\t\t1 = true\n"
+          "\t\t\t2 = Jeroslow-Wang\n"
+          "\t\t\t3 = random initial phase\n\t\t\t")
       .default_value(DLINEAR_DEFAULT_SAT_PHASE)
       .action([](const string &value) {
         int v = std::stoi(value);
         switch (v) {
-          case 0:return Config::SatDefaultPhase::False;
-          case 1:return Config::SatDefaultPhase::True;
-          case 2:return Config::SatDefaultPhase::JeroslowWang;
-          case 3:return Config::SatDefaultPhase::RandomInitialPhase;
-          default:DLINEAR_INVALID_ARGUMENT("--sat-default-phase", value);
+          case 0:
+            return Config::SatDefaultPhase::False;
+          case 1:
+            return Config::SatDefaultPhase::True;
+          case 2:
+            return Config::SatDefaultPhase::JeroslowWang;
+          case 3:
+            return Config::SatDefaultPhase::RandomInitialPhase;
+          default:
+            DLINEAR_INVALID_ARGUMENT("--sat-default-phase", value);
         }
       });
   parser_.add_argument("--simplex-sat-phase")
@@ -197,18 +201,14 @@ Config ArgParser::toConfig() const {
   DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
   Config config{};
   config.mutable_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<string>("file") : "");
-  if (parser_.is_used("in"))
-    config.mutable_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
-  if (parser_.is_used("precision"))
-    config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
+  if (parser_.is_used("in")) config.mutable_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
+  if (parser_.is_used("precision")) config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
   if (parser_.is_used("produce-models"))
     config.mutable_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
   if (parser_.is_used("verbosity"))
     config.mutable_verbose_dlinear().set_from_command_line(parser_.get<int>("verbosity"));
-  if (parser_.is_used("jobs"))
-    config.mutable_number_of_jobs().set_from_command_line(parser_.get<uint>("jobs"));
-  if (parser_.is_used("timings"))
-    config.mutable_with_timings().set_from_command_line(parser_.get<bool>("timings"));
+  if (parser_.is_used("jobs")) config.mutable_number_of_jobs().set_from_command_line(parser_.get<uint>("jobs"));
+  if (parser_.is_used("timings")) config.mutable_with_timings().set_from_command_line(parser_.get<bool>("timings"));
   if (parser_.is_used("continuous-output"))
     config.mutable_continuous_output().set_from_command_line(parser_.get<bool>("continuous-output"));
   if (parser_.is_used("random-seed"))
@@ -255,36 +255,31 @@ void ArgParser::validateOptions() {
   } else if (format != "auto" && format != extension) {
     DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
   }
-  if (!file_exists(parser_.get<string>("file")))
-    DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
+  if (!file_exists(parser_.get<string>("file"))) DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
   if (parser_.is_used("exhaustive") && parser_.is_used("precision"))
     DLINEAR_INVALID_ARGUMENT("--exhaustive", "cannot be set if --precision is used");
   if (parser_.get<double>("precision") == 0)
-    DLINEAR_INVALID_ARGUMENT("--precision", "cannot be set to zero. Use --exhaustive instead."
-                                            "\n"
-                                            "In order to support problems that may contain strict inequalities, dLinear4"
-                                            "reduces the precision value (or delta) by a small amount, and any strict"
-                                            "inequalities are de-strictified before being sent to the simplex solver. For"
-                                            "this reason, the precision must be strictly positive."
-                                            "\n"
-                                            "If you are sure that your problem contains no strict inequalities (not just in"
-                                            "the asserted formulas themselves, but in any conjunctive clause derived from"
-                                            "them), or if you simply wish to run the algorithm to completion, use"
-                                            "--exhaustive instead, and the precision value will be set to zero (but strict"
-                                            "inequalities will still be de-strictified)."
-                                            "\n"
-                                            "Hint: try --exhaustive in conjunction with --continuous-output "
-                                            "to find all delta-sat thresholds.");
-  if (parser_.get<double>("precision") < 0)
-    DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
+    DLINEAR_INVALID_ARGUMENT("--precision",
+                             "cannot be set to zero. Use --exhaustive instead."
+                             "\n"
+                             "In order to support problems that may contain strict inequalities, dLinear4"
+                             "reduces the precision value (or delta) by a small amount, and any strict"
+                             "inequalities are de-strictified before being sent to the simplex solver. For"
+                             "this reason, the precision must be strictly positive."
+                             "\n"
+                             "If you are sure that your problem contains no strict inequalities (not just in"
+                             "the asserted formulas themselves, but in any conjunctive clause derived from"
+                             "them), or if you simply wish to run the algorithm to completion, use"
+                             "--exhaustive instead, and the precision value will be set to zero (but strict"
+                             "inequalities will still be de-strictified)."
+                             "\n"
+                             "Hint: try --exhaustive in conjunction with --continuous-output "
+                             "to find all delta-sat thresholds.");
+  if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
 }
-string ArgParser::version() const {
-  return DLINEAR_VERSION_STRING;
-}
+string ArgParser::version() const { return DLINEAR_VERSION_STRING; }
 
-string ArgParser::repositoryStatus() const {
-  return DLINEAR_VERSION_REPOSTAT;
-}
+string ArgParser::repositoryStatus() const { return DLINEAR_VERSION_REPOSTAT; }
 
 string ArgParser::prompt() const {
 #ifndef NDEBUG
@@ -297,14 +292,11 @@ string ArgParser::prompt() const {
     repo_stat = " (repository: " + repo_stat + ")";
   }
 
-  string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}",
-                            DLINEAR_PROGRAM_NAME,
-                            version(),
-                            build_type,
-                            repo_stat);
+  string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}", DLINEAR_PROGRAM_NAME, version(),
+                            build_type, repo_stat);
   if (!qsoptex_hash_.empty()) vstr += fmt::format(" (qsopt-ex: {})", qsoptex_hash_);
   if (!soplex_hash_.empty()) vstr += fmt::format(" (soplex: {})", soplex_hash_);
   return vstr;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

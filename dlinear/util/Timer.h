@@ -7,16 +7,14 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_TIMER_H_
-#define DLINEAR5_DLINEAR_UTIL_TIMER_H_
+#pragma once
 
 #include <sys/resource.h>
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <type_traits>
-#include <cstdint>
 
 namespace dlinear {
 
@@ -25,7 +23,7 @@ namespace dlinear {
  *
  * Simple timer class to evaluate the performance of the software.
  */
-template<typename T>
+template <typename T>
 class TimerBase {
  public:
   using clock = T;
@@ -77,18 +75,16 @@ class TimerBase {
   [[nodiscard]] time_point now() const { return clock::now(); }
 
  private:
-  bool running_{false}; ///< Whether the timer is running or not.
-  time_point last_start_{}; ///< Last time_point when the timer is started or resumed.
-  duration elapsed_{}; ///< Elapsed time so far. This doesn't include the current fragment if it is running.
+  bool running_{false};      ///< Whether the timer is running or not.
+  time_point last_start_{};  ///< Last time_point when the timer is started or resumed.
+  duration elapsed_{};       ///< Elapsed time so far. This doesn't include the current fragment if it is running.
 };
 
 // Use high_resolution clock if it's steady, otherwise use steady_clock.
 using chosen_steady_clock = std::conditional<std::chrono::high_resolution_clock::is_steady,
-                                             std::chrono::high_resolution_clock,
-                                             std::chrono::steady_clock>::type;
+                                             std::chrono::high_resolution_clock, std::chrono::steady_clock>::type;
 
-extern template
-class TimerBase<chosen_steady_clock>;
+extern template class TimerBase<chosen_steady_clock>;
 class Timer : public TimerBase<chosen_steady_clock> {};
 
 struct user_clock {  // Implements the Clock interface of std::chrono
@@ -100,8 +96,7 @@ struct user_clock {  // Implements the Clock interface of std::chrono
   static time_point now();
 };
 
-extern template
-class TimerBase<user_clock>;
+extern template class TimerBase<user_clock>;
 class UserTimer : public TimerBase<user_clock> {};
 
 /**
@@ -141,12 +136,10 @@ class TimerGuard {
   void resume();
 
  private:
-  Timer *const timer_; ///< The timer to be guarded.
-  const bool enabled_{false}; ///< Whether the timer is enabled.
+  Timer *const timer_;         ///< The timer to be guarded.
+  const bool enabled_{false};  ///< Whether the timer is enabled.
 };
 
 extern UserTimer main_timer;
 
 }  // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_TIMER_H_

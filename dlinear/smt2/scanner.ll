@@ -74,7 +74,7 @@ numeral         0|[1-9][0-9]*
 decimal         {numeral}\.0*{numeral}
 hexadecimal     "#x"[0-9A-Fa-f]+
 binary          "#b"[01]+
-special_char    [+\-/*=%?!.$_~&^<>@]
+special_char    [+\-/=%?!.$_~&^<>@*]
 sym_begin       {letter}|{special_char}
 sym_continue    {sym_begin}|{digit}
 simple_symbol   {sym_begin}{sym_continue}*

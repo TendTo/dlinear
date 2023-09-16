@@ -7,15 +7,13 @@
  *
  * Provides an easy-to-use interface to dlinear and it's functionalities.
  */
-
-#ifndef DREAL_API_API_H_
-#define DREAL_API_API_H_
+#pragma once
 
 #include <tl/optional.hpp>
 
-#include "dlinear/util/Config.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
@@ -26,7 +24,7 @@ namespace dlinear {
  * @param delta precision perturbation.
  * @return a model if @p f is δ-satisfiable or nullopt if @p f is unsatisfiable.
  */
-tl::optional <Box> CheckSatisfiability(const Formula &f, double delta);
+tl::optional<Box> CheckSatisfiability(const Formula &f, double delta);
 
 /**
  * Check the satisfiability of a given formula @p f with a given configuration
@@ -35,7 +33,7 @@ tl::optional <Box> CheckSatisfiability(const Formula &f, double delta);
  * @param config configuration used to run the solver.
  * @return a model if @p f is δ-satisfiable or nullopt if @p f is unsatisfiable.
  */
-tl::optional <Box> CheckSatisfiability(const Formula &f, const Config &config);
+tl::optional<Box> CheckSatisfiability(const Formula &f, const Config &config);
 
 /**
  * Check the satisfiability of a given formula @p f with a given precision
@@ -66,7 +64,7 @@ bool CheckSatisfiability(const Formula &f, Config config, Box *box);
  * @param delta precision perturbation.
  * @return a model if a solution exists or nullopt if there is no solution.
  */
-tl::optional <Box> Minimize(const Expression &objective, const Formula &constraint, double delta);
+tl::optional<Box> Minimize(const Expression &objective, const Formula &constraint, double delta);
 
 /**
  * Find a solution to minimize @p objective function while satisfying a
@@ -76,7 +74,7 @@ tl::optional <Box> Minimize(const Expression &objective, const Formula &constrai
  * @param config configuration used to run the solver.
  * @return a model if a solution exists or nullopt if there is no solution.
  */
-tl::optional <Box> Minimize(const Expression &objective, const Formula &constraint, Config config);
+tl::optional<Box> Minimize(const Expression &objective, const Formula &constraint, Config config);
 
 /**
  * Find a solution to minimize @p objective function while satisfying a
@@ -103,5 +101,3 @@ bool Minimize(const Expression &objective, const Formula &constraint, double del
 bool Minimize(const Expression &objective, const Formula &constraint, Config config, Box *box);
 
 }  // namespace dlinear
-
-#endif  // DREAL_API_API_H_

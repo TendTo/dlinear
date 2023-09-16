@@ -9,17 +9,16 @@
  * In the end, it produces a context that can be used to solve the
  * problem.
  */
-#ifndef DLINEAR5_DLINEAR_SMT2_DRIVER_H_
-#define DLINEAR5_DLINEAR_SMT2_DRIVER_H_
+#pragma once
 
 #include <istream>
 #include <string>
 #include <utility>
 
-#include "dlinear/solver/Context.h"
-#include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/smt2/Term.h"
 #include "dlinear/smt2/scanner.h"
+#include "dlinear/solver/Context.h"
+#include "dlinear/util/ScopedUnorderedMap.hpp"
 
 namespace dlinear {
 
@@ -109,6 +108,7 @@ class Smt2Driver {
     [[nodiscard]] const Variable &variable() const { return var_; }
     [[nodiscard]] const Expression &expression() const { return expr_; }
     [[nodiscard]] bool is_variable() const { return is_var_; }
+
    private:
     Variable var_;
     Expression expr_;
@@ -143,9 +143,11 @@ class Smt2Driver {
 
   /** Pointer to the current scanenr instance, this is used to connect the
    * parser to the scanner. It is used in the yylex macro. */
-  Smt2Scanner *scanner_{nullptr};
+  Smt2Scanner *scanner() { return scanner_; }
 
  private:
+  Smt2Scanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
+
   /// enable debug output in the flex scanner
   bool trace_scanning_{false};
 
@@ -169,5 +171,3 @@ class Smt2Driver {
 };
 
 }  // namespace dlinear
-
-#endif  // DLINEAR5_DLINEAR_SMT2_DRIVER_H_

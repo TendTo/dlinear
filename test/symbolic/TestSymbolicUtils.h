@@ -4,9 +4,7 @@
  * @date 16 Aug 2023
  * @copyright 2023 dlinear
  */
-
-#ifndef DLINEAR5_TESTS_SYBMOLIC_TESTSYMBOLICUTILS_H_
-#define DLINEAR5_TESTS_SYBMOLIC_TESTSYMBOLICUTILS_H_
+#pragma once
 
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/libs/soplex.h"
@@ -92,5 +90,3 @@ inline bool FormulaNotEqual(const Formula &f1, const Formula &f2) { return !Form
 inline bool FormulaLess(const Formula &f1, const Formula &f2) { return f1.Less(f2); }
 
 inline bool FormulaNotLess(const Formula &f1, const Formula &f2) { return !FormulaLess(f1, f2); }
-
-#endif  // DLINEAR5_TESTS_SYBMOLIC_TESTSYMBOLICUTILS_H_

@@ -7,15 +7,13 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_
-#define DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_
+#pragma once
 
 #include <numeric>
 #include <set>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/Nnfizer.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -53,6 +51,4 @@ class NaiveCnfizer {
   friend Formula drake::symbolic::VisitFormula<Formula>(const NaiveCnfizer *, const Formula &);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_NAIVECNFIZER_H_
+}  // namespace dlinear

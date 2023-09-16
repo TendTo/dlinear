@@ -8,9 +8,7 @@
  * This is a unordered_set that supports backtracking. It is used to store
  * intermediate results.
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDSET_HPP_
-#define DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDSET_HPP_
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -24,9 +22,8 @@
 
 namespace dlinear {
 
-template<class Key, class Hash = std::hash<Key>,
-    class KeyEqual = std::equal_to<Key>,
-    class Allocator = std::allocator<Key>>
+template <class Key, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
+          class Allocator = std::allocator<Key>>
 class ScopedUnorderedSet {
  public:
   /// Aliases.
@@ -112,6 +109,4 @@ class ScopedUnorderedSet {
   UnorderedSetType set_;
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_SCOPEDUNORDEREDSET_HPP_
+}  // namespace dlinear

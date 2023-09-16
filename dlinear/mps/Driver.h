@@ -11,9 +11,9 @@
  */
 #pragma once
 
-#include <istream>
 #include <string>
 #include <unordered_map>
+#include <istream>
 #include <utility>
 
 #include "dlinear/mps/BoundType.h"
@@ -94,16 +94,16 @@ class MpsDriver {
    * coefficient (value) to the row.
    * In the mps file, a row is defined by:
    *
-   *    | Field1 | Field2 | Field3  | Field4         | Field5  | Field6         |
-   *    |--------|--------|---------|----------------|---------|----------------|
-   *    |        | Row    | Column1 | Value(Column1) | Column2 | Value(Column2) |
+   *    | Field1 | Field2 | Field3 | Field4      | Field5 | Field6      |
+   *    |--------|--------|--------|-------------|--------|-------------|
+   *    |        | Column | Row1   | Value(Row1) | Row2   | Value(Row2) |
    *
    * The last two fields are optional.
-   * @param row identifier of the row
    * @param column identifier of the column (variable)
+   * @param row identifier of the row
    * @param value coefficient of the column in the row
    */
-  void AddColumn(const std::string &row, const std::string &column, double value);
+  void AddColumn(const std::string &column, const std::string &row, double value);
 
   /**
    * Add the right hand side of the row.
@@ -162,10 +162,10 @@ class MpsDriver {
    *
    * @param type bound type
    * @param bound identifier of the bound. Used if strict_mps_ is true.
-   * @param row identifier of the row
+   * @param column identifier of the variable (column)
    * @param value bound value
    */
-  void AddBound(BoundType type, const std::string &bound, const std::string &row, double value);
+  void AddBound(BoundType type, const std::string &bound, const std::string &column, double value);
 
   /**
    * Called when the parser has reached the ENDATA section.

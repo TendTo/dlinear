@@ -145,8 +145,8 @@ columns: columns column
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
 column: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddColumn(*$2, *$1, std::stod(*$3)); 
-        driver.AddColumn(*$4, *$1, std::stod(*$5));
+        driver.AddColumn(*$1, *$2, std::stod(*$3)); 
+        driver.AddColumn(*$1, *$4, std::stod(*$5));
         delete $1;
         delete $2;
         delete $3;
@@ -154,7 +154,7 @@ column: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddColumn(*$2, *$1, std::stod(*$3)); 
+        driver.AddColumn(*$1, *$2, std::stod(*$3)); 
         delete $1;
         delete $2;
         delete $3;
@@ -176,8 +176,8 @@ rhs: rhs rhs_row
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
 rhs_row: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddRhs(*$2, *$1, std::stod(*$3));
-        driver.AddRhs(*$4, *$1, std::stod(*$5));
+        driver.AddRhs(*$1, *$2, std::stod(*$3));
+        driver.AddRhs(*$1, *$4, std::stod(*$5));
         delete $1;
         delete $2;
         delete $3;
@@ -185,7 +185,7 @@ rhs_row: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddRhs(*$2, *$1, std::stod(*$3));
+        driver.AddRhs(*$1, *$2, std::stod(*$3));
         delete $1;
         delete $2;
         delete $3;
@@ -207,8 +207,8 @@ ranges: ranges range
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
 range: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddRange(*$2, *$1, std::stod(*$3));
-        driver.AddRange(*$4, *$1, std::stod(*$5));
+        driver.AddRange(*$1, *$2, std::stod(*$3));
+        driver.AddRange(*$1, *$4, std::stod(*$5));
         delete $1;
         delete $2;
         delete $3;
@@ -216,7 +216,7 @@ range: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddRange(*$2, *$1, std::stod(*$3)); 
+        driver.AddRange(*$1, *$2, std::stod(*$3)); 
         delete $1;
         delete $2;
         delete $3;
@@ -243,7 +243,7 @@ bounds: bounds bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
 bound: BOUND_TYPE SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddBound(*$3, *$2, std::stod(*$4), $1);
+        driver.AddBound($1, *$2, *$3, std::stod(*$4));
         delete $2;
         delete $3;
         delete $4;

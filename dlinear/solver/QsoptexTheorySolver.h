@@ -7,31 +7,26 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SOLVER_QSOPTEXTHEORYSOLVER_H_
-#define DLINEAR5_DLINEAR_SOLVER_QSOPTEXTHEORYSOLVER_H_
-
-#include <set>
-#include <vector>
-#include <map>
 #include <functional>
-#include <utility>
 #include <limits>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
 
-#include "dlinear/util/Config.h"
+#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
-#include "dlinear/symbolic/literal.h"
-#include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/libs/gmp.h"
+#include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
-extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob,
-                                               mpq_t *x,
-                                               const mpq_t infeas,
-                                               const mpq_t delta,
+extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x, const mpq_t infeas, const mpq_t delta,
                                                void *data);
 
 /**
@@ -53,17 +48,11 @@ class QsoptexTheorySolver {
    * @param actual_precision actual delta precision to use
    * @return
    */
-  int CheckSat(const Box &box, const std::vector<Literal> &assertions,
-               const mpq_QSprob prob,
-               const std::map<int, Variable> &var_map,
-               mpq_class *actual_precision);
+  int CheckSat(const Box &box, const std::vector<Literal> &assertions, const mpq_QSprob prob,
+               const std::map<int, Variable> &var_map, mpq_class *actual_precision);
 
-  int CheckOpt(const Box &box,
-               mpq_class *obj_lo,
-               mpq_class *obj_up,
-               const std::vector<Literal> &assertions,
-               const mpq_QSprob prob,
-               const std::map<int, Variable> &var_map);
+  int CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *obj_up, const std::vector<Literal> &assertions,
+               const mpq_QSprob prob, const std::map<int, Variable> &var_map);
 
   /** Get a satisfying model. */
   [[nodiscard]] const Box &GetModel() const;
@@ -77,13 +66,8 @@ class QsoptexTheorySolver {
   LiteralSet explanation_;
   mpq_class precision_;
 
-  friend void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob,
-                                             mpq_t *x,
-                                             const mpq_t infeas,
-                                             const mpq_t delta,
+  friend void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x, const mpq_t infeas, const mpq_t delta,
                                              void *data);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_QSOPTEXTHEORYSOLVER_H_
+}  // namespace dlinear

@@ -11,13 +11,11 @@
  * - solver
  * - precision
  */
+#pragma once
 
-#ifndef DLINEAR5_BENCHMARK_UTIL_CONFIGFILEREADER_H_
-#define DLINEAR5_BENCHMARK_UTIL_CONFIGFILEREADER_H_
-
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace dlinear::benchmark {
 
@@ -48,12 +46,9 @@ class ConfigFileReader {
   const std::string precision_key_{"precision"};
   const std::string configFile_;
   std::map<std::string, std::vector<std::string>>
-      parameters_; ///< Map containing all the configuration loaded from the configuration file.
-
+      parameters_;  ///< Map containing all the configuration loaded from the configuration file.
 
   friend std::ostream &operator<<(std::ostream &os, const ConfigFileReader &configFileReader);
 };
 
-} // namespace dlinear::benchmark
-
-#endif //DLINEAR5_BENCHMARK_UTIL_CONFIGFILEREADER_H_
+}  // namespace dlinear::benchmark

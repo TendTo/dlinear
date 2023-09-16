@@ -11,19 +11,20 @@ using std::string;
 
 namespace dlinear::qsopt_ex {
 
-mpq_class *StringToMpqPtr(const string &str) {
+mpq_class *StringToMpqPtr(const string &str) { return CStringToMpqPtr(str.c_str()); }
+mpq_class StringToMpq(const string &str) { return CStringToMpq(str.c_str()); }
+mpq_class *CStringToMpqPtr(const char str[]) {
   mpq_t val;
   mpq_init(val);
-  mpq_EGlpNumReadStr(val, str.c_str());
-  auto *result = new mpq_class(val);
+  mpq_EGlpNumReadStr(val, str);
+  auto result = new mpq_class(val);
   mpq_clear(val);
   return result;
 }
-
-mpq_class StringToMpq(const string &str) {
+mpq_class CStringToMpq(const char str[]) {
   mpq_t val;
   mpq_init(val);
-  mpq_EGlpNumReadStr(val, str.c_str());
+  mpq_EGlpNumReadStr(val, str);
   mpq_class result(val);
   mpq_clear(val);
   return result;

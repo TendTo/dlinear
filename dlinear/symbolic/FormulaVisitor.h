@@ -10,9 +10,7 @@
  * By default, the visitor returns the original formula, but it can be
  * overridden by the derived classes.
  */
-
-#ifndef DLINEAR5_DLINEAR_SYMBOLIC_FORMULAVISITOR_H_
-#define DLINEAR5_DLINEAR_SYMBOLIC_FORMULAVISITOR_H_
+#pragma once
 
 #include "dlinear/symbolic/symbolic.h"
 
@@ -37,6 +35,4 @@ class FormulaVisitor {
   virtual Formula VisitForall(const Formula &f) { return f; }
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SYMBOLIC_FORMULAVISITOR_H_
+}  // namespace dlinear

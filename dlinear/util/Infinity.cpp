@@ -36,7 +36,7 @@ Infinity::~Infinity() {
 void Infinity::InftyStart(const Config& config) { InftyStart(config.lp_solver()); }
 
 void Infinity::InftyStart(Config::LPSolver lp_solver) {
-  if (instance_ != nullptr) [[unlikely]] {
+  if (instance_ != nullptr) {
     DLINEAR_WARN("Infinity already initialized! No action taken.");
     return;
   }
@@ -54,7 +54,7 @@ void Infinity::InftyStart(Config::LPSolver lp_solver) {
 }
 
 void Infinity::InftyFinish() {
-  if (instance_ != nullptr) [[likely]] {
+  if (instance_ != nullptr) {
     delete instance_;
     instance_ = nullptr;
   } else {

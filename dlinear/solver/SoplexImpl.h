@@ -7,19 +7,17 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SOLVER_SOPLEXIMPL_H_
-#define DLINEAR5_DLINEAR_SOLVER_SOPLEXIMPL_H_
-
-#include <vector>
 #include <utility>
-
+#include <vector>
+// Optional is a header-only library for optional/maybe values.
 #include <tl/optional.hpp>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/solver/SoplexSatSolver.h"
 #include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -35,7 +33,7 @@ class Context::SoplexImpl : public Context::Impl {
 
  protected:
   // Returns the current box in the stack.
-  tl::optional <Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) override;
+  tl::optional<Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) override;
   int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) override;
 
   void MinimizeCore(const Expression &obj_expr) override;
@@ -44,6 +42,4 @@ class Context::SoplexImpl : public Context::Impl {
   SoplexTheorySolver theory_solver_;
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_SOPLEXIMPL_H_
+}  // namespace dlinear

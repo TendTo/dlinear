@@ -7,12 +7,12 @@
 
 #include "Driver.h"
 
+#include <iostream>
+#include <limits>
+#include <sstream>
 #include <utility>
 #include <vector>
-#include <iostream>
-#include <sstream>
-#include <limits>
-
+// Optional is a header-only library for optional/maybe values.
 #include <tl/optional.hpp>
 
 #include "dlinear/util/Timer.h"
@@ -25,12 +25,12 @@ using std::endl;
 using std::ifstream;
 using std::istream;
 using std::istringstream;
+using std::nextafter;
+using std::numeric_limits;
 using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::vector;
-using std::nextafter;
-using std::numeric_limits;
 using tl::optional;
 
 namespace dlinear {
@@ -66,9 +66,7 @@ bool Smt2Driver::parse_string(const string &input, const string &sname) {
   return parse_stream(iss, sname);
 }
 
-void Smt2Driver::error(const location &l, const string &m) {
-  cerr << l << " : " << m << endl;
-}
+void Smt2Driver::error(const location &l, const string &m) { cerr << l << " : " << m << endl; }
 
 void Smt2Driver::error(const string &m) { cerr << m << endl; }
 
@@ -80,8 +78,7 @@ void Smt2Driver::CheckSat() {
     if (LP_DELTA_OPTIMAL == status) {
       mpq_class diff = obj_up - obj_lo;
       // fmt::print uses shortest round-trip format for doubles, by default
-      fmt::print("delta-optimal with delta = {} ( = {}), range = [{}, {}]",
-                 diff.get_d(), diff, obj_lo, obj_up);
+      fmt::print("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, obj_lo, obj_up);
     } else if (LP_UNBOUNDED == status) {
       fmt::print("unbounded");
     } else if (LP_INFEASIBLE == status) {
@@ -98,9 +95,8 @@ void Smt2Driver::CheckSat() {
     }
   } else {
     mpq_class actual_precision = context_.config().precision();
-    const optional <Box> model{context_.CheckSat(&actual_precision)};
-    double actual_precision_upper = nextafter(actual_precision.get_d(),
-                                              numeric_limits<double>::infinity());
+    const optional<Box> model{context_.CheckSat(&actual_precision)};
+    double actual_precision_upper = nextafter(actual_precision.get_d(), numeric_limits<double>::infinity());
     this->actual_precision_ = actual_precision.get_d();
     if (model) {
       // fmt::print uses shortest round-trip format for doubles, by default
@@ -125,13 +121,17 @@ ostream &PrintModel(ostream &os, const Box &box) {
     const Variable &var{box.variable(i)};
     os << "  (define-fun " << var << " () ";
     switch (var.get_type()) {
-      case Variable::Type::CONTINUOUS:os << Sort::Real;
+      case Variable::Type::CONTINUOUS:
+        os << Sort::Real;
         break;
-      case Variable::Type::BINARY:os << Sort::Binary;
+      case Variable::Type::BINARY:
+        os << Sort::Binary;
         break;
-      case Variable::Type::INTEGER:os << Sort::Int;
+      case Variable::Type::INTEGER:
+        os << Sort::Int;
         break;
-      case Variable::Type::BOOLEAN:os << Sort::Bool;
+      case Variable::Type::BOOLEAN:
+        os << Sort::Bool;
         break;
     }
     os << " ";
@@ -168,8 +168,7 @@ Variable Smt2Driver::DeclareVariable(const string &name, const Sort sort) {
   return v;
 }
 
-void Smt2Driver::DeclareVariable(const string &name, const Sort sort,
-                                 const Term &lb, const Term &ub) {
+void Smt2Driver::DeclareVariable(const string &name, const Sort sort, const Term &lb, const Term &ub) {
   const Variable v{RegisterVariable(name, sort)};
   context_.DeclareVariable(v, lb.expression(), ub.expression());
 }
@@ -184,8 +183,7 @@ string Smt2Driver::MakeUniqueName(const string &name) {
 Variable Smt2Driver::DeclareLocalVariable(const string &name, const Sort sort) {
   const Variable v{ParseVariableSort(MakeUniqueName(name), sort)};
   scope_.insert(name, VariableOrConstant(v));  // v is not inserted under its own name.
-  context_.DeclareVariable(
-      v, false /* This local variable is not a model variable. */);
+  context_.DeclareVariable(v, false /* This local variable is not a model variable. */);
   return v;
 }
 
@@ -197,9 +195,7 @@ const Smt2Driver::VariableOrConstant &Smt2Driver::lookup_variable(const string &
   return it->second;
 }
 
-Variable Smt2Driver::ParseVariableSort(const string &name, const Sort s) {
-  return Variable{name, SortToType(s)};
-}
+Variable Smt2Driver::ParseVariableSort(const string &name, const Sort s) { return Variable{name, SortToType(s)}; }
 
 void Smt2Driver::DefineLocalConstant(const string &name, const Expression &value) {
   DLINEAR_ASSERT(is_constant(value), "Value must be a constant expression.");

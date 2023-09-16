@@ -28,7 +28,7 @@ using dlinear::qsopt_ex::StringToMpq;
 
 /*** yacc/bison Declarations ***/
 
-/* Require bison 2.3 or later */
+/* Require bison 3.2 or later */
 %require "3.2"
 
 /* add debug output code to generated parser. disable this for release
@@ -129,7 +129,7 @@ using dlinear::qsopt_ex::StringToMpq;
  * object. it defines the yylex() function call to pull the next token from the
  * current lexer object of the driver context. */
 #undef yylex
-#define yylex driver.scanner_->lex
+#define yylex driver.scanner()->lex
 
 %}
 

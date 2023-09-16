@@ -8,9 +8,7 @@
  * This is a vector that supports backtracking. It is used to store
  * intermediate results.
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_SCOPEDVECTOR_HPP_
-#define DLINEAR5_DLINEAR_UTIL_SCOPEDVECTOR_HPP_
+#pragma once
 
 #include <algorithm>
 #include <cstddef>
@@ -23,7 +21,7 @@
 
 namespace dlinear {
 
-template<typename T>
+template <typename T>
 class ScopedVector {
  public:
   typedef std::vector<T> vector;
@@ -112,8 +110,7 @@ class ScopedVector {
   }
 
   friend std::ostream &operator<<(std::ostream &os, ScopedVector<T> const &v) {
-    for (auto const &e : v)
-      os << e << std::endl;
+    for (auto const &e : v) os << e << std::endl;
     return os;
   }
 
@@ -122,6 +119,4 @@ class ScopedVector {
   std::vector<size_t> scopes_;
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_SCOPEDVECTOR_HPP_
+}  // namespace dlinear

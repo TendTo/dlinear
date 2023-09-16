@@ -11,8 +11,7 @@
  * should only have a dependency "//dlinear/symbolic:symbolic", not
  * "@drake_symbolic//:symbolic".
  */
-#ifndef DLINEAR_SYMBOLIC_SYMBOLIC_H_
-#define DLINEAR_SYMBOLIC_SYMBOLIC_H_
+#pragma once
 
 #include <functional>
 #include <ostream>
@@ -32,12 +31,12 @@
 namespace dlinear {
 
 using drake::hash_value;
+using drake::symbolic::Environment;
 using drake::symbolic::Expression;
 using drake::symbolic::Formula;
-using drake::symbolic::Variables;
-using drake::symbolic::Variable;
-using drake::symbolic::Environment;
 using drake::symbolic::FormulaKind;
+using drake::symbolic::Variable;
+using drake::symbolic::Variables;
 using drake::symbolic::VisitExpression;
 using drake::symbolic::VisitFormula;
 
@@ -170,8 +169,7 @@ Formula make_disjunction(const std::vector<Formula> &formulas);
  * @param type type of variables
  * @return vector of variables
  */
-std::vector<Variable> CreateVector(const std::string &prefix,
-                                   int size,
+std::vector<Variable> CreateVector(const std::string &prefix, int size,
                                    Variable::Type type = Variable::Type::CONTINUOUS);
 
 /** Relational operators are used in formulas */
@@ -194,5 +192,3 @@ RelationalOperator operator!(RelationalOperator op);
 std::ostream &operator<<(std::ostream &os, RelationalOperator op);
 
 }  // namespace dlinear
-
-#endif // DLINEAR_SYMBOLIC_SYMBOLIC_H_

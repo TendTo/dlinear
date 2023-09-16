@@ -10,24 +10,24 @@
 
 #include "SoplexSatSolver.h"
 
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
+using std::abs;
 using std::cout;
+using std::make_pair;
+using std::pair;
 using std::set;
 using std::vector;
-using std::pair;
-using std::make_pair;
-using std::abs;
 
 using tl::optional;
 
-using soplex::Rational;
 using soplex::DSVectorRational;
-using soplex::LPRowRational;
 using soplex::LPColRational;
+using soplex::LPRowRational;
+using soplex::Rational;
 
 using dlinear::gmp::to_mpq_t;
 
@@ -55,7 +55,7 @@ SoplexSatSolver::SoplexSatSolver(const Config &config) : sat_{picosat_init()}, c
   spx_prob_.setIntParam(spx_prob_.OBJSENSE, spx_prob_.OBJSENSE_MINIMIZE);
 }
 
-SoplexSatSolver::SoplexSatSolver(const Config &config, const vector <Formula> &clauses) : SoplexSatSolver{config} {
+SoplexSatSolver::SoplexSatSolver(const Config &config, const vector<Formula> &clauses) : SoplexSatSolver{config} {
   AddClauses(clauses);
 }
 
@@ -74,7 +74,7 @@ void SoplexSatSolver::AddFormula(const Formula &f) {
   AddClauses(clauses);
 }
 
-void SoplexSatSolver::AddFormulas(const vector <Formula> &formulas) {
+void SoplexSatSolver::AddFormulas(const vector<Formula> &formulas) {
   for (const Formula &f : formulas) {
     AddFormula(f);
   }
@@ -87,7 +87,7 @@ void SoplexSatSolver::AddLearnedClause(const LiteralSet &literals) {
   picosat_add(sat_, 0);
 }
 
-void SoplexSatSolver::AddClauses(const vector <Formula> &formulas) {
+void SoplexSatSolver::AddClauses(const vector<Formula> &formulas) {
   for (const Formula &f : formulas) {
     AddClause(f);
   }
@@ -114,10 +114,8 @@ class SoplexSatSolverStat : public Stats {
   ~SoplexSatSolverStat() override {
     if (enabled()) {
       using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat",
-            "SAT level", num_check_sat_);
-      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n",
-            "Total time spent in SAT checks", "SAT level",
+      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat", "SAT level", num_check_sat_);
+      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n", "Total time spent in SAT checks", "SAT level",
             timer_check_sat_.seconds());
     }
   }
@@ -132,8 +130,7 @@ class SoplexSatSolverStat : public Stats {
 set<int> SoplexSatSolver::GetMainActiveLiterals() const {
   set<int> lits;
   for (int i = 1; i <= picosat_variables(sat_); ++i) {
-    const int model_i{has_picosat_pop_used_ ? picosat_deref(sat_, i)
-                                            : picosat_deref_partial(sat_, i)};
+    const int model_i{has_picosat_pop_used_ ? picosat_deref(sat_, i) : picosat_deref_partial(sat_, i)};
     if (model_i == 0) {
       continue;
     }
@@ -148,8 +145,7 @@ set<int> SoplexSatSolver::GetMainActiveLiterals() const {
       for (int c : c_it->second) {
         int count = 0;
         size_t j;
-        for (j = c; j < main_clauses_copy_.size() &&
-            main_clauses_copy_[j]; ++j) {
+        for (j = c; j < main_clauses_copy_.size() && main_clauses_copy_[j]; ++j) {
           int k{main_clauses_copy_[j]};
           if (lits.find(k) != lits.end()) {
             ++count;
@@ -175,10 +171,9 @@ set<int> SoplexSatSolver::GetMainActiveLiterals() const {
   return lits;
 }
 
-optional <SoplexSatSolver::Model> SoplexSatSolver::CheckSat(const Box &box) {
+optional<SoplexSatSolver::Model> SoplexSatSolver::CheckSat(const Box &box) {
   static SoplexSatSolverStat stat{DLINEAR_INFO_ENABLED};
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::CheckSat(#vars = {}, #clauses = {})",
-                    picosat_variables(sat_),
+  DLINEAR_DEBUG_FMT("SoplexSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
   stat.num_check_sat_++;
   // Call SAT solver.
@@ -260,8 +255,7 @@ void SoplexSatSolver::SetSPXVarCoef(DSVectorRational *coeffs, const Variable &va
   coeffs->add(it->second, to_mpq_t(value));
 }
 
-void SoplexSatSolver::SetSPXVarBound(const Variable &var, const char type,
-                                     const mpq_class &value) {
+void SoplexSatSolver::SetSPXVarBound(const Variable &var, const char type, const mpq_class &value) {
   DLINEAR_ASSERT(type == 'L' || type == 'U' || type == 'B', "type must be 'L', 'U', or 'B'");
   const auto it = to_spx_col_.find(var.get_id());
   if (it == to_spx_col_.end()) {
@@ -273,18 +267,14 @@ void SoplexSatSolver::SetSPXVarBound(const Variable &var, const char type,
   if (type == 'L' || type == 'B') {
     if (to_mpq_t(value) > spx_lower_[it->second]) {
       spx_lower_[it->second] = to_mpq_t(value);
-      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set lower bound of {} to {}",
-                        type,
-                        var,
+      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set lower bound of {} to {}", type, var,
                         spx_lower_[it->second]);
     }
   }
   if (type == 'U' || type == 'B') {
     if (to_mpq_t(value) < spx_upper_[it->second]) {
       spx_upper_[it->second] = to_mpq_t(value);
-      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set upper bound of {} to {}",
-                        type,
-                        var,
+      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set upper bound of {} to {}", type, var,
                         spx_upper_[it->second]);
     }
   }
@@ -327,8 +317,7 @@ static bool is_simple_bound(const Formula &formula) {
   }
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
-  return ((is_constant(lhs) && is_variable(rhs)) ||
-      (is_variable(lhs) && is_constant(rhs)));
+  return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
 }
 
 // Because the input precision > 0, and we have reduced this by a small amount,
@@ -355,9 +344,7 @@ static bool is_greater_or_whatever(const Formula &formula, bool truth) {
   }
 }
 
-static bool is_less_or_whatever(const Formula &formula, bool truth) {
-  return is_greater_or_whatever(formula, !truth);
-}
+static bool is_less_or_whatever(const Formula &formula, bool truth) { return is_greater_or_whatever(formula, !truth); }
 
 void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
   const auto it_row = to_spx_row_.find(make_pair(var.get_id(), truth));
@@ -470,15 +457,11 @@ void SoplexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) {
     SetSPXVarCoef(&coeffs, get_variable(expr), 1);
   } else if (is_multiplication(expr)) {
     std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1
-        || !is_variable(map.begin()->first)
-        || !is_constant(map.begin()->second)
-        || get_constant_value(map.begin()->second) != 1) {
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
       DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
     }
-    SetSPXVarCoef(&coeffs,
-                  get_variable(map.begin()->first),
-                  get_constant_in_multiplication(expr));
+    SetSPXVarCoef(&coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     for (const pair<const Expression, mpq_class> &pair : map) {
@@ -607,8 +590,7 @@ void SoplexSatSolver::AddLinearVariable(const Variable &var) {
   spx_lower_[spx_col] = -soplex::infinity;  // Set unbounded
   spx_upper_[spx_col] = soplex::infinity;
   // obj, coeffs, upper, lower
-  spx_prob_.addColRational(LPColRational(0, DSVectorRational(),
-                                         soplex::infinity, -soplex::infinity));
+  spx_prob_.addColRational(LPColRational(0, DSVectorRational(), soplex::infinity, -soplex::infinity));
   to_spx_col_.emplace(make_pair(var.get_id(), spx_col));
   from_spx_col_[spx_col] = var;
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearVariable({} ↦ {})", var, spx_col);
@@ -617,11 +599,11 @@ void SoplexSatSolver::AddLinearVariable(const Variable &var) {
 const std::map<int, Variable> &SoplexSatSolver::GetLinearVarMap() const {
   DLINEAR_TRACE("SoplexSatSolver::GetLinearVarMap(): from_spx_col_ =");
   if (DLINEAR_TRACE_ENABLED) {
-    for (const pair<int, Variable> kv : from_spx_col_) {
-      std::cerr << kv.first << ": " << kv.second << "\n";
+    for (const auto &[idx, var] : from_spx_col_) {
+      DLINEAR_TRACE_FMT("{}: {}", idx, var);
     }
   }
   return from_spx_col_;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

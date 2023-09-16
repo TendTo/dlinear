@@ -9,18 +9,16 @@
  * provides a class named Smt2Scanner used to parse the file using the Flex
  * API.
  */
-#ifndef DLINEAR_SMT2_SCANNER_H_
-#define DLINEAR_SMT2_SCANNER_H_
+#pragma once
 
 // Flex expects the signature of yylex to be defined in the macro YY_DECL, and
 // the C++ parser expects it to be declared. We can factor both as follows.
 
 #ifndef YY_DECL
 
-#define YY_DECL                                              \
-  dlinear::Smt2Parser::token_type dlinear::Smt2Scanner::lex( \
-      dlinear::Smt2Parser::semantic_type *yylval,            \
-      dlinear::Smt2Parser::location_type *yylloc)
+#define YY_DECL                                                                                         \
+  dlinear::Smt2Parser::token_type dlinear::Smt2Scanner::lex(dlinear::Smt2Parser::semantic_type *yylval, \
+                                                            dlinear::Smt2Parser::location_type *yylloc)
 #endif
 
 #ifndef __FLEX_LEXER_H
@@ -29,12 +27,12 @@
 #undef yyFlexLexer
 #endif
 
-// The following include should come first before parser.yy.hh.
-// Do not alpha-sort them.
-#include "dlinear/smt2/sort.h"
 #include "dlinear/smt2/Term.h"
+#include "dlinear/smt2/sort.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
+// The following include should come after all the previous ones.
+// Do not alpha-sort them.
 #include "dlinear/smt2/parser.yy.hpp"
 
 namespace dlinear {
@@ -74,6 +72,4 @@ class Smt2Scanner : public Smt2FlexLexer {
   void set_debug(bool b);
 };
 
-} // namespace dlinear
-
-#endif // DLINEAR_SMT2_SCANNER_H_
+}  // namespace dlinear

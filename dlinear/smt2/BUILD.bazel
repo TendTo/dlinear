@@ -12,6 +12,7 @@ package(default_visibility = [
 gen_lex(
     name = "scanner",
     src = "scanner.ll",
+    hdr = "scanner.h",
     source_out = "scanner.ll.cpp",
     visibility = ["//visibility:private"],
 )
@@ -80,7 +81,6 @@ dlinear_cc_library(
     hdrs = [
         "Driver.h",
         "run.h",
-        "scanner.h",
     ],
     deps = [
         ":logic",

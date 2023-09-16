@@ -9,21 +9,19 @@
  * problem being solved. It also holds the information about the
  * program version.
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
-#define DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
-
-#include <vector>
-#include <string>
 #include <memory>
-
+#include <string>
+#include <vector>
+// Optional is a header-only library for optional/maybe values.
 #include <tl/optional.hpp>
 
-#include "dlinear/util/Config.h"
 #include "dlinear/libs/gmp.h"
+#include "dlinear/smt2/logic.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
-#include "dlinear/smt2/logic.h"
+#include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
@@ -81,7 +79,7 @@ class Context {
    * @p actual_precision (write-only) to the actual max infeasibility where
    * appropriate.
    */
-  tl::optional <Box> CheckSat(mpq_class *actual_precision);
+  tl::optional<Box> CheckSat(mpq_class *actual_precision);
 
   /**
    * Checks the satisfiability of the asserted formulas, and (where
@@ -201,6 +199,4 @@ class Context {
   std::unique_ptr<Impl> impl_;
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_CONTEXT_H_
+}  // namespace dlinear

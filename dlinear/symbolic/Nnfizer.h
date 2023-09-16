@@ -8,9 +8,7 @@
  * NNFizer class converts a formula into an equivalent formula in NNF.
  * @see https://en.wikipedia.org/wiki/Negation_normal_form
  */
-
-#ifndef DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
-#define DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
+#pragma once
 
 #include <set>
 
@@ -56,12 +54,10 @@ class Nnfizer {
   [[nodiscard]] Formula VisitEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitNotEqualTo(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitGreaterThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
-  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f,
-                                                  bool polarity,
+  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f, bool polarity,
                                                   bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitLessThan(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
-  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f,
-                                               bool polarity,
+  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f, bool polarity,
                                                bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitConjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitDisjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
@@ -72,6 +68,4 @@ class Nnfizer {
   // methods.
   friend Formula drake::symbolic::VisitFormula<Formula>(const Nnfizer *, const Formula &, const bool &, const bool &);
 };
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SYMBOLIC_NNFIZER_H_
+}  // namespace dlinear

@@ -1,5 +1,15 @@
-#ifndef DLINEAR_UTIL_SIGNALHANDLERGUARD_H_
-#define DLINEAR_UTIL_SIGNALHANDLERGUARD_H_
+/**
+ * @file SignalHandlerGuard.h
+ * @author dlinear
+ * @version 0.1
+ * @date 14 Aug 2023
+ * @copyright 2023 dlinear
+ * @brief Signal handler guard.
+ *
+ * It sets a new signal handler and restores the old one when it goes
+ * out of scope. If the flag is set, its destructor clears it out.
+ */
+#pragma once
 
 #include <atomic>
 #include <csignal>
@@ -57,5 +67,3 @@ class SignalHandlerGuard {
   struct sigaction old_action_;
 };
 }  // namespace dlinear
-
-#endif  // DLINEAR_UTIL_SIGNALHANDLERGUARD_H_

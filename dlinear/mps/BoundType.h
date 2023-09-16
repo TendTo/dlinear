@@ -25,7 +25,7 @@ namespace dlinear::mps {
  * The bound type is used to specify the type of a variable bound.
  * The bound type is used in the MPS file format.
  */
-enum class BoundType : short {
+enum class BoundType {
   LO,  // Lower bound
   LI,  // Lower bound integer
   UP,  // Upper bound

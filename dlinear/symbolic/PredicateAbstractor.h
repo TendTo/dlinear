@@ -7,18 +7,16 @@
  *
  * Long Description
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_PREDICATEABSTRACTOR_H_
-#define DLINEAR5_DLINEAR_UTIL_PREDICATEABSTRACTOR_H_
+#pragma once
 
 #include <memory>
+#include <set>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
-#include <sstream>
-#include <set>
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/FormulaVisitor.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -48,18 +46,13 @@ class PredicateAbstractor : public FormulaVisitor {
    */
   Formula Convert(const std::vector<Formula> &formulas);
 
-  const std::unordered_map<Variable, Formula, hash_value<Variable>> &
-  var_to_formula_map() const {
+  const std::unordered_map<Variable, Formula, hash_value<Variable>> &var_to_formula_map() const {
     return var_to_formula_map_;
   }
 
-  const Variable &operator[](const Formula &f) const {
-    return formula_to_var_map_.at(f);
-  }
+  const Variable &operator[](const Formula &f) const { return formula_to_var_map_.at(f); }
 
-  const Formula &operator[](const Variable &var) const {
-    return var_to_formula_map_.at(var);
-  }
+  const Formula &operator[](const Variable &var) const { return var_to_formula_map_.at(var); }
 
  private:
   Formula Visit(const Formula &f) override;
@@ -85,6 +78,4 @@ class PredicateAbstractor : public FormulaVisitor {
   friend Formula drake::symbolic::VisitFormula<Formula, PredicateAbstractor>(PredicateAbstractor *, const Formula &);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_PREDICATEABSTRACTOR_H_
+}  // namespace dlinear

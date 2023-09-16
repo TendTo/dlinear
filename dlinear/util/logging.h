@@ -11,43 +11,41 @@
  * The higher the verbosity level, the more information is logged.
  * If another value is provided, the logging is turned off.
  */
-#ifndef DLINEAR5_LOGGING_H
-#define DLINEAR5_LOGGING_H
+#pragma once
 
 #ifndef NDEBUG
 
 #include <spdlog/spdlog.h>
+// Enable formatting with the override of operator<< for user-defined types.
+// Must be included after spdlog.h.
 #include <spdlog/fmt/ostr.h>
 
 #include <memory>
 
 namespace dlinear {
 
-enum class LoggerType {
-  OUT,
-  ERR
-};
+enum class LoggerType { OUT, ERR };
 
-std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
+std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type); // NOLINT
 
 }  // namespace dlinear
 
-
-#define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) \
-    (verbosity == 0 ? spdlog::level::critical :   \
-    (verbosity == 1 ? spdlog::level::err   :      \
-    (verbosity == 2 ? spdlog::level::warn  :      \
-    (verbosity == 3 ? spdlog::level::info  :      \
-    (verbosity == 4 ? spdlog::level::debug :      \
-    (verbosity == 5 ? spdlog::level::trace :      \
-    spdlog::level::off))))))
+#define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity)                                                            \
+  (verbosity == 0                                                                                            \
+       ? spdlog::level::critical                                                                             \
+       : (verbosity == 1                                                                                     \
+              ? spdlog::level::err                                                                           \
+              : (verbosity == 2 ? spdlog::level::warn                                                        \
+                                : (verbosity == 3 ? spdlog::level::info                                      \
+                                                  : (verbosity == 4 ? spdlog::level::debug                   \
+                                                                    : (verbosity == 5 ? spdlog::level::trace \
+                                                                                      : spdlog::level::off))))))
 #define DLINEAR_LOG_INIT_VERBOSITY(verbosity) DLINEAR_LOG_INIT_LEVEL(DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity))
-#define DLINEAR_LOG_INIT_LEVEL(level)                                           \
-    do {                                                                        \
-        get_logger(::dlinear::LoggerType::OUT)->set_level(level);               \
-        get_logger(::dlinear::LoggerType::ERR)->set_level(level);               \
-    }                                                                           \
-    while (0)
+#define DLINEAR_LOG_INIT_LEVEL(level)                         \
+  do {                                                        \
+    get_logger(::dlinear::LoggerType::OUT)->set_level(level); \
+    get_logger(::dlinear::LoggerType::ERR)->set_level(level); \
+  } while (0)
 #define DLINEAR_TRACE(msg) get_logger(::dlinear::LoggerType::OUT)->trace(msg)
 #define DLINEAR_TRACE_FMT(msg, ...) get_logger(::dlinear::LoggerType::OUT)->trace(msg, ##__VA_ARGS__)
 #define DLINEAR_DEBUG(msg) get_logger(::dlinear::LoggerType::OUT)->debug(msg)
@@ -84,5 +82,3 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);
 #define DLINEAR_TRACE_ENABLED false
 
 #endif
-
-#endif  // DLINEAR5_LOGGING_H

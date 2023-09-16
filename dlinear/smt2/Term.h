@@ -8,9 +8,7 @@
  * Terms are the building blocks of a smt problem. They are either
  * expressions or formulas.
  */
-
-#ifndef DLINEAR_SMT2_TERM_H_
-#define DLINEAR_SMT2_TERM_H_
+#pragma once
 
 #include <iostream>
 
@@ -82,12 +80,12 @@ class Term {
   Formula &mutable_formula();
 
  private:
-  Type type_; ///< Type of this term.
-  Expression e_; ///< Expression inside.
-  Formula f_; ///< Formula inside.
+  Type type_;     ///< Type of this term.
+  Expression e_;  ///< Expression inside.
+  Formula f_;     ///< Formula inside.
 };
 
 std::ostream &operator<<(std::ostream &os, const Term &t);
 }  // namespace dlinear
 
-#endif  // DLINEAR_SMT2_TERM_H_
+#pragma once

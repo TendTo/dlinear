@@ -7,24 +7,22 @@
  *
  * Long Description
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SOLVER_SOPLEXTHEORYSOLVER_H_
-#define DLINEAR5_DLINEAR_SOLVER_SOPLEXTHEORYSOLVER_H_
-
-#include <set>
-#include <vector>
-#include <map>
-#include <functional>
-#include <utility>
 #include <atomic>
+#include <functional>
 #include <iostream>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
 
-#include "dlinear/util/Config.h"
-#include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Box.h"
-#include "dlinear/symbolic/literal.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/soplex.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
@@ -35,10 +33,8 @@ class SoplexTheorySolver {
 
   /// Checks consistency. Returns true if there is a satisfying
   /// assignment. Otherwise, return false.
-  int CheckSat(const Box &box, const std::vector<Literal> &assertions,
-               soplex::SoPlex *prob,
-               const soplex::VectorRational &lower,
-               const soplex::VectorRational &upper,
+  int CheckSat(const Box &box, const std::vector<Literal> &assertions, soplex::SoPlex *prob,
+               const soplex::VectorRational &lower, const soplex::VectorRational &upper,
                const std::map<int, Variable> &var_map);
 
   /**
@@ -54,12 +50,10 @@ class SoplexTheorySolver {
   [[nodiscard]] const LiteralSet &GetExplanation() const;
 
  private:
-  const Config &config_; ///< Configuration of the solver
-  Box model_; ///< Satisfying Model
-  LiteralSet explanation_; ///< List of used constraints
-  mpq_class precision_; ///< Precision of the delta solver
+  const Config &config_;    ///< Configuration of the solver
+  Box model_;               ///< Satisfying Model
+  LiteralSet explanation_;  ///< List of used constraints
+  mpq_class precision_;     ///< Precision of the delta solver
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SOLVER_SOPLEXTHEORYSOLVER_H_
+}  // namespace dlinear

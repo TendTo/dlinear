@@ -7,8 +7,7 @@
  *
  * Indicates the type of a term.
  */
-#ifndef DLINEAR_SMT2_SORT_H_
-#define DLINEAR_SMT2_SORT_H_
+#pragma once
 
 #include <ostream>
 #include <string>
@@ -32,5 +31,3 @@ std::ostream &operator<<(std::ostream &os, const Sort &sort);
 Variable::Type SortToType(Sort sort);
 
 }  // namespace dlinear
-
-#endif  // DLINEAR_SMT2_SORT_H_

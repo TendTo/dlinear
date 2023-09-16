@@ -14,9 +14,7 @@
  * 4. Value set by a code
  * @see Type
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_
-#define DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_
+#pragma once
 
 #include <iostream>
 #include <utility>
@@ -34,7 +32,7 @@ namespace dlinear {
  * by an updated requested from a file.
  * @tparam T Type of the value the class will hold.
  */
-template<typename T>
+template <typename T>
 class OptionValue {
  public:
   enum class Type {
@@ -48,8 +46,7 @@ class OptionValue {
    * Constructs an option value with @p value.
    * @param value value to be held.
    */
-  explicit OptionValue(T value)
-      : value_{std::move(value)}, type_{Type::DEFAULT} {}
+  explicit OptionValue(T value) : value_{std::move(value)}, type_{Type::DEFAULT} {}
 
   /** Default copy constructor */
   OptionValue(const OptionValue &) = default;
@@ -110,7 +107,8 @@ class OptionValue {
   void set_from_file(const T &value) {
     switch (type_) {
       case Type::DEFAULT:
-      case Type::FROM_FILE:value_ = value;
+      case Type::FROM_FILE:
+        value_ = value;
         type_ = Type::FROM_FILE;
         return;
 
@@ -123,18 +121,20 @@ class OptionValue {
 
   friend std::ostream &operator<<(std::ostream &os, Type type) {
     switch (type) {
-      case OptionValue<T>::Type::DEFAULT:return os << "DEFAULT";
-      case OptionValue<T>::Type::FROM_FILE:return os << "FROM_FILE";
-      case OptionValue<T>::Type::FROM_COMMAND_LINE:return os << "FROM_COMMAND_LINE";
-      case OptionValue<T>::Type::FROM_CODE:return os << "FROM_CODE";
+      case OptionValue<T>::Type::DEFAULT:
+        return os << "DEFAULT";
+      case OptionValue<T>::Type::FROM_FILE:
+        return os << "FROM_FILE";
+      case OptionValue<T>::Type::FROM_COMMAND_LINE:
+        return os << "FROM_COMMAND_LINE";
+      case OptionValue<T>::Type::FROM_CODE:
+        return os << "FROM_CODE";
     }
   }
 
  private:
-  T value_; ///< Value the class holds.
-  Type type_; ///< Type of the value.
+  T value_;    ///< Value the class holds.
+  Type type_;  ///< Type of the value.
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_UTIL_OPTIONVALUE_HPP_
+}  // namespace dlinear

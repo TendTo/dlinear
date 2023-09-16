@@ -9,9 +9,7 @@
  * the solver. The infinity values are initialized in the constructor and are
  * accessible through static methods.
  */
-
-#ifndef DLINEAR5_DLINEAR_UTIL_INFINITY_H_
-#define DLINEAR5_DLINEAR_UTIL_INFINITY_H_
+#pragma once
 
 #include <string>
 
@@ -34,7 +32,7 @@ class Infinity {
   ~Infinity();
 
  public:
-  Infinity(Infinity &other) = delete;
+  Infinity(const Infinity &other) = delete;
   void operator=(const Infinity &) = delete;
 
   static bool IsInitialized() { return instance_ != nullptr; }
@@ -46,5 +44,3 @@ class Infinity {
 };
 
 }  // namespace dlinear
-
-#endif  // DLINEAR5_DLINEAR_UTIL_INFINITY_H_

@@ -13,8 +13,7 @@ REPOSITORY_STATUS="$(grep '^STABLE_REPOSITORY_STATUS ' bazel-out/stable-status.t
 
 # print version header
 cat <<EOF
-#ifndef DLINEAR_VERSION_H_
-#define DLINEAR_VERSION_H_
+#pragma once
 
 #define DLINEAR_PROGRAM_NAME    "dlinear"
 #define DLINEAR_VERSION_STRING  "${VERSION}"
@@ -24,5 +23,4 @@ cat <<EOF
 #define DLINEAR_VERSION_REVISION ${REVISION}
 #define DLINEAR_VERSION_REPOSTAT "${REPOSITORY_STATUS}"
 
-#endif  // DLINEAR_VERSION_H_
 EOF

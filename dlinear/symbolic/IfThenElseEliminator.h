@@ -7,13 +7,11 @@
  *
  * Removes the If-Then-Else expressions from a formula.
  */
+#pragma once
 
-#ifndef DLINEAR5_DLINEAR_SYMBOLIC_IFTHENELSEELIMINATOR_H_
-#define DLINEAR5_DLINEAR_SYMBOLIC_IFTHENELSEELIMINATOR_H_
-
+#include <iostream>
 #include <unordered_set>
 #include <vector>
-#include <iostream>
 
 #include "dlinear/symbolic/symbolic.h"
 
@@ -22,7 +20,8 @@ namespace dlinear {
  * IfThenElseEliminator class
  *
  * Eliminate If-Then-Else expressions by introducing new variables.
- * @todo Check "Efficient Term ITE Conversion for Satisfiability Modulo Theories", H. Kim, F. Somenzi, H. Jin. Twelfth International Conference on Theory and Applications of Satisfiability Testing (SAT'09).
+ * @todo Check "Efficient Term ITE Conversion for Satisfiability Modulo Theories", H. Kim, F. Somenzi, H. Jin. Twelfth
+ * International Conference on Theory and Applications of Satisfiability Testing (SAT'09).
  */
 class IfThenElseEliminator {
  public:
@@ -33,8 +32,7 @@ class IfThenElseEliminator {
    * @return Processed formula.
    */
   Formula Process(const Formula &f);
-  const std::unordered_set<Variable, hash_value<Variable>> &
-  variables() const;
+  const std::unordered_set<Variable, hash_value<Variable>> &variables() const;
 
  private:
   // Handle expressions.
@@ -84,22 +82,17 @@ class IfThenElseEliminator {
   // Member fields
   // ---------------
 
-  std::vector<Formula> added_formulas_; ///< The added formulas introduced by the elimination process
+  std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process
   std::unordered_set<Variable, hash_value<Variable>>
-      ite_variables_; ///< The variables introduced by the elimination process.
+      ite_variables_;  ///< The variables introduced by the elimination process.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
-  friend Formula drake::symbolic::VisitFormula<Formula>(IfThenElseEliminator *,
-                                                        const Formula &,
-                                                        const Formula &);
+  friend Formula drake::symbolic::VisitFormula<Formula>(IfThenElseEliminator *, const Formula &, const Formula &);
   // Makes VisitExpression a friend of this class so that it can use private
   // operator()s.
-  friend Expression drake::symbolic::VisitExpression<Expression>(IfThenElseEliminator *,
-                                                                 const Expression &,
+  friend Expression drake::symbolic::VisitExpression<Expression>(IfThenElseEliminator *, const Expression &,
                                                                  const Formula &);
 };
 
-} // namespace dlinear
-
-#endif //DLINEAR5_DLINEAR_SYMBOLIC_IFTHENELSEELIMINATOR_H_
+}  // namespace dlinear
