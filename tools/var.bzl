@@ -1,3 +1,5 @@
+"""Provides a set of variables to the template engine."""
+
 def _provide_var_impl(ctx):
     return [platform_common.TemplateVariableInfo(ctx.attr.variables)]
 

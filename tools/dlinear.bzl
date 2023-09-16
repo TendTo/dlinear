@@ -103,9 +103,9 @@ def dlinear_cc_binary(
 
 def dlinear_cc_test(
         name,
-        size = None,
         srcs = None,
         copts = [],
+        tags = [],
         **kwargs):
     """Creates a rule to declare a C++ unit test.
 
@@ -117,20 +117,18 @@ def dlinear_cc_test(
 
     Args:
         name: The name of the test.
-        size: The size of the test. Defaults to "small".
         srcs: A list of source files to compile.
         copts: A list of compiler options.
+        tags: A list of tags to add to the test. Allows for test filtering.
         **kwargs: Additional arguments to pass to native.cc_test.
     """
-    if size == None:
-        size = "small"
     if srcs == None:
         srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".cpp"]
     native.cc_test(
         name = name,
-        size = size,
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
+        tags = tags + ["dlinear"],
         **kwargs
     )
 
@@ -138,6 +136,8 @@ def dlinear_cc_googletest(
         name,
         srcs = None,
         deps = None,
+        size = "small",
+        tags = [],
         use_default_main = True,
         **kwargs):
     """Creates a rule to declare a C++ unit test using googletest.
@@ -155,6 +155,8 @@ def dlinear_cc_googletest(
         name: The name of the test.
         srcs: A list of source files to compile.
         deps: A list of dependencies.
+        size: The size of the test.
+        tags: A list of tags to add to the test. Allows for test filtering.
         use_default_main: Whether to use googletest's main.
         **kwargs: Additional arguments to pass to dlinear_cc_test.
     """
@@ -168,6 +170,8 @@ def dlinear_cc_googletest(
         name = name,
         srcs = srcs,
         deps = deps,
+        size = size,
+        tags = tags + ["googletest"],
         **kwargs
     )
 

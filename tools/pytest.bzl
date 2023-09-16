@@ -1,7 +1,9 @@
+"""Macro with some preconfigurations for testing with pytest."""
+
 load("@rules_python//python:defs.bzl", "py_test")
 load("@pip//:requirements.bzl", "requirement")
 
-def pytest_test(name, srcs, deps = [], args = [], data = [], **kwargs):
+def pytest_test(name, srcs, deps = [], args = [], **kwargs):
     """Call pytest from a py_test rule, taking care of the common arguments and dependencies.
 
     Args:
@@ -9,8 +11,7 @@ def pytest_test(name, srcs, deps = [], args = [], data = [], **kwargs):
         srcs: The source files to test.
         deps: The dependencies of the rule.
         args: The arguments to pass to pytest.
-        data: The data dependencies of the rule.
-        kwargs: Additional arguments to pass to py_test.
+        **kwargs: Additional arguments to pass to py_test.
     """
     py_test(
         name = name,
@@ -20,11 +21,10 @@ def pytest_test(name, srcs, deps = [], args = [], data = [], **kwargs):
         python_version = "PY3",
         srcs_version = "PY3",
         deps = deps + [requirement("pytest")],
-        data = data,
         **kwargs
     )
 
-def pydlinear_py_test(name, srcs = None, deps = [], args = [], data = [], size = "small", **kwargs):
+def pydlinear_py_test(name, srcs = None, deps = [], args = [], data = [], size = "small", tags = [], **kwargs):
     """Call pytest from a py_test rule, taking care of the common arguments and dependencies.
 
     By default, sets size="small" because that indicates a unit test.
@@ -37,7 +37,9 @@ def pydlinear_py_test(name, srcs = None, deps = [], args = [], data = [], size =
         deps: The dependencies of the rule.
         args: The arguments to pass to pytest.
         data: The data dependencies of the rule.
-        kwargs: Additional arguments to pass to py_test.
+        size: The size of the test.
+        tags: The tags to apply to the test. Ease of use for filtering tests.
+        **kwargs: Additional arguments to pass to py_test.
     """
     if srcs == None:
         srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".py"]
@@ -48,5 +50,6 @@ def pydlinear_py_test(name, srcs = None, deps = [], args = [], data = [], size =
         deps = deps + ["//pydlinear"],
         data = data,
         size = size,
+        tags = tags + ["pydlinear"],
         **kwargs
     )
