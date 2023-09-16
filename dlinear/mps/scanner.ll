@@ -7,10 +7,12 @@
 #include <string>
 
 #include "dlinear/mps/scanner.h"
+#include "dlinear/mps/Sense.h"
+#include "dlinear/mps/BoundType.h"
 
 /* import the parser's token type into a local typedef */
-typedef dlinear::MpsParser::token token;
-typedef dlinear::MpsParser::token_type token_type;
+typedef dlinear::mps::MpsParser::token token;
+typedef dlinear::mps::MpsParser::token_type token_type;
 
 /* By default yylex returns int, we use token_type. Unfortunately yyterminate
  * by default returns 0, which is not of token_type. */
@@ -20,8 +22,8 @@ typedef dlinear::MpsParser::token_type token_type;
  * on Win32. The C++ scanner uses STL streams instead. */
 #define YY_NO_UNISTD_H
 
-// #define debug_print(__val__) std::cerr << __FILE__ << ":" << __LINE__ << " " << __val__ << std::endl;
-#define debug_print(__val__) void(0)
+#define debug_print(__val__) std::cerr << __FILE__ << ":" << __LINE__ << " " << __val__ << std::endl;
+// #define debug_print(__val__) void(0)
 %}
 
 /*** Flex Declarations and Options ***/
@@ -34,7 +36,7 @@ typedef dlinear::MpsParser::token_type token_type;
 
 /* the manual says "somewhat more optimized" -
  * however, it also prevents interactive use */
-/* %option batch */
+%option batch
 
 /* enable scanner to generate debug output. disable this for release
  * versions. */
@@ -54,9 +56,14 @@ typedef dlinear::MpsParser::token_type token_type;
 /* handle locations */
 int mps_yycolumn = 1;
 
+#ifndef NDEBUG
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = mps_yycolumn; yylloc->end.column = mps_yycolumn+yyleng-1; \
 mps_yycolumn += yyleng;
+#else
+#define YY_USER_ACTION void(0);
+#endif
+
 %}
 
 whitespace      [\x09 \xA0]
@@ -66,7 +73,6 @@ hex             [0-9a-fA-F]
 letter          [a-zA-Z]
 comment         ^\*[^\n\r]*
 rational        [-+]?([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)([eE][-+]?[0-9]+)?
-integer         [-+]?[0-9]+
 special_char    [+\-/=%?!.$_~&^<>@*]
 sym_begin       {letter}|{special_char}
 sym_continue    {sym_begin}|{digit}
@@ -74,11 +80,7 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 /*** End of Declarations ***/
 
-%x ROWS
-%x COLUMNS
-%x RHS
-%x RANGES
-%x BOUNDS
+%x END_SECTION
 
 %% /*** Regular Expressions Part ***/
 
@@ -91,41 +93,31 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 {comment}[\n\r]+                { mps_yycolumn=1; }
 
-(?i:NAME)                       { debug_print("name"); BEGIN(INITIAL); return token::NAME_DECLARATION; }
-(?i:ROWS)                       { debug_print(yytext); BEGIN(ROWS); return token::ROWS_DECLARATION; }
-(?i:COLUMNS)                    { debug_print(yytext); BEGIN(COLUMNS); return token::COLUMNS_DECLARATION; }
-(?i:RHS)                        { debug_print(yytext); BEGIN(RHS); return token::RHS_DECLARATION; }
-(?i:RANGES)                     { debug_print(yytext); BEGIN(RANGES); return token::RANGES_DECLARATION; }
-(?i:BOUNDS)                     { debug_print(yytext); BEGIN(BOUNDS); return token::BOUNDS_DECLARATION; }
-(?i:ENDATA)                     { debug_print(yytext); BEGIN(INITIAL); return token::ENDATA; }
+(?i:NAME)                       { return token::NAME_DECLARATION; }
+(?i:ROWS)                       { return token::ROWS_DECLARATION; }
+(?i:COLUMNS)                    { return token::COLUMNS_DECLARATION; }
+(?i:RHS)                        { return token::RHS_DECLARATION; }
+(?i:RANGES)                     { return token::RANGES_DECLARATION; }
+(?i:BOUNDS)                     { return token::BOUNDS_DECLARATION; }
+(?i:ENDATA)                     { BEGIN(END_SECTION); return token::ENDATA; }
 
-<ROWS>^[ ]+[NELGnelg]           { debug_print("sense"); yylval->charVal = *yytext; return token::SENSE; }
-<ROWS>[ ]+{simple_symbol}       { debug_print(yytext); yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<ROWS>^[^ ]                     { debug_print("space"); BEGIN(INITIAL); yyless(0); }
-<ROWS>\n+                       { debug_print("newline"); mps_yycolumn=1; return token::NEWLINE; }
+[ ]+[NELGnelg]                  { yylval->senseVal = ParseSense(yytext); return token::SENSE; }
+[ ]+(?i:LO|UP|FX|FR|MI|PL|BV|LI|UI|SC) { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
 
-<COLUMNS>[ ]+{rational}         { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
-<COLUMNS>[ ]+{simple_symbol}    { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<COLUMNS>^[^ ]                  { debug_print("space"); BEGIN(INITIAL); yyless(0); }
-<COLUMNS>\n+                    { debug_print("newline"); mps_yycolumn=1; return token::NEWLINE; }
+[ ]+{rational}                  { 
+                                    const char* symbol = yytext;
+                                    while (*symbol == ' ') ++symbol; // skip leading spaces
+                                    yylval->stringVal = new std::string(symbol);
+                                    return token::RATIONAL; 
+                                }
+[ ]+{simple_symbol}             { 
+                                    const char* symbol = yytext;
+                                    while (*symbol == ' ') ++symbol; // skip leading spaces
+                                    yylval->stringVal = new std::string(symbol);
+                                    return token::SYMBOL;
+                                }
 
-<RHS>[ ]+{rational}             { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
-<RHS>[ ]+{simple_symbol}        { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<RHS>^[^ ]                      { debug_print("space"); BEGIN(INITIAL); yyless(0); }
-<RHS>\n+                        { debug_print("newline"); mps_yycolumn=1; return token::NEWLINE; }
-
-<RANGES>[ ]+{rational}          { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
-<RANGES>[ ]+{simple_symbol}     { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<RANGES>^[^ ]                   { debug_print("space"); BEGIN(INITIAL); yyless(0); }
-<RANGES>\n+                     { debug_print("newline"); mps_yycolumn=1; return token::NEWLINE; }
-
-<BOUNDS>[ ]+(?i:LO|UP|FX|FR|MI|PL|BV|LI|UI|SC) { yylval->stringVal = new std::string(yytext, yyleng); return token::BOUND_TYPE; }
-<BOUNDS>[ ]+{rational}          { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
-<BOUNDS>[ ]+{simple_symbol}     { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<BOUNDS>^[^ ]                   { debug_print("space"); BEGIN(INITIAL); yyless(0); }
-<BOUNDS>\n+                     { debug_print("newline"); mps_yycolumn=1; return token::NEWLINE; }
-
-{simple_symbol}                 {debug_print(yytext); yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
+<END_SECTION>[ \n\t\r]+|.+      {  }
 
  /* gobble up white-spaces */
 [ \t\r]+ {
@@ -135,35 +127,17 @@ simple_symbol   {sym_begin}{sym_continue}*
  /* gobble up end-of-lines */
 \n {
     mps_yycolumn=1;
-}
-
-{integer} {
-    try {
-        static_assert(sizeof(int64_t) == sizeof(long), "sizeof(std::int64_t) != sizeof(long).");
-        yylval->int64Val = std::stol(yytext);
-        return token::INT;
-    } catch(std::out_of_range& e) {
-        std::cerr << "At line " << yylloc->begin.line
-                  << " the following value would fall out of the range of the result type (long):\n"
-                  << yytext << "\n";
-        throw e;
-    }
-}
-
-{rational} {
-    yylval->rationalVal = new std::string(yytext, yyleng);
-    return token::RATIONAL;
+    return static_cast<token_type>(*yytext);
 }
  
  /* pass all other characters up to bison */
 . {
-    debug_print("char");
     return static_cast<token_type>(*yytext);
 }
 
 %% /*** Additional Code ***/
 
-namespace dlinear {
+namespace dlinear::mps {
 
 MpsScanner::MpsScanner(std::istream* in, std::ostream* out) : MpsFlexLexer(in, out) {}
 
@@ -172,7 +146,7 @@ MpsScanner::~MpsScanner() {}
 void MpsScanner::set_debug(const bool b) {
     yy_flex_debug = b;
 }
-}  // namespace dlinear
+}  // namespace dlinear::mps
 
 /* This implementation of MpsFlexLexer::yylex() is required to fill the
  * vtable of the class MpsFlexLexer. We define the scanner's main yylex

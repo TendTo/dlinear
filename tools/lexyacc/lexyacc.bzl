@@ -75,7 +75,7 @@ def _gen_lex_impl(ctx):
         arguments = ["-o", output.path, ctx.files.src[0].path],
         executable = _lex_yacc_info.lex,
     )
-    return DefaultInfo(files = depset([output]))
+    return DefaultInfo(files = depset([output] + ctx.files.hdr))
 
 def _gen_yacc_impl(ctx):
     if len(ctx.files.src) != 1:
@@ -86,7 +86,7 @@ def _gen_yacc_impl(ctx):
     ctx.actions.run(
         outputs = outputs,
         inputs = [ctx.files.src[0]],
-        arguments = ["-o", ctx.outputs.source_out.path, ctx.files.src[0].path],
+        arguments = ["-Wcounterexamples", "-o", ctx.outputs.source_out.path, ctx.files.src[0].path],
         executable = _lex_yacc_info.yacc,
     )
     return DefaultInfo(files = depset(outputs))
@@ -95,6 +95,7 @@ gen_lex = rule(
     implementation = _gen_lex_impl,
     attrs = {
         "src": attr.label(mandatory = True, allow_single_file = True),
+        "hdr": attr.label(mandatory = False, allow_single_file = True),
         "source_out": attr.output(mandatory = True),
     },
     toolchains = ["//tools/%s:%s" % (_toolchain_name, _toolchain_type)],

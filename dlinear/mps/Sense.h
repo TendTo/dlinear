@@ -1,0 +1,72 @@
+/**
+ * @file Sense.h
+ * @author dlinear
+ * @date 16 Sep 2023
+ * @copyright 2023 dlinear
+ *
+ * @brief Sense of a constraint row.
+ *
+ * The sense indicates the type or relation a contraint row has with
+ * respect to its right-hand side.
+ * The supported values are 'L', 'E', 'G', or 'N'.
+ * They represent, respectively, less than, equal to, greater than, or
+ * no constraint, usually applied to the objective function.
+ */
+#pragma once
+
+#include <string>
+
+namespace dlinear::mps {
+
+enum class Sense : short {
+  L,  ///< Less or equal to
+  E,  ///< Equal to
+  G,  ///< Greater or equal to
+  N   ///< No sense, used for the objective function
+};
+
+/**
+ * Parse a sense from a string.
+ * The string must be one of the following:
+ * - "L"
+ * - "E"
+ * - "G"
+ * - "N"
+ * Any leading or trailing spaces are ignored.
+ * The input is case-insensitive.
+ *
+ * @param sense string representation of the sense
+ * @return corresponding sense
+ */
+Sense ParseSense(const std::string &sense);
+/**
+ * Parse a sense from a C-style string.
+ * The string must be one of the following:
+ * - "L"
+ * - "E"
+ * - "G"
+ * - "N"
+ * Any leading or trailing spaces are ignored.
+ * The input is case-insensitive.
+ *
+ * @param sense C-style string representation of the sense
+ * @return corresponding sense
+ */
+Sense ParseSense(const char sense[]);
+/**
+ * Parse a sense from a character.
+ * The character must be one of the following:
+ * - 'L'
+ * - 'E'
+ * - 'G'
+ * - 'N'
+ * The input is case-insensitive.
+ *
+ * @param sense character representation of the sense
+ * @return corresponding sense
+ */
+Sense ParseSense(char sense);
+
+std::ostream &operator<<(std::ostream &os, const Sense &sense);
+
+}  // namespace dlinear::mps

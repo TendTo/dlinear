@@ -1,24 +1,28 @@
 /**
  * @file Driver.h
  * @author dlinear
- * @date 22 Aug 2023
+ * @date 15 Sep 2023
  * @copyright 2023 dlinear
- * @brief Driver form the parsing and execution of smt2 files.
+ * @brief Driver form the parsing and execution of mps files.
  *
  * The driver puts in communication the parser and the scanner.
  * In the end, it produces a context that can be used to solve the
  * problem.
  */
-#ifndef DLINEAR5_DLINEAR_SMT2_DRIVER_H_
-#define DLINEAR5_DLINEAR_SMT2_DRIVER_H_
+#pragma once
 
 #include <istream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
+#include "dlinear/mps/BoundType.h"
+#include "dlinear/mps/Sense.h"
 #include "dlinear/mps/scanner.h"
+#include "dlinear/solver/Context.h"
+#include "dlinear/symbolic/symbolic.h"
 
-namespace dlinear {
+namespace dlinear::mps {
 
 /**
  * The MpsDriver class brings together all components. It creates an
@@ -31,8 +35,8 @@ namespace dlinear {
  */
 class MpsDriver {
  public:
-  /// construct a new parser driver context
   MpsDriver() = default;
+  explicit MpsDriver(Context context);
 
   /**
    * Invoke the scanner and parser for a stream.
@@ -58,9 +62,6 @@ class MpsDriver {
    */
   bool parse_file(const std::string &filename);
 
-  // simply dumping them on the standard error output, we will pass
-  // them to the driver using the following two member functions.
-
   /**
    * Error handling with associated line number. This can be modified to
    * output the error e.g. to a dialog box.
@@ -73,23 +74,161 @@ class MpsDriver {
    */
   static void error(const std::string &m);
 
-  void print(int number) const;
-  void print(const std::string str) const;
+  /**
+   * Add a row to the problem.
+   * It creates a record for the row and stores the sense.
+   * In the mps file, a row is defined by:
+   *
+   *    | Field1 | Field2 | Field3 | Field4 | Field5 | Field6 |
+   *    |--------|--------|--------|--------|--------|--------|
+   *    | Sense  | Row    |        |        |        |        |
+   *
+   * @param sense relation between the row and the rhs
+   * @param row identifier of the row
+   */
+  void AddRow(Sense sense, const std::string &row);
 
-  void AddRow(char sense, const std::string &name);
+  /**
+   * Add a column to the problem.
+   * It creates a the variable (column), if not already present, and adds its
+   * coefficient (value) to the row.
+   * In the mps file, a row is defined by:
+   *
+   *    | Field1 | Field2 | Field3  | Field4         | Field5  | Field6         |
+   *    |--------|--------|---------|----------------|---------|----------------|
+   *    |        | Row    | Column1 | Value(Column1) | Column2 | Value(Column2) |
+   *
+   * The last two fields are optional.
+   * @param row identifier of the row
+   * @param column identifier of the column (variable)
+   * @param value coefficient of the column in the row
+   */
   void AddColumn(const std::string &row, const std::string &column, double value);
-  void AddRhs(const std::string &row, const std::string &rhs, double value);
-  void AddRange(const std::string &row, const std::string &rhs, double value);
-  void AddBound(const std::string &row, const std::string &bound, double value, const std::string &type);
 
-  std::string &mutable_streamname() { return streamname_; }
+  /**
+   * Add the right hand side of the row.
+   * It creates a formula that combines the row and the rhs
+   * using the sense of the row.
+   * If strict_mps_ is true and multiple rhs are found,
+   * only the first one is considered, the others are skipped.
+   * In the mps file, an RHS line is defined by:
+   *
+   *    | Field1 | Field2 | Field3 | Field4       | Field5 | Field6       |
+   *    |--------|--------|--------|--------------|--------|--------------|
+   *    |        | RHS    | Row1   | Value (Row1) | Row2   | Value (Row2) |
+   *
+   * The last two fields are optional.
+   * @param rhs identifier of the rhs. Used if strict_mps_ is true.
+   * @param row identifier of the row
+   * @param value rhs value
+   */
+  void AddRhs(const std::string &rhs, const std::string &row, double value);
 
-  std::string streamname_;
-  bool trace_scanning_{false};
-  bool trace_parsing_{false};
-  MpsScanner *scanner_{nullptr};
+  /**
+   * Add a new row contraint based on the range.
+   * If strict_mps_ is true and multiple ranges are found,
+   * only the first one is considered, the others are skipped.
+   * In the mps file, a range line is defined by:
+   *
+   *    | Field1 | Field2 | Field3 | Field4       | Field5 | Field6       |
+   *    |--------|--------|--------|--------------|--------|--------------|
+   *    |        | Rhs    | Row1   | Value (Row1) | Row2   | Value (Row2) |
+   *
+   * The last two fields are optional.
+   * The behaviour depends on the sense of the row:
+   *
+   *    | Row type | Range sign | Lower rhs | Upper rhs |
+   *    |----------|------------|-----------|-----------|
+   *    | G        | +/-        | rhs       | rhs + |r| |
+   *    | L        | +/-        | rhs - |r| | rhs       |
+   *    | E        | +          | rhs       | rhs + r   |
+   *    | E        | -          | rhs + r   | rhs       |
+   *
+   * @param rhs identifier of the rhs. Used if strict_mps_ is true.
+   * @param row identifier of the row
+   * @param value range value
+   */
+  void AddRange(const std::string &rhs, const std::string &row, double value);
+
+  /**
+   * Add a bound to a variable (column).
+   * If strict_mps_ is true and multiple bounds are found,
+   * only the first one is considered, the others are skipped.
+   * In the mps file, a bound line is defined by:
+   *
+   *   | Field1     | Field2 | Field3 | Field4 | Field5 | Field6 |
+   *   |------------|--------|--------|--------|--------|--------|
+   *   | Bound Type | Bound  | Column | Value  |        |        |
+   *
+   * @param type bound type
+   * @param bound identifier of the bound. Used if strict_mps_ is true.
+   * @param row identifier of the row
+   * @param value bound value
+   */
+  void AddBound(BoundType type, const std::string &bound, const std::string &row, double value);
+
+  /**
+   * Called when the parser has reached the ENDATA section.
+   * It finalizes the assertions, adding the default lower bound
+   * if needed, and launches the solver.
+   */
+  void End();
+
+  const std::string &stream_name() const { return stream_name_; }
+  std::string &mutable_stream_name() { return stream_name_; }
+  const std::string &problem_name() const { return problem_name_; }
+  std::string &mutable_problem_name() { return problem_name_; }
+  bool debug_scanning() const { return debug_scanning_; }
+  void set_debug_scanning(bool b) { debug_scanning_ = b; }
+  bool debug_parsing() const { return debug_parsing_; }
+  void set_debug_parsing(bool b) { debug_parsing_ = b; }
+  bool strict_mps() const { return strict_mps_; }
+  void set_strict_mps(bool b) { strict_mps_ = b; }
+  double actual_precision() const { return actual_precision_; }
+  std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
+
+  MpsScanner *scanner() { return scanner_; }
+
+ private:
+  /**
+   * If strict_mps_ is true, keeps track of the name of the first rhs found.
+   * All the other rhs must have the same name, otherwise they are skipped.
+   * @param rhs identifier of the rhs
+   * @return whether the rhs should be considered
+   */
+  inline bool VerifyStrictRhs(const std::string &rhs);
+
+  /**
+   * If strict_mps_ is true, keeps track of the name of the first bound found.
+   * All the other bound must have the same name, otherwise they are skipped.
+   * @param bound identifier of the bound
+   * @return whether the bound should be considered
+   */
+  inline bool VerifyStrictBound(const std::string &bound);
+
+  /** Launch the solver over the parsed problem. */
+  void CheckSat();
+
+  std::string stream_name_;     ///< The name of the stream. It is either the name of the file or "stream input".
+  std::string problem_name_;    ///< The name of the problem. Used to name the context.
+  bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
+  bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.
+  bool strict_mps_{false};      ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
+  MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
+
+  std::unordered_map<std::string, Sense> row_senses_;  ///< The sense of each row.
+  std::unordered_map<std::string, Expression> rows_;   ///< The rows of the problem. Used to build the assertions.
+  std::unordered_map<std::string, Variable> columns_;  ///< The columns of the problem. Contains the variables.
+
+  std::unordered_map<std::string, Formula> rhs_;        ///< Assertions built by combining the rows and the rhs.
+  std::unordered_map<std::string, double> rhs_values_;  ///< The values of the hand side of the problem.
+  std::unordered_map<std::string, Formula> bounds_;     ///< Assertions built by combining the columns and the bounds.
+  std::unordered_map<std::string, bool> skip_lower_bound_;  ///< True if there is no need to manually add the lb 0 <= V.
+  std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
+  std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
+
+  Context context_;              ///< The context filled during parsing of the expressions.
+  double actual_precision_{-1};  ///< The actual precision of the solver.
 };
 
-}  // namespace dlinear
-
-#endif  // DLINEAR5_DLINEAR_SMT2_DRIVER_H_
+}  // namespace dlinear::mps

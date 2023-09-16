@@ -78,5 +78,7 @@ coverage.xml
 benchmark/smt2/*
 benchmark/csv/*
 
+# Tests
+tests/
 
 !.gitkeep
