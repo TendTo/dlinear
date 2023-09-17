@@ -11,9 +11,9 @@
  */
 #pragma once
 
+#include <istream>
 #include <string>
 #include <unordered_map>
-#include <istream>
 #include <utility>
 
 #include "dlinear/mps/BoundType.h"
@@ -36,7 +36,7 @@ namespace dlinear::mps {
 class MpsDriver {
  public:
   MpsDriver() = default;
-  explicit MpsDriver(Context context);
+  explicit MpsDriver(Context *context);
 
   /**
    * Invoke the scanner and parser for a stream.
@@ -227,7 +227,7 @@ class MpsDriver {
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
 
-  Context context_;              ///< The context filled during parsing of the expressions.
+  Context *context_;             ///< The context filled during parsing of the expressions.
   double actual_precision_{-1};  ///< The actual precision of the solver.
 };
 

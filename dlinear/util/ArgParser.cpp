@@ -82,10 +82,12 @@ void ArgParser::addOptions() {
       .implicit_value(true);
   parser_.add_argument("--format")
       .help("file format. Any one of these: smt2, auto (use file extension)")
-      .default_value(string{"auto"})  // TODO: check config
+      .default_value(DLINEAR_DEFAULT_FORMAT)
       .action([](const std::string &value) {
-        if (value != "smt2" && value != "auto") DLINEAR_INVALID_ARGUMENT("--format", value);
-        return value;
+        if (value == "auto") return Config::Format::AUTO;
+        if (value == "smt2") return Config::Format::SMT2;
+        if (value == "mps") return Config::Format::MPS;
+        DLINEAR_INVALID_ARGUMENT("--format", value);
       });
   parser_.add_argument("--in")
       .help("read from standard input. Uses smt2 by default.")
@@ -201,6 +203,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
   Config config{};
   config.mutable_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<string>("file") : "");
+  if (parser_.is_used("format")) config.mutable_format().set_from_command_line(parser_.get<Config::Format>("format"));
   if (parser_.is_used("in")) config.mutable_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
   if (parser_.is_used("precision")) config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
   if (parser_.is_used("produce-models"))
@@ -248,11 +251,12 @@ void ArgParser::validateOptions() {
   if (!parser_.is_used("in") && !parser_.is_used("file"))
     DLINEAR_INVALID_ARGUMENT("file", "must be specified if --in is not used");
   // Check file extension
-  string format = parser_.get<string>("format");
+  Config::Format format = parser_.get<Config::Format>("format");
   string extension{get_extension(parser_.get<string>("file"))};
-  if (format == "auto" && extension != "smt2") {
-    DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 if --format is auto");
-  } else if (format != "auto" && format != extension) {
+  if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
+    DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
+  } else if ((format == Config::Format::SMT2 && extension != "smt2") ||
+             (format == Config::Format::MPS && extension != "mps")) {
     DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
   }
   if (!file_exists(parser_.get<string>("file"))) DLINEAR_INVALID_ARGUMENT("file", "cannot find file");

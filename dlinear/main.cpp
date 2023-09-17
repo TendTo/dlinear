@@ -12,12 +12,10 @@
 
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/libs/soplex.h"
-#include "dlinear/smt2/run.h"
-#include "dlinear/solver/Context.h"
+#include "dlinear/solver/Solver.h"
+#include "dlinear/solver/SolverOutput.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Infinity.h"
-#include "dlinear/symbolic/symbolic.h"
 
 namespace {
 void HandleSigInt(const int) {
@@ -39,15 +37,9 @@ int main(int argc, const char *argv[]) {
   dlinear::Config config = parser.toConfig();
 
   // Setup the infinity values.
-  dlinear::Infinity::InftyStart(config);
-  dlinear::Expression::InitConstants();
+  dlinear::Solver solver{config};
 
-  // Run the smt2 parser on the input file.
-  dlinear::RunSmt2(config);
-
-  // Clean up the infinity values.
-  dlinear::Expression::DeInitConstants();
-  dlinear::Infinity::InftyFinish();
+  std::cout << solver.CheckSat() << std::endl;
 
   return 0;
 }

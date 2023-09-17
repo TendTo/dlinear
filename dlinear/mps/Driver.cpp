@@ -36,7 +36,7 @@ using std::vector;
 using tl::optional;
 
 namespace dlinear::mps {
-MpsDriver::MpsDriver(Context context) : context_{std::move(context)} {}
+MpsDriver::MpsDriver(Context *context) : context_{context} {}
 
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
   stream_name_ = sname;
@@ -102,7 +102,7 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, dou
     DLINEAR_TRACE_FMT("Added column {}", column);
     const Variable var = Variable{column};
     columns_[column] = var;  // If not already in the map, add the variable
-    context_.DeclareVariable(var);
+    context_->DeclareVariable(var);
   }
   rows_[row] += Expression{value * columns_[column]};
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
@@ -209,34 +209,16 @@ void MpsDriver::End() {
   DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());
   for (const auto &[name, bound] : bounds_) {
     DLINEAR_DEBUG_FMT("Assertion {}", bound);
-    context_.Assert(bound);
+    context_->Assert(bound);
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
     DLINEAR_DEBUG_FMT("Assertion {}", row);
-    context_.Assert(row);
+    context_->Assert(row);
   }
   CheckSat();
 }
 
-void MpsDriver::CheckSat() {
-  mpq_class actual_precision = context_.config().precision();
-  const optional<Box> model{context_.CheckSat(&actual_precision)};
-  double actual_precision_upper = nextafter(actual_precision.get_d(), numeric_limits<double>::infinity());
-  this->actual_precision_ = actual_precision.get_d();
-  if (model) {
-    // fmt::print uses shortest round-trip format for doubles, by default
-    fmt::print("delta-sat with delta = {} ( > {})", actual_precision_upper, actual_precision);
-  } else {
-    fmt::print("unsat");
-  }
-  if (context_.config().with_timings()) {
-    fmt::print(" after {} seconds", main_timer.seconds());
-  }
-  fmt::print("\n");
-  if (model && context_.config().produce_models()) {
-    fmt::print("{}\n", *model);
-  }
-}
+void MpsDriver::CheckSat() {}
 
 }  // namespace dlinear::mps

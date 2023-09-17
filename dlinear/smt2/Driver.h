@@ -35,7 +35,7 @@ class Smt2Driver {
  public:
   /// construct a new parser driver context
   Smt2Driver() = default;
-  explicit Smt2Driver(Context context);
+  explicit Smt2Driver(Context *context);
 
   /**
    * Invoke the scanner and parser for a stream.
@@ -134,10 +134,8 @@ class Smt2Driver {
   bool trace_parsing() const { return trace_parsing_; }
   void set_trace_parsing(bool b) { trace_parsing_ = b; }
 
-  Context &mutable_context() { return context_; }
-  const Context &context() const { return context_; }
-
-  double actual_precision() const { return actual_precision_; }
+  Context &mutable_context() { return *context_; }
+  const Context &context() const { return *context_; }
 
   std::string &mutable_streamname() { return streamname_; }
 
@@ -164,10 +162,7 @@ class Smt2Driver {
   std::string streamname_;
 
   /** The context filled during parsing of the expressions. */
-  Context context_;
-
-  /** Final precision */
-  double actual_precision_{-1};
+  Context *context_;
 };
 
 }  // namespace dlinear::smt2

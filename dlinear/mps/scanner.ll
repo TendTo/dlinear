@@ -6,7 +6,10 @@
 
 #include <string>
 
+#define __DLINEAR_MPS_SCANNER_H__ // prevent inclusion of the flex header two times
 #include "dlinear/mps/scanner.h"
+#undef __DLINEAR_MPS_SCANNER_H__
+
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/BoundType.h"
 
@@ -22,8 +25,14 @@ typedef dlinear::mps::MpsParser::token_type token_type;
  * on Win32. The C++ scanner uses STL streams instead. */
 #define YY_NO_UNISTD_H
 
-#define debug_print(__val__) std::cerr << __FILE__ << ":" << __LINE__ << " " << __val__ << std::endl;
-// #define debug_print(__val__) void(0)
+/**
+ * Flex expects the signature of yylex to be defined in the macro YY_DECL, and
+ * the C++ parser expects it to be declared. We can factor both as follows.
+ */
+#undef YY_DECL
+#define YY_DECL                                                                                                     \
+  dlinear::mps::MpsParser::token_type dlinear::mps::MpsScanner::lex(dlinear::mps::MpsParser::semantic_type *yylval, \
+                                                                    dlinear::mps::MpsParser::location_type *yylloc)
 %}
 
 /*** Flex Declarations and Options ***/

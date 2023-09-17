@@ -23,7 +23,7 @@ dlinear_cc_library(
     deps = [
         ":version",
         "//dlinear/api",
-        "//dlinear/solver",
+        "//dlinear/solver:context",
         "//dlinear/solver:logic",
         "//dlinear/symbolic",
         "//dlinear/util:box",
@@ -40,11 +40,12 @@ dlinear_cc_binary(
     }),
     linkstatic = True,
     deps = [
-        "//dlinear/smt2",
-        "//dlinear/symbolic",
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/libs:soplex",
+        "//dlinear/solver",
+        "//dlinear/solver:solver_output",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
-        "//dlinear/util:infinity",
     ],
 )
 

@@ -7,11 +7,16 @@
 #include "Config.h"
 
 #include "dlinear/util/exception.h"
+#include "dlinear/util/filesystem.h"
 
 using std::endl;
 using std::ostream;
 
 namespace dlinear {
+Config::Config(const std::string filename) : filename_{filename} {}
+Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
+
+std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
 ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
   switch (sat_default_phase) {
@@ -56,4 +61,5 @@ ostream &operator<<(ostream &os, const Config &config) {
             << "sat_default_phase = " << config.sat_default_phase_.get() << ", " << endl
             << '}';
 }
+
 }  // namespace dlinear

@@ -17,6 +17,7 @@
 #include "dlinear/util/OptionValue.hpp"
 
 #define DLINEAR_DEFAULT_PRECISION 9.999999999999996e-4
+#define DLINEAR_DEFAULT_FORMAT dlinear::Config::Format::AUTO
 #define DLINEAR_DEFAULT_READ_FROM_STDIN false
 #define DLINEAR_DEFAULT_EXHAUSTIVE false
 #define DLINEAR_DEFAULT_PRODUCE_MODELS false
@@ -26,7 +27,7 @@
 #define DLINEAR_DEFAULT_USE_LOCAL_OPTIMIZATION false
 #define DLINEAR_DEFAULT_CONTINUOUS_OUTPUT false
 #define DLINEAR_DEFAULT_WITH_TIMINGS false
-#define DLINEAR_DEFAULT_LP_SOLVER Config::LPSolver::QSOPTEX
+#define DLINEAR_DEFAULT_LP_SOLVER dlinear::Config::LPSolver::QSOPTEX
 #define DLINEAR_DEFAULT_SIMPLEX_SAT_PHASE 1
 #define DLINEAR_DEFAULT_VERBOSE_SIMPLEX 0
 #define DLINEAR_DEFAULT_VERBOSE_DLINEAR 2
@@ -36,7 +37,7 @@
 #define DLINEAR_DEFAULT_NLOPTF_TO_ABS 1e-6
 #define DLINEAR_DEFAULT_NLOPT_MAX_EVAL 100u
 #define DLINEAR_DEFAULT_NLOPT_MAX_TIME 0.01
-#define DLINEAR_DEFAULT_SAT_PHASE Config::SatDefaultPhase::JeroslowWang
+#define DLINEAR_DEFAULT_SAT_PHASE dlinear::Config::SatDefaultPhase::JeroslowWang
 #define DLINEAR_DEFAULT_RANDOM_SEED 0u
 #define DLINEAR_DEFAULT_DEBUG_SCANNING false
 #define DLINEAR_DEFAULT_DEBUG_PARSING false
@@ -55,18 +56,30 @@ class Config {
     JeroslowWang = 2,  ///< Default option
     RandomInitialPhase = 3
   };
+  enum class Format {
+    AUTO = 0,
+    SMT2 = 1,
+    MPS = 2,
+  };
+
   Config() = default;
-  Config(const Config &) = default;
-  Config(Config &&) = default;
-  Config &operator=(const Config &) = default;
-  Config &operator=(Config &&) = default;
-  ~Config() = default;
+  explicit Config(const std::string filename);
+  explicit Config(bool read_from_stdin);
 
   /** Input file name */
-  [[nodiscard]] std::string filename() const { return filename_.get(); }
+  [[nodiscard]] const std::string &filename() const { return filename_.get(); }
 
   /** Mutable input file name */
   [[nodiscard]] OptionValue<std::string> &mutable_filename() { return filename_; }
+
+  /** Input file name extension */
+  [[nodiscard]] std::string filename_extension() const;
+
+  /** Input format */
+  [[nodiscard]] Format format() const { return format_.get(); }
+
+  /** Mutable input format */
+  [[nodiscard]] OptionValue<Format> &mutable_format() { return format_; }
 
   /** Whether to read from stdin */
   [[nodiscard]] bool read_from_stdin() const { return read_from_stdin_.get(); }
@@ -214,6 +227,7 @@ class Config {
 
  private:
   OptionValue<std::string> filename_{""};
+  OptionValue<Format> format_{DLINEAR_DEFAULT_FORMAT};
   OptionValue<bool> read_from_stdin_{DLINEAR_DEFAULT_READ_FROM_STDIN};
   OptionValue<double> precision_{kDefaultPrecision};
   OptionValue<bool> produce_models_{DLINEAR_DEFAULT_PRODUCE_MODELS};

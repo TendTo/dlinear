@@ -11,17 +11,7 @@
  */
 #pragma once
 
-// Flex expects the signature of yylex to be defined in the macro YY_DECL, and
-// the C++ parser expects it to be declared. We can factor both as follows.
-
-#ifndef YY_DECL
-
-#define YY_DECL                                                          \
-  dlinear::smt2::Smt2Parser::token_type dlinear::smt2::Smt2Scanner::lex( \
-      dlinear::smt2::Smt2Parser::semantic_type *yylval, dlinear::smt2::Smt2Parser::location_type *yylloc)
-#endif
-
-#ifndef __FLEX_LEXER_H
+#ifndef __DLINEAR_SMT2_SCANNER_H__
 #define yyFlexLexer Smt2FlexLexer
 #include <FlexLexer.h>
 #undef yyFlexLexer

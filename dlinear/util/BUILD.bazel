@@ -29,7 +29,10 @@ dlinear_cc_library(
         "Config.h",
         "OptionValue.hpp",
     ],
-    deps = [":exception"],
+    deps = [
+        ":exception",
+        ":filesystem",
+    ],
 )
 
 dlinear_cc_library(

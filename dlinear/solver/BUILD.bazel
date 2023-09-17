@@ -14,7 +14,46 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "solver_output",
+    srcs = ["SolverOutput.cpp"],
+    hdrs = ["SolverOutput.h"],
+    deps = [
+        "//dlinear/libs:gmp",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:timer",
+    ],
+)
+
+dlinear_cc_library(
+    name = "solver_guard",
+    srcs = ["SolverGuard.cpp"],
+    hdrs = ["SolverGuard.h"],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/util:config",
+        "//dlinear/util:infinity",
+    ],
+)
+
+dlinear_cc_library(
     name = "solver",
+    srcs = ["Solver.cpp"],
+    hdrs = ["Solver.h"],
+    deps = [
+        ":context",
+        ":solver_guard",
+        ":solver_output",
+        "//dlinear/libs:gmp",
+        "//dlinear/mps",
+        "//dlinear/smt2",
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+    ],
+)
+
+dlinear_cc_library(
+    name = "context",
     srcs = [
         "Context.cpp",
         "ContextImpl.cpp",

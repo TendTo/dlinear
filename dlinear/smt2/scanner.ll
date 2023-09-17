@@ -14,7 +14,9 @@
 
 #include <string>
 
+#define __DLINEAR_SMT2_SCANNER_H__ // prevent inclusion of the flex header file two times
 #include "dlinear/smt2/scanner.h"
+#undef __DLINEAR_SMT2_SCANNER_H__
 
 /* import the parser's token type into a local typedef */
 typedef dlinear::smt2::Smt2Parser::token token;
@@ -28,6 +30,14 @@ typedef dlinear::smt2::Smt2Parser::token_type token_type;
  * on Win32. The C++ scanner uses STL streams instead. */
 #define YY_NO_UNISTD_H
 
+/**
+ * Flex expects the signature of yylex to be defined in the macro YY_DECL, and
+ * the C++ parser expects it to be declared. We can factor both as follows.
+ */
+#undef YY_DECL
+#define YY_DECL                                                          \
+  dlinear::smt2::Smt2Parser::token_type dlinear::smt2::Smt2Scanner::lex( \
+      dlinear::smt2::Smt2Parser::semantic_type *yylval, dlinear::smt2::Smt2Parser::location_type *yylloc)
 %}
 
 /*** Flex Declarations and Options ***/

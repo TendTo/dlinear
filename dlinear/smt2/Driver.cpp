@@ -34,8 +34,7 @@ using std::vector;
 using tl::optional;
 
 namespace dlinear::smt2 {
-
-Smt2Driver::Smt2Driver(Context context) : context_{std::move(context)} {}
+Smt2Driver::Smt2Driver(Context *context) : context_{context} {}
 
 bool Smt2Driver::parse_stream(istream &in, const string &sname) {
   streamname_ = sname;
@@ -50,7 +49,7 @@ bool Smt2Driver::parse_stream(istream &in, const string &sname) {
 }
 
 bool Smt2Driver::parse_file(const string &filename) {
-  if (context_.config().read_from_stdin()) {
+  if (context_->config().read_from_stdin()) {
     // Option --in passed to dreal.
     return parse_stream(cin, "(stdin)");
   }
@@ -70,91 +69,9 @@ void Smt2Driver::error(const location &l, const string &m) { cerr << l << " : " 
 
 void Smt2Driver::error(const string &m) { cerr << m << endl; }
 
-void Smt2Driver::CheckSat() {
-  if (context_.have_objective()) {
-    mpq_class obj_lo, obj_up;
-    Box model;
-    int status = context_.CheckOpt(&obj_lo, &obj_up, &model);
-    if (LP_DELTA_OPTIMAL == status) {
-      mpq_class diff = obj_up - obj_lo;
-      // fmt::print uses shortest round-trip format for doubles, by default
-      fmt::print("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, obj_lo, obj_up);
-    } else if (LP_UNBOUNDED == status) {
-      fmt::print("unbounded");
-    } else if (LP_INFEASIBLE == status) {
-      fmt::print("infeasible");
-    } else {
-      DLINEAR_UNREACHABLE();
-    }
-    if (context_.config().with_timings()) {
-      fmt::print(" after {} seconds", main_timer.seconds());
-    }
-    fmt::print("\n");
-    if (LP_DELTA_OPTIMAL == status && context_.config().produce_models()) {
-      fmt::print("{}\n", model);
-    }
-  } else {
-    mpq_class actual_precision = context_.config().precision();
-    const optional<Box> model{context_.CheckSat(&actual_precision)};
-    double actual_precision_upper = nextafter(actual_precision.get_d(), numeric_limits<double>::infinity());
-    this->actual_precision_ = actual_precision.get_d();
-    if (model) {
-      // fmt::print uses shortest round-trip format for doubles, by default
-      fmt::print("delta-sat with delta = {} ( > {})", actual_precision_upper, actual_precision);
-    } else {
-      fmt::print("unsat");
-    }
-    if (context_.config().with_timings()) {
-      fmt::print(" after {} seconds", main_timer.seconds());
-    }
-    fmt::print("\n");
-    if (model && context_.config().produce_models()) {
-      fmt::print("{}\n", *model);
-    }
-  }
-}
+void Smt2Driver::CheckSat() {}
 
-namespace {
-ostream &PrintModel(ostream &os, const Box &box) {
-  os << "(model\n";
-  for (int i = 0; i < box.size(); ++i) {
-    const Variable &var{box.variable(i)};
-    os << "  (define-fun " << var << " () ";
-    switch (var.get_type()) {
-      case Variable::Type::CONTINUOUS:
-        os << Sort::Real;
-        break;
-      case Variable::Type::BINARY:
-        os << Sort::Binary;
-        break;
-      case Variable::Type::INTEGER:
-        os << Sort::Int;
-        break;
-      case Variable::Type::BOOLEAN:
-        os << Sort::Bool;
-        break;
-    }
-    os << " ";
-    const Box::Interval &iv{box[i]};
-    if (iv.is_degenerated()) {
-      os << iv.lb();
-    } else {
-      os << iv;
-    }
-    os << ")\n";
-  }
-  return os << ")";
-}
-}  // namespace
-
-void Smt2Driver::GetModel() {
-  const Box &box{context_.get_model()};
-  if (box.empty()) {
-    cout << "(error \"model is not available\")" << endl;
-  } else {
-    PrintModel(cout, box) << endl;
-  }
-}
+void Smt2Driver::GetModel() {}
 
 Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
   const Variable v{ParseVariableSort(name, sort)};
@@ -164,13 +81,13 @@ Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
 
 Variable Smt2Driver::DeclareVariable(const string &name, const Sort sort) {
   Variable v{RegisterVariable(name, sort)};
-  context_.DeclareVariable(v);
+  context_->DeclareVariable(v);
   return v;
 }
 
 void Smt2Driver::DeclareVariable(const string &name, const Sort sort, const Term &lb, const Term &ub) {
   const Variable v{RegisterVariable(name, sort)};
-  context_.DeclareVariable(v, lb.expression(), ub.expression());
+  context_->DeclareVariable(v, lb.expression(), ub.expression());
 }
 
 string Smt2Driver::MakeUniqueName(const string &name) {
@@ -183,7 +100,7 @@ string Smt2Driver::MakeUniqueName(const string &name) {
 Variable Smt2Driver::DeclareLocalVariable(const string &name, const Sort sort) {
   const Variable v{ParseVariableSort(MakeUniqueName(name), sort)};
   scope_.insert(name, VariableOrConstant(v));  // v is not inserted under its own name.
-  context_.DeclareVariable(v, false /* This local variable is not a model variable. */);
+  context_->DeclareVariable(v, false /* This local variable is not a model variable. */);
   return v;
 }
 

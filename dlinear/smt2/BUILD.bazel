@@ -67,18 +67,16 @@ dlinear_cc_library(
     name = "smt2",
     srcs = [
         "Driver.cpp",
-        "run.cpp",
         ":parser",
         ":scanner",
     ],
     hdrs = [
         "Driver.h",
-        "run.h",
     ],
     deps = [
         ":sort",
         ":term",
-        "//dlinear/solver",
+        "//dlinear/solver:context",
         "//dlinear/solver:logic",
         "//dlinear/symbolic",
         "//dlinear/util:box",
