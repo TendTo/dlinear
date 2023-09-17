@@ -1,41 +1,44 @@
+#include <gtest/gtest.h>
+
+#include <fstream>
+
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
 
-#include <gtest/gtest.h>
-#include <fstream>
-
 using dlinear::ArgParser;
 using dlinear::Config;
-using std::string;
 using std::ofstream;
 using std::remove;
+using std::string;
 
 class TestArgParser : public ::testing::Test {
  protected:
   dlinear::ArgParser parser_{};
-  const string filename_{"TempFile.smt2"};
+  const string filename_smt2_{"TempFile.smt2"};
+  const string filename_mps_{"TempFile.mps"};
   const string bad_filename_{"TempFile.err"};
   const string non_existing_filename_{"NotExistingTempFile.smt2"};
   void SetUp() override {
     parser_ = ArgParser{};
-    ofstream f{filename_};
+    ofstream f{filename_smt2_};
+    ofstream m{filename_mps_};
     ofstream bf{bad_filename_};
     f.close();
+    m.close();
     bf.close();
   }
   void TearDown() override {
-    remove(filename_.c_str());
+    remove(filename_smt2_.c_str());
+    remove(filename_mps_.c_str());
     remove(bad_filename_.c_str());
   }
 };
 
-TEST_F(TestArgParser, Contructor) {
-  EXPECT_NO_THROW(ArgParser parser{});
-}
+TEST_F(TestArgParser, Contructor) { EXPECT_NO_THROW(ArgParser parser{}); }
 
 TEST_F(TestArgParser, DefaultValues) {
   const int argc = 2;
-  const char *argv[argc] = {"dlinear", filename_.c_str()};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str()};
   parser_.parse(argc, argv);
   EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 9.999999999999996e-4);
   EXPECT_FALSE(parser_.get<bool>("produce-models"));
@@ -46,6 +49,7 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
   EXPECT_FALSE(parser_.get<bool>("exhaustive"));
   EXPECT_FALSE(parser_.get<bool>("forall-polytope"));
+  EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
   EXPECT_FALSE(parser_.get<bool>("in"));
   EXPECT_FALSE(parser_.get<bool>("local-optimization"));
   EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::QSOPTEX);
@@ -64,61 +68,61 @@ TEST_F(TestArgParser, DefaultValues) {
 
 TEST_F(TestArgParser, ParseVerbosity) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--verbosity", "1"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--verbosity", "1"};
   parser_.parse(argc, argv);
   EXPECT_EQ(parser_.get<int>("verbosity"), 1);
 }
 
 TEST_F(TestArgParser, ParsePrecision) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--precision", "2.1"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--precision", "2.1"};
   parser_.parse(argc, argv);
   EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 2.1);
 }
 
 TEST_F(TestArgParser, ParseInvalidPrecision) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--precision", "-1"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--precision", "-1"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --precision");
 }
 
 TEST_F(TestArgParser, ParseJobs) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--jobs", "2"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--jobs", "2"};
   parser_.parse(argc, argv);
   EXPECT_EQ(parser_.get<uint>("jobs"), 2u);
 }
 
 TEST_F(TestArgParser, ParseInvalidJobs) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--jobs", "-1"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--jobs", "-1"};
   EXPECT_DEATH(parser_.parse(argc, argv), "pattern not found");
 }
 
 TEST_F(TestArgParser, ParseContinuousOutput) {
   const int argc = 3;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--continuous-output"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--continuous-output"};
   parser_.parse(argc, argv);
   EXPECT_TRUE(parser_.get<bool>("continuous-output"));
 }
 
 TEST_F(TestArgParser, ParseProduceModels) {
   const int argc = 3;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--produce-models"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--produce-models"};
   parser_.parse(argc, argv);
   EXPECT_TRUE(parser_.get<bool>("produce-models"));
 }
 
 TEST_F(TestArgParser, ParseRandomSeed) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--random-seed", "10"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--random-seed", "10"};
   parser_.parse(argc, argv);
   EXPECT_EQ(parser_.get<uint>("random-seed"), 10ul);
 }
 
 TEST_F(TestArgParser, InvalidInAndFile) {
   const int argc = 3;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--in"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--in"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --in");
 }
 
@@ -134,18 +138,20 @@ TEST_F(TestArgParser, FileNotProvided) {
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
 }
 
-TEST_F(TestArgParser, AutoFormat) {
+TEST_F(TestArgParser, AutoFormatSmt2) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--format", "auto"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "auto"};
   parser_.parse(argc, argv);
-  EXPECT_EQ(parser_.get<string>("file"), filename_);
+  EXPECT_EQ(parser_.get<string>("file"), filename_smt2_);
+  EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
 }
 
-TEST_F(TestArgParser, Smt2Format) {
+TEST_F(TestArgParser, AutoFormatMps) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--format", "smt2"};
+  const char *argv[argc] = {"dlinear", filename_mps_.c_str(), "--format", "auto"};
   parser_.parse(argc, argv);
-  EXPECT_EQ(parser_.get<string>("file"), filename_);
+  EXPECT_EQ(parser_.get<string>("file"), filename_mps_);
+  EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
 }
 
 TEST_F(TestArgParser, WrongAutoFormat) {
@@ -154,14 +160,48 @@ TEST_F(TestArgParser, WrongAutoFormat) {
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
 }
 
-TEST_F(TestArgParser, WrongSmt2Format) {
+TEST_F(TestArgParser, Smt2Format) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "smt2"};
+  parser_.parse(argc, argv);
+  EXPECT_EQ(parser_.get<string>("file"), filename_smt2_);
+  EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::SMT2);
+}
+
+TEST_F(TestArgParser, WrongSmt2FormatErr) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", bad_filename_.c_str(), "--format", "smt2"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
 }
 
+TEST_F(TestArgParser, WrongSmt2FormatMps) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_mps_.c_str(), "--format", "smt2"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
+}
+
+TEST_F(TestArgParser, MpsFormat) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_mps_.c_str(), "--format", "mps"};
+  parser_.parse(argc, argv);
+  EXPECT_EQ(parser_.get<string>("file"), filename_mps_);
+  EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::MPS);
+}
+
+TEST_F(TestArgParser, WrongMpsFormatErr) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", bad_filename_.c_str(), "--format", "mps"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
+}
+
+TEST_F(TestArgParser, WrongMpsFormatSmt2) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "mps"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
+}
+
 TEST_F(TestArgParser, WrongFormat) {
   const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_.c_str(), "--format", "invalid"};
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "invalid"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --format");
 }
