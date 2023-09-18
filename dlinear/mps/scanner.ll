@@ -82,8 +82,8 @@ hex             [0-9a-fA-F]
 letter          [a-zA-Z]
 comment         ^\*[^\n\r]*
 rational        [-+]?([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)([eE][-+]?[0-9]+)?
-special_char    [+\-/=%?!.$_~&^<>@*]
-sym_begin       {letter}|{special_char}
+special_char    [+\-/=%?!.$_~&^<>@*()#,\[\]]
+sym_begin       {letter}|{special_char}|{digit}
 sym_continue    {sym_begin}|{digit}
 simple_symbol   {sym_begin}{sym_continue}*
 
@@ -111,19 +111,19 @@ simple_symbol   {sym_begin}{sym_continue}*
 (?i:ENDATA)                     { BEGIN(END_SECTION); return token::ENDATA; }
 
 [ ]+[NELGnelg]                  { yylval->senseVal = ParseSense(yytext); return token::SENSE; }
-[ ]+(?i:LO|UP|FX|FR|MI|PL|BV|LI|UI|SC) { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
+[ ]+(?i:BV)                     { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE_BV; }
+[ ]+(?i:LO|UP|FX|FR|MI|PL|LI|UI|SC) { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
 
-[ ]+{rational}                  { 
-                                    const char* symbol = yytext;
-                                    while (*symbol == ' ') ++symbol; // skip leading spaces
-                                    yylval->stringVal = new std::string(symbol);
-                                    return token::RATIONAL; 
-                                }
 [ ]+{simple_symbol}             { 
                                     const char* symbol = yytext;
                                     while (*symbol == ' ') ++symbol; // skip leading spaces
                                     yylval->stringVal = new std::string(symbol);
                                     return token::SYMBOL;
+                                }
+
+['"]{simple_symbol}['"]         { 
+                                    yylval->stringVal = new std::string(yytext+1, yyleng-2);
+                                    return token::QUOTED_SYMBOL;
                                 }
 
 <END_SECTION>[ \n\t\r]+|.+      {  }

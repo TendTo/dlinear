@@ -25,7 +25,7 @@ void HandleSigInt(const int) {
 }
 }  // namespace
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   // Handle C-c.
   std::signal(SIGINT, HandleSigInt);
 

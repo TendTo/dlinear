@@ -92,11 +92,10 @@ void MpsDriver::error(const string &m) { cerr << m << endl; }
 
 void MpsDriver::AddRow(Sense sense, const std::string &row) {
   DLINEAR_TRACE_FMT("Driver::AddRow {} {}", sense, row);
-  rows_[row] = Expression::Zero();
   row_senses_[row] = sense;
 }
 
-void MpsDriver::AddColumn(const std::string &column, const std::string &row, double value) {
+void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
@@ -108,87 +107,116 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, dou
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
 }
 
-void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, double value) {
-  DLINEAR_TRACE_FMT("Driver::AddRhs {} {} {}", row, rhs, value);
+void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class value) {
+  DLINEAR_TRACE_FMT("Driver::AddRhs {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   rhs_values_[row] = value;
-  switch (row_senses_[row]) {
-    case Sense::L:
-      rhs_[row] = rows_[row] <= value;
-      break;
-    case Sense::G:
-      rhs_[row] = value <= rows_[row];
-      break;
-    case Sense::E:
-      rhs_[row] = rows_[row] == value;
-      break;
-    case Sense::N:
-      // TODO(Tend): Check if this is correct
-      DLINEAR_DEBUG("Sense N is used only for objective function. No action to take");
-      break;
-    default:
-      DLINEAR_UNREACHABLE();
+  try {
+    switch (row_senses_.at(row)) {
+      case Sense::L:
+        rhs_[row] = rows_[row] <= value;
+        break;
+      case Sense::G:
+        rhs_[row] = value <= rows_[row];
+        break;
+      case Sense::E:
+        rhs_[row] = rows_[row] == value;
+        break;
+      case Sense::N:
+        // TODO(Tend): Check if this is correct
+        DLINEAR_DEBUG("Sense N is used only for objective function. No action to take");
+        break;
+      default:
+        DLINEAR_UNREACHABLE();
+    }
+  } catch (const std::out_of_range &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Row {} not found", row);
   }
   DLINEAR_TRACE_FMT("Updated rhs {}", rhs_[row]);
 }
 
-void MpsDriver::AddRange(const std::string &rhs, const std::string &row, double value) {
-  DLINEAR_TRACE_FMT("Driver::AddRange {} {} {}", row, rhs, value);
+void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_class value) {
+  DLINEAR_TRACE_FMT("Driver::AddRange {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
-  switch (row_senses_[row]) {
-    case Sense::L:
-      rhs_[row] = rhs_[row] && (rhs_values_[row] - value <= rows_[row]);
-      break;
-    case Sense::G:
-      rhs_[row] = rhs_[row] && (rows_[row] <= rhs_values_[row] + value);
-      break;
-    case Sense::E:
-      rhs_[row] = value > 0 ? rhs_values_[row] <= rows_[row] && rows_[row] <= rhs_values_[row] + value
-                            : rhs_values_[row] + value <= rows_[row] && rows_[row] <= rhs_values_[row];
-      break;
-    case Sense::N:
-      DLINEAR_WARN("Sense N is used only for objective function. No action to take");
-      break;
-    default:
-      DLINEAR_UNREACHABLE();
+  try {
+    switch (row_senses_.at(row)) {
+      case Sense::L:
+        rhs_[row] = rhs_[row] && (rhs_values_[row] - Expression{value} <= rows_[row]);
+        break;
+      case Sense::G:
+        rhs_[row] = rhs_[row] && (rows_[row] <= rhs_values_[row] + Expression{value});
+        break;
+      case Sense::E:
+        rhs_[row] = value > 0 ? rhs_values_[row] <= rows_[row] && rows_[row] <= rhs_values_[row] + Expression{value}
+                              : rhs_values_[row] + Expression{value} <= rows_[row] && rows_[row] <= rhs_values_[row];
+        break;
+      case Sense::N:
+        DLINEAR_WARN("Sense N is used only for objective function. No action to take");
+        break;
+      default:
+        DLINEAR_UNREACHABLE();
+    }
+  } catch (const std::out_of_range &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Row {} not found", row);
   }
 }
 
-void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column, double value) {
-  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", column, bound, value, bound_type);
+void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column, mpq_class value) {
+  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column, value);
   if (!VerifyStrictBound(bound)) return;
   if (bounds_.find(column) == bounds_.end())
     bounds_[column] = Formula::True();  // If not already in the map, add a placeholder formula
-  switch (bound_type) {
-    case BoundType::UP:
-    case BoundType::UI:
-      bounds_[column] = bounds_[column] && (columns_[column] <= value);
-      if (value <= 0) skip_lower_bound_[column] = true;
-      break;
-    case BoundType::LO:
-    case BoundType::LI:
-      bounds_[column] = bounds_[column] && (value <= columns_[column]);
-      skip_lower_bound_[column] = true;
-      break;
-    case BoundType::FX:
-      bounds_[column] = bounds_[column] && (columns_[column] == value);
-      skip_lower_bound_[column] = true;
-      break;
-    case BoundType::PL:
-      skip_lower_bound_[column] = true;
-      [[fallthrough]];
-    case BoundType::FR:
-    case BoundType::MI:
-      DLINEAR_DEBUG("Infinity bound, no action to take");
-      break;
-    case BoundType::BV:
-      DLINEAR_RUNTIME_ERROR("Binary variable bound not supported");
-      bounds_[column] = (columns_[column] == 0) || (columns_[column] == 1);
-      skip_lower_bound_[column] = false;
-      break;
-    default:
-      DLINEAR_UNREACHABLE();
+  try {
+    switch (bound_type) {
+      case BoundType::UP:
+      case BoundType::UI:
+        bounds_[column] = bounds_[column] && (columns_.at(column) <= value);
+        if (value <= 0) skip_lower_bound_[column] = true;
+        break;
+      case BoundType::LO:
+      case BoundType::LI:
+        bounds_[column] = bounds_[column] && (value <= columns_.at(column));
+        skip_lower_bound_[column] = true;
+        break;
+      case BoundType::FX:
+        bounds_[column] = bounds_[column] && (columns_.at(column) == value);
+        skip_lower_bound_[column] = true;
+        break;
+      case BoundType::PL:
+        skip_lower_bound_[column] = true;
+        [[fallthrough]];
+      case BoundType::FR:
+      case BoundType::MI:
+        DLINEAR_DEBUG("Infinity bound, no action to take");
+        break;
+      default:
+        DLINEAR_UNREACHABLE();
+    }
+  } catch (const std::out_of_range &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
   }
+
+  DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
+}
+
+void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column) {
+  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column);
+  if (!VerifyStrictBound(bound)) return;
+  if (bounds_.find(column) == bounds_.end())
+    bounds_[column] = Formula::True();  // If not already in the map, add a placeholder formula
+  try {
+    switch (bound_type) {
+      case BoundType::BV:
+        bounds_[column] = (0 <= columns_.at(column)) && (columns_.at(column) <= 1);
+        skip_lower_bound_[column] = true;
+        break;
+      default:
+        DLINEAR_UNREACHABLE();
+    }
+  } catch (const std::out_of_range &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
+  }
+
   DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
 }
 

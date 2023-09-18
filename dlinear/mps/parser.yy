@@ -8,8 +8,11 @@
 #include <tuple>
 #include <utility>
 
+#include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/BoundType.h"
+
+using dlinear::qsopt_ex::StringToMpq;
 
 /* void yyerror(SmtPrsr parser, const char *); */
 #define YYMAXDEPTH 1024 * 1024
@@ -58,24 +61,23 @@
 
 %union
 {
-    std::string*              rationalVal;
-    std::string*              stringVal;
-    Sense       senseVal;
-    BoundType   boundTypeVal;
+    std::string* stringVal;
+    Sense        senseVal;
+    BoundType    boundTypeVal;
 }
 
-%token '\n'
 %token NAME_DECLARATION ROWS_DECLARATION COLUMNS_DECLARATION RHS_DECLARATION RANGES_DECLARATION BOUNDS_DECLARATION ENDATA
 
 %token                 END          0        "end of file"
-%token <stringVal>     RATIONAL              "rational number"
 %token <stringVal>     SYMBOL                "symbol"
+%token <stringVal>     QUOTED_SYMBOL         "symbol in quotes"
 %token <senseVal>      SENSE                 "sense. Acceptable values are: E, L, G, N"
 %token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX, FR, MI, PL"
+%token <boundTypeVal>  BOUND_TYPE_BV         "type of bound. Can only be BV"
 
 %type <stringVal> name
 
-%destructor { delete $$; } RATIONAL SYMBOL
+%destructor { delete $$; } SYMBOL
 
 %{
 
@@ -128,9 +130,11 @@ rows: rows row
     ;
 
 row: SENSE SYMBOL '\n' { driver.AddRow($1, *$2); }
+    | '\n'
     ;
 
-columns_section: COLUMNS_DECLARATION '\n' columns
+columns_section: COLUMNS_DECLARATION '\n'
+    | COLUMNS_DECLARATION '\n' columns
     ;
 
 columns: columns column
@@ -144,24 +148,27 @@ columns: columns column
         Field 5: Row identifier (optional)
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
-column: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddColumn(*$1, *$2, std::stod(*$3)); 
-        driver.AddColumn(*$1, *$4, std::stod(*$5));
+column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddColumn(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
+        driver.AddColumn(*$1, *$4, mpq_class{StringToMpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
         delete $4;
         delete $5;
     }
-    | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddColumn(*$1, *$2, std::stod(*$3)); 
+    | SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddColumn(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
         delete $1;
         delete $2;
         delete $3;
     }
+    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { delete $1; delete $2; delete $3;}
+    | '\n'
     ;
 
-rhs_section: RHS_DECLARATION '\n' rhs
+rhs_section: RHS_DECLARATION '\n'
+    | RHS_DECLARATION '\n' rhs
     ;
 
 rhs: rhs rhs_row
@@ -175,21 +182,35 @@ rhs: rhs rhs_row
         Field 5: Row identifier (optional)
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
-rhs_row: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddRhs(*$1, *$2, std::stod(*$3));
-        driver.AddRhs(*$1, *$4, std::stod(*$5));
+rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddRhs(*$1, *$2, mpq_class{StringToMpq(*$3)});
+        driver.AddRhs(*$1, *$4, mpq_class{StringToMpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
         delete $4;
         delete $5;
     }
-    | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddRhs(*$1, *$2, std::stod(*$3));
+    | SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddRhs("", *$1, mpq_class{StringToMpq(*$2)});
+        driver.AddRhs("", *$3, mpq_class{StringToMpq(*$4)});
+        delete $1;
+        delete $2;
+        delete $3;
+        delete $4;
+    }
+    | SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddRhs(*$1, *$2, mpq_class{StringToMpq(*$3)});
         delete $1;
         delete $2;
         delete $3;
     }
+    | SYMBOL SYMBOL '\n' { 
+        driver.AddRhs("", *$1, mpq_class{StringToMpq(*$2)});
+        delete $1;
+        delete $2;
+    }
+    | '\n'
     ;
 
 ranges_section: RANGES_DECLARATION '\n' ranges
@@ -206,24 +227,26 @@ ranges: ranges range
         Field 5: Row identifier (optional)
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
-range: SYMBOL SYMBOL RATIONAL SYMBOL RATIONAL '\n' { 
-        driver.AddRange(*$1, *$2, std::stod(*$3));
-        driver.AddRange(*$1, *$4, std::stod(*$5));
+range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddRange(*$1, *$2, mpq_class{StringToMpq(*$3)});
+        driver.AddRange(*$1, *$4, mpq_class{StringToMpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
         delete $4;
         delete $5;
     }
-    | SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddRange(*$1, *$2, std::stod(*$3)); 
+    | SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddRange(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
         delete $1;
         delete $2;
         delete $3;
     }
+    | '\n'
     ;
 
-bounds_section: BOUNDS_DECLARATION '\n' bounds
+bounds_section: BOUNDS_DECLARATION '\n'
+    | BOUNDS_DECLARATION '\n' bounds
     ;
 
 bounds: bounds bound
@@ -242,12 +265,18 @@ bounds: bounds bound
         Field 4: Value of the specified bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
-bound: BOUND_TYPE SYMBOL SYMBOL RATIONAL '\n' { 
-        driver.AddBound($1, *$2, *$3, std::stod(*$4));
+bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddBound($1, *$2, *$3, mpq_class{StringToMpq(*$4)});
         delete $2;
         delete $3;
         delete $4;
     }
+    | BOUND_TYPE_BV SYMBOL SYMBOL '\n' { 
+        driver.AddBound($1, *$2, *$3);
+        delete $2;
+        delete $3;
+    }
+    | '\n'
 
 end_section: ENDATA '\n'
     | ENDATA { driver.End(); }

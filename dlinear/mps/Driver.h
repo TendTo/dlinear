@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "dlinear/libs/gmp.h"
 #include "dlinear/mps/BoundType.h"
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/scanner.h"
@@ -103,7 +104,7 @@ class MpsDriver {
    * @param row identifier of the row
    * @param value coefficient of the column in the row
    */
-  void AddColumn(const std::string &column, const std::string &row, double value);
+  void AddColumn(const std::string &column, const std::string &row, mpq_class value);
 
   /**
    * Add the right hand side of the row.
@@ -122,7 +123,7 @@ class MpsDriver {
    * @param row identifier of the row
    * @param value rhs value
    */
-  void AddRhs(const std::string &rhs, const std::string &row, double value);
+  void AddRhs(const std::string &rhs, const std::string &row, mpq_class value);
 
   /**
    * Add a new row contraint based on the range.
@@ -148,7 +149,7 @@ class MpsDriver {
    * @param row identifier of the row
    * @param value range value
    */
-  void AddRange(const std::string &rhs, const std::string &row, double value);
+  void AddRange(const std::string &rhs, const std::string &row, mpq_class value);
 
   /**
    * Add a bound to a variable (column).
@@ -165,7 +166,23 @@ class MpsDriver {
    * @param column identifier of the variable (column)
    * @param value bound value
    */
-  void AddBound(BoundType type, const std::string &bound, const std::string &column, double value);
+  void AddBound(BoundType type, const std::string &bound, const std::string &column, mpq_class value);
+
+  /**
+   * Add a binary bound to a variable (column).
+   * If strict_mps_ is true and multiple bounds are found,
+   * only the first one is considered, the others are skipped.
+   * In the mps file, a bound line is defined by:
+   *
+   *   | Field1     | Field2 | Field3 | Field4 | Field5 | Field6 |
+   *   |------------|--------|--------|--------|--------|--------|
+   *   | Bound Type | Bound  | Column |        |        |        |
+   *
+   * @param type bound type. Must be BV.
+   * @param bound identifier of the bound. Used if strict_mps_ is true.
+   * @param column identifier of the variable (column)
+   */
+  void AddBound(BoundType type, const std::string &bound, const std::string &column);
 
   /**
    * Called when the parser has reached the ENDATA section.
@@ -220,9 +237,9 @@ class MpsDriver {
   std::unordered_map<std::string, Expression> rows_;   ///< The rows of the problem. Used to build the assertions.
   std::unordered_map<std::string, Variable> columns_;  ///< The columns of the problem. Contains the variables.
 
-  std::unordered_map<std::string, Formula> rhs_;        ///< Assertions built by combining the rows and the rhs.
-  std::unordered_map<std::string, double> rhs_values_;  ///< The values of the hand side of the problem.
-  std::unordered_map<std::string, Formula> bounds_;     ///< Assertions built by combining the columns and the bounds.
+  std::unordered_map<std::string, Formula> rhs_;           ///< Assertions built by combining the rows and the rhs.
+  std::unordered_map<std::string, mpq_class> rhs_values_;  ///< The values of the hand side of the problem.
+  std::unordered_map<std::string, Formula> bounds_;  ///< Assertions built by combining the columns and the bounds.
   std::unordered_map<std::string, bool> skip_lower_bound_;  ///< True if there is no need to manually add the lb 0 <= V.
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
