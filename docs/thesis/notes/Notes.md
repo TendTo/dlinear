@@ -56,3 +56,9 @@ The results of this process are the \texttt{soplex.BUILD.bazel} and \texttt{qsop
 
 - `--//tools:enable_soplex=[True|False]` to enable or disable soplex. Default is `True`
 - `--//tools:enable_qsoptex=[True|False]` to enable or disable qsopt_ex. Default is `True`
+
+### Design decision to be taken
+
+- Should the (check-sat) and (produce-model) directives be ignored and just be handled by the solver?
+- Should the FX bound be implemented by $var = bound$ or by $bound <= var <= bound$?
+- Using an unordered_map, meaning the order of assertions is not guaranteed to be the same, yields a different result and model when using the --simplex-sat-phase 2. Is it ok to use them for the speedup?

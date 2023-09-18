@@ -117,7 +117,8 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
         rhs_[row] = rows_[row] <= value;
         break;
       case Sense::G:
-        rhs_[row] = value <= rows_[row];
+        // rhs_[row] = value <= rows_[row];
+        rhs_[row] = rows_[row] >= value;
         break;
       case Sense::E:
         rhs_[row] = rows_[row] == value;
@@ -179,14 +180,15 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FX:
-        bounds_[column] = bounds_[column] && (columns_.at(column) == value);
+        // bounds_[column] = bounds_[column] && (columns_.at(column) == value);
+        bounds_[column] = bounds_[column] && (value <= columns_.at(column)) && (columns_.at(column) <= value);
+        skip_lower_bound_[column] = true;
+        break;
+      case BoundType::FR:
+      case BoundType::MI:
         skip_lower_bound_[column] = true;
         break;
       case BoundType::PL:
-        skip_lower_bound_[column] = true;
-        [[fallthrough]];
-      case BoundType::FR:
-      case BoundType::MI:
         DLINEAR_DEBUG("Infinity bound, no action to take");
         break;
       default:
