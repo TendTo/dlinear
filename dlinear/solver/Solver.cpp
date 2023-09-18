@@ -1,3 +1,9 @@
+/**
+ * @file Solver.cpp
+ * @author dlinear
+ * @date 16 Sep 2023
+ * @copyright 2023 dlinear
+ */
 #include "Solver.h"
 
 #include <tl/optional.hpp>

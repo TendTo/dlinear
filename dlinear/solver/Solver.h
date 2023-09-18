@@ -13,6 +13,7 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/Context.h"
