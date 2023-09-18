@@ -89,6 +89,7 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 /*** End of Declarations ***/
 
+%x NAME_SECTION
 %x END_SECTION
 
 %% /*** Regular Expressions Part ***/
@@ -102,17 +103,21 @@ simple_symbol   {sym_begin}{sym_continue}*
 
 {comment}[\n\r]+                { mps_yycolumn=1; }
 
-(?i:NAME)                       { return token::NAME_DECLARATION; }
+(?i:NAME)                       { BEGIN(NAME_SECTION); return token::NAME_DECLARATION; }
 (?i:ROWS)                       { return token::ROWS_DECLARATION; }
 (?i:COLUMNS)                    { return token::COLUMNS_DECLARATION; }
 (?i:RHS)                        { return token::RHS_DECLARATION; }
 (?i:RANGES)                     { return token::RANGES_DECLARATION; }
 (?i:BOUNDS)                     { return token::BOUNDS_DECLARATION; }
+(?i:OBJSENSE)                   { return token::OBJSENSE_DECLARATION; }
+(?i:OBJNAME)                    { return token::OBJNAME_DECLARATION; }
 (?i:ENDATA)                     { BEGIN(END_SECTION); return token::ENDATA; }
 
+[ ]+(?i:MAX)                    { return token::MAX; }
+[ ]+(?i:MIN)                    { return token::MIN; }
 [ ]+[NELGnelg]                  { yylval->senseVal = ParseSense(yytext); return token::SENSE; }
-[ ]+(?i:BV)                     { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE_BV; }
-[ ]+(?i:LO|UP|FX|FR|MI|PL|LI|UI|SC) { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
+[ ]+(?i:BV|MI|PL|FR)            { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE_SINGLE; }
+[ ]+(?i:LO|UP|FX|LI|UI|SC)      { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
 
 [ ]+{simple_symbol}             { 
                                     const char* symbol = yytext;
@@ -125,6 +130,10 @@ simple_symbol   {sym_begin}{sym_continue}*
                                     yylval->stringVal = new std::string(yytext+1, yyleng-2);
                                     return token::QUOTED_SYMBOL;
                                 }
+
+<NAME_SECTION>[^ \n].+[^ \n]    { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
+<NAME_SECTION>[ ]+              {  }
+<NAME_SECTION>[\n]              { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
 
 <END_SECTION>[ \n\t\r]+|.+      {  }
 

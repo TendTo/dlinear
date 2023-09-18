@@ -34,8 +34,7 @@ class Solver {
   Solver &operator=(Solver &&) = delete;
 
   /**
-   * @brief Check the satisfiability of the current context.
-   *
+   * Check the satisfiability of the current context.
    * @return SolverOutput
    */
   SolverOutput CheckSat();
@@ -46,9 +45,9 @@ class Solver {
   Context context_;
   SolverOutput output_;
 
-  void ParseInput();
-  void ParseSmt2();
-  void ParseMps();
+  bool ParseInput();
+  bool ParseSmt2();
+  bool ParseMps();
   void CheckCore();
   void CheckSatCore();
   void CheckObjCore();

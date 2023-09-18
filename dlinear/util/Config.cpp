@@ -33,6 +33,17 @@ ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phas
   }
 }
 
+std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver) {
+  switch (lp_solver) {
+    case Config::LPSolver::QSOPTEX:
+      return os << "qsopex";
+    case Config::LPSolver::SOPLEX:
+      return os << "soplex";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 ostream &operator<<(ostream &os, const Config &config) {
   return os << "Config {" << endl
             << "filename = '" << config.filename_.get() << "', " << endl

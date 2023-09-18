@@ -128,11 +128,11 @@ class Smt2Driver {
 
   std::string MakeUniqueName(const std::string &name);
 
-  bool trace_scanning() const { return trace_scanning_; }
-  void set_trace_scanning(bool b) { trace_scanning_ = b; }
+  bool trace_scanning() const { return debug_scanning_; }
+  void set_trace_scanning(bool b) { debug_scanning_ = b; }
 
-  bool trace_parsing() const { return trace_parsing_; }
-  void set_trace_parsing(bool b) { trace_parsing_ = b; }
+  bool trace_parsing() const { return debug_parsing_; }
+  void set_trace_parsing(bool b) { debug_parsing_ = b; }
 
   Context &mutable_context() { return *context_; }
   const Context &context() const { return *context_; }
@@ -146,23 +146,18 @@ class Smt2Driver {
  private:
   Smt2Scanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
 
-  /// enable debug output in the flex scanner
-  bool trace_scanning_{false};
-
-  /// enable debug output in the bison parser
-  bool trace_parsing_{false};
-
   /** Scoped map from a string to a corresponding Variable or constant Expression. */
   ScopedUnorderedMap<std::string, VariableOrConstant> scope_;
 
-  /// Sequential value concatenated to names to make them unique.
-  int64_t nextUniqueId_{};
+  int64_t nextUniqueId_{};  ///< Sequential value concatenated to names to make them unique.
 
-  /// stream name (file or input stream) used for error messages.
-  std::string streamname_;
+  std::string streamname_;  ///< The name of the stream being parsed.
 
-  /** The context filled during parsing of the expressions. */
-  Context *context_;
+  Context *context_;  ///< The context filled during parsing of the expressions.
+
+  bool debug_scanning_{false};  ///< Enable debug output in the flex scanner.
+
+  bool debug_parsing_{false};  ///< Enable debug output in the bison parser.
 };
 
 }  // namespace dlinear::smt2

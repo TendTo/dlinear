@@ -77,6 +77,30 @@ class MpsDriver {
   static void error(const std::string &m);
 
   /**
+   * Set the objective sense of the problem after having encountered the
+   * OBJSENSE section.
+   *
+   * In the mps file, the objective sense is defined by:
+   *
+   * OBJSENSE
+   *  MAX or MIN
+   * @param is_min whether the problem is a minimization problem. It is true by default.
+   */
+  void ObjectiveSense(bool is_min);
+
+  /**
+   * Set the name of the objective row after having encountered the
+   * OBJNAME section.
+   *
+   * In the mps file, the objective name is defined by:
+   *
+   * OBJNAME
+   *  <name>
+   * @param row name of the objective row
+   */
+  void ObjectiveName(const std::string &row);
+
+  /**
    * Add a row to the problem.
    * It creates a record for the row and stores the sense.
    * In the mps file, a row is defined by:
@@ -202,8 +226,9 @@ class MpsDriver {
   void set_debug_parsing(bool b) { debug_parsing_ = b; }
   bool strict_mps() const { return strict_mps_; }
   void set_strict_mps(bool b) { strict_mps_ = b; }
-  double actual_precision() const { return actual_precision_; }
   std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
+  bool is_min() const { return is_min_; }
+  const std::string &obj_row() const { return obj_row_; }
 
   MpsScanner *scanner() { return scanner_; }
 
@@ -224,15 +249,12 @@ class MpsDriver {
    */
   inline bool VerifyStrictBound(const std::string &bound);
 
-  /** Launch the solver over the parsed problem. */
-  void CheckSat();
-
-  std::string stream_name_;     ///< The name of the stream. It is either the name of the file or "stream input".
-  std::string problem_name_;    ///< The name of the problem. Used to name the context.
-  bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
-  bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.
-  bool strict_mps_{false};      ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
+  std::string stream_name_;       ///< The name of the stream. It is either the name of the file or "stream input".
+  std::string problem_name_;      ///< The name of the problem. Used to name the context.
+  bool is_min_{true};             ///< True if the problem is a minimization problem.
+  std::string obj_row_;           ///< The name of the objective row.
   MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
+  bool strict_mps_{false};  ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
 
   std::unordered_map<std::string, Sense> row_senses_;  ///< The sense of each row.
   std::unordered_map<std::string, Expression> rows_;   ///< The rows of the problem. Used to build the assertions.
@@ -247,8 +269,10 @@ class MpsDriver {
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
 
-  Context *context_;             ///< The context filled during parsing of the expressions.
-  double actual_precision_{-1};  ///< The actual precision of the solver.
+  Context *context_;  ///< The context filled during parsing of the expressions.
+
+  bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
+  bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.
 };
 
 }  // namespace dlinear::mps

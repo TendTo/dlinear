@@ -40,6 +40,11 @@ dlinear_cc_library(
     name = "solver",
     srcs = ["Solver.cpp"],
     hdrs = ["Solver.h"],
+    visibility = [
+        "//benchmark:__subpackages__",
+        "//dlinear:__subpackages__",
+        "//test:__subpackages__",
+    ],
     deps = [
         ":context",
         ":solver_guard",

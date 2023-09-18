@@ -36,7 +36,10 @@ using std::vector;
 using tl::optional;
 
 namespace dlinear::mps {
-MpsDriver::MpsDriver(Context *context) : context_{context} {}
+MpsDriver::MpsDriver(Context *context)
+    : context_{context},
+      debug_scanning_{context_->config().debug_scanning()},
+      debug_parsing_{context_->config().debug_parsing()} {}
 
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
   stream_name_ = sname;
@@ -89,6 +92,16 @@ bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
 
 void MpsDriver::error(const location &l, const string &m) { cerr << l << " : " << m << endl; }
 void MpsDriver::error(const string &m) { cerr << m << endl; }
+
+void MpsDriver::ObjectiveSense(bool is_min) {
+  DLINEAR_TRACE_FMT("Driver::ObjectiveSense {}", is_min);
+  is_min_ = is_min;
+}
+
+void MpsDriver::ObjectiveName(const std::string &row) {
+  DLINEAR_TRACE_FMT("Driver::ObjectiveName {}", row);
+  obj_row_ = row;
+}
 
 void MpsDriver::AddRow(Sense sense, const std::string &row) {
   DLINEAR_TRACE_FMT("Driver::AddRow {} {}", sense, row);
@@ -184,13 +197,6 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         bounds_[column] = bounds_[column] && (value <= columns_.at(column)) && (columns_.at(column) <= value);
         skip_lower_bound_[column] = true;
         break;
-      case BoundType::FR:
-      case BoundType::MI:
-        skip_lower_bound_[column] = true;
-        break;
-      case BoundType::PL:
-        DLINEAR_DEBUG("Infinity bound, no action to take");
-        break;
       default:
         DLINEAR_UNREACHABLE();
     }
@@ -212,6 +218,13 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         bounds_[column] = (0 <= columns_.at(column)) && (columns_.at(column) <= 1);
         skip_lower_bound_[column] = true;
         break;
+      case BoundType::FR:
+      case BoundType::MI:
+        skip_lower_bound_[column] = true;
+        break;
+      case BoundType::PL:
+        DLINEAR_DEBUG("Infinity bound, no action to take");
+        break;
       default:
         DLINEAR_UNREACHABLE();
     }
@@ -223,7 +236,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
 }
 
 void MpsDriver::End() {
-  DLINEAR_TRACE("Driver::EndData");
+  DLINEAR_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   for (const auto &[row, sense] : row_senses_) {
     if (rhs_.find(row) == rhs_.end()) {
       DLINEAR_DEBUG_FMT("Row {} has no RHS. Adding 0", row);
@@ -246,9 +259,6 @@ void MpsDriver::End() {
     DLINEAR_DEBUG_FMT("Assertion {}", row);
     context_->Assert(row);
   }
-  CheckSat();
 }
-
-void MpsDriver::CheckSat() {}
 
 }  // namespace dlinear::mps

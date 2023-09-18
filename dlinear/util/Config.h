@@ -302,6 +302,7 @@ class Config {
 
   friend std::ostream &operator<<(std::ostream &os, const Config &config);
   friend std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
+  friend std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 };
 
 }  // namespace dlinear

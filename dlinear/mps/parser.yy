@@ -66,14 +66,15 @@ using dlinear::qsopt_ex::StringToMpq;
     BoundType    boundTypeVal;
 }
 
-%token NAME_DECLARATION ROWS_DECLARATION COLUMNS_DECLARATION RHS_DECLARATION RANGES_DECLARATION BOUNDS_DECLARATION ENDATA
+%token NAME_DECLARATION ROWS_DECLARATION COLUMNS_DECLARATION RHS_DECLARATION RANGES_DECLARATION BOUNDS_DECLARATION OBJSENSE_DECLARATION OBJNAME_DECLARATION ENDATA
+%token MIN MAX
 
 %token                 END          0        "end of file"
 %token <stringVal>     SYMBOL                "symbol"
 %token <stringVal>     QUOTED_SYMBOL         "symbol in quotes"
 %token <senseVal>      SENSE                 "sense. Acceptable values are: E, L, G, N"
-%token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX, FR, MI, PL"
-%token <boundTypeVal>  BOUND_TYPE_BV         "type of bound. Can only be BV"
+%token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
+%token <boundTypeVal>  BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 
 %type <stringVal> name
 
@@ -103,6 +104,8 @@ sections: sections section
 
 section: name_section
     | rows_section
+    | objsense_section
+    | objname_section
     | columns_section
     | rhs_section
     | ranges_section
@@ -118,7 +121,14 @@ name_section: NAME_DECLARATION name '\n' {
     ;
 
 name: SYMBOL { $$ = $1; }
-    | name SYMBOL { $$ = new std::string(*$1); delete $2; }
+    | name SYMBOL { $$ = $1; delete $2; }
+    ;
+
+objsense_section: OBJSENSE_DECLARATION '\n' MAX '\n' { driver.ObjectiveSense(false); }
+    | OBJSENSE_DECLARATION '\n' MIN '\n' { driver.ObjectiveSense(true); }
+    ;
+
+objname_section: OBJNAME_DECLARATION '\n' SYMBOL '\n' { driver.ObjectiveName(*$3); delete $3; }
     ;
 
 rows_section: ROWS_DECLARATION '\n'
@@ -213,7 +223,8 @@ rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
     | '\n'
     ;
 
-ranges_section: RANGES_DECLARATION '\n' ranges
+ranges_section: RANGES_DECLARATION '\n'
+    | RANGES_DECLARATION '\n' ranges
     ;
 
 ranges: ranges range
@@ -271,7 +282,7 @@ bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
         delete $3;
         delete $4;
     }
-    | BOUND_TYPE_BV SYMBOL SYMBOL '\n' { 
+    | BOUND_TYPE_SINGLE SYMBOL SYMBOL '\n' { 
         driver.AddBound($1, *$2, *$3);
         delete $2;
         delete $3;

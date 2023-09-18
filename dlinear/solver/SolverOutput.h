@@ -46,7 +46,10 @@ enum class SolverResult {
 class SolverOutput {
  public:
   explicit SolverOutput(mpq_class precision, bool produce_models = false, bool with_timings = false)
-      : actual_precision_{precision}, produce_models_{produce_models}, with_timings_{with_timings} {}
+      : result_{SolverResult::UNSOLVED},
+        actual_precision_{precision},
+        produce_models_{produce_models},
+        with_timings_{with_timings} {}
 
   SolverResult result() const { return result_; }
   mpq_class &mutable_actual_precision() { return actual_precision_; }
@@ -55,6 +58,7 @@ class SolverOutput {
   Box &mutable_model() { return model_; }
   bool &mutable_with_timings() { return with_timings_; }
   bool &mutable_produce_models() { return produce_models_; }
+  uint &mutable_n_assertions() { return n_assertions_; }
 
   SolverResult &mutable_result() { return result_; }
   const mpq_class &actual_precision() const { return actual_precision_; }
@@ -64,10 +68,16 @@ class SolverOutput {
   const Box &model() const { return model_; }
   bool with_timings() const { return with_timings_; }
   bool produce_models() const { return produce_models_; }
+  uint n_assertions() const { return n_assertions_; }
+  bool is_sat() const {
+    return result_ == SolverResult::SAT || result_ == SolverResult::DELTA_SAT || result_ == SolverResult::OPTIMAL ||
+           result_ == SolverResult::DELTA_OPTIMAL;
+  }
 
   std::string ToString() const;
 
  private:
+  uint n_assertions_{0};
   SolverResult result_{SolverResult::UNSOLVED};
   mpq_class lower_bound_{0};
   mpq_class upper_bound_{0};

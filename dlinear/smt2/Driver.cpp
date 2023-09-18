@@ -34,17 +34,20 @@ using std::vector;
 using tl::optional;
 
 namespace dlinear::smt2 {
-Smt2Driver::Smt2Driver(Context *context) : context_{context} {}
+Smt2Driver::Smt2Driver(Context *context)
+    : context_{context},
+      debug_scanning_{context_->config().debug_scanning()},
+      debug_parsing_{context_->config().debug_parsing()} {}
 
 bool Smt2Driver::parse_stream(istream &in, const string &sname) {
   streamname_ = sname;
 
   Smt2Scanner scanner(&in);
-  scanner.set_debug(trace_scanning_);
+  scanner.set_debug(debug_scanning_);
   this->scanner_ = &scanner;
 
   Smt2Parser parser(*this);
-  parser.set_debug_level(trace_parsing_);
+  parser.set_debug_level(debug_parsing_);
   return parser.parse() == 0;
 }
 
