@@ -28,11 +28,8 @@ dlinear_cc_library(
     srcs = ["InfoGatherer.cpp"],
     hdrs = ["InfoGatherer.h"],
     deps = [
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
-        "//dlinear/smt2",
+        "//dlinear/solver",
         "//dlinear/util:config",
         "//dlinear/util:exception",
-        "//dlinear/util:infinity",
     ],
 )

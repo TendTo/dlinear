@@ -6,11 +6,9 @@
 #include <cstdio>
 #include <iostream>
 #include <regex>
+#include <sstream>
 
-#include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/libs/soplex.h"
-#include "dlinear/smt2/Driver.h"
-#include "dlinear/smt2/run.h"
+#include "dlinear/solver/Solver.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear::benchmark {
@@ -29,8 +27,8 @@ class InfoGatherer {
   InfoGatherer(std::string filename, std::string solver, const std::string &precision, uint timeout);
   bool run();
 
-  [[nodiscard]] const std::string &filename() const { return filename_; }
-  [[nodiscard]] const std::string &solver() const { return solver_; }
+  [[nodiscard]] const std::string &filename() const { return config_.filename(); }
+  [[nodiscard]] std::string solver() const { return (std::ostringstream{} << config_.lp_solver()).str(); }
   [[nodiscard]] double precision() const { return precision_; }
   [[nodiscard]] double actualPrecision() const { return actualPrecision_; }
   [[nodiscard]] uint nAssertions() const { return nAssertions_; }
@@ -40,8 +38,6 @@ class InfoGatherer {
 
  private:
   Config config_;
-  const std::string filename_;
-  const std::string solver_;
   double precision_{0.0};
   double actualPrecision_{0.0};
   uint nAssertions_{0};
@@ -50,10 +46,7 @@ class InfoGatherer {
   uint timeout_{0};
   uint time_{0};
 
-  std::string GetSolverName(const Config::LPSolver solver);
-  Config::LPSolver GetLPSolver(const std::string &solver);
-  void Init();
-  void DeInit();
+  Config::LPSolver GetLPSolver(const std::string &solver) const;
   void GatherInfo(shared_results *results);
   void StartIntermediateProcess(shared_results *results);
   bool WaitChild();

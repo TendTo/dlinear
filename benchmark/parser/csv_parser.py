@@ -40,7 +40,7 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
                 self.benchmarks += list(reader)  # type: ignore
 
     def parse_lp_problem(self, benchmark: "Benchmark"):
-        file = benchmark["file"].split("/")[-1].removeprefix("LP_").removesuffix(".smt2")
+        file = benchmark["file"].split("/")[-1].removeprefix("LP_").removesuffix(".smt2").removesuffix(".mps")
         solver = benchmark["solver"]
         result = "delta-sat" if int(benchmark["result"]) == 1 else "unsat"
 
