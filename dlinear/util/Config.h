@@ -24,6 +24,7 @@
 #define DLINEAR_DEFAULT_USE_POLYTOPE false
 #define DLINEAR_DEFAULT_USE_POLYTOPE_IN_FORALL false
 #define DLINEAR_DEFAULT_USE_WORKLIST_FIXPOINT false
+#define DLINEAR_DEFAULT_SKIP_CHECK_SAT false
 #define DLINEAR_DEFAULT_USE_LOCAL_OPTIMIZATION false
 #define DLINEAR_DEFAULT_CONTINUOUS_OUTPUT false
 #define DLINEAR_DEFAULT_WITH_TIMINGS false
@@ -32,7 +33,6 @@
 #define DLINEAR_DEFAULT_VERBOSE_SIMPLEX 0
 #define DLINEAR_DEFAULT_VERBOSE_DLINEAR 2
 #define DLINEAR_DEFAULT_NUMBER_OF_JOBS 1u
-#define DLINEAR_DEFAULT_STACK_LEFT_BOX_FIRST false
 #define DLINEAR_DEFAULT_NLOPTF_TO_REL 1e-6
 #define DLINEAR_DEFAULT_NLOPTF_TO_ABS 1e-6
 #define DLINEAR_DEFAULT_NLOPT_MAX_EVAL 100u
@@ -41,6 +41,7 @@
 #define DLINEAR_DEFAULT_RANDOM_SEED 0u
 #define DLINEAR_DEFAULT_DEBUG_SCANNING false
 #define DLINEAR_DEFAULT_DEBUG_PARSING false
+#define DLINEAR_DEFAULT_SILENT false
 
 namespace dlinear {
 
@@ -165,37 +166,99 @@ class Config {
   /** Mutable number of parallel jobs */
   [[nodiscard]] OptionValue<uint> &mutable_number_of_jobs() { return number_of_jobs_; }
 
-  /** Whether the ICP algorithm stacks the left box first after branching */
-  [[nodiscard]] bool stack_left_box_first() const { return stack_left_box_first_.get(); }
+  /** Whether the application should not write anything on the standard output */
+  [[nodiscard]] bool silent() const { return silent_.get(); }
 
-  /** Mutable option on whether the ICP algorithm stacks the left box first after branching */
-  [[nodiscard]] OptionValue<bool> &mutable_stack_left_box_first() { return stack_left_box_first_; }
+  /** Mutable option on whether the application should not write anything on the standard output */
+  [[nodiscard]] OptionValue<bool> &mutable_silent() { return silent_; }
 
-  /** Relative tolerance on function value in NLopt */
+  /**
+   * NLopt options used as a stopping criteria.
+   *
+   * These options are used when we use NLopt in refining
+   * counterexamples via local-optimization. The following
+   * descriptions are from
+   * https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#stopping-criteria
+   *
+   * Set relative tolerance on function value: stop when an
+   * optimization step (or an estimate of the optimum) changes the
+   * objective function value by less than tol multiplied by the
+   * absolute value of the function value. (If there is any chance
+   * that your optimum function value is close to zero, you might want
+   * to set an absolute tolerance with nlopt_set_ftol_abs as well.)
+   * Criterion is disabled if tol is non-positive.
+   */
   [[nodiscard]] double nlopt_ftol_rel() const { return nlopt_ftol_rel_.get(); }
 
-  /** Mutable relative tolerance on function value in NLopt */
+  /**
+   * Mutable NLopt options used as a stopping criteria.
+   *
+   * These options are used when we use NLopt in refining
+   * counterexamples via local-optimization. The following
+   * descriptions are from
+   * https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#stopping-criteria
+   *
+   * Set relative tolerance on function value: stop when an
+   * optimization step (or an estimate of the optimum) changes the
+   * objective function value by less than tol multiplied by the
+   * absolute value of the function value. (If there is any chance
+   * that your optimum function value is close to zero, you might want
+   * to set an absolute tolerance with nlopt_set_ftol_abs as well.)
+   * Criterion is disabled if tol is non-positive.
+   */
   [[nodiscard]] OptionValue<double> &mutable_nlopt_ftol_rel() { return nlopt_ftol_rel_; }
 
-  /** Absolute tolerance on function value in NLopt */
+  /**
+   * Absolute tolerance on function value: stop when an
+   * optimization step (or an estimate of the optimum) changes the
+   * function value by less than tol. Criterion is disabled if tol is
+   * non-positive.
+   */
   [[nodiscard]] double nlopt_ftol_abs() const { return nlopt_ftol_abs_.get(); }
 
-  /** Mutable absolute tolerance on function value in NLopt */
+  /**
+   * Mutable absolute tolerance on function value: stop when an
+   * optimization step (or an estimate of the optimum) changes the
+   * function value by less than tol. Criterion is disabled if tol is
+   * non-positive.
+   */
   [[nodiscard]] OptionValue<double> &mutable_nlopt_ftol_abs() { return nlopt_ftol_abs_; }
 
-  /** Number of maximum function evaluations allowed in NLopt */
+  /**
+   * Number of function evaluations that will stop the solver when
+   * exceeded. (This is not a strict maximum: the number of function
+   * evaluations may exceed maxeval slightly, depending upon the
+   * algorithm.) Criterion is disabled if maxeval is non-positive.
+   */
   [[nodiscard]] uint nlopt_maxeval() const { return nlopt_maxeval_.get(); }
 
-  /** Mutable number of maximum function evaluations allowed in NLopt */
+  /**
+   * Mutable number of function evaluations that will stop the solver when
+   * exceeded. (This is not a strict maximum: the number of function
+   * evaluations may exceed maxeval slightly, depending upon the
+   * algorithm.) Criterion is disabled if maxeval is non-positive.
+   */
   [[nodiscard]] OptionValue<uint> &mutable_nlopt_maxeval() { return nlopt_maxeval_; }
 
-  /** Maxtime in NLopt */
+  /**
+   * Time (in seconds) after which the solver is stopped forcefully.
+   * (This is not a strict maximum: the time may exceed
+   * maxtime slightly, depending upon the algorithm and on how slow
+   * your function evaluation is.) Criterion is disabled if maxtime is
+   * non-positive.
+   */
   [[nodiscard]] double nlopt_maxtime() const { return nlopt_maxtime_.get(); }
 
-  /** Mutable maxtime in NLopt */
+  /**
+   * Mutable time (in seconds) after which the solver is stopped forcefully.
+   * (This is not a strict maximum: the time may exceed
+   * maxtime slightly, depending upon the algorithm and on how slow
+   * your function evaluation is.) Criterion is disabled if maxtime is
+   * non-positive.
+   */
   [[nodiscard]] OptionValue<double> &mutable_nlopt_maxtime() { return nlopt_maxtime_; }
 
-  /** Default phase for SAT solver */
+  /** Default phase for the SAT solver */
   [[nodiscard]] SatDefaultPhase sat_default_phase() const { return sat_default_phase_.get(); }
 
   /** Mutable default phase for SAT solver */
@@ -219,90 +282,43 @@ class Config {
   /** Mutable debug parsing */
   [[nodiscard]] OptionValue<bool> &mutable_debug_parsing() { return debug_parsing_; }
 
-  static constexpr double kDefaultPrecision{DLINEAR_DEFAULT_PRECISION};  // pred(floor("0.001"))
-  static constexpr double kDefaultNloptFtolRel{DLINEAR_DEFAULT_NLOPTF_TO_REL};
-  static constexpr double kDefaultNloptFtolAbs{DLINEAR_DEFAULT_NLOPTF_TO_ABS};
-  static constexpr int kDefaultNloptMaxEval{DLINEAR_DEFAULT_NLOPT_MAX_EVAL};
-  static constexpr double kDefaultNloptMaxTime{DLINEAR_DEFAULT_NLOPT_MAX_TIME};
+  [[nodiscard]] bool skip_check_sat() const { return skip_check_sat_.get(); }
+
+  [[nodiscard]] OptionValue<bool> &mutable_skip_check_sat() { return skip_check_sat_; }
 
  private:
+  OptionValue<bool> continuous_output_{DLINEAR_DEFAULT_CONTINUOUS_OUTPUT};
+  OptionValue<bool> debug_parsing_{DLINEAR_DEFAULT_DEBUG_PARSING};
+  OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
   OptionValue<std::string> filename_{""};
   OptionValue<Format> format_{DLINEAR_DEFAULT_FORMAT};
-  OptionValue<bool> read_from_stdin_{DLINEAR_DEFAULT_READ_FROM_STDIN};
-  OptionValue<double> precision_{kDefaultPrecision};
+  OptionValue<LPSolver> lp_solver_{DLINEAR_DEFAULT_LP_SOLVER};
+  OptionValue<double> nlopt_ftol_abs_{DLINEAR_DEFAULT_NLOPTF_TO_ABS};
+  OptionValue<double> nlopt_ftol_rel_{DLINEAR_DEFAULT_NLOPTF_TO_REL};
+  OptionValue<uint> nlopt_maxeval_{DLINEAR_DEFAULT_NLOPT_MAX_EVAL};
+  OptionValue<double> nlopt_maxtime_{DLINEAR_DEFAULT_NLOPT_MAX_TIME};
+  OptionValue<uint> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
+  OptionValue<double> precision_{DLINEAR_DEFAULT_PRECISION};
   OptionValue<bool> produce_models_{DLINEAR_DEFAULT_PRODUCE_MODELS};
+  OptionValue<uint> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
+  OptionValue<bool> read_from_stdin_{DLINEAR_DEFAULT_READ_FROM_STDIN};
+  OptionValue<SatDefaultPhase> sat_default_phase_{DLINEAR_DEFAULT_SAT_PHASE};
+  OptionValue<bool> silent_{DLINEAR_DEFAULT_SILENT};
+  OptionValue<int> simplex_sat_phase_{DLINEAR_DEFAULT_SIMPLEX_SAT_PHASE};
+  OptionValue<bool> skip_check_sat_{DLINEAR_DEFAULT_SKIP_CHECK_SAT};
+  OptionValue<bool> use_local_optimization_{DLINEAR_DEFAULT_USE_LOCAL_OPTIMIZATION};
   OptionValue<bool> use_polytope_{DLINEAR_DEFAULT_USE_POLYTOPE};
   OptionValue<bool> use_polytope_in_forall_{DLINEAR_DEFAULT_USE_POLYTOPE_IN_FORALL};
   OptionValue<bool> use_worklist_fixpoint_{DLINEAR_DEFAULT_USE_WORKLIST_FIXPOINT};
-  OptionValue<bool> use_local_optimization_{DLINEAR_DEFAULT_USE_LOCAL_OPTIMIZATION};
-  OptionValue<int> simplex_sat_phase_{DLINEAR_DEFAULT_SIMPLEX_SAT_PHASE};
-  OptionValue<LPSolver> lp_solver_{DLINEAR_DEFAULT_LP_SOLVER};
-  OptionValue<int> verbose_simplex_{DLINEAR_DEFAULT_VERBOSE_SIMPLEX};
   OptionValue<int> verbose_dlinear_{DLINEAR_DEFAULT_VERBOSE_DLINEAR};
-  OptionValue<bool> continuous_output_{DLINEAR_DEFAULT_CONTINUOUS_OUTPUT};
+  OptionValue<int> verbose_simplex_{DLINEAR_DEFAULT_VERBOSE_SIMPLEX};
   OptionValue<bool> with_timings_{DLINEAR_DEFAULT_WITH_TIMINGS};
-  OptionValue<uint> number_of_jobs_{DLINEAR_DEFAULT_NUMBER_OF_JOBS};
-  OptionValue<bool> stack_left_box_first_{DLINEAR_DEFAULT_STACK_LEFT_BOX_FIRST};
-  OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
-  OptionValue<bool> debug_parsing_{DLINEAR_DEFAULT_DEBUG_PARSING};
-  OptionValue<uint> random_seed_{DLINEAR_DEFAULT_RANDOM_SEED};
-
-  /**
-   * NLopt options (stopping criteria)
-   *
-   * These options are used when we use NLopt in refining
-   * counterexamples via local-optimization. The following
-   * descriptions are from
-   * https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#stopping-criteria
-   *
-   * Set relative tolerance on function value: stop when an
-   * optimization step (or an estimate of the optimum) changes the
-   * objective function value by less than tol multiplied by the
-   * absolute value of the function value. (If there is any chance
-   * that your optimum function value is close to zero, you might want
-   * to set an absolute tolerance with nlopt_set_ftol_abs as well.)
-   * Criterion is disabled if tol is non-positive.
-   */
-  OptionValue<double> nlopt_ftol_rel_{kDefaultNloptFtolRel};
-
-  /**
-   * Set absolute tolerance on function value: stop when an
-   * optimization step (or an estimate of the optimum) changes the
-   * function value by less than tol. Criterion is disabled if tol is
-   * non-positive.
-   */
-  OptionValue<double> nlopt_ftol_abs_{kDefaultNloptFtolAbs};
-
-  /**
-   * Stop when the number of function evaluations exceeds
-   * maxeval. (This is not a strict maximum: the number of function
-   * evaluations may exceed maxeval slightly, depending upon the
-   * algorithm.) Criterion is disabled if maxeval is non-positive.
-   */
-  OptionValue<uint> nlopt_maxeval_{kDefaultNloptMaxEval};
-
-  /**
-   * Stop when the optimization time (in seconds) exceeds
-   * maxtime. (This is not a strict maximum: the time may exceed
-   * maxtime slightly, depending upon the algorithm and on how slow
-   * your function evaluation is.) Criterion is disabled if maxtime is
-   * non-positive.
-   */
-  OptionValue<double> nlopt_maxtime_{kDefaultNloptMaxTime};
-
-  /**
-   * Default initial phase for PICOSAT:
-   *
-   * 0 = false
-   * 1 = true
-   * 2 = Jeroslow-Wang (default)
-   * 3 = random initial phase
-   */
-  OptionValue<SatDefaultPhase> sat_default_phase_{DLINEAR_DEFAULT_SAT_PHASE};
 
   friend std::ostream &operator<<(std::ostream &os, const Config &config);
-  friend std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
-  friend std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 };
+
+std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
+std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
+std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 
 }  // namespace dlinear

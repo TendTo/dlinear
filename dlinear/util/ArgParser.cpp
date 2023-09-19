@@ -35,7 +35,7 @@ ArgParser::ArgParser(string qsopt_exHash, string soplexHash)
 void ArgParser::parse(int argc, const char **argv) {
   try {
     parser_.parse_args(argc, argv);
-    DLINEAR_LOG_INIT_VERBOSITY(parser_.get<int>("verbosity"));
+    DLINEAR_LOG_INIT_VERBOSITY((parser_.get<bool>("silent") ? 0 : parser_.get<int>("verbosity")));
     validateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   } catch (const std::runtime_error &err) {
@@ -52,15 +52,15 @@ void ArgParser::parse(int argc, const char **argv) {
 void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::addOptions: adding options");
   parser_.add_description(prompt());
+  parser_.add_argument("--continuous-output")
+      .help("report partial results continuously, as and when available")
+      .default_value(DLINEAR_DEFAULT_CONTINUOUS_OUTPUT)
+      .implicit_value(true);
   parser_.add_argument("file").help("input file").default_value("");
   parser_.add_argument("-j", "--jobs")
       .help("set the number of jobs")
       .default_value(DLINEAR_DEFAULT_NUMBER_OF_JOBS)
       .scan<'i', uint>();
-  parser_.add_argument("--continuous-output")
-      .help("report partial results continuously, as and when available")
-      .default_value(DLINEAR_DEFAULT_CONTINUOUS_OUTPUT)
-      .implicit_value(true);
   parser_.add_argument("--debug-parsing")
       .help("debug parsing")
       .default_value(DLINEAR_DEFAULT_DEBUG_PARSING)
@@ -191,6 +191,14 @@ void ArgParser::addOptions() {
       .help("use worklist fixpoint algorithm in ICP")
       .default_value(DLINEAR_DEFAULT_USE_WORKLIST_FIXPOINT)
       .implicit_value(true);
+  parser_.add_argument("--skip-check-sat")
+      .help("parse the input, but does not run the solver")
+      .default_value(DLINEAR_DEFAULT_SKIP_CHECK_SAT)
+      .implicit_value(true);
+  parser_.add_argument("-s", "--silent")
+      .help("do not print the results to stdout. Verbosity level will be set to 0")
+      .default_value(DLINEAR_DEFAULT_SILENT)
+      .implicit_value(true);
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
 
@@ -202,44 +210,52 @@ ostream &operator<<(ostream &os, const ArgParser &parser) {
 Config ArgParser::toConfig() const {
   DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
   Config config{};
+
   config.mutable_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<string>("file") : "");
-  if (parser_.is_used("format")) config.mutable_format().set_from_command_line(parser_.get<Config::Format>("format"));
-  if (parser_.is_used("in")) config.mutable_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
-  if (parser_.is_used("precision")) config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
-  if (parser_.is_used("produce-models"))
-    config.mutable_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
-  if (parser_.is_used("verbosity"))
-    config.mutable_verbose_dlinear().set_from_command_line(parser_.get<int>("verbosity"));
-  if (parser_.is_used("jobs")) config.mutable_number_of_jobs().set_from_command_line(parser_.get<uint>("jobs"));
-  if (parser_.is_used("timings")) config.mutable_with_timings().set_from_command_line(parser_.get<bool>("timings"));
+
+  // Add all the options to the config in alphabetical order
   if (parser_.is_used("continuous-output"))
     config.mutable_continuous_output().set_from_command_line(parser_.get<bool>("continuous-output"));
-  if (parser_.is_used("random-seed"))
-    config.mutable_random_seed().set_from_command_line(parser_.get<uint>("random-seed"));
+  if (parser_.is_used("debug-parsing"))
+    config.mutable_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
+  if (parser_.is_used("debug-scanning")) config.mutable_debug_scanning().set_from_command_line(true);
+  if (parser_.is_used("exhaustive")) config.mutable_precision().set_from_command_line(0);
+  if (parser_.is_used("format")) config.mutable_format().set_from_command_line(parser_.get<Config::Format>("format"));
+  if (parser_.is_used("forall-polytope"))
+    config.mutable_use_polytope_in_forall().set_from_command_line(parser_.get<bool>("forall-polytope"));
   if (parser_.is_used("lp-solver"))
     config.mutable_lp_solver().set_from_command_line(parser_.get<Config::LPSolver>("lp-solver"));
-  if (parser_.is_used("verbose-simplex"))
-    config.mutable_verbose_simplex().set_from_command_line(parser_.get<int>("verbose-simplex"));
-  if (parser_.is_used("nlopt-ftol-rel"))
-    config.mutable_nlopt_ftol_rel().set_from_command_line(parser_.get<double>("nlopt-ftol-rel"));
+  if (parser_.is_used("produce-models"))
+    config.mutable_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
   if (parser_.is_used("nlopt-ftol-abs"))
     config.mutable_nlopt_ftol_abs().set_from_command_line(parser_.get<double>("nlopt-ftol-abs"));
+  if (parser_.is_used("nlopt-ftol-rel"))
+    config.mutable_nlopt_ftol_rel().set_from_command_line(parser_.get<double>("nlopt-ftol-rel"));
   if (parser_.is_used("nlopt-maxeval"))
     config.mutable_nlopt_maxeval().set_from_command_line(parser_.get<uint>("nlopt-maxeval"));
   if (parser_.is_used("nlopt-maxtime"))
     config.mutable_nlopt_maxtime().set_from_command_line(parser_.get<double>("nlopt-maxtime"));
+  if (parser_.is_used("polytope")) config.mutable_use_polytope().set_from_command_line(parser_.get<bool>("polytope"));
+  if (parser_.is_used("precision")) config.mutable_precision().set_from_command_line(parser_.get<double>("precision"));
+  if (parser_.is_used("produce-models"))
+    config.mutable_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
+  if (parser_.is_used("random-seed"))
+    config.mutable_random_seed().set_from_command_line(parser_.get<uint>("random-seed"));
   if (parser_.is_used("sat-default-phase"))
     config.mutable_sat_default_phase().set_from_command_line(parser_.get<Config::SatDefaultPhase>("sat-default-phase"));
   if (parser_.is_used("simplex-sat-phase"))
     config.mutable_simplex_sat_phase().set_from_command_line(parser_.get<int>("simplex-sat-phase"));
+  if (parser_.is_used("silent")) config.mutable_silent().set_from_command_line(parser_.get<bool>("silent"));
+  if (parser_.is_used("skip-check-sat"))
+    config.mutable_skip_check_sat().set_from_command_line(parser_.get<bool>("skip-check-sat"));
+  if (parser_.is_used("timings")) config.mutable_with_timings().set_from_command_line(parser_.get<bool>("timings"));
+  if (parser_.is_used("verbosity"))
+    config.mutable_verbose_dlinear().set_from_command_line(parser_.get<int>("verbosity"));
+  if (parser_.is_used("verbose-simplex"))
+    config.mutable_verbose_simplex().set_from_command_line(parser_.get<int>("verbose-simplex"));
   if (parser_.is_used("worklist-fixpoint"))
     config.mutable_use_worklist_fixpoint().set_from_command_line(parser_.get<bool>("worklist-fixpoint"));
-  if (parser_.is_used("local-optimization"))
-    config.mutable_use_local_optimization().set_from_command_line(parser_.get<bool>("local-optimization"));
-  if (parser_.is_used("debug-scanning"))
-    config.mutable_debug_scanning().set_from_command_line(parser_.get<bool>("debug-scanning"));
-  if (parser_.is_used("debug-parsing"))
-    config.mutable_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
+
   DLINEAR_TRACE_FMT("ArgParser::toConfig: {}", config);
   return config;
 }
@@ -259,7 +275,8 @@ void ArgParser::validateOptions() {
              (format == Config::Format::MPS && extension != "mps")) {
     DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
   }
-  if (!file_exists(parser_.get<string>("file"))) DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
+  if (!parser_.get<bool>("in") && !file_exists(parser_.get<string>("file")))
+    DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
   if (parser_.is_used("exhaustive") && parser_.is_used("precision"))
     DLINEAR_INVALID_ARGUMENT("--exhaustive", "cannot be set if --precision is used");
   if (parser_.get<double>("precision") == 0)
@@ -280,7 +297,12 @@ void ArgParser::validateOptions() {
                              "Hint: try --exhaustive in conjunction with --continuous-output "
                              "to find all delta-sat thresholds.");
   if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
+  if (parser_.get<bool>("skip-check-sat") && parser_.get<bool>("produce-models"))
+    DLINEAR_INVALID_ARGUMENT("--produce-models", "no models will be produced if --skip-check-sat is provided");
+  if (parser_.is_used("verbosity") && parser_.is_used("silent"))
+    DLINEAR_INVALID_ARGUMENT("--verbosity", "verbosity is set to 0 if --silent is provided");
 }
+
 string ArgParser::version() const { return DLINEAR_VERSION_STRING; }
 
 string ArgParser::repositoryStatus() const { return DLINEAR_VERSION_REPOSTAT; }

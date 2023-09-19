@@ -32,6 +32,7 @@ namespace dlinear {
  */
 enum class SolverResult {
   UNSOLVED,       // The solver has not yet been run.
+  SKIP_SAT,       // The user asked to skip the satisfiability check.
   SAT,            // The problem is satisfiable.
   DELTA_SAT,      // The problem is delta-satisfiable.
   OPTIMAL,        // The optimization problem is optimal.

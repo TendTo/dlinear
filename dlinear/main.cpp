@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
   // Setup the infinity values.
   dlinear::Solver solver{config};
 
-  std::cout << solver.CheckSat() << std::endl;
+  if (!config.silent()) std::cout << solver.CheckSat() << std::endl;
 
   return 0;
 }

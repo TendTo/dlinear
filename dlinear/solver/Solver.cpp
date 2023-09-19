@@ -29,7 +29,13 @@ SolverOutput Solver::CheckSat() {
   if (output_.result() != SolverResult::UNSOLVED) return output_;
   DLINEAR_DEBUG("Solver::CheckSat -- No previous result fond.");
   if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
-  CheckCore();
+  output_.mutable_n_assertions() = context_.assertions().size();
+
+  if (config_.skip_check_sat())
+    output_.mutable_result() = SolverResult::SKIP_SAT;
+  else
+    CheckCore();
+
   return output_;
 }
 
@@ -70,7 +76,6 @@ void Solver::CheckCore() {
     CheckObjCore();
   else
     CheckSatCore();
-  output_.mutable_n_assertions() = context_.assertions().size();
 }
 
 void Solver::CheckObjCore() {
