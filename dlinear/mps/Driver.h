@@ -195,6 +195,7 @@ class MpsDriver {
 
   /**
    * Add a binary bound to a variable (column).
+   * The value is not present, for it is inferred from the bound type.
    * If strict_mps_ is true and multiple bounds are found,
    * only the first one is considered, the others are skipped.
    * In the mps file, a bound line is defined by:
@@ -203,7 +204,7 @@ class MpsDriver {
    *   |------------|--------|--------|--------|--------|--------|
    *   | Bound Type | Bound  | Column |        |        |        |
    *
-   * @param type bound type. Must be BV.
+   * @param type bound type. Must be either BV, FR, MI or PL.
    * @param bound identifier of the bound. Used if strict_mps_ is true.
    * @param column identifier of the variable (column)
    */

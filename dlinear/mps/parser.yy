@@ -282,6 +282,17 @@ bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
         delete $3;
         delete $4;
     }
+    | BOUND_TYPE SYMBOL SYMBOL '\n' { 
+        driver.AddBound($1, "", *$2, mpq_class{StringToMpq(*$3)});
+        delete $2;
+        delete $3;
+    }
+    | BOUND_TYPE_SINGLE SYMBOL SYMBOL SYMBOL '\n' { 
+        driver.AddBound($1, *$2, *$3);
+        delete $2;
+        delete $3;
+        delete $4;
+    }
     | BOUND_TYPE_SINGLE SYMBOL SYMBOL '\n' { 
         driver.AddBound($1, *$2, *$3);
         delete $2;
