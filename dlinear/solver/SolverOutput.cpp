@@ -29,6 +29,8 @@ std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
   switch (bound) {
     case SolverResult::UNSAT:
       return os << "unsat";
+    case SolverResult::SKIP_SAT:
+      return os << "skip-sat";
     case SolverResult::UNSOLVED:
       return os << "unsolved";
     case SolverResult::SAT:
@@ -78,6 +80,9 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
       break;
     case SolverResult::UNFEASIBLE:
       os << "unfeasible";
+      break;
+    case SolverResult::SKIP_SAT:
+      os << "skip-sat\nNo satisfiability check was performed\nTo use the SAT solver, remove the option --skip-check-sat";
       break;
     default:
       DLINEAR_UNREACHABLE();

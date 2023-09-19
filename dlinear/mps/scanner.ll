@@ -76,13 +76,8 @@ mps_yycolumn += yyleng;
 %}
 
 whitespace      [ \t\r]
-digit           [0-9]
-letter          [a-zA-Z]
 comment         ^\*[^\n\r]*
-special_char    [+\-/=%?!.$_~&^<>@*()#,\[\]:;{}]
-sym_begin       {letter}|{special_char}|{digit}
-sym_continue    {sym_begin}|{digit}
-simple_symbol   {sym_begin}{sym_continue}*
+symbol          [^ \t\r\n]+
 
 /*** End of Declarations ***/
 
@@ -116,14 +111,14 @@ simple_symbol   {sym_begin}{sym_continue}*
 {whitespace}+(?i:BV|MI|PL|FR)        { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE_SINGLE; }
 {whitespace}+(?i:LO|UP|FX|LI|UI|SC)  { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
 
-{whitespace}+{simple_symbol}    {
+{whitespace}+{symbol}           {
                                     const char* symbol = yytext;
                                     while (*symbol == ' ') ++symbol; // skip leading spaces
                                     yylval->stringVal = new std::string(symbol);
                                     return token::SYMBOL;
                                 }
 
-['"]{simple_symbol}['"]         { 
+['"]{symbol}['"]                { 
                                     yylval->stringVal = new std::string(yytext+1, yyleng-2);
                                     return token::QUOTED_SYMBOL;
                                 }

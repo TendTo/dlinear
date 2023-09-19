@@ -17,6 +17,7 @@
 #include <tl/optional.hpp>
 
 #include "dlinear/mps/parser.yy.hpp"
+#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -36,12 +37,35 @@ using std::vector;
 using tl::optional;
 
 namespace dlinear::mps {
+
+namespace {
+class MpsDriverStat : public Stats {
+ public:
+  explicit MpsDriverStat(const bool enabled) : Stats{enabled} {};
+  MpsDriverStat(const MpsDriverStat &) = default;
+  MpsDriverStat(MpsDriverStat &&) = default;
+  MpsDriverStat &operator=(const MpsDriverStat &) = delete;
+  MpsDriverStat &operator=(MpsDriverStat &&) = delete;
+  ~MpsDriverStat() override {
+    if (enabled()) cout << ToString() << std::endl;
+  }
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15} sec", "Total time spent in MPS parsing", "MPS Driver",
+                       timer_parse_mps_.seconds());
+  }
+  Timer timer_parse_mps_;
+};
+}  // namespace
+
 MpsDriver::MpsDriver(Context *context)
     : context_{context},
       debug_scanning_{context_->config().debug_scanning()},
       debug_parsing_{context_->config().debug_parsing()} {}
 
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
+  static MpsDriverStat stat{DLINEAR_INFO_ENABLED};
+  TimerGuard check_sat_timer_guard(&stat.timer_parse_mps_, stat.enabled(), true);
+
   stream_name_ = sname;
 
   MpsScanner scanner(&in);
@@ -50,6 +74,7 @@ bool MpsDriver::parse_stream(istream &in, const string &sname) {
 
   MpsParser parser(*this);
   parser.set_debug_level(debug_parsing_);
+
   return parser.parse() == 0;
 }
 

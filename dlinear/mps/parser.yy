@@ -76,8 +76,6 @@ using dlinear::qsopt_ex::StringToMpq;
 %token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
 %token <boundTypeVal>  BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 
-%type <stringVal> name
-
 %destructor { delete $$; } SYMBOL
 
 %{
@@ -113,15 +111,11 @@ section: name_section
     | end_section
     ;
 
-name_section: NAME_DECLARATION name '\n' { 
+name_section: NAME_DECLARATION SYMBOL '\n' { 
         driver.mutable_problem_name() = *$2;
         delete $2;
     }
     | NAME_DECLARATION '\n' { driver.mutable_problem_name() = "unnamed"; }
-    ;
-
-name: SYMBOL { $$ = $1; }
-    | name SYMBOL { $$ = $1; delete $2; }
     ;
 
 objsense_section: OBJSENSE_DECLARATION '\n' MAX '\n' { driver.ObjectiveSense(false); }
