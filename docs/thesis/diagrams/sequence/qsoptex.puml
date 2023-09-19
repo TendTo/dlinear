@@ -1,9 +1,14 @@
 @startuml qsoptex
 
+skinparam Shadowing false
+
+participant Solver
 participant Driver
 participant QsoptexImpl
 participant QsoptexSatSolver
 participant QsoptexTheorySolver
+
+Solver -> Driver ++: ParseFile()
 
 Driver -> QsoptexImpl ++: SetLogic(Context::Logic)
 return
@@ -26,8 +31,10 @@ loop for each assertion
     return
 end
 
+return
+
+Solver -> QsoptexImpl ++: CheckSat()
 loop untill the theory solver returns SAT | UNSOLVED or the SAT solver returns UNSAT
-    Driver -> QsoptexImpl ++: CheckSatCore()
     QsoptexImpl -> QsoptexSatSolver ++: CheckSat()
     return SAT | UNSAT
 

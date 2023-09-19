@@ -5,7 +5,8 @@
 The software is written in C++ and is formed by two main components: the \textit{dlinear library} and the \textit{pydlinear Python bindings}.
 The former is the result of the refactoring of the \dlinearfour project.
 The process involved a deep study of the codebase, which led to a delicate but rewarding migration to the latest C++17 standard, as well as the update of most external libraries to their latest version.
-During the refactoring, all the leftovers from the \dreal project have been removed, while some design patterns, such as Singleton and Visitor, have been introduced to improve the code quality and future extensibility.
+All the leftovers from the \dreal project have been removed during the refactoring. 
+At the same time, some design patterns, such as Singleton and Visitor, have been introduced to improve the code quality and future extensibility.
 
 \pydlinear is a new addition inspired by the \dreal project to provide a more user-friendly interface to the library and allow faster prototyping in a Python environment.
 Furthermore, a customized \textit{benchmarking suite} has been introduced to the project, and the \textit{test suite} has been improved with additional coverage.
@@ -17,33 +18,39 @@ Instead of relying on a manual installation of all the direct and transitive dep
 See \autoref{tab:changes} for a summary of the changes introduced.
 
 \begin{table}[h]
-        \centering
+        \hskip-1.5cm
         \begin{tabular}{l|l}
-                \textbf{\dlinearfour}               & \textbf{\dlinear}                                   \\
+                \textbf{\dlinearfour}                        & \textbf{\dlinear}                                   \\
                 \hline
                 \hline
-                C++14 standard                      & C++17 standard ([[nodiscard]], [[likely]])          \\
+                C++14 standard                               & C++17 standard ([[nodiscard]], [[likely]])          \\
                 \hline
-                \dreal leftovers                    & Removed unused code,                                \\
-                                                    & changed namespace to \dlinear                       \\
+                \dreal leftovers                             & Removed unused code,                                \\
+                                                             & changed namespace to \dlinear                       \\
                 \hline
-                Manual dependencies building        & \bazel handles all external dependencies            \\
+                Manual dependencies building                 & \bazel handles all external dependencies            \\
                 \hline
-                Old dependency version              & Updated dependencies to the latest version          \\
+                Old dependency version                       & Updated dependencies to the latest version          \\
                 \hline
-                Old ezoptionparser                  & Modern argparse                                     \\
-                command-line parser library         & command-line parser library                         \\
+                Old ezoptionparser                           & Modern argparse                                     \\
+                command-line parser library                  & command-line parser library                         \\
                 \hline
-                Multiple independent classes        & FormulaVisitor superclass with virtual methods      \\
-                to perform formula conversions      &                                                     \\
+                Multiple independent classes                 & FormulaVisitor superclass with virtual methods      \\
+                to perform formula conversions               &                                                     \\
                 \hline
-                Multiple functions to initialize     & Singleton instance in charge or the                 \\
-                and deinitialize the global state   & global state of the program. Ensures                \\
-                of the program with no safety check & the validity of the initialization/deinitialization \\
+                Multiple functions to initialize             & Singleton instance in charge or the                 \\
+                and deinitialize the global state            & global state of the program. Ensures                \\
+                of the program with no safety check          & the validity of the initialization/deinitialization \\
                 \hline
-                                                    & \pydlinear Python bindings                          \\
+                The parser is also responsible for handling  & Introduced an abstraction layer through a Solver   \\
+                the \gls{smt} solver and outputs the results & class. Easy to extend with multiple parsers         \\
                 \hline
-                                                    & Benchmarking suite with CSV output                  \\
+                                                             & MPS file format support                             \\
+                \hline
+                                                             & \pydlinear Python bindings                          \\
+                \hline
+                                                             & Benchmarking suite with CSV output                  \\
+                \hline
         \end{tabular}
         \caption{Summary of the changes made to the original \dlinearfour project}\label{tab:changes}
 \end{table}
@@ -77,6 +84,8 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
                                                                 [api
                                                                 ]
                                                                 [libs
+                                                                ]
+                                                                [mps
                                                                 ]
                                                                 [smt2
                                                                 ]
@@ -117,7 +126,7 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
 When a software project inevitably grows in size and complexity, it becomes increasingly difficult to maintain and extend.
 A common approach to combat this trend is following some design patterns, often described as solutions to common problems in software engineering.
 
-Being quite a complex project, \dreal uses various design patterns, like the \textit{pimpl idiom} or the \textit{Composite}, which have been ported to \dlinearfour and \dlinear.
+As a complex project, \dreal uses various design patterns, like the \textit{pimpl idiom} or the \textit{Composite}, which have been ported to \dlinearfour and \dlinear.
 In the refactoring of the project, some patterns have then been either improved (\textit{Visitor}) or introduced (\textit{Singleton}).
 
 \subsection*{Pimpl idiom}
@@ -180,9 +189,23 @@ Since memory management must be handled manually, the \texttt{Infinity} class al
 
 \plantuml[0.45]{diagrams/dlinear/singleton}{UML class diagram of the Singleton pattern as it is used within \dlinear}{dlinear-singleton}
 
-\section{Smt2 parser}
+\section{Parsers}
 
-The input files \dlinear accepts are in the format standardized by SMT-LIB \cite{docs:smtlib}.
+The first step in the verification process is always parsing the input to extract the relevant information and build the internal representation the solvers will use.
+The parser becomes an essential component of the software: it determines which formats are supported and can slow down the application if not implemented correctly.
+
+\dlinearfour supported only the \gls{smt} format, while \dlinear adds support for the \gls{mps} format.
+The original implementation was problematic to extend: the \texttt{Driver} class was built around the \texttt{Smt2Parser} class, and the two were tightly coupled.
+Furthermore, it was also responsible for interacting with the \gls{sat} and \gls{smt} solvers, making it a monolithic class and diminishing its cohesion.
+
+The solution was to add an abstraction layer between the \texttt{Driver} and the client, introducing the \texttt{Solver} class.
+Its job is determining which parser to use based on the input file's extension.
+After completing this first step, the \texttt{Context} containing all the relevant information gathered from the input is produced and passed to the solvers.
+Finally, the output is returned to the Client.
+
+\subsection*{Smt2 parser}
+
+The original input files \dlinear accepts are in the format standardized by SMT-LIB \cite{docs:smtlib}.
 The parser itself is generated by \texttt{bison} and \texttt{flex} and can be divided into two main parts: the lexer and the parser.
 The lexer is responsible for tokenizing the input file by matching the input stream with the regular expressions defined in the \texttt{scanner.ll} file (\autoref{code:example.yy}).
 The result is then fed to the parser, which uses the grammar defined in the \texttt{parser.yy} file to build an abstract syntax tree (\autoref{code:example.yy}).
@@ -194,15 +217,51 @@ Each rule in the grammar is associated with an action, usually a \texttt{Driver}
 
 \lstinputlisting[language=yacc,frame=single,showstringspaces=false,caption={Simplified example of a rule parsing the check-sat token and calling the \texttt{Driver} accordingly},captionpos=b,label={code:example.yy}]{code/example.yy}
 
+\subsection*{MPS parser}
+
+One of the most promising fields where \dlinear can be applied is \textit{linear programming}.
+The goal is to verify whether a set of linear constraints is satisfiable, not necessarily finding the optimal solution.
+
+\gls{mps} is a common format to store \gls{lp} problems \cite{man:mps}.
+It is worth noting that the \gls{mps} standard is often extended by adding custom sections or the support for integer variables.
+The syntax remains quite simple: it is column-oriented, with each column representing a variable and each row representing a constraint.
+The file is divided into sections, each starting with a known identifier.
+
+For example, the \gls{lp} problem:
+
+\begin{equation*}
+        \begin{aligned}
+                 & \text{minimize}   & - x_1 - 2 x_2       \\
+                 & \text{subject to} & - x_1 + x_2 \leq 20 \\
+                 &                   & x_1 - 3 x_2 \leq 30 \\
+                 &                   & x_1 \leq 40         \\
+                 &                   & x_1, x_2 \geq 0
+        \end{aligned}
+\end{equation*}
+
+is represented in \gls{mps} format as in \autoref{code:example.mps}
+
+\lstinputlisting[frame=single,showstringspaces=false,caption={Example of an MPS file \cite{man:mps}},captionpos=b,label={code:example.mps}]{code/example.mps}
+
+The parser is generated using \texttt{bison} and \texttt{flex} and it has inherited its structure from the \texttt{smt2} parser.
+The grammar is pretty simple: each section can have an arbitrary number of rows (even no row at all), each with a certain number of columns.
+It is sufficient to determine the section the parser is in to know which function of the \texttt{Driver} to call.
+
+The information needed to build the constraints is divided into many different sections, so the whole file must be processed before the \texttt{Context} can be created.
+Hence, it is not possible to add the constraints incrementally.
+Instead, the \texttt{Driver} stores all the building blocks in some temporary maps, which will be used at the end to finalize the \texttt{Context}.
+
 \section{Solvers}
 
 The two solvers supported by \dlinear are \texttt{soplex} and \texttt{qsoptex}.
 Both represent the heart of the software.
 They are responsible for solving the \gls{lp} part of the problem while being directed by the \texttt{picosat} \gls{sat} solver.
 
-While the \texttt{smt2} file is being parsed, each variable encountered is stored and added to the \texttt{Context} object.
+The API presented to the Client hides all the implementation behind the \texttt{Solver} class.
+The configuration will determine which solver to use and with what parameters.
+While the input file is being parsed, each variable encountered is stored, to be added to the \texttt{Context} object later.
 The same is true for all the assertions regarding the problem's constraints, representing the theory's atoms.
-When the \texttt{check-sat} directive is reached, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex}.
+Once the parsing has been completed successfully, everything comes together: the \gls{sat} solver evaluates a set of atoms that needs to be satisfied, which are then used to build the \gls{lp} problem to be passed to either \texttt{soplex} or \texttt{qsoptex}.
 If the \gls{sat} solver returns \texttt{unsat}, the program halts immediately, for the problem is trivially unsatisfiable.
 Otherwise, the output of the \gls{lp} solver will determine the final result.
 If the \gls{lp} problem is solved, then \dlinear will return \texttt{sat} and a model.

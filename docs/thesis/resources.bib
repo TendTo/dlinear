@@ -49,13 +49,14 @@
   author  = {Torbjörn Granlund and {the GMP development team}},
   edition = {6.3.0},
   year    = 2012,
-  note    = {\url{http://gmplib.org/}}
+  url     = {http://gmplib.org/}
 }
-@manual{man:python-implementations,
-  title   = {Python Implementations},
-  author  = {MaxBernstein},
-  year    = 2023,
-  note    = {\url{https://wiki.python.org/moin/PythonImplementations}}
+@manual{man:mps,
+  title   = {MPS file format: industry standard},
+  author  = {IBM},
+  edition = {22.1.1},
+  year    = 2022,
+  url     = {https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-mps-file-format-industry-standard}
 }
 @manual{man:pimpl,
   author = {cppreference.com},
@@ -67,6 +68,12 @@
   year   = {2017},
   note   = {https://github.com/pybind/pybind11},
   title  = {pybind11 -- Seamless operability between C++11 and Python}
+}
+@manual{man:python-implementations,
+  title  = {Python Implementations},
+  author = {MaxBernstein},
+  year   = 2023,
+  url    = {https://wiki.python.org/moin/PythonImplementations}
 }
 @techreport{man:soplex,
   author      = {Ambros Gleixner and Daniel Steffy and Kati Wolter},
@@ -145,6 +152,12 @@
   numpages   = {41},
   keywords   = {Satisfiability Modulo Theories, SAT solvers}
 }
+@misc{paper:drake,
+  author = {Russ Tedrake and the Drake Development Team},
+  title  = {"Drake: Model-based design and verification for robotics},
+  year   = {2019},
+  url    = {https://drake.mit.edu}
+}
 @inproceedings{paper:dreal,
   author    = {Gao, Sicun
                and Kong, Soonho
@@ -206,6 +219,31 @@
   biburl    = {https://dblp.org/rec/conf/hybrid/SunKS19.bib},
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
+@article{paper:parallel-interior-point,
+  author    = {Jacek Gondzio and
+               Robert Sarkissian},
+  title     = {Parallel interior-point solver for structured linear programs},
+  journal   = {Math. Program.},
+  volume    = {96},
+  number    = {3},
+  pages     = {561--584},
+  year      = {2003},
+  url       = {https://doi.org/10.1007/s10107-003-0379-5},
+  doi       = {10.1007/s10107-003-0379-5},
+  timestamp = {Sat, 27 May 2017 14:25:34 +0200},
+  biburl    = {https://dblp.org/rec/journals/mp/GondzioS03.bib},
+  bibsource = {https://dblp.org}
+}
+@article{paper:picosat,
+  author  = {Biere, Armin},
+  year    = {2008},
+  month   = {05},
+  pages   = {75-97},
+  title   = {PicoSAT Essentials.},
+  volume  = {4},
+  journal = {JSAT},
+  doi     = {10.3233/SAT190039}
+}
 @article{paper:simplex,
   title    = {An overview on the simplex algorithm},
   journal  = {Applied Mathematics and Computation},
@@ -254,6 +292,15 @@
   isbn      = {978-3-642-81955-1},
   doi       = {10.1007/978-3-642-81955-1_28},
   url       = {https://doi.org/10.1007/978-3-642-81955-1_28}
+}
+@misc{repo:argparse,
+  author       = {p-ranav},
+  title        = {argparse},
+  year         = {2019},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/p-ranav/argparse}},
+  commit       = {v2.9}
 }
 @misc{repo:bazel,
   author       = {Google},
@@ -319,6 +366,15 @@
   howpublished = {\url{https://github.com/bazelbuild/rules_foreign_cc}},
   commit       = {0.9.0}
 }
+@misc{repo:spdlog,
+  author       = {gabime},
+  title        = {spdlog},
+  year         = {2016},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/gabime/spdlog}},
+  commit       = {v1.12.0}
+}
 @misc{repo:starlark,
   author       = {Google},
   title        = {starlark},
@@ -356,53 +412,4 @@
   journal      = {GitHub repository},
   howpublished = {\url{https://github.com/Z3Prover/z3}},
   commit       = {e8a38c548235d21c9f075cc9cdbe473fc68ef8bd}
-}
-@misc{repo:argparse},
-  author       = {p-ranav},
-  title        = {argparse},
-  year         = {2019},
-  publisher    = {GitHub},
-  journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/p-ranav/argparse}},
-  commit       = {v2.9},
-}
-@misc{repo:spdlog,
-  author       = {gabime},
-  title        = {spdlog},
-  year         = {2016},
-  publisher    = {GitHub},
-  journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/gabime/spdlog}},
-  commit       = {v1.12.0},
-}
-@article{paper:parallel-interior-point,
-  author    = {Jacek Gondzio and
-               Robert Sarkissian},
-  title     = {Parallel interior-point solver for structured linear programs},
-  journal   = {Math. Program.},
-  volume    = {96},
-  number    = {3},
-  pages     = {561--584},
-  year      = {2003},
-  url       = {https://doi.org/10.1007/s10107-003-0379-5},
-  doi       = {10.1007/s10107-003-0379-5},
-  timestamp = {Sat, 27 May 2017 14:25:34 +0200},
-  biburl    = {https://dblp.org/rec/journals/mp/GondzioS03.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org},
-}
-@misc{paper:drake,
- author = {Russ Tedrake and the Drake Development Team},
- title = {"Drake: Model-based design and verification for robotics},
- year = {2019},
- url = {https://drake.mit.edu},
-}
-@article{paper:picosat,
-  author = {Biere, Armin},
-  year = {2008},
-  month = {05},
-  pages = {75-97},
-  title = {PicoSAT Essentials.},
-  volume = {4},
-  journal = {JSAT},
-  doi = {10.3233/SAT190039},
 }
