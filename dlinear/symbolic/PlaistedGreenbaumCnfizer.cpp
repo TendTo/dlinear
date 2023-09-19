@@ -7,16 +7,16 @@
 
 #include "PlaistedGreenbaumCnfizer.h"
 
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 using std::cout;
-using std::to_string;
-using std::vector;
 using std::set;
 using std::string;
+using std::to_string;
+using std::vector;
 
 namespace dlinear {
 
@@ -30,18 +30,13 @@ class PlaistedGreenbaumCnfizerStat : public Stats {
   PlaistedGreenbaumCnfizerStat &operator=(const PlaistedGreenbaumCnfizerStat &) = delete;
   PlaistedGreenbaumCnfizerStat &operator=(PlaistedGreenbaumCnfizerStat &&) = delete;
   ~PlaistedGreenbaumCnfizerStat() override {
-    if (enabled()) {
-      using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of Convert",
-            "PlaistedGreenbaum Cnfizer", num_convert_);
-      if (num_convert_ > 0) {
-        print(cout, "{:<45} @ {:<20} = {:>15f} sec\n",
-              "Total time spent in Converting", "PlaistedGreenbaum Cnfizer",
-              timer_convert_.seconds());
-      }
-    }
+    if (enabled()) cout << ToString() << std::endl;
   }
-
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
+                       "PlaistedGreenbaum Cnfizer", num_convert_, "Total time spent in Converting",
+                       "PlaistedGreenbaum Cnfizer", timer_convert_.seconds());
+  }
   void increase_num_convert() { increase(&num_convert_); }
 
   Timer timer_convert_;
@@ -51,7 +46,7 @@ class PlaistedGreenbaumCnfizerStat : public Stats {
 };
 }  // namespace
 
-vector <Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
+vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   static PlaistedGreenbaumCnfizerStat stat{DLINEAR_INFO_ENABLED};
   TimerGuard timer_guard(&stat.timer_convert_, stat.enabled());
   stat.increase_num_convert();
@@ -82,7 +77,7 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   //     = ∀y. (clause₁(x, y) ∧ ... ∧ clauseₙ(x, y))
   //     = (∀y. ¬b v clause₁(x, y)) ∧ ... ∧ (∀y. ¬b v clauseₙ(x, y))
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
-  const Formula &quantified_formula{get_quantified_formula(f)};  // φ(x, y)
+  const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
   const set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
   for (const Formula &clause : clauses) {
@@ -112,8 +107,7 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
 Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
   static size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
-  const Variable bvar{string("conj") + to_string(id++),
-                      Variable::Type::BOOLEAN};
+  const Variable bvar{string("conj") + to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
   for (const Formula &op : get_operands(f)) {
     aux_.emplace_back(!bvar || this->Visit(op));
@@ -124,12 +118,9 @@ Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
 Formula PlaistedGreenbaumCnfizer::VisitDisjunction(const Formula &f) {
   static size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
-  const Variable bvar{string("disj") + to_string(id++),
-                      Variable::Type::BOOLEAN};
+  const Variable bvar{string("disj") + to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
-  set<Formula> clause{::dlinear::map(
-      get_operands(f),
-      [this](const Formula &formula) { return this->Visit(formula); })};
+  set<Formula> clause{::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   clause.insert(!bvar);
   aux_.emplace_back(make_disjunction(clause));
   return Formula{bvar};
@@ -140,4 +131,4 @@ Formula PlaistedGreenbaumCnfizer::VisitNegation(const Formula &f) {
   return f;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

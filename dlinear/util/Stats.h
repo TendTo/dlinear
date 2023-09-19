@@ -12,6 +12,7 @@
 
 #include <atomic>
 #include <iostream>
+#include <string>
 
 namespace dlinear {
 
@@ -39,6 +40,8 @@ class Stats {
   Stats &operator=(Stats &&) = delete;
 
   virtual ~Stats() = default;
+
+  virtual std::string ToString() const = 0;
 
   /**
    * Return whether the stats is enabled.

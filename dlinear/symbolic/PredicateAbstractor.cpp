@@ -10,14 +10,14 @@
 
 #include "PredicateAbstractor.h"
 
-#include "dlinear/util/logging.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/logging.h"
 
 using fmt::print;
 using std::cout;
-using std::stringstream;
 using std::set;
+using std::stringstream;
 using std::vector;
 
 namespace dlinear {
@@ -35,18 +35,13 @@ class PredicateAbstractorStat : public Stats {
   PredicateAbstractorStat &operator=(const PredicateAbstractorStat &) = delete;
   PredicateAbstractorStat &operator=(PredicateAbstractorStat &&) = delete;
   ~PredicateAbstractorStat() override {
-    if (enabled()) {
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of Convert", "Predicate Abstractor", num_convert_);
-      if (num_convert_ > 0) {
-        print(cout,
-              "{:<45} @ {:<20} = {:>15f} sec\n",
-              "Total time spent in Converting",
-              "Predicate Abstractor",
-              timer_convert_.seconds());
-      }
-    }
+    if (enabled()) cout << ToString() << std::endl;
   }
-
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
+                       "Predicate Abstractor", num_convert_, "Total time spent in Converting", "Predicate Abstractor",
+                       timer_convert_.seconds());
+  }
   void increase_num_convert() { increase(&num_convert_); }
 
   Timer timer_convert_;
@@ -67,9 +62,8 @@ Formula PredicateAbstractor::Convert(const Formula &f) {
   return Visit(f);
 }
 
-Formula PredicateAbstractor::Convert(const vector <Formula> &formulas) {
-  return Convert(
-      make_conjunction(set<Formula>{formulas.begin(), formulas.end()}));
+Formula PredicateAbstractor::Convert(const vector<Formula> &formulas) {
+  return Convert(make_conjunction(set<Formula>{formulas.begin(), formulas.end()}));
 }
 
 Formula PredicateAbstractor::Visit(const Formula &f) {
@@ -99,9 +93,7 @@ Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
   }
 }
 
-Formula PredicateAbstractor::VisitEqualTo(const Formula &f) {
-  return VisitAtomic(f);
-}
+Formula PredicateAbstractor::VisitEqualTo(const Formula &f) { return VisitAtomic(f); }
 
 Formula PredicateAbstractor::VisitNotEqualTo(const Formula &f) {
   const Expression &lhs{get_lhs_expression(f)};
@@ -121,34 +113,22 @@ Formula PredicateAbstractor::VisitGreaterThanOrEqualTo(const Formula &f) {
   return !VisitAtomic(lhs < rhs);
 }
 
-Formula PredicateAbstractor::VisitLessThan(const Formula &f) {
-  return VisitAtomic(f);
-}
+Formula PredicateAbstractor::VisitLessThan(const Formula &f) { return VisitAtomic(f); }
 
-Formula PredicateAbstractor::VisitLessThanOrEqualTo(const Formula &f) {
-  return VisitAtomic(f);
-}
+Formula PredicateAbstractor::VisitLessThanOrEqualTo(const Formula &f) { return VisitAtomic(f); }
 
 Formula PredicateAbstractor::VisitConjunction(const Formula &f) {
-  const set<Formula> operands{
-      map(get_operands(f),
-          [this](const Formula &formula) { return this->Visit(formula); })};
+  const set<Formula> operands{map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   return make_conjunction(operands);
 }
 
 Formula PredicateAbstractor::VisitDisjunction(const Formula &f) {
-  const set<Formula> operands{
-      map(get_operands(f),
-          [this](const Formula &formula) { return this->Visit(formula); })};
+  const set<Formula> operands{map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   return make_disjunction(operands);
 }
 
-Formula PredicateAbstractor::VisitNegation(const Formula &f) {
-  return !Visit(get_operand(f));
-}
+Formula PredicateAbstractor::VisitNegation(const Formula &f) { return !Visit(get_operand(f)); }
 
-Formula PredicateAbstractor::VisitForall(const Formula &f) {
-  return VisitAtomic(f);
-}
+Formula PredicateAbstractor::VisitForall(const Formula &f) { return VisitAtomic(f); }
 
-} // namespace dlinear
+}  // namespace dlinear

@@ -6,16 +6,11 @@
  */
 #include "Stats.h"
 
-using std::ostream;
 using std::endl;
+using std::ostream;
 
 namespace dlinear {
 
-ostream &operator<<(ostream &os, const Stats &stats) {
-  os << "Stats {" << endl
-     << "\t_enabled=" << stats.enabled_ << endl
-     << '}';
-  return os;
-}
+ostream &operator<<(ostream &os, const Stats &stats) { return os << stats.ToString(); }
 
-} // namespace dlinear
+}  // namespace dlinear

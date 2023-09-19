@@ -8,9 +8,9 @@
 #include "TseitinCnfizer.h"
 
 #include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
-#include "dlinear/util/Timer.h"
 
 namespace dlinear {
 
@@ -30,18 +30,13 @@ class TseitinCnfizerStat : public Stats {
   TseitinCnfizerStat &operator=(const TseitinCnfizerStat &) = delete;
   TseitinCnfizerStat &operator=(TseitinCnfizerStat &&) = delete;
   ~TseitinCnfizerStat() override {
-    if (enabled()) {
-      using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of Convert",
-            "Tseitin Cnfizer", num_convert_);
-      if (num_convert_ > 0) {
-        print(cout, "{:<45} @ {:<20} = {:>15f} sec\n",
-              "Total time spent in Converting", "Tseitin Cnfizer",
-              timer_convert_.seconds());
-      }
-    }
+    if (enabled()) cout << ToString() << std::endl;
   }
-
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
+                       "Tseitin Cnfizer", num_convert_, "Total time spent in Converting", "Tseitin Cnfizer",
+                       timer_convert_.seconds());
+  }
   void increase_num_convert() { increase(&num_convert_); }
 
   Timer timer_convert_;
@@ -98,27 +93,24 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
   //     = ∀y. (clause₁(x, y) ∧ ... ∧ clauseₙ(x, y))
   //     = (∀y. clause₁(x, y)) ∧ ... ∧ (∀y. clauseₙ(x, y))
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
-  const Formula &quantified_formula{get_quantified_formula(f)};  // φ(x, y)
+  const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
-  const set<Formula> clauses{
-      get_clauses(naive_cnfizer_.Convert(quantified_formula))};
-  const set<Formula> new_clauses{
-      ::dlinear::map(clauses, [&quantified_variables](const Formula &clause) {
-        DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
-        if (HaveIntersection(clause.GetFreeVariables(), quantified_variables)) {
-          return forall(quantified_variables, clause);
-        } else {
-          return clause;
-        }
-      })};
+  const set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
+  const set<Formula> new_clauses{::dlinear::map(clauses, [&quantified_variables](const Formula &clause) {
+    DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
+    if (HaveIntersection(clause.GetFreeVariables(), quantified_variables)) {
+      return forall(quantified_variables, clause);
+    } else {
+      return clause;
+    }
+  })};
 
   DLINEAR_ASSERT(!new_clauses.empty(), "Clause must not be empty");
   if (new_clauses.size() == 1) {
     return *(new_clauses.begin());
   } else {
     static size_t id{0};
-    const Variable bvar{string("forall") + to_string(id++),
-                        Variable::Type::BOOLEAN};
+    const Variable bvar{string("forall") + to_string(id++), Variable::Type::BOOLEAN};
     map_.emplace(bvar, make_conjunction(new_clauses));
     return Formula{bvar};
   }
@@ -128,18 +120,17 @@ Formula TseitinCnfizer::VisitConjunction(const Formula &f) {
   // Introduce a new Boolean variable, `bvar` for `f` and record the
   // relation `bvar ⇔ f`.
   static size_t id{0};
-  const set<Formula> transformed_operands
-      {::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
-  const Variable bvar{string("conj") + to_string(id++),
-                      Variable::Type::BOOLEAN};
+  const set<Formula> transformed_operands{
+      ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const Variable bvar{string("conj") + to_string(id++), Variable::Type::BOOLEAN};
   map_.emplace(bvar, make_conjunction(transformed_operands));
   return Formula{bvar};
 }
 
 Formula TseitinCnfizer::VisitDisjunction(const Formula &f) {
   static size_t id{0};
-  const set<Formula> &transformed_operands
-      {::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const set<Formula> &transformed_operands{
+      ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   const Variable bvar{string("disj") + to_string(id++), Variable::Type::BOOLEAN};
   map_.emplace(bvar, make_disjunction(transformed_operands));
   return Formula{bvar};
@@ -162,19 +153,32 @@ namespace {
 // pattern-matching.
 void Cnfize(const Variable &b, const Formula &f, vector<Formula> *clauses) {
   switch (f.get_kind()) {
-    case FormulaKind::False:DLINEAR_UNREACHABLE();
-    case FormulaKind::True:DLINEAR_UNREACHABLE();
-    case FormulaKind::Var:DLINEAR_UNREACHABLE();
-    case FormulaKind::Eq:DLINEAR_UNREACHABLE();
-    case FormulaKind::Neq:DLINEAR_UNREACHABLE();
-    case FormulaKind::Gt:DLINEAR_UNREACHABLE();
-    case FormulaKind::Geq:DLINEAR_UNREACHABLE();
-    case FormulaKind::Lt:DLINEAR_UNREACHABLE();
-    case FormulaKind::Leq:DLINEAR_UNREACHABLE();
-    case FormulaKind::Forall:DLINEAR_UNREACHABLE();
-    case FormulaKind::And:return CnfizeConjunction(b, f, clauses);
-    case FormulaKind::Or:return CnfizeDisjunction(b, f, clauses);
-    case FormulaKind::Not:return CnfizeNegation(b, f, clauses);
+    case FormulaKind::False:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::True:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Var:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Eq:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Neq:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Gt:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Geq:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Lt:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Leq:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::Forall:
+      DLINEAR_UNREACHABLE();
+    case FormulaKind::And:
+      return CnfizeConjunction(b, f, clauses);
+    case FormulaKind::Or:
+      return CnfizeDisjunction(b, f, clauses);
+    case FormulaKind::Not:
+      return CnfizeNegation(b, f, clauses);
   }
   DLINEAR_UNREACHABLE();
 }
@@ -196,8 +200,7 @@ void AddIff(const Formula &f1, const Formula &f2, vector<Formula> *clauses) {
 //   b ⇔ ¬b₁
 // = (b → ¬b₁) ∧ (¬b₁ → b)
 // = (¬b ∨ ¬b₁) ∧ (b₁ ∨ b)   (✓CNF)
-void CnfizeNegation(const Variable &b, const Formula &f,
-                    vector<Formula> *clauses) {
+void CnfizeNegation(const Variable &b, const Formula &f, vector<Formula> *clauses) {
   AddIff(Formula{b}, f, clauses);
 }  // namespace
 
@@ -207,13 +210,11 @@ void CnfizeNegation(const Variable &b, const Formula &f,
 // = (b → (b₁ ∧ ... ∧ bₙ)) ∧ ((b₁ ∧ ... ∧ bₙ) → b)
 // = (¬b ∨ (b₁ ∧ ... ∧ bₙ)) ∧ (¬b₁ ∨ ... ∨ ¬bₙ ∨ b)
 // = (¬b ∨ b₁) ∧ ... (¬b ∨ bₙ) ∧ (¬b₁ ∨ ... ∨ ¬bₙ ∨ b)   (✓CNF)
-void CnfizeConjunction(const Variable &b, const Formula &f,
-                       vector<Formula> *clauses) {
+void CnfizeConjunction(const Variable &b, const Formula &f, vector<Formula> *clauses) {
   // operands = {b₁, ..., bₙ}
   const set<Formula> &operands{get_operands(f)};
   // negated_operands = {¬b₁, ..., ¬bₙ}
-  const set<Formula> &negated_operands{
-      map(operands, [](const Formula &formula) { return !formula; })};
+  const set<Formula> &negated_operands{map(operands, [](const Formula &formula) { return !formula; })};
   Formula ret{Formula::True()};
   for (const Formula &b_i : operands) {
     Add(!b || b_i, clauses);
@@ -227,18 +228,15 @@ void CnfizeConjunction(const Variable &b, const Formula &f,
 // = (b → (b₁ ∨ ... ∨ bₙ)) ∧ ((b₁ ∨ ... ∨ bₙ) → b)
 // = (¬b ∨ b₁ ∨ ... ∨ bₙ) ∧ ((¬b₁ ∧ ... ∧ ¬bₙ) ∨ b)
 // = (¬b ∨ b₁ ∨ ... ∨ bₙ) ∧ (¬b₁ ∨ b) ∧ ... ∧ (¬bₙ ∨ b)   (✓CNF)
-void CnfizeDisjunction(const Variable &b, const Formula &f,
-                       vector<Formula> *clauses) {
+void CnfizeDisjunction(const Variable &b, const Formula &f, vector<Formula> *clauses) {
   // negated_operands = {¬b₁, ..., ¬bₙ}
-  const set<Formula> &negated_operands{
-      map(get_operands(f), [](const Formula &formula) { return !formula; })};
+  const set<Formula> &negated_operands{map(get_operands(f), [](const Formula &formula) { return !formula; })};
   Add(!b || f, clauses);  // (¬b ∨ b₁ ∨ ... ∨ bₙ)
   for (const Formula &neg_b_i : negated_operands) {
     Add(neg_b_i || b, clauses);
   }
 }
 
-} // namespace
+}  // namespace
 
-} // namespace dlinear
-
+}  // namespace dlinear

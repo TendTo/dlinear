@@ -15,10 +15,10 @@
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 
-using std::unordered_set;
 using std::cout;
 using std::set;
 using std::to_string;
+using std::unordered_set;
 
 namespace dlinear {
 
@@ -30,19 +30,12 @@ class IfThenElseElimStat : public Stats {
   IfThenElseElimStat &operator=(const IfThenElseElimStat &) = delete;
   IfThenElseElimStat &operator=(IfThenElseElimStat &&) = delete;
   ~IfThenElseElimStat() override {
-    if (enabled()) {
-      using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of Process", "ITE Elim", num_process_);
-      if (num_process_ > 0) {
-        print(cout,
-              "{:<45} @ {:<20} = {:>15f} sec\n",
-              "Total time spent in Processing",
-              "ITE Elim",
-              timer_process_.seconds());
-      }
-    }
+    if (enabled()) cout << ToString() << std::endl;
   }
-
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Process", "ITE Elim",
+                       num_process_, "Total time spent in Processing", "ITE Elim", timer_process_.seconds());
+  }
   void increase_num_process() { increase(&num_process_); }
 
   Timer timer_process_;
@@ -61,23 +54,16 @@ Formula IfThenElseEliminator::Process(const Formula &f) {
   return new_f && make_conjunction(added_formulas_);
 }
 
-const unordered_set<Variable, hash_value<Variable>> &
-IfThenElseEliminator::variables() const {
-  return ite_variables_;
-}
+const unordered_set<Variable, hash_value<Variable>> &IfThenElseEliminator::variables() const { return ite_variables_; }
 
 Expression IfThenElseEliminator::Visit(const Expression &e, const Formula &guard) {
   if (e.include_ite()) return VisitExpression<Expression>(this, e, guard);
   return e;
 }
 
-Expression IfThenElseEliminator::VisitVariable(const Expression &e, const Formula &) {
-  return e;
-}
+Expression IfThenElseEliminator::VisitVariable(const Expression &e, const Formula &) { return e; }
 
-Expression IfThenElseEliminator::VisitConstant(const Expression &e, const Formula &) {
-  return e;
-}
+Expression IfThenElseEliminator::VisitConstant(const Expression &e, const Formula &) { return e; }
 
 Expression IfThenElseEliminator::VisitAddition(const Expression &e, const Formula &guard) {
   // e = c₀ + ∑ᵢ cᵢ * eᵢ
@@ -102,8 +88,7 @@ Expression IfThenElseEliminator::VisitMultiplication(const Expression &e, const 
 }
 
 Expression IfThenElseEliminator::VisitDivision(const Expression &e, const Formula &guard) {
-  return Visit(get_first_argument(e), guard) /
-      Visit(get_second_argument(e), guard);
+  return Visit(get_first_argument(e), guard) / Visit(get_second_argument(e), guard);
 }
 
 Expression IfThenElseEliminator::VisitLog(const Expression &e, const Formula &guard) {
@@ -166,13 +151,11 @@ Expression IfThenElseEliminator::VisitTanh(const Expression &e, const Formula &g
   return tanh(Visit(get_argument(e), guard));
 }
 
-Expression IfThenElseEliminator::VisitMin(const Expression &e,
-                                          const Formula &guard) {
+Expression IfThenElseEliminator::VisitMin(const Expression &e, const Formula &guard) {
   return min(Visit(get_first_argument(e), guard), Visit(get_second_argument(e), guard));
 }
 
-Expression IfThenElseEliminator::VisitMax(const Expression &e,
-                                          const Formula &guard) {
+Expression IfThenElseEliminator::VisitMax(const Expression &e, const Formula &guard) {
   return max(Visit(get_first_argument(e), guard), Visit(get_second_argument(e), guard));
 }
 
@@ -190,25 +173,17 @@ Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Form
   return new_var;
 }
 
-Expression IfThenElseEliminator::VisitUninterpretedFunction(const Expression &e, const Formula &) {
-  return e;
-}
+Expression IfThenElseEliminator::VisitUninterpretedFunction(const Expression &e, const Formula &) { return e; }
 
 Formula IfThenElseEliminator::Visit(const Formula &f, const Formula &guard) {
   return VisitFormula<Formula>(this, f, guard);
 }
 
-Formula IfThenElseEliminator::VisitFalse(const Formula &f, const Formula &) {
-  return f;
-}
+Formula IfThenElseEliminator::VisitFalse(const Formula &f, const Formula &) { return f; }
 
-Formula IfThenElseEliminator::VisitTrue(const Formula &f, const Formula &) {
-  return f;
-}
+Formula IfThenElseEliminator::VisitTrue(const Formula &f, const Formula &) { return f; }
 
-Formula IfThenElseEliminator::VisitVariable(const Formula &f, const Formula &) {
-  return f;
-}
+Formula IfThenElseEliminator::VisitVariable(const Formula &f, const Formula &) { return f; }
 
 Formula IfThenElseEliminator::VisitEqualTo(const Formula &f, const Formula &guard) {
   return Visit(get_lhs_expression(f), guard) == Visit(get_rhs_expression(f), guard);
@@ -280,9 +255,8 @@ Formula IfThenElseEliminator::VisitForall(const Formula &f, const Formula &) {
   const Formula &quantified_formula{get_quantified_formula(f)};
   IfThenElseEliminator ite_eliminator_forall;
   const Formula eliminated{ite_eliminator_forall.Process(!quantified_formula)};
-  quantified_variables.insert(ite_eliminator_forall.variables().begin(),
-                              ite_eliminator_forall.variables().end());
+  quantified_variables.insert(ite_eliminator_forall.variables().begin(), ite_eliminator_forall.variables().end());
   return forall(quantified_variables, Nnfizer{}.Convert(!eliminated));
 }
 
-} // namespace dlinear
+}  // namespace dlinear

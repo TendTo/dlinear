@@ -112,14 +112,12 @@ class SoplexSatSolverStat : public Stats {
   SoplexSatSolverStat &operator=(const SoplexSatSolverStat &) = delete;
   SoplexSatSolverStat &operator=(SoplexSatSolverStat &&) = delete;
   ~SoplexSatSolverStat() override {
-    if (enabled()) {
-      using fmt::print;
-      print(cout, "{:<45} @ {:<20} = {:>15}\n", "Total # of CheckSat", "SAT level", num_check_sat_);
-      print(cout, "{:<45} @ {:<20} = {:>15f} sec\n", "Total time spent in SAT checks", "SAT level",
-            timer_check_sat_.seconds());
-    }
+    if (enabled()) cout << ToString() << std::endl;
   }
-
+  std::string ToString() const override {
+    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of CheckSat", "SAT level",
+                       num_check_sat_, "Total time spent in SAT checks", "SAT level", timer_check_sat_.seconds());
+  }
   int num_check_sat_{0};
   Timer timer_check_sat_;
 };
