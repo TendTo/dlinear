@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+
 #include "benchmark/util/BenchConfig.h"
 #include "benchmark/util/ConfigFileReader.h"
 
@@ -41,23 +42,19 @@ class BenchmarkProgram {
    * the --exhaustive flag
    * @return the argc parameter, meaning the size of usable arguments in @p argv
    */
-  static inline int InitArgv(const char *argv[],
-                             const std::string &filename,
-                             const std::string &solver,
+  static inline int InitArgv(const char *argv[], const std::string &filename, const std::string &solver,
                              const std::string &precision);
 
  private:
   const static int DEFAULT_ARGC{6};
-
   int argc_;
   const char **argv_;
   BenchConfig config_;
 
-  /** Register all the benchmarks that will be run. */
-  void RegisterBenchmarks();
-
   /** Start the benchmarking framework, making it run all registered benchmarks */
   void StartBenchmarks();
+
+  void PrintRow(const std::string &row, bool overwrite = false);
 };
 
-} // namespace dlinear::benchmark
+}  // namespace dlinear::benchmark

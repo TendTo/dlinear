@@ -7,8 +7,8 @@
 
 #include "BenchmarkProgram.h"
 
-#include "benchmark/util/InfoGatherer.h"
 #include "benchmark/util/BenchArgParser.h"
+#include "benchmark/util/InfoGatherer.h"
 
 using std::string;
 using std::vector;
@@ -22,16 +22,25 @@ BenchmarkProgram::BenchmarkProgram(int argc, const char *argv[]) : argc_{argc}, 
 }
 
 int BenchmarkProgram::Run() {
-  RegisterBenchmarks();
+  StartBenchmarks();
   return 0;
 }
 
-void BenchmarkProgram::RegisterBenchmarks() {
+void BenchmarkProgram::PrintRow(const std::string &row, bool overwrite) {
+  if (config_.output_file().empty()) {
+    std::cout << row << std::endl;
+  } else {
+    std::ofstream output_file{config_.output_file(), overwrite ? std::ofstream::trunc : std::ofstream::app};
+    output_file << row << std::endl;
+    output_file.close();
+  }
+}
+
+void BenchmarkProgram::StartBenchmarks() {
   ConfigFileReader config_file_reader{config_.config_file()};
   config_file_reader.read();
 
-  std::stringstream ss;
-  ss << "file,solver,assertions,precision,timeUnit,time,actualPrecision,result" << std::endl;
+  PrintRow("file,solver,assertions,precision,timeUnit,time,actualPrecision,result", true);
 
   std::cout << "Starting benchmarking" << std::endl;
   for (const string &filename : config_.files()) {
@@ -40,28 +49,17 @@ void BenchmarkProgram::RegisterBenchmarks() {
         InfoGatherer info_gatherer{filename, solver, precision, config_.timeout()};
         if (config_.isDryRun()) continue;
         if (info_gatherer.run() && info_gatherer.nAssertions() > 0) {
-          ss << info_gatherer << std::endl;
+          PrintRow((std::stringstream{} << info_gatherer).str());
         } else {
-
           std::cerr << "Could not gather info from " << filename << " with solver " << solver << " and precision "
                     << precision << std::endl;
         }
       }
     }
   }
-
-  if (config_.output_file().empty()) {
-    std::cout << ss.str();
-  } else {
-    std::ofstream output_file{config_.output_file()};
-    output_file << ss.str();
-    output_file.close();
-  }
 }
 
-inline int BenchmarkProgram::InitArgv(const char *argv[],
-                                      const string &filename,
-                                      const string &solver,
+inline int BenchmarkProgram::InitArgv(const char *argv[], const string &filename, const string &solver,
                                       const string &precision) {
   int argc = DEFAULT_ARGC;
   argv[0] = "dlinear";
@@ -78,4 +76,4 @@ inline int BenchmarkProgram::InitArgv(const char *argv[],
   return argc;
 }
 
-} // namespace dlinear::benchmark
+}  // namespace dlinear::benchmark
