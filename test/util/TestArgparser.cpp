@@ -64,6 +64,8 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_EQ(parser_.get<int>("verbosity"), 2);
   EXPECT_EQ(parser_.get<int>("verbose-simplex"), 0);
   EXPECT_FALSE(parser_.get<bool>("worklist-fixpoint"));
+  EXPECT_FALSE(parser_.get<bool>("silent"));
+  EXPECT_FALSE(parser_.get<bool>("skip-check-sat"));
 }
 
 TEST_F(TestArgParser, ParseVerbosity) {
@@ -204,4 +206,39 @@ TEST_F(TestArgParser, WrongFormat) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "invalid"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --format");
+}
+
+TEST_F(TestArgParser, SkipCheckSat) {
+  const int argc = 3;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--skip-check-sat"};
+  parser_.parse(argc, argv);
+  EXPECT_TRUE(parser_.get<bool>("skip-check-sat"));
+}
+
+TEST_F(TestArgParser, WrongSkipCheckSat) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--skip-check-sat", "--produce-models"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --produce-models");
+}
+
+TEST_F(TestArgParser, Exhaustive) {
+  const int argc = 3;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--exhaustive"};
+  parser_.parse(argc, argv);
+  EXPECT_TRUE(parser_.get<bool>("exhaustive"));
+  auto config = parser_.toConfig();
+  EXPECT_DOUBLE_EQ(config.precision(), 0.0);
+}
+
+TEST_F(TestArgParser, Silent) {
+  const int argc = 3;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--silent"};
+  parser_.parse(argc, argv);
+  EXPECT_TRUE(parser_.get<bool>("silent"));
+}
+
+TEST_F(TestArgParser, WrongSilentWithVerbosity) {
+  const int argc = 5;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--silent", "--verbosity", "1"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --verbosity");
 }

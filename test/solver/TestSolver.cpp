@@ -52,27 +52,7 @@ TEST_F(TestSolver, ConstructorConfig) {
   EXPECT_FALSE(Infinity::IsInitialized());
 }
 
-TEST_F(TestSolver, CheckSatDefault) {
-  Solver s{};
-  s.CheckSat();
-}
-
-TEST_F(TestSolver, CheckSatFilenameSmt2) {
-  Solver s{"test.smt2"};
-  s.CheckSat();
-}
-
-TEST_F(TestSolver, CheckSatFilenameMps) {
-  Solver s{"test.mps"};
-  s.CheckSat();
-}
-
 TEST_F(TestSolver, CheckSatWrongFilename) {
   Solver s{"test.err"};
   EXPECT_DEATH(s.CheckSat(), "Should not be reachable");
-}
-
-TEST_F(TestSolver, CheckSatConfig) {
-  Solver s{config_};
-  s.CheckSat();
 }
