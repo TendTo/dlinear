@@ -1,5 +1,7 @@
 # Dlinear
 
+[![dlinear CI](https://github.com/TendTo/dlinear/actions/workflows/dlinear.yml/badge.svg)](https://github.com/TendTo/dlinear/actions/workflows/dlinear.yml)
+
 Delta-complete SMT solver for linear programming.
 Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://github.com/dreal/dreal4).
 
@@ -14,6 +16,20 @@ Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://g
 - [gmp](https://gmplib.org/) to compile [qsopt_ex](https://gmplib.org/) and [soplex](https://soplex.zib.de/)
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
 - [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` and `.mps` files
+
+## Default parsing and solving behavior
+
+dlinear will parse and solve problems in `smt2` or `mps` format.
+The default behavior is to parse the input and produce a satisfiability result, either `delta-sat` or `unsat`.
+
+> **Warning**  
+> Some `smt` directives will be ignored, since their role is taken by the command line flags:
+>
+> - `(check-sat)` is assumed to be present by default. It can be disabled with `--no-check-sat`
+> - `(produce-models)` is ignored by default. It can be enabled with `-m/--produce-models`
+> - `(minimize)`/`(maximize)` are ignored by default. They can be enabled with `-m/--produce-models`
+>
+>   This also implies that, when parsing a `mps` file, the objective function is ignored, unless the `-m/--produce-models` flag is used.
 
 ### Useful commands
 

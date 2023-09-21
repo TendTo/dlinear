@@ -101,6 +101,20 @@ class Smt2Driver {
   /** Return a model computed by the solver in response to an invocation of the check-sat. */
   void GetModel();
 
+  /**
+   * Maximize the objective function @p f. The objective function is
+   * added to the context as a constraint.
+   * @param f expression to maximize
+   */
+  void Maximize(const Expression &f);
+
+  /**
+   * Minimize the objective function @p f. The objective function is
+   * added to the context as a constraint.
+   * @param f expression to minimize
+   */
+  void Minimize(const Expression &f);
+
   class VariableOrConstant {
    public:
     explicit VariableOrConstant(Variable var) : var_{std::move(var)}, is_var_{true} {}

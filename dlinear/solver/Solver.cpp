@@ -28,14 +28,16 @@ Solver::Solver(Config config)
 SolverOutput Solver::CheckSat() {
   DLINEAR_TRACE("Solver::CheckSat");
   if (output_.result() != SolverResult::UNSOLVED) return output_;
-  DLINEAR_DEBUG("Solver::CheckSat -- No previous result fond.");
+  DLINEAR_DEBUG("Solver::CheckSat -- No cached result fond.");
   if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
   output_.mutable_n_assertions() = context_.assertions().size();
 
   if (config_.skip_check_sat())
     output_.mutable_result() = SolverResult::SKIP_SAT;
+  else if (context_.have_objective())
+    CheckObjCore();
   else
-    CheckCore();
+    CheckSatCore();
 
   return output_;
 }
@@ -71,15 +73,9 @@ bool Solver::ParseMps() {
   return mps_driver.parse_file(config_.filename());
 }
 
-void Solver::CheckCore() {
-  if (context_.have_objective())
-    CheckObjCore();
-  else
-    CheckSatCore();
-}
-
 void Solver::CheckObjCore() {
   DLINEAR_DEBUG("Solver::CheckObjCore");
+  output_.mutable_model() = context_.box();
   int status =
       context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound(), &output_.mutable_model());
   if (LP_DELTA_OPTIMAL == status) {

@@ -136,7 +136,7 @@ void MpsDriver::AddRow(Sense sense, const std::string &row) {
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
-  if (row == obj_row_) return;
+  if (!context_->config().produce_models() && row == obj_row_) return;
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
     const Variable var = Variable{column};
@@ -157,15 +157,13 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
         rhs_[row] = rows_[row] <= value;
         break;
       case Sense::G:
-        // rhs_[row] = value <= rows_[row];
-        rhs_[row] = rows_[row] >= value;
+        rhs_[row] = value <= rows_[row];
         break;
       case Sense::E:
         rhs_[row] = rows_[row] == value;
         break;
       case Sense::N:
-        // TODO(Tend): Check if this is correct
-        DLINEAR_DEBUG("Sense N is used only for objective function. No action to take");
+        DLINEAR_WARN("Sense N is used only for objective function. No action to take");
         break;
       default:
         DLINEAR_UNREACHABLE();
@@ -205,8 +203,6 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
 void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column, value);
   if (!VerifyStrictBound(bound)) return;
-  if (bounds_.find(column) == bounds_.end())
-    bounds_[column] = Formula::True();  // If not already in the map, add a placeholder formula
   try {
     switch (bound_type) {
       case BoundType::UP:
@@ -237,8 +233,6 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
 void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column) {
   DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column);
   if (!VerifyStrictBound(bound)) return;
-  if (bounds_.find(column) == bounds_.end())
-    bounds_[column] = Formula::True();  // If not already in the map, add a placeholder formula
   try {
     switch (bound_type) {
       case BoundType::BV:
@@ -283,6 +277,13 @@ void MpsDriver::End() {
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
     context_->Assert(row);
+  }
+  if (context_->config().produce_models()) {
+    if (is_min_) {
+      context_->Minimize(rows_.at(obj_row_));
+    } else {
+      context_->Maximize(rows_.at(obj_row_));
+    }
   }
 }
 

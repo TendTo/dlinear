@@ -96,6 +96,13 @@ void Smt2Driver::CheckSat() {}
 
 void Smt2Driver::GetModel() {}
 
+void Smt2Driver::Maximize(const Expression &f) {
+  if (context_->config().produce_models()) context_->Maximize(f);
+}
+void Smt2Driver::Minimize(const Expression &f) {
+  if (context_->config().produce_models()) context_->Minimize(f);
+}
+
 Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
   const Variable v{ParseVariableSort(name, sort)};
   scope_.insert(v.get_name(), VariableOrConstant(v));

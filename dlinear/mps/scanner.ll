@@ -77,7 +77,7 @@ mps_yycolumn += yyleng;
 
 whitespace      [ \t\r]
 comment         ^\*[^\n\r]*
-symbol          [^ \t\r\n]+
+symbol          [^ \t\r\n'"]+
 
 /*** End of Declarations ***/
 

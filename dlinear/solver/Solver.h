@@ -48,7 +48,6 @@ class Solver {
   bool ParseInput();
   bool ParseSmt2();
   bool ParseMps();
-  void CheckCore();
   void CheckSatCore();
   void CheckObjCore();
 };

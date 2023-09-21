@@ -216,13 +216,13 @@ command_get_model:
                 ;
 
 command_maximize: '(' TK_MAXIMIZE term ')' {
-                      driver.mutable_context().Maximize($3->expression());
+                      driver.Maximize($3->expression());
                       delete $3;
                 }
                 ;
 
 command_minimize: '(' TK_MINIMIZE term ')' {
-                      driver.mutable_context().Minimize($3->expression());
+                      driver.Minimize($3->expression());
                       delete $3;
                 }
                 ;
