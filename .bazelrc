@@ -11,7 +11,9 @@ build --incompatible_strict_action_env
 build --disk_cache=~/.cache/dlinear_bazel
 
 # Debug build
+build:debug --disk_cache=~/.cache/dlinear_bazel_debug
 build:debug --cxxopt=-O0
+build:debug --cxxopt=-p
 build:debug --compilation_mode=dbg
 
 # Optimized build
