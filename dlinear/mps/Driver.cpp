@@ -13,8 +13,6 @@
 #include <sstream>
 #include <utility>
 #include <vector>
-// Optional is a header-only library for optional/maybe values.
-#include <tl/optional.hpp>
 
 #include "dlinear/mps/parser.yy.hpp"
 #include "dlinear/util/Stats.h"
@@ -34,7 +32,6 @@ using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::vector;
-using tl::optional;
 
 namespace dlinear::mps {
 
@@ -49,7 +46,7 @@ class MpsDriverStat : public Stats {
   ~MpsDriverStat() override {
     if (enabled()) cout << ToString() << std::endl;
   }
-  std::string ToString() const override {
+  [[nodiscard]] std::string ToString() const override {
     return fmt::format("{:<45} @ {:<20} = {:>15} sec", "Total time spent in MPS parsing", "MPS Driver",
                        timer_parse_mps_.seconds());
   }
@@ -92,10 +89,10 @@ bool MpsDriver::parse_string(const string &input, const string &sname) {
 }
 
 bool MpsDriver::VerifyStrictBound(const std::string &bound) {
-  if (strict_mps_) [[unlikely]] {            // NOLINT
-    if (bound_name_.empty()) [[unlikely]] {  // NOLINT
+  if (strict_mps_) {
+    if (bound_name_.empty()) {
       bound_name_ = bound;
-    } else if (bound_name_ != bound) [[unlikely]] {  // NOLINT
+    } else if (bound_name_ != bound) {
       DLINEAR_WARN_FMT("First bound was '{}', found new bound '{}'. Skipping", bound_name_, bound);
       return false;
     }
@@ -104,10 +101,10 @@ bool MpsDriver::VerifyStrictBound(const std::string &bound) {
 }
 
 bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
-  if (strict_mps_) [[unlikely]] {          // NOLINT
-    if (rhs_name_.empty()) [[unlikely]] {  // NOLINT
+  if (strict_mps_) {
+    if (rhs_name_.empty()) {
       rhs_name_ = rhs;
-    } else if (rhs_name_ != rhs) [[unlikely]] {  // NOLINT
+    } else if (rhs_name_ != rhs) {
       DLINEAR_WARN_FMT("First RHS was '{}', found new RHS '{}'. Skipping", rhs_name_, rhs);
       return false;
     }
@@ -130,18 +127,23 @@ void MpsDriver::ObjectiveName(const std::string &row) {
 
 void MpsDriver::AddRow(Sense sense, const std::string &row) {
   DLINEAR_TRACE_FMT("Driver::AddRow {} {}", sense, row);
+  if (sense == Sense::N && obj_row_.empty()) {
+    DLINEAR_DEBUG("Objective row not found. Adding the first row with sense N as objective row");
+    obj_row_ = row;
+  }
   row_senses_[row] = sense;
 }
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
+  if (row == obj_row_) return;
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
     const Variable var = Variable{column};
     columns_[column] = var;  // If not already in the map, add the variable
     context_->DeclareVariable(var);
   }
-  rows_[row] += Expression{value * columns_[column]};
+  rows_[row] += value * columns_[column];
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
 }
 
@@ -264,24 +266,22 @@ void MpsDriver::End() {
   DLINEAR_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   for (const auto &[row, sense] : row_senses_) {
     if (rhs_.find(row) == rhs_.end()) {
-      DLINEAR_DEBUG_FMT("Row {} has no RHS. Adding 0", row);
+      DLINEAR_TRACE_FMT("Row {} has no RHS. Adding 0", row);
       AddRhs(rhs_name_, row, 0);
     }
   }
   for (const auto &[column, var] : columns_) {
     if (skip_lower_bound_.find(column) == skip_lower_bound_.end()) {
-      DLINEAR_DEBUG_FMT("Column has no lower bound. Adding 0 <= {}", column);
+      DLINEAR_TRACE_FMT("Column has no lower bound. Adding 0 <= {}", column);
       AddBound(BoundType::LO, bound_name_, column, 0);
     }
   }
   DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());
   for (const auto &[name, bound] : bounds_) {
-    DLINEAR_DEBUG_FMT("Assertion {}", bound);
     context_->Assert(bound);
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
-    DLINEAR_DEBUG_FMT("Assertion {}", row);
     context_->Assert(row);
   }
 }

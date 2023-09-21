@@ -123,6 +123,7 @@ symbol          [^ \t\r\n]+
                                     return token::QUOTED_SYMBOL;
                                 }
 
+<NAME_SECTION>[^ \r\t\n]+             { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
 <NAME_SECTION>[^ \r\t\n].+[^ \r\t\n]  { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
 <NAME_SECTION>{whitespace}+           {  }
 <NAME_SECTION>[\n]                    { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
