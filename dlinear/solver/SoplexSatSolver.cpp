@@ -10,6 +10,8 @@
 
 #include "SoplexSatSolver.h"
 
+#include <string>
+
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
@@ -21,8 +23,6 @@ using std::make_pair;
 using std::pair;
 using std::set;
 using std::vector;
-
-using tl::optional;
 
 using soplex::DSVectorRational;
 using soplex::LPColRational;
@@ -169,7 +169,7 @@ set<int> SoplexSatSolver::GetMainActiveLiterals() const {
   return lits;
 }
 
-optional<SoplexSatSolver::Model> SoplexSatSolver::CheckSat(const Box &box) {
+std::optional<SoplexSatSolver::Model> SoplexSatSolver::CheckSat(const Box &box) {
   static SoplexSatSolverStat stat{DLINEAR_INFO_ENABLED};
   DLINEAR_DEBUG_FMT("SoplexSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));

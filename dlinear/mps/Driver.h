@@ -267,7 +267,7 @@ class MpsDriver {
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
 
-  Context *context_;  ///< The context filled during parsing of the expressions.
+  Context *context_{};  ///< The context filled during parsing of the expressions.
 
   bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
   bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.

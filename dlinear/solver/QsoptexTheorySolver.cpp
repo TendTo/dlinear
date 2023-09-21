@@ -7,6 +7,8 @@
 
 #include "QsoptexTheorySolver.h"
 
+#include <string>
+
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Timer.h"

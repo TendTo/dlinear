@@ -27,7 +27,7 @@ class Solver {
  public:
   Solver();
   explicit Solver(const std::string &filename);
-  explicit Solver(const Config &config);
+  explicit Solver(Config config);
   Solver(const Solver &) = delete;
   Solver(Solver &&) = delete;
   Solver &operator=(const Solver &) = delete;

@@ -10,6 +10,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/Box.h"
@@ -48,11 +49,11 @@ class SolverOutput {
  public:
   explicit SolverOutput(mpq_class precision, bool produce_models = false, bool with_timings = false)
       : result_{SolverResult::UNSOLVED},
-        actual_precision_{precision},
+        actual_precision_{std::move(precision)},
         produce_models_{produce_models},
         with_timings_{with_timings} {}
 
-  SolverResult result() const { return result_; }
+  SolverResult &mutable_result() { return result_; }
   mpq_class &mutable_actual_precision() { return actual_precision_; }
   mpq_class &mutable_lower_bound() { return lower_bound_; }
   mpq_class &mutable_upper_bound() { return upper_bound_; }
@@ -61,21 +62,21 @@ class SolverOutput {
   bool &mutable_produce_models() { return produce_models_; }
   uint &mutable_n_assertions() { return n_assertions_; }
 
-  SolverResult &mutable_result() { return result_; }
-  const mpq_class &actual_precision() const { return actual_precision_; }
-  double precision_upper_bound() const;
-  const mpq_class &lower_bound() const { return lower_bound_; }
-  const mpq_class &upper_bound() const { return upper_bound_; }
-  const Box &model() const { return model_; }
-  bool with_timings() const { return with_timings_; }
-  bool produce_models() const { return produce_models_; }
-  uint n_assertions() const { return n_assertions_; }
-  bool is_sat() const {
+  [[nodiscard]] SolverResult result() const { return result_; }
+  [[nodiscard]] const mpq_class &actual_precision() const { return actual_precision_; }
+  [[nodiscard]] double precision_upper_bound() const;
+  [[nodiscard]] const mpq_class &lower_bound() const { return lower_bound_; }
+  [[nodiscard]] const mpq_class &upper_bound() const { return upper_bound_; }
+  [[nodiscard]] const Box &model() const { return model_; }
+  [[nodiscard]] bool with_timings() const { return with_timings_; }
+  [[nodiscard]] bool produce_models() const { return produce_models_; }
+  [[nodiscard]] uint n_assertions() const { return n_assertions_; }
+  [[nodiscard]] bool is_sat() const {
     return result_ == SolverResult::SAT || result_ == SolverResult::DELTA_SAT || result_ == SolverResult::OPTIMAL ||
            result_ == SolverResult::DELTA_OPTIMAL;
   }
 
-  std::string ToString() const;
+  [[nodiscard]] std::string ToString() const;
 
  private:
   uint n_assertions_{0};

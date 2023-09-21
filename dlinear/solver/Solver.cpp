@@ -6,7 +6,8 @@
  */
 #include "Solver.h"
 
-#include <tl/optional.hpp>
+#include <optional>
+#include <utility>
 
 #include "dlinear/mps/Driver.h"
 #include "dlinear/smt2/Driver.h"
@@ -17,9 +18,9 @@
 
 namespace dlinear {
 Solver::Solver() : Solver{Config{true}} {}
-Solver::Solver(const std::string& filename) : Solver{Config{filename}} {}
-Solver::Solver(const Config& config)
-    : config_{config},
+Solver::Solver(const std::string &filename) : Solver{Config{filename}} {}
+Solver::Solver(Config config)
+    : config_{std::move(config)},
       guard_{config_},
       context_{config_},
       output_{config_.precision(), config_.produce_models(), config_.with_timings()} {}
@@ -54,7 +55,6 @@ bool Solver::ParseInput() {
     default:
       DLINEAR_UNREACHABLE();
   }
-  return false;
 }
 
 bool Solver::ParseSmt2() {
@@ -95,7 +95,7 @@ void Solver::CheckObjCore() {
 
 void Solver::CheckSatCore() {
   DLINEAR_DEBUG("Solver::CheckSatCore");
-  const tl::optional<Box> model{context_.CheckSat(&output_.mutable_actual_precision())};
+  const std::optional<Box> model{context_.CheckSat(&output_.mutable_actual_precision())};
   if (model) {
     output_.mutable_model() = *model;
     output_.mutable_result() = SolverResult::DELTA_SAT;

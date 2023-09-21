@@ -72,14 +72,6 @@ github_archive(
 )
 
 github_archive(
-    name = "tl_optional",  # Creative Commons Zero v1.0 Universal | tl optional library that extends std::optional
-    build_file = "//third_party:tl_optional.BUILD.bazel",
-    commit = "v1.1.0",
-    repository = "TartanLlama/optional",
-    sha256 = "88ece79f3de5ccaec4191951a222f95cc80c4381dafd3163bdb1ff87cedf3118",
-)
-
-github_archive(
     name = "picosat",  # MIT
     build_file = "//third_party:picosat.BUILD.bazel",
     commit = "4ee7aa1d1c645df8fa9daa07f2be17c6d03b35fc",  # master

@@ -12,10 +12,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-// Optional is a header-only library for optional/maybe values.
-#include <tl/optional.hpp>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/Logic.h"
@@ -79,7 +78,7 @@ class Context {
    * @p actual_precision (write-only) to the actual max infeasibility where
    * appropriate.
    */
-  tl::optional<Box> CheckSat(mpq_class *actual_precision);
+  std::optional<Box> CheckSat(mpq_class *actual_precision);
 
   /**
    * Checks the satisfiability of the asserted formulas, and (where

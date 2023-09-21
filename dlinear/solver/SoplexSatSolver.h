@@ -14,13 +14,12 @@
 #include <cmath>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-// Optional is a header-only library for optional/maybe values.
-#include <tl/optional.hpp>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/soplex.h"
@@ -90,7 +89,7 @@ class SoplexSatSolver {
    * @param box box of variables to check
    * @return whether the problem is satisfiable as an optional
    */
-  tl::optional<Model> CheckSat(const Box &box);
+  std::optional<Model> CheckSat(const Box &box);
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();

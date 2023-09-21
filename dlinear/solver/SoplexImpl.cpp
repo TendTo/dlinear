@@ -18,7 +18,6 @@
 
 using std::pair;
 using std::vector;
-using tl::optional;
 
 namespace dlinear {
 
@@ -58,8 +57,8 @@ void Context::SoplexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
-                                                mpq_class * /*actual_precision*/) {
+std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
+                                                     mpq_class * /*actual_precision*/) {
   DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("Context::SoplexImpl::CheckSat: Box =\n{}", box);
   if (box.empty()) {

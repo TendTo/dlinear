@@ -12,8 +12,6 @@
 #include <sstream>
 #include <utility>
 #include <vector>
-// Optional is a header-only library for optional/maybe values.
-#include <tl/optional.hpp>
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
@@ -32,7 +30,6 @@ using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::vector;
-using tl::optional;
 
 namespace dlinear::smt2 {
 
@@ -47,7 +44,7 @@ class Smt2DriverStat : public Stats {
   ~Smt2DriverStat() override {
     if (enabled()) cout << ToString() << std::endl;
   }
-  std::string ToString() const override {
+  [[nodiscard]] std::string ToString() const override {
     return fmt::format("{:<45} @ {:<20} = {:>15} sec", "Total time spent in SMT2 parsing", "SMT2 Driver",
                        timer_parse_mps_.seconds());
   }

@@ -11,18 +11,15 @@
 
 #include "dlinear/util/logging.h"
 
-using std::unordered_set;
 using std::string;
+using std::unordered_set;
 using std::vector;
-using tl::optional;
 
 namespace {
 
 bool ParseBooleanOption(const string &key, const string &val) {
-  if (val == "true")
-    return true;
-  if (val == "false")
-    return false;
+  if (val == "true") return true;
+  if (val == "false") return false;
   DLINEAR_RUNTIME_ERROR_FMT("Unknown value {} is provided for option {}", val, key);
 }
 
@@ -40,11 +37,11 @@ Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objectiv
   boxes_.push_back(Box{});
 }
 
-optional <Box> Context::Impl::CheckSat(mpq_class *actual_precision) {
+std::optional<Box> Context::Impl::CheckSat(mpq_class *actual_precision) {
   auto result = CheckSatCore(stack_, box(), actual_precision);
   if (result) {
     // In case of delta-sat, do post-processing.
-    //Tighten(&(*result), config_.precision());
+    // Tighten(&(*result), config_.precision());
     DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", *result);
     model_ = ExtractModel(*result);
     return model_;
@@ -86,7 +83,7 @@ void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Exp
   SetInterval(v, lb_fp, ub_fp);
 }
 
-void Context::Impl::Minimize(const vector <Expression> &functions) {
+void Context::Impl::Minimize(const vector<Expression> &functions) {
   DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   const Expression &obj_expr{functions[0].Expand()};
@@ -95,7 +92,7 @@ void Context::Impl::Minimize(const vector <Expression> &functions) {
   MinimizeCore(obj_expr);
 }
 
-void Context::Impl::Maximize(const vector <Expression> &functions) {
+void Context::Impl::Maximize(const vector<Expression> &functions) {
   DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   // Negate objective function
@@ -130,8 +127,7 @@ void Context::Impl::SetOption(const string &key, const double val) {
   option_[key] = fmt::format("{}", val);
 
   if (key == ":precision") {
-    if (val <= 0.0)
-      DLINEAR_RUNTIME_ERROR_FMT("Precision has to be positive (input = {}).", val);
+    if (val <= 0.0) DLINEAR_RUNTIME_ERROR_FMT("Precision has to be positive (input = {}).", val);
     return config_.mutable_precision().set_from_file(val);
   }
 }
@@ -139,16 +135,14 @@ void Context::Impl::SetOption(const string &key, const double val) {
 void Context::Impl::SetOption(const string &key, const string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
-  if (key == ":polytope")
-    return config_.mutable_use_polytope().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":polytope") return config_.mutable_use_polytope().set_from_file(ParseBooleanOption(key, val));
   if (key == ":forall-polytope")
     return config_.mutable_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
   if (key == ":local-optimization")
     return config_.mutable_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
   if (key == ":worklist-fixpoint")
     return config_.mutable_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":produce-models")
-    return config_.mutable_produce_models().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":produce-models") return config_.mutable_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
 Box Context::Impl::ExtractModel(const Box &box) const {
@@ -169,19 +163,11 @@ bool Context::Impl::is_model_variable(const Variable &v) const {
   return model_variables_.find(v.get_id()) != model_variables_.end();
 }
 
-void Context::Impl::mark_model_variable(const Variable &v) {
-  model_variables_.insert(v.get_id());
-}
+void Context::Impl::mark_model_variable(const Variable &v) { model_variables_.insert(v.get_id()); }
 
-const ScopedVector<Formula> &Context::Impl::assertions() const {
-  return stack_;
-}
+const ScopedVector<Formula> &Context::Impl::assertions() const { return stack_; }
 
-bool Context::Impl::have_objective() const {
-  return have_objective_;
-}
+bool Context::Impl::have_objective() const { return have_objective_; }
 
-bool Context::Impl::is_max() const {
-  return is_max_;
-}
-} // namespace dlinear
+bool Context::Impl::is_max() const { return is_max_; }
+}  // namespace dlinear

@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <set>
+#include <string>
 
 #include "dlinear/symbolic/Nnfizer.h"
 #include "dlinear/util/Stats.h"

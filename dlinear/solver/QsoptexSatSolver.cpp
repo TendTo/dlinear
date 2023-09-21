@@ -7,6 +7,8 @@
 
 #include "QsoptexSatSolver.h"
 
+#include <string>
+
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
@@ -17,7 +19,6 @@ using std::make_pair;
 using std::pair;
 using std::set;
 using std::vector;
-using tl::optional;
 
 namespace dlinear {
 
@@ -156,7 +157,7 @@ set<int> QsoptexSatSolver::GetMainActiveLiterals() const {
   return lits;
 }
 
-optional<QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, optional<Expression> obj_expr) {
+std::optional<QsoptexSatSolver::Model> QsoptexSatSolver::CheckSat(const Box &box, std::optional<Expression> obj_expr) {
   static SatSolverStat stat{DLINEAR_INFO_ENABLED};
   DLINEAR_DEBUG_FMT("QsoptexSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));

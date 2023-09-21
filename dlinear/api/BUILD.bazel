@@ -17,7 +17,6 @@ dlinear_cc_library(
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:exception",
-        "@tl_optional",
     ],
 )
 

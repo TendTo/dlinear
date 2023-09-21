@@ -12,11 +12,10 @@
 #include <picosat/picosat.h>
 
 #include <map>
+#include <optional>
 #include <set>
 #include <utility>
 #include <vector>
-// Optional is a header-only library for optional values.
-#include <tl/optional.hpp>
 
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
@@ -91,7 +90,7 @@ class QsoptexSatSolver {
    * @param obj_expr the objective expression to minimize
    * @return a witness, satisfying model if the problem is satisfiable, nullopt if UNSAT
    */
-  tl::optional<Model> CheckSat(const Box &box, tl::optional<Expression> obj_expr = tl::optional<Expression>());
+  std::optional<Model> CheckSat(const Box &box, std::optional<Expression> obj_expr = std::optional<Expression>{});
 
   // TODO(soonho): Push/Pop cnfizer and predicate_abstractor?
   void Pop();

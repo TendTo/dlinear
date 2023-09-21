@@ -102,7 +102,6 @@ dlinear_cc_library(
         "//dlinear/util:scoped_structures",
         "//dlinear/util:signal_handler_guard",
         "@picosat",
-        "@tl_optional",
     ],
 )
 

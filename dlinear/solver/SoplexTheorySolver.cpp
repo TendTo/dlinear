@@ -7,6 +7,8 @@
 
 #include "SoplexTheorySolver.h"
 
+#include <string>
+
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"

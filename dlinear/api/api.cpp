@@ -15,7 +15,7 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/exception.h"
 
-using tl::optional;
+using std::optional;
 
 namespace dlinear {
 
@@ -41,7 +41,7 @@ bool CheckSatisfiability(const Formula &f, const double delta, Box *const box) {
   return CheckSatisfiability(f, config, box);
 }
 
-bool CheckSatisfiability(const Formula &f, const Config& config, Box *const box) {
+bool CheckSatisfiability(const Formula &f, const Config &config, Box *const box) {
   const optional<Box> result{CheckSatisfiability(f, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");
@@ -58,7 +58,7 @@ optional<Box> Minimize(const Expression &objective, const Formula &constraint, d
   return Minimize(objective, constraint, config);
 }
 
-optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config& config) {
+optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config &config) {
   mpq_class actual_precision = config.precision();
   Context context{config};
   for (const Variable &v : constraint.GetFreeVariables()) {
@@ -78,7 +78,7 @@ bool Minimize(const Expression &objective, const Formula &constraint, const doub
   return Minimize(objective, constraint, config, box);
 }
 
-bool Minimize(const Expression &objective, const Formula &constraint, const Config& config, Box *const box) {
+bool Minimize(const Expression &objective, const Formula &constraint, const Config &config, Box *const box) {
   const optional<Box> result{Minimize(objective, constraint, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");

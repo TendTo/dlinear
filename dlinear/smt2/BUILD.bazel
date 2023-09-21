@@ -85,7 +85,6 @@ dlinear_cc_library(
         "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
         "@flex_lexer",
-        "@tl_optional",
     ],
 )
 

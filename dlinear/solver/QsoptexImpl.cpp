@@ -20,7 +20,6 @@
 
 using std::pair;
 using std::vector;
-using tl::optional;
 
 namespace dlinear {
 
@@ -60,8 +59,8 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
-                                                 mpq_class *actual_precision) {
+std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
+                                                      mpq_class *actual_precision) {
   DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckSatCore: Box =\n{}", box);
   if (box.empty()) {
     return {};
@@ -182,7 +181,7 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_c
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
     DLINEAR_ASSERT(have_objective_, "Unexpected objective");
-    const auto optional_model = sat_solver_.CheckSat(*box, optional<Expression>(obj_expr_));
+    const auto optional_model = sat_solver_.CheckSat(*box, std::optional<Expression>(obj_expr_));
     if (optional_model) {
       const vector<pair<Variable, bool>> &boolean_model{optional_model->first};
       for (const pair<Variable, bool> &p : boolean_model) {
