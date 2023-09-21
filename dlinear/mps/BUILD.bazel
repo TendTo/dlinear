@@ -56,20 +56,7 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//dlinear/util:timer",
-    ],
-)
-
-dlinear_cc_binary(
-    name = "test",
-    srcs = [
-        "test.cpp",
-    ],
-    deps = [
-        ":mps",
-        "//dlinear/symbolic",
-        "//dlinear/util:config",
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
+        "@flex_lexer",
     ],
 )
 

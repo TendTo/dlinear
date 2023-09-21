@@ -10,6 +10,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace dlinear {
 
@@ -37,5 +38,16 @@ bool dir_exists(const std::string &name);
  * @return The extension of the file.
  */
 std::string get_extension(const std::string &name);
+
+/**
+ * Split a C-string by whitespace.
+ *
+ * Each word is returned as a separate string in a vector.
+ * @note This function is not Unicode-aware.
+ * @note The words are trimmed.
+ * @param in input string to split
+ * @return vector os strings
+ */
+std::vector<std::string> split_string_by_whitespace(const char *in);
 
 }  // namespace dlinear

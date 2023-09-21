@@ -18,7 +18,6 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "soplex",
-    srcs = ["soplex.cpp"],
     hdrs = ["soplex.h"],
     deps = select({
         "//tools:dynamic_build": ["@soplex//:soplex.so"],

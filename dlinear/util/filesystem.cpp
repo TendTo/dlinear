@@ -20,17 +20,15 @@ namespace dlinear {
 
 bool file_exists(const string &name) {
   DLINEAR_TRACE_FMT("file_exists({})", name);
-  struct stat buffer{};
-  if (stat(name.c_str(), &buffer) != 0)
-    return false;
+  struct stat buffer {};
+  if (stat(name.c_str(), &buffer) != 0) return false;
   return S_ISREG(buffer.st_mode);
 }
 
 bool dir_exists(const string &name) {
   DLINEAR_TRACE_FMT("dir_exists({})", name);
-  struct stat buffer{};
-  if (stat(name.c_str(), &buffer) != 0)
-    return false;
+  struct stat buffer {};
+  if (stat(name.c_str(), &buffer) != 0) return false;
   return S_ISDIR(buffer.st_mode);
 }
 
@@ -38,9 +36,22 @@ string get_extension(const string &name) {
   DLINEAR_TRACE_FMT("get_extension({})", name);
   const size_t idx = name.rfind('.');
   DLINEAR_TRACE_FMT("position of the '.': {}", idx);
-  if (idx == string::npos) // No extension found
+  if (idx == string::npos)  // No extension found
     return "";
   return name.substr(idx + 1);
+}
+
+std::vector<std::string> split_string_by_whitespace(const char *in) {
+  std::vector<std::string> r;
+  for (const char *p = in; *p; ++p) {
+    while (*p == ' ' || *p == '\t' || *p == '\r') ++p;
+    if (*p == '\0') break;
+    int length = 0;
+    while (p[length] != ' ' && p[length] != '\t' && p[length] != '\r' && p[length]) ++length;
+    r.emplace_back(p, length);
+    p += length - 1;
+  }
+  return r;
 }
 
 }  // namespace dlinear

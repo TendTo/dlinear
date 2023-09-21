@@ -35,6 +35,15 @@
     }                                                                                                      \
   } while (false)
 
+#define DLINEAR_ASSERT_FMT(condition, message, ...)                                           \
+  do {                                                                                        \
+    if (!(condition)) {                                                                       \
+      DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}", #condition, __FILE__, __LINE__); \
+      DLINEAR_CRITICAL_FMT(message, ##__VA_ARGS__);                                           \
+      std::terminate();                                                                       \
+    }                                                                                         \
+  } while (false)
+
 #define DLINEAR_UNREACHABLE()                                                   \
   do {                                                                          \
     DLINEAR_CRITICAL_FMT("{}:{} Should not be reachable.", __FILE__, __LINE__); \

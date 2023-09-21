@@ -13,7 +13,7 @@ Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://g
 - [Bazel](https://bazel.build/)
 - [gmp](https://gmplib.org/) to compile [qsopt_ex](https://gmplib.org/) and [soplex](https://soplex.zib.de/)
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
-- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` files
+- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` and `.mps` files
 
 ### Useful commands
 
@@ -30,8 +30,19 @@ bazel test //dlinear/...
 ```
 
 ```bash
-# Run tests
-bazel test //test/...
+# Run dlinear unit tests
+bazel test --test_tag_filters=dlinear //test/...
+```
+
+```bash
+# Run dlinear integration tests by solving a bunch of problems
+# and confronting the results with the expected ones
+bazel test --test_tag_filters=solver //test/...
+```
+
+```bash
+# Run linting
+bazel test --test_tag_filters=cpplint //dlinear/...
 ```
 
 ```bash

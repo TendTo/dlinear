@@ -41,8 +41,8 @@ bool CheckSatisfiability(const Formula &f, const double delta, Box *const box) {
   return CheckSatisfiability(f, config, box);
 }
 
-bool CheckSatisfiability(const Formula &f, Config config, Box *const box) {
-  const optional<Box> result{CheckSatisfiability(f, std::move(config))};
+bool CheckSatisfiability(const Formula &f, const Config& config, Box *const box) {
+  const optional<Box> result{CheckSatisfiability(f, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");
     *box = *result;
@@ -58,9 +58,9 @@ optional<Box> Minimize(const Expression &objective, const Formula &constraint, d
   return Minimize(objective, constraint, config);
 }
 
-optional<Box> Minimize(const Expression &objective, const Formula &constraint, Config config) {
+optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config& config) {
   mpq_class actual_precision = config.precision();
-  Context context{std::move(config)};
+  Context context{config};
   for (const Variable &v : constraint.GetFreeVariables()) {
     context.DeclareVariable(v);
   }
@@ -78,8 +78,8 @@ bool Minimize(const Expression &objective, const Formula &constraint, const doub
   return Minimize(objective, constraint, config, box);
 }
 
-bool Minimize(const Expression &objective, const Formula &constraint, Config config, Box *const box) {
-  const optional<Box> result{Minimize(objective, constraint, std::move(config))};
+bool Minimize(const Expression &objective, const Formula &constraint, const Config& config, Box *const box) {
+  const optional<Box> result{Minimize(objective, constraint, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");
     *box = *result;

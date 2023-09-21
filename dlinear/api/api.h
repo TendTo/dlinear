@@ -54,7 +54,7 @@ bool CheckSatisfiability(const Formula &f, double delta, Box *box);
  * @param box box containing the model if @p f is δ-satisfiable.
  * @return whether @p f is δ-satisfiable.
  */
-bool CheckSatisfiability(const Formula &f, Config config, Box *box);
+bool CheckSatisfiability(const Formula &f, const Config& config, Box *box);
 
 /**
  * Find a solution to minimize @p objective function while satisfying a
@@ -74,7 +74,7 @@ tl::optional<Box> Minimize(const Expression &objective, const Formula &constrain
  * @param config configuration used to run the solver.
  * @return a model if a solution exists or nullopt if there is no solution.
  */
-tl::optional<Box> Minimize(const Expression &objective, const Formula &constraint, Config config);
+tl::optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config& config);
 
 /**
  * Find a solution to minimize @p objective function while satisfying a
@@ -98,6 +98,6 @@ bool Minimize(const Expression &objective, const Formula &constraint, double del
  * @param box box containing the model if a solution exists.
  * @return whether a solution exists.
  */
-bool Minimize(const Expression &objective, const Formula &constraint, Config config, Box *box);
+bool Minimize(const Expression &objective, const Formula &constraint, const Config& config, Box *box);
 
 }  // namespace dlinear
