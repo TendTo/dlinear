@@ -61,14 +61,14 @@ bool Solver::ParseInput() {
 
 bool Solver::ParseSmt2() {
   DLINEAR_DEBUG("Solver::ParseSmt2");
-  smt2::Smt2Driver smt2_driver{&context_};
+  smt2::Smt2Driver smt2_driver{context_};
   if (config_.read_from_stdin()) return smt2_driver.parse_stream(std::cin, "(stdin)");
   return smt2_driver.parse_file(config_.filename());
 }
 
 bool Solver::ParseMps() {
   DLINEAR_DEBUG("Solver::ParseMps");
-  mps::MpsDriver mps_driver{&context_};
+  mps::MpsDriver mps_driver{context_};
   if (config_.read_from_stdin()) return mps_driver.parse_stream(std::cin, "(stdin)");
   return mps_driver.parse_file(config_.filename());
 }

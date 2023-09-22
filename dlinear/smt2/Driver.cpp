@@ -52,10 +52,10 @@ class Smt2DriverStat : public Stats {
 };
 }  // namespace
 
-Smt2Driver::Smt2Driver(Context *context)
+Smt2Driver::Smt2Driver(Context &context)
     : context_{context},
-      debug_scanning_{context_->config().debug_scanning()},
-      debug_parsing_{context_->config().debug_parsing()} {}
+      debug_scanning_{context_.config().debug_scanning()},
+      debug_parsing_{context_.config().debug_parsing()} {}
 
 bool Smt2Driver::parse_stream(istream &in, const string &sname) {
   static Smt2DriverStat stat{DLINEAR_INFO_ENABLED};
@@ -72,7 +72,7 @@ bool Smt2Driver::parse_stream(istream &in, const string &sname) {
 }
 
 bool Smt2Driver::parse_file(const string &filename) {
-  if (context_->config().read_from_stdin()) {
+  if (context_.config().read_from_stdin()) {
     // Option --in passed to dreal.
     return parse_stream(cin, "(stdin)");
   }
@@ -97,10 +97,10 @@ void Smt2Driver::CheckSat() {}
 void Smt2Driver::GetModel() {}
 
 void Smt2Driver::Maximize(const Expression &f) {
-  if (context_->config().produce_models()) context_->Maximize(f);
+  if (context_.config().produce_models()) context_.Maximize(f);
 }
 void Smt2Driver::Minimize(const Expression &f) {
-  if (context_->config().produce_models()) context_->Minimize(f);
+  if (context_.config().produce_models()) context_.Minimize(f);
 }
 
 Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
@@ -111,13 +111,13 @@ Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
 
 Variable Smt2Driver::DeclareVariable(const string &name, const Sort sort) {
   Variable v{RegisterVariable(name, sort)};
-  context_->DeclareVariable(v);
+  context_.DeclareVariable(v);
   return v;
 }
 
 void Smt2Driver::DeclareVariable(const string &name, const Sort sort, const Term &lb, const Term &ub) {
   const Variable v{RegisterVariable(name, sort)};
-  context_->DeclareVariable(v, lb.expression(), ub.expression());
+  context_.DeclareVariable(v, lb.expression(), ub.expression());
 }
 
 string Smt2Driver::MakeUniqueName(const string &name) {
@@ -130,7 +130,7 @@ string Smt2Driver::MakeUniqueName(const string &name) {
 Variable Smt2Driver::DeclareLocalVariable(const string &name, const Sort sort) {
   const Variable v{ParseVariableSort(MakeUniqueName(name), sort)};
   scope_.insert(name, VariableOrConstant(v));  // v is not inserted under its own name.
-  context_->DeclareVariable(v, false /* This local variable is not a model variable. */);
+  context_.DeclareVariable(v, false /* This local variable is not a model variable. */);
   return v;
 }
 

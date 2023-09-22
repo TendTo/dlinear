@@ -12,6 +12,7 @@
 #pragma once
 
 #include <istream>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -37,7 +38,7 @@ namespace dlinear::mps {
 class MpsDriver {
  public:
   MpsDriver() = default;
-  explicit MpsDriver(Context *context);
+  explicit MpsDriver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
 
   /**
    * Invoke the scanner and parser for a stream.
@@ -256,18 +257,20 @@ class MpsDriver {
   MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
   bool strict_mps_{false};  ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
 
-  std::unordered_map<std::string, Sense> row_senses_;  ///< The sense of each row.
-  std::unordered_map<std::string, Expression> rows_;   ///< The rows of the problem. Used to build the assertions.
-  std::unordered_map<std::string, Variable> columns_;  ///< The columns of the problem. Contains the variables.
-
-  std::unordered_map<std::string, Formula> rhs_;           ///< Assertions built by combining the rows and the rhs.
-  std::unordered_map<std::string, mpq_class> rhs_values_;  ///< The values of the hand side of the problem.
-  std::unordered_map<std::string, Formula> bounds_;  ///< Assertions built by combining the columns and the bounds.
+  std::unordered_map<std::string, Sense> row_senses_;       ///< The sense of each row.
+  std::unordered_map<std::string, Expression> rows_;        ///< The rows of the problem. Used to build the assertions.
+  std::unordered_map<std::string, Variable> columns_;       ///< The columns of the problem. Contains the variables.
   std::unordered_map<std::string, bool> skip_lower_bound_;  ///< True if there is no need to manually add the lb 0 <= V.
+  std::unordered_map<std::string, mpq_class> rhs_values_;   ///< The values of the hand side of the problem.
+
+  // TODO(TendTo): Could be optimized by using unordered_map.
+  std::map<std::string, Formula> rhs_;     ///< Assertions built by combining the rows and the rhs.
+  std::map<std::string, Formula> bounds_;  ///< Assertions built by combining the columns and the bounds.
+
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
 
-  Context *context_{};  ///< The context filled during parsing of the expressions.
+  Context &context_;  ///< The context filled during parsing of the expressions.
 
   bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
   bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.

@@ -35,7 +35,7 @@ class Smt2Driver {
  public:
   /// construct a new parser driver context
   Smt2Driver() = default;
-  explicit Smt2Driver(Context *context);
+  explicit Smt2Driver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
 
   /**
    * Invoke the scanner and parser for a stream.
@@ -148,8 +148,8 @@ class Smt2Driver {
   bool trace_parsing() const { return debug_parsing_; }
   void set_trace_parsing(bool b) { debug_parsing_ = b; }
 
-  Context &mutable_context() { return *context_; }
-  const Context &context() const { return *context_; }
+  Context &mutable_context() { return context_; }
+  const Context &context() const { return context_; }
 
   std::string &mutable_streamname() { return streamname_; }
 
@@ -167,7 +167,7 @@ class Smt2Driver {
 
   std::string streamname_;  ///< The name of the stream being parsed.
 
-  Context *context_;  ///< The context filled during parsing of the expressions.
+  Context &context_;  ///< The context filled during parsing of the expressions.
 
   bool debug_scanning_{false};  ///< Enable debug output in the flex scanner.
 

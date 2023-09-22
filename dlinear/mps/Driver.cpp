@@ -54,10 +54,10 @@ class MpsDriverStat : public Stats {
 };
 }  // namespace
 
-MpsDriver::MpsDriver(Context *context)
+MpsDriver::MpsDriver(Context &context)
     : context_{context},
-      debug_scanning_{context_->config().debug_scanning()},
-      debug_parsing_{context_->config().debug_parsing()} {}
+      debug_scanning_{context_.config().debug_scanning()},
+      debug_parsing_{context_.config().debug_parsing()} {}
 
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
   static MpsDriverStat stat{DLINEAR_INFO_ENABLED};
@@ -136,12 +136,12 @@ void MpsDriver::AddRow(Sense sense, const std::string &row) {
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
-  if (!context_->config().produce_models() && row == obj_row_) return;
+  if (!context_.config().produce_models() && row == obj_row_) return;
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
     const Variable var = Variable{column};
     columns_[column] = var;  // If not already in the map, add the variable
-    context_->DeclareVariable(var);
+    context_.DeclareVariable(var);
   }
   rows_[row] += value * columns_[column];
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
@@ -259,7 +259,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
 void MpsDriver::End() {
   DLINEAR_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
   for (const auto &[row, sense] : row_senses_) {
-    if (rhs_.find(row) == rhs_.end()) {
+    if (sense != Sense::N && rhs_.find(row) == rhs_.end()) {
       DLINEAR_TRACE_FMT("Row {} has no RHS. Adding 0", row);
       AddRhs(rhs_name_, row, 0);
     }
@@ -272,17 +272,17 @@ void MpsDriver::End() {
   }
   DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());
   for (const auto &[name, bound] : bounds_) {
-    context_->Assert(bound);
+    context_.Assert(bound);
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
-    context_->Assert(row);
+    context_.Assert(row);
   }
-  if (context_->config().produce_models()) {
+  if (context_.config().produce_models()) {
     if (is_min_) {
-      context_->Minimize(rows_.at(obj_row_));
+      context_.Minimize(rows_.at(obj_row_));
     } else {
-      context_->Maximize(rows_.at(obj_row_));
+      context_.Maximize(rows_.at(obj_row_));
     }
   }
 }
