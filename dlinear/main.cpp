@@ -10,8 +10,6 @@
  */
 #include <csignal>
 
-#include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/libs/soplex.h"
 #include "dlinear/solver/Solver.h"
 #include "dlinear/solver/SolverOutput.h"
 #include "dlinear/util/ArgParser.h"
@@ -21,7 +19,7 @@ namespace {
 void HandleSigInt(const int) {
   // Properly exit so that we can see stat information produced by destructors
   // even if a user press C-c.
-  std::exit(1);
+  std::exit(EXIT_FAILURE);
 }
 }  // namespace
 
@@ -30,7 +28,7 @@ int main(int argc, const char* argv[]) {
   std::signal(SIGINT, HandleSigInt);
 
   // Initialize the command line parser.
-  dlinear::ArgParser parser{QSopt_ex_repository_status(), soplex::getGitHash()};
+  dlinear::ArgParser parser{};
   // Parse the command line arguments.
   parser.parse(argc, argv);
   // Get the configuration from the command line arguments.

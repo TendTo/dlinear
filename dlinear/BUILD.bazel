@@ -40,10 +40,7 @@ dlinear_cc_binary(
     }),
     linkstatic = True,
     deps = [
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
         "//dlinear/solver",
-        "//dlinear/solver:solver_output",
         "//dlinear/util:argparser",
         "//dlinear/util:config",
     ],

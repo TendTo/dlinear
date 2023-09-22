@@ -18,6 +18,8 @@ dlinear_cc_library(
         ":filesystem",
         ":logging",
         "//dlinear:version",
+        "//dlinear/libs:qsopt_ex",
+        "//dlinear/libs:soplex",
         "@argparse",
     ],
 )

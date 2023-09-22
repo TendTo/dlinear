@@ -8,6 +8,8 @@
 
 #include <utility>
 
+#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/soplex.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 #include "dlinear/util/logging.h"
@@ -19,15 +21,10 @@ using std::ostream;
 using std::string;
 
 namespace dlinear {
-ArgParser::ArgParser() : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING} {
-  DLINEAR_TRACE("ArgParser::ArgParser");
-  addOptions();
-}
-
-ArgParser::ArgParser(string qsopt_exHash, string soplexHash)
+ArgParser::ArgParser()
     : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING},
-      qsoptex_hash_{std::move(qsopt_exHash)},
-      soplex_hash_{std::move(soplexHash)} {
+      qsoptex_hash_{QSopt_ex_repository_status()},
+      soplex_hash_{soplex::getGitHash()} {
   DLINEAR_TRACE("ArgParser::ArgParser");
   addOptions();
 }
