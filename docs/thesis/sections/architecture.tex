@@ -114,6 +114,8 @@ All the build tools and Starlark rules/macros are stored in the \texttt{tools} p
                                                 ]
                                                 [tools \qquad\qquad\qquad\  Build tools and Starlark macros
                                                 ]
+                                                [WORKSPACE.bazel, file
+                                                ]
                                 ]
                 \end{forest}
         \end{adjustbox}
@@ -221,13 +223,11 @@ Each rule in the grammar is associated with an action, usually a \texttt{Driver}
 
 One of the most promising fields where \dlinear can be applied is \textit{linear programming}.
 The goal is to verify whether a set of linear constraints is satisfiable, not necessarily finding the optimal solution.
-
 \gls{mps} is a common format to store \gls{lp} problems \cite{man:mps}.
 It is worth noting that the \gls{mps} standard is often extended by adding custom sections or the support for integer variables.
-The syntax remains quite simple: it is column-oriented, with each column representing a variable and each row representing a constraint.
+The syntax is column-oriented, each column represents a variable and each row a constraint.
 The file is divided into sections, each starting with a known identifier.
-
-For example, the \gls{lp} problem:
+For example, the following \gls{lp} problem is represented in \gls{mps} format as in \autoref{code:example.mps}.
 
 \begin{equation*}
         \begin{aligned}
@@ -239,9 +239,7 @@ For example, the \gls{lp} problem:
         \end{aligned}
 \end{equation*}
 
-is represented in \gls{mps} format as in \autoref{code:example.mps}
-
-\lstinputlisting[frame=single,showstringspaces=false,caption={Example of an MPS file \cite{man:mps}},captionpos=b,label={code:example.mps}]{code/example.mps}
+\lstinputlisting[language=mps,frame=single,showstringspaces=false,caption={Example of an MPS file \cite{man:mps}},captionpos=b,label={code:example.mps}]{code/example.mps}
 
 The parser is generated using \texttt{bison} and \texttt{flex} and it has inherited its structure from the \texttt{smt2} parser.
 The grammar is pretty simple: each section can have an arbitrary number of rows (even no row at all), each with a certain number of columns.

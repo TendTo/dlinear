@@ -158,6 +158,25 @@ pic me set={file}{file},
     tabsize=2,
     breaklines=true,
 }
+\lstdefinelanguage{mps}{
+    alsoletter=-, % Include dashes as letters
+    sensitive=true,
+    morekeywords={NAME, ROWS, COLUMNS, RHS, RANGES, BOUNDS, BINARIES, GENERALS, ENDATA},
+    morekeywords=[2]{N, L, E, G, UP, LO, FX, FR, MI, PL},
+    morecomment=[l]{*},
+    morestring=[b]",
+}
+\lstset{
+    language=mps,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywords},
+    keywordstyle={[2]\color{type}},
+    commentstyle=\color{comments},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=2,
+    breaklines=true,
+}
 \lstdefinelanguage{bazel}{
     alsoletter=-, % Include dashes as letters
     sensitive=true,
