@@ -49,12 +49,8 @@ struct DrakeSymbolicGuard {
       default:
         throw std::runtime_error("Unknown solver");
     }
-    Expression::InitConstants();
   }
-  ~DrakeSymbolicGuard() {
-    Expression::DeInitConstants();
-    Infinity::InftyFinish();
-  }
+  ~DrakeSymbolicGuard() { Infinity::InftyFinish(); }
 };
 
 inline bool VarEqual(const Variable &v1, const Variable &v2) { return v1.equal_to(v2); }

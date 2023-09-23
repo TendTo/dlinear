@@ -13,7 +13,6 @@ configure_make(
     visibility = ["//visibility:public"],
     configure_in_place = True,
     autoreconf = True,
-    copts = ["CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"], # should disable the different memory allocators
     autoreconf_options = [
         "--install",
         "--force",
@@ -21,7 +20,7 @@ configure_make(
         "--warnings=all",
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
-    args = ["-j4"],
+    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],  # -DEG_LPNUM_MEMSLAB=0 disables memory slab allocator
     deps = ["@zlib", "@bzip2lib"],
 )
 
@@ -34,7 +33,6 @@ configure_make(
     visibility = ["//visibility:public"],
     configure_in_place = True,
     autoreconf = True,
-    copts = ["CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"], # shoud disable the different memory allocators
     autoreconf_options = [
         "--install",
         "--force",
@@ -42,7 +40,7 @@ configure_make(
         "--warnings=all",
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
-    args = ["-j4"],
+    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],  # -DEG_LPNUM_MEMSLAB=0 disables memory slab allocator
     deps = ["@zlib", "@bzip2lib"],
 )
 

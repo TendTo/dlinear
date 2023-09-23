@@ -11,14 +11,14 @@
 
 namespace dlinear {
 
-SolverGuard::SolverGuard(const Config& config) {
-  Infinity::InftyStart(config);
-  Expression::InitConstants();
-}
+SolverGuard::SolverGuard(const Config& config) { Infinity::InftyStart(config); }
 
-SolverGuard::~SolverGuard() {
-  Expression::DeInitConstants();
+SolverGuard::~SolverGuard() { DeInit(); }
+
+void SolverGuard::DeInit() {
+  if (cleared_) return;
   Infinity::InftyFinish();
+  cleared_ = true;
 }
 
 }  // namespace dlinear

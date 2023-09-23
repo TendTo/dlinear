@@ -17,6 +17,11 @@ class SolverGuard {
  public:
   explicit SolverGuard(const dlinear::Config &config);
   ~SolverGuard();
+
+  void DeInit();
+
+ private:
+  bool cleared_{false};
 };
 
 }  // namespace dlinear
