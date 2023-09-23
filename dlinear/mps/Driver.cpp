@@ -136,13 +136,13 @@ void MpsDriver::AddRow(Sense sense, const std::string &row) {
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
-  if (!context_.config().produce_models() && row == obj_row_) return;
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
     const Variable var = Variable{column};
     columns_[column] = var;  // If not already in the map, add the variable
     context_.DeclareVariable(var);
   }
+  if (!context_.config().produce_models() && row == obj_row_) return;
   rows_[row] += value * columns_[column];
   DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
 }

@@ -23,6 +23,7 @@ cc_library(
     ],
     hdrs = ["bzlib.h"],
     includes = ["."],
+    linkstatic = True,
 )
 
 cc_binary(

@@ -14,18 +14,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "solver_output",
-    srcs = ["SolverOutput.cpp"],
-    hdrs = ["SolverOutput.h"],
-    deps = [
-        "//dlinear/libs:gmp",
-        "//dlinear/util:box",
-        "//dlinear/util:exception",
-        "//dlinear/util:timer",
-    ],
-)
-
-dlinear_cc_library(
     name = "solver_guard",
     srcs = ["SolverGuard.cpp"],
     hdrs = ["SolverGuard.h"],
@@ -38,22 +26,34 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "solver",
-    srcs = ["Solver.cpp"],
-    hdrs = ["Solver.h"],
+    srcs = [
+        "Solver.cpp",
+        "SolverOutput.cpp",
+    ],
+    hdrs = [
+        "Solver.h",
+        "SolverOutput.h",
+    ],
+    local_defines = select({
+        "//tools:dynamic_build": ["DLINEAR_CHECK_INTERRUPT"],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//benchmark:__subpackages__",
         "//dlinear:__subpackages__",
+        "//pydlinear:__subpackages__",
         "//test:__subpackages__",
     ],
     deps = [
         ":context",
         ":solver_guard",
-        ":solver_output",
         "//dlinear/libs:gmp",
         "//dlinear/mps",
         "//dlinear/smt2",
+        "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:exception",
+        "//dlinear/util:timer",
     ],
 )
 
