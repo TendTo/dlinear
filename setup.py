@@ -9,7 +9,6 @@ from setuptools.command.sdist import sdist as _sdist
 from setuptools.command.develop import develop as _develop
 from setuptools.command.bdist_egg import bdist_egg as _bdist_egg
 
-VERSION = "4.21.06.2".replace(".0", ".")
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(ROOT_DIR)
 MODULE_NAME = "pydlinear"

@@ -8,17 +8,22 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <spdlog/spdlog.h>
-// Needed for fmt::format.
-#include <spdlog/fmt/ostr.h>
+
+#ifndef DLINEAR_PYDLINEAR
+#define DLINEAR_PYDLINEAR
+#endif
 
 #include "dlinear/api/api.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/smt2/Driver.h"
+#include "dlinear/solver/Solver.h"
+#include "dlinear/solver/SolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/ArgParser.h"
+#include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Infinity.h"
+#include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
 namespace py = pybind11;
@@ -27,9 +32,64 @@ using namespace dlinear;
 
 typedef typename std::unordered_map<Variable, double> ExpressionMap;
 
+namespace PYBIND11_NAMESPACE {
+namespace detail {
+template <>
+struct type_caster<mpq_class> {
+ public:
+  /**
+   * This macro establishes the name 'inty' in
+   * function signatures and declares a local variable
+   * 'value' of type inty
+   */
+  PYBIND11_TYPE_CASTER(mpq_class, const_name("mpq_class"));
+
+  /**
+   * Conversion part 1 (Python->C++): convert a PyObject into a mpq_class
+   * instance or return false upon failure. The second argument
+   * indicates whether implicit conversions should be applied.
+   */
+  bool load(handle src, bool) {
+    /* Extract PyObject from handle */
+    PyObject *source = src.ptr();
+    /* Try converting into a Python float value */
+    PyObject *tmp = PyNumber_Float(source);
+    if (!tmp) return false;
+    /* Now try to convert into a C++ mpq_class */
+    mpq_class value{PyFloat_AsDouble(tmp)};
+    Py_DECREF(tmp);
+    /* Ensure return code was OK (to avoid out-of-range errors etc) */
+    return !PyErr_Occurred();
+  }
+
+  /**
+   * Conversion part 2 (C++ -> Python): convert an mpq_class instance into
+   * a Python object. The second and third arguments are used to
+   * indicate the return value policy and parent object (for
+   * ``return_value_policy::reference_internal``) and are generally
+   * ignored by implicit casters.
+   */
+  static handle cast(const mpq_class &src, return_value_policy /* policy */, handle /* parent */) {
+    return PyFloat_FromDouble(src.get_d());
+  }
+};
+}  // namespace detail
+}  // namespace PYBIND11_NAMESPACE
+
 PYBIND11_MODULE(_pydlinear, m) {
   m.attr("__version__") = DLINEAR_VERSION_STRING;
   m.doc() = "dlinear python bindings";
+
+  m.def(
+      "set_verbosity", [](int level) { DLINEAR_LOG_INIT_VERBOSITY(level); },
+      "Set the verbosity level of dlinear.\n"
+      "-1: off\n"
+      "0: critical\n"
+      "1: error\n"
+      "2: warn\n"
+      "3: info\n"
+      "4: debug\n"
+      "5: trace\n");
 
   auto MpqArrayClass = py::class_<qsopt_ex::MpqArray>(m, "MpqArray");
   auto FormulaClass = py::class_<Formula>(m, "Formula");
@@ -39,25 +99,33 @@ PYBIND11_MODULE(_pydlinear, m) {
   auto VariablesClass = py::class_<Variables>(m, "Variables");
   auto LPSolverEnum = py::enum_<Config::LPSolver>(m, "LPSolver");
   auto SatDefaultPhaseEnum = py::enum_<Config::SatDefaultPhase>(m, "SatDefaultPhase");
+  auto FormatEnum = py::enum_<Config::Format>(m, "Format");
   auto ConfigClass = py::class_<Config>(m, "Config");
-  auto Smt2DriverClass = py::class_<Smt2Driver>(m, "Smt2Driver");
+  auto SolverClass = py::class_<Solver>(m, "Solver");
   auto ContextClass = py::class_<Context>(m, "Context");
+  auto SolverOutputClass = py::class_<SolverOutput>(m, "SolverOutput");
+  auto BoxClass = py::class_<Box>(m, "Box");
+  auto BoxIntervalClass = py::class_<Box::Interval>(m, "Interval");
 
-  m.def("init_solver", py::overload_cast<const Config &>(&Infinity::InftyStart), "Initialize solver")
-      .def("init_solver", py::overload_cast<Config::LPSolver>(&Infinity::InftyStart), "Initialize solver")
-      .def("de_init_solver", &Infinity::InftyFinish, "De-initialize solver");
+  SolverClass.def(py::init<>())
+      .def(py::init<const Config &>())
+      .def(py::init<const std::string &>())
+      .def("__enter__", &Solver::Enter)
+      .def("__exit__", [](Solver &self, py::object, py::object, py::object) { self.Exit(); })
+      .def("CheckSat", &Solver::CheckSat);
+
+  SolverOutputClass.def_property_readonly("result", &SolverOutput::mutable_result)
+      .def_property_readonly("actual_precision", &SolverOutput::mutable_actual_precision)
+      .def_property_readonly("lower_bound", &SolverOutput::mutable_lower_bound)
+      .def_property_readonly("upper_bound", &SolverOutput::mutable_upper_bound)
+      .def_property_readonly("model", &SolverOutput::mutable_model)
+      .def_property_readonly("with_timings", &SolverOutput::with_timings)
+      .def_property_readonly("produce_models", &SolverOutput::produce_models)
+      .def_property_readonly("n_assertions", &SolverOutput::n_assertions)
+      .def_property_readonly("is_sat", &SolverOutput::is_sat)
+      .def("__str__", [](const SolverOutput &self) { return (std::stringstream() << self).str(); });
 
   ContextClass.def(py::init<>()).def(py::init<const Config &>());
-
-  Smt2DriverClass.def(py::init<>())
-      .def(py::init([](const Config &config) { return Smt2Driver{Context{config}}; }))
-      .def("parse_file", &Smt2Driver::parse_file)
-      .def("parse_file", [](Smt2Driver &self) { return self.parse_file(self.context().config().filename()); })
-      .def("parse_string", &Smt2Driver::parse_string)
-      .def("check_sat", &Smt2Driver::CheckSat)
-      .def("get_model", &Smt2Driver::GetModel)
-      .def_property("trace_scanning", &Smt2Driver::trace_scanning, &Smt2Driver::set_trace_scanning)
-      .def_property("trace_parsing", &Smt2Driver::trace_parsing, &Smt2Driver::set_trace_parsing);
 
   MpqArrayClass.def(py::init<size_t>())
       .def("__len__", &qsopt_ex::MpqArray::size)
@@ -67,16 +135,12 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("GetFreeVariables", &Formula::GetFreeVariables)
       .def("EqualTo", &Formula::EqualTo)
       .def("Evaluate", [](const Formula &self) { return self.Evaluate(); })
-      //      .def("Evaluate",
-      //           [](const Formula &self, const Environment::map &env) {
-      //             Environment e;
-      //             return self.Evaluate(Environment{env});
-      //           })
       .def("Substitute",
            [](const Formula &self, const Variable &var, const Expression &e) { return self.Substitute(var, e); })
       .def("to_string", &Formula::to_string)
       .def("__str__", &Formula::to_string)
-      .def("__repr__", [](const Formula &self) { return fmt::format("<Formula \"{}\">", self.to_string()); })
+      .def("__repr__",
+           [](const Formula &self) { return (std::stringstream{} << "<Formula '" << self.to_string() << "'>").str(); })
       .def("__eq__", [](const Formula &self, const Formula &other) { return self.EqualTo(other); })
       .def("__ne__", [](const Formula &self, const Formula &other) { return !self.EqualTo(other); })
       .def("__hash__", [](const Formula &self) { return std::hash<Formula>{}(self); })
@@ -94,7 +158,9 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("get_id", &Variable::get_id)
       .def("get_type", &Variable::get_type)
       .def("__str__", &Variable::to_string)
-      .def("__repr__", [](const Variable &self) { return fmt::format("Variable('{}')", self.to_string()); })
+      .def(
+          "__repr__",
+          [](const Variable &self) { return (std::stringstream{} << "<Variable '" << self.to_string() << "'>").str(); })
       .def("__hash__", [](const Variable &self) { return std::hash<Variable>{}(self); })
       // Addition.
       .def(py::self + py::self)
@@ -156,7 +222,10 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("__len__", &Variables::size)
       .def("empty", &Variables::empty)
       .def("__str__", &Variables::to_string)
-      .def("__repr__", [](const Variables &self) { return fmt::format("<Variables \"{}\">", self); })
+      .def("__repr__",
+           [](const Variables &self) {
+             return (std::stringstream{} << "<Variables '" << self.to_string() << "'>").str();
+           })
       .def("to_string", &Variables::to_string)
       .def("__hash__", [](const Variables &self) { return hash_value<Variables>{}(self); })
       .def("insert", [](Variables &self, const Variable &var) { self.insert(var); })
@@ -181,11 +250,21 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def(py::self - Variable());
 
   ExpressionClass.def(py::init<>())
-      .def(py::init<double>())
+      .def(py::init<>([](double b) {
+        if (Infinity::IsInitialized()) return std::make_unique<Expression>(b);
+        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with Solver`"};
+      }))
+      .def(py::init<>([](const Variable &var) {
+        if (Infinity::IsInitialized()) return std::make_unique<Expression>(var);
+        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with Solver`"};
+      }))
       .def(py::init<const Variable &>())
       .def("__abs__", [](const Expression &self) { return abs(self); })
       .def("__str__", &Expression::to_string)
-      .def("__repr__", [](const Expression &self) { return fmt::format("<Expression \"{}\">", self.to_string()); })
+      .def("__repr__",
+           [](const Expression &self) {
+             return (std::stringstream{} << "<Expression '" << self.to_string() << "'>").str();
+           })
       .def("to_string", &Expression::to_string)
       .def("Expand", &Expression::Expand)
       .def("Evaluate", [](const Expression &self) { return self.Evaluate().get_d(); })
@@ -275,6 +354,73 @@ PYBIND11_MODULE(_pydlinear, m) {
       .value("JEROS_LOW_WANG", Config::SatDefaultPhase::JeroslowWang)
       .export_values();
 
+  FormatEnum.value("AUTO", Config::Format::AUTO)
+      .value("SMT2", Config::Format::SMT2)
+      .value("MPS", Config::Format::MPS)
+      .export_values();
+
+  BoxIntervalClass.def(py::init<>())
+      .def(py::init<double, double>())
+      .def(py::init<double>())
+      .def(py::self == py::self)
+      .def(py::self != py::self)
+      .def("__str__",
+           [](const Box::Interval &self) { return (std::stringstream{} << "<Interval '" << self << "'>").str(); })
+      .def("__repr__",
+           [](const Box::Interval &self) {
+             return (std::stringstream{} << "<Interval [" << self.lb() << ", " << self.ub() << "]>").str();
+           })
+      .def("is_empty", &Box::Interval::is_empty)
+      .def("set_empty", &Box::Interval::set_empty)
+      .def("lb", &Box::Interval::lb)
+      .def("ub", &Box::Interval::ub)
+      .def("mid", &Box::Interval::mid)
+      .def("diam", &Box::Interval::diam)
+      .def("is_degenerated", &Box::Interval::is_degenerated)
+      .def("is_bisectable", &Box::Interval::is_bisectable)
+      .def("bisect", &Box::Interval::bisect);
+
+  BoxClass.def(py::init<const std::vector<Variable> &>())
+      .def("Add", py::overload_cast<const Variable &>(&Box::Add))
+      .def("empty", &Box::empty)
+      .def("set_empty", &Box::set_empty)
+      .def("size", &Box::size)
+      .def("__setitem__", [](Box &self, const Variable &var, const Box::Interval &i) { self[var] = i; })
+      .def("__setitem__", [](Box &self, const int idx, const Box::Interval &i) { self[idx] = i; })
+      .def("__getitem__", [](const Box &self, const Variable &var) { return self[var]; })
+      .def("__getitem__", [](const Box &self, const int idx) { return self[idx]; })
+      .def("__repr__", [](const Box &self) { return fmt::format("<Box \"{}\">", self); })
+      .def("__len__", &Box::size)
+      .def("__delitem__",
+           [](const Box &, const Variable &) { throw std::runtime_error{"Box class does not allow deleting an item"}; })
+      .def("clear", [](const Box &) { throw std::runtime_error{"Box class does not support the 'clear' operation"}; })
+      .def("has_key", [](const Box &self, const Variable &var) { return self.has_variable(var); })
+      .def("keys", [](const Box &self) { return self.variables(); })
+      .def("values",
+           [](const Box &self) {
+             std::vector<Box::Interval> ret{static_cast<size_t>(self.size())};
+             for (const Box::Interval &iv : self.interval_vector()) ret.push_back(iv);
+             return ret;
+           })
+      .def("items",
+           [](const Box &self) {
+             const std::vector<Variable> &vars{self.variables()};
+             const Box::IntervalVector &iv{self.interval_vector()};
+             std::vector<std::pair<Variable, Box::Interval>> ret;
+             ret.reserve(iv.size());
+             for (std::size_t i = 0; i < iv.size(); ++i) ret.emplace_back(vars[i], iv[i]);
+             return ret;
+           })
+      .def("variable", &Box::variable)
+      .def("index", &Box::index)
+      .def("MaxDiam", &Box::MaxDiam)
+      .def("bisect", [](const Box &self, const int i) { return self.bisect(i); })
+      .def("bisect", [](const Box &self, const Variable &var) { return self.bisect(var); })
+      .def(py::self == py::self)
+      .def(py::self != py::self)
+      .def("__str__", [](const Box &self) { return (std::stringstream{} << "<Box '" << self << "'>").str(); })
+      .def("set", [](Box &self, const Box &b) { return self = b; });
+
   ConfigClass.def(py::init<>())
       .def_static("from_command_line",
                   [](std::vector<std::string> args) {
@@ -286,14 +432,51 @@ PYBIND11_MODULE(_pydlinear, m) {
                     argparser.parse(args.size(), argv);
                     return argparser.toConfig();
                   })
+      .def_property(
+          "continuous_output", &Config::continuous_output,
+          [](Config &self, const bool continuous_output) { self.mutable_continuous_output() = continuous_output; })
+      .def_property("debug_parsing", &Config::debug_parsing,
+                    [](Config &self, const bool debug_parsing) { self.mutable_debug_parsing() = debug_parsing; })
+      .def_property("debug_scanning", &Config::debug_scanning,
+                    [](Config &self, const bool debug_scanning) { self.mutable_debug_scanning() = debug_scanning; })
       .def_property("filename", &Config::filename,
                     [](Config &self, const std::string &filename) { self.mutable_filename() = filename; })
-      .def_property("read_from_stdin", &Config::read_from_stdin,
-                    [](Config &self, const bool read_from_stdin) { self.mutable_read_from_stdin() = read_from_stdin; })
+      .def_property("format", &Config::format,
+                    [](Config &self, const Config::Format &format) { self.mutable_format() = format; })
+      .def_property("lp_solver", &Config::lp_solver,
+                    [](Config &self, const Config::LPSolver lp_solver) { self.mutable_lp_solver() = lp_solver; })
+      .def_property("nlopt_ftol_abs", &Config::nlopt_ftol_abs,
+                    [](Config &self, const bool nlopt_ftol_abs) { self.mutable_nlopt_ftol_abs() = nlopt_ftol_abs; })
+      .def_property("nlopt_ftol_rel", &Config::nlopt_ftol_rel,
+                    [](Config &self, const bool nlopt_ftol_rel) { self.mutable_nlopt_ftol_rel() = nlopt_ftol_rel; })
+      .def_property("nlopt_maxeval", &Config::nlopt_maxeval,
+                    [](Config &self, const bool nlopt_maxeval) { self.mutable_nlopt_maxeval() = nlopt_maxeval; })
+      .def_property("nlopt_maxtime", &Config::nlopt_maxtime,
+                    [](Config &self, const bool nlopt_maxtime) { self.mutable_nlopt_maxtime() = nlopt_maxtime; })
+      .def_property("number_of_jobs", &Config::number_of_jobs,
+                    [](Config &self, const int number_of_jobs) { self.mutable_number_of_jobs() = number_of_jobs; })
       .def_property("precision", &Config::precision,
                     [](Config &self, const double prec) { self.mutable_precision() = prec; })
       .def_property("produce_models", &Config::produce_models,
                     [](Config &self, const bool produce_models) { self.mutable_produce_models() = produce_models; })
+      .def_property("random_seed", &Config::random_seed,
+                    [](Config &self, const int random_seed) { self.mutable_random_seed() = random_seed; })
+      .def_property("read_from_stdin", &Config::read_from_stdin,
+                    [](Config &self, const bool read_from_stdin) { self.mutable_read_from_stdin() = read_from_stdin; })
+      .def_property("sat_default_phase", &Config::sat_default_phase,
+                    [](Config &self, const Config::SatDefaultPhase sat_default_phase) {
+                      self.mutable_sat_default_phase() = sat_default_phase;
+                    })
+      .def_property("silent", &Config::silent, [](Config &self, const bool silent) { self.mutable_silent() = silent; })
+      .def_property(
+          "simplex_sat_phase", &Config::simplex_sat_phase,
+          [](Config &self, const int simplex_sat_phase) { self.mutable_simplex_sat_phase() = simplex_sat_phase; })
+      .def_property("skip_check_sat", &Config::skip_check_sat,
+                    [](Config &self, const bool skip_check_sat) { self.mutable_skip_check_sat() = skip_check_sat; })
+      .def_property("use_local_optimization", &Config::use_local_optimization,
+                    [](Config &self, const bool use_local_optimization) {
+                      self.mutable_use_local_optimization() = use_local_optimization;
+                    })
       .def_property("use_polytope", &Config::use_polytope,
                     [](Config &self, const bool use_polytope) { self.mutable_use_polytope() = use_polytope; })
       .def_property("use_polytope_in_forall", &Config::use_polytope_in_forall,
@@ -304,47 +487,11 @@ PYBIND11_MODULE(_pydlinear, m) {
                     [](Config &self, const bool use_worklist_fixpoint) {
                       self.mutable_use_worklist_fixpoint() = use_worklist_fixpoint;
                     })
-      .def_property("use_local_optimization", &Config::use_local_optimization,
-                    [](Config &self, const bool use_local_optimization) {
-                      self.mutable_use_local_optimization() = use_local_optimization;
-                    })
-      .def_property(
-          "simplex_sat_phase", &Config::simplex_sat_phase,
-          [](Config &self, const int simplex_sat_phase) { self.mutable_simplex_sat_phase() = simplex_sat_phase; })
-      .def_property("lp_solver", &Config::lp_solver,
-                    [](Config &self, const Config::LPSolver lp_solver) { self.mutable_lp_solver() = lp_solver; })
-      .def_property("verbose_simplex", &Config::verbose_simplex,
-                    [](Config &self, const int verbose_simplex) { self.mutable_verbose_simplex() = verbose_simplex; })
       .def_property("verbose_dlinear", &Config::verbose_dlinear,
                     [](Config &self, const int verbose_dlinear) { self.mutable_verbose_dlinear() = verbose_dlinear; })
-      .def_property(
-          "continuous_output", &Config::continuous_output,
-          [](Config &self, const bool continuous_output) { self.mutable_continuous_output() = continuous_output; })
+      .def_property("verbose_simplex", &Config::verbose_simplex,
+                    [](Config &self, const int verbose_simplex) { self.mutable_verbose_simplex() = verbose_simplex; })
       .def_property("with_timings", &Config::with_timings,
                     [](Config &self, const bool with_timings) { self.mutable_with_timings() = with_timings; })
-      .def_property("number_of_jobs", &Config::number_of_jobs,
-                    [](Config &self, const int number_of_jobs) { self.mutable_number_of_jobs() = number_of_jobs; })
-      .def_property("stack_left_box_first", &Config::stack_left_box_first,
-                    [](Config &self, const int stack_left_box_first) {
-                      self.mutable_stack_left_box_first() = stack_left_box_first;
-                    })
-      .def_property("debug_scanning", &Config::debug_scanning,
-                    [](Config &self, const bool debug_scanning) { self.mutable_debug_scanning() = debug_scanning; })
-      .def_property("debug_parsing", &Config::debug_parsing,
-                    [](Config &self, const bool debug_parsing) { self.mutable_debug_parsing() = debug_parsing; })
-      .def_property("random_seed", &Config::random_seed,
-                    [](Config &self, const int random_seed) { self.mutable_random_seed() = random_seed; })
-      .def_property("nlopt_ftol_rel", &Config::nlopt_ftol_rel,
-                    [](Config &self, const bool nlopt_ftol_rel) { self.mutable_nlopt_ftol_rel() = nlopt_ftol_rel; })
-      .def_property("nlopt_ftol_abs", &Config::nlopt_ftol_abs,
-                    [](Config &self, const bool nlopt_ftol_abs) { self.mutable_nlopt_ftol_abs() = nlopt_ftol_abs; })
-      .def_property("nlopt_maxeval", &Config::nlopt_maxeval,
-                    [](Config &self, const bool nlopt_maxeval) { self.mutable_nlopt_maxeval() = nlopt_maxeval; })
-      .def_property("nlopt_maxtime", &Config::nlopt_maxtime,
-                    [](Config &self, const bool nlopt_maxtime) { self.mutable_nlopt_maxtime() = nlopt_maxtime; })
-      .def_property("sat_default_phase", &Config::sat_default_phase,
-                    [](Config &self, const Config::SatDefaultPhase sat_default_phase) {
-                      self.mutable_sat_default_phase() = sat_default_phase;
-                    })
-      .def("__str__", [](const Config &self) { return fmt::format("{}", self); });
+      .def("__str__", [](const Config &self) { return (std::stringstream() << self).str(); });
 }

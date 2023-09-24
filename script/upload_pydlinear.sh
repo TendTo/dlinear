@@ -22,8 +22,9 @@
 #%
 #% EXAMPLES
 #%    ${SCRIPT_NAME}
-#%    ${SCRIPT_NAME} --test
-#%    ${SCRIPT_NAME} --dry-run # Just runs bazel build and checks if the prerequesites are met
+#%    ${SCRIPT_NAME} --test # Upload to testpypi
+#%    ${SCRIPT_NAME} --dry-run # Just checks if the prerequesites are met
+#%    ${SCRIPT_NAME} --build --stub -dry-run # Build, generate stubs and stop before uploading
 #%    ${SCRIPT_NAME} --cleanup # Removes build and dist folders
 #%
 #================================================================
@@ -205,7 +206,6 @@ function main() {
 
     if [[ $stub = true ]]; then
         generate_stubs
-        exit 0
     fi
 
     if [[ $dry_run = true ]]; then

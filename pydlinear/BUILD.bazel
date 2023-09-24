@@ -6,6 +6,7 @@ pybind_extension(
     srcs = ["pydlinear.cpp"],
     linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
     linkstatic = False,
+    local_defines = ["DLINEAR_PYDLINEAR"],
     deps = [
         "//dlinear:version",
         "//dlinear/api",
@@ -15,7 +16,9 @@ pybind_extension(
         "//dlinear/solver",
         "//dlinear/symbolic",
         "//dlinear/util:argparser",
+        "//dlinear/util:box",
         "//dlinear/util:config",
+        "//dlinear/util:logging",
     ],
 )
 

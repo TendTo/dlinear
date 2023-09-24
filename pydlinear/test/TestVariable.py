@@ -1,22 +1,21 @@
-import pydlinear as p
-import pytest
+import pydlinear as pdl
 
 
 class TestVariable:
     def test_variable_constructor(self):
-        a = p.Variable("a")
+        a = pdl.Variable("a")
         assert a.get_id() == 1
-        assert a.get_type() == p.VariableType.Real
+        assert a.get_type() == pdl.VariableType.Real
 
     def test_variable_constructor_with_type(self):
-        a = p.Variable("a", p.VariableType.Int)
-        assert a.get_type() == p.VariableType.Int
+        a = pdl.Variable("a", pdl.VariableType.Int)
+        assert a.get_type() == pdl.VariableType.Int
 
-        b = p.Variable("b", p.VariableType.Binary)
-        assert b.get_type() == p.VariableType.Binary
+        b = pdl.Variable("b", pdl.VariableType.Binary)
+        assert b.get_type() == pdl.VariableType.Binary
 
-        c = p.Variable("c", p.VariableType.Bool)
-        assert c.get_type() == p.VariableType.Bool
+        c = pdl.Variable("c", pdl.VariableType.Bool)
+        assert c.get_type() == pdl.VariableType.Bool
 
-        d = p.Variable("d", p.VariableType.Real)
-        assert d.get_type() == p.VariableType.Real
+        d = pdl.Variable("d", pdl.VariableType.Real)
+        assert d.get_type() == pdl.VariableType.Real

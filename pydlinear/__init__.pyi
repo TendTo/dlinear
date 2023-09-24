@@ -4,32 +4,73 @@ import pydlinear._pydlinear
 import typing
 
 __all__ = [
+    "AUTO",
     "Binary",
     "Bool",
+    "Box",
     "Config",
     "Context",
     "Expression",
     "FALSE",
+    "Format",
     "Formula",
     "Int",
+    "Interval",
     "JEROS_LOW_WANG",
     "LPSolver",
+    "MPS",
     "MpqArray",
     "QSOPTEX",
     "RANDOM_INITIAL_PHASE",
     "Real",
+    "SMT2",
     "SOPLEX",
     "SatDefaultPhase",
-    "Smt2Driver",
+    "Solver",
+    "SolverOutput",
     "TRUE",
     "Variable",
     "VariableType",
     "Variables",
-    "de_init_solver",
-    "init_solver"
+    "set_verbosity"
 ]
 
 
+class Box():
+    def Add(self, arg0: Variable) -> None: ...
+    def MaxDiam(self) -> typing.Tuple[mpq_class, int]: ...
+    def __delitem__(self, arg0: Variable) -> None: ...
+    def __eq__(self, arg0: Box) -> bool: ...
+    @typing.overload
+    def __getitem__(self, arg0: Variable) -> Interval: ...
+    @typing.overload
+    def __getitem__(self, arg0: int) -> Interval: ...
+    def __init__(self, arg0: typing.List[Variable]) -> None: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: Box) -> bool: ...
+    def __repr__(self) -> str: ...
+    @typing.overload
+    def __setitem__(self, arg0: Variable, arg1: Interval) -> None: ...
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: Interval) -> None: ...
+    def __str__(self) -> str: ...
+    @typing.overload
+    def bisect(self, arg0: int) -> typing.Tuple[Box, Box]: ...
+    @typing.overload
+    def bisect(self, arg0: Variable) -> typing.Tuple[Box, Box]: ...
+    def clear(self) -> None: ...
+    def empty(self) -> bool: ...
+    def has_key(self, arg0: Variable) -> bool: ...
+    def index(self, arg0: Variable) -> int: ...
+    def items(self) -> typing.List[typing.Tuple[Variable, Interval]]: ...
+    def keys(self) -> typing.List[Variable]: ...
+    def set(self, arg0: Box) -> Box: ...
+    def set_empty(self) -> None: ...
+    def size(self) -> int: ...
+    def values(self) -> typing.List[Interval]: ...
+    def variable(self, arg0: int) -> Variable: ...
+    __hash__: typing.ClassVar[None] = None
+    pass
 class Config():
     def __init__(self) -> None: ...
     def __str__(self) -> str: ...
@@ -66,6 +107,14 @@ class Config():
         """
     @filename.setter
     def filename(self, arg1: str) -> None:
+        pass
+    @property
+    def format(self) -> Format:
+        """
+        :type: Format
+        """
+    @format.setter
+    def format(self, arg1: Format) -> None:
         pass
     @property
     def lp_solver(self) -> LPSolver:
@@ -156,6 +205,14 @@ class Config():
     def sat_default_phase(self, arg1: SatDefaultPhase) -> None:
         pass
     @property
+    def silent(self) -> bool:
+        """
+        :type: bool
+        """
+    @silent.setter
+    def silent(self, arg1: bool) -> None:
+        pass
+    @property
     def simplex_sat_phase(self) -> int:
         """
         :type: int
@@ -164,12 +221,12 @@ class Config():
     def simplex_sat_phase(self, arg1: int) -> None:
         pass
     @property
-    def stack_left_box_first(self) -> bool:
+    def skip_check_sat(self) -> bool:
         """
         :type: bool
         """
-    @stack_left_box_first.setter
-    def stack_left_box_first(self, arg1: int) -> None:
+    @skip_check_sat.setter
+    def skip_check_sat(self, arg1: bool) -> None:
         pass
     @property
     def use_local_optimization(self) -> bool:
@@ -357,6 +414,40 @@ class Expression():
     def to_string(self) -> str: ...
     __hash__: typing.ClassVar[None] = None
     pass
+class Format():
+    """
+    Members:
+
+      AUTO
+
+      SMT2
+
+      MPS
+    """
+    def __eq__(self, other: object) -> bool: ...
+    def __getstate__(self) -> int: ...
+    def __hash__(self) -> int: ...
+    def __index__(self) -> int: ...
+    def __init__(self, value: int) -> None: ...
+    def __int__(self) -> int: ...
+    def __ne__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+    def __setstate__(self, state: int) -> None: ...
+    @property
+    def name(self) -> str:
+        """
+        :type: str
+        """
+    @property
+    def value(self) -> int:
+        """
+        :type: int
+        """
+    AUTO: pydlinear._pydlinear.Format # value = <Format.AUTO: 0>
+    MPS: pydlinear._pydlinear.Format # value = <Format.MPS: 2>
+    SMT2: pydlinear._pydlinear.Format # value = <Format.SMT2: 1>
+    __members__: dict # value = {'AUTO': <Format.AUTO: 0>, 'SMT2': <Format.SMT2: 1>, 'MPS': <Format.MPS: 2>}
+    pass
 class Formula():
     def EqualTo(self, arg0: Formula) -> bool: ...
     def Evaluate(self) -> bool: ...
@@ -380,6 +471,28 @@ class Formula():
     def __repr__(self) -> str: ...
     def __str__(self) -> str: ...
     def to_string(self) -> str: ...
+    pass
+class Interval():
+    def __eq__(self, arg0: Interval) -> bool: ...
+    @typing.overload
+    def __init__(self) -> None: ...
+    @typing.overload
+    def __init__(self, arg0: float, arg1: float) -> None: ...
+    @typing.overload
+    def __init__(self, arg0: float) -> None: ...
+    def __ne__(self, arg0: Interval) -> bool: ...
+    def __repr__(self) -> str: ...
+    def __str__(self) -> str: ...
+    def bisect(self, arg0: mpq_class) -> typing.Tuple[Interval, Interval]: ...
+    def diam(self) -> mpq_class: ...
+    def is_bisectable(self) -> bool: ...
+    def is_degenerated(self) -> bool: ...
+    def is_empty(self) -> bool: ...
+    def lb(self) -> mpq_class: ...
+    def mid(self) -> mpq_class: ...
+    def set_empty(self) -> None: ...
+    def ub(self) -> mpq_class: ...
+    __hash__: typing.ClassVar[None] = None
     pass
 class LPSolver():
     """
@@ -454,34 +567,64 @@ class SatDefaultPhase():
     TRUE: pydlinear._pydlinear.SatDefaultPhase # value = <SatDefaultPhase.TRUE: 1>
     __members__: dict # value = {'RANDOM_INITIAL_PHASE': <SatDefaultPhase.RANDOM_INITIAL_PHASE: 3>, 'FALSE': <SatDefaultPhase.FALSE: 0>, 'TRUE': <SatDefaultPhase.TRUE: 1>, 'JEROS_LOW_WANG': <SatDefaultPhase.JEROS_LOW_WANG: 2>}
     pass
-class Smt2Driver():
+class Solver():
+    def CheckSat(self) -> SolverOutput: ...
+    def __enter__(self) -> Solver: ...
+    def __exit__(self, arg0: object, arg1: object, arg2: object) -> None: ...
     @typing.overload
     def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: Config) -> None: ...
-    def check_sat(self) -> None: ...
-    def get_model(self) -> None: ...
     @typing.overload
-    def parse_file(self, arg0: str) -> bool: ...
-    @typing.overload
-    def parse_file(self) -> bool: ...
-    def parse_string(self, arg0: str, arg1: str) -> bool: ...
+    def __init__(self, arg0: str) -> None: ...
+    pass
+class SolverOutput():
+    def __str__(self) -> str: ...
     @property
-    def trace_parsing(self) -> bool:
+    def actual_precision(self) -> mpq_class:
+        """
+        :type: mpq_class
+        """
+    @property
+    def is_sat(self) -> bool:
         """
         :type: bool
         """
-    @trace_parsing.setter
-    def trace_parsing(self, arg1: bool) -> None:
-        pass
     @property
-    def trace_scanning(self) -> bool:
+    def lower_bound(self) -> mpq_class:
+        """
+        :type: mpq_class
+        """
+    @property
+    def model(self) -> Box:
+        """
+        :type: Box
+        """
+    @property
+    def n_assertions(self) -> int:
+        """
+        :type: int
+        """
+    @property
+    def produce_models(self) -> bool:
         """
         :type: bool
         """
-    @trace_scanning.setter
-    def trace_scanning(self, arg1: bool) -> None:
-        pass
+    @property
+    def result(self) -> dlinear::SolverResult:
+        """
+        :type: dlinear::SolverResult
+        """
+    @property
+    def upper_bound(self) -> mpq_class:
+        """
+        :type: mpq_class
+        """
+    @property
+    def with_timings(self) -> bool:
+        """
+        :type: bool
+        """
     pass
 class Variable():
     def __abs__(self) -> Expression: ...
@@ -618,28 +761,28 @@ class Variables():
     def size(self) -> int: ...
     def to_string(self) -> str: ...
     pass
-def de_init_solver() -> None:
+def set_verbosity(arg0: int) -> None:
     """
-    De-initialize solver
+    Set the verbosity level of dlinear.
+    -1: off
+    0: critical
+    1: error
+    2: warn
+    3: info
+    4: debug
+    5: trace
     """
-@typing.overload
-def init_solver(arg0: Config) -> None:
-    """
-    Initialize solver
-
-    Initialize solver
-    """
-@typing.overload
-def init_solver(arg0: LPSolver) -> None:
-    pass
+AUTO: pydlinear._pydlinear.Format # value = <Format.AUTO: 0>
 Binary: pydlinear._pydlinear.VariableType # value = <VariableType.Binary: 2>
 Bool: pydlinear._pydlinear.VariableType # value = <VariableType.Bool: 3>
 FALSE: pydlinear._pydlinear.SatDefaultPhase # value = <SatDefaultPhase.FALSE: 0>
 Int: pydlinear._pydlinear.VariableType # value = <VariableType.Int: 1>
 JEROS_LOW_WANG: pydlinear._pydlinear.SatDefaultPhase # value = <SatDefaultPhase.JEROS_LOW_WANG: 2>
+MPS: pydlinear._pydlinear.Format # value = <Format.MPS: 2>
 QSOPTEX: pydlinear._pydlinear.LPSolver # value = <LPSolver.QSOPTEX: 1>
 RANDOM_INITIAL_PHASE: pydlinear._pydlinear.SatDefaultPhase # value = <SatDefaultPhase.RANDOM_INITIAL_PHASE: 3>
 Real: pydlinear._pydlinear.VariableType # value = <VariableType.Real: 0>
+SMT2: pydlinear._pydlinear.Format # value = <Format.SMT2: 1>
 SOPLEX: pydlinear._pydlinear.LPSolver # value = <LPSolver.SOPLEX: 0>
 TRUE: pydlinear._pydlinear.SatDefaultPhase # value = <SatDefaultPhase.TRUE: 1>
 __version__ = '0.0.1'

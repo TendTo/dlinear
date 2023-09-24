@@ -1,12 +1,11 @@
-import pydlinear as pdl
 import sys
+import pydlinear as pdl
 
 
 def main():
     config = pdl.Config.from_command_line(sys.argv)
-    config.lp_solver = pdl.LPSolver.SOPLEX
-    pdl.init_solver(config)
-    pdl.Smt2Driver(config).parse_file()
+    with pdl.Solver(config) as s:
+        print(s.CheckSat())
 
 
 if __name__ == "__main__":
