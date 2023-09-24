@@ -80,5 +80,8 @@ benchmark/csv/*
 
 # Tests
 tests/
+/*.mps
+/*.smt2
+/*.log
 
 !.gitkeep

@@ -62,6 +62,11 @@ bazel test --test_tag_filters=cpplint //dlinear/...
 ```
 
 ```bash
+# Run pydlinear tests
+bazel test --test_tag_filters=pydlinear //pydlinear/...
+```
+
+```bash
 # Run benchmarks
 bazel run //benchmark
 ```
@@ -117,14 +122,12 @@ import pydlinear as pdl
 
 
 def main():
-    config = pdl.Config()
-    config.filename = "my_file.smt2"
-    config.lp_solver = pdl.LPSolver.SOPLEX
-
-    pdl.init_solver(config)
-    pdl.Smt2Driver(config).parse_file()
+    config = pdl.Config.from_command_line(sys.argv)
+    with pdl.Solver(config) as s:
+        print(s.CheckSat())
 
 
 if __name__ == "__main__":
     main()
+
 ```

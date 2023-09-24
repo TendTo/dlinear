@@ -1,8 +1,7 @@
-import pydlinear as p
+import pydlinear as pdl
+import sys
 
-c = p.Config() # Uses the default options
-# Initializes the correct solver for the configuration
-p.init_solver(c)
 
-d = p.Smt2Driver(c)
-d.parse_file("input.smt2") # Run the "input.smt2" file
+config = pdl.Config.from_command_line(sys.argv)
+with pdl.Solver(config) as s:
+    print(s.CheckSat())
