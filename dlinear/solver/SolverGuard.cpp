@@ -6,7 +6,6 @@
  */
 #include "SolverGuard.h"
 
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"
 
 namespace dlinear {

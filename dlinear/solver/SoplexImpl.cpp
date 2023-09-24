@@ -11,7 +11,7 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
 #include "dlinear/util/SignalHandlerGuard.h"
 #include "dlinear/util/interrupt.h"
 #endif
@@ -81,9 +81,9 @@ std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula>
 #endif
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
     if (g_interrupted) {
       DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");

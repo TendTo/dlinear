@@ -13,7 +13,7 @@
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
 
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
 #include "dlinear/util/SignalHandlerGuard.h"
 #include "dlinear/util/interrupt.h"
 #endif
@@ -76,15 +76,15 @@ std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula
     DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Found Model\n{}", box);
     return box;
   }
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
   // Install a signal handler for SIGINT for this scope.
   SignalHandlerGuard guard{SIGINT, interrupt_handler, &g_interrupted};
 #endif
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
     if (g_interrupted) {
       DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
@@ -169,9 +169,9 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_c
   bool have_opt_cand = false;        // optimality candidate
   mpq_class new_obj_up, new_obj_lo;  // Upper and lower bounds of new optimality candidate
   while (true) {
-    // Note that 'DLINEAR_CHECK_INTERRUPT' is only defined in setup.py,
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
     // when we build dReal python package.
-#ifdef DLINEAR_CHECK_INTERRUPT
+#ifdef DLINEAR_PYDLINEAR
     if (g_interrupted) {
       DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
       throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");

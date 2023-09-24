@@ -65,7 +65,12 @@ typedef dlinear::mps::MpsParser::token_type token_type;
 /* handle locations */
 int mps_yycolumn = 1;
 
-#ifndef NDEBUG
+#ifdef DLINEAR_PYDLINEAR
+#define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
+yylloc->begin.column = mps_yycolumn; yylloc->end.column = mps_yycolumn+yyleng-1; \
+mps_yycolumn += yyleng; \
+if (g_interrupted) { throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected."); } 
+#elif !defined(NDEBUG)
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = mps_yycolumn; yylloc->end.column = mps_yycolumn+yyleng-1; \
 mps_yycolumn += yyleng;

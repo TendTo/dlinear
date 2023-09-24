@@ -39,11 +39,29 @@ class Solver {
    */
   SolverOutput CheckSat();
 
+#ifdef DLINEAR_PYDLINEAR
+  /**
+   * Enter the solver.
+   * Allows to use the with statement in python.
+   * @return Solver reference
+   */
+  Solver &Enter();
+
+  /**
+   * Cleanup the infinity values forcefully.
+   * It is not necessary to call this function, as the destructor will take care of it.
+   * However, it is useful for the python bindings, since the garbage collector
+   * might not call the destructor in time.
+   * It is idempotent, so it can be called multiple times without any problem.
+   */
+  void Exit();
+#endif
+
  private:
-  const Config config_;
-  SolverGuard guard_;
-  Context context_;
-  SolverOutput output_;
+  const Config config_;  ///< Configuration of the solver.
+  SolverGuard guard_;    ///< Takes care of initializing and de-initializing the correct infinity values.
+  Context context_;      ///< Context obtained from the input file and passed to the SAT and SMT solvers.
+  SolverOutput output_;  ///< Output of the solver.
 
   bool ParseInput();
   bool ParseSmt2();

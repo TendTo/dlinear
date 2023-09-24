@@ -18,7 +18,6 @@ dlinear_cc_library(
     srcs = ["SolverGuard.cpp"],
     hdrs = ["SolverGuard.h"],
     deps = [
-        "//dlinear/symbolic",
         "//dlinear/util:config",
         "//dlinear/util:infinity",
     ],
@@ -35,7 +34,7 @@ dlinear_cc_library(
         "SolverOutput.h",
     ],
     local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_CHECK_INTERRUPT"],
+        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
     visibility = [
@@ -80,7 +79,7 @@ dlinear_cc_library(
         "SoplexTheorySolver.h",
     ],
     local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_CHECK_INTERRUPT"],
+        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
     deps = [
@@ -97,12 +96,16 @@ dlinear_cc_library(
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:infinity",
-        "//dlinear/util:interrupt",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
-        "//dlinear/util:signal_handler_guard",
         "@picosat",
-    ],
+    ] + select({
+        "//tools:dynamic_build": [
+            "//dlinear/util:interrupt",
+            "//dlinear/util:signal_handler_guard",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cpplint()

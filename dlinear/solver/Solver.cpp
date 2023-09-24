@@ -13,6 +13,7 @@
 #include "dlinear/smt2/Driver.h"
 #include "dlinear/solver/SolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Infinity.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -24,6 +25,14 @@ Solver::Solver(Config config)
       guard_{config_},
       context_{config_},
       output_{config_.precision(), config_.produce_models(), config_.with_timings()} {}
+
+#ifdef DLINEAR_PYDLINEAR
+
+Solver &Solver::Enter() { return *this; }
+
+void Solver::Exit() { guard_.DeInit(); }
+
+#endif
 
 SolverOutput Solver::CheckSat() {
   DLINEAR_TRACE("Solver::CheckSat");

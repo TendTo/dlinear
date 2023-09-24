@@ -12,7 +12,7 @@ pybind_extension(
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
-        "//dlinear/smt2",
+        "//dlinear/solver",
         "//dlinear/symbolic",
         "//dlinear/util:argparser",
         "//dlinear/util:config",

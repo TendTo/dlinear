@@ -70,9 +70,11 @@ dlinear_cc_library(
         ":parser",
         ":scanner",
     ],
-    hdrs = [
-        "Driver.h",
-    ],
+    hdrs = ["Driver.h"],
+    local_defines = select({
+        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":sort",
         ":term",
@@ -85,7 +87,13 @@ dlinear_cc_library(
         "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
         "@flex_lexer",
-    ],
+    ] + select({
+        "//tools:dynamic_build": [
+            "//dlinear/util:interrupt",
+            "//dlinear/util:signal_handler_guard",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cpplint()

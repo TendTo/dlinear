@@ -70,9 +70,18 @@ typedef dlinear::smt2::Smt2Parser::token_type token_type;
 /* handle locations */
 int smt2_yycolumn = 1;
 
+#ifdef DLINEAR_PYDLINEAR
+#define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
+yylloc->begin.column = smt2_yycolumn; yylloc->end.column = smt2_yycolumn+yyleng-1; \
+smt2_yycolumn += yyleng; \
+if (g_interrupted) { throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected."); } 
+#elif !defined(NDEBUG)
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = smt2_yycolumn; yylloc->end.column = smt2_yycolumn+yyleng-1; \
 smt2_yycolumn += yyleng;
+#else
+#define YY_USER_ACTION void(0);
+#endif
 %}
 
 whitespace      [\x09 \xA0]
