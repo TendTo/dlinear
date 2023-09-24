@@ -68,13 +68,11 @@ class BaseBenchmarkParser(ABC):
         self,
         input_files: "str | list[str]",
         output_file: "str",
-        smt2_folder: "str" = "",
         min_time: int = 0,
         time_unit: "TimeUnit" = "s",
     ) -> None:
         self.input_files: "list[str]" = input_files if isinstance(input_files, list) else [input_files]
         self.output_file: "str" = output_file
-        self.smt2_folder: "str" = smt2_folder
         self.lp_problem_rows: "dict[str, LPProblem]" = {}
         self.slone_stufken_rows: "dict[str, SloaneStufken]" = {}
         self.smt_problem_rows: "dict[str, SMTProblem]" = {}

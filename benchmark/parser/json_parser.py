@@ -28,11 +28,10 @@ class BenchmarkJsonParser(BaseBenchmarkParser):
         self,
         input_file: "str | list[str]",
         output_file: "str",
-        smt2_folder: "str" = "",
         min_time: "int" = 0,
         time_unit: "TimeUnit" = "s",
     ):
-        super().__init__(input_file, output_file, smt2_folder, min_time, time_unit)
+        super().__init__(input_file, output_file, min_time, time_unit)
         assert all(input_file.endswith(".json") for input_file in self.input_files)
         self.benchmarks: "list[Benchmark]" = []
 

@@ -24,11 +24,10 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
         self,
         input_files: "str | list[str]",
         output_file: "str",
-        smt2_folder: "str" = "",
         min_time: "int" = 0,
         time_unit: "TimeUnit" = "s",
     ):
-        super().__init__(input_files, output_file, smt2_folder, min_time, time_unit)
+        super().__init__(input_files, output_file, min_time, time_unit)
         assert all(input_file.endswith(".csv") for input_file in self.input_files)
         self.benchmarks: "list[Benchmark]" = []
 
@@ -161,6 +160,8 @@ class BenchmarkCsvParser(BaseBenchmarkParser):
                 self.parse_lp_problem(benchmark)
             elif file.startswith("SMT"):
                 self.parse_smt_problem(benchmark)
+            elif file.endswith(".mps"):
+                self.parse_lp_problem(benchmark)
             elif re.match(r"^(\d+-){4}\d+.smt2$", file):
                 self.parse_sloane_stufken_problem(benchmark)
             else:

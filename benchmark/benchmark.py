@@ -8,7 +8,7 @@ def main():
     args = parse_command_line_args()
 
     benchmark_parser = BenchmarkCsvParser(
-        args.input_files, args.output_file, "smt2", args.min_time, time_unit=args.time_unit
+        args.input_files, args.output_file, args.min_time, time_unit=args.time_unit
     )
     benchmark_parser.parse_benchmarks()
 
