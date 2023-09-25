@@ -143,24 +143,25 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     context_.DeclareVariable(var);
   }
   if (!context_.config().produce_models() && row == obj_row_) return;
-  rows_[row] += value * columns_[column];
-  DLINEAR_TRACE_FMT("Updated row {}", rows_[row]);
+  rows_[row].emplace(columns_[column], value);
+  DLINEAR_TRACE_FMT("Updated row {}", row);
 }
 
 void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddRhs {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   rhs_values_[row] = value;
+  Expression row_expression = ExpressionAddFactory{0, rows_[row]}.GetExpression();
   try {
     switch (row_senses_.at(row)) {
       case Sense::L:
-        rhs_[row] = rows_[row] <= value;
+        rhs_[row] = row_expression <= value;
         break;
       case Sense::G:
-        rhs_[row] = value <= rows_[row];
+        rhs_[row] = value <= row_expression;
         break;
       case Sense::E:
-        rhs_[row] = rows_[row] == value;
+        rhs_[row] = row_expression == value;
         break;
       case Sense::N:
         DLINEAR_WARN("Sense N is used only for objective function. No action to take");
@@ -178,16 +179,18 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
   DLINEAR_TRACE_FMT("Driver::AddRange {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   try {
+    Expression row_expression = ExpressionAddFactory{0, rows_[row]}.GetExpression();
     switch (row_senses_.at(row)) {
       case Sense::L:
-        rhs_[row] = rhs_[row] && (rhs_values_[row] - Expression{value} <= rows_[row]);
+        rhs_[row] = rhs_[row] && mpq_class{rhs_values_[row] - value} <= row_expression;
         break;
       case Sense::G:
-        rhs_[row] = rhs_[row] && (rows_[row] <= rhs_values_[row] + Expression{value});
+        rhs_[row] = rhs_[row] && row_expression <= mpq_class{rhs_values_[row] + value};
         break;
       case Sense::E:
-        rhs_[row] = value > 0 ? rhs_values_[row] <= rows_[row] && rows_[row] <= rhs_values_[row] + Expression{value}
-                              : rhs_values_[row] + Expression{value} <= rows_[row] && rows_[row] <= rhs_values_[row];
+        rhs_[row] = value > 0
+                        ? rhs_values_[row] <= row_expression && row_expression <= mpq_class(rhs_values_[row] + value)
+                        : mpq_class{rhs_values_[row] + value} <= row_expression && row_expression <= rhs_values_[row];
         break;
       case Sense::N:
         DLINEAR_WARN("Sense N is used only for objective function. No action to take");
@@ -279,10 +282,11 @@ void MpsDriver::End() {
     context_.Assert(row);
   }
   if (context_.config().produce_models()) {
+    Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
     if (is_min_) {
-      context_.Minimize(rows_.at(obj_row_));
+      context_.Minimize(obj_expression);
     } else {
-      context_.Maximize(rows_.at(obj_row_));
+      context_.Maximize(obj_expression);
     }
   }
 }

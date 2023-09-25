@@ -257,8 +257,14 @@ class MpsDriver {
   MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
   bool strict_mps_{false};  ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
 
+  /**
+   * The rows of the problem. Contains a map between each variable, stored as an expression, and the
+   * coefficient. It will be used to build the final row_expression using the @ref ExpressionAddFactory class.
+   * The result is then combined with the rhs value and the correct row sense to build the Formula that makes up the
+   * assertion.
+   */
+  std::unordered_map<std::string, std::map<Expression, mpq_class>> rows_;
   std::unordered_map<std::string, Sense> row_senses_;       ///< The sense of each row.
-  std::unordered_map<std::string, Expression> rows_;        ///< The rows of the problem. Used to build the assertions.
   std::unordered_map<std::string, Variable> columns_;       ///< The columns of the problem. Contains the variables.
   std::unordered_map<std::string, bool> skip_lower_bound_;  ///< True if there is no need to manually add the lb 0 <= V.
   std::unordered_map<std::string, mpq_class> rhs_values_;   ///< The values of the hand side of the problem.
