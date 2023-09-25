@@ -22,6 +22,7 @@
 // From drake
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
+#include "dlinear/symbolic/symbolic_expression_cell.h"
 #include "dlinear/symbolic/symbolic_expression_visitor.h"
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_formula_visitor.h"
@@ -33,6 +34,7 @@ namespace dlinear {
 using drake::hash_value;
 using drake::symbolic::Environment;
 using drake::symbolic::Expression;
+using drake::symbolic::ExpressionAddFactory;
 using drake::symbolic::Formula;
 using drake::symbolic::FormulaKind;
 using drake::symbolic::Variable;
