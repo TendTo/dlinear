@@ -36,6 +36,7 @@ dlinear_cc_binary(
     srcs = ["main.cpp"],
     features = select({
         "//tools:dynamic_build": [],
+        "//tools:debug": [],
         "//conditions:default": ["fully_static_link"],
     }),
     linkstatic = True,

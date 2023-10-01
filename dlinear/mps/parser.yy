@@ -133,7 +133,7 @@ rows: rows row
     |  row
     ;
 
-row: SENSE SYMBOL '\n' { driver.AddRow($1, *$2); }
+row: SENSE SYMBOL '\n' { driver.AddRow($1, *$2); delete $2; }
     | '\n'
     ;
 
