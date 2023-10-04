@@ -140,4 +140,9 @@ dlinear_cc_library(
     hdrs = ["SignalHandlerGuard.h"],
 )
 
+dlinear_cc_library(
+    name = "hash",
+    hdrs = ["hash.hpp"],
+)
+
 cpplint()

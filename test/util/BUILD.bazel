@@ -47,3 +47,8 @@ dlinear_cc_googletest(
     name = "test_config",
     deps = ["//dlinear/util:config"],
 )
+
+dlinear_cc_googletest(
+    name = "test_hash",
+    deps = ["//dlinear/util:hash", "//dlinear/symbolic"],
+)
