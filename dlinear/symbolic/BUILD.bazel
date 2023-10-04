@@ -118,10 +118,20 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "elements",
-    srcs = ["Variable.cpp"],
-    hdrs = ["Variable.h"],
+    srcs = [
+        "Environment.cpp",
+        "Variable.cpp",
+        "Variables.cpp",
+    ],
+    hdrs = [
+        "Environment.h",
+        "Variable.h",
+        "Variables.h",
+    ],
     deps = [
+        "//dlinear/libs:gmp",
         "//dlinear/util:exception",
+        "//dlinear/util:hash",
     ],
 )
 

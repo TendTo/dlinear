@@ -7,16 +7,9 @@
 
 #include <gtest/gtest.h>
 
-#include "TestSymbolicUtils.h"
-#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/symbolic/Variable.h"
 
-using dlinear::CreateVector;
-using dlinear::iff;
-using dlinear::imply;
-using dlinear::drake::symbolic::Prod;
-using dlinear::drake::symbolic::Sum;
-using std::to_string;
-using std::vector;
+using dlinear::symbolic::Variable;
 
 TEST(TestVariable, DummyVariableContructor) {
   const Variable dummy{};
