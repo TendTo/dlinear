@@ -6,12 +6,12 @@
  */
 #include "BenchArgParser.h"
 
-#include <utility>
 #include <dirent.h>
 
-using std::endl;
+#include <utility>
+
 using std::cerr;
-using std::string;
+using std::endl;
 using std::ostream;
 using std::string;
 
@@ -25,8 +25,7 @@ void BenchArgParser::parse(int argc, const char **argv) {
   try {
     parser_.parse_args(argc, argv);
     validateOptions();
-  }
-  catch (const std::runtime_error &err) {
+  } catch (const std::runtime_error &err) {
     cerr << err.what() << endl;
     cerr << parser_;
     exit(EXIT_FAILURE);
@@ -44,14 +43,13 @@ void BenchArgParser::addOptions() {
       .default_value(false)
       .implicit_value(true);
   parser_.add_argument("-t", "--timeout")
-      .help("max time in seconds allowed for info gathering for each problem. "
-            "Only problems taking less than the timeout are benchmarked. If set "
-            "to 0, it is disabled.")
+      .help(
+          "max time in seconds allowed for info gathering for each problem. "
+          "Only problems taking less than the timeout are benchmarked. If set "
+          "to 0, it is disabled.")
       .default_value(0u)
       .scan<'i', uint>();
-  parser_.add_argument("-c", "--config")
-      .help("path to the configuration file")
-      .default_value(string{CONF_FILE});
+  parser_.add_argument("-c", "--config").help("path to the configuration file").default_value(string{CONF_FILE});
   parser_.add_argument("-p", "--path")
       .help("path to the directory containing the smt2 files")
       .default_value(string{SMT2_DIR});
@@ -64,6 +62,10 @@ void BenchArgParser::addOptions() {
   parser_.add_argument("-o", "--output")
       .help("output file for the benchmark results. If not set, the results will be printed to stdout")
       .default_value(string{});
+  parser_.add_argument("--info-verbosity")
+      .help("apply the verbosity level INFO when running dlinear")
+      .default_value(false)
+      .implicit_value(true);
 }
 
 ostream &operator<<(ostream &os, const BenchArgParser &parser) {
@@ -80,6 +82,10 @@ BenchConfig BenchArgParser::toConfig() const {
   config.setExtension(parser_.get<string>("extension"));
   config.setOutputFile(parser_.get<string>("output"));
   config.setFiles(getFilesVector());
+  if (parser_.get<bool>("info-verbosity"))
+    DLINEAR_LOG_INIT_VERBOSITY(3);
+  else
+    DLINEAR_LOG_INIT_VERBOSITY(0);
   return config;
 }
 
@@ -94,13 +100,9 @@ void BenchArgParser::validateOptions() {
     DLINEAR_INVALID_ARGUMENT("--config", fmt::format("file {} does not exist", parser_.get<string>("config")));
 }
 
-string BenchArgParser::version() const {
-  return DLINEAR_VERSION_STRING;
-}
+string BenchArgParser::version() const { return DLINEAR_VERSION_STRING; }
 
-string BenchArgParser::repositoryStatus() const {
-  return DLINEAR_VERSION_REPOSTAT;
-}
+string BenchArgParser::repositoryStatus() const { return DLINEAR_VERSION_REPOSTAT; }
 
 string BenchArgParser::prompt() const {
   return fmt::format("{} benchmark version {} ({})\n", DLINEAR_PROGRAM_NAME, version(), repositoryStatus());
@@ -119,8 +121,7 @@ std::vector<string> BenchArgParser::getFilesVector() const {
   string fileExtension = parser_.get<string>("extension");
   if ((dir = opendir(path.c_str())) != nullptr) {
     while ((ent = readdir(dir)) != nullptr) {
-      if (EndsWith(ent->d_name, fileExtension.c_str()))
-        files.push_back(fmt::format("{}/{}", path, ent->d_name));
+      if (EndsWith(ent->d_name, fileExtension.c_str())) files.push_back(fmt::format("{}/{}", path, ent->d_name));
     }
     closedir(dir);
   } else {
@@ -131,8 +132,7 @@ std::vector<string> BenchArgParser::getFilesVector() const {
 
 bool BenchArgParser::EndsWith(const char str[], const char suffix[]) const {
   size_t str_len = strlen(str), suffix_len = strlen(suffix);
-  return suffix_len > 0 && str_len >= suffix_len &&
-      0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
+  return suffix_len > 0 && str_len >= suffix_len && 0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
 }
 
-} // namespace dlinear
+}  // namespace dlinear::benchmark
