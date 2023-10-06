@@ -120,11 +120,15 @@ dlinear_cc_library(
     name = "elements",
     srcs = [
         "Environment.cpp",
+        "Expression.cpp",
+        "ExpressionCell.cpp",
         "Variable.cpp",
         "Variables.cpp",
     ],
     hdrs = [
         "Environment.h",
+        "Expression.h",
+        "ExpressionCell.h",
         "Variable.h",
         "Variables.h",
     ],
