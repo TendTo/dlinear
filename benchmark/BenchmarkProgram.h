@@ -33,7 +33,7 @@ class BenchmarkProgram {
   /**
    * @brief Initialize the array @p argv with the correct values, making it
    * ready to be used when starting a benchmark. The @p argv must have a size
-   * greater or equal to 6. The value returned is intended to be userd as the
+   * greater or equal to 6. The value returned is intended to be used as the
    * argc parameter, and corresponds to the number of args in @p argv .
    * @param argv array to be initialized by the function
    * @param filename name of the file used in the benchmark
