@@ -148,9 +148,7 @@ void Box::Add(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   values_[(*var_to_idx_)[v]] = Interval{lb, ub};
 }
 
-bool Box::empty() const {
-  return std::any_of(values_.begin(), values_.end(), [](const Interval &iv) { return iv.is_empty(); });
-}
+bool Box::empty() const { return values_[0].is_empty(); }
 
 void Box::set_empty() {
   for (Interval &iv : values_) {
