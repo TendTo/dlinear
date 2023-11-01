@@ -18,6 +18,8 @@ struct shared_results {
   bool isSat;
   double actualPrecision;
   uint time;
+  double smt_solver_time;
+  double parser_time;
 };
 
 class InfoGatherer {
@@ -35,6 +37,8 @@ class InfoGatherer {
   [[nodiscard]] bool isSat() const { return isSat_; }
   [[nodiscard]] uint timeout() const { return timeout_; }
   [[nodiscard]] uint time() const { return time_; }
+  [[nodiscard]] double smt_solver_time() const { return smt_solver_time_; }
+  [[nodiscard]] double parser_time() const { return parser_time_; }
 
  private:
   Config config_;
@@ -45,6 +49,8 @@ class InfoGatherer {
   pid_t intermediate_pid_{-1};
   uint timeout_{0};
   uint time_{0};
+  double smt_solver_time_{0.0};
+  double parser_time_{0.0};
 
   Config::LPSolver GetLPSolver(const std::string &solver) const;
   void GatherInfo(shared_results *results);

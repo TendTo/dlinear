@@ -8,6 +8,19 @@ if TYPE_CHECKING:
     from typing import TypedDict, Literal
 
     TimeUnit = Literal["ns", "us", "ms", "s", "m", "h"]
+    ProblemCategory = Literal["lp", "ss", "smt"]
+
+    class Benchmark(TypedDict):
+        file: str
+        solver: str
+        assertions: int
+        timeUnit: str
+        time: int
+        parserTime: int
+        smtTime: int
+        precision: float
+        actualPrecision: float
+        result: int
 
     class SloaneStufken(TypedDict):
         assertions: int
@@ -23,6 +36,10 @@ if TYPE_CHECKING:
         actualPrecisionQ: float
         timeS: float
         timeQ: float
+        parserTimeS: float
+        parserTimeQ: float
+        smtTimeS: float
+        smtTimeQ: float
         resultS: str
         resultQ: str
 
@@ -36,6 +53,10 @@ if TYPE_CHECKING:
         actualPrecisionQ: float
         timeS: float
         timeQ: float
+        parserTimeS: float
+        parserTimeQ: float
+        smtTimeS: float
+        smtTimeQ: float
         resultS: str
         resultQ: str
 
@@ -49,6 +70,10 @@ if TYPE_CHECKING:
         actualPrecisionQ: float
         timeS: float
         timeQ: float
+        parserTimeS: float
+        parserTimeQ: float
+        smtTimeS: float
+        smtTimeQ: float
         resultS: str
         resultQ: str
 
@@ -78,6 +103,52 @@ class BaseBenchmarkParser(ABC):
         self.smt_problem_rows: "dict[str, SMTProblem]" = {}
         self.min_time: "int" = min_time
         self.time_unit: "TimeUnit" = time_unit
+
+    def add_row(self, file: "str", benchmark: "Benchmark", row_dict: "dict"):
+        solver = benchmark["solver"]
+        result = "delta-sat" if int(benchmark["result"]) == 1 else "unsat"
+        precision = float(benchmark["precision"])
+        assertions = int(benchmark["assertions"])
+        actual_precision = float(benchmark["actualPrecision"])
+        time = self.time_conversion(benchmark["time"], benchmark["timeUnit"])
+
+        default_row = {
+                "file": file,
+                "assertions": assertions,
+                "precision": precision,
+                "timeUnit": self.time_unit,
+                "iterations": 1,
+                "actualPrecisionS": -1,
+                "actualPrecisionQ": -1,
+                "timeS": -1,
+                "timeQ": -1,
+                "resultS": "/",
+                "resultQ": "/",
+        }
+        if row_dict is self.slone_stufken_rows:
+            s1, k1, s2, k2, t = (int(val) for val in file.split("-"))
+            default_row.update({
+                "s1": s1,
+                "k1": k1,
+                "s2": s2,
+                "k2": k2,
+                "t":  t,
+            })
+
+        key = f"{file}/{precision}"
+        row: "LPProblem | SloaneStufken | SMTProblem" = row_dict.get(key, default_row)
+
+        identifier = "S" if solver == "soplex" else "Q"
+        row[f"actualPrecision{identifier}"] = actual_precision
+        row[f"time{identifier}"] = round(time, 3)
+        row[f"parserTime{identifier}"] = benchmark["parserTime"]
+        row[f"smtTime{identifier}"] = benchmark["smtTime"]
+        row["fest"] = "A"
+        row[f"result{identifier}"] = result
+
+        row_dict[key] = row
+
+
 
     @abstractmethod
     def load_benchmarks(self):
