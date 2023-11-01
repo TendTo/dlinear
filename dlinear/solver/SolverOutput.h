@@ -14,6 +14,7 @@
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/util/Box.h"
+#include "dlinear/util/Timer.h"
 
 namespace dlinear {
 
@@ -53,6 +54,8 @@ class SolverOutput {
         produce_models_{produce_models},
         with_timings_{with_timings} {}
 
+  Timer &mutable_parser_timer() { return parser_timer_; }
+  Timer &mutable_smt_solver_timer() { return smt_solver_timer_; }
   SolverResult &mutable_result() { return result_; }
   mpq_class &mutable_actual_precision() { return actual_precision_; }
   mpq_class &mutable_lower_bound() { return lower_bound_; }
@@ -62,6 +65,8 @@ class SolverOutput {
   bool &mutable_produce_models() { return produce_models_; }
   uint &mutable_n_assertions() { return n_assertions_; }
 
+  [[nodiscard]] double parser_time() const { return parser_timer_.seconds(); }
+  [[nodiscard]] double smt_solver_time() const { return smt_solver_timer_.seconds(); }
   [[nodiscard]] SolverResult result() const { return result_; }
   [[nodiscard]] const mpq_class &actual_precision() const { return actual_precision_; }
   [[nodiscard]] double precision_upper_bound() const;
@@ -79,6 +84,8 @@ class SolverOutput {
   [[nodiscard]] std::string ToString() const;
 
  private:
+  Timer parser_timer_{};
+  Timer smt_solver_timer_{};
   uint n_assertions_{0};
   SolverResult result_{SolverResult::UNSOLVED};
   mpq_class lower_bound_{0};

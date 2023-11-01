@@ -40,7 +40,7 @@ void BenchmarkProgram::StartBenchmarks() {
   ConfigFileReader config_file_reader{config_.config_file()};
   config_file_reader.read();
 
-  PrintRow("file,solver,assertions,precision,timeUnit,time,actualPrecision,result", true);
+  PrintRow("file,solver,assertions,precision,timeUnit,time,parserTime,smtTime,actualPrecision,result", true);
 
   std::cout << "Starting benchmarking" << std::endl;
   for (const string &filename : config_.files()) {

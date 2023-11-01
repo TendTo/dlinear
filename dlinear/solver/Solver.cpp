@@ -14,10 +14,12 @@
 #include "dlinear/solver/SolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"
+#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
+
 Solver::Solver() : Solver{Config{true}} {}
 Solver::Solver(const std::string &filename) : Solver{Config{filename}} {}
 Solver::Solver(Config config)
@@ -53,6 +55,7 @@ SolverOutput Solver::CheckSat() {
 
 bool Solver::ParseInput() {
   DLINEAR_TRACE("Solver::ParseInput");
+  TimerGuard timer_guard{&output_.mutable_parser_timer(), true};
   switch (config_.format()) {
     case Config::Format::AUTO:
       if (config_.read_from_stdin()) return ParseSmt2();
@@ -84,6 +87,7 @@ bool Solver::ParseMps() {
 
 void Solver::CheckObjCore() {
   DLINEAR_DEBUG("Solver::CheckObjCore");
+  TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
   output_.mutable_model() = context_.box();
   int status =
       context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound(), &output_.mutable_model());
@@ -100,6 +104,7 @@ void Solver::CheckObjCore() {
 
 void Solver::CheckSatCore() {
   DLINEAR_DEBUG("Solver::CheckSatCore");
+  TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
   const std::optional<Box> model{context_.CheckSat(&output_.mutable_actual_precision())};
   if (model) {
     output_.mutable_model() = *model;

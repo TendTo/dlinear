@@ -93,6 +93,8 @@ void InfoGatherer::ParseResults(shared_results *results) {
   isSat_ = results->isSat;
   actualPrecision_ = results->actualPrecision;
   time_ = results->time;
+  smt_solver_time_ = results->smt_solver_time;
+  parser_time_ = results->parser_time;
 }
 
 Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) const {
@@ -112,6 +114,8 @@ void InfoGatherer::GatherInfo(shared_results *results) {
   results->nAssertions = res.n_assertions();
   results->isSat = res.is_sat();
   results->actualPrecision = res.actual_precision().get_d();
+  results->parser_time = res.parser_time();
+  results->smt_solver_time = res.smt_solver_time();
 
   auto end = std::chrono::high_resolution_clock::now();
   results->time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
@@ -121,7 +125,9 @@ std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer) {
   return os << info_gatherer.filename() << "," << info_gatherer.solver() << "," << info_gatherer.nAssertions() << ","
             << info_gatherer.precision() << ","
             << "s"
-            << "," << info_gatherer.time() << "," << info_gatherer.actualPrecision() << "," << info_gatherer.isSat();
+            << "," << info_gatherer.time() << "," << info_gatherer.parser_time() << ","
+            << info_gatherer.smt_solver_time() << "," << info_gatherer.actualPrecision() << ","
+            << info_gatherer.isSat();
 }
 
 }  // namespace dlinear::benchmark
