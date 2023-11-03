@@ -1,7 +1,0 @@
-solver,type,time,seed,size
-GaussNP,double,45324,40,40
-GaussPP,double,52404,40,40
-GaussFP,double,118330,40,40
-GaussNP,mpq_class,242638001,40,40
-GaussPP,mpq_class,232953244,40,40
-GaussFP,mpq_class,233358997,40,40

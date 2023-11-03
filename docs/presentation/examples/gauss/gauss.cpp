@@ -5,8 +5,6 @@
 #include <iostream>
 #include <random>
 
-#define SEED 42
-
 namespace dlinear {
 
 template <>
@@ -28,6 +26,11 @@ Gauss<double>::~Gauss() {
 }
 
 template <>
+std::string Gauss<double>::type_name() const {
+  return "double";
+}
+
+template <>
 void Gauss<double>::sequential_generate() {
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
@@ -39,7 +42,7 @@ void Gauss<double>::sequential_generate() {
 
 template <>
 void Gauss<double>::random_generate() {
-  srand(SEED);
+  srand(seed_);
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
       A_[i][j] = static_cast<double>(rand() % 100 + 1) / static_cast<double>(rand() % 100 + 1);
@@ -108,6 +111,17 @@ void Gauss<double>::print_b() {
   }
 }
 
+template <>
+std::ostream &operator<<(std::ostream &os, const Gauss<double> &gauss) {
+  for (size_t i = 0; i < gauss.size(); ++i) {
+    for (size_t j = 0; j < gauss.size(); ++j) {
+      std::cout << gauss.A()[i][j] << " ";
+    }
+    std::cout << "\t | " << gauss.b()[i] << std::endl;
+  }
+  return os;
+}
+
 /**
  * GMP
  */
@@ -131,6 +145,11 @@ Gauss<mpq_class>::~Gauss() {
 }
 
 template <>
+std::string Gauss<mpq_class>::type_name() const {
+  return "mpq_class";
+}
+
+template <>
 void Gauss<mpq_class>::sequential_generate() {
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
@@ -142,7 +161,7 @@ void Gauss<mpq_class>::sequential_generate() {
 
 template <>
 void Gauss<mpq_class>::random_generate() {
-  srand(SEED);
+  srand(DEFAULT_SEED);
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
       A_[i][j] = mpq_class{rand() % 100 + 1, rand() % 100 + 1};
@@ -209,6 +228,18 @@ void Gauss<mpq_class>::print_b() {
   for (size_t i = 0; i < size_; ++i) {
     std::cout << b_[i] << std::endl;
   }
+}
+
+template <>
+std::ostream &operator<<(std::ostream &os, const Gauss<mpq_class> &gauss) {
+  for (size_t i = 0; i < gauss.size(); ++i) {
+    for (size_t j = 0; j < gauss.size(); ++j) {
+      std::cout << gauss.A()[i][j] << " ";
+    }
+    std::cout << "\t | " << gauss.b()[i] << std::endl;
+  }
+
+  return os;
 }
 
 }  // namespace dlinear

@@ -39,6 +39,11 @@ void GaussFP<double>::forward_elimination() {
     }
     std::swap(A_[i], A_[max_row]);
     std::swap(b_[i], b_[max_row]);
+    if (i != max_col) {
+      for (size_t j = 0; j < size_; ++j) {
+        std::swap(A_[j][i], A_[j][max_col]);
+      }
+    }
     for (size_t j = i + 1; j < size_; ++j) {
       if (A_[i][i] == 0) throw std::runtime_error("Impossible system");
       if (A_[j][i] == 0) continue;
@@ -68,6 +73,11 @@ void GaussFP<mpq_class>::forward_elimination() {
     }
     std::swap(A_[i], A_[max_row]);
     std::swap(b_[i], b_[max_row]);
+    if (i != max_col) {
+      for (size_t j = 0; j < size_; ++j) {
+        std::swap(A_[j][i], A_[j][max_col]);
+      }
+    }
     for (size_t j = i + 1; j < size_; ++j) {
       if (A_[i][i] == 0) throw std::runtime_error("Impossible system");
       if (A_[j][i] == 0) continue;
