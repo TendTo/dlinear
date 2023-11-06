@@ -8,7 +8,7 @@
 namespace dlinear {
 
 template <>
-Gauss<double>::Gauss(size_t size, size_t seed) : size_{size}, seed_{seed} {
+Gauss<double>::Gauss(size_t size, size_t seed) : size_{size}, permutation_{nullptr}, seed_{seed} {
   A_ = new double *[size_];
   for (size_t i = 0; i < size_; ++i) {
     A_[i] = new double[size_];
@@ -78,12 +78,14 @@ template <>
 std::unique_ptr<double[]> Gauss<double>::backward_substitution() {
   std::unique_ptr<double[]> x{std::make_unique<double[]>(size_)};
   for (size_t i = size_ - 1; i < size_; --i) {
+    double &x_i = permutation_ == nullptr ? x[i] : x[permutation_[i]];
     if (A_[i][i] == 0) throw std::runtime_error("Indeterminate system");
-    x[i] = b_[i];
+    x_i = b_[i];
     for (size_t j = i + 1; j < size_; ++j) {
-      x[i] -= A_[i][j] * x[j];
+      const double &x_j = permutation_ == nullptr ? x[j] : x[permutation_[j]];
+      x_i -= A_[i][j] * x_j;
     }
-    x[i] /= A_[i][i];
+    x_i /= A_[i][i];
   }
   return x;
 }
@@ -127,7 +129,7 @@ std::ostream &operator<<(std::ostream &os, const Gauss<double> &gauss) {
  */
 
 template <>
-Gauss<mpq_class>::Gauss(size_t size, size_t seed) : size_{size}, seed_{seed} {
+Gauss<mpq_class>::Gauss(size_t size, size_t seed) : size_{size}, permutation_{nullptr}, seed_{seed} {
   A_ = new mpq_class *[size_];
   for (size_t i = 0; i < size_; ++i) {
     A_[i] = new mpq_class[size_];
@@ -161,7 +163,7 @@ void Gauss<mpq_class>::sequential_generate() {
 
 template <>
 void Gauss<mpq_class>::random_generate() {
-  srand(DEFAULT_SEED);
+  srand(seed_);
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
       A_[i][j] = mpq_class{rand() % 100 + 1, rand() % 100 + 1};
@@ -197,12 +199,14 @@ template <>
 std::unique_ptr<mpq_class[]> Gauss<mpq_class>::backward_substitution() {
   std::unique_ptr<mpq_class[]> x{std::make_unique<mpq_class[]>(size_)};
   for (size_t i = size_ - 1; i < size_; --i) {
+    mpq_class &x_i = permutation_ == nullptr ? x[i] : x[permutation_[i]];
     if (A_[i][i] == 0) throw std::runtime_error("Indeterminate system");
-    x[i] = b_[i];
+    x_i = b_[i];
     for (size_t j = i + 1; j < size_; ++j) {
-      x[i] -= A_[i][j] * x[j];
+      const mpq_class &x_j = permutation_ == nullptr ? x[j] : x[permutation_[j]];
+      x_i -= A_[i][j] * x_j;
     }
-    x[i] /= A_[i][i];
+    x_i /= A_[i][i];
   }
   return x;
 }

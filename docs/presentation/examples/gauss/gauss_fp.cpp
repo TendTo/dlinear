@@ -40,6 +40,7 @@ void GaussFP<double>::forward_elimination() {
     std::swap(A_[i], A_[max_row]);
     std::swap(b_[i], b_[max_row]);
     if (i != max_col) {
+      std::swap(permutation_[i], permutation_[max_col]);
       for (size_t j = 0; j < size_; ++j) {
         std::swap(A_[j][i], A_[j][max_col]);
       }
@@ -74,6 +75,7 @@ void GaussFP<mpq_class>::forward_elimination() {
     std::swap(A_[i], A_[max_row]);
     std::swap(b_[i], b_[max_row]);
     if (i != max_col) {
+      std::swap(permutation_[i], permutation_[max_col]);
       for (size_t j = 0; j < size_; ++j) {
         std::swap(A_[j][i], A_[j][max_col]);
       }

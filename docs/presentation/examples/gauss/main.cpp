@@ -30,7 +30,6 @@ std::unique_ptr<T[]> benchmark(size_t size, size_t seed, std::ostream& output) {
   std::unique_ptr<T[]> x{gauss->solve()};
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-  std::sort(x.get(), x.get() + size);
 
   mtx.lock();
   output << gauss->class_name() << "," << gauss->type_name() << "," << time << "," << gauss->seed() << ","

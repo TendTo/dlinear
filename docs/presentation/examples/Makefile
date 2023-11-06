@@ -7,7 +7,7 @@ gauss: gauss.out
 	./gauss.out
 
 gauss.out: $(GAUSS_SRC)
-	g++ -o $@ $^ $(GAUSS_LIB) -std=c++17 -Wall -Werror -Wpedantic -O3
+	g++ -o $@ $^ $(GAUSS_LIB) -std=c++17 -Wall -Werror -Wpedantic -g
 
 sgauss.out: $(GAUSS_SRC)
 	g++ -o $@ $^ $(GAUSS_LIB) -std=c++17 -Wall -Werror -Wpedantic -O3 -static -static-libgcc -static-libstdc++

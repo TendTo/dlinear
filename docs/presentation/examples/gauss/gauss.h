@@ -46,6 +46,7 @@ class Gauss {
   size_t size_;
   T **A_;
   T *b_;
+  size_t *permutation_;
 
  private:
   size_t seed_;
