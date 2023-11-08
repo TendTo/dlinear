@@ -83,5 +83,6 @@ tests/
 /*.mps
 /*.smt2
 /*.log
+*.out
 
 !.gitkeep
