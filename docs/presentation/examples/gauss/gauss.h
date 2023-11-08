@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <mutex>
 #include <string>
 
 #define DEFAULT_SEED 42
@@ -42,6 +41,7 @@ class Gauss {
  protected:
   virtual void forward_elimination() = 0;
   std::unique_ptr<T[]> backward_substitution();
+  bool is_grater_than_abs(const T &a, const T &b);
 
   size_t size_;
   T **A_;
