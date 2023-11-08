@@ -26,5 +26,6 @@ void GaussNP<T>::forward_elimination() {
 
 template class GaussNP<double>;
 template class GaussNP<mpq_class>;
+template class GaussNP<mpf_class>;
 
 }  // namespace dlinear

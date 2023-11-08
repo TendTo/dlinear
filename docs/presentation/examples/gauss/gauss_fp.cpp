@@ -44,5 +44,6 @@ void GaussFP<T>::forward_elimination() {
 
 template class GaussFP<double>;
 template class GaussFP<mpq_class>;
+template class GaussFP<mpf_class>;
 
 }  // namespace dlinear

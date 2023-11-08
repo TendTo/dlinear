@@ -35,5 +35,6 @@ void GaussPP<T>::forward_elimination() {
 
 template class GaussPP<double>;
 template class GaussPP<mpq_class>;
+template class GaussPP<mpf_class>;
 
 }  // namespace dlinear

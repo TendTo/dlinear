@@ -9,6 +9,8 @@ namespace dlinear {
 
 template <class T>
 Gauss<T>::Gauss(size_t size, size_t seed) : size_{size}, permutation_{nullptr}, seed_{seed} {
+  static_assert(std::is_same<double, T>() || std::is_base_of<mpq_class, T>() || std::is_base_of<mpf_class, T>(),
+                "Template type must be either double, mpq_class or mpf_class");
   A_ = new T *[size_];
   for (size_t i = 0; i < size_; ++i) {
     A_[i] = new T[size_];
@@ -111,6 +113,27 @@ std::ostream &operator<<(std::ostream &os, const Gauss<T> &gauss) {
   return os;
 }
 
+template <class T>
+void Gauss<T>::sequential_generate() {
+  for (size_t i = 0; i < size_; ++i) {
+    for (size_t j = 0; j < size_; ++j) {
+      A_[i][j] = static_cast<T>(2 * i + 3 * j + 13);
+    }
+    b_[i] = static_cast<T>(11 * i + 7);
+  }
+}
+
+template <class T>
+void Gauss<T>::random_generate() {
+  srand(seed_);
+  for (size_t i = 0; i < size_; ++i) {
+    for (size_t j = 0; j < size_; ++j) {
+      A_[i][j] = static_cast<T>(rand() % 100 + 1) / static_cast<T>(rand() % 100 + 1);
+    }
+    b_[i] = static_cast<T>(rand() % 100 + 1) / static_cast<T>(rand() % 100 + 1);
+  }
+}
+
 /**
  * Double
  */
@@ -120,29 +143,8 @@ std::string Gauss<double>::type_name() const {
   return "double";
 }
 
-template <>
-void Gauss<double>::sequential_generate() {
-  for (size_t i = 0; i < size_; ++i) {
-    for (size_t j = 0; j < size_; ++j) {
-      A_[i][j] = static_cast<double>(2 * i + 3 * j + 13);
-    }
-    b_[i] = static_cast<double>(11 * i + 7);
-  }
-}
-
-template <>
-void Gauss<double>::random_generate() {
-  srand(seed_);
-  for (size_t i = 0; i < size_; ++i) {
-    for (size_t j = 0; j < size_; ++j) {
-      A_[i][j] = static_cast<double>(rand() % 100 + 1) / static_cast<double>(rand() % 100 + 1);
-    }
-    b_[i] = static_cast<double>(rand() % 100 + 1) / static_cast<double>(rand() % 100 + 1);
-  }
-}
-
 /**
- * GMP
+ * mpq
  */
 
 template <>
@@ -171,7 +173,17 @@ void Gauss<mpq_class>::random_generate() {
   }
 }
 
+/**
+ * mpf
+ */
+
+template <>
+std::string Gauss<mpf_class>::type_name() const {
+  return "mpf_class";
+}
+
 template class Gauss<double>;
 template class Gauss<mpq_class>;
+template class Gauss<mpf_class>;
 
 }  // namespace dlinear
