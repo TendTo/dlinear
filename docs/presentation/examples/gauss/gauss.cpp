@@ -128,9 +128,13 @@ void Gauss<T>::random_generate() {
   srand(seed_);
   for (size_t i = 0; i < size_; ++i) {
     for (size_t j = 0; j < size_; ++j) {
-      A_[i][j] = static_cast<T>(rand() % 100 + 1) / static_cast<T>(rand() % 100 + 1);
+      T num = static_cast<T>(rand() % 100 + 1);
+      T den = static_cast<T>(rand() % 100 + 1);
+      A_[i][j] = num / den;
     }
-    b_[i] = static_cast<T>(rand() % 100 + 1) / static_cast<T>(rand() % 100 + 1);
+    T b_num = static_cast<T>(rand() % 100 + 1);
+    T b_den = static_cast<T>(rand() % 100 + 1);
+    b_[i] = b_num / b_den;
   }
 }
 
