@@ -8,16 +8,20 @@
 #include "gauss_np.h"
 #include "gauss_pp.h"
 
+#define PRECISION 128
+#define PRECISION_STR "128"
+
 template <template <class> class G, class T>
 class GaussBenchmark {
  public:
   GaussBenchmark(std::ostream& timing_, std::ostream& diff, size_t size, size_t seed)
-      : timing_{timing_}, diff_{diff}, gauss_{std::move(std::make_unique<G<T>>(size, seed))}, x_{} {}
+      : timing_{timing_}, diff_{diff}, gauss_{std::move(std::make_unique<G<T>>(size, seed))}, x_{} {
+    static_assert(std::is_base_of<dlinear::Gauss<T>, G<T>>(), "G must be a subclass of Gauss<T>");
+    static_assert(std::is_same<T, double>() || std::is_same<T, mpq_class>() || std::is_same<T, mpf_class>(),
+                  "T must be either double or mpq_class / mpf_class");
+  }
 
   void benchmark() {
-    static_assert(std::is_same<T, double>() || std::is_same<T, mpq_class>() || std::is_same<T, mpf_class>(),
-                  "T must be either double or mpq_class");
-    static_assert(std::is_base_of<dlinear::Gauss<T>, G<T>>(), "G must be a subclass of Gauss<T>");
     gauss_->random_generate();
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -29,36 +33,34 @@ class GaussBenchmark {
             << gauss_->size() << std::endl;
   }
 
-  inline double get_double(const double& x) const { return x; }
-  inline double get_double(const mpq_class& x) const { return x.get_d(); }
-  inline double get_double(const mpf_class& x) const { return x.get_d(); }
+  mpf_class abs(const mpf_class& x) const { return x < 0 ? -x : x; }
 
   template <template <class> class O, class OT>
-  double diff(const GaussBenchmark<O, OT>& o) const {
+  mpf_class diff(const GaussBenchmark<O, OT>& o) const {
     ensure_same_size(o);
-    double sum = 0;
+    mpf_class sum = 0;
     for (size_t i = 0; i < gauss_->size(); ++i) {
-      sum += get_double(x_[i]) - get_double(o.x()[i]);
+      sum += mpf_class{x_[i]} - mpf_class{o.x()[i]};
     }
     return sum;
   }
 
   template <template <class> class O, class OT>
-  double asb_diff(const GaussBenchmark<O, OT>& o) const {
+  mpf_class asb_diff(const GaussBenchmark<O, OT>& o) const {
     ensure_same_size(o);
-    double sum = 0;
+    mpf_class sum = 0;
     for (size_t i = 0; i < gauss_->size(); ++i) {
-      sum += std::abs(get_double(x_[i]) - get_double(o.x()[i]));
+      sum += abs(mpf_class{x_[i]} - mpf_class{o.x()[i]});
     }
     return sum;
   }
 
   template <template <class> class O, class OT>
-  double square_mean(const GaussBenchmark<O, OT>& o) const {
+  mpf_class abs_mean(const GaussBenchmark<O, OT>& o) const {
     ensure_same_size(o);
-    double sum = 0;
+    mpf_class sum = 0;
     for (size_t i = 0; i < gauss_->size(); ++i) {
-      sum += std::abs(get_double(x_[i]) - get_double(o.x()[i]));
+      sum += abs(mpf_class(mpf_class{x_[i]} - mpf_class{o.x()[i]}));
     }
     return sum / gauss_->size();
   }
@@ -66,8 +68,8 @@ class GaussBenchmark {
   template <template <class> class O, class OT>
   void print_compare_to_baseline(const GaussBenchmark<O, OT>& baseline) const {
     ensure_same_size(baseline);
-    diff_ << gauss_->class_name() << "," << gauss_->type_name() << "," << gauss_->size() << "," << square_mean(baseline)
-          << "," << asb_diff(baseline) << "," << diff(baseline) << std::endl;
+    diff_ << gauss_->class_name() << "," << gauss_->type_name() << "," << gauss_->size() << "," << abs_mean(baseline)
+          << "," << asb_diff(baseline) << "," << diff(baseline) << "," << PRECISION << std::endl;
   }
 
   inline const std::unique_ptr<T[]>& x() const { return x_; }
@@ -111,9 +113,9 @@ int main(int argc, char const* argv[]) {
     return 1;
   }
   output << "solver,type,time,seed,size" << std::endl;
+  diff << "solver,type,size,avg,abs,diff,precision" << std::endl;
 
-  GaussBenchmark<dlinear::GaussNP, double> g1{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussPP, double> g2{output, diff, size, seed};
+  mpf_set_default_prec(PRECISION);
   GaussBenchmark<dlinear::GaussFP, double> g3{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussNP, mpq_class> g4{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussPP, mpq_class> g5{output, diff, size, seed};
