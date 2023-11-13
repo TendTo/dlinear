@@ -1,3 +1,4 @@
+#include <getopt.h>
 #include <gmpxx.h>
 
 #include <chrono>
@@ -30,7 +31,7 @@ class GaussBenchmark {
     auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 
     timing_ << gauss_->class_name() << "," << gauss_->type_name() << "," << time << "," << gauss_->seed() << ","
-            << gauss_->size() << std::endl;
+            << gauss_->size() << "," << mpf_get_default_prec() << std::endl;
   }
 
   mpf_class abs(const mpf_class& x) const { return x < 0 ? -x : x; }
@@ -69,7 +70,7 @@ class GaussBenchmark {
   void print_compare_to_baseline(const GaussBenchmark<O, OT>& baseline) const {
     ensure_same_size(baseline);
     diff_ << gauss_->class_name() << "," << gauss_->type_name() << "," << gauss_->size() << "," << abs_mean(baseline)
-          << "," << asb_diff(baseline) << "," << diff(baseline) << "," << PRECISION << std::endl;
+          << "," << asb_diff(baseline) << "," << diff(baseline) << "," << mpf_get_default_prec() << std::endl;
   }
 
   inline const std::unique_ptr<T[]>& x() const { return x_; }
@@ -94,17 +95,32 @@ class GaussBenchmark {
 int main(int argc, char const* argv[]) {
   size_t size = 10, seed = 42;
   const char *output_file = "time.csv", *diff_file = "diff.csv";
-  if (argc >= 2 && std::atoi(argv[1]) > 0) {
-    size = std::atoi(argv[1]);
-  }
-  if (argc >= 3 && std::atoi(argv[2]) > 0) {
-    seed = std::atoi(argv[2]);
-  }
-  if (argc >= 4) {
-    output_file = argv[3];
-  }
-  if (argc >= 5) {
-    diff_file = argv[4];
+  mpf_set_default_prec(PRECISION);
+
+  int opt;
+  while ((opt = getopt(argc, const_cast<char* const*>(argv), "d:t:p:s:r:h")) != -1) {
+    switch (opt) {
+      case 's':
+        size = std::atoi(optarg);
+        break;
+      case 'r':
+        seed = std::atoi(optarg);
+        break;
+      case 't':
+        output_file = optarg;
+        break;
+      case 'd':
+        diff_file = optarg;
+        break;
+      case 'p':
+        mpf_set_default_prec(std::atoi(optarg));
+        break;
+      case 'h':
+      default:
+        std::cerr << "Usage: " << argv[0] << " [-n|--number SIZE] [-E|--show-ends SEED] [output_file] [diff_file]"
+                  << std::endl;
+        return 1;
+    }
   }
 
   std::ofstream output{output_file}, diff{diff_file};
@@ -112,10 +128,9 @@ int main(int argc, char const* argv[]) {
     std::cerr << "Cannot open output file" << std::endl;
     return 1;
   }
-  output << "solver,type,time,seed,size" << std::endl;
+  output << "solver,type,time,seed,size,precision" << std::endl;
   diff << "solver,type,size,avg,abs,diff,precision" << std::endl;
 
-  mpf_set_default_prec(PRECISION);
   GaussBenchmark<dlinear::GaussNP, double> g1{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussPP, double> g2{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussFP, double> g3{output, diff, size, seed};
@@ -141,6 +156,7 @@ int main(int argc, char const* argv[]) {
   g3.print_compare_to_baseline(g6);
   g4.print_compare_to_baseline(g6);
   g5.print_compare_to_baseline(g6);
+  g6.print_compare_to_baseline(g6);
   g7.print_compare_to_baseline(g6);
   g8.print_compare_to_baseline(g6);
   g9.print_compare_to_baseline(g6);
