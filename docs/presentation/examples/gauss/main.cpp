@@ -9,7 +9,7 @@
 #include "gauss_pp.h"
 
 #define PRECISION 128
-#define PRECISION_STR "128"
+#define PRECISION_STR #PRECISION
 
 template <template <class> class G, class T>
 class GaussBenchmark {
@@ -116,6 +116,8 @@ int main(int argc, char const* argv[]) {
   diff << "solver,type,size,avg,abs,diff,precision" << std::endl;
 
   mpf_set_default_prec(PRECISION);
+  GaussBenchmark<dlinear::GaussNP, double> g1{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussPP, double> g2{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussFP, double> g3{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussNP, mpq_class> g4{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussPP, mpq_class> g5{output, diff, size, seed};
