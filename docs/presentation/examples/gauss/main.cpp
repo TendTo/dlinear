@@ -134,12 +134,12 @@ int main(int argc, char const* argv[]) {
   GaussBenchmark<dlinear::GaussNP, double> g1{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussPP, double> g2{output, diff, size, seed};
   GaussBenchmark<dlinear::GaussFP, double> g3{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussNP, mpq_class> g4{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussPP, mpq_class> g5{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussFP, mpq_class> g6{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussNP, mpf_class> g7{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussPP, mpf_class> g8{output, diff, size, seed};
-  GaussBenchmark<dlinear::GaussFP, mpf_class> g9{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussNP, mpf_class> g4{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussPP, mpf_class> g5{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussFP, mpf_class> g6{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussNP, mpq_class> g7{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussPP, mpq_class> g8{output, diff, size, seed};
+  GaussBenchmark<dlinear::GaussFP, mpq_class> g9{output, diff, size, seed};
 
   g1.benchmark();
   g2.benchmark();
@@ -151,15 +151,15 @@ int main(int argc, char const* argv[]) {
   g8.benchmark();
   g9.benchmark();
 
-  g1.print_compare_to_baseline(g6);
-  g2.print_compare_to_baseline(g6);
-  g3.print_compare_to_baseline(g6);
-  g4.print_compare_to_baseline(g6);
-  g5.print_compare_to_baseline(g6);
-  g6.print_compare_to_baseline(g6);
-  g7.print_compare_to_baseline(g6);
-  g8.print_compare_to_baseline(g6);
-  g9.print_compare_to_baseline(g6);
+  g1.print_compare_to_baseline(g9);
+  g2.print_compare_to_baseline(g9);
+  g3.print_compare_to_baseline(g9);
+  g4.print_compare_to_baseline(g9);
+  g5.print_compare_to_baseline(g9);
+  g6.print_compare_to_baseline(g9);
+  g7.print_compare_to_baseline(g9);
+  g8.print_compare_to_baseline(g9);
+  g9.print_compare_to_baseline(g9);
 
   return 0;
 }
