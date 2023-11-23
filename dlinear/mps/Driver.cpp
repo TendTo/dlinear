@@ -281,7 +281,7 @@ void MpsDriver::End() {
     if (row.EqualTo(Formula::True())) continue;
     context_.Assert(row);
   }
-  if (context_.config().produce_models()) {
+  if (context_.config().produce_models() && !obj_row_.empty()) {
     Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
     if (is_min_) {
       context_.Minimize(obj_expression);

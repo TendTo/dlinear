@@ -5,7 +5,7 @@ import pytest
 FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 PARAMETERS: "list[tuple[str, pdl.LPSolver, int, str]]" = [
-    ("ite_02.smt2", pdl.LPSolver.QSOPTEX, 1, "delta-sat with delta = 5e-324 ( > 0)"),
+    ("ite_02.smt2", pdl.LPSolver.QSOPTEX, 1, "sat with delta = 0"),
     (
         "ite_02.smt2",
         pdl.LPSolver.SOPLEX,

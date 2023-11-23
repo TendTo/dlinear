@@ -32,7 +32,7 @@ class Context::SoplexImpl : public Context::Impl {
 
  protected:
   // Returns the current box in the stack.
-  std::optional<Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) override;
+  SatResult CheckSatCore(const ScopedVector<Formula> &stack, Box *model, mpq_class *actual_precision) override;
   int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) override;
 
   void MinimizeCore(const Expression &obj_expr) override;

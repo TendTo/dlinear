@@ -37,23 +37,30 @@ Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objectiv
   boxes_.push_back(Box{});
 }
 
-std::optional<Box> Context::Impl::CheckSat(mpq_class *actual_precision) {
-  auto result = CheckSatCore(stack_, box(), actual_precision);
-  if (result) {
-    // In case of delta-sat, do post-processing.
-    // Tighten(&(*result), config_.precision());
-    DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", *result);
-    model_ = ExtractModel(*result);
-    return model_;
-  } else {
-    model_.set_empty();
-    return result;
+SatResult Context::Impl::CheckSat(mpq_class *actual_precision, Box *model) {
+  *model = box();
+  SatResult result = CheckSatCore(stack_, model, actual_precision);
+  switch (result) {
+    case SatResult::SAT_DELTA_SATISFIABLE:
+    case SatResult::SAT_SATISFIABLE:
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", *model);
+      *model = ExtractModel(*model);
+      model_ = *model;  // For get_model()
+      break;
+    case SatResult::SAT_UNSATISFIABLE:
+      DLINEAR_DEBUG("ContextImpl::CheckSat() - Model not found");
+      model->set_empty();
+      model_ = *model;  // For get_model()
+      break;
+    default:
+      DLINEAR_UNREACHABLE();
   }
+  return result;
 }
 
 int Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model) {
   int result = CheckOptCore(stack_, obj_lo, obj_up, model);
-  if (LP_DELTA_OPTIMAL == result) {
+  if (LP_DELTA_OPTIMAL == result || LP_OPTIMAL == result) {
     DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", *model);
     *model = ExtractModel(*model);
     model_ = *model;  // For get_model()

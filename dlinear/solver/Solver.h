@@ -39,6 +39,8 @@ class Solver {
    */
   SolverOutput CheckSat();
 
+  void Visualize();
+
 #ifdef DLINEAR_PYDLINEAR
   /**
    * Enter the solver.

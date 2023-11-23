@@ -35,7 +35,7 @@ class Context::Impl {
   virtual void Pop() = 0;
   virtual void Push() = 0;
 
-  std::optional<Box> CheckSat(mpq_class *actual_precision);
+  SatResult CheckSat(mpq_class *actual_precision, Box *model);
   int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model);
   void DeclareVariable(const Variable &v, bool is_model_variable);
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
@@ -67,7 +67,7 @@ class Context::Impl {
   void AddToBox(const Variable &v);
 
   /** Return the current box in the stack. */
-  virtual std::optional<Box> CheckSatCore(const ScopedVector<Formula> &stack, Box box, mpq_class *actual_precision) = 0;
+  virtual SatResult CheckSatCore(const ScopedVector<Formula> &stack, Box *box, mpq_class *actual_precision) = 0;
   virtual int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) = 0;
 
   virtual void MinimizeCore(const Expression &obj_expr) = 0;

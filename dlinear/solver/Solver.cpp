@@ -53,6 +53,12 @@ SolverOutput Solver::CheckSat() {
   return output_;
 }
 
+void Solver::Visualize() {
+  DLINEAR_TRACE("Solver::Visualize");
+  if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
+  for (const auto &a : context_.assertions()) std::cout << a << std::endl;
+}
+
 bool Solver::ParseInput() {
   DLINEAR_TRACE("Solver::ParseInput");
   TimerGuard timer_guard{&output_.mutable_parser_timer(), true};
@@ -105,9 +111,13 @@ void Solver::CheckObjCore() {
 void Solver::CheckSatCore() {
   DLINEAR_DEBUG("Solver::CheckSatCore");
   TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
-  const std::optional<Box> model{context_.CheckSat(&output_.mutable_actual_precision())};
-  if (model) {
-    output_.mutable_model() = *model;
+  Box model;
+  const SatResult res = context_.CheckSat(&output_.mutable_actual_precision(), &model);
+  if (res == SatResult::SAT_SATISFIABLE) {
+    output_.mutable_model() = std::move(model);
+    output_.mutable_result() = SolverResult::SAT;
+  } else if (res == SatResult::SAT_DELTA_SATISFIABLE) {
+    output_.mutable_model() = std::move(model);
     output_.mutable_result() = SolverResult::DELTA_SAT;
   } else {
     output_.mutable_result() = SolverResult::UNSAT;

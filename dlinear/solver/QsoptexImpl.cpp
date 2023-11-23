@@ -59,22 +59,23 @@ void Context::QsoptexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
-                                                      mpq_class *actual_precision) {
+SatResult Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box *box_,
+                                             mpq_class *actual_precision) {
+  Box &box{*box_};
   DLINEAR_TRACE_FMT("Context::QsoptexImpl::CheckSatCore: Box =\n{}", box);
   if (box.empty()) {
-    return {};
+    return SAT_UNSATISFIABLE;
   }
   // If false ∈ stack, it's UNSAT.
   for (const auto &f : stack.get_vector()) {
     if (is_false(f)) {
-      return {};
+      return SAT_UNSATISFIABLE;
     }
   }
   // If stack = ∅ or stack = {true}, it's trivially SAT.
   if (stack.empty() || (stack.size() == 1 && is_true(stack.first()))) {
     DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckSatCore() - Found Model\n{}", box);
-    return box;
+    return SAT_SATISFIABLE;
   }
 #ifdef DLINEAR_PYDLINEAR
   // Install a signal handler for SIGINT for this scope.
@@ -110,11 +111,11 @@ std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula
         // have already been enabled in the LP solver
         int theory_result{theory_solver_.CheckSat(box, theory_model, sat_solver_.GetLinearSolver(),
                                                   sat_solver_.GetLinearVarMap(), actual_precision)};
-        if (theory_result == SAT_DELTA_SATISFIABLE) {
+        if (theory_result == SAT_DELTA_SATISFIABLE || theory_result == SAT_SATISFIABLE) {
           // SAT from TheorySolver.
           DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Theory Check = delta-SAT");
-          Box model{theory_solver_.GetModel()};
-          return model;
+          box = theory_solver_.GetModel();
+          return static_cast<SatResult>(theory_result);
         } else {
           if (theory_result == SAT_UNSATISFIABLE) {
             // UNSAT from TheorySolver.
@@ -132,7 +133,7 @@ std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula
           sat_solver_.AddLearnedClause(explanation);
         }
       } else {
-        return box;
+        return SAT_SATISFIABLE;
       }
     } else {
       if (have_unsolved) {
@@ -142,7 +143,7 @@ std::optional<Box> Context::QsoptexImpl::CheckSatCore(const ScopedVector<Formula
       }
       // UNSAT from SATSolver. Escape the loop.
       DLINEAR_DEBUG("Context::QsoptexImpl::CheckSatCore() - Sat Check = UNSAT");
-      return {};
+      return SAT_UNSATISFIABLE;
     }
   }
 }
@@ -166,8 +167,8 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_c
   //  return *box;
   //}
   bool have_unsolved = false;
-  bool have_opt_cand = false;        // optimality candidate
-  mpq_class new_obj_up, new_obj_lo;  // Upper and lower bounds of new optimality candidate
+  LpResult have_opt_cand = LP_NO_RESULT;  // optimality candidate
+  mpq_class new_obj_up, new_obj_lo;       // Upper and lower bounds of new optimality candidate
   while (true) {
     // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
     // when we build dReal python package.
@@ -201,13 +202,12 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_c
       // have already been enabled in the LP solver.
       int theory_result{theory_solver_.CheckOpt(*box, &new_obj_lo, &new_obj_up, theory_model,
                                                 sat_solver_.GetLinearSolver(), sat_solver_.GetLinearVarMap())};
-      if (LP_UNBOUNDED == theory_result) {
-        DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNBOUNDED");
-        // Result is correct - can return immediately.
-        return LP_UNBOUNDED;
-      } else {
-        if (LP_DELTA_OPTIMAL == theory_result) {
-          DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = delta-OPTIMAL");
+
+      switch (theory_result) {
+        case LP_DELTA_OPTIMAL:
+        case LP_OPTIMAL:
+          DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - Theory Check = {}",
+                            theory_result == LP_OPTIMAL ? "OPTIMAL" : "delta-OPTIMAL");
           // Within Context::Impl, the problem is always a minimization.
           if (!have_opt_cand || new_obj_lo < *obj_lo) {
             // This LP could yield the global optimum, which could therefore
@@ -229,23 +229,31 @@ int Context::QsoptexImpl::CheckOptCore(const ScopedVector<Formula> &stack, mpq_c
             // range.
             *box = theory_solver_.GetModel();
           }
-          have_opt_cand = true;
-          // Must continue - to ensure that this is the best across all feasible regions.
-        } else if (LP_INFEASIBLE == theory_result) {
+          have_opt_cand = static_cast<LpResult>(theory_result);
+          break;
+        case LP_UNBOUNDED:
+          DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNBOUNDED");
+          // Result is correct - can return immediately.
+          return LP_UNBOUNDED;
+        case LP_INFEASIBLE:
           DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = INFEASIBLE");
           // Must continue - to ensure that all regions are infeasible.
-        } else {
-          DLINEAR_ASSERT(LP_UNSOLVED == theory_result, "Unexpected theory result instead of LP_UNSOLVED");
+          break;
+        case LP_UNSOLVED:
           DLINEAR_DEBUG("Context::QsoptexImpl::CheckOptCore() - Theory Check = UNKNOWN");
           have_unsolved = true;  // Will prevent return of INFEASIBLE or delta-OPTIMAL.
           // Problem may still be found to be unbounded.
-        }
-        // Force SAT solver to find new regions.
-        const LiteralSet &explanation{theory_solver_.GetExplanation()};
-        DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - size of explanation = {} - stack size = {}",
-                          explanation.size(), stack.get_vector().size());
-        sat_solver_.AddLearnedClause(explanation);
+          break;
+        default:
+          DLINEAR_UNREACHABLE();
       }
+
+      // Force SAT solver to find new regions.
+      const LiteralSet &explanation{theory_solver_.GetExplanation()};
+      DLINEAR_DEBUG_FMT("Context::QsoptexImpl::CheckOptCore() - size of explanation = {} - stack size = {}",
+                        explanation.size(), stack.get_vector().size());
+      sat_solver_.AddLearnedClause(explanation);
+
     } else {
       // UNSAT from SATSolver. Must escape the loop, one way or another.
       if (have_unsolved) {

@@ -32,7 +32,8 @@ optional<Box> CheckSatisfiability(const Formula &f, const Config &config) {
     context.DeclareVariable(v);
   }
   context.Assert(f);
-  return context.CheckSat(&actual_precision);
+  DLINEAR_UNREACHABLE();
+  //  return context.CheckSat(&actual_precision);
 }
 
 bool CheckSatisfiability(const Formula &f, const double delta, Box *const box) {
@@ -69,7 +70,8 @@ optional<Box> Minimize(const Expression &objective, const Formula &constraint, c
   }
   context.Assert(constraint);
   context.Minimize(objective);
-  return context.CheckSat(&actual_precision);
+  DLINEAR_UNREACHABLE();
+  //  return context.CheckSat(&actual_precision);
 }
 
 bool Minimize(const Expression &objective, const Formula &constraint, const double delta, Box *const box) {

@@ -57,23 +57,23 @@ void Context::SoplexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box box,
-                                                     mpq_class * /*actual_precision*/) {
+SatResult Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box *box_ptr, mpq_class *) {
+  Box &box{*box_ptr};
   DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("Context::SoplexImpl::CheckSat: Box =\n{}", box);
   if (box.empty()) {
-    return {};
+    return SAT_UNSATISFIABLE;
   }
   // If false ∈ stack, it's UNSAT.
   for (const auto &f : stack.get_vector()) {
     if (is_false(f)) {
-      return {};
+      return SAT_UNSATISFIABLE;
     }
   }
   // If stack = ∅ or stack = {true}, it's trivially SAT.
   if (stack.empty() || (stack.size() == 1 && is_true(stack.first()))) {
     DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Found Model\n{}", box);
-    return box;
+    return SAT_SATISFIABLE;
   }
 #ifdef dlinear_check_interrupt
   // install a signal handler for sigint for this scope.
@@ -104,15 +104,17 @@ std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula>
         // SAT from SATSolver.
         DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = SAT");
 
+        // Soplex only produces exact solutions, so the precision is 0. @see dlinear::SoplexTheorySolver::CheckSat
+        //        *actual_precision = 0;
         // The selected assertions have already been enabled in the LP solver
         int theory_result{theory_solver_.CheckSat(box, theory_model, sat_solver_.GetLinearSolverPtr(),
                                                   sat_solver_.GetLowerBounds(), sat_solver_.GetUpperBounds(),
                                                   sat_solver_.GetLinearVarMap())};
-        if (theory_result == SAT_DELTA_SATISFIABLE) {
+        if (theory_result == SAT_DELTA_SATISFIABLE || theory_result == SAT_SATISFIABLE) {
           // SAT from TheorySolver.
-          DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Theory Check = delta-SAT");
-          Box model{theory_solver_.GetModel()};
-          return model;
+          DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Theory Check = {}", theory_result);
+          box = theory_solver_.GetModel();
+          return static_cast<SatResult>(theory_result);
         } else {
           if (theory_result == SAT_UNSATISFIABLE) {
             // UNSAT from TheorySolver.
@@ -130,7 +132,7 @@ std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula>
           sat_solver_.AddLearnedClause(explanation);
         }
       } else {
-        return box;
+        return SAT_SATISFIABLE;
       }
     } else {
       if (have_unsolved) {
@@ -140,7 +142,7 @@ std::optional<Box> Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula>
       }
       // UNSAT from SATSolver. Escape the loop.
       DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore() - Sat Check = UNSAT");
-      return {};
+      return SAT_UNSATISFIABLE;
     }
   }
 }

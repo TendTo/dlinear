@@ -37,7 +37,9 @@ Context::Context(const Config &config) : impl_{make_impl(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
-std::optional<Box> Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
+SatResult Context::CheckSat(mpq_class *actual_precision, Box *model) {
+  return impl_->CheckSat(actual_precision, model);
+}
 
 int Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model) {
   return impl_->CheckOpt(obj_lo, obj_up, model);

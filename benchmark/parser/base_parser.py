@@ -14,17 +14,19 @@ if TYPE_CHECKING:
         file: str
         solver: str
         assertions: int
+        precision: float
+        simplexPhase: int
         timeUnit: str
         time: int
-        parserTime: int
-        smtTime: int
-        precision: float
+        parserTime: float
+        smtTime: float
         actualPrecision: float
         result: int
 
     class SloaneStufken(TypedDict):
         assertions: int
         precision: float
+        simplexPhase: int
         timeUnit: str
         iterations: int
         s1: int
@@ -47,6 +49,7 @@ if TYPE_CHECKING:
         file: str
         assertions: int
         precision: float
+        simplexPhase: int
         timeUnit: str
         iterations: int
         actualPrecisionS: float
@@ -64,6 +67,7 @@ if TYPE_CHECKING:
         file: str
         assertions: int
         precision: float
+        simplexPhase: int
         timeUnit: str
         iterations: int
         actualPrecisionS: float
@@ -116,6 +120,7 @@ class BaseBenchmarkParser(ABC):
                 "file": file,
                 "assertions": assertions,
                 "precision": precision,
+                "simplexPhase": benchmark["simplexPhase"],
                 "timeUnit": self.time_unit,
                 "iterations": 1,
                 "actualPrecisionS": -1,
@@ -135,7 +140,7 @@ class BaseBenchmarkParser(ABC):
                 "t":  t,
             })
 
-        key = f"{file}/{precision}"
+        key = f"{file}/{precision}/{benchmark['simplexPhase']}"
         row: "LPProblem | SloaneStufken | SMTProblem" = row_dict.get(key, default_row)
 
         identifier = "S" if solver == "soplex" else "Q"
@@ -143,7 +148,6 @@ class BaseBenchmarkParser(ABC):
         row[f"time{identifier}"] = round(time, 3)
         row[f"parserTime{identifier}"] = benchmark["parserTime"]
         row[f"smtTime{identifier}"] = benchmark["smtTime"]
-        row["fest"] = "A"
         row[f"result{identifier}"] = result
 
         row_dict[key] = row

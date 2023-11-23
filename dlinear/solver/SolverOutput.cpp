@@ -63,6 +63,8 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
     case SolverResult::ERROR:
       return os << "error";
     case SolverResult::SAT:
+      os << "sat with delta = 0";
+      break;
     case SolverResult::DELTA_SAT:
       os << fmt::format("delta-sat with delta = {} ( > {})", s.precision_upper_bound(), s.actual_precision());
       break;
@@ -70,6 +72,8 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
       os << "unsat";
       break;
     case SolverResult::OPTIMAL:
+      os << fmt::format("optimal with delta = 0, range = [{}, {}]", s.lower_bound(), s.upper_bound());
+      break;
     case SolverResult::DELTA_OPTIMAL: {
       mpq_class diff = s.upper_bound() - s.lower_bound();
       os << fmt::format("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, s.lower_bound(),

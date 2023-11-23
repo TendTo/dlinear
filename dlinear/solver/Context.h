@@ -25,7 +25,7 @@
 
 namespace dlinear {
 
-enum {
+enum SatResult {
   SAT_NO_RESULT = 0,
   SAT_UNSOLVED,
   SAT_UNSATISFIABLE,
@@ -33,11 +33,12 @@ enum {
   SAT_DELTA_SATISFIABLE,
 };
 
-enum {
+enum LpResult {
   LP_NO_RESULT = 0,
   LP_UNSOLVED,
   LP_INFEASIBLE,
   LP_UNBOUNDED,
+  LP_OPTIMAL,
   LP_DELTA_OPTIMAL,
 };
 
@@ -77,8 +78,14 @@ class Context {
    * Checks the satisfiability of the asserted formulas, and sets
    * @p actual_precision (write-only) to the actual max infeasibility where
    * appropriate.
+   * @param actual_precision[in,out] initialized with the desired precision, it will be
+   * set to the lowest possible precision below the given one that satisfies the
+   * constraints.
+   * @param model[out] is set to the model if the result is SAT_SATISFIABLE or
+   * SAT_DELTA_SATISFIABLE.
+   * @return the satisfiability result.
    */
-  std::optional<Box> CheckSat(mpq_class *actual_precision);
+  SatResult CheckSat(mpq_class *actual_precision, Box *model);
 
   /**
    * Checks the satisfiability of the asserted formulas, and (where

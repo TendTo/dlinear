@@ -90,7 +90,7 @@ int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *
   // The solver can't handle problems with inverted bounds, so we need to
   // handle that here.  Also, if there are no constraints, we can immediately
   // return SAT afterward if the bounds are OK.
-  lp_status = LP_DELTA_OPTIMAL;
+  lp_status = LP_OPTIMAL;
   mpq_t temp;
   mpq_init(temp);
   for (const pair<const int, Variable> &kv : var_map) {
@@ -158,30 +158,17 @@ int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *
     DLINEAR_DEBUG("QsoptexTheorySolver::CheckOpt: QSopt_ex failed to return a result");
   }
 
-  lp_status = LP_NO_RESULT;
-
   switch (qs_lp_status) {
     case QS_LP_OPTIMAL:
+      lp_status = LP_OPTIMAL;
+      break;
     case QS_LP_DELTA_OPTIMAL:
-      // Copy delta-optimal point from x into model_
-      for (const pair<const int, Variable> &kv : var_map) {
-        DLINEAR_ASSERT(
-            model_[kv.second].lb() <= mpq_class(x[kv.first]) && mpq_class(x[kv.first]) <= model_[kv.second].ub(),
-            "x[kv.first] must be in bounds");
-        model_[kv.second] = x[kv.first];
-      }
       lp_status = LP_DELTA_OPTIMAL;
       break;
     case QS_LP_INFEASIBLE:
-      // Prevent the exact same LP from coming up again
-      explanation_.clear();
-      explanation_.insert(assertions.begin(), assertions.end());
       lp_status = LP_INFEASIBLE;
       break;
     case QS_LP_UNSOLVED:
-      // Prevent the exact same LP from coming up again
-      explanation_.clear();
-      explanation_.insert(assertions.begin(), assertions.end());
       lp_status = LP_UNSOLVED;
       break;
     case QS_LP_UNBOUNDED:
@@ -190,7 +177,29 @@ int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *
     case QS_LP_ITER_LIMIT:
       DLINEAR_RUNTIME_ERROR("Iteration limit reached");
     default:
+      lp_status = LP_NO_RESULT;
       DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned LP status {}", qs_lp_status);
+  }
+
+  switch (lp_status) {
+    case LP_OPTIMAL:
+    case LP_DELTA_OPTIMAL:
+      // Copy delta-optimal point from x into model_
+      for (const pair<const int, Variable> &kv : var_map) {
+        DLINEAR_ASSERT(
+            model_[kv.second].lb() <= mpq_class(x[kv.first]) && mpq_class(x[kv.first]) <= model_[kv.second].ub(),
+            "x[kv.first] must be in bounds");
+        model_[kv.second] = x[kv.first];
+      }
+      break;
+    case LP_UNSOLVED:
+    case LP_INFEASIBLE:
+      // Prevent the exact same LP from coming up again
+      explanation_.clear();
+      explanation_.insert(assertions.begin(), assertions.end());
+      break;
+    default:
+      break;
   }
 
   return lp_status;
@@ -241,7 +250,7 @@ int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &as
   // The solver can't handle problems with inverted bounds, so we need to
   // handle that here.  Also, if there are no constraints, we can immediately
   // return SAT afterward if the bounds are OK.
-  sat_status = SAT_DELTA_SATISFIABLE;
+  sat_status = SAT_SATISFIABLE;
   mpq_t temp;
   mpq_init(temp);
   for (const pair<const int, Variable> &kv : var_map) {
@@ -303,6 +312,8 @@ int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &as
 
   switch (lp_status) {
     case QS_LP_FEASIBLE:
+      sat_status = SAT_SATISFIABLE;
+      break;
     case QS_LP_DELTA_FEASIBLE:
       sat_status = SAT_DELTA_SATISFIABLE;
       break;
@@ -330,7 +341,6 @@ int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &as
             "x[kv.first] must be in bounds");
         model_[kv.second] = x[kv.first];
       }
-      sat_status = SAT_DELTA_SATISFIABLE;
       break;
     case SAT_UNSATISFIABLE:
     case SAT_UNSOLVED:
