@@ -37,6 +37,7 @@ class BenchConfig {
   [[nodiscard]] const std::string &path() const { return path_; }
   [[nodiscard]] const std::string &extension() const { return extension_; }
   [[nodiscard]] const std::string &output_file() const { return output_file_; }
+  [[nodiscard]] int simplex_sat_phase() const { return simplex_sat_phase_; }
 
   void setDryRun(bool isDryRun) { isDryRun_ = isDryRun; }
   void setFiles(const std::vector<std::string> &files) { files_ = files; }
@@ -48,6 +49,7 @@ class BenchConfig {
   void setPath(std::string &&path) { path_ = std::move(path); }
   void setExtension(const std::string &extension) { extension_ = extension; }
   void setOutputFile(const std::string &outputFile) { output_file_ = outputFile; }
+  void setSimplexSatPhase(int simplexSatPhase) { simplex_sat_phase_ = simplexSatPhase; }
 
  private:
   std::string config_file_;
@@ -57,6 +59,7 @@ class BenchConfig {
   std::string output_file_;
   bool isDryRun_{};
   uint timeout_{};
+  int simplex_sat_phase_{};
 
   friend std::ostream &operator<<(std::ostream &os, const BenchConfig &config);
 };

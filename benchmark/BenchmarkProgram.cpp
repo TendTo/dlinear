@@ -15,6 +15,19 @@ using std::vector;
 
 namespace dlinear::benchmark {
 
+namespace {
+
+inline dlinear::Config GetConfig(const string &filename, const string &solver, const string &precision,
+                                 int simplex_phase) {
+  dlinear::Config config{filename};
+  config.mutable_lp_solver().set_from_command_line(InfoGatherer::GetLPSolver(solver));
+  config.mutable_precision().set_from_command_line(stod(precision));
+  config.mutable_simplex_sat_phase().set_from_command_line(simplex_phase);
+  return config;
+}
+
+}  // namespace
+
 BenchmarkProgram::BenchmarkProgram(int argc, const char *argv[]) : argc_{argc}, argv_{argv} {
   BenchArgParser arg_parser{};
   arg_parser.parse(argc, argv);
@@ -40,13 +53,15 @@ void BenchmarkProgram::StartBenchmarks() {
   ConfigFileReader config_file_reader{config_.config_file()};
   config_file_reader.read();
 
-  PrintRow("file,solver,assertions,precision,timeUnit,time,parserTime,smtTime,actualPrecision,result", true);
+  PrintRow("file,solver,assertions,precision,simplexPhase,timeUnit,time,parserTime,smtTime,actualPrecision,result",
+           true);
 
   std::cout << "Starting benchmarking" << std::endl;
   for (const string &filename : config_.files()) {
     for (const string &solver : config_file_reader.solvers()) {
       for (const string &precision : config_file_reader.precisions()) {
-        InfoGatherer info_gatherer{filename, solver, precision, config_.timeout()};
+        dlinear::Config dlinear_config{GetConfig(filename, solver, precision, config_.simplex_sat_phase())};
+        InfoGatherer info_gatherer{dlinear_config, config_.timeout()};
         if (config_.isDryRun()) continue;
         if (info_gatherer.run() && info_gatherer.nAssertions() > 0) {
           PrintRow((std::stringstream{} << info_gatherer).str());

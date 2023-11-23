@@ -27,6 +27,9 @@ class InfoGatherer {
   InfoGatherer() = delete;
   InfoGatherer(std::string filename, std::string solver, const std::string &precision);
   InfoGatherer(std::string filename, std::string solver, const std::string &precision, uint timeout);
+  InfoGatherer(Config config, uint timeout);
+
+  static Config::LPSolver GetLPSolver(const std::string &solver);
   bool run();
 
   [[nodiscard]] const std::string &filename() const { return config_.filename(); }
@@ -39,6 +42,7 @@ class InfoGatherer {
   [[nodiscard]] uint time() const { return time_; }
   [[nodiscard]] double smt_solver_time() const { return smt_solver_time_; }
   [[nodiscard]] double parser_time() const { return parser_time_; }
+  [[nodiscard]] int simplex_phase() const { return config_.simplex_sat_phase(); }
 
  private:
   Config config_;
@@ -52,7 +56,6 @@ class InfoGatherer {
   double smt_solver_time_{0.0};
   double parser_time_{0.0};
 
-  Config::LPSolver GetLPSolver(const std::string &solver) const;
   void GatherInfo(shared_results *results);
   void StartIntermediateProcess(shared_results *results);
   bool WaitChild();

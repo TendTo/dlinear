@@ -8,18 +8,19 @@ using std::string;
 namespace dlinear::benchmark {
 
 InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision)
-    : config_{std::move(filename)}, timeout_{0} {
-  precision_ = stod(precision);
+    : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{0} {
   config_.mutable_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
   config_.mutable_precision().set_from_command_line(precision_);
 }
 
 InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision, uint timeout)
-    : config_{std::move(filename)}, timeout_{timeout} {
-  precision_ = stod(precision);
+    : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{timeout} {
   config_.mutable_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
   config_.mutable_precision().set_from_command_line(precision_);
 }
+
+InfoGatherer::InfoGatherer(Config config, uint timeout)
+    : config_{config}, precision_{config.precision()}, timeout_{timeout} {}
 
 bool InfoGatherer::run() {
   std::cout << "Running " << config_.filename() << " with " << config_.lp_solver() << " and " << precision_
@@ -97,7 +98,7 @@ void InfoGatherer::ParseResults(shared_results *results) {
   parser_time_ = results->parser_time;
 }
 
-Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) const {
+Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) {
   if (solver == "soplex") {
     return Config::SOPLEX;
   } else if (solver == "qsoptex") {
@@ -122,12 +123,17 @@ void InfoGatherer::GatherInfo(shared_results *results) {
 }
 
 std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer) {
-  return os << info_gatherer.filename() << "," << info_gatherer.solver() << "," << info_gatherer.nAssertions() << ","
-            << info_gatherer.precision() << ","
-            << "s"
-            << "," << info_gatherer.time() << "," << info_gatherer.parser_time() << ","
-            << info_gatherer.smt_solver_time() << "," << info_gatherer.actualPrecision() << ","
-            << info_gatherer.isSat();
+  return os << info_gatherer.filename() << ","         // Filename
+            << info_gatherer.solver() << ","           // Solver
+            << info_gatherer.nAssertions() << ","      // Number of assertions
+            << info_gatherer.precision() << ","        // Precision
+            << info_gatherer.simplex_phase() << ","    // Simplex Phase
+            << "s,"                                    // Time unit
+            << info_gatherer.time() << ","             // Time
+            << info_gatherer.parser_time() << ","      // Parser time
+            << info_gatherer.smt_solver_time() << ","  // SMT solver time
+            << info_gatherer.actualPrecision() << ","  // Actual precision
+            << info_gatherer.isSat();                  // Result
 }
 
 }  // namespace dlinear::benchmark

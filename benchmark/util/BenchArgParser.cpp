@@ -66,6 +66,10 @@ void BenchArgParser::addOptions() {
       .help("apply the verbosity level INFO when running dlinear")
       .default_value(false)
       .implicit_value(true);
+  parser_.add_argument("-s", "--simplex-sat-phase")
+      .help("what phase to use to verify the feasibility of the LP problem")
+      .default_value(1)
+      .scan<'i', int>();
 }
 
 ostream &operator<<(ostream &os, const BenchArgParser &parser) {
@@ -81,6 +85,7 @@ BenchConfig BenchArgParser::toConfig() const {
   config.setTimeout(parser_.get<uint>("timeout"));
   config.setExtension(parser_.get<string>("extension"));
   config.setOutputFile(parser_.get<string>("output"));
+  config.setSimplexSatPhase(parser_.get<int>("simplex-sat-phase"));
   config.setFiles(getFilesVector());
   if (parser_.get<bool>("info-verbosity"))
     DLINEAR_LOG_INIT_VERBOSITY(3);
@@ -98,6 +103,9 @@ void BenchArgParser::validateOptions() {
     DLINEAR_INVALID_ARGUMENT("--path", fmt::format("directory {} does not exist", parser_.get<string>("path")));
   if (!file_exists(parser_.get<string>("config")))
     DLINEAR_INVALID_ARGUMENT("--config", fmt::format("file {} does not exist", parser_.get<string>("config")));
+  if (parser_.get<int>("simplex-sat-phase") != 1 && parser_.get<int>("simplex-sat-phase") != 2)
+    DLINEAR_INVALID_ARGUMENT("--simplex-sat-phase", fmt::format("value must be either 1 or 2, received '{}'",
+                                                                parser_.get<int>("simplex-sat-phase")));
 }
 
 string BenchArgParser::version() const { return DLINEAR_VERSION_STRING; }
