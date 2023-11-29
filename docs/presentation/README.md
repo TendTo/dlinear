@@ -237,3 +237,41 @@ It works by keeping track of the numerator and denominator of the rational numbe
 - investigate numerically rigorous techniques for solving linear programming problems
 - develop algorithms that relax the completeness of these algorithms providing still useful but faster results
 - implement the developed algorithms in software
+
+## Qsoptex algorithm
+
+```mermaid
+stateDiagram-v2
+
+state "Double precision" as double
+state "mpq precision" as mpq
+state "Delta feasibiilty check" as delta_feasibility
+state "Feasible" as feasible
+state "Delta-Feasible" as delta_feasible
+
+
+state if_feasibility <<choice>>
+state if_mpq_output <<choice>>
+state if_double_output <<choice>>
+
+    [*] --> double
+    double --> if_double_output
+
+    if_double_output --> feasible : Feasible
+    if_double_output --> mpq : Numerical error
+    if_double_output --> delta_feasibility : Infeasibility < precision
+    if_double_output --> infeasible : Infeasible
+
+    delta_feasibility --> if_feasibility
+
+    if_feasibility --> feasible : Infeasibility = 0
+    if_feasibility --> delta_feasible : Infeasibility <= delta
+    if_feasibility --> mpq : Infeasibility > delta
+
+    mpq --> if_mpq_output
+
+    if_mpq_output --> mpq : Numerical error
+    if_mpq_output --> feasible : Feasible
+    if_mpq_output --> infeasible : Infeasible
+    if_mpq_output --> delta_feasibility : Infeasibility < precision
+```
