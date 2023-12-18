@@ -17,3 +17,11 @@ cc_import(
     static_library = "libgmp.a",
     visibility = ["//visibility:public"],
 )
+
+cc_import(
+    name = "mpfr",
+    shared_library = "libmpfr.so",
+    static_library = "libmpfr.a",
+    visibility = ["//visibility:public"],
+    deps = [":gmp", ":gmpxx"],
+)

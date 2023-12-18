@@ -15,7 +15,7 @@ cmake(
         "QUADMATH": "on",
     },
     out_static_libs = ["libsoplex.a"],
-    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision"],
+    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision", "@linux_libs//:mpfr"],
     visibility = ["//visibility:public"],
 )
 
@@ -30,7 +30,7 @@ cmake(
         "QUADMATH": "on",
     },
     out_shared_libs = ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
-    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision"],
+    deps = ["@zlib", "@linux_libs//:gmpxx", "@boost//:multiprecision", "@linux_libs//:mpfr"],
     visibility = ["//visibility:public"],
 )
 

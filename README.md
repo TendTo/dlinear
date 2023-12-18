@@ -17,6 +17,7 @@ Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://g
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
 - [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/)
 - [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` and `.mps` files
+- [mpfr](https://www.mpfr.org/) to compile [soplex](https://soplex.zib.de/) with iterative refinement with arbitrary precision
 
 ## Default parsing and solving behavior
 

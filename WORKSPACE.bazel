@@ -50,9 +50,9 @@ github_archive(
 github_archive(
     name = "soplex",  # Apache License 2.0 | linear programming solver
     build_file = "//third_party:soplex.BUILD.bazel",
-    commit = "release-603",
+    commit = "00b608823b00e7829aea71d99e17fb89f7f6af74",
     repository = "scipopt/soplex",
-    sha256 = "2bdf9adc9ac6ad48f98056679b7b852e626ac4aaaf277e7d4ce17794ed1097be",
+    sha256 = "ac5578f9c1660e46ccf3261b9f49b921fb1cd44b4d935fb3d21ae52a1a8101ec",
 )
 
 github_archive(
