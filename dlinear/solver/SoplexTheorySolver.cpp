@@ -183,7 +183,7 @@ int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &ass
       }
     }
     if (ok) {
-      sat_status = SAT_DELTA_SATISFIABLE;
+      sat_status = *actual_precision == 0.0 ? SAT_SATISFIABLE : SAT_DELTA_SATISFIABLE;
     } else {
       sat_status = SAT_UNSATISFIABLE;
     }
