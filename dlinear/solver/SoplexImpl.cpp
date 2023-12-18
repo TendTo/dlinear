@@ -57,7 +57,8 @@ void Context::SoplexImpl::Assert(const Formula &f) {
 #endif
 }  // namespace dlinear
 
-SatResult Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box *box_ptr, mpq_class *) {
+SatResult Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, Box *box_ptr,
+                                            mpq_class *actual_precision) {
   Box &box{*box_ptr};
   DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("Context::SoplexImpl::CheckSat: Box =\n{}", box);
@@ -109,7 +110,7 @@ SatResult Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, 
         // The selected assertions have already been enabled in the LP solver
         int theory_result{theory_solver_.CheckSat(box, theory_model, sat_solver_.GetLinearSolverPtr(),
                                                   sat_solver_.GetLowerBounds(), sat_solver_.GetUpperBounds(),
-                                                  sat_solver_.GetLinearVarMap())};
+                                                  sat_solver_.GetLinearVarMap(), actual_precision)};
         if (theory_result == SAT_DELTA_SATISFIABLE || theory_result == SAT_SATISFIABLE) {
           // SAT from TheorySolver.
           DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSatCore() - Theory Check = {}", theory_result);

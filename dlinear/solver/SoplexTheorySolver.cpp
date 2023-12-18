@@ -10,6 +10,7 @@
 #include <string>
 
 #include "dlinear/solver/Context.h"
+#include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
@@ -60,7 +61,7 @@ class TheorySolverStat : public Stats {
 
 int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &assertions, SoPlex *prob,
                                  const VectorRational &lower, const VectorRational &upper,
-                                 const std::map<int, Variable> &var_map) {
+                                 const std::map<int, Variable> &var_map, mpq_class *actual_precision) {
   DLINEAR_ASSERT(prob != nullptr, "Prob is null");
   static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
@@ -70,8 +71,6 @@ int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &ass
 
   SPxSolver::Status status = SPxSolver::Status::UNKNOWN;
   int sat_status = SAT_NO_RESULT;
-
-  precision_ = config_.precision();
 
   int rowcount = prob->numRowsRational();
   int colcount = prob->numColsRational();
@@ -128,16 +127,21 @@ int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &ass
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: calling SoPlex (phase {})",
                     1 == config_.simplex_sat_phase() ? "one" : "two");
 
-  mpq_class actual_precision{precision_};
+  soplex::Rational min_violation;
+  soplex::Rational sum_violation;
+
   status = prob->optimize();
-  actual_precision = 0;  // Because we always solve exactly, at present
 
   if ((2 == config_.simplex_sat_phase() && status != SPxSolver::Status::OPTIMAL) ||
       (status != SPxSolver::Status::OPTIMAL && status != SPxSolver::Status::UNBOUNDED &&
        status != SPxSolver::Status::INFEASIBLE)) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}", status);
+  } else if ((status == SPxSolver::Status::OPTIMAL || status != SPxSolver::Status::UNBOUNDED) &&
+             prob->getRowViolationRational(min_violation, sum_violation)) {
+    *actual_precision = std::move(min_violation.convert_to<mpq_class>());
+    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex has returned with precision = {}", *actual_precision);
   } else {
-    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex has returned with precision = {}", actual_precision);
+    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: SoPlex has returned infeasible");
   }
 
   x.reDim(colcount);
@@ -147,13 +151,14 @@ int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &ass
     DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()", colcount,
                      x.dim());
   }
-  DLINEAR_ASSERT(status != SPxSolver::Status::OPTIMAL || haveSoln, "status must be OPTIMAL or haveSoln must be true");
+  DLINEAR_ASSERT(status != SPxSolver::Status::OPTIMAL || haveSoln,
+                 "status must either be not OPTIMAL or a solution must be present");
 
   if (1 == config_.simplex_sat_phase()) {
     switch (status) {
       case SPxSolver::Status::OPTIMAL:
       case SPxSolver::Status::UNBOUNDED:
-        sat_status = SAT_DELTA_SATISFIABLE;
+        sat_status = *actual_precision == 0.0 ? SAT_SATISFIABLE : SAT_DELTA_SATISFIABLE;
         break;
       case SPxSolver::Status::INFEASIBLE:
         sat_status = SAT_UNSATISFIABLE;
@@ -189,6 +194,7 @@ int SoplexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &ass
   }
 
   switch (sat_status) {
+    case SAT_SATISFIABLE:
     case SAT_DELTA_SATISFIABLE:
       if (haveSoln) {
         // Copy delta-feasible point from x into model_

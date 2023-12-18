@@ -35,7 +35,7 @@ class SoplexTheorySolver {
   /// assignment. Otherwise, return false.
   int CheckSat(const Box &box, const std::vector<Literal> &assertions, soplex::SoPlex *prob,
                const soplex::VectorRational &lower, const soplex::VectorRational &upper,
-               const std::map<int, Variable> &var_map);
+               const std::map<int, Variable> &var_map, mpq_class *actual_precision);
 
   /**
    * Get a satisfying Model.

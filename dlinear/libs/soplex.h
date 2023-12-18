@@ -12,5 +12,9 @@
  */
 #pragma once
 
+// This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+
 #define SOPLEX_WITH_GMP
-#include <soplex.h>
+#include <soplex.h>  // NOLINT

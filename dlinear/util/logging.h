@@ -26,7 +26,7 @@ namespace dlinear {
 
 enum class LoggerType { OUT, ERR };
 
-std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type); // NOLINT
+std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 }  // namespace dlinear
 

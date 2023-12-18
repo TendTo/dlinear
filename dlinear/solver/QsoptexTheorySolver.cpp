@@ -207,6 +207,8 @@ int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *
 
 extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_t *const /*x*/, const mpq_t infeas,
                                                const mpq_t /*delta*/, void *data) {
+  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexCheckSatPartialSolution called with infeasibility {}",
+                    mpq_class(infeas));
   auto *theory_solver = static_cast<QsoptexTheorySolver *>(data);
   // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
   double infeas_gt = nextafter(mpq_get_d(infeas), numeric_limits<double>::infinity());
