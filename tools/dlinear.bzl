@@ -219,7 +219,7 @@ def solver_phased_test(
             "$(location %s)" % input_file,
             lp_solver,
             str(phase),
-            ("X" if exhaustive_ok else "C") if continuous else "N",
+            ("C" if continuous else "X") if exhaustive_ok else "N",
         ] + options,
         tags = tags + ["solver", suffix],
         data = ["//test/solver:test_solver_binary"] + data_files,

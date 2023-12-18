@@ -56,16 +56,19 @@ def parse_command_line_args() -> "argparse.Namespace":
     parser.add_argument("phase", help="simplex phase", choices=["1", "2"])
     parser.add_argument("cont_mode",
                         help="""continuous mode.
-                        | N -> no continuous mode | Y -> continuous mode | X -> continuous mode with exhaustive""",
-                        choices=["N", "Y", "X"])
+                        | N -> no continuous mode | C -> continuous mode | X -> continuous mode with exhaustive""",
+                        choices=["N", "C", "X"])
     parser.add_argument("options", nargs=argparse.REMAINDER, help="options to pass through to solver")
     parser.add_argument("--log-level", default="INFO", help="log level",
                         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
 
     parsed_args = parser.parse_args()
 
-    if parsed_args.cont_mode != "N" and parsed_args.lp_solver == "soplex":
+    if parsed_args.cont_mode == "C" and parsed_args.lp_solver == "soplex":
         parser.error("Only qsoptex supports continuous mode")
+    if parsed_args.phase == "2" and parsed_args.lp_solver == "soplex":
+        logger.info("No phase 2 for SoPlex - skipping test")
+        sys.exit(0)  # Skip test
     logger.setLevel(parsed_args.log_level)
 
     return parsed_args
@@ -74,16 +77,17 @@ def parse_command_line_args() -> "argparse.Namespace":
 def parse_dlinear_args(parsed_args: "argparse.Namespace") -> "list[str]":
     args = ["--simplex-sat-phase", parsed_args.phase, "--lp-solver", parsed_args.lp_solver]
     if parsed_args.cont_mode != "N":
-        args.append("--continuous-output")
-        if parsed_args.cont_mode == "X":
-            args.append("--exhaustive")
+        args.append("--exhaustive")
+        if parsed_args.cont_mode == "C":
+            args.append("--continuous-output")
     args.extend(parsed_args.options)
+    print(args)
     return args
 
 
 def get_expected_output(parsed_args: "argparse.Namespace") -> "list[str]":
     file_name = os.path.splitext(parsed_args.file)[0]
-    if parsed_args.cont_mode == "N":
+    if parsed_args.cont_mode != "C":
         expected_output_filenames = (
             "{}.{}.expected_phase_{}".format(file_name, parsed_args.lp_solver, parsed_args.phase),  # 1. (non-continuous mode)
             "{}.{}.expected".format(file_name, parsed_args.lp_solver),  # 2. (non-continuous mode)
@@ -97,6 +101,7 @@ def get_expected_output(parsed_args: "argparse.Namespace") -> "list[str]":
         )
     for expected_output_filename in expected_output_filenames:
         if os.path.exists(expected_output_filename):
+            print("found expected output file: {}".format(expected_output_filename))
             with open(expected_output_filename, "r", encoding='utf-8') as myfile:
                 return myfile.read().strip().splitlines()  # File exists, return the contents
 
