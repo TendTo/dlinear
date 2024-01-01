@@ -47,8 +47,8 @@ std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
       return os << "delta-optimal";
     case SolverResult::UNBOUNDED:
       return os << "unbounded";
-    case SolverResult::UNFEASIBLE:
-      return os << "unfeasible";
+    case SolverResult::INFEASIBLE:
+      return os << "infeasible";
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -82,8 +82,8 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
     case SolverResult::UNBOUNDED:
       os << "unbounded";
       break;
-    case SolverResult::UNFEASIBLE:
-      os << "unfeasible";
+    case SolverResult::INFEASIBLE:
+      os << "infeasible";
       break;
     case SolverResult::SKIP_SAT:
       os << "skip-sat\n"

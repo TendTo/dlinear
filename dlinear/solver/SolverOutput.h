@@ -27,7 +27,7 @@ namespace dlinear {
  * - OPTIMAL: The context is optimal.
  * - DELTA_OPTIMAL: The context is delta-optimal.
  * - UNBOUNDED: The context is unbounded.
- * - UNFEASIBLE: The context is unfeasible.
+ * - INFEASIBLE: The context is infeasible.
  * - UNSAT: The context is unsatisfiable.
  * - UNKNOWN: Could not determine satisfiability.
  * - ERROR: An error occurred.
@@ -40,7 +40,7 @@ enum class SolverResult {
   OPTIMAL,        // The optimization problem is optimal.
   DELTA_OPTIMAL,  // The optimization problem is delta-optimal.
   UNBOUNDED,      // The problem is unbounded.
-  UNFEASIBLE,     // The problem is unfeasible.
+  INFEASIBLE,     // The problem is infeasible.
   UNSAT,          // The problem is unsatisfiable.
   UNKNOWN,        // Could not determine satisfiability.
   ERROR,          // An error occurred.

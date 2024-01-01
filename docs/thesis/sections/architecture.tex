@@ -263,7 +263,7 @@ Once the parsing has been completed successfully, everything comes together: the
 If the \gls{sat} solver returns \texttt{unsat}, the program halts immediately, for the problem is trivially unsatisfiable.
 Otherwise, the output of the \gls{lp} solver will determine the final result.
 If the \gls{lp} problem is solved, then \dlinear will return \texttt{sat} and a model.
-If the input is found to be unfeasible, an explanation containing the unsatisfiable core will be returned.
+If the input is found to be infeasible, an explanation containing the unsatisfiable core will be returned.
 By negating and integrating it in the input of the \gls{sat} solver, another iteration will be performed, and the process will repeat (\autoref{dg:qsoptex}).
 
 \plantuml{diagrams/sequence/qsoptex}{Simplified sequence diagram of the interactions between the \gls{sat} and theory solvers}{qsoptex}

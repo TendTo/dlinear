@@ -69,7 +69,7 @@ The transformation uses three basic operators:
 Solving a \gls{sat} problem is no easy task.
 Since the number of possible assignments is finite, a naive approach would be to loop over them and verify if they satisfy the formula.
 This technique called \textit{Local search}, has seen some use when combined with specialized heuristics to guide the next assignment to try.
-Regardless, proving that a formula is unsatisfiable would require evaluating all possibilities, which is unfeasible for large formulas.
+Regardless, proving that a formula is unsatisfiable would require evaluating all possibilities, which is infeasible for large formulas.
 
 Complete algorithms, on the other hand, are guaranteed to find a solution if one exists and to prove that no solution exists otherwise.
 Properties of \gls{sat} problems can be exploited to produce different solving techniques.

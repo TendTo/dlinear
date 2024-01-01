@@ -102,7 +102,7 @@ void Solver::CheckObjCore() {
   } else if (LP_UNBOUNDED == status) {
     output_.mutable_result() = SolverResult::UNBOUNDED;
   } else if (LP_INFEASIBLE == status) {
-    output_.mutable_result() = SolverResult::UNFEASIBLE;
+    output_.mutable_result() = SolverResult::INFEASIBLE;
   } else {
     DLINEAR_UNREACHABLE();
   }
