@@ -63,11 +63,13 @@ SatResult Context::SoplexImpl::CheckSatCore(const ScopedVector<Formula> &stack, 
   DLINEAR_DEBUG("Context::SoplexImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("Context::SoplexImpl::CheckSat: Box =\n{}", box);
   if (box.empty()) {
+    DLINEAR_DEBUG("Context::SoplexImpl::CheckSat: Box is empty");
     return SAT_UNSATISFIABLE;
   }
   // If false ∈ stack, it's UNSAT.
   for (const auto &f : stack.get_vector()) {
     if (is_false(f)) {
+      DLINEAR_DEBUG_FMT("Context::SoplexImpl::CheckSat: Found false formula = {}", f);
       return SAT_UNSATISFIABLE;
     }
   }
