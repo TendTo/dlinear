@@ -52,6 +52,11 @@ Formula &Formula::operator=(Formula &&f) noexcept {
   return *this;
 }
 
+Formula &Formula::operator&=(const Formula &f2) {
+  make_conjunction(*this, f2);
+  return *this;
+}
+
 Formula::~Formula() {
   if (ptr_) {
     ptr_->decrease_rc();

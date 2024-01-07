@@ -263,6 +263,7 @@ class Formula {
   friend Formula operator<=(const Expression &e1, const Expression &e2);
   friend Formula operator>(const Expression &e1, const Expression &e2);
   friend Formula operator>=(const Expression &e1, const Expression &e2);
+  Formula &operator&=(const Formula &f2);
 
   /// Returns true if this symbolic formula includes an ITE (If-Then-Else)
   /// expression.

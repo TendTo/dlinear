@@ -182,10 +182,10 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
     Expression row_expression = ExpressionAddFactory{0, rows_[row]}.GetExpression();
     switch (row_senses_.at(row)) {
       case Sense::L:
-        rhs_[row] = rhs_[row] && mpq_class{rhs_values_[row] - value} <= row_expression;
+        rhs_[row] &= mpq_class{rhs_values_[row] - value} <= row_expression;
         break;
       case Sense::G:
-        rhs_[row] = rhs_[row] && row_expression <= mpq_class{rhs_values_[row] + value};
+        rhs_[row] &= row_expression <= mpq_class{rhs_values_[row] + value};
         break;
       case Sense::E:
         rhs_[row] = value > 0
@@ -210,17 +210,17 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
     switch (bound_type) {
       case BoundType::UP:
       case BoundType::UI:
-        bounds_[column] = bounds_[column] && (columns_.at(column) <= value);
+        bounds_[column] &= columns_.at(column) <= value;
         if (value <= 0) skip_lower_bound_[column] = true;
         break;
       case BoundType::LO:
       case BoundType::LI:
-        bounds_[column] = bounds_[column] && (value <= columns_.at(column));
+        bounds_[column] &= value <= columns_.at(column);
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FX:
         // bounds_[column] = bounds_[column] && (columns_.at(column) == value);
-        bounds_[column] = bounds_[column] && (value <= columns_.at(column)) && (columns_.at(column) <= value);
+        bounds_[column] &= (value <= columns_.at(column)) && (columns_.at(column) <= value);
         skip_lower_bound_[column] = true;
         break;
       default:
