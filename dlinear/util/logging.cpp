@@ -7,7 +7,7 @@
 
 #include "logging.h"
 
-#ifndef NDEBUG
+#ifndef NLOG
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 

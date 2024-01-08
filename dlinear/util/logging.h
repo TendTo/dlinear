@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#ifndef NDEBUG
+#ifndef NLOG
 
 #include <spdlog/spdlog.h>
 // Enable formatting with the override of operator<< for user-defined types.
