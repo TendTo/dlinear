@@ -94,7 +94,7 @@ int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *
   mpq_t temp;
   mpq_init(temp);
   for (const pair<const int, Variable> &kv : var_map) {
-    int res;
+    [[maybe_unused]] int res;
     res = mpq_QSget_bound(prob, kv.first, 'L', &temp);
     DLINEAR_ASSERT(!res, "Invalid res");
     mpq_class lb{temp};
@@ -256,7 +256,7 @@ int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &as
   mpq_t temp;
   mpq_init(temp);
   for (const pair<const int, Variable> &kv : var_map) {
-    int res;
+    [[maybe_unused]] int res;
     res = mpq_QSget_bound(prob, kv.first, 'L', &temp);
     DLINEAR_ASSERT(!res, "Invalid res");
     mpq_class lb{temp};

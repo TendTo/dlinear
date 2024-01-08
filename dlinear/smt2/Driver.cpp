@@ -7,6 +7,7 @@
 
 #include "Driver.h"
 
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -15,6 +16,7 @@
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/logging.h"
 #include "dlinear/util/exception.h"
 
 using std::cerr;

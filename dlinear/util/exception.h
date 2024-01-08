@@ -18,10 +18,10 @@
 #ifdef NDEBUG
 
 #define DLINEAR_ASSERT(condition, msg) ((void)0)
-#define DLINEAR_UNREACHABLE() terminate()
-#define DLINEAR_RUNTIME_ERROR(msg) throw runtime_error(msg)
-#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...) throw runtime_error()
-#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw runtime_error()
+#define DLINEAR_UNREACHABLE() std::terminate()
+#define DLINEAR_RUNTIME_ERROR(msg) throw std::runtime_error(msg)
+#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...) throw std::runtime_error(msg)
+#define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::runtime_error(argument)
 
 #else
 

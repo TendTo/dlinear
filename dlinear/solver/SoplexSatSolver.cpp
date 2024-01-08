@@ -293,7 +293,7 @@ void SoplexSatSolver::ResetLinearProblem(const Box &box) {
     spx_prob_.changeRangeRational(i, -soplex::infinity, soplex::infinity);
   }
   // Clear variable bounds
-  const int spx_cols{spx_prob_.numColsRational()};
+  [[maybe_unused]] const int spx_cols{spx_prob_.numColsRational()};
   DLINEAR_ASSERT(2 == config_.simplex_sat_phase() || static_cast<size_t>(spx_cols) == from_spx_col_.size(),
                  "spx_cols must match from_spx_col_.size()");
   for (const pair<int, Variable> kv : from_spx_col_) {

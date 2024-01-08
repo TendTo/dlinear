@@ -17,7 +17,7 @@ using std::vector;
 
 namespace {
 
-bool ParseBooleanOption(const string &key, const string &val) {
+bool ParseBooleanOption([[maybe_unused]] const string &key, const string &val) {
   if (val == "true") return true;
   if (val == "false") return false;
   DLINEAR_RUNTIME_ERROR_FMT("Unknown value {} is provided for option {}", val, key);

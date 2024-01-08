@@ -12,6 +12,7 @@
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/logging.h"
 
 using std::abs;
 using std::cout;
@@ -304,7 +305,7 @@ void QsoptexSatSolver::ResetLinearProblem(const Box &box) {
     mpq_QSchange_rhscoef(qsx_prob_, i, mpq_NINFTY);
   }
   // Clear variable bounds
-  const int qsx_cols{mpq_QSget_colcount(qsx_prob_)};
+  [[maybe_unused]] const int qsx_cols{mpq_QSget_colcount(qsx_prob_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_cols) == from_qsx_col_.size(), "Column count mismatch");
   for (const pair<int, Variable> kv : from_qsx_col_) {
     if (box.has_variable(kv.second)) {
@@ -565,7 +566,7 @@ void QsoptexSatSolver::AddLinearVariable(const Variable &var) {
     return;
   }
   const int qsx_col{mpq_QSget_colcount(qsx_prob_)};
-  int status = mpq_QSnew_col(qsx_prob_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY, var.get_name().c_str());
+  [[maybe_unused]] int status = mpq_QSnew_col(qsx_prob_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY, var.get_name().c_str());
   DLINEAR_ASSERT(!status, "Invalid status");
   to_qsx_col_.emplace(make_pair(var.get_id(), qsx_col));
   from_qsx_col_[qsx_col] = var;
