@@ -177,8 +177,8 @@ bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(va
 
 int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
 
-const Box::IntervalVector &Box::interval_vector() const { return values_; }
-Box::IntervalVector &Box::mutable_interval_vector() { return values_; }
+const std::vector<Box::Interval> &Box::interval_vector() const { return values_; }
+std::vector<Box::Interval> &Box::mutable_interval_vector() { return values_; }
 
 pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};
@@ -316,8 +316,8 @@ bool operator==(const Box &b1, const Box &b2) {
 
 bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 
-ostream &DisplayDiff(ostream &os, const vector<Variable> &variables, const Box::IntervalVector &old_iv,
-                     const Box::IntervalVector &new_iv) {
+ostream &DisplayDiff(ostream &os, const vector<Variable> &variables, const std::vector<Box::Interval> &old_iv,
+                     const std::vector<Box::Interval> &new_iv) {
   IosFmtFlagSaver saver{os};
   for (size_t i = 0; i < variables.size(); ++i) {
     const Box::Interval &old_i{old_iv[i]};

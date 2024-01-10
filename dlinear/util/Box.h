@@ -54,11 +54,7 @@ class Box {
       lb_ = ub_ = val;
       return *this;
     }
-    Interval &operator=(const Interval &other) {
-      lb_ = other.lb_;
-      ub_ = other.ub_;
-      return *this;
-    }
+    Interval &operator=(const Interval &other) = default;
     // Mutators
     void set_empty() {
       lb_ = 1;
@@ -68,10 +64,6 @@ class Box {
 
    private:
     mpq_class lb_, ub_;
-  };
-
-  class IntervalVector : public std::vector<Interval> {
-    using vector::vector;
   };
 
   /// Constructs a zero-dimensional box.
@@ -132,10 +124,10 @@ class Box {
   [[nodiscard]] bool has_variable(const Variable &var) const;
 
   /// Returns the interval vector of the box.
-  [[nodiscard]] const IntervalVector &interval_vector() const;
+  [[nodiscard]] const std::vector<Interval> &interval_vector() const;
 
   /// Returns the interval vector of the box.
-  IntervalVector &mutable_interval_vector();
+  std::vector<Interval> &mutable_interval_vector();
 
   /// Returns the index associated with @p var.
   [[nodiscard]] int index(const Variable &var) const;
@@ -168,11 +160,8 @@ class Box {
   [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
   std::shared_ptr<std::vector<Variable>> variables_;
-
-  IntervalVector values_;
-
+  std::vector<Interval> values_;
   std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;
-
   std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;
 
   friend std::ostream &operator<<(std::ostream &os, const Box &box);
@@ -186,7 +175,7 @@ bool operator==(const Box &b1, const Box &b2);
 
 bool operator!=(const Box &b1, const Box &b2);
 
-std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables, const Box::IntervalVector &old_iv,
-                          const Box::IntervalVector &new_iv);
+std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables,
+                          const std::vector<Box::Interval> &old_iv, const std::vector<Box::Interval> &new_iv);
 
 }  // namespace dlinear
