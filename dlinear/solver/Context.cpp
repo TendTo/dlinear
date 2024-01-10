@@ -37,12 +37,12 @@ Context::Context(const Config &config) : impl_{make_impl(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
-SatResult Context::CheckSat(mpq_class *actual_precision, Box *model) {
-  return impl_->CheckSat(actual_precision, model);
+SatResult Context::CheckSat(mpq_class *actual_precision) {
+  return impl_->CheckSat(actual_precision);
 }
 
-int Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model) {
-  return impl_->CheckOpt(obj_lo, obj_up, model);
+int Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
+  return impl_->CheckOpt(obj_lo, obj_up);
 }
 
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
@@ -98,7 +98,7 @@ string Context::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
 
 const Box &Context::box() const { return impl_->box(); }
 
-const Box &Context::get_model() const { return impl_->get_model(); }
+const Box &Context::model() const { return impl_->get_model(); }
 
 const ScopedVector<Formula> &Context::assertions() const { return impl_->assertions(); }
 

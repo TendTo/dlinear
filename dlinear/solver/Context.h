@@ -81,8 +81,10 @@ class Context {
 
   /**
    * Checks the satisfiability of the asserted formulas, and sets
-   * @p actual_precision (write-only) to the actual max infeasibility where
-   * appropriate.
+   * @p actual_precision to the actual max infeasibility where
+   * appropriate. If the result is SAT_SATISFIABLE or SAT_DELTA_SATISFIABLE,
+   * @p model is set to the output model.
+   *
    * @param actual_precision[in,out] initialized with the desired precision, it will be
    * set to the lowest possible precision below the given one that satisfies the
    * constraints.
@@ -90,13 +92,13 @@ class Context {
    * SAT_DELTA_SATISFIABLE.
    * @return the satisfiability result.
    */
-  SatResult CheckSat(mpq_class *actual_precision, Box *model);
+  SatResult CheckSat(mpq_class *actual_precision);
 
   /**
    * Checks the satisfiability of the asserted formulas, and (where
    * possible) optimizes an objective function over them.
    */
-  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model);
+  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
 
   /**
    * Declare a variable @p v. By default @p v is considered as a
@@ -120,6 +122,8 @@ class Context {
    * @param is_model_variable whether or not the variable is a model variable
    */
   void DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub, bool is_model_variable = true);
+
+  void Exit();
 
   /** Asserts a formula minimizing a cost function @p f */
   void Minimize(const Expression &f);
@@ -186,7 +190,7 @@ class Context {
    * Returns a representation of a model computed by the solver in
    * response to an invocation of the check-sat.
    */
-  [[nodiscard]] const Box &get_model() const;
+  [[nodiscard]] const Box &model() const;
 
   /**
    * Returns whether or not there is an objective function (which may be

@@ -95,8 +95,7 @@ void Solver::CheckObjCore() {
   DLINEAR_DEBUG("Solver::CheckObjCore");
   TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
   output_.mutable_model() = context_.box();
-  int status =
-      context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound(), &output_.mutable_model());
+  int status = context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound());
   if (LP_DELTA_OPTIMAL == status) {
     output_.mutable_result() = SolverResult::DELTA_OPTIMAL;
   } else if (LP_UNBOUNDED == status) {
@@ -106,22 +105,21 @@ void Solver::CheckObjCore() {
   } else {
     DLINEAR_UNREACHABLE();
   }
+  output_.mutable_model() = context_.model();
 }
 
 void Solver::CheckSatCore() {
   DLINEAR_DEBUG("Solver::CheckSatCore");
   TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
-  Box model;
-  const SatResult res = context_.CheckSat(&output_.mutable_actual_precision(), &model);
+  const SatResult res = context_.CheckSat(&output_.mutable_actual_precision());
   if (res == SatResult::SAT_SATISFIABLE) {
-    output_.mutable_model() = std::move(model);
     output_.mutable_result() = SolverResult::SAT;
   } else if (res == SatResult::SAT_DELTA_SATISFIABLE) {
-    output_.mutable_model() = std::move(model);
     output_.mutable_result() = SolverResult::DELTA_SAT;
   } else {
     output_.mutable_result() = SolverResult::UNSAT;
   }
+  output_.mutable_model() = context_.model();
 }
 
 }  // namespace dlinear
