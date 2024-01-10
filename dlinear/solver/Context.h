@@ -102,7 +102,7 @@ class Context {
 
   /**
    * Declare a variable @p v. By default @p v is considered as a
-   * model variable. If @p is_model_variable is false, it is declared as
+   * model variable. If @p IsModelVariable is false, it is declared as
    * a non-model variable and will not appear in the model.
    *
    * @param v the variable to be declared
@@ -113,7 +113,7 @@ class Context {
   /**
    * Declare a variable @p v which is bounded by an interval `[lb,
    * ub]`. By default @p v is considered as a model variable. If @p
-   * is_model_variable is false, it is declared as a non-model variable
+   * IsModelVariable is false, it is declared as a non-model variable
    * and will not appear in the model.
    *
    * @param v the variable to be declared

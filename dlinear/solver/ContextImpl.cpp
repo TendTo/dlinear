@@ -37,20 +37,22 @@ Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objectiv
   boxes_.push_back(Box{});
 }
 
-SatResult Context::Impl::CheckSat(mpq_class *actual_precision, Box *model) {
-  *model = box();
-  SatResult result = CheckSatCore(stack_, model, actual_precision);
+SatResult Context::Impl::CheckSat(mpq_class *precision) {
+  model_.set_empty();
+  SatResult result = CheckSatCore(stack_, &model_, precision);
   switch (result) {
     case SatResult::SAT_DELTA_SATISFIABLE:
     case SatResult::SAT_SATISFIABLE:
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", *model);
-      *model = ExtractModel(*model);
-      model_ = *model;  // For get_model()
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", model_);
+      model_ = ExtractModel(model_);
       break;
     case SatResult::SAT_UNSATISFIABLE:
       DLINEAR_DEBUG("ContextImpl::CheckSat() - Model not found");
-      model->set_empty();
-      model_ = *model;  // For get_model()
+      model_.set_empty();
+      break;
+    case SatResult::SAT_UNSOLVED:
+      DLINEAR_DEBUG("ContextImpl::CheckSat() - Unknown");
+      model_.set_empty();
       break;
     default:
       DLINEAR_UNREACHABLE();
@@ -58,16 +60,15 @@ SatResult Context::Impl::CheckSat(mpq_class *actual_precision, Box *model) {
   return result;
 }
 
-int Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model) {
-  int result = CheckOptCore(stack_, obj_lo, obj_up, model);
+int Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
+  model_.set_empty();
+  int result = CheckOptCore(stack_, obj_lo, obj_up, &model_);
   if (LP_DELTA_OPTIMAL == result || LP_OPTIMAL == result) {
-    DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", *model);
-    *model = ExtractModel(*model);
-    model_ = *model;  // For get_model()
+    DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", model_);
+    model_ = ExtractModel(model_);
     return result;
   } else {
-    model->set_empty();
-    model_ = *model;  // For get_model()
+    model_.set_empty();
     return result;
   }
 }
@@ -80,7 +81,7 @@ void Context::Impl::AddToBox(const Variable &v) {
 void Context::Impl::DeclareVariable(const Variable &v, const bool is_model_variable) {
   DLINEAR_DEBUG_FMT("ContextImpl::DeclareVariable({})", v);
   AddToBox(v);
-  if (is_model_variable) mark_model_variable(v);
+  if (is_model_variable) MarkModelVariable(v);
 }
 
 void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Expression &ub) {
@@ -159,18 +160,18 @@ Box Context::Impl::ExtractModel(const Box &box) const {
   }
   Box new_box;
   for (const Variable &v : box.variables()) {
-    if (is_model_variable(v)) {
+    if (IsModelVariable(v)) {
       new_box.Add(v, box[v].lb(), box[v].ub());
     }
   }
   return new_box;
 }
 
-bool Context::Impl::is_model_variable(const Variable &v) const {
+bool Context::Impl::IsModelVariable(const Variable &v) const {
   return model_variables_.find(v.get_id()) != model_variables_.end();
 }
 
-void Context::Impl::mark_model_variable(const Variable &v) { model_variables_.insert(v.get_id()); }
+void Context::Impl::MarkModelVariable(const Variable &v) { model_variables_.insert(v.get_id()); }
 
 const ScopedVector<Formula> &Context::Impl::assertions() const { return stack_; }
 

@@ -4,17 +4,16 @@
  * @date 16 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/util/Box.h"
-#include "test/symbolic/TestSymbolicUtils.h"
+#include <gtest/gtest.h>
 
 #include <limits>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <gtest/gtest.h>
-
+#include "dlinear/util/Box.h"
 #include "dlinear/util/Infinity.h"
+#include "test/symbolic/TestSymbolicUtils.h"
 
 using std::is_nothrow_move_constructible;
 using std::numeric_limits;
@@ -52,6 +51,7 @@ TEST_F(TestBox, AddHasVariable) {
   EXPECT_TRUE(b1.has_variable(x_));
   EXPECT_FALSE(b1.has_variable(y_));
   EXPECT_FALSE(b1.has_variable(z_));
+  EXPECT_EQ(b1.size(), 1);
 
   b1.Add(y_);
   EXPECT_EQ(b1[y_].lb(), -inf_);
@@ -59,6 +59,7 @@ TEST_F(TestBox, AddHasVariable) {
   EXPECT_TRUE(b1.has_variable(x_));
   EXPECT_TRUE(b1.has_variable(y_));
   EXPECT_FALSE(b1.has_variable(z_));
+  EXPECT_EQ(b1.size(), 2);
 
   b1.Add(z_, -5, 10);
   EXPECT_EQ(b1[z_].lb(), -5);
@@ -66,14 +67,20 @@ TEST_F(TestBox, AddHasVariable) {
   EXPECT_TRUE(b1.has_variable(x_));
   EXPECT_TRUE(b1.has_variable(y_));
   EXPECT_TRUE(b1.has_variable(z_));
+  EXPECT_EQ(b1.size(), 3);
 }
 
 TEST_F(TestBox, Empty) {
-  Box b1{{x_}};
+  Box b1{};
+  b1.Add(x_, 3, 5);
   EXPECT_FALSE(b1.empty());
 
   b1.set_empty();
   EXPECT_TRUE(b1.empty());
+
+  EXPECT_TRUE(b1.has_variable(x_));
+  EXPECT_EQ(b1.size(), 1);
+  EXPECT_TRUE(b1[x_].is_empty());
 }
 
 TEST_F(TestBox, IndexOperator) {
@@ -276,14 +283,13 @@ TEST_F(TestBox, Equality) {
 TEST_F(TestBox, IsNothrowMoveConstructible) {
   static_assert(is_nothrow_move_constructible<Box::Interval>::value,
                 "Box::Interval should be nothrow_move_constructible.");
-  static_assert(is_nothrow_move_constructible<Box::IntervalVector>::value,
+  static_assert(is_nothrow_move_constructible<std::vector<Box::Interval>>::value,
                 "Box::IntervalVector should be nothrow_move_constructible.");
-  static_assert(is_nothrow_move_constructible<Box>::value,
-                "Box should be nothrow_move_constructible.");
+  static_assert(is_nothrow_move_constructible<Box>::value, "Box should be nothrow_move_constructible.");
 }
 
 TEST_F(TestBox, IntervalFromString) {
   Box::Interval interval = Box::Interval::fromString("100");
-  EXPECT_EQ(interval.lb(), 100); // TODO: should be -100??
+  EXPECT_EQ(interval.lb(), 100);  // TODO: should be -100??
   EXPECT_EQ(interval.ub(), 100);
 }

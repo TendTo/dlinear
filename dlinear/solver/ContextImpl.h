@@ -35,8 +35,8 @@ class Context::Impl {
   virtual void Pop() = 0;
   virtual void Push() = 0;
 
-  SatResult CheckSat(mpq_class *actual_precision, Box *model);
-  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up, Box *model);
+  SatResult CheckSat(mpq_class *precision);
+  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
   void DeclareVariable(const Variable &v, bool is_model_variable);
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
   void Minimize(const std::vector<Expression> &functions);
@@ -62,6 +62,7 @@ class Context::Impl {
    * `DeclareVariable` should be used. But `DeclareVariable` should be
    * called from outside of this class. Any methods in this class
    * should not call it directly.
+   *
    * @param v The variable to be added to the current box.
    */
   void AddToBox(const Variable &v);
@@ -73,16 +74,17 @@ class Context::Impl {
   virtual void MinimizeCore(const Expression &obj_expr) = 0;
 
   /** Mark the variable @p v as a model variable. */
-  void mark_model_variable(const Variable &v);
+  void MarkModelVariable(const Variable &v);
 
   /** Check if the variable @p v is a model variable or not. */
-  bool is_model_variable(const Variable &v) const;
+  bool IsModelVariable(const Variable &v) const;
 
   /**
    * Extract a model from the @p box. Note that @p box might include
    * non-model variables (i.e. variables introduced by if-then-else
    * elimination). This function creates a new box which is free of
    * those non-model variables.
+   *
    * @param box box to extract a model from.
    * @return box which is free of non-model variables.
    */
