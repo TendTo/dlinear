@@ -65,22 +65,14 @@ void Context::Maximize(const Expression &f) { impl_->Maximize({f}); }
 
 void Context::Pop(int n) {
   DLINEAR_DEBUG_FMT("Context::Pop({})", n);
-  if (n <= 0) {
-    DLINEAR_RUNTIME_ERROR_FMT("Context::Pop(n) called with n = {} which is not positive.", n);
-  }
-  while (n-- > 0) {
-    impl_->Pop();
-  }
+  if (n <= 0) DLINEAR_RUNTIME_ERROR_FMT("Context::Pop(n) called with n = {} which is not positive.", n);
+  while (n-- > 0) impl_->Pop();
 }
 
 void Context::Push(int n) {
   DLINEAR_DEBUG_FMT("Context::Push({})", n);
-  if (n <= 0) {
-    DLINEAR_RUNTIME_ERROR_FMT("Context::Push(n) called with n = {} which is not positive.", n);
-  }
-  while (n-- > 0) {
-    impl_->Push();
-  }
+  if (n <= 0) DLINEAR_RUNTIME_ERROR_FMT("Context::Push(n) called with n = {} which is not positive.", n);
+  while (n-- > 0) impl_->Push();
 }
 
 void Context::SetInfo(const string &key, const double val) { impl_->SetInfo(key, val); }

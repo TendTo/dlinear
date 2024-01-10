@@ -59,7 +59,7 @@ class Context {
   /** Move constructor. */
   Context(Context &&context) noexcept;
 
-  /** Destructor (Defaulted in .cc file. Needed here for compilation). */
+  /** Destructor (Defaulted in source file. Needed here for compilation). */
   ~Context();
 
   /** Deleted copy-assign. */
@@ -71,7 +71,12 @@ class Context {
   /** Constructs a context with @p config. */
   explicit Context(const Config &config);
 
-  /** Asserts a formula @p f. */
+  /**
+   * Asserts a formula @p f.
+   * The new formula is added to the box.
+   *
+   * @param f the formula to be asserted
+   */
   void Assert(const Formula &f);
 
   /**
@@ -97,6 +102,9 @@ class Context {
    * Declare a variable @p v. By default @p v is considered as a
    * model variable. If @p is_model_variable is false, it is declared as
    * a non-model variable and will not appear in the model.
+   *
+   * @param v the variable to be declared
+   * @param is_model_variable whether or not the variable is a model variable
    */
   void DeclareVariable(const Variable &v, bool is_model_variable = true);
 
@@ -105,11 +113,13 @@ class Context {
    * ub]`. By default @p v is considered as a model variable. If @p
    * is_model_variable is false, it is declared as a non-model variable
    * and will not appear in the model.
+   *
+   * @param v the variable to be declared
+   * @param lb the lower bound of the variable
+   * @param ub the upper bound of the variable
+   * @param is_model_variable whether or not the variable is a model variable
    */
   void DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub, bool is_model_variable = true);
-
-  /** Closes the context */
-  static void Exit();
 
   /** Asserts a formula minimizing a cost function @p f */
   void Minimize(const Expression &f);
