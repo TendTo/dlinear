@@ -9,8 +9,10 @@
  */
 #pragma once
 
+#include <ostream>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "dlinear/symbolic/symbolic.h"
 
@@ -23,5 +25,10 @@ struct LiteralComparator {
 };
 
 using LiteralSet = std::set<Literal, LiteralComparator>;
+
+using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
+
+std::ostream &operator<<(std::ostream &os, const Literal &literal);
+std::ostream &operator<<(std::ostream &os, const Model &model);
 
 }  // namespace dlinear

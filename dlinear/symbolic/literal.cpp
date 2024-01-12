@@ -18,4 +18,16 @@ bool LiteralComparator::operator()(const Literal &a, const Literal &b) const {
   return a.second < b.second;
 }
 
-} // namespace dlinear
+std::ostream &operator<<(std::ostream &os, const Literal &literal) {
+  return os << (literal.second ? "" : "¬") << literal.first;
+}
+
+std::ostream &operator<<(std::ostream &os, const Model &model) {
+  os << "Boolean model:\n";
+  for (const auto &lit : model.first) os << lit << " ";
+  os << "\nTheory model:\n";
+  for (const auto &lit : model.second) os << lit << " ";
+  return os;
+}
+
+}  // namespace dlinear
