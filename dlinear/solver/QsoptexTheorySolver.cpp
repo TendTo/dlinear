@@ -30,14 +30,14 @@ namespace dlinear {
 QsoptexTheorySolver::QsoptexTheorySolver(const Config &config) : config_{config} {}
 
 namespace {
-class TheorySolverStat : public Stats {
+class QsoptexTheorySolverStat : public Stats {
  public:
-  explicit TheorySolverStat(const bool enabled) : Stats{enabled} {}
-  TheorySolverStat(const TheorySolverStat &) = delete;
-  TheorySolverStat(TheorySolverStat &&) = delete;
-  TheorySolverStat &operator=(const TheorySolverStat &) = delete;
-  TheorySolverStat &operator=(TheorySolverStat &&) = delete;
-  ~TheorySolverStat() override {
+  explicit QsoptexTheorySolverStat(const bool enabled) : Stats{enabled} {}
+  QsoptexTheorySolverStat(const QsoptexTheorySolverStat &) = delete;
+  QsoptexTheorySolverStat(QsoptexTheorySolverStat &&) = delete;
+  QsoptexTheorySolverStat &operator=(const QsoptexTheorySolverStat &) = delete;
+  QsoptexTheorySolverStat &operator=(QsoptexTheorySolverStat &&) = delete;
+  ~QsoptexTheorySolverStat() override {
     if (enabled()) cout << ToString() << std::endl;
   }
   std::string ToString() const override {
@@ -56,7 +56,7 @@ class TheorySolverStat : public Stats {
 int QsoptexTheorySolver::CheckOpt(const Box &box, mpq_class *obj_lo, mpq_class *obj_up,
                                   const std::vector<Literal> &assertions, const mpq_QSprob prob,
                                   const std::map<int, Variable> &var_map) {
-  static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
+  static QsoptexTheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
   TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
 
@@ -222,7 +222,7 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
 
 int QsoptexTheorySolver::CheckSat(const Box &box, const std::vector<Literal> &assertions, const mpq_QSprob prob,
                                   const std::map<int, Variable> &var_map, mpq_class *actual_precision) {
-  static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
+  static QsoptexTheorySolverStat stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
   TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
 
