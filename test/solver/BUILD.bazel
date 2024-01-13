@@ -13,6 +13,11 @@ dlinear_cc_googletest(
     deps = ["//dlinear/solver"],
 )
 
+dlinear_cc_googletest(
+    name = "test_picosat_sat_solver",
+    deps = ["//dlinear/solver:sat_solver"],
+)
+
 dlinear_cc_binary(
     name = "test_solver_binary",
     srcs = ["MainTestSolver.cpp"],

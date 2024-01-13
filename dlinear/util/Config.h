@@ -64,7 +64,7 @@ class Config {
   };
 
   Config() = default;
-  explicit Config(const std::string filename);
+  explicit Config(std::string filename);
   explicit Config(bool read_from_stdin);
 
   /** Input file name */

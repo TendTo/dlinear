@@ -1,59 +1,37 @@
-/**
- * @file SoplexTheorySolver.h
- * @author dlinear
- * @date 24 Aug 2023
- * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
- */
+//
+// Created by c3054737 on 12/01/24.
+//
 #pragma once
 
-#include <atomic>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <set>
-#include <utility>
-#include <vector>
-
-#include "dlinear/libs/gmp.h"
 #include "dlinear/libs/soplex.h"
+#include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Box.h"
-#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
-class SoplexTheorySolver {
+class SoplexTheorySolver : public TheorySolver {
  public:
-  SoplexTheorySolver() = delete;
-  explicit SoplexTheorySolver(const Config &config);
+  explicit SoplexTheorySolver(const Config& config = Config{});
 
-  /// Checks consistency. Returns true if there is a satisfying
-  /// assignment. Otherwise, return false.
-  int CheckSat(const Box &box, const std::vector<Literal> &assertions, soplex::SoPlex *prob,
-               const soplex::VectorRational &lower, const soplex::VectorRational &upper,
-               const std::map<int, Variable> &var_map, mpq_class *actual_precision);
+  void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
 
-  /**
-   * Get a satisfying Model.
-   * @return satisfying Model
-   */
-  [[nodiscard]] const Box &GetModel() const;
+  void AddTheoryVariable(const Variable& var) override;
 
-  /**
-   * Get a list of used constraints.
-   * @return list of used constraints
-   */
-  [[nodiscard]] const LiteralSet &GetExplanation() const;
+  void EnableTheoryLiteral(const Literal& lit, const VarToTheoryLiteralMap& var_to_theory_literals) override;
+
+  SatResult CheckSat(const Box& box, mpq_class* actual_precision) override;
 
  private:
-  const Config &config_;    ///< Configuration of the solver
-  Box model_;               ///< Satisfying Model
-  LiteralSet explanation_;  ///< List of used constraints
-  mpq_class precision_;     ///< Precision of the delta solver
+  void ResetLinearProblem(const Box& box) override;
+
+  // Exact LP solver (SoPlex)
+  soplex::SoPlex spx_;
+  soplex::VectorRational spx_lower_;
+  soplex::VectorRational spx_upper_;
+
+  std::vector<mpq_class> spx_rhs_;
+  std::vector<char> spx_sense_;
 };
 
 }  // namespace dlinear

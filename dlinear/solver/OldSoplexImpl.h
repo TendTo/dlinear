@@ -14,8 +14,8 @@
 #include <vector>
 
 #include "dlinear/solver/ContextImpl.h"
-#include "dlinear/solver/SoplexSatSolver.h"
-#include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/solver/OldSoplexSatSolver.h"
+#include "dlinear/solver/OldSoplexTheorySolver.h"
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {

@@ -14,6 +14,8 @@
 #include <iostream>
 #include <string>
 
+#define DLINEAR_STATS_FMT "{:<45} @ {:<20} = {:>15} {:<45} @ {:<20} = {:>15f} sec"
+
 namespace dlinear {
 
 class Stats {

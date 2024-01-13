@@ -16,6 +16,11 @@
 #include <vector>
 
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/PicosatSatSolver.h"
+#include "dlinear/solver/SatSolver.h"
+#include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/solver/TheorySolver.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
@@ -31,12 +36,12 @@ class Context::Impl {
   Impl &operator=(Impl &&) = delete;
   virtual ~Impl() = default;
 
-  virtual void Assert(const Formula &f) = 0;
-  virtual void Pop() = 0;
-  virtual void Push() = 0;
+  virtual void Assert(const Formula &f);
+  virtual void Pop();
+  virtual void Push();
 
   SatResult CheckSat(mpq_class *precision);
-  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
+  LpResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
   void DeclareVariable(const Variable &v, bool is_model_variable);
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
   void Minimize(const std::vector<Expression> &functions);
@@ -68,10 +73,10 @@ class Context::Impl {
   void AddToBox(const Variable &v);
 
   /** Return the current box in the stack. */
-  virtual SatResult CheckSatCore(const ScopedVector<Formula> &stack, Box *box, mpq_class *actual_precision) = 0;
-  virtual int CheckOptCore(const ScopedVector<Formula> &stack, mpq_class *obj_lo, mpq_class *obj_up, Box *model) = 0;
+  virtual SatResult CheckSatCore(mpq_class *actual_precision);
+  virtual LpResult CheckOptCore(mpq_class *obj_lo, mpq_class *obj_up);
 
-  virtual void MinimizeCore(const Expression &obj_expr) = 0;
+  virtual void MinimizeCore(const Expression &obj_expr);
 
   /** Mark the variable @p v as a model variable. */
   void MarkModelVariable(const Variable &v);
@@ -103,6 +108,10 @@ class Context::Impl {
 
   bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
+
+  // TODO: these will become templated classes.
+  PicosatSatSolver sat_solver_;       ///< SAT solver.
+  SoplexTheorySolver theory_solver_;  ///< Theory solver.
 };
 
 }  // namespace dlinear

@@ -12,10 +12,8 @@
 
 #include "dlinear/solver/Solver.h"
 #include "dlinear/solver/SolverOutput.h"
-#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Infinity.h"
 
 namespace {
 void HandleSigInt(const int) {

@@ -9,8 +9,11 @@
 
 #include <utility>
 
+#include "dlinear/solver/SatResult.h"
+#include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/util/logging.h"
 
+using std::pair;
 using std::string;
 using std::unordered_set;
 using std::vector;
@@ -29,7 +32,8 @@ namespace dlinear {
 
 Context::Impl::Impl() : Impl{Config{}} {}
 
-Context::Impl::Impl(const Config &config) : config_{config}, have_objective_{false}, is_max_{false} {
+Context::Impl::Impl(const Config &config)
+    : config_{config}, have_objective_{false}, is_max_{false}, sat_solver_{config}, theory_solver_{config} {
   boxes_.push_back(Box{});
 }
 
@@ -37,9 +41,46 @@ Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objectiv
   boxes_.push_back(Box{});
 }
 
+void Context::Impl::Assert(const Formula &f) {
+  if (is_true(f)) return;              // Skip trivially true assertions.
+  if (box().empty()) return;           // The box has no variables, so skip.
+  if (is_false(f)) box().set_empty();  // The formula is false, so set the box to empty.
+
+  // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
+  DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
+  IfThenElseEliminator ite_eliminator;
+  const Formula no_ite{ite_eliminator.Process(f)};
+
+  // Note that the following does not mark `ite_var` as a model variable.
+  for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
+  stack_.push_back(no_ite);
+  sat_solver_.AddFormula(no_ite);
+#if 0
+  } else {
+    DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is not added.", f);
+    DLINEAR_DEBUG_FMT("Box=\n{}", box());
+    return;
+  }
+#endif
+}
+
+void Context::Impl::Pop() {
+  DLINEAR_DEBUG("ContextImpl::Pop()");
+  stack_.pop();
+  boxes_.pop();
+  sat_solver_.Pop();
+}
+
+void Context::Impl::Push() {
+  DLINEAR_DEBUG("ContextImpl::Push()");
+  sat_solver_.Push();
+  boxes_.push();
+  boxes_.push_back(boxes_.last());
+  stack_.push();
+}
+
 SatResult Context::Impl::CheckSat(mpq_class *precision) {
-  model_.set_empty();
-  SatResult result = CheckSatCore(stack_, &model_, precision);
+  SatResult result = CheckSatCore(precision);
   switch (result) {
     case SatResult::SAT_DELTA_SATISFIABLE:
     case SatResult::SAT_SATISFIABLE:
@@ -60,17 +101,16 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
   return result;
 }
 
-int Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
-  model_.set_empty();
-  int result = CheckOptCore(stack_, obj_lo, obj_up, &model_);
-  if (LP_DELTA_OPTIMAL == result || LP_OPTIMAL == result) {
+LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
+  LpResult result = CheckOptCore(obj_lo, obj_up);
+  if (LpResult::LP_DELTA_OPTIMAL == result || LpResult::LP_OPTIMAL == result) {
     DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", model_);
     model_ = ExtractModel(model_);
-    return result;
   } else {
+    DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Model not found\n{}", model_);
     model_.set_empty();
-    return result;
   }
+  return result;
 }
 
 void Context::Impl::AddToBox(const Variable &v) {
@@ -178,4 +218,102 @@ const ScopedVector<Formula> &Context::Impl::assertions() const { return stack_; 
 bool Context::Impl::have_objective() const { return have_objective_; }
 
 bool Context::Impl::is_max() const { return is_max_; }
+
+SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
+  DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
+  DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
+  if (box().empty()) {
+    DLINEAR_DEBUG("ContextImpl::CheckSat: Box is empty");
+    return SatResult::SAT_UNSATISFIABLE;
+  }
+  // If false ∈ stack, it's UNSAT.
+  for (const auto &f : stack_.get_vector()) {
+    if (is_false(f)) {
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSat: Found false formula = {}", f);
+      return SatResult::SAT_UNSATISFIABLE;
+    }
+  }
+  // If stack = ∅ or stack = {true}, it's trivially SAT.
+  //  std::all_of(stack_.get_vector().begin(), stack_.get_vector().end(), drake::symbolic::is_true);
+  if (stack_.empty() || (stack_.size() == 1 && is_true(stack_.first()))) {
+    DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Found Model\n{}", box());
+    return SatResult::SAT_SATISFIABLE;
+  }
+#ifdef DLINEAR_PYDLINEAR
+  // install a signal handler for sigint for this scope.
+  signalhandlerguard guard{sigint, interrupt_handler, &g_interrupted};
+#endif
+  bool have_unsolved = false;
+  while (true) {
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
+    // when we build dReal python package.
+#ifdef DLINEAR_PYDLINEAR
+    if (g_interrupted) {
+      DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
+      throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
+    }
+#endif
+
+    // The box is passed in to the SAT solver solely to provide the LP solver
+    // with initial bounds on the numerical variables.
+    const auto optional_model = sat_solver_.CheckSat();
+
+    // The SAT solver did not return a model.
+    if (!optional_model) {
+      if (have_unsolved) {  // There was an unsolved theory instance. The SMT solver failed to prove UNSAT.
+        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNKNOWN");
+        DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
+      } else {  // There is no unsolved theory instance. The SAT solver succeeded in proving UNSAT.
+        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNSAT");
+        return SatResult::SAT_UNSATISFIABLE;
+      }
+    }
+
+    // The SAT solver found a model that satisfies the formula. SAT from SATSolver.
+    DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
+
+    // Here, we modify Boolean variables only (not used by the LP solver).
+    const vector<pair<Variable, bool>> &boolean_model{optional_model->first};
+    for (const pair<Variable, bool> &p : boolean_model) {
+      box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
+    }
+
+    // Extrapolate the theory model from the SAT model.
+    const vector<pair<Variable, bool>> &theory_model{optional_model->second};
+    // If there is no theory to solve, the SAT solver output is enough to return SAT.
+    if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
+
+    theory_solver_.EnableTheoryLiterals(theory_model, sat_solver_.var_to_theory_literals());
+
+    // Soplex only produces exact solutions, so the precision is 0. @see dlinear::SoplexTheorySolver::CheckSat
+    //        *actual_precision = 0;
+    // The selected assertions have already been enabled in the LP solver
+    SatResult theory_result = theory_solver_.CheckSat(box(), actual_precision);
+    if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
+      // SAT from TheorySolver.
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
+      box() = theory_solver_.GetModel();
+      return theory_result;
+    } else {
+      if (theory_result == SatResult::SAT_UNSATISFIABLE) {
+        // UNSAT from TheorySolver.
+        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
+      } else {
+        DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
+        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
+        have_unsolved = true;  // Will prevent return of UNSAT
+      }
+      const LiteralSet &explanation{theory_model.cbegin(), theory_model.cend()};
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
+                        stack_.get_vector().size());
+      sat_solver_.AddLearnedClause(explanation);
+    }
+  }
+}
+
+LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
+  DLINEAR_RUNTIME_ERROR("Not implemented");
+  return LpResult::LP_INFEASIBLE;
+}
+
 }  // namespace dlinear

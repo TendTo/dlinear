@@ -47,4 +47,34 @@ dlinear_cc_binary(
     ],
 )
 
+dlinear_cc_binary(
+    name = "test",
+    srcs = ["test.cpp"],
+    features = select({
+        "//tools:dynamic_build": [],
+        "//tools:debug": [],
+        "//conditions:default": ["fully_static_link"],
+    }),
+    linkstatic = True,
+    deps = [
+        "//dlinear/solver",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_binary(
+    name = "soplex",
+    srcs = ["soplex.cpp"],
+    features = select({
+        "//tools:dynamic_build": [],
+        "//tools:debug": [],
+        "//conditions:default": ["fully_static_link"],
+    }),
+    linkstatic = True,
+    deps = [
+        "//dlinear/libs:soplex",
+        "//dlinear/util:logging",
+    ],
+)
+
 cpplint()

@@ -8,7 +8,7 @@
  * Long Description
  */
 
-#include "SoplexSatSolver.h"
+#include "OldSoplexSatSolver.h"
 
 #include <string>
 
@@ -326,7 +326,7 @@ static bool is_simple_bound(const Formula &formula) {
 // we can replace any strict inequalities with the equivalent non-strict
 // inequalities, and ignore not-equal constraints altogether.
 
-static bool is_equal_or_whatever(const Formula &formula, bool truth) {
+static bool IsEqualToOrWhatever(const Formula &formula, bool truth) {
   if (truth) {
     return is_equal_to(formula);
   } else {
@@ -334,11 +334,11 @@ static bool is_equal_or_whatever(const Formula &formula, bool truth) {
   }
 }
 
-static bool is_not_equal_or_whatever(const Formula &formula, bool truth) {
-  return is_equal_or_whatever(formula, !truth);
+static bool IsNotEqualToOrWhatever(const Formula &formula, bool truth) {
+  return IsEqualToOrWhatever(formula, !truth);
 }
 
-static bool is_greater_or_whatever(const Formula &formula, bool truth) {
+static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth) {
   if (truth) {
     return is_greater_than(formula) || is_greater_than_or_equal_to(formula);
   } else {
@@ -346,7 +346,7 @@ static bool is_greater_or_whatever(const Formula &formula, bool truth) {
   }
 }
 
-static bool is_less_or_whatever(const Formula &formula, bool truth) { return is_greater_or_whatever(formula, !truth); }
+static bool IsLessThanOrWhatever(const Formula &formula, bool truth) { return IsGreaterThanOrWhatever(formula, !truth); }
 
 void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
   const auto it_row = to_spx_row_.find(make_pair(var.get_id(), truth));
@@ -369,7 +369,7 @@ void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
     const Expression &lhs{get_lhs_expression(formula)};
     const Expression &rhs{get_rhs_expression(formula)};
     DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-    if (is_equal_or_whatever(formula, truth)) {
+    if (IsEqualToOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetSPXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -377,7 +377,7 @@ void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_greater_or_whatever(formula, truth)) {
+    } else if (IsGreaterThanOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetSPXVarBound(get_variable(lhs), 'L', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -385,7 +385,7 @@ void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_less_or_whatever(formula, truth)) {
+    } else if (IsLessThanOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetSPXVarBound(get_variable(lhs), 'U', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -393,7 +393,7 @@ void SoplexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_not_equal_or_whatever(formula, truth)) {
+    } else if (IsNotEqualToOrWhatever(formula, truth)) {
       // Nothing to do, because this constraint is always delta-sat for
       // delta > 0.
     } else {
@@ -424,22 +424,22 @@ void SoplexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) {
   for (const Variable &var : formula.GetFreeVariables()) {
     AddLinearVariable(var);
   }
-  if (is_equal_or_whatever(formula, truth)) {
+  if (IsEqualToOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;  // Just create simple bound in LP
     }
     spx_sense_.push_back('E');
-  } else if (is_greater_or_whatever(formula, truth)) {
+  } else if (IsGreaterThanOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;
     }
     spx_sense_.push_back('G');
-  } else if (is_less_or_whatever(formula, truth)) {
+  } else if (IsLessThanOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;
     }
     spx_sense_.push_back('L');
-  } else if (is_not_equal_or_whatever(formula, truth)) {
+  } else if (IsNotEqualToOrWhatever(formula, truth)) {
     // Nothing to do, because this constraint is always delta-sat for
     // delta > 0.
     return;
@@ -595,7 +595,7 @@ void SoplexSatSolver::AddLinearVariable(const Variable &var) {
   spx_prob_.addColRational(LPColRational(0, DSVectorRational(), soplex::infinity, -soplex::infinity));
   to_spx_col_.emplace(make_pair(var.get_id(), spx_col));
   from_spx_col_[spx_col] = var;
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearVariable({} ↦ {})", var, spx_col);
+  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddTheoryVariable({} ↦ {})", var, spx_col);
 }
 
 const std::map<int, Variable> &SoplexSatSolver::GetLinearVarMap() const {

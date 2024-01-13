@@ -11,6 +11,7 @@
 
 #include <ostream>
 #include <set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -27,6 +28,8 @@ struct LiteralComparator {
 using LiteralSet = std::set<Literal, LiteralComparator>;
 
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
+
+using VarToTheoryLiteralMap = std::unordered_map<Variable, Formula, hash_value<Variable>>;
 
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
 std::ostream &operator<<(std::ostream &os, const Model &model);

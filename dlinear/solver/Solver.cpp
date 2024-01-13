@@ -94,13 +94,12 @@ bool Solver::ParseMps() {
 void Solver::CheckObjCore() {
   DLINEAR_DEBUG("Solver::CheckObjCore");
   TimerGuard timer_guard{&output_.mutable_smt_solver_timer(), true};
-  output_.mutable_model() = context_.box();
-  int status = context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound());
-  if (LP_DELTA_OPTIMAL == status) {
+  LpResult status = context_.CheckOpt(&output_.mutable_lower_bound(), &output_.mutable_upper_bound());
+  if (LpResult::LP_DELTA_OPTIMAL == status) {
     output_.mutable_result() = SolverResult::DELTA_OPTIMAL;
-  } else if (LP_UNBOUNDED == status) {
+  } else if (LpResult::LP_UNBOUNDED == status) {
     output_.mutable_result() = SolverResult::UNBOUNDED;
-  } else if (LP_INFEASIBLE == status) {
+  } else if (LpResult::LP_INFEASIBLE == status) {
     output_.mutable_result() = SolverResult::INFEASIBLE;
   } else {
     DLINEAR_UNREACHABLE();

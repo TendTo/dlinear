@@ -10,8 +10,7 @@
 #include <memory>
 #include <utility>
 
-#include "dlinear/solver/QsoptexImpl.h"
-#include "dlinear/solver/SoplexImpl.h"
+#include "dlinear/solver/ContextImpl.h"
 #include "dlinear/version.h"
 
 using std::make_unique;
@@ -21,29 +20,19 @@ using std::vector;
 
 namespace dlinear {
 
-unique_ptr<Context::Impl> Context::make_impl(const Config &config) {
-  if (config.lp_solver() == Config::QSOPTEX) return make_unique<Context::QsoptexImpl>(config);
-  if (config.lp_solver() == Config::SOPLEX) return make_unique<Context::SoplexImpl>(config);
-  DLINEAR_RUNTIME_ERROR("Unsupported LP solver");
-}
-
 Context::Context() : Context{Config{}} {}
 
 Context::Context(Context &&context) noexcept : impl_{std::move(context.impl_)} {}
 
 Context::~Context() = default;
 
-Context::Context(const Config &config) : impl_{make_impl(config)} {}
+Context::Context(const Config &config) : impl_{std::make_unique<Impl>(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 
-SatResult Context::CheckSat(mpq_class *actual_precision) {
-  return impl_->CheckSat(actual_precision);
-}
+SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
 
-int Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
-  return impl_->CheckOpt(obj_lo, obj_up);
-}
+LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
 
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
   impl_->DeclareVariable(v, is_model_variable);

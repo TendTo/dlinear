@@ -13,7 +13,7 @@ using std::endl;
 using std::ostream;
 
 namespace dlinear {
-Config::Config(const std::string filename) : filename_{filename} {}
+Config::Config(std::string filename) : filename_{std::move(filename)} {}
 Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }

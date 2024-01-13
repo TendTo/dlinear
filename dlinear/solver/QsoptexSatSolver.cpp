@@ -334,15 +334,15 @@ static bool is_simple_bound(const Formula &formula) {
 // we can replace any strict inequalities with the equivalent non-strict
 // inequalities, and ignore not-equal constraints altogether.
 
-static bool is_equal_or_whatever(const Formula &formula, bool truth) {
+static bool IsEqualToOrWhatever(const Formula &formula, bool truth) {
   return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
-static bool is_not_equal_or_whatever(const Formula &formula, bool truth) {
-  return is_equal_or_whatever(formula, !truth);
+static bool IsNotEqualToOrWhatever(const Formula &formula, bool truth) {
+  return IsEqualToOrWhatever(formula, !truth);
 }
 
-static bool is_greater_or_whatever(const Formula &formula, bool truth) {
+static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth) {
   if (truth) {
     return is_greater_than(formula) || is_greater_than_or_equal_to(formula);
   } else {
@@ -350,7 +350,7 @@ static bool is_greater_or_whatever(const Formula &formula, bool truth) {
   }
 }
 
-static bool is_less_or_whatever(const Formula &formula, bool truth) { return is_greater_or_whatever(formula, !truth); }
+static bool IsLessThanOrWhatever(const Formula &formula, bool truth) { return IsGreaterThanOrWhatever(formula, !truth); }
 
 void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
   const auto it_row = to_qsx_row_.find(make_pair(var.get_id(), truth));
@@ -370,7 +370,7 @@ void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
     const Expression &lhs{get_lhs_expression(formula)};
     const Expression &rhs{get_rhs_expression(formula)};
     DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-    if (is_equal_or_whatever(formula, truth)) {
+    if (IsEqualToOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetQSXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -378,7 +378,7 @@ void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_greater_or_whatever(formula, truth)) {
+    } else if (IsGreaterThanOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetQSXVarBound(get_variable(lhs), 'L', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -386,7 +386,7 @@ void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_less_or_whatever(formula, truth)) {
+    } else if (IsLessThanOrWhatever(formula, truth)) {
       if (is_variable(lhs) && is_constant(rhs)) {
         SetQSXVarBound(get_variable(lhs), 'U', get_constant_value(rhs));
       } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -394,7 +394,7 @@ void QsoptexSatSolver::EnableLinearLiteral(const Variable &var, bool truth) {
       } else {
         DLINEAR_UNREACHABLE();
       }
-    } else if (is_not_equal_or_whatever(formula, truth)) {
+    } else if (IsNotEqualToOrWhatever(formula, truth)) {
       // Nothing to do, because this constraint is always delta-sat for
       // delta > 0.
     } else {
@@ -425,22 +425,22 @@ void QsoptexSatSolver::AddLinearLiteral(const Variable &formulaVar, bool truth) 
   for (const Variable &var : formula.GetFreeVariables()) {
     AddLinearVariable(var);
   }
-  if (is_equal_or_whatever(formula, truth)) {
+  if (IsEqualToOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;  // Just create simple bound in LP
     }
     qsx_sense_.push_back('E');
-  } else if (is_greater_or_whatever(formula, truth)) {
+  } else if (IsGreaterThanOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;
     }
     qsx_sense_.push_back('G');
-  } else if (is_less_or_whatever(formula, truth)) {
+  } else if (IsLessThanOrWhatever(formula, truth)) {
     if (is_simple_bound(formula)) {
       return;
     }
     qsx_sense_.push_back('L');
-  } else if (is_not_equal_or_whatever(formula, truth)) {
+  } else if (IsNotEqualToOrWhatever(formula, truth)) {
     // Nothing to do, because this constraint is always delta-sat for
     // delta > 0.
     return;
@@ -570,7 +570,7 @@ void QsoptexSatSolver::AddLinearVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   to_qsx_col_.emplace(make_pair(var.get_id(), qsx_col));
   from_qsx_col_[qsx_col] = var;
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddLinearVariable({} ↦ {})", var, qsx_col);
+  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddTheoryVariable({} ↦ {})", var, qsx_col);
 }
 
 void QsoptexSatSolver::ClearLinearObjective() {

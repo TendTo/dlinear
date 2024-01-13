@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "SoplexImpl.h"
+#include "OldSoplexImpl.h"
 
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/util/exception.h"

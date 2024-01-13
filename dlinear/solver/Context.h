@@ -18,29 +18,14 @@
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/Logic.h"
+#include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
-
-enum SatResult {
-  SAT_NO_RESULT = 0,
-  SAT_UNSOLVED,
-  SAT_UNSATISFIABLE,
-  SAT_SATISFIABLE,
-  SAT_DELTA_SATISFIABLE,
-};
-
-enum LpResult {
-  LP_NO_RESULT = 0,
-  LP_UNSOLVED,
-  LP_INFEASIBLE,
-  LP_UNBOUNDED,
-  LP_OPTIMAL,
-  LP_DELTA_OPTIMAL,
-};
 
 /**
  * @brief Context class that holds a set of constraints and provide
@@ -98,7 +83,7 @@ class Context {
    * Checks the satisfiability of the asserted formulas, and (where
    * possible) optimizes an objective function over them.
    */
-  int CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
+  LpResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
 
   /**
    * Declare a variable @p v. By default @p v is considered as a
@@ -213,8 +198,6 @@ class Context {
   class Impl;
   class SoplexImpl;
   class QsoptexImpl;
-
-  static std::unique_ptr<Context::Impl> make_impl(const Config &config);
 
   std::unique_ptr<Impl> impl_;
 };
