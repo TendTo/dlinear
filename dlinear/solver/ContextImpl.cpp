@@ -56,9 +56,12 @@ Context::Impl::Impl(Config &&config)
 }
 
 void Context::Impl::Assert(const Formula &f) {
-  if (is_true(f)) return;              // Skip trivially true assertions.
-  if (box().empty()) return;           // The box has no variables, so skip.
-  if (is_false(f)) box().set_empty();  // The formula is false, so set the box to empty. There is no point in continuing
+  if (is_true(f)) return;     // Skip trivially true assertions.
+  if (box().empty()) return;  // The box has no variables, so skip.
+  if (is_false(f)) {          // The formula is false, so set the box to empty. There is no point in continuing
+    box().set_empty();
+    return;
+  }
 
   // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
