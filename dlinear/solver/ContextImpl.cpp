@@ -101,8 +101,8 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
   switch (result) {
     case SatResult::SAT_DELTA_SATISFIABLE:
     case SatResult::SAT_SATISFIABLE:
+      model_ = ExtractModel(box());
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", model_);
-      model_ = ExtractModel(model_);
       break;
     case SatResult::SAT_UNSATISFIABLE:
       DLINEAR_DEBUG("ContextImpl::CheckSat() - Model not found");
@@ -121,10 +121,10 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
 LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
   LpResult result = CheckOptCore(obj_lo, obj_up);
   if (LpResult::LP_DELTA_OPTIMAL == result || LpResult::LP_OPTIMAL == result) {
+    model_ = ExtractModel(box());
     DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", model_);
-    model_ = ExtractModel(model_);
   } else {
-    DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Model not found\n{}", model_);
+    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Model not found");
     model_.set_empty();
   }
   return result;
