@@ -17,9 +17,7 @@
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/LpResult.h"
-#include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatSolver.h"
-#include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/util/ScopedVector.hpp"
 
@@ -60,7 +58,9 @@ class Context::Impl {
   bool have_objective() const;
   bool is_max() const;
 
- protected:
+ private:
+  std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);
+
   /**
    * Add the variable @p v to the current box. This is used to
    * introduce a non-model variable to solver. For a model variable,
@@ -110,10 +110,10 @@ class Context::Impl {
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
   bool theory_loaded_;   ///< Whether the theory solver has been loaded with all the assertions parsed by the SAT
 
-  PredicateAbstractor predicate_abstractor_; ///< Converts the theory literals to boolean variables.
-  // TODO: these will become templated classes.
-  PicosatSatSolver sat_solver_;       ///< SAT solver.
-  SoplexTheorySolver theory_solver_;  ///< Theory solver.
+  PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
+  // TODO: these could become templated classes for added efficiency
+  std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
+  std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
 };
 
 }  // namespace dlinear

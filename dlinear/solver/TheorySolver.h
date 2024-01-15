@@ -63,13 +63,6 @@ class TheorySolver {
 
   virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision) = 0;
 
- protected:
-  static bool IsSimpleBound(const Formula &formula);
-  static bool IsEqualToOrWhatever(const Formula &formula, bool truth);
-  static bool IsNotEqualToOrWhatever(const Formula &formula, bool truth);
-  static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth);
-  static bool IsLessThanOrWhatever(const Formula &formula, bool truth);
-
   /**
    * Reset the linear problem, disabling all constraints and bounds to the ones
    * in the box.
@@ -77,6 +70,13 @@ class TheorySolver {
    * @param box cox containing the bounds for the variables that will be applied to the theory solver
    */
   virtual void Reset(const Box &box) = 0;
+
+ protected:
+  static bool IsSimpleBound(const Formula &formula);
+  static bool IsEqualToOrWhatever(const Formula &formula, bool truth);
+  static bool IsNotEqualToOrWhatever(const Formula &formula, bool truth);
+  static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth);
+  static bool IsLessThanOrWhatever(const Formula &formula, bool truth);
 
   int simplex_sat_phase_;
   PredicateAbstractor &predicate_abstractor_;

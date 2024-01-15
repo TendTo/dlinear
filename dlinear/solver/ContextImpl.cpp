@@ -9,7 +9,10 @@
 
 #include <utility>
 
+#include "dlinear/solver/PicosatSatSolver.h"
+#include "dlinear/solver/QsoptexTheorySolver.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/util/logging.h"
 
@@ -37,8 +40,8 @@ Context::Impl::Impl(const Config &config)
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
-      sat_solver_{predicate_abstractor_, config},
-      theory_solver_{predicate_abstractor_, config} {
+      sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
+      theory_solver_{GetTheorySolver(config)} {
   boxes_.push_back(Box{});
 }
 
@@ -47,8 +50,8 @@ Context::Impl::Impl(Config &&config)
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
-      sat_solver_{predicate_abstractor_, config},
-      theory_solver_{predicate_abstractor_, config} {
+      sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
+      theory_solver_{GetTheorySolver(config)} {
   boxes_.push_back(Box{});
 }
 
@@ -65,7 +68,7 @@ void Context::Impl::Assert(const Formula &f) {
   // Note that the following does not mark `ite_var` as a model variable.
   for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
   stack_.push_back(no_ite);
-  sat_solver_.AddFormula(no_ite);
+  sat_solver_->AddFormula(no_ite);
 #if 0
   } else {
     DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is not added.", f);
@@ -79,12 +82,12 @@ void Context::Impl::Pop() {
   DLINEAR_DEBUG("ContextImpl::Pop()");
   stack_.pop();
   boxes_.pop();
-  sat_solver_.Pop();
+  sat_solver_->Pop();
 }
 
 void Context::Impl::Push() {
   DLINEAR_DEBUG("ContextImpl::Push()");
-  sat_solver_.Push();
+  sat_solver_->Push();
   boxes_.push();
   boxes_.push_back(boxes_.last());
   stack_.push();
@@ -234,7 +237,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
   if (!theory_loaded_) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore(): Loading theory solver");
-    theory_solver_.AddLiterals(sat_solver_.theory_literals());
+    theory_solver_->AddLiterals(sat_solver_->theory_literals());
     theory_loaded_ = true;
   }
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
@@ -272,7 +275,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
-    const auto optional_model = sat_solver_.CheckSat();
+    const auto optional_model = sat_solver_->CheckSat();
 
     // The SAT solver did not return a model.
     if (!optional_model) {
@@ -299,17 +302,17 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
-    theory_solver_.Reset(box());
-    theory_solver_.EnableLiterals(theory_model);
+    theory_solver_->Reset(box());
+    theory_solver_->EnableLiterals(theory_model);
 
     // Soplex only produces exact solutions, so the precision is 0. @see dlinear::SoplexTheorySolver::CheckSat
     //        *actual_precision = 0;
     // The selected assertions have already been enabled in the LP solver
-    SatResult theory_result = theory_solver_.CheckSat(box(), actual_precision);
+    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
       // SAT from TheorySolver.
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
-      box() = theory_solver_.GetModel();
+      box() = theory_solver_->GetModel();
       return theory_result;
     } else {
       if (theory_result == SatResult::SAT_UNSATISFIABLE) {
@@ -323,7 +326,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
       const LiteralSet &explanation{theory_model.cbegin(), theory_model.cend()};
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
                         stack_.get_vector().size());
-      sat_solver_.AddLearnedClause(explanation);
+      sat_solver_->AddLearnedClause(explanation);
     }
   }
 }
@@ -334,6 +337,16 @@ LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe
 }
 void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
   DLINEAR_RUNTIME_ERROR("Not implemented");
+}
+std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
+  switch (config.lp_solver()) {
+    case Config::LPSolver::SOPLEX:
+      return std::make_unique<SoplexTheorySolver>(predicate_abstractor_, config);
+    case Config::LPSolver::QSOPTEX:
+      return std::make_unique<QsoptexTheorySolver>(predicate_abstractor_, config);
+    default:
+      DLINEAR_UNREACHABLE();
+  }
 }
 
 }  // namespace dlinear
