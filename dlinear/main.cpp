@@ -14,6 +14,7 @@
 #include "dlinear/solver/SolverOutput.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
+#include "dlinear/util/Timer.h"
 
 namespace {
 void HandleSigInt(const int) {
@@ -26,7 +27,6 @@ void HandleSigInt(const int) {
 int main(int argc, const char* argv[]) {
   // Handle C-c.
   std::signal(SIGINT, HandleSigInt);
-
   // Initialize the command line parser.
   dlinear::ArgParser parser{};
   // Parse the command line arguments.
@@ -37,6 +37,8 @@ int main(int argc, const char* argv[]) {
   // Setup the infinity values.
   dlinear::Solver solver{config};
 
+  // Start the main timer and run the solver.
+  dlinear::main_timer.start();
   if (!config.silent()) std::cout << solver.CheckSat() << std::endl;
 
   return 0;
