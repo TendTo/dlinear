@@ -39,7 +39,6 @@ class TheorySolverStat : public Stats {
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : TheorySolver(predicate_abstractor, config) {
   spx_.setRealParam(soplex::SoPlex::FEASTOL, config.precision());
-  spx_.setRealParam(soplex::SoPlex::OPTTOL, 0.0);
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
   spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SOLVEMODE, soplex::SoPlex::SOLVEMODE_RATIONAL);
@@ -49,9 +48,16 @@ SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor
   // Default is maximize.
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
   // Enable precision boosting
-  spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, true);
-  spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, false);
-  spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, 0.0);
+  bool enable_precision_boosting = config.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
+  spx_.setBoolParam(soplex::SoPlex::PRECISION_BOOSTING, enable_precision_boosting);
+  spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, enable_precision_boosting ? 0 : 2);
+  // Enable iterative refinement
+  bool enable_iterative_refinement = config.lp_mode() != Config::LPMode::PURE_PRECISION_BOOSTING;
+  spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
+  DLINEAR_DEBUG_FMT(
+      "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
+      config.precision(), enable_precision_boosting, enable_iterative_refinement);
 }
 
 void SoplexTheorySolver::AddVariable(const Variable &var) {

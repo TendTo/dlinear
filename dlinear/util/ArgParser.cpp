@@ -102,6 +102,16 @@ void ArgParser::addOptions() {
         if (value == "qsoptex" || value == "2") return Config::LPSolver::QSOPTEX;
         DLINEAR_INVALID_ARGUMENT("--lp-solver", value);
       });
+  parser_.add_argument("--lp-mode")
+      .help("set the LP mode. One of: auto, pure-precision-boosting, pure-iterative-refinement, hybrid")
+      .default_value(Config::LPMode::AUTO)
+      .action([](const std::string &value) {
+        if (value == "auto") return Config::LPMode::AUTO;
+        if (value == "pure-precision-boosting") return Config::LPMode::PURE_PRECISION_BOOSTING;
+        if (value == "pure-iterative-refinement") return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+        if (value == "hybrid") return Config::LPMode::HYBRID;
+        DLINEAR_INVALID_ARGUMENT("--lp-mode", value);
+      });
   parser_.add_argument("-m", "--produce-models")
       .help("produce models")
       .default_value(DLINEAR_DEFAULT_PRODUCE_MODELS)
@@ -222,6 +232,8 @@ Config ArgParser::toConfig() const {
     config.mutable_use_polytope_in_forall().set_from_command_line(parser_.get<bool>("forall-polytope"));
   if (parser_.is_used("lp-solver"))
     config.mutable_lp_solver().set_from_command_line(parser_.get<Config::LPSolver>("lp-solver"));
+  if (parser_.is_used("lp-mode"))
+    config.mutable_lp_mode().set_from_command_line(parser_.get<Config::LPMode>("lp-mode"));
   if (parser_.is_used("produce-models"))
     config.mutable_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
   if (parser_.is_used("nlopt-ftol-abs"))
@@ -298,6 +310,10 @@ void ArgParser::validateOptions() {
     DLINEAR_INVALID_ARGUMENT("--produce-models", "no models will be produced if --skip-check-sat is provided");
   if (parser_.is_used("verbosity") && parser_.is_used("silent"))
     DLINEAR_INVALID_ARGUMENT("--verbosity", "verbosity is set to 0 if --silent is provided");
+  if (parser_.get<Config::LPSolver>("lp-solver") == Config::QSOPTEX)
+    if (parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::AUTO &&
+        parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::PURE_PRECISION_BOOSTING)
+      DLINEAR_INVALID_ARGUMENT("--lp-solver", "QSopt_ex only supports 'auto' and 'pure-precision-boosting' modes");
 }
 
 string ArgParser::version() const { return DLINEAR_VERSION_STRING; }

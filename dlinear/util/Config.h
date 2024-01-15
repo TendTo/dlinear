@@ -140,6 +140,9 @@ class Config {
   /** Which LP mode to use */
   [[nodiscard]] LPMode lp_mode() const { return lp_mode_.get(); }
 
+  /** Mutable option on which LP mode to use */
+  [[nodiscard]] OptionValue<LPMode> &mutable_lp_mode() { return lp_mode_; }
+
   /** Which LP solver to use */
   [[nodiscard]] LPSolver lp_solver() const { return lp_solver_.get(); }
 
