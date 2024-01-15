@@ -42,6 +42,7 @@
 #define DLINEAR_DEFAULT_DEBUG_SCANNING false
 #define DLINEAR_DEFAULT_DEBUG_PARSING false
 #define DLINEAR_DEFAULT_SILENT false
+#define DLINEAR_DEFAULT_LP_MODE dlinear::Config::LPMode::AUTO
 
 namespace dlinear {
 
@@ -61,6 +62,12 @@ class Config {
     AUTO = 0,
     SMT2 = 1,
     MPS = 2,
+  };
+  enum class LPMode {
+    AUTO = 0,
+    PURE_PRECISION_BOOSTING = 1,
+    PURE_ITERATIVE_REFINEMENT = 2,
+    HYBRID = 3,
   };
 
   Config() = default;
@@ -129,6 +136,9 @@ class Config {
 
   /** Mutable option on which phase of simplex to use for linear satisfiability problems */
   [[nodiscard]] OptionValue<int> &mutable_simplex_sat_phase() { return simplex_sat_phase_; }
+
+  /** Which LP mode to use */
+  [[nodiscard]] LPMode lp_mode() const { return lp_mode_.get(); }
 
   /** Which LP solver to use */
   [[nodiscard]] LPSolver lp_solver() const { return lp_solver_.get(); }
@@ -292,6 +302,7 @@ class Config {
   OptionValue<bool> debug_scanning_{DLINEAR_DEFAULT_DEBUG_SCANNING};
   OptionValue<std::string> filename_{""};
   OptionValue<Format> format_{DLINEAR_DEFAULT_FORMAT};
+  OptionValue<LPMode> lp_mode_{DLINEAR_DEFAULT_LP_MODE};
   OptionValue<LPSolver> lp_solver_{DLINEAR_DEFAULT_LP_SOLVER};
   OptionValue<double> nlopt_ftol_abs_{DLINEAR_DEFAULT_NLOPTF_TO_ABS};
   OptionValue<double> nlopt_ftol_rel_{DLINEAR_DEFAULT_NLOPTF_TO_REL};
@@ -320,5 +331,6 @@ class Config {
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
 std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
+std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 
 }  // namespace dlinear
