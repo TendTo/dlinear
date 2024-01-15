@@ -24,12 +24,12 @@ class QsoptexTheorySolver : public TheorySolver {
   void Reset(const Box &box) override;
 
  private:
-  void SetSPXVarBound(const Variable &var, char type, const mpq_class &value);
+  void SetLinearObjective(const Expression &expr);
+  void ClearLinearObjective();
+
   void SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value);
   void SetQSXVarObjCoef(const Variable &var, const mpq_class &value);
-  void SetQSXVarBound(const Variable &var, const char type, const mpq_class &value);
-
-  void CreateArtificials(int spx_row);
+  void SetQSXVarBound(const Variable &var, char type, const mpq_class &value);
 
   bool continuous_output_;
   bool with_timings_;

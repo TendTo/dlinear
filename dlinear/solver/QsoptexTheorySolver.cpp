@@ -341,6 +341,47 @@ void QsoptexTheorySolver::Reset(const Box &box) {
   }
 }
 
+void QsoptexTheorySolver::ClearLinearObjective() {
+  const int qsx_colcount = mpq_QSget_colcount(qsx_);
+  mpq_t c_value;
+  mpq_init(c_value);
+  mpq_set_d(c_value, 0);  // Initialized to zero
+  // Set all objective coefficients to zero
+  for (int i = 0; i < qsx_colcount; ++i) mpq_QSchange_objcoef(qsx_, i, c_value);
+  mpq_clear(c_value);
+}
+
+void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
+  ClearLinearObjective();
+  if (is_constant(expr)) {
+    if (0 != get_constant_value(expr)) {
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+    }
+  } else if (is_variable(expr)) {
+    SetQSXVarObjCoef(get_variable(expr), 1);
+  } else if (is_multiplication(expr)) {
+    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+    }
+    SetQSXVarObjCoef(get_variable(map.begin()->first), get_constant_in_multiplication(expr));
+  } else if (is_addition(expr)) {
+    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
+    if (0 != get_constant_in_addition(expr)) {
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+    }
+    for (const auto &[var, coeff] : map) {
+      if (!is_variable(var)) {
+        DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+      }
+      SetQSXVarObjCoef(get_variable(var), coeff);
+    }
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+  }
+}
+
 void QsoptexTheorySolver::SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value) {
   const auto it = var_to_theory_col_.find(var.get_id());
   // Variable is not present in the LP solver
@@ -359,9 +400,9 @@ void QsoptexTheorySolver::SetQSXVarCoef(int qsx_row, const Variable &var, const 
 
 void QsoptexTheorySolver::SetQSXVarObjCoef(const Variable &var, const mpq_class &value) {
   const auto it = var_to_theory_col_.find(var.get_id());
-  if (it == var_to_theory_col_.end()) {
-    DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
-  }
+  // Variable is not present in the LP solver
+  if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
+
   if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
@@ -371,6 +412,7 @@ void QsoptexTheorySolver::SetQSXVarObjCoef(const Variable &var, const mpq_class 
   mpq_QSchange_objcoef(qsx_, it->second, c_value);
   mpq_clear(c_value);
 }
+
 void QsoptexTheorySolver::SetQSXVarBound(const Variable &var, const char type, const mpq_class &value) {
   if (type == 'B') {
     // Both
