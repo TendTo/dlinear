@@ -188,7 +188,7 @@ void SoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
   // Update indexes
-  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), spx_row);
+  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), std::make_pair(spx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
@@ -201,8 +201,8 @@ void SoplexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto it_row = lit_to_theory_row_.find({var.get_id(), truth});
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const int spx_row = it_row->second;
-    const char sense{spx_sense_[spx_row]};
+    const auto &[spx_row, spx_row2] = it_row->second;
+    const char sense = spx_sense_[spx_row];
     const mpq_class &rhs{spx_rhs_[spx_row]};
     spx_.changeRangeRational(spx_row,
                              sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),

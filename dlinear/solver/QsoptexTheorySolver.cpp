@@ -122,7 +122,7 @@ void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", qsx_rhs_.back());
   }
   // Update indexes
-  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), qsx_row);
+  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), std::make_pair(qsx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
@@ -146,7 +146,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto it_row = lit_to_theory_row_.find({var.get_id(), truth});
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const int qsx_row = it_row->second;
+    const auto &[qsx_row, qsx_row2] = it_row->second;
     mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
     mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
     DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);

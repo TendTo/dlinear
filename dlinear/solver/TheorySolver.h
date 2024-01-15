@@ -86,7 +86,7 @@ class TheorySolver {
   std::map<Variable::Id, int> var_to_theory_col_;
   std::map<int, Variable> theory_col_to_var_;
 
-  std::map<std::pair<Variable::Id, bool>, int> lit_to_theory_row_;
+  std::map<std::pair<Variable::Id, bool>, std::pair<int, int>> lit_to_theory_row_;
   std::vector<Literal> theory_row_to_lit_;
 
   Box model_;  ///< model produced by the theory solver
