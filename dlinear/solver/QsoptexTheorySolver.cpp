@@ -125,7 +125,7 @@ void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
+  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
 void QsoptexTheorySolver::AddVariable(const Variable &var) {
@@ -138,7 +138,7 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   var_to_theory_col_.emplace(var.get_id(), qsx_col);
   theory_col_to_var_[qsx_col] = var;
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddVariable({} ↦ {})", var, qsx_col);
+  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
 void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
@@ -149,14 +149,14 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
     const int qsx_row = it_row->second;
     mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
     mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
-    DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral({})", qsx_row);
+    DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
     return;
   }
   const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
   const auto it = var_to_formula_map.find(var);
   // Either a learned literal, or a not-equal literal from the input problem.
   if (it == var_to_formula_map.end() || !IsSimpleBound(it->second)) {
-    DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
+    DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
     return;
   }
 
@@ -164,7 +164,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const Formula &formula{it->second};
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
-  DLINEAR_TRACE_FMT("QsoptexSatSolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+  DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
   if (IsEqualToOrWhatever(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetQSXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
@@ -316,7 +316,7 @@ SatResult QsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precis
 }
 
 void QsoptexTheorySolver::Reset(const Box &box) {
-  DLINEAR_TRACE_FMT("QsoptexSatSolver::Reset(): Box =\n{}", box);
+  DLINEAR_TRACE_FMT("QsoptexTheorySolver::Reset(): Box =\n{}", box);
   // Clear constraint bounds
   const int qsx_rows{mpq_QSget_rowcount(qsx_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_rows) == theory_row_to_lit_.size(), "Row count mismatch");

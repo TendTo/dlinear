@@ -79,6 +79,8 @@ class TheorySolver {
   static bool IsLessThanOrWhatever(const Formula &formula, bool truth);
 
   int simplex_sat_phase_;
+  double precision_;
+
   PredicateAbstractor &predicate_abstractor_;
 
   std::map<Variable::Id, int> var_to_theory_col_;

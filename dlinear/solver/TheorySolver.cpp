@@ -9,7 +9,9 @@
 namespace dlinear {
 
 TheorySolver::TheorySolver(PredicateAbstractor &predicate_abstractor, [[maybe_unused]] const Config &config)
-    : simplex_sat_phase_{config.simplex_sat_phase()}, predicate_abstractor_{predicate_abstractor} {}
+    : simplex_sat_phase_{config.simplex_sat_phase()},
+      precision_{config.precision()},
+      predicate_abstractor_{predicate_abstractor} {}
 const std::map<int, Variable> &TheorySolver::GetLinearVarMap() const {
   DLINEAR_TRACE("TheorySolver::GetLinearVarMap(): theory_col_to_var_ =");
   if (DLINEAR_TRACE_ENABLED) {
