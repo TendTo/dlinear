@@ -9,14 +9,11 @@
 
 namespace dlinear {
 
-SatSolver::SatSolver([[maybe_unused]] const Config &config) : cur_clause_start_{} {}
-
-const VarToTheoryLiteralMap &SatSolver::var_to_theory_literals() const {
-  return predicate_abstractor_.var_to_formula_map();
-}
+SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, [[maybe_unused]] const Config &config)
+    : cur_clause_start_{0}, predicate_abstractor_{predicate_abstractor} {}
 
 void SatSolver::AddFormula(const Formula &f) {
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddFormula({})", f);
+  DLINEAR_DEBUG_FMT("SatSolver::AddFormula({})", f);
   std::vector<Formula> clauses{cnfizer_.Convert(f)};
 
   // Collect CNF variables and store them in `cnf_variables_`.
@@ -27,6 +24,9 @@ void SatSolver::AddFormula(const Formula &f) {
 
   AddClauses(clauses);
 }
+
+void SatSolver::Pop() { DLINEAR_RUNTIME_ERROR("Not implemented"); }
+void SatSolver::Push() { DLINEAR_RUNTIME_ERROR("Not implemented"); }
 
 void SatSolver::AddFormulas(const std::vector<Formula> &formulas) {
   for (const Formula &f : formulas) AddFormula(f);
@@ -55,15 +55,14 @@ void SatSolver::AddLiteral(const Formula &f) {
 }
 
 void SatSolver::UpdateLookup(int lit, int learned) {
-  if (learned) {
-    learned_clause_lits_.insert(lit);
-  } else {
+  if (!learned) {
     main_clauses_copy_.push_back(lit);
     main_clause_lookup_[lit].insert(cur_clause_start_);
   }
 }
 
 void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
+  std::set<size_t> examined_clauses_idx;
   for (auto it = lits.begin(); it != lits.end();) {
     int i = *it;
     int required = false;
@@ -71,6 +70,8 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
     auto c_it = main_clause_lookup_.find(i);
     if (c_it != main_clause_lookup_.end()) {
       for (size_t c : c_it->second) {
+        // Make sure 'c' is a clause we haven't checked yet
+        if (examined_clauses_idx.count(c) > 0) continue;
         int count = 0;
         size_t j;
         for (j = c; j < main_clauses_copy_.size() && main_clauses_copy_[j]; ++j) {
@@ -83,6 +84,9 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
           // `i' is the only active literal in clause `c'; hence, required.
           required = true;
           break;
+        } else {
+          // There are at least two active literals in clause 'c'. There is no point in checking it again
+          examined_clauses_idx.insert(c);
         }
       }
     }

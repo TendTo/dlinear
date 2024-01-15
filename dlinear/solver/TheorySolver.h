@@ -5,6 +5,7 @@
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
@@ -14,16 +15,42 @@ namespace dlinear {
 
 class TheorySolver {
  public:
-  explicit TheorySolver(const Config &config = Config{});
+  explicit TheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   virtual ~TheorySolver() = default;
 
-  void AddFormula(const Formula &f);
-
-  virtual void AddTheoryVariable(const Variable &var) = 0;
-
-  void EnableTheoryLiterals(const std::vector<Literal> &theory_literals,
-                            const VarToTheoryLiteralMap &var_to_theory_literals);
-  virtual void EnableTheoryLiteral(const Literal &lit, const VarToTheoryLiteralMap &var_to_theory_literals) = 0;
+  /**
+   * Add a vector of literals to the theory solver.
+   * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
+   * and the truth value (sense) of such literal
+   *
+   * @param theory_literals vector of literals
+   */
+  void AddLiterals(const std::vector<Literal> &theory_literals);
+  /**
+   * Add a Literal to the theory solver.
+   * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
+   * and the truth value (sense) of such literal
+   *
+   * @param lit literal to be added
+   */
+  virtual void AddLiteral(const Literal &lit) = 0;
+  /**
+   * Add a variable (column) to the theory solver.
+   *
+   * @param var variable to add
+   */
+  virtual void AddVariable(const Variable &var) = 0;
+  /**
+   * Activate the literals that have previously been added to the theory solver.
+   *
+   * @param theory_literals vector of literals to be activated
+   */
+  void EnableLiterals(const std::vector<Literal> &theory_literals);
+  /**
+   * Activate the literal that had previously been added to the theory solver
+   * @param lit literal to activate
+   */
+  virtual void EnableLiteral(const Literal &lit) = 0;
 
   /**
    * Get a model that satisfies all the constraints of the theory
@@ -43,9 +70,16 @@ class TheorySolver {
   static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth);
   static bool IsLessThanOrWhatever(const Formula &formula, bool truth);
 
-  virtual void ResetLinearProblem(const Box &box) = 0;
+  /**
+   * Reset the linear problem, disabling all constraints and bounds to the ones
+   * in the box.
+   *
+   * @param box cox containing the bounds for the variables that will be applied to the theory solver
+   */
+  virtual void Reset(const Box &box) = 0;
 
   int simplex_sat_phase_;
+  PredicateAbstractor &predicate_abstractor_;
 
   std::map<Variable::Id, int> var_to_theory_col_;
   std::map<int, Variable> theory_col_to_var_;

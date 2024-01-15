@@ -31,15 +31,15 @@ class PicosatSatSolverStat : public Stats {
 };
 }  // namespace
 
-PicosatSatSolver::PicosatSatSolver(const Config &config)
-    : SatSolver{config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
+PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config)
+    : SatSolver{predicate_abstractor, config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
   picosat_save_original_clauses(sat_);
   if (config.random_seed() != 0) {
     picosat_set_seed(sat_, config.random_seed());
-    DLINEAR_DEBUG_FMT("SoplexSatSolver::Set Random Seed {}", config.random_seed());
+    DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Random Seed {}", config.random_seed());
   }
   picosat_set_global_default_phase(sat_, static_cast<int>(config.sat_default_phase()));
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::Set Default Phase {}", config.sat_default_phase());
+  DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Default Phase {}", config.sat_default_phase());
 }
 PicosatSatSolver::~PicosatSatSolver() { picosat_reset(sat_); }
 
@@ -52,7 +52,7 @@ void PicosatSatSolver::MakeSatVar(const Variable &var) {
   const int sat_var{picosat_inc_max_var(sat_)};
   var_to_sat_.insert(var.get_id(), sat_var);
   sat_to_var_.insert(sat_var, var);
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::MakeSatVar({} ↦ {})", var, sat_var);
+  DLINEAR_DEBUG_FMT("PicosatSatSolver::MakeSatVar({} ↦ {})", var, sat_var);
 }
 
 void PicosatSatSolver::AddLearnedClause(const LiteralSet &literals) {
@@ -63,21 +63,12 @@ void PicosatSatSolver::AddLearnedClause(const LiteralSet &literals) {
 void PicosatSatSolver::AddLiteral(const Literal &l, bool learned) {
   const Variable &var{l.first};
   DLINEAR_ASSERT(var.get_type() == Variable::Type::BOOLEAN, "var must be Boolean");
-  if (l.second) {
-    // f = b
-    // Add l = b
-    int lit{var_to_sat_[var.get_id()]};
-    picosat_add(sat_, lit);
-    UpdateLookup(lit, learned);
-    // TODO: if (!learned) AddLinearLiteral(var, true);
-  } else {
-    // f = ¬b
-    // Add l = ¬b
-    int lit{-var_to_sat_[var.get_id()]};
-    picosat_add(sat_, lit);
-    UpdateLookup(lit, learned);
-    // TODO: if (!learned) AddLinearLiteral(var, false);
-  }
+  // f = b or f = ¬b.
+  int lit = l.second ? var_to_sat_[var.get_id()] : -var_to_sat_[var.get_id()];
+  picosat_add(sat_, lit);
+  UpdateLookup(lit, learned);
+  // If the literal is from the original formula, add it to the theory solver.
+  if (!learned) theory_literals_.emplace_back(var, l.second);
 }
 
 std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
@@ -95,7 +86,7 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
 
 std::optional<Model> PicosatSatSolver::CheckSat() {
   static PicosatSatSolverStat stat{DLINEAR_INFO_ENABLED};
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
+  DLINEAR_DEBUG_FMT("PicosatSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
   stat.num_check_sat_++;
   // Call SAT solver.
@@ -106,7 +97,7 @@ std::optional<Model> PicosatSatSolver::CheckSat() {
   if (ret == PICOSAT_SATISFIABLE) {
     return OnSatResult();
   } else if (ret == PICOSAT_UNSATISFIABLE) {
-    DLINEAR_DEBUG("SoplexSatSolver::CheckSat() No solution.");
+    DLINEAR_DEBUG("PicosatSatSolver::CheckSat() No solution.");
     return {};
   } else {
     DLINEAR_ASSERT(ret == PICOSAT_UNKNOWN, "ret must be PICOSAT_UNKNOWN");

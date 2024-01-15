@@ -20,7 +20,7 @@ namespace dlinear {
 
 class SatSolver {
  public:
-  explicit SatSolver(const Config &config = Config{});
+  explicit SatSolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   virtual ~SatSolver() = default;
 
   void Pop();
@@ -41,37 +41,6 @@ class SatSolver {
    */
   void AddFormulas(const std::vector<Formula> &formulas);
   /**
-   * Given a clause = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to
-   * the solver.
-   *
-   * @param literals literals to add as the inverted clause
-   */
-  virtual void AddLearnedClause(const LiteralSet &literals) = 0;
-  /**
-   * Check the satisfiability of the current configuration.
-   *
-   * @return a witness, satisfying model if the problem is SAT.
-   * @return empty optional if UNSAT
-   */
-  virtual std::optional<Model> CheckSat() = 0;
-  /**
-   * Get a theory literal corresponding to the variable @p var.
-   *
-   * @param var variable that is mapped to a theory literal
-   * @return theory literal corresponding to @p var
-   */
-  Formula theory_literal(const Variable &var) const { return predicate_abstractor_[var]; }
-
-  /**
-   * Get all the theory literals the predicate abstractor has converted to a boolean variable.
-   * The map allows to retrieve the original theory literal from the boolean variable.
-   *
-   * @return map between boolean variables and the corresponding theory literals
-   */
-  const VarToTheoryLiteralMap &var_to_theory_literals() const;
-
- protected:
-  /**
    * Add a formula @p f to the solver.
    * @p f must be a clause. That is, it is either a literal (b or ¬b)
    * or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
@@ -87,6 +56,28 @@ class SatSolver {
    * @param formulas vector of formulas to add
    */
   void AddClauses(const std::vector<Formula> &formulas);
+  /**
+   * Given a clause = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to
+   * the solver.
+   *
+   * @param literals literals to add as the inverted clause
+   */
+  virtual void AddLearnedClause(const LiteralSet &literals) = 0;
+  /**
+   * Check the satisfiability of the current configuration.
+   *
+   * @return a witness, satisfying model if the problem is SAT.
+   * @return empty optional if UNSAT
+   */
+  virtual std::optional<Model> CheckSat() = 0;
+  /**
+   * Get the list of Literal which correspond to a theory literal that have been inserted into the SAT solver.
+   *
+   * @return vector of literals
+   */
+  const std::vector<Literal> &theory_literals() const { return theory_literals_; }
+
+ protected:
   /**
    * Add a clause @p f to the internal SAT solver.
    * @p f must be a clause. That is, it is either a literal (b or ¬b)
@@ -105,10 +96,6 @@ class SatSolver {
    * @param var variable to add
    */
   virtual void MakeSatVar(const Variable &var) = 0;
-  // Add a symbolic formula @p f.
-  //
-  // @pre @p f is either a Boolean variable or a negation of Boolean
-  // variable.
   /**
    * Add a formula @p f to the solver.
    * @p f must be a Boolean variable or a negation of Boolean variable (b or ¬b).
@@ -163,22 +150,19 @@ class SatSolver {
    */
   void UpdateLookup(int lit, int learned);
 
-  // Data to help with removing literals that are only required by learned
-  // clauses.
+  // Data to help with removing literals that are only required by learned clauses.
   std::vector<int> main_clauses_copy_;
   std::map<int, std::set<size_t>> main_clause_lookup_;
-  std::set<int> learned_clause_lits_;
   size_t cur_clause_start_;
+  std::vector<Literal> theory_literals_;
 
   ScopedUnorderedMap<Variable::Id, int> var_to_sat_;  ///< Map symbolic::Variable → int (Variable type in PicoSat).
   ScopedUnorderedMap<int, Variable> sat_to_var_;      ///< Map int (Variable type in PicoSat) → symbolic::Variable.
-
-  PlaistedGreenbaumCnfizer cnfizer_;  ///< CNF converter. Converts the formula to CNF.
-  PredicateAbstractor
-      predicate_abstractor_;  //< Predicate abstractor. Converts the theory literals to boolean variables.
-
   ScopedUnorderedSet<Variable::Id>
       cnf_variables_;  ///< Set of temporary Boolean variables introduced by CNF transformations.
+
+  PlaistedGreenbaumCnfizer cnfizer_;           ///< Converts the formula to CNF.
+  PredicateAbstractor &predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
 };
 
 }  // namespace dlinear

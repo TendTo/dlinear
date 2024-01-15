@@ -15,7 +15,10 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_picosat_sat_solver",
-    deps = ["//dlinear/solver:sat_solver"],
+    deps = [
+        "//dlinear/solver:sat_solver",
+        "//dlinear/solver:solver_guard",
+    ],
 )
 
 dlinear_cc_binary(

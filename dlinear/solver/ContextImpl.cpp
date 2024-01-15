@@ -33,18 +33,29 @@ namespace dlinear {
 Context::Impl::Impl() : Impl{Config{}} {}
 
 Context::Impl::Impl(const Config &config)
-    : config_{config}, have_objective_{false}, is_max_{false}, sat_solver_{config}, theory_solver_{config} {
+    : config_{config},
+      have_objective_{false},
+      is_max_{false},
+      theory_loaded_{false},
+      sat_solver_{predicate_abstractor_, config},
+      theory_solver_{predicate_abstractor_, config} {
   boxes_.push_back(Box{});
 }
 
-Context::Impl::Impl(Config &&config) : config_{std::move(config)}, have_objective_{false}, is_max_{false} {
+Context::Impl::Impl(Config &&config)
+    : config_{std::move(config)},
+      have_objective_{false},
+      is_max_{false},
+      theory_loaded_{false},
+      sat_solver_{predicate_abstractor_, config},
+      theory_solver_{predicate_abstractor_, config} {
   boxes_.push_back(Box{});
 }
 
 void Context::Impl::Assert(const Formula &f) {
   if (is_true(f)) return;              // Skip trivially true assertions.
   if (box().empty()) return;           // The box has no variables, so skip.
-  if (is_false(f)) box().set_empty();  // The formula is false, so set the box to empty.
+  if (is_false(f)) box().set_empty();  // The formula is false, so set the box to empty. There is no point in continuing
 
   // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
@@ -221,6 +232,11 @@ bool Context::Impl::is_max() const { return is_max_; }
 
 SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
+  if (!theory_loaded_) {
+    DLINEAR_DEBUG("ContextImpl::CheckSatCore(): Loading theory solver");
+    theory_solver_.AddLiterals(sat_solver_.theory_literals());
+    theory_loaded_ = true;
+  }
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
   if (box().empty()) {
     DLINEAR_DEBUG("ContextImpl::CheckSat: Box is empty");
@@ -283,7 +299,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
-    theory_solver_.EnableTheoryLiterals(theory_model, sat_solver_.var_to_theory_literals());
+    theory_solver_.Reset(box());
+    theory_solver_.EnableLiterals(theory_model);
 
     // Soplex only produces exact solutions, so the precision is 0. @see dlinear::SoplexTheorySolver::CheckSat
     //        *actual_precision = 0;
@@ -314,6 +331,9 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
   DLINEAR_RUNTIME_ERROR("Not implemented");
   return LpResult::LP_INFEASIBLE;
+}
+void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
+  DLINEAR_RUNTIME_ERROR("Not implemented");
 }
 
 }  // namespace dlinear

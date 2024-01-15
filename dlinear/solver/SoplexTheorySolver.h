@@ -12,18 +12,21 @@ namespace dlinear {
 
 class SoplexTheorySolver : public TheorySolver {
  public:
-  explicit SoplexTheorySolver(const Config& config = Config{});
+  explicit SoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
 
-  void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
+  void AddVariable(const Variable& var) override;
 
-  void AddTheoryVariable(const Variable& var) override;
-
-  void EnableTheoryLiteral(const Literal& lit, const VarToTheoryLiteralMap& var_to_theory_literals) override;
+  void EnableLiteral(const Literal& lit) override;
 
   SatResult CheckSat(const Box& box, mpq_class* actual_precision) override;
+  void AddLiteral(const Literal& lit) override;
+
+  void Reset(const Box& box) override;
 
  private:
-  void ResetLinearProblem(const Box& box) override;
+  void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
+  void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
+  void CreateArtificials(int spx_row);
 
   // Exact LP solver (SoPlex)
   soplex::SoPlex spx_;

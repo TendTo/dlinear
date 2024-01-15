@@ -108,7 +108,9 @@ class Context::Impl {
 
   bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
+  bool theory_loaded_;   ///< Whether the theory solver has been loaded with all the assertions parsed by the SAT
 
+  PredicateAbstractor predicate_abstractor_; ///< Converts the theory literals to boolean variables.
   // TODO: these will become templated classes.
   PicosatSatSolver sat_solver_;       ///< SAT solver.
   SoplexTheorySolver theory_solver_;  ///< Theory solver.

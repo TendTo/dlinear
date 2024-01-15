@@ -36,7 +36,8 @@ class TheorySolverStat : public Stats {
 };
 }  // namespace
 
-SoplexTheorySolver::SoplexTheorySolver(const Config &config) : TheorySolver(config) {
+SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
+    : TheorySolver(predicate_abstractor, config) {
   spx_.setRealParam(soplex::SoPlex::FEASTOL, config.precision());
   spx_.setRealParam(soplex::SoPlex::OPTTOL, 0.0);
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
@@ -53,7 +54,7 @@ SoplexTheorySolver::SoplexTheorySolver(const Config &config) : TheorySolver(conf
   spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, 0.0);
 }
 
-void SoplexTheorySolver::AddTheoryVariable(const Variable &var) {
+void SoplexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());
   if (it != var_to_theory_col_.end()) {
     // Found.
@@ -68,7 +69,7 @@ void SoplexTheorySolver::AddTheoryVariable(const Variable &var) {
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_[spx_col] = var;
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddTheoryVariable({} ↦ {})", var, spx_col);
+  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
 void SoplexTheorySolver::SetSPXVarBound(const Variable &var, const char type, const mpq_class &value) {
@@ -96,7 +97,98 @@ void SoplexTheorySolver::SetSPXVarBound(const Variable &var, const char type, co
   }
 }
 
-void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheoryLiteralMap &var_to_theory_literals) {
+void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const Variable &var, const mpq_class &value) {
+  const auto it = var_to_theory_col_.find(var.get_id());
+  if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
+  if (value <= -soplex::infinity || value >= soplex::infinity) {
+    DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
+  }
+  coeffs.add(it->second, gmp::to_mpq_t(value));
+}
+
+void SoplexTheorySolver::AddLiteral(const Literal &lit) {
+  const auto &[formulaVar, truth] = lit;
+  const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
+  const auto it = var_to_formula_map.find(formulaVar);
+  // Boolean variable - no need to involve theory solver
+  if (it == var_to_formula_map.end()) return;
+  const auto it2 = lit_to_theory_row_.find({formulaVar.get_id(), truth});
+  // Literal is already present
+  if (it2 != lit_to_theory_row_.end()) return;
+
+  // Theory formula
+  const Formula &formula = it->second;
+  // Create the LP solver variables
+  for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
+
+  if (IsEqualToOrWhatever(formula, truth)) {
+    if (IsSimpleBound(formula)) {
+      return;  // Just create simple bound in LP
+    }
+    spx_sense_.push_back('E');
+  } else if (IsGreaterThanOrWhatever(formula, truth)) {
+    if (IsSimpleBound(formula)) {
+      return;
+    }
+    spx_sense_.push_back('G');
+  } else if (IsLessThanOrWhatever(formula, truth)) {
+    if (IsSimpleBound(formula)) {
+      return;
+    }
+    spx_sense_.push_back('L');
+  } else if (IsNotEqualToOrWhatever(formula, truth)) {
+    // Nothing to do, because this constraint is always delta-sat for
+    // delta > 0.
+    return;
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
+  }
+
+  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula)).Expand()};
+  const int spx_row{spx_.numRowsRational()};
+  soplex::DSVectorRational coeffs;
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "spx_row must match spx_sense_.size() - 1");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size(), "spx_row must match spx_rhs_.size()");
+  spx_rhs_.emplace_back(0);
+  if (is_constant(expr)) {
+    spx_rhs_.back() = -get_constant_value(expr);
+  } else if (is_variable(expr)) {
+    SetSPXVarCoeff(coeffs, get_variable(expr), 1);
+  } else if (is_multiplication(expr)) {
+    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+    }
+    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
+  } else if (is_addition(expr)) {
+    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
+    for (const auto &pair : map) {
+      if (!is_variable(pair.first)) {
+        DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+      }
+      SetSPXVarCoeff(coeffs, get_variable(pair.first), pair.second);
+    }
+    spx_rhs_.back() = -get_constant_in_addition(expr);
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+  }
+  if (spx_rhs_.back() <= -soplex::infinity || spx_rhs_.back() >= soplex::infinity) {
+    DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", spx_rhs_.back());
+  }
+
+  // Add inactive constraint
+  spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
+
+  // Update indexes
+  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), spx_row);
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
+  theory_row_to_lit_.emplace_back(formulaVar, truth);
+  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
+}
+
+void SoplexTheorySolver::EnableLiteral(const Literal &lit) {
   const Variable &var = lit.first;
   const bool truth = lit.second;
 
@@ -116,9 +208,9 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
   // If the literal was not already among the constraints (rows) of the LP, it must be a bound
   // on a variable (column), a learned literal, or a not-equal literal from the
   // input problem (if delta > 0).
-  const auto it = var_to_theory_literals.find(var);
+  const auto it = predicate_abstractor_.var_to_formula_map().find(var);
   // The variable is not in the map (it is not a theory literal) or it is not a simple bound
-  if (it == var_to_theory_literals.end() || !TheorySolver::IsSimpleBound(it->second)) {
+  if (it == predicate_abstractor_.var_to_formula_map().end() || !IsSimpleBound(it->second)) {
     DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
     return;
   }
@@ -128,7 +220,7 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-  if (TheorySolver::IsEqualToOrWhatever(formula, truth)) {
+  if (IsEqualToOrWhatever(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetSPXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -136,7 +228,7 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (TheorySolver::IsGreaterThanOrWhatever(formula, truth)) {
+  } else if (IsGreaterThanOrWhatever(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetSPXVarBound(get_variable(lhs), 'L', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -144,7 +236,7 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (TheorySolver::IsLessThanOrWhatever(formula, truth)) {
+  } else if (IsLessThanOrWhatever(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetSPXVarBound(get_variable(lhs), 'U', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -152,7 +244,7 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (TheorySolver::IsNotEqualToOrWhatever(formula, truth)) {
+  } else if (IsNotEqualToOrWhatever(formula, truth)) {
     // If delta > 0, we can ignore not-equal bounds on variables, for they will always be satisfied.
     // TODO: This should be addressed in case of delta == 0.
     // Since Soplex is not able to handle inverted bounds, not equal should be handled by adding a new row
@@ -160,6 +252,22 @@ void SoplexTheorySolver::EnableTheoryLiteral(const Literal &lit, const VarToTheo
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
+}
+
+void SoplexTheorySolver::CreateArtificials(const int spx_row) {
+  DLINEAR_ASSERT(2 == simplex_sat_phase_, "must be phase 2");
+  const int spx_cols{spx_.numColsRational()};
+  spx_lower_.reDim(spx_cols + 2, true);  // Set lower bounds to zero
+  spx_upper_.reDim(spx_cols + 2, false);
+  spx_upper_[spx_cols] = soplex::infinity;  // Set upper bounds to infinity
+  spx_upper_[spx_cols + 1] = soplex::infinity;
+  soplex::DSVectorRational coeffsPos;
+  coeffsPos.add(spx_row, 1);
+  spx_.addColRational(soplex::LPColRational(1, coeffsPos, soplex::infinity, 0));
+  soplex::DSVectorRational coeffsNeg;
+  coeffsNeg.add(spx_row, -1);
+  spx_.addColRational(soplex::LPColRational(1, coeffsNeg, soplex::infinity, 0));
+  DLINEAR_DEBUG_FMT("SoplexSatSolver::CreateArtificials({} -> ({}, {}))", spx_row, spx_cols, spx_cols + 1);
 }
 
 SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
@@ -302,8 +410,8 @@ SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precisi
   return sat_status;
 }
 
-void SoplexTheorySolver::ResetLinearProblem(const Box &box) {
-  DLINEAR_TRACE_FMT("SoplexSatSolver::ResetLinearProblem(): Box =\n{}", box);
+void SoplexTheorySolver::Reset(const Box &box) {
+  DLINEAR_TRACE_FMT("SoplexSatSolver::Reset(): Box =\n{}", box);
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
 

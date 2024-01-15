@@ -8,10 +8,8 @@
 
 namespace dlinear {
 
-TheorySolver::TheorySolver([[maybe_unused]] const Config &config) : simplex_sat_phase_{config.simplex_sat_phase()} {}
-
-void TheorySolver::AddFormula([[maybe_unused]] const Formula &f) {}
-
+TheorySolver::TheorySolver(PredicateAbstractor &predicate_abstractor, [[maybe_unused]] const Config &config)
+    : simplex_sat_phase_{config.simplex_sat_phase()}, predicate_abstractor_{predicate_abstractor} {}
 const std::map<int, Variable> &TheorySolver::GetLinearVarMap() const {
   DLINEAR_TRACE("TheorySolver::GetLinearVarMap(): theory_col_to_var_ =");
   if (DLINEAR_TRACE_ENABLED) {
@@ -27,9 +25,12 @@ const Box &TheorySolver::GetModel() const {
   return model_;
 }
 
-void TheorySolver::EnableTheoryLiterals(const std::vector<Literal> &theory_literals,
-                                        const VarToTheoryLiteralMap &var_to_theory_literals) {
-  for (const Literal &lit : theory_literals) EnableTheoryLiteral(lit, var_to_theory_literals);
+void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
+  for (const auto &lit : theory_literals) AddLiteral(lit);
+}
+
+void TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+  for (const Literal &lit : theory_literals) EnableLiteral(lit);
 }
 
 bool TheorySolver::IsSimpleBound(const Formula &formula) {

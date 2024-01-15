@@ -296,7 +296,7 @@ void QsoptexSatSolver::SetQSXVarBound(const Variable &var, const char type, cons
 }
 
 void QsoptexSatSolver::ResetLinearProblem(const Box &box) {
-  DLINEAR_TRACE_FMT("QsoptexSatSolver::ResetLinearProblem(): Box =\n{}", box);
+  DLINEAR_TRACE_FMT("QsoptexSatSolver::Reset(): Box =\n{}", box);
   // Clear constraint bounds
   const int qsx_rows{mpq_QSget_rowcount(qsx_prob_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_rows) == from_qsx_row_.size(), "Row count mismatch");
@@ -570,7 +570,7 @@ void QsoptexSatSolver::AddLinearVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   to_qsx_col_.emplace(make_pair(var.get_id(), qsx_col));
   from_qsx_col_[qsx_col] = var;
-  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddTheoryVariable({} ↦ {})", var, qsx_col);
+  DLINEAR_DEBUG_FMT("QsoptexSatSolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
 void QsoptexSatSolver::ClearLinearObjective() {

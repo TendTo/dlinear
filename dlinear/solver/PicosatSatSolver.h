@@ -20,7 +20,7 @@ namespace dlinear {
 
 class PicosatSatSolver : public SatSolver {
  public:
-  explicit PicosatSatSolver(const Config &config = Config{});
+  explicit PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   ~PicosatSatSolver() override;
 
   void AddLiteral(const Literal &l, bool learned) override;
@@ -31,13 +31,12 @@ class PicosatSatSolver : public SatSolver {
 
   std::optional<Model> CheckSat() override;
 
- private:
-  [[nodiscard]] std::set<int> GetMainActiveLiterals() const override;
-
  protected:
   void AddClauseToSat(const Formula &f) override;
 
  private:
+  [[nodiscard]] std::set<int> GetMainActiveLiterals() const override;
+
   PicoSAT *const sat_{};
 
   bool has_picosat_pop_used_;
