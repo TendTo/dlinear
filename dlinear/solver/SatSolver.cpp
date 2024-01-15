@@ -45,8 +45,8 @@ void SatSolver::AddClause(const Formula &f) {
 }
 
 void SatSolver::AddLiteral(const Formula &f) {
-  DLINEAR_ASSERT(is_variable(f) || (is_negation(f) && is_variable(get_operand(f))),
-                 "f must be a variable or negation of a variable");
+  DLINEAR_ASSERT_FMT(is_variable(f) || (is_negation(f) && is_variable(get_operand(f))),
+                     "f must be a variable or negation of a variable. Found {}", f);
   if (is_variable(f)) {
     AddLiteral({get_variable(f), true}, false);
   } else {

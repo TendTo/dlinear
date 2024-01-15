@@ -13,14 +13,14 @@ using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
 namespace {
-class TheorySolverStat : public Stats {
+class SoplexTheorySolverStats : public Stats {
  public:
-  explicit TheorySolverStat(const bool enabled) : Stats{enabled} {}
-  TheorySolverStat(const TheorySolverStat &) = delete;
-  TheorySolverStat(TheorySolverStat &&) = delete;
-  TheorySolverStat &operator=(const TheorySolverStat &) = delete;
-  TheorySolverStat &operator=(TheorySolverStat &&) = delete;
-  ~TheorySolverStat() override {
+  explicit SoplexTheorySolverStats(const bool enabled) : Stats{enabled} {}
+  SoplexTheorySolverStats(const SoplexTheorySolverStats &) = delete;
+  SoplexTheorySolverStats(SoplexTheorySolverStats &&) = delete;
+  SoplexTheorySolverStats &operator=(const SoplexTheorySolverStats &) = delete;
+  SoplexTheorySolverStats &operator=(SoplexTheorySolverStats &&) = delete;
+  ~SoplexTheorySolverStats() override {
     if (enabled()) std::cout << ToString() << std::endl;
   }
   std::string ToString() const override {
@@ -277,7 +277,7 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
 }
 
 SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static TheorySolverStat stat{DLINEAR_INFO_ENABLED};
+  static SoplexTheorySolverStats stat{DLINEAR_INFO_ENABLED};
   stat.increase_num_check_sat();
   TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
 

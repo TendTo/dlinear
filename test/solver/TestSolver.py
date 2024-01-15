@@ -81,7 +81,6 @@ def parse_dlinear_args(parsed_args: "argparse.Namespace") -> "list[str]":
         if parsed_args.cont_mode == "C":
             args.append("--continuous-output")
     args.extend(parsed_args.options)
-    print(args)
     return args
 
 
@@ -101,7 +100,6 @@ def get_expected_output(parsed_args: "argparse.Namespace") -> "list[str]":
         )
     for expected_output_filename in expected_output_filenames:
         if os.path.exists(expected_output_filename):
-            print("found expected output file: {}".format(expected_output_filename))
             with open(expected_output_filename, "r", encoding='utf-8') as myfile:
                 return myfile.read().strip().splitlines()  # File exists, return the contents
 
@@ -126,6 +124,7 @@ def test():
         out = subprocess.check_output([cmd_args.dlinear, cmd_args.file] + dlinear_args, env=dict(os.environ))
     except subprocess.CalledProcessError as e:
         logger.critical("error code %s %s", e.returncode, e.output)
+        logger.critical("args: %s %s %s", cmd_args.dlinear, cmd_args.file, dlinear_args)
         sys.exit(e.returncode)
 
     str_output = out.decode('UTF-8').splitlines()
