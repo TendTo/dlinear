@@ -127,25 +127,32 @@ void SoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
+  [[maybe_unused]] int added = 0;
   if (IsEqualToOrWhatever(formula, truth)) {
-    if (IsSimpleBound(formula)) {
+    if (IsSimpleBound(formula) && precision_ > 0) {
       return;  // Just create simple bound in LP
     }
     spx_sense_.push_back('E');
+    spx_sense_.push_back('I');
+    added = 2;
   } else if (IsGreaterThanOrWhatever(formula, truth)) {
     if (IsSimpleBound(formula)) {
       return;
     }
     spx_sense_.push_back('G');
+    added = 1;
   } else if (IsLessThanOrWhatever(formula, truth)) {
     if (IsSimpleBound(formula)) {
       return;
     }
     spx_sense_.push_back('L');
+    added = 1;
   } else if (IsNotEqualToOrWhatever(formula, truth)) {
-    // Nothing to do, because this constraint is always delta-sat for
-    // delta > 0.
-    return;
+    // Nothing to do, because this constraint is always delta-sat for delta > 0.
+    if (precision_ > 0) return;
+    spx_sense_.push_back('l');
+    spx_sense_.push_back('g');
+    added = 2;
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
@@ -153,8 +160,9 @@ void SoplexTheorySolver::AddLiteral(const Literal &lit) {
   Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula)).Expand()};
   const int spx_row{spx_.numRowsRational()};
   soplex::DSVectorRational coeffs;
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "spx_row must match spx_sense_.size() - 1");
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size(), "spx_row must match spx_rhs_.size()");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - added, "spx_row must be spx_sense.size() - added");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size(), "spx_row must match spx_rhs.size()");
+
   spx_rhs_.emplace_back(0);
   if (is_constant(expr)) {
     spx_rhs_.back() = -get_constant_value(expr);
@@ -183,32 +191,42 @@ void SoplexTheorySolver::AddLiteral(const Literal &lit) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", spx_rhs_.back());
   }
 
-  // Add inactive constraint
-  spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  for (int i = 0; i < added; ++i) {
+    // Add inactive constraint
+    spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  }
+  if (added == 2) spx_rhs_.emplace_back(spx_rhs_.back());
+
+  // TODO: check this still works
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
   // Update indexes
-  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), std::make_pair(spx_row, -1));
+  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth),
+                             std::make_pair(spx_row, added == 2 ? spx_row + 1 : -1));
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
+  if (added == 2) theory_row_to_lit_.emplace_back(formulaVar, truth);
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
 void SoplexTheorySolver::EnableLiteral(const Literal &lit) {
-  const Variable &var = lit.first;
-  const bool truth = lit.second;
+  const auto &[var, truth] = lit;
 
   const auto it_row = lit_to_theory_row_.find({var.get_id(), truth});
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
     const auto &[spx_row, spx_row2] = it_row->second;
-    const char sense = spx_sense_[spx_row];
-    const mpq_class &rhs{spx_rhs_[spx_row]};
-    spx_.changeRangeRational(spx_row,
-                             sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
-                             sense == 'L' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
-    DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral({})", spx_row);
+    EnableLiteral(spx_row);
+    if (spx_row2 >= 0) EnableLiteral(spx_row2);
     return;
+  }
+
+  const auto it_row_inverted = lit_to_theory_row_.find({var.get_id(), !truth});
+  if (it_row_inverted != lit_to_theory_row_.end()) {
+    // A non-trivial linear literal from the input problem
+    const auto &[spx_row, spx_row2] = it_row_inverted->second;
+    DLINEAR_RUNTIME_ERROR_FMT("Found inverted constraint: {}",
+                              predicate_abstractor_[theory_row_to_lit_[spx_row].first]);
   }
 
   // If the literal was not already among the constraints (rows) of the LP, it must be a bound
@@ -258,6 +276,25 @@ void SoplexTheorySolver::EnableLiteral(const Literal &lit) {
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
+}
+
+void SoplexTheorySolver::EnableLiteral(const int theory_row) {
+  char sense = spx_sense_[theory_row];
+  if ('I' == sense) return;  // No point in enabling an inactive constraint
+  const mpq_class &rhs{spx_rhs_[theory_row]};
+  double tolerance = 0;
+  if ('l' == sense || 'g' == sense) {
+    // Not-equal literal from the input problem
+    sense = toupper(sense);
+    tolerance = 1e-6;
+  }
+  spx_.changeRangeRational(
+      theory_row,
+      sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(0 == tolerance ? rhs : rhs + tolerance))
+                                   : Rational(-soplex::infinity),
+      sense == 'L' || sense == 'E' ? Rational(gmp::to_mpq_t(0 == tolerance ? rhs : rhs - tolerance))
+                                   : Rational(soplex::infinity));
+  DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral row ({})", theory_row);
 }
 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
@@ -355,8 +392,8 @@ SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precisi
   bool haveSoln = spx_.getPrimalRational(x);
   if (haveSoln && x.dim() != colcount) {
     DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be > colcount");
-    DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()", colcount,
-                     x.dim());
+    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
+                      colcount, x.dim());
   }
   DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || haveSoln,
                  "status must either be not OPTIMAL or a solution must be present");
@@ -365,7 +402,7 @@ SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precisi
     switch (status) {
       case SoplexStatus::OPTIMAL:
       case SoplexStatus::UNBOUNDED:
-        sat_status = *actual_precision == 0.0 ? SatResult::SAT_SATISFIABLE : SatResult::SAT_DELTA_SATISFIABLE;
+        sat_status = precision_ == 0.0 ? SatResult::SAT_SATISFIABLE : SatResult::SAT_DELTA_SATISFIABLE;
         break;
       case SoplexStatus::INFEASIBLE:
         sat_status = SatResult::SAT_UNSATISFIABLE;
@@ -387,7 +424,7 @@ SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precisi
       }
     }
     if (ok) {
-      sat_status = *actual_precision == 0.0 ? SatResult::SAT_SATISFIABLE : SatResult::SAT_DELTA_SATISFIABLE;
+      sat_status = precision_ == 0.0 ? SatResult::SAT_SATISFIABLE : SatResult::SAT_DELTA_SATISFIABLE;
     } else {
       sat_status = SatResult::SAT_UNSATISFIABLE;
     }

@@ -24,6 +24,7 @@ class SoplexTheorySolver : public TheorySolver {
   void Reset(const Box& box) override;
 
  private:
+  void EnableLiteral(int theory_row);
   void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
   void CreateArtificials(int spx_row);
