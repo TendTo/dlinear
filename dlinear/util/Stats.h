@@ -16,13 +16,7 @@
 
 #include "dlinear/util/Timer.h"
 
-#define DLINEAR_STATS_FMT "{:<45} @ {:<20} = {:>15} sec"
-#define DLINEAR_ITERATION_STATS_FMT "{:<45} @ {:<20} = {:>15}\n"
-
 namespace dlinear {
-
-//"Total # of Process", "ITE Elim",
-//                       num_process_, "Total time spent in Processing", "ITE Elim", timer_process_.seconds()
 
 class Stats {
  private:
@@ -54,6 +48,12 @@ class Stats {
    */
   [[nodiscard]] const Timer &timer() const { return timer_; }
   /**
+   * @brief Convert the current state of the object to a formatted string, only including the specific
+   * part the Stat object is concerned about
+   * @return string representing a partial state of the Stats
+   */
+  [[nodiscard]] virtual std::string ToSegmentString() const;
+  /**
    * @brief Convert the current state of the object to a formatted string
    * @return string representing the state of the Stats
    */
@@ -70,6 +70,8 @@ class IterationStats : public Stats {
                           std::string iterations_name = "Total # of Iterations");
 
   ~IterationStats() override;
+
+  [[nodiscard]] std::string ToSegmentString() const override;
 
   [[nodiscard]] std::string ToString() const override;
 
