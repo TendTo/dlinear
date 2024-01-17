@@ -12,30 +12,6 @@
 
 namespace dlinear {
 
-namespace {
-class QsoptexTheorySolverStats : public Stats {
- public:
-  explicit QsoptexTheorySolverStats(const bool enabled) : Stats{enabled} {}
-  QsoptexTheorySolverStats(const QsoptexTheorySolverStats &) = delete;
-  QsoptexTheorySolverStats(QsoptexTheorySolverStats &&) = delete;
-  QsoptexTheorySolverStats &operator=(const QsoptexTheorySolverStats &) = delete;
-  QsoptexTheorySolverStats &operator=(QsoptexTheorySolverStats &&) = delete;
-  ~QsoptexTheorySolverStats() override {
-    if (enabled()) std::cout << ToString() << std::endl;
-  }
-  [[nodiscard]] std::string ToString() const override {
-    return fmt::format(DLINEAR_STATS_FMT, "Total # of CheckSat", "Theory level", num_check_sat_,
-                       "Total time spent in CheckSat", "Theory level", timer_check_sat_.seconds());
-  }
-  void increase_num_check_sat() { increase(&num_check_sat_); }
-
-  Timer timer_check_sat_;
-
- private:
-  std::atomic<int> num_check_sat_{0};
-};
-}  // namespace
-
 QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : TheorySolver(predicate_abstractor, config),
       continuous_output_{config.continuous_output()},
@@ -46,6 +22,7 @@ QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstract
     DLINEAR_RUNTIME_ERROR("With --lp-solver qsoptex, maximum value for --verbose-simplex is 3");
   }
   mpq_QSset_param(qsx_, QS_PARAM_SIMPLEX_DISPLAY, config.verbose_simplex());
+  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config.precision());
 }
 
 void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
@@ -198,9 +175,10 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
 }
 
 SatResult QsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static QsoptexTheorySolverStats stat{DLINEAR_INFO_ENABLED};
-  stat.increase_num_check_sat();
-  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "QsoptexTheorySolver", "Total # of CheckSat",
+                             "Total time spent in CheckSat"};
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
+  stat.Increase();
 
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::CheckSat: Box = \n{}", box);
 

@@ -14,44 +14,76 @@
 #include <iostream>
 #include <string>
 
-#define DLINEAR_STATS_FMT "{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec"
+#include "dlinear/util/Timer.h"
+
+#define DLINEAR_STATS_FMT "{:<45} @ {:<20} = {:>15} sec"
+#define DLINEAR_ITERATION_STATS_FMT "{:<45} @ {:<20} = {:>15}\n"
 
 namespace dlinear {
 
+//"Total # of Process", "ITE Elim",
+//                       num_process_, "Total time spent in Processing", "ITE Elim", timer_process_.seconds()
+
 class Stats {
  private:
-  const bool enabled_{false};
+  Timer timer_;
 
  protected:
-  template <typename T>
-  void increase(std::atomic<T> *v) {
-    if (enabled_) {
-      atomic_fetch_add_explicit(v, 1, std::memory_order_relaxed);
-    }
-  }
+  const bool enabled_;
+  std::string class_name_;
+  std::string operations_name_;
 
  public:
-  explicit Stats(bool enabled) : enabled_{enabled} {}
+  explicit Stats(bool enabled, std::string class_name, std::string name_time = "Time spent in Operations");
 
-  Stats(const Stats &) = default;
-
-  Stats(Stats &&) = default;
-
-  Stats &operator=(const Stats &) = delete;
-
-  Stats &operator=(Stats &&) = delete;
-
-  virtual ~Stats() = default;
-
-  virtual std::string ToString() const = 0;
+  virtual ~Stats();
 
   /**
    * Return whether the stats is enabled.
    * @return whether the stats is enabled.
    */
   [[nodiscard]] bool enabled() const { return enabled_; }
-
-  friend std::ostream &operator<<(std::ostream &os, const Stats &stats);
+  /**
+   * Return a mutable reference to the timer
+   * @return timer
+   */
+  [[nodiscard]] Timer &mutable_timer() { return timer_; }
+  /**
+   * Return a constant reference to the timer
+   * @return timer
+   */
+  [[nodiscard]] const Timer &timer() const { return timer_; }
+  /**
+   * @brief Convert the current state of the object to a formatted string
+   * @return string representing the state of the Stats
+   */
+  [[nodiscard]] virtual std::string ToString() const;
 };
+
+class IterationStats : public Stats {
+ private:
+  std::atomic<unsigned int> iterations_;
+  std::string iterations_name_;
+
+ public:
+  explicit IterationStats(bool enabled, std::string class_name, std::string name_time = "Time spent in Operations",
+                          std::string iterations_name = "Total # of Iterations");
+
+  ~IterationStats() override;
+
+  [[nodiscard]] std::string ToString() const override;
+
+  /**
+   * Increase the iteration counter by one.
+   * @note The iteration counter is atomic.
+   */
+  void Increase();
+
+  void operator++();
+  void operator++(int);
+};
+
+std::ostream &operator<<(std::ostream &os, const Stats &stats);
+std::ostream &operator<<(std::ostream &os, const IterationStats &stats);
 
 }  // namespace dlinear

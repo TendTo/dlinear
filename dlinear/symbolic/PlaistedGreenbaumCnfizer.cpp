@@ -19,37 +19,11 @@ using std::to_string;
 using std::vector;
 
 namespace dlinear {
-
-namespace {
-// A class to show statistics information at destruction.
-class PlaistedGreenbaumCnfizerStat : public Stats {
- public:
-  explicit PlaistedGreenbaumCnfizerStat(const bool enabled) : Stats{enabled} {}
-  PlaistedGreenbaumCnfizerStat(const PlaistedGreenbaumCnfizerStat &) = delete;
-  PlaistedGreenbaumCnfizerStat(PlaistedGreenbaumCnfizerStat &&) = delete;
-  PlaistedGreenbaumCnfizerStat &operator=(const PlaistedGreenbaumCnfizerStat &) = delete;
-  PlaistedGreenbaumCnfizerStat &operator=(PlaistedGreenbaumCnfizerStat &&) = delete;
-  ~PlaistedGreenbaumCnfizerStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
-                       "PlaistedGreenbaum Cnfizer", num_convert_, "Total time spent in Converting",
-                       "PlaistedGreenbaum Cnfizer", timer_convert_.seconds());
-  }
-  void increase_num_convert() { increase(&num_convert_); }
-
-  Timer timer_convert_;
-
- private:
-  std::atomic<int> num_convert_{0};
-};
-}  // namespace
-
 vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
-  static PlaistedGreenbaumCnfizerStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard timer_guard(&stat.timer_convert_, stat.enabled());
-  stat.increase_num_convert();
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "PlaistedGreenbaum Cnfizer", "Total time spent in Converting",
+                             "Total # of Convert"};
+  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  stat.Increase();
   // Put the Formula into negation normal form
   const Formula &g{nnfizer_.Convert(f, true /* push_negation_into_relationals */)};
   aux_.clear();

@@ -22,28 +22,6 @@ using std::vector;
 
 namespace {
 // A class to show statistics information at destruction.
-class TseitinCnfizerStat : public Stats {
- public:
-  explicit TseitinCnfizerStat(const bool enabled) : Stats{enabled} {}
-  TseitinCnfizerStat(const TseitinCnfizerStat &) = delete;
-  TseitinCnfizerStat(TseitinCnfizerStat &&) = delete;
-  TseitinCnfizerStat &operator=(const TseitinCnfizerStat &) = delete;
-  TseitinCnfizerStat &operator=(TseitinCnfizerStat &&) = delete;
-  ~TseitinCnfizerStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
-                       "Tseitin Cnfizer", num_convert_, "Total time spent in Converting", "Tseitin Cnfizer",
-                       timer_convert_.seconds());
-  }
-  void increase_num_convert() { increase(&num_convert_); }
-
-  Timer timer_convert_;
-
- private:
-  std::atomic<int> num_convert_{0};
-};
 
 // Forward declarations for the helper functions.
 void Cnfize(const Variable &b, const Formula &f, vector<Formula> *clauses);
@@ -57,9 +35,10 @@ void CnfizeDisjunction(const Variable &b, const Formula &f, vector<Formula> *cla
 //    each subterm `f`, and keep the relation `b ⇔ f`.
 //  - Then it cnfizes each `b ⇔ f` and make a conjunction of them.
 vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
-  static TseitinCnfizerStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard timer_guard(&stat.timer_convert_, stat.enabled());
-  stat.increase_num_convert();
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "Tseitin Cnfizer", "Total time spent in Converting",
+                             "Total # of Convert"};
+  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  stat.Increase();
   map_.clear();
   vector<Formula> ret;
   const Formula head{Visit(f)};

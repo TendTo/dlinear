@@ -16,8 +16,8 @@
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
-#include "dlinear/util/logging.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 using std::cerr;
 using std::cin;
@@ -35,33 +35,14 @@ using std::vector;
 
 namespace dlinear::smt2 {
 
-namespace {
-class Smt2DriverStat : public Stats {
- public:
-  explicit Smt2DriverStat(const bool enabled) : Stats{enabled} {};
-  Smt2DriverStat(const Smt2DriverStat &) = default;
-  Smt2DriverStat(Smt2DriverStat &&) = default;
-  Smt2DriverStat &operator=(const Smt2DriverStat &) = delete;
-  Smt2DriverStat &operator=(Smt2DriverStat &&) = delete;
-  ~Smt2DriverStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  [[nodiscard]] std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15} sec", "Total time spent in SMT2 parsing", "SMT2 Driver",
-                       timer_parse_mps_.seconds());
-  }
-  Timer timer_parse_mps_;
-};
-}  // namespace
-
 Smt2Driver::Smt2Driver(Context &context)
     : context_{context},
       debug_scanning_{context_.config().debug_scanning()},
       debug_parsing_{context_.config().debug_parsing()} {}
 
 bool Smt2Driver::parse_stream(istream &in, const string &sname) {
-  static Smt2DriverStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard check_sat_timer_guard(&stat.timer_parse_mps_, stat.enabled(), true);
+  static Stats stat{DLINEAR_INFO_ENABLED, "SMT2 Driver", "Total time spent in SMT2 parsing"};
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true);
   streamname_ = sname;
 
   Smt2Scanner scanner(&in);

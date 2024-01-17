@@ -35,33 +35,14 @@ using std::vector;
 
 namespace dlinear::mps {
 
-namespace {
-class MpsDriverStat : public Stats {
- public:
-  explicit MpsDriverStat(const bool enabled) : Stats{enabled} {};
-  MpsDriverStat(const MpsDriverStat &) = default;
-  MpsDriverStat(MpsDriverStat &&) = default;
-  MpsDriverStat &operator=(const MpsDriverStat &) = delete;
-  MpsDriverStat &operator=(MpsDriverStat &&) = delete;
-  ~MpsDriverStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  [[nodiscard]] std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15} sec", "Total time spent in MPS parsing", "MPS Driver",
-                       timer_parse_mps_.seconds());
-  }
-  Timer timer_parse_mps_;
-};
-}  // namespace
-
 MpsDriver::MpsDriver(Context &context)
     : context_{context},
       debug_scanning_{context_.config().debug_scanning()},
       debug_parsing_{context_.config().debug_parsing()} {}
 
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
-  static MpsDriverStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard check_sat_timer_guard(&stat.timer_parse_mps_, stat.enabled(), true);
+  static Stats stat{DLINEAR_INFO_ENABLED, "MPS Driver", "Total time spent in MPS parsing"};
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true);
 
   stream_name_ = sname;
 

@@ -11,26 +11,6 @@
 
 namespace dlinear {
 
-namespace {
-class PicosatSatSolverStat : public Stats {
- public:
-  explicit PicosatSatSolverStat(const bool enabled) : Stats{enabled} {};
-  PicosatSatSolverStat(const PicosatSatSolverStat &) = default;
-  PicosatSatSolverStat(PicosatSatSolverStat &&) = default;
-  PicosatSatSolverStat &operator=(const PicosatSatSolverStat &) = delete;
-  PicosatSatSolverStat &operator=(PicosatSatSolverStat &&) = delete;
-  ~PicosatSatSolverStat() override {
-    if (enabled()) std::cout << ToString() << std::endl;
-  }
-  [[nodiscard]] std::string ToString() const override {
-    return fmt::format(DLINEAR_STATS_FMT, "Total # of CheckSat", "SAT level", num_check_sat_,
-                       "Total time spent in SAT checks", "SAT level", timer_check_sat_.seconds());
-  }
-  int num_check_sat_{0};
-  Timer timer_check_sat_;
-};
-}  // namespace
-
 PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : SatSolver{predicate_abstractor, config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
   picosat_save_original_clauses(sat_);
@@ -85,12 +65,14 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
 }
 
 std::optional<Model> PicosatSatSolver::CheckSat() {
-  static PicosatSatSolverStat stat{DLINEAR_INFO_ENABLED};
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "PicosatSatSolver", "Total time spent in SAT checks",
+                             "Total # of CheckSat"};
   DLINEAR_DEBUG_FMT("PicosatSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
-  stat.num_check_sat_++;
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), DLINEAR_INFO_ENABLED);
+  stat.Increase();
+
   // Call SAT solver.
-  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, DLINEAR_INFO_ENABLED);
   const int ret{picosat_sat(sat_, -1)};
   check_sat_timer_guard.pause();
 

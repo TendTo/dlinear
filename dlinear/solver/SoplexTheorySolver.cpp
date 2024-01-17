@@ -12,29 +12,7 @@ namespace dlinear {
 using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
-namespace {
-class SoplexTheorySolverStats : public Stats {
- public:
-  explicit SoplexTheorySolverStats(const bool enabled) : Stats{enabled} {}
-  SoplexTheorySolverStats(const SoplexTheorySolverStats &) = delete;
-  SoplexTheorySolverStats(SoplexTheorySolverStats &&) = delete;
-  SoplexTheorySolverStats &operator=(const SoplexTheorySolverStats &) = delete;
-  SoplexTheorySolverStats &operator=(SoplexTheorySolverStats &&) = delete;
-  ~SoplexTheorySolverStats() override {
-    if (enabled()) std::cout << ToString() << std::endl;
-  }
-  std::string ToString() const override {
-    return fmt::format(DLINEAR_STATS_FMT, "Total # of CheckSat", "Theory level", num_check_sat_,
-                       "Total time spent in CheckSat", "Theory level", timer_check_sat_.seconds());
-  }
-  void increase_num_check_sat() { increase(&num_check_sat_); }
 
-  Timer timer_check_sat_;
-
- private:
-  std::atomic<int> num_check_sat_{0};
-};
-}  // namespace
 
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : TheorySolver(predicate_abstractor, config) {
@@ -314,9 +292,10 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
 }
 
 SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static SoplexTheorySolverStats stat{DLINEAR_INFO_ENABLED};
-  stat.increase_num_check_sat();
-  TimerGuard check_sat_timer_guard(&stat.timer_check_sat_, stat.enabled(), true /* start_timer */);
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "SoplexTheorySolver", "Total # of CheckSat",
+                             "Total time spent in CheckSat"};
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
+  stat.Increase();
 
   DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
 

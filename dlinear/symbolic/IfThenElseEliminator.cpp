@@ -23,32 +23,10 @@ using std::unordered_set;
 
 namespace dlinear {
 
-class IfThenElseElimStat : public Stats {
- public:
-  explicit IfThenElseElimStat(const bool enabled) : Stats{enabled} {}
-  IfThenElseElimStat(const IfThenElseElimStat &) = delete;
-  IfThenElseElimStat(IfThenElseElimStat &&) = delete;
-  IfThenElseElimStat &operator=(const IfThenElseElimStat &) = delete;
-  IfThenElseElimStat &operator=(IfThenElseElimStat &&) = delete;
-  ~IfThenElseElimStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Process", "ITE Elim",
-                       num_process_, "Total time spent in Processing", "ITE Elim", timer_process_.seconds());
-  }
-  void increase_num_process() { increase(&num_process_); }
-
-  Timer timer_process_;
-
- private:
-  std::atomic<int> num_process_{0};
-};
-
 Formula IfThenElseEliminator::Process(const Formula &f) {
-  static IfThenElseElimStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard timer_guard(&stat.timer_process_, stat.enabled());
-  stat.increase_num_process();
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "ITE Elim", "Total time spent in Processing", "Total # of Process"};
+  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  stat.Increase();
 
   Formula new_f{Visit(f, Formula::True())};
   if (f.EqualTo(new_f) && added_formulas_.empty()) return f;

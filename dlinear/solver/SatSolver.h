@@ -27,7 +27,7 @@ class SatSolver {
   void Push();
   /**
    * Add a formula @p f to the solver.
-   * @note If @p f is a clause, please use @link AddClause function. This
+   * @note If @p f is a clause, please use @ref AddClause function. This
    * function does not assume anything about @p f and perform
    * pre-processings (CNFize and PredicateAbstraction).
    *

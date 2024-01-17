@@ -24,43 +24,16 @@ using std::vector;
 
 namespace dlinear {
 
-/**
- * A class to show
- * statistics information
- * at destruction
- */
-class PredicateAbstractorStat : public Stats {
- public:
-  explicit PredicateAbstractorStat(const bool enabled) : Stats{enabled} {}
-  PredicateAbstractorStat(const PredicateAbstractorStat &) = delete;
-  PredicateAbstractorStat(PredicateAbstractorStat &&) = delete;
-  PredicateAbstractorStat &operator=(const PredicateAbstractorStat &) = delete;
-  PredicateAbstractorStat &operator=(PredicateAbstractorStat &&) = delete;
-  ~PredicateAbstractorStat() override {
-    if (enabled()) cout << ToString() << std::endl;
-  }
-  std::string ToString() const override {
-    return fmt::format("{:<45} @ {:<20} = {:>15}\n{:<45} @ {:<20} = {:>15f} sec", "Total # of Convert",
-                       "Predicate Abstractor", num_convert_, "Total time spent in Converting", "Predicate Abstractor",
-                       timer_convert_.seconds());
-  }
-  void increase_num_convert() { increase(&num_convert_); }
-
-  Timer timer_convert_;
-
- private:
-  std::atomic<int> num_convert_{0};
-};
-
 void PredicateAbstractor::Add(const Variable &var, const Formula &f) {
   var_to_formula_map_.emplace(var, f);
   formula_to_var_map_.emplace(f, var);
 }
 
 Formula PredicateAbstractor::Convert(const Formula &f) {
-  static PredicateAbstractorStat stat{DLINEAR_INFO_ENABLED};
-  TimerGuard timer_guard(&stat.timer_convert_, stat.enabled());
-  stat.increase_num_convert();
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "Predicate Abstractor", "Total time spent in Converting",
+                             "Total # of Convert"};
+  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  stat.Increase();
   return Visit(f);
 }
 
