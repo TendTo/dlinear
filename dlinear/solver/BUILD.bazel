@@ -21,6 +21,13 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "lp_sense",
+    srcs = ["LpSense.cpp"],
+    hdrs = ["LpSense.h"],
+    deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
     name = "sat_result",
     srcs = ["SatResult.cpp"],
     hdrs = ["SatResult.h"],
@@ -75,6 +82,7 @@ dlinear_cc_library(
         "TheorySolver.h",
     ],
     deps = [
+        ":lp_sense",
         ":sat_result",
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
