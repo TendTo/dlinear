@@ -79,6 +79,10 @@ benchmark/*.csv
 # Docs
 docs/out/
 
+# Temporary files and directories
+temp/
+temp.*
+
 # Tests
 tests/
 /*.mps

@@ -15,7 +15,7 @@ namespace dlinear {
 
 class TheorySolver {
  public:
-  explicit TheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  explicit TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   virtual ~TheorySolver() = default;
 
   /**
@@ -73,23 +73,35 @@ class TheorySolver {
 
  protected:
   static bool IsSimpleBound(const Formula &formula);
-  static bool IsEqualToOrWhatever(const Formula &formula, bool truth);
-  static bool IsNotEqualToOrWhatever(const Formula &formula, bool truth);
-  static bool IsGreaterThanOrWhatever(const Formula &formula, bool truth);
-  static bool IsLessThanOrWhatever(const Formula &formula, bool truth);
+  static bool IsEqualTo(const Formula &formula, bool truth);
+  static bool IsNotEqualTo(const Formula &formula, bool truth);
+  static bool IsGreaterThan(const Formula &formula, bool truth);
+  static bool IsLessThan(const Formula &formula, bool truth);
+  static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth);
+  static bool IsLessThanOrEqualTo(const Formula &formula, bool truth);
 
   int simplex_sat_phase_;
   double precision_;
 
-  PredicateAbstractor &predicate_abstractor_;
+  const PredicateAbstractor &predicate_abstractor_;
 
-  std::map<Variable::Id, int> var_to_theory_col_;
-  std::map<int, Variable> theory_col_to_var_;
+  std::map<Variable::Id, int> var_to_theory_col_;  ///< Variable ⇔ theory column.
+                                                   ///< The Variable is the one created by the PredicateAbstractor
+                                                   ///< The column is the one used by the theory solver.
+  std::map<int, Variable> theory_col_to_var_;      ///< Theory column ⇔ Variable.
+                                                   ///< The column is the one used by the theory solver.
+                                                   ///< The Variable is the one created by the PredicateAbstractor
 
-  std::map<std::pair<Variable::Id, bool>, std::pair<int, int>> lit_to_theory_row_;
-  std::vector<Literal> theory_row_to_lit_;
+  std::map<Variable::Id, std::tuple<bool, int, int>>
+      lit_to_theory_row_;  ///< Literal ⇔ theory row.
+                           ///< The tuple contains the truth value of the literal when it was first added to the LP
+                           ///< solver, The row is the constraint used by the theory solver.
+  std::vector<Literal> theory_row_to_lit_;  ///< Theory row ⇔ Literal
+                                            ///< The row is the constraint used by the theory solver.
+                                            ///< The tuple contains the truth value of the literal when it was first
+                                            ///< added to the LP solver,
 
-  Box model_;  ///< model produced by the theory solver
+  Box model_;  ///< Model produced by the theory solver
 };
 
 }  // namespace dlinear

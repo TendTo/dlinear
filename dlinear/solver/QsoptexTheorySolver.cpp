@@ -32,7 +32,7 @@ void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
   // Boolean variable - no need to involve theory solver
   if (it == var_to_formula_map.end()) return;
 
-  const auto it2 = lit_to_theory_row_.find({formulaVar.get_id(), truth});
+  const auto it2 = lit_to_theory_row_.find(formulaVar.get_id());
   // Found.
   if (it2 != lit_to_theory_row_.end()) return;
 
@@ -42,22 +42,22 @@ void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
   for (const Variable &var : formula.GetFreeVariables()) {
     AddVariable(var);
   }
-  if (IsEqualToOrWhatever(formula, truth)) {
+  if (IsEqualTo(formula, truth)) {
     if (IsSimpleBound(formula)) {
       return;  // Just create simple bound in LP
     }
     qsx_sense_.push_back('E');
-  } else if (IsGreaterThanOrWhatever(formula, truth)) {
+  } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
     if (IsSimpleBound(formula)) {
       return;
     }
     qsx_sense_.push_back('G');
-  } else if (IsLessThanOrWhatever(formula, truth)) {
+  } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
     if (IsSimpleBound(formula)) {
       return;
     }
     qsx_sense_.push_back('L');
-  } else if (IsNotEqualToOrWhatever(formula, truth)) {
+  } else if (IsNotEqualTo(formula, truth)) {
     // Nothing to do, because this constraint is always delta-sat for
     // delta > 0.
     return;
@@ -99,7 +99,7 @@ void QsoptexTheorySolver::AddLiteral(const Literal &lit) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", qsx_rhs_.back());
   }
   // Update indexes
-  lit_to_theory_row_.emplace(std::make_pair(formulaVar.get_id(), truth), std::make_pair(qsx_row, -1));
+  lit_to_theory_row_.emplace(formulaVar.get_id(), std::make_tuple(truth, qsx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
@@ -120,14 +120,16 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
 
 void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto &[var, truth] = lit;
-  const auto it_row = lit_to_theory_row_.find({var.get_id(), truth});
+  const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const auto &[qsx_row, qsx_row2] = it_row->second;
-    mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
-    mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
-    DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
-    return;
+    const auto &[stored_truth, qsx_row, qsx_row2] = it_row->second;
+    if (stored_truth == truth) {
+      mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
+      mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
+      DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
+      return;
+    }
   }
   const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
   const auto it = var_to_formula_map.find(var);
@@ -142,7 +144,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-  if (IsEqualToOrWhatever(formula, truth)) {
+  if (IsEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetQSXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -150,7 +152,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (IsGreaterThanOrWhatever(formula, truth)) {
+  } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetQSXVarBound(get_variable(lhs), 'L', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -158,7 +160,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (IsLessThanOrWhatever(formula, truth)) {
+  } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetQSXVarBound(get_variable(lhs), 'U', get_constant_value(rhs));
     } else if (is_constant(lhs) && is_variable(rhs)) {
@@ -166,7 +168,7 @@ void QsoptexTheorySolver::EnableLiteral(const Literal &lit) {
     } else {
       DLINEAR_UNREACHABLE();
     }
-  } else if (IsNotEqualToOrWhatever(formula, truth)) {
+  } else if (IsNotEqualTo(formula, truth)) {
     // Nothing to do, because this constraint is always delta-sat for
     // delta > 0.
   } else {

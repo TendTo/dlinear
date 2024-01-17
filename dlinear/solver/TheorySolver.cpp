@@ -8,7 +8,7 @@
 
 namespace dlinear {
 
-TheorySolver::TheorySolver(PredicateAbstractor &predicate_abstractor, [[maybe_unused]] const Config &config)
+TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config)
     : simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
       predicate_abstractor_{predicate_abstractor} {}
@@ -45,21 +45,24 @@ bool TheorySolver::IsSimpleBound(const Formula &formula) {
   return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
 }
 
-bool TheorySolver::IsEqualToOrWhatever(const Formula &formula, bool truth) {
+bool TheorySolver::IsEqualTo(const Formula &formula, bool truth) {
   return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
-bool TheorySolver::IsNotEqualToOrWhatever(const Formula &formula, bool truth) {
-  return IsEqualToOrWhatever(formula, !truth);
+bool TheorySolver::IsNotEqualTo(const Formula &formula, bool truth) { return IsEqualTo(formula, !truth); }
+
+bool TheorySolver::IsGreaterThan(const Formula &formula, bool truth) {
+  return truth ? is_greater_than(formula) : is_less_than(formula);
 }
 
-bool TheorySolver::IsGreaterThanOrWhatever(const Formula &formula, bool truth) {
-  return truth ? is_greater_than(formula) || is_greater_than_or_equal_to(formula)
-               : is_less_than(formula) || is_less_than_or_equal_to(formula);
+bool TheorySolver::IsLessThan(const Formula &formula, bool truth) { return IsGreaterThan(formula, !truth); }
+
+bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, bool truth) {
+  return truth ? is_greater_than_or_equal_to(formula) : is_less_than_or_equal_to(formula);
 }
 
-bool TheorySolver::IsLessThanOrWhatever(const Formula &formula, bool truth) {
-  return IsGreaterThanOrWhatever(formula, !truth);
+bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, bool truth) {
+  return IsGreaterThanOrEqualTo(formula, !truth);
 }
 
 }  // namespace dlinear

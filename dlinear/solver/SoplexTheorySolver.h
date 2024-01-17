@@ -23,8 +23,9 @@ class SoplexTheorySolver : public TheorySolver {
 
   void Reset(const Box& box) override;
 
- private:
-  void EnableLiteral(int theory_row);
+ protected:
+  static soplex::Rational infinity_;
+  static soplex::Rational ninfinity_;
   void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
   void CreateArtificials(int spx_row);

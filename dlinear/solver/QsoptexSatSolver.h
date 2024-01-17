@@ -45,24 +45,16 @@ class QsoptexSatSolver {
    * @param clauses clauses to assertla
    */
   QsoptexSatSolver(const Config &config, const std::vector<Formula> &clauses);
-
-  /** Deleted copy constructor. */
   QsoptexSatSolver(const QsoptexSatSolver &) = delete;
-
-  /** Deleted move constructor. */
   QsoptexSatSolver(QsoptexSatSolver &&) = delete;
-
-  /** Deleted copy constructor. */
   QsoptexSatSolver &operator=(const QsoptexSatSolver &) = delete;
-
-  /** Deleted move-assignment operator. */
   QsoptexSatSolver &operator=(QsoptexSatSolver &&) = delete;
 
   ~QsoptexSatSolver();
 
   /**
    * Add a formula @p f to the solver.
-   * @note If @p f is a clause, please use @link AddClause function. This
+   * @note If @p f is a clause, please use @ref AddClause function. This
    * function does not assume anything about @p f and perform
    * pre-processings (CNFize and PredicateAbstraction).
    * @param f formula to be added
@@ -71,7 +63,7 @@ class QsoptexSatSolver {
 
   /**
    * Add a vector of formulas @p formulas to the solver.
-   * @note If @p f is a clause, please use @link AddClauses function. This
+   * @note If @p f is a clause, please use @ref AddClauses function. This
    * @param formulas
    */
   void AddFormulas(const std::vector<Formula> &formulas);
@@ -116,6 +108,7 @@ class QsoptexSatSolver {
    * Add a vector of formulas @p formulas to the solver.
    * @note Each element of @p formulas must be a clause. That is, it is either
    * a literal (b or ¬b) or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
+   *
    * @param formulas set of clauses to be added
    */
   void AddClauses(const std::vector<Formula> &formulas);
@@ -124,21 +117,25 @@ class QsoptexSatSolver {
    * Return a corresponding literal ID of @p var.
    * It maintains two maps `lit_to_var_` and `var_to_lit_` to keep track of the
    * relationship between Variable ⇔ Literal (in SAT).
-   * @param var
+   *
+   * @param var variable to add to the SAT solver
    */
   void MakeSatVar(const Variable &var);
 
   /**
    * Disable all literals in the linear solver restricting variables to the
    * given @p box only.
+   *
    * @param box box of variables to restrict
    */
   void ResetLinearProblem(const Box &box);
 
-  // Add a symbolic formula @p f to @p clause.
-  //
-  // @pre @p f is either a Boolean variable or a negation of Boolean
-  // variable.
+  /**
+   * Add a symbolic formula @p f to @p clause.
+   * @pre @p f is either a Boolean variable or a negation of Boolean variable
+   *
+   * @param f formula to add
+   */
   void AddLiteral(const Formula &f);
   void AddLiteral(const Literal &l, bool learned);
 

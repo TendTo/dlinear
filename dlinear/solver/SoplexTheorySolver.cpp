@@ -12,10 +12,15 @@ namespace dlinear {
 using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
-
+Rational SoplexTheorySolver::infinity_{0};
+Rational SoplexTheorySolver::ninfinity_{0};
 
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : TheorySolver(predicate_abstractor, config) {
+  // Initialize infinities
+  infinity_ = soplex::infinity;
+  ninfinity_ = -soplex::infinity;
+  // Default SoPlex parameters
   spx_.setRealParam(soplex::SoPlex::FEASTOL, config.precision());
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
   spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
