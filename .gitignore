@@ -76,6 +76,9 @@ coverage.xml
 benchmark/smt2/*
 benchmark/*.csv
 
+# Docs
+docs/out/
+
 # Tests
 tests/
 /*.mps
