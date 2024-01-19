@@ -41,10 +41,10 @@ void PicosatSatSolver::AddLearnedClause(const LiteralSet &literals) {
 }
 
 void PicosatSatSolver::AddLiteral(const Literal &l, bool learned) {
-  const Variable &var{l.first};
+  const auto &[var, truth] = l;
   DLINEAR_ASSERT(var.get_type() == Variable::Type::BOOLEAN, "var must be Boolean");
   // f = b or f = ¬b.
-  int lit = l.second ? var_to_sat_[var.get_id()] : -var_to_sat_[var.get_id()];
+  const int lit = truth ? var_to_sat_[var.get_id()] : -var_to_sat_[var.get_id()];
   picosat_add(sat_, lit);
   UpdateLookup(lit, learned);
   // If the literal is from the original formula, add it to the theory solver.

@@ -966,7 +966,9 @@ bool is_if_then_else(const Expression &e) { return is_if_then_else(*e.ptr_); }
 bool is_uninterpreted_function(const Expression &e) {
   return is_uninterpreted_function(*e.ptr_);
 }
-
+const mpq_class &get_constant_value_ref(const Expression &e) {
+  return to_constant(e)->get_value_ref();
+}
 mpq_class get_constant_value(const Expression &e) {
   return to_constant(e)->get_value();
 }

@@ -14,6 +14,7 @@
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
 
 using std::pair;
@@ -309,28 +310,35 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
     theory_solver_->Reset(box());
-    theory_solver_->EnableLiterals(theory_model);
+    std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
+    if (explanation_bounds) {
+      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}",
+                        explanation_bounds.value().size(), stack_.get_vector().size());
+      DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation_bounds.value());
+      sat_solver_->AddLearnedClause(explanation_bounds.value());
+      continue;
+    }
 
+    LiteralSet explanation_theory{};
     // If the SAT solver found a model, we have to check if it is consistent with the theory
-    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision);
+    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, explanation_theory);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
       // SAT from TheorySolver.
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
       box() = theory_solver_->GetModel();
       return theory_result;
     } else {
-      if (theory_result == SatResult::SAT_UNSATISFIABLE) {
-        // UNSAT from TheorySolver.
+      if (theory_result == SatResult::SAT_UNSATISFIABLE) {  // UNSAT from TheorySolver.
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
       } else {
         DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
         have_unsolved = true;  // Will prevent return of UNSAT
       }
-      const LiteralSet &explanation{theory_model.cbegin(), theory_model.cend()};
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
-                        stack_.get_vector().size());
-      sat_solver_->AddLearnedClause(explanation);
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}",
+                        explanation_theory.size(), stack_.get_vector().size());
+      sat_solver_->AddLearnedClause(explanation_theory);
     }
   }
 }

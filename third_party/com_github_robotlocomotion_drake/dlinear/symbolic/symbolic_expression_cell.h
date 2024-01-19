@@ -7,13 +7,12 @@
 #include <ostream>
 #include <string>
 
+#include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
-
-#include "dlinear/libs/gmp.h"
 
 namespace dlinear::drake::symbolic {
 
@@ -62,8 +61,7 @@ class ExpressionCell {
    * expressions in @p s.
    * @throws std::runtime_error if NaN is detected during substitution.
    */
-  virtual Expression Substitute(const ExpressionSubstitution &expr_subst,
-                                const FormulaSubstitution &formula_subst) = 0;
+  virtual Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) = 0;
 
   /** Differentiates this symbolic expression with respect to the variable @p
    * var.
@@ -75,9 +73,7 @@ class ExpressionCell {
   virtual std::ostream &Display(std::ostream &os) const = 0;
 
   /** Returns the reference count of this cell. */
-  unsigned use_count() const {
-    return atomic_load_explicit(&rc_, std::memory_order_acquire);
-  }
+  unsigned use_count() const { return atomic_load_explicit(&rc_, std::memory_order_acquire); }
 
   /** Copy-constructs an ExpressionCell from an lvalue. (DELETED) */
   ExpressionCell(const ExpressionCell &e) = delete;
@@ -96,8 +92,7 @@ class ExpressionCell {
   ExpressionCell() = default;
   /** Constructs ExpressionCell of kind @p k with @p hash, @p is_poly, and @p
    * include_ite. */
-  ExpressionCell(ExpressionKind k, size_t hash, bool is_poly, bool include_ite,
-                 Variables variables);
+  ExpressionCell(ExpressionKind k, size_t hash, bool is_poly, bool include_ite, Variables variables);
   /** Default destructor. */
   virtual ~ExpressionCell() = default;
   /** Returns an expression pointing to this ExpressionCell. */
@@ -112,9 +107,7 @@ class ExpressionCell {
 
   // Reference counter.
   mutable std::atomic<unsigned> rc_{0};
-  void increase_rc() const {
-    atomic_fetch_add_explicit(&rc_, 1U, std::memory_order_relaxed);
-  }
+  void increase_rc() const { atomic_fetch_add_explicit(&rc_, 1U, std::memory_order_relaxed); }
   void decrease_rc() const {
     if (atomic_fetch_sub_explicit(&rc_, 1U, std::memory_order_acq_rel) == 1U) {
       delete this;
@@ -197,8 +190,7 @@ class BinaryExpressionCell : public ExpressionCell {
   /** Constructs BinaryExpressionCell of kind @p k with @p hash, @p e1, @p e2,
    * @p is_poly.
    */
-  BinaryExpressionCell(ExpressionKind k, const Expression &e1,
-                       const Expression &e2, bool is_poly);
+  BinaryExpressionCell(ExpressionKind k, const Expression &e1, const Expression &e2, bool is_poly);
   /** Returns the evaluation result f(@p v1, @p v2 ). */
   virtual mpq_class DoEvaluate(const mpq_class &v1, const mpq_class &v2) const = 0;
 
@@ -219,8 +211,7 @@ class ExpressionVar : public ExpressionCell {
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -233,12 +224,12 @@ class ExpressionConstant : public ExpressionCell {
  public:
   explicit ExpressionConstant(const mpq_class &v);
   mpq_class get_value() const { return v_; }
+  const mpq_class &get_value_ref() const { return v_; }
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -254,8 +245,7 @@ class ExpressionNaN : public ExpressionCell {
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 };
@@ -268,11 +258,11 @@ class ExpressionInfty : public ExpressionCell {
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   int GetSign() const { return sign_; }
+
  private:
   int sign_ = 1;
 };
@@ -294,35 +284,27 @@ class ExpressionAdd : public ExpressionCell {
  public:
   /** Constructs ExpressionAdd from @p constant_term and @p term_to_coeff_map.
    */
-  ExpressionAdd(const mpq_class &constant,
-                std::map<Expression, mpq_class> expr_to_coeff_map);
+  ExpressionAdd(const mpq_class &constant, std::map<Expression, mpq_class> expr_to_coeff_map);
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   /** Returns the constant. */
   mpq_class get_constant() const { return constant_; }
   /** Returns map from an expression to its coefficient. */
-  const std::map<Expression, mpq_class> &get_expr_to_coeff_map() const {
-    return expr_to_coeff_map_;
-  }
+  const std::map<Expression, mpq_class> &get_expr_to_coeff_map() const { return expr_to_coeff_map_; }
 
   // TODO(soonho): Make the following private and allow
   // only selected functions/method to use them.
   /** Returns map from an expression to its coefficient. */
-  std::map<Expression, mpq_class> &get_mutable_expr_to_coeff_map() {
-    return expr_to_coeff_map_;
-  }
+  std::map<Expression, mpq_class> &get_mutable_expr_to_coeff_map() { return expr_to_coeff_map_; }
 
  private:
-  static Variables ExtractVariables(
-      const std::map<Expression, mpq_class> &expr_to_coeff_map);
-  std::ostream &DisplayTerm(std::ostream &os, bool print_plus, const mpq_class &coeff,
-                            const Expression &term) const;
+  static Variables ExtractVariables(const std::map<Expression, mpq_class> &expr_to_coeff_map);
+  std::ostream &DisplayTerm(std::ostream &os, bool print_plus, const mpq_class &coeff, const Expression &term) const;
 
   mpq_class constant_{};
   std::map<Expression, mpq_class> expr_to_coeff_map_;
@@ -349,8 +331,7 @@ class ExpressionAddFactory {
 
   /** Constructs ExpressionAddFactory with @p constant and @p
    * expr_to_coeff_map. */
-  ExpressionAddFactory(const mpq_class &constant,
-                       std::map<Expression, mpq_class> expr_to_coeff_map);
+  ExpressionAddFactory(const mpq_class &constant, std::map<Expression, mpq_class> expr_to_coeff_map);
 
   /** Constructs ExpressionAddFactory from @p ptr. */
   explicit ExpressionAddFactory(const ExpressionAdd *ptr);
@@ -391,8 +372,7 @@ class ExpressionAddFactory {
   ExpressionAddFactory &AddTerm(const mpq_class &coeff, const Expression &term);
   /* Adds expr_to_coeff_map to this factory. It calls AddConstant and AddTerm
    * methods. */
-  ExpressionAddFactory &AddMap(
-      const std::map<Expression, mpq_class> &expr_to_coeff_map);
+  ExpressionAddFactory &AddMap(const std::map<Expression, mpq_class> &expr_to_coeff_map);
 
   bool get_expression_is_called_{false};
   mpq_class constant_{0.0};
@@ -415,36 +395,27 @@ class ExpressionAddFactory {
 class ExpressionMul : public ExpressionCell {
  public:
   /** Constructs ExpressionMul from @p constant and @p base_to_exponent_map. */
-  ExpressionMul(const mpq_class &constant,
-                std::map<Expression, Expression> base_to_exponent_map);
+  ExpressionMul(const mpq_class &constant, std::map<Expression, Expression> base_to_exponent_map);
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   /** Returns constant term. */
   mpq_class get_constant() const { return constant_; }
   /** Returns map from a term to its exponent. */
-  const std::map<Expression, Expression> &get_base_to_exponent_map() const {
-    return base_to_exponent_map_;
-  }
+  const std::map<Expression, Expression> &get_base_to_exponent_map() const { return base_to_exponent_map_; }
 
   // TODO(soonho): Make the following private and allow
   // only selected functions/method to use them.
   /** Returns map from a term to its exponent. */
-  std::map<Expression, Expression> &get_mutable_base_to_exponent_map() {
-    return base_to_exponent_map_;
-  }
+  std::map<Expression, Expression> &get_mutable_base_to_exponent_map() { return base_to_exponent_map_; }
 
  private:
-  static Variables ExtractVariables(
-      const std::map<Expression, Expression> &base_to_exponent_map);
-  std::ostream &DisplayTerm(std::ostream &os, bool print_mul,
-                            const Expression &base,
-                            const Expression &exponent) const;
+  static Variables ExtractVariables(const std::map<Expression, Expression> &base_to_exponent_map);
+  std::ostream &DisplayTerm(std::ostream &os, bool print_mul, const Expression &base, const Expression &exponent) const;
 
   mpq_class constant_{};
   std::map<Expression, Expression> base_to_exponent_map_;
@@ -471,8 +442,7 @@ class ExpressionMulFactory {
 
   /** Constructs ExpressionMulFactory with @p constant and @p
    * base_to_exponent_map. */
-  ExpressionMulFactory(const mpq_class &constant,
-                       std::map<Expression, Expression> base_to_exponent_map);
+  ExpressionMulFactory(const mpq_class &constant, std::map<Expression, Expression> base_to_exponent_map);
 
   /** Constructs ExpressionMulFactory from @p ptr. */
   explicit ExpressionMulFactory(const ExpressionMul *ptr);
@@ -508,12 +478,10 @@ class ExpressionMulFactory {
      results in c * b1 ^ e1 * ... * base^exponent * ... * bn ^ en. Note that
      it also performs simplifications to merge the exponents of common bases.
   */
-  ExpressionMulFactory &AddTerm(const Expression &base,
-                                const Expression &exponent);
+  ExpressionMulFactory &AddTerm(const Expression &base, const Expression &exponent);
   /* Adds base_to_exponent_map to this factory. It calls AddConstant and AddTerm
    * methods. */
-  ExpressionMulFactory &AddMap(
-      const std::map<Expression, Expression> &base_to_exponent_map);
+  ExpressionMulFactory &AddMap(const std::map<Expression, Expression> &base_to_exponent_map);
 
   bool get_expression_is_called_{false};
   mpq_class constant_{1.0};
@@ -525,8 +493,7 @@ class ExpressionDiv : public BinaryExpressionCell {
  public:
   ExpressionDiv(const Expression &e1, const Expression &e2);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -539,8 +506,7 @@ class ExpressionLog : public UnaryExpressionCell {
  public:
   explicit ExpressionLog(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -557,8 +523,7 @@ class ExpressionAbs : public UnaryExpressionCell {
  public:
   explicit ExpressionAbs(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -574,8 +539,7 @@ class ExpressionExp : public UnaryExpressionCell {
  public:
   explicit ExpressionExp(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -588,8 +552,7 @@ class ExpressionSqrt : public UnaryExpressionCell {
  public:
   explicit ExpressionSqrt(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -606,8 +569,7 @@ class ExpressionPow : public BinaryExpressionCell {
  public:
   ExpressionPow(const Expression &e1, const Expression &e2);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -625,8 +587,7 @@ class ExpressionSin : public UnaryExpressionCell {
  public:
   explicit ExpressionSin(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -639,8 +600,7 @@ class ExpressionCos : public UnaryExpressionCell {
  public:
   explicit ExpressionCos(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -653,8 +613,7 @@ class ExpressionTan : public UnaryExpressionCell {
  public:
   explicit ExpressionTan(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -667,8 +626,7 @@ class ExpressionAsin : public UnaryExpressionCell {
  public:
   explicit ExpressionAsin(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -685,8 +643,7 @@ class ExpressionAcos : public UnaryExpressionCell {
  public:
   explicit ExpressionAcos(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -703,8 +660,7 @@ class ExpressionAtan : public UnaryExpressionCell {
  public:
   explicit ExpressionAtan(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -718,8 +674,7 @@ class ExpressionAtan2 : public BinaryExpressionCell {
  public:
   ExpressionAtan2(const Expression &e1, const Expression &e2);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -732,8 +687,7 @@ class ExpressionSinh : public UnaryExpressionCell {
  public:
   explicit ExpressionSinh(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -746,8 +700,7 @@ class ExpressionCosh : public UnaryExpressionCell {
  public:
   explicit ExpressionCosh(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -760,8 +713,7 @@ class ExpressionTanh : public UnaryExpressionCell {
  public:
   explicit ExpressionTanh(const Expression &e);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -774,8 +726,7 @@ class ExpressionMin : public BinaryExpressionCell {
  public:
   ExpressionMin(const Expression &e1, const Expression &e2);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -788,8 +739,7 @@ class ExpressionMax : public BinaryExpressionCell {
  public:
   ExpressionMax(const Expression &e1, const Expression &e2);
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -802,14 +752,12 @@ class ExpressionIfThenElse : public ExpressionCell {
  public:
   /** Constructs if-then-else expression from @p f_cond, @p e_then, and @p
    * e_else. */
-  ExpressionIfThenElse(const Formula &f_cond, const Expression &e_then,
-                       const Expression &e_else);
+  ExpressionIfThenElse(const Formula &f_cond, const Expression &e_then, const Expression &e_else);
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -821,9 +769,7 @@ class ExpressionIfThenElse : public ExpressionCell {
   const Expression &get_else_expression() const { return e_else_; }
 
  private:
-  static Variables ExtractVariables(const Formula &f_cond,
-                                    const Expression &e_then,
-                                    const Expression &e_else);
+  static Variables ExtractVariables(const Formula &f_cond, const Expression &e_then, const Expression &e_else);
 
   const Formula f_cond_;
   const Expression e_then_;
@@ -835,14 +781,12 @@ class ExpressionUninterpretedFunction : public ExpressionCell {
  public:
   /** Constructs an uninterpreted-function expression from @p name and @p vars.
    */
-  ExpressionUninterpretedFunction(const std::string &name,
-                                  const Variables &vars);
+  ExpressionUninterpretedFunction(const std::string &name, const Variables &vars);
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
   Expression Expand() override;
-  Expression Substitute(const ExpressionSubstitution &expr_subst,
-                        const FormulaSubstitution &formula_subst) override;
+  Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) override;
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
 
@@ -1195,14 +1139,10 @@ const ExpressionIfThenElse *to_if_then_else(const Expression &e);
  * ExpressionUninterpretedFunction*`.
  *  @pre @c *expr_ptr is of @c ExpressionUninterpretedFunction.
  */
-const ExpressionUninterpretedFunction *to_uninterpreted_function(
-    const ExpressionCell *expr_ptr);
+const ExpressionUninterpretedFunction *to_uninterpreted_function(const ExpressionCell *expr_ptr);
 /** Casts @p e of Expression to `const ExpressionUninterpretedFunction*`.
  * @pre @c *(e.ptr_) is of @c ExpressionUninterpretedFunction.
  */
-const ExpressionUninterpretedFunction *to_uninterpreted_function(
-    const Expression &e);
+const ExpressionUninterpretedFunction *to_uninterpreted_function(const Expression &e);
 
-} // namespace dlinear::drake::symbolic
-
-
+}  // namespace dlinear::drake::symbolic

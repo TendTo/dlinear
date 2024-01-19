@@ -4,6 +4,7 @@
 
 #include "TheorySolver.h"
 
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
@@ -31,8 +32,14 @@ void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
   for (const auto &lit : theory_literals) AddLiteral(lit);
 }
 
-void TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
-  for (const Literal &lit : theory_literals) EnableLiteral(lit);
+std::optional<LiteralSet> TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+  for (const Literal &lit : theory_literals) {
+    std::optional<LiteralSet> explanation{EnableLiteral(lit)};
+    // Check if the literal that was just enabled is conflicting with the current model.
+    // If so, return the explanation containing a superset of the conflicting literals
+    if (explanation) return explanation;
+  }
+  return {};
 }
 
 bool TheorySolver::IsSimpleBound(const Formula &formula) {
@@ -63,6 +70,31 @@ bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, bool truth) {
 
 bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, bool truth) {
   return IsGreaterThanOrEqualTo(formula, !truth);
+}
+
+std::tuple<const Variable &, const char, const mpq_class &> TheorySolver::GetBound(const Formula &formula, bool truth) {
+  DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
+  
+  const Expression &lhs{get_lhs_expression(formula)};
+  const Expression &rhs{get_rhs_expression(formula)};
+  if (IsEqualTo(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'B', get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'B', get_constant_value_ref(lhs)};
+  }
+  if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'L', get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'U', get_constant_value_ref(lhs)};
+  }
+  if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'U', get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'L', get_constant_value_ref(lhs)};
+  }
+  if (IsNotEqualTo(formula, truth)) {
+    // If delta > 0, we can ignore not-equal bounds on variables, for they will always be satisfied.
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'N', get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'N', get_constant_value_ref(lhs)};
+  }
+  DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
 }  // namespace dlinear

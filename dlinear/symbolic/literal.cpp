@@ -22,6 +22,18 @@ std::ostream &operator<<(std::ostream &os, const Literal &literal) {
   return os << (literal.second ? "" : "¬") << literal.first;
 }
 
+std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set) {
+  os << "{";
+  for (const auto &lit : literal_set) os << lit << ", ";
+  return os << "}";
+}
+
+std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literal_vec) {
+  os << "{";
+  for (const auto &lit : literal_vec) os << lit << ", ";
+  return os << "}";
+}
+
 std::ostream &operator<<(std::ostream &os, const Model &model) {
   os << "Boolean model:\n";
   for (const auto &lit : model.first) os << lit << " ";

@@ -29,9 +29,9 @@ using LiteralSet = std::set<Literal, LiteralComparator>;
 
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
 
-using VarToTheoryLiteralMap = std::unordered_map<Variable, Formula, hash_value<Variable>>;
-
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
+std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set);
+std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literal_vec);
 std::ostream &operator<<(std::ostream &os, const Model &model);
 
 }  // namespace dlinear

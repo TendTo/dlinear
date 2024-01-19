@@ -636,6 +636,11 @@ bool is_if_then_else(const Expression &e);
 /** Checks if @p e is an uninterpreted-function expression. */
 bool is_uninterpreted_function(const Expression &e);
 
+/** Returns a reference to the constant value of the rational constant expression @p e.
+ *  @pre @p e is either a rational constant or real constant expression.
+ *  @warning The reference will be invalidated if @p e is destructed.
+ */
+const mpq_class& get_constant_value_ref(const Expression &e);
 /** Returns the constant value of the rational constant expression @p e.
  *  @pre @p e is either a rational constant or real constant expression.
  */

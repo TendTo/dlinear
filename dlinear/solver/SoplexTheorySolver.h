@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "dlinear/libs/soplex.h"
@@ -27,7 +28,7 @@ class SoplexTheorySolver : public TheorySolver {
 
   bool CheckBounds() override;
 
-  void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
+  bool SetSPXVarBound(const std::tuple<const Variable&, char, const mpq_class&>& bound, int spx_col);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
   void CreateArtificials(int spx_row);
 

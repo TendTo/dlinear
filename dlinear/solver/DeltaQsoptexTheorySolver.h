@@ -17,11 +17,11 @@ class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
  public:
   explicit DeltaQsoptexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
 
-  void EnableLiteral(const Literal& lit) override;
+  std::optional<LiteralSet> EnableLiteral(const Literal& lit) override;
 
   void AddLiteral(const Literal& lit) override;
 
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision) override;
+  SatResult CheckSat(const Box& box, mpq_class* actual_precision, LiteralSet& explanation) override;
 };
 
 }  // namespace dlinear

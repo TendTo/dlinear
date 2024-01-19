@@ -100,7 +100,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
-void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
+std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   const Variable &var = lit.first;
   const bool truth = lit.second;
 
@@ -116,7 +116,7 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
           spx_row, sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
           sense == 'L' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
       DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({})", spx_row);
-      return;
+      return {};
     }
   }
 
@@ -127,46 +127,29 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   // The variable is not in the map (it is not a theory literal) or it is not a simple bound
   if (it == predicate_abstractor_.var_to_formula_map().end() || !IsSimpleBound(it->second)) {
     DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
-    return;
+    return {};
   }
 
   // A simple bound - set it directly
-  const Formula &formula{it->second};
-  const Expression &lhs{get_lhs_expression(formula)};
-  const Expression &rhs{get_rhs_expression(formula)};
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-  if (IsEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) {
-      SetSPXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
-    } else if (is_constant(lhs) && is_variable(rhs)) {
-      SetSPXVarBound(get_variable(rhs), 'B', get_constant_value(lhs));
-    } else {
-      DLINEAR_UNREACHABLE();
-    }
-  } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) {
-      SetSPXVarBound(get_variable(lhs), 'L', get_constant_value(rhs));
-    } else if (is_constant(lhs) && is_variable(rhs)) {
-      SetSPXVarBound(get_variable(rhs), 'U', get_constant_value(lhs));
-    } else {
-      DLINEAR_UNREACHABLE();
-    }
-  } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) {
-      SetSPXVarBound(get_variable(lhs), 'U', get_constant_value(rhs));
-    } else if (is_constant(lhs) && is_variable(rhs)) {
-      SetSPXVarBound(get_variable(rhs), 'L', get_constant_value(lhs));
-    } else {
-      DLINEAR_UNREACHABLE();
-    }
-  } else if (IsNotEqualTo(formula, truth)) {
-    // If delta > 0, we can ignore not-equal bounds on variables, for they will always be satisfied.
-  } else {
-    DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
-  }
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", it->second);
+  // bound = (variable, type, value)
+  // variable is the box variable
+  // type is 'L' for lower bound, 'U' for upper bound, 'B' for both, 'N' for not equal and 'I' for ignore
+  // value is the bound value
+  std::tuple<const Variable &, const char, const mpq_class &> bound = GetBound(it->second, truth);
+  // If the bound type is 'I' or 'N', we can just ignore the bound
+  if (std::get<1>(bound) == 'I' || std::get<1>(bound) == 'N') return {};
+
+  // Add the active bound to the LP solver bounds
+  int theory_col = var_to_theory_col_[std::get<0>(bound).get_id()];
+  bool valid_bound = SetSPXVarBound(bound, theory_col);
+  theory_col_to_explanation_[theory_col].insert(lit);
+  // If the bound is invalid, return the explanation and update the SAT solver immediately
+  if (!valid_bound) return theory_col_to_explanation_[theory_col];
+  return {};
 }
 
-SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
+SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaSoplexTheorySolver", "Total # of CheckSat",
                              "Total time spent in CheckSat"};
   TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
@@ -242,6 +225,16 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
         break;
       case SoplexStatus::INFEASIBLE:
         sat_status = SatResult::SAT_UNSATISFIABLE;
+        {
+          soplex::VectorRational infeasibility_rows;
+          infeasibility_rows.reDim(rowcount);
+          [[maybe_unused]] bool res = spx_.getDualFarkasRational(infeasibility_rows);
+          DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
+          explanation.clear();
+          for (int i = 0; i < rowcount; ++i) {
+            if (infeasibility_rows[i] > 0) explanation.insert(theory_row_to_lit_[i]);
+          }
+        }
         break;
       default:
         DLINEAR_UNREACHABLE();
@@ -277,7 +270,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
           model_[var] = x[theory_col].backend().data();
         }
       } else {
-        DLINEAR_RUNTIME_ERROR("delta-sat but no solution available");
+        DLINEAR_RUNTIME_ERROR("delta-sat but no solution available: UNBOUNDED");
       }
       break;
     default:

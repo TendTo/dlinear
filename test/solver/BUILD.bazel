@@ -21,6 +21,12 @@ dlinear_cc_googletest(
     ],
 )
 
+dlinear_cc_googletest(
+    name = "test_smt2",
+    data = glob(["smt2/*.smt2"]),
+    deps = ["//dlinear/solver"],
+)
+
 dlinear_cc_binary(
     name = "test_solver_binary",
     srcs = ["MainTestSolver.cpp"],

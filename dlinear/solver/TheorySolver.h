@@ -4,6 +4,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -49,12 +50,12 @@ class TheorySolver {
    *
    * @param theory_literals vector of literals to be activated
    */
-  void EnableLiterals(const std::vector<Literal> &theory_literals);
+  std::optional<LiteralSet> EnableLiterals(const std::vector<Literal> &theory_literals);
   /**
    * Activate the literal that had previously been added to the theory solver
    * @param lit literal to activate
    */
-  virtual void EnableLiteral(const Literal &lit) = 0;
+  virtual std::optional<LiteralSet> EnableLiteral(const Literal &lit) = 0;
 
   /**
    * Get a model that satisfies all the constraints of the theory
@@ -65,7 +66,7 @@ class TheorySolver {
 
   [[nodiscard]] const std::map<int, Variable> &GetLinearVarMap() const;
 
-  virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision) = 0;
+  virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
 
   /**
    * Reset the linear problem, disabling all constraints and bounds to the ones
@@ -83,6 +84,8 @@ class TheorySolver {
   static bool IsLessThan(const Formula &formula, bool truth);
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth);
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth);
+
+  static std::tuple<const Variable &, const char, const mpq_class &> GetBound(const Formula &formula, bool truth);
 
   /**
    * Theory solvers struggle to handle problems with inverted bounds.
@@ -113,6 +116,10 @@ class TheorySolver {
                                             ///< The row is the constraint used by the theory solver.
                                             ///< The tuple contains the truth value of the literal when it was first
                                             ///< added to the LP solver,
+  std::vector<LiteralSet> theory_col_to_explanation_;  ///< Theory row ⇔ Explanation
+                                                       ///< The row is the constraint used by the theory solver.
+                                                       ///< The explanation is the set of literals that explain why the
+                                                       ///< bound on the col (variable) is unsatisfiable
 
   Box model_;  ///< Model produced by the theory solver
 };

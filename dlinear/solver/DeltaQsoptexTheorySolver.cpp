@@ -96,7 +96,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
-void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
+std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
@@ -106,7 +106,7 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
       mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
       mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
       DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
-      return;
+      return {};
     }
   }
   const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
@@ -114,7 +114,7 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   // Either a learned literal, or a not-equal literal from the input problem.
   if (it == var_to_formula_map.end() || !IsSimpleBound(it->second)) {
     DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
-    return;
+    return {};
   }
 
   // A simple bound - set it directly
@@ -151,13 +151,17 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
+  return {};
 }
 
-SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
+SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaQsoptexTheorySolver", "Total # of CheckSat",
                              "Total time spent in CheckSat"};
   TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
   stat.Increase();
+
+  explanation.clear();
+  explanation.insert(theory_row_to_lit_.begin(), theory_row_to_lit_.end());
 
   DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::CheckSat: Box = \n{}", box);
 

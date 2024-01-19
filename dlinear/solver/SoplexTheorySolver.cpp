@@ -3,7 +3,6 @@
 //
 #include "SoplexTheorySolver.h"
 
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 
@@ -56,32 +55,40 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_[spx_col] = var;
+  theory_col_to_explanation_.emplace_back();
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
-void SoplexTheorySolver::SetSPXVarBound(const Variable &var, const char type, const mpq_class &value) {
-  DLINEAR_ASSERT(type == 'L' || type == 'U' || type == 'B', "type must be 'L', 'U', or 'B'");
-  const auto it = var_to_theory_col_.find(var.get_id());
+bool SoplexTheorySolver::SetSPXVarBound(const std::tuple<const Variable &, char, const mpq_class &> &bound,
+                                        int spx_col) {
+  const auto &[var, type, value] = bound;
+  DLINEAR_ASSERT_FMT(type == 'L' || type == 'U' || type == 'B' || type == 'N',
+                     "type must be 'L', 'U', 'B' or 'N', received {}", type);
 
-  if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
   if (value <= -soplex::infinity || value >= soplex::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
   }
 
   if (type == 'L' || type == 'B') {
-    if (gmp::to_mpq_t(value) > spx_lower_[it->second]) {
-      spx_lower_[it->second] = gmp::to_mpq_t(value);
+    if (gmp::to_mpq_t(value) > spx_lower_[spx_col]) {
+      spx_lower_[spx_col] = gmp::to_mpq_t(value);
       DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set lower bound of {} to {}", type, var,
-                        spx_lower_[it->second]);
+                        spx_lower_[spx_col]);
     }
   }
   if (type == 'U' || type == 'B') {
-    if (gmp::to_mpq_t(value) < spx_upper_[it->second]) {
-      spx_upper_[it->second] = gmp::to_mpq_t(value);
+    if (gmp::to_mpq_t(value) < spx_upper_[spx_col]) {
+      spx_upper_[spx_col] = gmp::to_mpq_t(value);
       DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set upper bound of {} to {}", type, var,
-                        spx_upper_[it->second]);
+                        spx_upper_[spx_col]);
     }
   }
+  if (spx_lower_[spx_col] > spx_upper_[spx_col]) {
+    DLINEAR_DEBUG_FMT("SoplexSatSolver::SetSPXVarBound: variable {} has invalid bounds [{}, {}]", var,
+                      spx_lower_[spx_col], spx_upper_[spx_col]);
+    return false;
+  }
+  return true;
 }
 
 void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const Variable &var, const mpq_class &value) {
@@ -113,6 +120,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("SoplexSatSolver::Reset(): Box =\n{}", box);
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
+  for (auto &explanation : theory_col_to_explanation_) explanation.clear();
 
   // Clear constraint bounds
   const int spx_rows = spx_.numRowsRational();
