@@ -180,7 +180,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   }
 
   // The solver can't handle problems with inverted bounds, so we need to handle that here
-  if (!CheckBounds()) return SatResult::SAT_UNSOLVED;
+  if (!CheckBounds()) return SatResult::SAT_UNSATISFIABLE;
 
   // If there are no constraints, we can immediately return SAT afterward
   if (rowcount == 0) {

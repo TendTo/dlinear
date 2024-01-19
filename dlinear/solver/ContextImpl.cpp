@@ -310,9 +310,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     theory_solver_->Reset(box());
     theory_solver_->EnableLiterals(theory_model);
 
-    // Soplex only produces exact solutions, so the precision is 0. @see dlinear::SoplexTheorySolver::CheckSat
-    //        *actual_precision = 0;
-    // The selected assertions have already been enabled in the LP solver
+    // If the SAT solver found a model, we have to check if it is consistent with the theory
     SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
       // SAT from TheorySolver.

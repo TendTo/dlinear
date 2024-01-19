@@ -97,7 +97,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), std::tuple(truth, spx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
 void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
@@ -115,7 +115,7 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
       spx_.changeRangeRational(
           spx_row, sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
           sense == 'L' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
-      DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral({})", spx_row);
+      DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({})", spx_row);
       return;
     }
   }
@@ -126,7 +126,7 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto it = predicate_abstractor_.var_to_formula_map().find(var);
   // The variable is not in the map (it is not a theory literal) or it is not a simple bound
   if (it == predicate_abstractor_.var_to_formula_map().end() || !IsSimpleBound(it->second)) {
-    DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
     return;
   }
 
@@ -134,7 +134,7 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   const Formula &formula{it->second};
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
-  DLINEAR_TRACE_FMT("SoplexSatSolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
   if (IsEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetSPXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
@@ -167,12 +167,12 @@ void DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
 }
 
 SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "SoplexTheorySolver", "Total # of CheckSat",
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaSoplexTheorySolver", "Total # of CheckSat",
                              "Total time spent in CheckSat"};
   TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
   stat.Increase();
 
-  DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::CheckSat: Box = \n{}", box);
 
   SoplexStatus status = SoplexStatus::UNKNOWN;
   SatResult sat_status = SatResult::SAT_NO_RESULT;
@@ -184,7 +184,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
     if (!model_.has_variable(kv.second)) {
       // Variable should already be present
-      DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", kv.second);
+      DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", kv.second);
       model_.Add(kv.second);
     }
   }
@@ -194,7 +194,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   // If we can immediately return SAT afterward
   if (rowcount == 0) {
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: no need to call LP solver");
+    DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: no need to call LP solver");
     return SatResult::SAT_DELTA_SATISFIABLE;
   }
 
@@ -202,7 +202,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   spx_.changeUpperRational(spx_upper_);
 
   // Now we call the solver
-  DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: calling SoPlex (phase {})", 1 == simplex_sat_phase_ ? "one" : "two");
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})",
+                    1 == simplex_sat_phase_ ? "one" : "two");
 
   Rational max_violation, sum_violation;
 
@@ -216,9 +217,10 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
     *actual_precision = max_violation.convert_to<mpq_class>();
-    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex returned {}, precision = {}", status, *actual_precision);
+    DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: SoPlex returned {}, precision = {}", status,
+                      *actual_precision);
   } else {
-    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
+    DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
   }
 
   soplex::VectorRational x;
@@ -226,8 +228,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   bool haveSoln = spx_.getPrimalRational(x);
   if (haveSoln && x.dim() != colcount) {
     DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be > colcount");
-    DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()", colcount,
-                     x.dim());
+    DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
+                     colcount, x.dim());
   }
   DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || haveSoln,
                  "status must either be not OPTIMAL or a solution must be present");
@@ -281,7 +283,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     default:
       break;
   }
-  DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: returning {}", sat_status);
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: returning {}", sat_status);
 
   return sat_status;
 }
