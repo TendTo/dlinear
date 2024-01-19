@@ -4,8 +4,10 @@
 
 #include "QsoptexTheorySolver.h"
 
+#include <map>
+#include <limits>
+
 #include "dlinear/util/Infinity.h"
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -38,36 +40,7 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
-SatResult QsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "QsoptexTheorySolver", "Total # of CheckSat",
-                             "Total time spent in CheckSat"};
-  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
-  stat.Increase();
-
-  DLINEAR_TRACE_FMT("QsoptexTheorySolver::CheckSat: Box = \n{}", box);
-
-  int status = -1;
-  SatResult sat_status = SatResult::SAT_NO_RESULT;
-
-  size_t rowcount = mpq_QSget_rowcount(qsx_);
-  size_t colcount = mpq_QSget_colcount(qsx_);
-  // x: * must be allocated/deallocated using QSopt_ex.
-  //    * should have room for the (rowcount) "logical" variables, which come
-  //    after the (colcount) "structural" variables.
-  qsopt_ex::MpqArray x{colcount + rowcount};
-
-  model_ = box;
-  for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
-    if (!model_.has_variable(kv.second)) {
-      // Variable should already be present
-      DLINEAR_WARN_FMT("QsoptexTheorySolver::CheckSat: Adding var {} to model from SAT", kv.second);
-      model_.Add(kv.second);
-    }
-  }
-
-  // The solver can't handle problems with inverted bounds, so we need to
-  // handle that here.  Also, if there are no constraints, we can immediately
-  // return SAT afterward if the bounds are OK.
+bool QsoptexTheorySolver::CheckBounds() {
   mpq_t temp;
   mpq_init(temp);
   for (const auto &[theory_col, var] : theory_col_to_var_) {
@@ -80,9 +53,10 @@ SatResult QsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precis
     mpq_class ub{temp};
     if (lb > ub) {
       DLINEAR_DEBUG_FMT("QsoptexTheorySolver::CheckSat: variable {} has invalid bounds [{}, {}]", var, lb, ub);
-      return SatResult::SAT_UNSATISFIABLE;
+      mpq_clear(temp);
+      return false;
     }
-    if (rowcount == 0) {
+    if (mpq_QSget_rowcount(qsx_) == 0) {
       mpq_class val;
       if (Infinity::Ninfty() < lb) {
         val = lb;
@@ -96,65 +70,7 @@ SatResult QsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precis
     }
   }
   mpq_clear(temp);
-  if (rowcount == 0) {
-    DLINEAR_DEBUG("QsoptexTheorySolver::CheckSat: no need to call LP solver");
-    return SatResult::SAT_SATISFIABLE;
-  }
-
-  // Now we call the solver
-  int lp_status = -1;
-  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})",
-                    1 == simplex_sat_phase_ ? "one" : "two");
-
-  if (1 == simplex_sat_phase_) {
-    status =
-        QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX,
-                       &lp_status, continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
-  } else {
-    status = QSexact_delta_solver(qsx_, static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX, &lp_status,
-                                  actual_precision->get_mpq_t(),
-                                  continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
-  }
-
-  if (status) {
-    DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
-  } else {
-    DLINEAR_DEBUG_FMT("QsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}", *actual_precision);
-  }
-
-  switch (lp_status) {
-    case QS_LP_FEASIBLE:
-      sat_status = SatResult::SAT_SATISFIABLE;
-      break;
-    case QS_LP_DELTA_FEASIBLE:
-      sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-      break;
-    case QS_LP_INFEASIBLE:
-      sat_status = SatResult::SAT_UNSATISFIABLE;
-      break;
-    case QS_LP_UNSOLVED:
-      sat_status = SatResult::SAT_UNSOLVED;
-      DLINEAR_DEBUG("QsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
-      break;
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-
-  switch (sat_status) {
-    case SatResult::SAT_SATISFIABLE:
-    case SatResult::SAT_DELTA_SATISFIABLE:
-      // Copy delta-feasible point from x into model_
-      for (const auto &[theory_col, var] : theory_col_to_var_) {
-        DLINEAR_ASSERT(model_[var].lb() <= mpq_class(x[theory_col]) && mpq_class(x[theory_col]) <= model_[var].ub(),
-                       "x[kv.first] must be in bounds");
-        model_[var] = x[theory_col];
-      }
-      break;
-    default:
-      break;
-  }
-
-  return sat_status;
+  return true;
 }
 
 void QsoptexTheorySolver::Reset(const Box &box) {

@@ -9,7 +9,6 @@
 
 namespace dlinear {
 
-using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
 Rational SoplexTheorySolver::infinity_{0};
@@ -110,147 +109,6 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   DLINEAR_DEBUG_FMT("SoplexSatSolver::CreateArtificials({} -> ({}, {}))", spx_row, spx_cols, spx_cols + 1);
 }
 
-SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "SoplexTheorySolver", "Total # of CheckSat",
-                             "Total time spent in CheckSat"};
-  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
-  stat.Increase();
-
-  DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
-
-  SoplexStatus status = SoplexStatus::UNKNOWN;
-  SatResult sat_status = SatResult::SAT_NO_RESULT;
-
-  int rowcount = spx_.numRowsRational();
-  int colcount = spx_.numColsRational();
-
-  model_ = box;
-  for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
-    if (!model_.has_variable(kv.second)) {
-      // Variable should already be present
-      DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", kv.second);
-      model_.Add(kv.second);
-    }
-  }
-
-  // The solver can't handle problems with inverted bounds, so we need to
-  // handle that here.
-  // Also, if there are no constraints, we can immediately return SAT afterward if the bounds are OK.
-  for (const auto &[theory_col, var] : theory_col_to_var_) {
-    const Rational &lb{spx_lower_[theory_col]};
-    const Rational &ub{spx_upper_[theory_col]};
-    if (lb > ub) {
-      DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: variable {} has invalid bounds [{}, {}]", var, lb, ub);
-      return SatResult::SAT_UNSATISFIABLE;
-    }
-    if (rowcount == 0) {
-      Rational val;
-      if (-soplex::infinity < lb) {
-        val = lb;
-      } else if (ub < soplex::infinity) {
-        val = ub;
-      } else {
-        val = 0;
-      }
-      DLINEAR_ASSERT(gmp::to_mpq_t(model_[var].lb()) <= val && val <= gmp::to_mpq_t(model_[var].ub()),
-                     "val must be in bounds");
-      model_[var] = val.backend().data();
-    }
-  }
-  if (rowcount == 0) {
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: no need to call LP solver");
-    return SatResult::SAT_SATISFIABLE;
-  }
-
-  spx_.changeLowerRational(spx_lower_);
-  spx_.changeUpperRational(spx_upper_);
-
-  // Now we call the solver
-  DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: calling SoPlex (phase {})", 1 == simplex_sat_phase_ ? "one" : "two");
-
-  Rational max_violation, sum_violation;
-
-  status = spx_.optimize();
-
-  // If the simplex_sat_status is 2, we expect the status to be OPTIMAL
-  // Otherwise, the status must be OPTIMAL, UNBOUNDED, or INFEASIBLE
-  // Anything else is an error
-  if ((2 == simplex_sat_phase_ && status != SoplexStatus::OPTIMAL) ||
-      (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE)) {
-    DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
-  } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
-    *actual_precision = max_violation.convert_to<mpq_class>();
-    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex returned {}, precision = {}", status, *actual_precision);
-  } else {
-    DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
-  }
-
-  soplex::VectorRational x;
-  x.reDim(colcount);
-  bool haveSoln = spx_.getPrimalRational(x);
-  if (haveSoln && x.dim() != colcount) {
-    DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be > colcount");
-    DLINEAR_WARN_FMT("SoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()", colcount,
-                     x.dim());
-  }
-  DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || haveSoln,
-                 "status must either be not OPTIMAL or a solution must be present");
-
-  if (1 == simplex_sat_phase_) {
-    switch (status) {
-      case SoplexStatus::OPTIMAL:
-      case SoplexStatus::UNBOUNDED:
-        sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-        break;
-      case SoplexStatus::INFEASIBLE:
-        sat_status = SatResult::SAT_UNSATISFIABLE;
-        break;
-      default:
-        DLINEAR_UNREACHABLE();
-    }
-  } else {
-    // The feasibility LP should always be feasible & bounded
-    DLINEAR_ASSERT(status == SoplexStatus::OPTIMAL, "status must be OPTIMAL");
-    soplex::VectorRational obj;
-    spx_.getObjRational(obj);
-    DLINEAR_ASSERT(obj.dim() == colcount, "obj.dim() must be == colcount");
-    bool ok = true;
-    // ok = std::ranges::all_of(0, colcount, [&] (int i) { return obj[i] == 0 || x[i] == 0; });
-    for (int i = 0; i < colcount; ++i) {
-      if (!(ok = (obj[i] == 0 || x[i] == 0))) {
-        break;
-      }
-    }
-    if (ok) {
-      sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-    } else {
-      sat_status = SatResult::SAT_UNSATISFIABLE;
-    }
-  }
-
-  switch (sat_status) {
-    case SatResult::SAT_SATISFIABLE:
-    case SatResult::SAT_DELTA_SATISFIABLE:
-      if (haveSoln) {
-        // Copy delta-feasible point from x into model_
-        for (const auto &[theory_col, var] : theory_col_to_var_) {
-          DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                             gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
-                         "val must be in bounds");
-          model_[var] = x[theory_col].backend().data();
-        }
-      } else {
-        DLINEAR_RUNTIME_ERROR("delta-sat but no solution available");
-      }
-      break;
-    default:
-      break;
-  }
-  DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: returning {}", sat_status);
-
-  return sat_status;
-}
-
 void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("SoplexSatSolver::Reset(): Box =\n{}", box);
   // Omitting to do this seems to cause problems in soplex
@@ -280,6 +138,31 @@ void SoplexTheorySolver::Reset(const Box &box) {
     }
     spx_.changeBoundsRational(theory_col, -soplex::infinity, soplex::infinity);
   }
+}
+
+bool SoplexTheorySolver::CheckBounds() {
+  for (const auto &[theory_col, var] : theory_col_to_var_) {
+    const Rational &lb{spx_lower_[theory_col]};
+    const Rational &ub{spx_upper_[theory_col]};
+    if (lb > ub) {
+      DLINEAR_DEBUG_FMT("SoplexTheorySolver::CheckSat: variable {} has invalid bounds [{}, {}]", var, lb, ub);
+      return false;
+    }
+    if (spx_.numRowsRational() == 0) {
+      Rational val;
+      if (-soplex::infinity < lb) {
+        val = lb;
+      } else if (ub < soplex::infinity) {
+        val = ub;
+      } else {
+        val = 0;
+      }
+      DLINEAR_ASSERT(gmp::to_mpq_t(model_[var].lb()) <= val && val <= gmp::to_mpq_t(model_[var].ub()),
+                     "val must be in bounds");
+      model_[var] = val.backend().data();
+    }
+  }
+  return true;
 }
 
 }  // namespace dlinear

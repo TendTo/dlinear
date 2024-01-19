@@ -4,9 +4,14 @@
 
 #include "DeltaQsoptexTheorySolver.h"
 
+#include <map>
+#include <utility>
+
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -88,7 +93,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), std::make_tuple(truth, qsx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
-  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
 void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
@@ -100,7 +105,7 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
     if (stored_truth == truth) {
       mpq_QSchange_sense(qsx_, qsx_row, qsx_sense_[qsx_row]);
       mpq_QSchange_rhscoef(qsx_, qsx_row, qsx_rhs_[qsx_row].get_mpq_t());
-      DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
+      DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({})", qsx_row);
       return;
     }
   }
@@ -108,7 +113,7 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto it = var_to_formula_map.find(var);
   // Either a learned literal, or a not-equal literal from the input problem.
   if (it == var_to_formula_map.end() || !IsSimpleBound(it->second)) {
-    DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
+    DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
     return;
   }
 
@@ -116,7 +121,7 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const Formula &formula{it->second};
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
-  DLINEAR_TRACE_FMT("QsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+  DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
   if (IsEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) {
       SetQSXVarBound(get_variable(lhs), 'B', get_constant_value(rhs));
@@ -146,6 +151,95 @@ void DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
+}
+
+SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision) {
+  static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaQsoptexTheorySolver", "Total # of CheckSat",
+                             "Total time spent in CheckSat"};
+  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true /* start_timer */);
+  stat.Increase();
+
+  DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::CheckSat: Box = \n{}", box);
+
+  int status = -1;
+  SatResult sat_status;
+
+  size_t rowcount = mpq_QSget_rowcount(qsx_);
+  size_t colcount = mpq_QSget_colcount(qsx_);
+  // x: must be allocated/deallocated using QSopt_ex.
+  // Should have room for the (rowcount) "logical" variables, which come fter the (colcount) "structural" variables.
+  qsopt_ex::MpqArray x{colcount + rowcount};
+
+  model_ = box;
+  for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
+    if (!model_.has_variable(kv.second)) {
+      // Variable should already be present
+      DLINEAR_WARN_FMT("DeltaQsoptexTheorySolver::CheckSat: Adding var {} to model from SAT", kv.second);
+      model_.Add(kv.second);
+    }
+  }
+
+  // The solver can't handle problems with inverted bounds, so we need to handle that here
+  if (!CheckBounds()) return SatResult::SAT_UNSOLVED;
+
+  // If there are no constraints, we can immediately return SAT afterward
+  if (rowcount == 0) {
+    DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: no need to call LP solver");
+    return SatResult::SAT_DELTA_SATISFIABLE;
+  }
+
+  // Now we call the solver
+  int lp_status = -1;
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})",
+                    1 == simplex_sat_phase_ ? "one" : "two");
+
+  if (1 == simplex_sat_phase_) {
+    status =
+        QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX,
+                       &lp_status, continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
+  } else {
+    status = QSexact_delta_solver(qsx_, static_cast<mpq_t *>(x), nullptr, nullptr, PRIMAL_SIMPLEX, &lp_status,
+                                  actual_precision->get_mpq_t(),
+                                  continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
+  }
+
+  if (status) {
+    DLINEAR_RUNTIME_ERROR_FMT("QSopt_ex returned {}", status);
+  } else {
+    DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex has returned with precision = {}",
+                      *actual_precision);
+  }
+
+  switch (lp_status) {
+    case QS_LP_FEASIBLE:
+    case QS_LP_DELTA_FEASIBLE:
+      sat_status = SatResult::SAT_DELTA_SATISFIABLE;
+      break;
+    case QS_LP_INFEASIBLE:
+      sat_status = SatResult::SAT_UNSATISFIABLE;
+      break;
+    case QS_LP_UNSOLVED:
+      sat_status = SatResult::SAT_UNSOLVED;
+      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
+      break;
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+
+  switch (sat_status) {
+    case SatResult::SAT_DELTA_SATISFIABLE:
+      // Copy delta-feasible point from x into model_
+      for (const auto &[theory_col, var] : theory_col_to_var_) {
+        DLINEAR_ASSERT(model_[var].lb() <= mpq_class(x[theory_col]) && mpq_class(x[theory_col]) <= model_[var].ub(),
+                       "x[kv.first] must be in bounds");
+        model_[var] = x[theory_col];
+      }
+      break;
+    default:
+      break;
+  }
+
+  return sat_status;
 }
 
 }  // namespace dlinear

@@ -3,10 +3,13 @@
 //
 #pragma once
 
+#include <vector>
+
 #include "dlinear/libs/soplex.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
 
 namespace dlinear {
 
@@ -16,13 +19,13 @@ class SoplexTheorySolver : public TheorySolver {
 
   void AddVariable(const Variable& var) override;
 
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision) override;
-
   void Reset(const Box& box) override;
 
  protected:
   static soplex::Rational infinity_;
   static soplex::Rational ninfinity_;
+
+  bool CheckBounds() override;
 
   void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);

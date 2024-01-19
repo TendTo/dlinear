@@ -3,10 +3,13 @@
 //
 #pragma once
 
+#include <vector>
+
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
 
 namespace dlinear {
 
@@ -18,12 +21,13 @@ class QsoptexTheorySolver : public TheorySolver {
   explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
 
   void AddVariable(const Variable &var) override;
-  SatResult CheckSat(const Box &box, mpq_class *actual_precision) override;
   void Reset(const Box &box) override;
 
  protected:
   void SetLinearObjective(const Expression &expr);
   void ClearLinearObjective();
+
+  bool CheckBounds() override;
 
   void SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value);
   void SetQSXVarObjCoef(const Variable &var, const mpq_class &value);
