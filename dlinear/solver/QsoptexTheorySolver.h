@@ -17,13 +17,11 @@ class QsoptexTheorySolver : public TheorySolver {
  public:
   explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
 
-  void AddLiteral(const Literal &lit) override;
   void AddVariable(const Variable &var) override;
-  void EnableLiteral(const Literal &lit) override;
   SatResult CheckSat(const Box &box, mpq_class *actual_precision) override;
   void Reset(const Box &box) override;
 
- private:
+ protected:
   void SetLinearObjective(const Expression &expr);
   void ClearLinearObjective();
 

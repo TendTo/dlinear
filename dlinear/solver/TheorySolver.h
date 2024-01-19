@@ -94,8 +94,8 @@ class TheorySolver {
 
   std::map<Variable::Id, std::tuple<bool, int, int>>
       lit_to_theory_row_;  ///< Literal ⇔ theory row.
-                           ///< The tuple contains the truth value of the literal when it was first added to the LP
-                           ///< solver, The row is the constraint used by the theory solver.
+                           ///< The tuple contains the truth value of the literal when it was added to the LP solver
+                           ///< Up to two rows that map to the constraint the theory solver will check.
   std::vector<Literal> theory_row_to_lit_;  ///< Theory row ⇔ Literal
                                             ///< The row is the constraint used by the theory solver.
                                             ///< The tuple contains the truth value of the literal when it was first

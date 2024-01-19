@@ -72,11 +72,15 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "theory_solver",
     srcs = [
+        "DeltaQsoptexTheorySolver.cpp",
+        "DeltaSoplexTheorySolver.cpp",
         "QsoptexTheorySolver.cpp",
         "SoplexTheorySolver.cpp",
         "TheorySolver.cpp",
     ],
     hdrs = [
+        "DeltaQsoptexTheorySolver.h",
+        "DeltaSoplexTheorySolver.h",
         "QsoptexTheorySolver.h",
         "SoplexTheorySolver.h",
         "TheorySolver.h",

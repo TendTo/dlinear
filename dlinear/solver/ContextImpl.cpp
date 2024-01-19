@@ -9,10 +9,10 @@
 
 #include <utility>
 
+#include "dlinear/solver/DeltaQsoptexTheorySolver.h"
+#include "dlinear/solver/DeltaSoplexTheorySolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
-#include "dlinear/solver/QsoptexTheorySolver.h"
 #include "dlinear/solver/SatResult.h"
-#include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/util/logging.h"
 
@@ -344,9 +344,11 @@ void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
 std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
   switch (config.lp_solver()) {
     case Config::LPSolver::SOPLEX:
-      return std::make_unique<SoplexTheorySolver>(predicate_abstractor_, config);
+      return config.precision() >= 0 ? std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_, config)
+                                     : nullptr;
     case Config::LPSolver::QSOPTEX:
-      return std::make_unique<QsoptexTheorySolver>(predicate_abstractor_, config);
+      return config.precision() >= 0 ? std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config)
+                                     : nullptr;
     default:
       DLINEAR_UNREACHABLE();
   }

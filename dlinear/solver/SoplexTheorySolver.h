@@ -16,16 +16,14 @@ class SoplexTheorySolver : public TheorySolver {
 
   void AddVariable(const Variable& var) override;
 
-  void EnableLiteral(const Literal& lit) override;
-
   SatResult CheckSat(const Box& box, mpq_class* actual_precision) override;
-  void AddLiteral(const Literal& lit) override;
 
   void Reset(const Box& box) override;
 
  protected:
   static soplex::Rational infinity_;
   static soplex::Rational ninfinity_;
+
   void SetSPXVarBound(const Variable& var, char type, const mpq_class& value);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
   void CreateArtificials(int spx_row);
