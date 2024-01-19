@@ -1,2 +1,2 @@
 PARTIAL: delta-sat with delta = 1.5349738609140475e-13 ( > 1/6514768918635)
-sat with delta = 0
+delta-sat with delta = 5e-324 ( > 0)
