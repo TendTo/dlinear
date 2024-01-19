@@ -6,6 +6,7 @@
 #include <picosat/picosat.h>
 
 #include <optional>
+#include <set>
 
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"

@@ -6,6 +6,8 @@
  */
 #include "Config.h"
 
+#include <utility>
+
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 

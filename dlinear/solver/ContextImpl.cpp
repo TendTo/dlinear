@@ -63,7 +63,9 @@ void Context::Impl::Assert(const Formula &f) {
     return;
   }
 
-  // if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
+#if 0
+  if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
+#endif
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
   IfThenElseEliminator ite_eliminator;
   const Formula no_ite{ite_eliminator.Process(f)};

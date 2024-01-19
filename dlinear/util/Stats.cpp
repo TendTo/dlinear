@@ -8,6 +8,8 @@
 
 #include <spdlog/fmt/fmt.h>
 
+#include <utility>
+
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
 #define DLINEAR_ITERATION_STATS_FMT "{:<35} @ {:<26} = {:>15}"
 

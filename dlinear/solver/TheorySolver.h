@@ -3,6 +3,10 @@
 //
 #pragma once
 
+#include <map>
+#include <tuple>
+#include <vector>
+
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
@@ -79,6 +83,15 @@ class TheorySolver {
   static bool IsLessThan(const Formula &formula, bool truth);
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth);
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth);
+
+  /**
+   * Theory solvers struggle to handle problems with inverted bounds.
+   * It is convenient to have a method that checks them beforehand.
+   * If at least a bound is inverted, the problem is UNSAT, since it is impossible to satisfy the constraint.
+   * @return true if all bounds are valid
+   * @return false if at least one bound is inverted
+   */
+  virtual bool CheckBounds() = 0;
 
   int simplex_sat_phase_;
   double precision_;

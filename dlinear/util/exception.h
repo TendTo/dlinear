@@ -11,8 +11,6 @@
  */
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
-
 #include <stdexcept>
 
 #ifdef NDEBUG
@@ -24,6 +22,8 @@
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::runtime_error(argument)
 
 #else
+
+#include <spdlog/fmt/fmt.h>
 
 #include "dlinear/util/logging.h"
 
