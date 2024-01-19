@@ -181,6 +181,7 @@ void Context::Impl::SetInfo(const string &key, const string &val) {
 
 void Context::Impl::SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInterval({} = [{}, {}])", v, lb, ub);
+  if (lb > ub) DLINEAR_RUNTIME_ERROR_FMT("Lower bound {} is greater than upper bound {}.", lb, ub);
   box()[v] = Box::Interval{lb, ub};
 }
 

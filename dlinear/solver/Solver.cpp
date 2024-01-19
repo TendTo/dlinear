@@ -115,8 +115,10 @@ void Solver::CheckSatCore() {
     output_.mutable_result() = SolverResult::SAT;
   } else if (res == SatResult::SAT_DELTA_SATISFIABLE) {
     output_.mutable_result() = SolverResult::DELTA_SAT;
-  } else {
+  } else if (res == SatResult::SAT_UNSATISFIABLE) {
     output_.mutable_result() = SolverResult::UNSAT;
+  } else {
+    output_.mutable_result() = SolverResult::UNKNOWN;
   }
   output_.mutable_model() = context_.model();
 }

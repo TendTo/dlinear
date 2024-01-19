@@ -116,7 +116,6 @@ Model SatSolver::OnSatResult() {
     if (it != var_to_formula_map.end()) {  // The variable is a theory literal
       DLINEAR_TRACE_FMT("SoplexSatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);
       model.second.emplace_back(var, i > 0);
-      // TODO: EnableLinearLiteral(var, i > 0);
     } else if (cnf_variables_.count(var.get_id()) == 0) {  // The variable wasn't introduced by CNF transformations
       DLINEAR_TRACE_FMT("SoplexSatSolver::CheckSat: Add Boolean literal {}{} to Model ", i > 0 ? "" : "¬", var);
       model.first.emplace_back(var, i > 0);
