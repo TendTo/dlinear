@@ -180,6 +180,12 @@ void Context::Impl::SetInfo(const string &key, const string &val) {
   info_[key] = val;
 }
 
+std::string Context::Impl::GetInfo(const string &key) const {
+  const auto it = info_.find(key);
+  if (it == info_.end()) return "";
+  return it->second;
+}
+
 void Context::Impl::SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInterval({} = [{}, {}])", v, lb, ub);
   if (lb > ub) DLINEAR_RUNTIME_ERROR_FMT("Lower bound {} is greater than upper bound {}.", lb, ub);
@@ -212,6 +218,12 @@ void Context::Impl::SetOption(const string &key, const string &val) {
   if (key == ":worklist-fixpoint")
     return config_.mutable_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
   if (key == ":produce-models") return config_.mutable_produce_models().set_from_file(ParseBooleanOption(key, val));
+}
+
+std::string Context::Impl::GetOption(const string &key) const {
+  const auto it = option_.find(key);
+  if (it == option_.end()) return "";
+  return it->second;
 }
 
 Box Context::Impl::ExtractModel(const Box &box) const {

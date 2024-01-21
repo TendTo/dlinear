@@ -122,5 +122,7 @@ void Solver::CheckSatCore() {
   }
   output_.mutable_model() = context_.model();
 }
+std::string Solver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
+std::string Solver::GetOption(const std::string &key) const { return context_.GetOption(key); }
 
 }  // namespace dlinear

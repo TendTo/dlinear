@@ -134,6 +134,8 @@ class Context {
   /** Sets an info @p key with a value @p val. */
   void SetInfo(const std::string &key, const std::string &val);
 
+  [[nodiscard]] std::string GetInfo(const std::string &key) const;
+
   /** Sets the interval of @p v in the current box (top one in boxes_). */
   void SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub);
 
@@ -145,6 +147,8 @@ class Context {
 
   /** Sets an option @p key with a value @p val */
   void SetOption(const std::string &key, const std::string &val);
+
+  [[nodiscard]] std::string GetOption(const std::string &key) const;
 
   /** Returns a const reference of configuration */
   [[nodiscard]] const Config &config() const;

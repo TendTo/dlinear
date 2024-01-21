@@ -33,6 +33,9 @@ class Solver {
   Solver &operator=(const Solver &) = delete;
   Solver &operator=(Solver &&) = delete;
 
+  [[nodiscard]] std::string GetInfo(const std::string &key) const;
+  [[nodiscard]] std::string GetOption(const std::string &key) const;
+
   /**
    * Check the satisfiability of the current context.
    * @return SolverOutput

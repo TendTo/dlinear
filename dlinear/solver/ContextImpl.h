@@ -47,10 +47,12 @@ class Context::Impl {
   void Maximize(const std::vector<Expression> &functions);
   void SetInfo(const std::string &key, double val);
   void SetInfo(const std::string &key, const std::string &val);
+  [[nodiscard]] std::string GetInfo(const std::string &key) const;
   void SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub);
   void SetLogic(const Logic &logic);
   void SetOption(const std::string &key, double val);
   void SetOption(const std::string &key, const std::string &val);
+  [[nodiscard]] std::string GetOption(const std::string &key) const;
   const Config &config() const { return config_; }
   Config &mutable_config() { return config_; }
   const ScopedVector<Formula> &assertions() const;
