@@ -9,10 +9,11 @@
  */
 
 #include "ConfigFileReader.h"
-#include "dlinear/util/exception.h"
 
 #include <fstream>
 #include <regex>
+
+#include "dlinear/util/exception.h"
 
 using std::string;
 
@@ -20,8 +21,7 @@ namespace dlinear::benchmark {
 
 void ConfigFileReader::read() {
   std::ifstream conf_file{configFile_};
-  if (!conf_file.is_open())
-    DLINEAR_RUNTIME_ERROR_FMT("File '{}' could not be opened", configFile_);
+  if (!conf_file.is_open()) DLINEAR_RUNTIME_ERROR_FMT("File '{}' could not be opened", configFile_);
 
   const std::regex conf_regex("^(\\w+) *= *(.+?) *$");
   std::smatch conf_matches;
@@ -42,10 +42,11 @@ void ConfigFileReader::read() {
 }
 
 std::ostream &operator<<(std::ostream &os, const ConfigFileReader &configFileReader) {
-  os << "ConfigFileReader{" << "parameters_= {" << std::endl;
-  for (auto mapIt = begin(configFileReader.parameters_); mapIt != end(configFileReader.parameters_); ++mapIt) {
-    os << mapIt->first << " : ";
-    for (const auto &c : mapIt->second) {
+  os << "ConfigFileReader{"
+     << "parameters_= {" << std::endl;
+  for (const auto &[key, values] : configFileReader.parameters_) {
+    os << key << " : ";
+    for (const auto &c : values) {
       os << c << " ";
     }
     os << std::endl;
@@ -53,4 +54,4 @@ std::ostream &operator<<(std::ostream &os, const ConfigFileReader &configFileRea
   os << "}";
   return os;
 }
-} // namespace dlinear::benchmark
+}  // namespace dlinear::benchmark

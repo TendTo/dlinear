@@ -38,12 +38,14 @@ class ConfigFileReader {
    * parameter = value1 [value2 ...]
    */
   void read();
-  [[nodiscard]] const std::vector<std::string> &solvers() { return parameters_[solver_key_]; }
-  [[nodiscard]] const std::vector<std::string> &precisions() { return parameters_[precision_key_]; }
+  [[nodiscard]] const std::vector<std::string> &solvers() const { return parameters_.at(solver_key_); }
+  [[nodiscard]] const std::vector<std::string> &precisions() const { return parameters_.at(precision_key_); }
+  [[nodiscard]] const std::vector<std::string> &lp_modes() const { return parameters_.at(lp_modes_key_); }
 
  private:
   const std::string solver_key_{"solver"};
   const std::string precision_key_{"precision"};
+  const std::string lp_modes_key_{"lp_modes"};
   const std::string configFile_;
   std::map<std::string, std::vector<std::string>>
       parameters_;  ///< Map containing all the configuration loaded from the configuration file.

@@ -18,11 +18,12 @@ namespace dlinear::benchmark {
 namespace {
 
 inline dlinear::Config GetConfig(const string &filename, const string &solver, const string &precision,
-                                 int simplex_phase) {
+                                 int simplex_phase, const string &lp_mode = "auto") {
   dlinear::Config config{filename};
   config.mutable_lp_solver().set_from_command_line(InfoGatherer::GetLPSolver(solver));
   config.mutable_precision().set_from_command_line(stod(precision));
   config.mutable_simplex_sat_phase().set_from_command_line(simplex_phase);
+  config.mutable_lp_mode().set_from_command_line(InfoGatherer::GetLPMode(lp_mode));
   return config;
 }
 
@@ -50,24 +51,29 @@ void BenchmarkProgram::PrintRow(const std::string &row, bool overwrite) {
 }
 
 void BenchmarkProgram::StartBenchmarks() {
-  ConfigFileReader config_file_reader{config_.config_file()};
-  config_file_reader.read();
+  ConfigFileReader config_file{config_.config_file()};
+  config_file.read();
 
-  PrintRow("file,solver,assertions,precision,simplexPhase,timeUnit,time,parserTime,smtTime,actualPrecision,result",
-           true);
+  PrintRow(
+      "file,solver,assertions,precision,simplexPhase,lpMode,timeUnit,time,parserTime,smtTime,actualPrecision,result",
+      true);
 
   std::cout << "Starting benchmarking" << std::endl;
   for (const string &filename : config_.files()) {
-    for (const string &solver : config_file_reader.solvers()) {
-      for (const string &precision : config_file_reader.precisions()) {
-        dlinear::Config dlinear_config{GetConfig(filename, solver, precision, config_.simplex_sat_phase())};
-        InfoGatherer info_gatherer{dlinear_config, config_.timeout()};
-        if (config_.isDryRun()) continue;
-        if (info_gatherer.run() && info_gatherer.nAssertions() > 0) {
-          PrintRow((std::stringstream{} << info_gatherer).str());
-        } else {
-          std::cerr << "Could not gather info from " << filename << " with solver " << solver << " and precision "
-                    << precision << std::endl;
+    for (const string &solver : config_file.solvers()) {
+      for (const string &precision : config_file.precisions()) {
+        for (const string &lp_mode : config_file.lp_modes()) {
+          dlinear::Config dlinear_config{GetConfig(filename, solver, precision, config_.simplex_sat_phase(), lp_mode)};
+          if (dlinear_config.lp_solver() == Config::QSOPTEX && dlinear_config.lp_mode() != Config::LPMode::AUTO)
+            continue;
+          InfoGatherer info_gatherer{dlinear_config, config_.timeout()};
+          if (config_.isDryRun()) continue;
+          if (info_gatherer.run() && info_gatherer.nAssertions() > 0) {
+            PrintRow((std::stringstream{} << info_gatherer).str());
+          } else {
+            std::cerr << "Could not gather info from " << filename << " with solver " << solver << ", precision "
+                      << precision << ", lp_mode " << lp_mode << std::endl;
+          }
         }
       }
     }

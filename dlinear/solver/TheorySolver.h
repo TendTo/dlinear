@@ -149,9 +149,9 @@ class TheorySolver {
                                             ///< The row is the constraint used by the theory solver.
                                             ///< The tuple contains the truth value of the literal when it was first
                                             ///< added to the LP solver,
-  std::vector<bool> theory_row_to_truth_;   ///< Theory row ⇔ truth value
-                                            ///< The row is the constraint used by the theory solver.
-                                            ///< The truth is the boolean assignment of the literal during this iteration
+  std::vector<bool> theory_row_to_truth_;  ///< Theory row ⇔ truth value
+                                           ///< The row is the constraint used by the theory solver.
+                                           ///< The truth is the boolean assignment of the literal during this iteration
   std::vector<LiteralSet>
       theory_bound_to_explanation_;  ///< Theory bound ⇔ Explanation
                                      ///< The bound is used by the theory solver to limit a variable.

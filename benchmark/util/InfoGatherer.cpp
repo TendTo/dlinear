@@ -107,6 +107,19 @@ Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) {
   DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
 }
 
+Config::LPMode InfoGatherer::GetLPMode(const string &mode) {
+  if (mode == "auto") {
+    return Config::LPMode::AUTO;
+  } else if (mode == "pure-precision-boosting") {
+    return Config::LPMode::PURE_PRECISION_BOOSTING;
+  } else if (mode == "pure-iterative-refinement") {
+    return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  } else if (mode == "hybrid") {
+    return Config::LPMode::HYBRID;
+  }
+  DLINEAR_RUNTIME_ERROR_FMT("Unknown LP mode {}", mode);
+}
+
 void InfoGatherer::GatherInfo(shared_results *results) {
   auto start = std::chrono::high_resolution_clock::now();
   Solver solver{config_};
@@ -128,6 +141,7 @@ std::ostream &operator<<(std::ostream &os, const InfoGatherer &info_gatherer) {
             << info_gatherer.nAssertions() << ","      // Number of assertions
             << info_gatherer.precision() << ","        // Precision
             << info_gatherer.simplex_phase() << ","    // Simplex Phase
+            << info_gatherer.lp_mode() << ","          // LP Mode
             << "s,"                                    // Time unit
             << info_gatherer.time() << ","             // Time
             << info_gatherer.parser_time() << ","      // Parser time

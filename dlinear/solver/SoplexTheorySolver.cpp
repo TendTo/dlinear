@@ -3,6 +3,8 @@
 //
 #include "SoplexTheorySolver.h"
 
+#include <utility>
+
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 

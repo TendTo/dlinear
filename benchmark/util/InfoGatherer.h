@@ -30,6 +30,7 @@ class InfoGatherer {
   InfoGatherer(Config config, uint timeout);
 
   static Config::LPSolver GetLPSolver(const std::string &solver);
+  static Config::LPMode GetLPMode(const std::string &mode);
   bool run();
 
   [[nodiscard]] const std::string &filename() const { return config_.filename(); }
@@ -43,6 +44,20 @@ class InfoGatherer {
   [[nodiscard]] double smt_solver_time() const { return smt_solver_time_; }
   [[nodiscard]] double parser_time() const { return parser_time_; }
   [[nodiscard]] int simplex_phase() const { return config_.simplex_sat_phase(); }
+  [[nodiscard]] char lp_mode() const {
+    switch (config_.lp_mode()) {
+      case Config::LPMode::AUTO:
+        return config_.lp_solver() == Config::LPSolver::QSOPTEX ? 'P' : 'H';
+      case Config::LPMode::PURE_PRECISION_BOOSTING:
+        return 'P';
+      case Config::LPMode::PURE_ITERATIVE_REFINEMENT:
+        return 'I';
+      case Config::LPMode::HYBRID:
+        return 'H';
+      default:
+        DLINEAR_UNREACHABLE();
+    }
+  }
 
  private:
   Config config_;
