@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "dlinear/libs/soplex.h"
+#include "dlinear/solver/LpRowSense.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -26,9 +27,10 @@ class SoplexTheorySolver : public TheorySolver {
   static soplex::Rational infinity_;
   static soplex::Rational ninfinity_;
 
-  bool CheckBounds() override;
+  void UpdateModelBounds() override;
+  void UpdateExplanation(LiteralSet& explanation) override;
 
-  bool SetSPXVarBound(const std::tuple<const Variable&, char, const mpq_class&>& bound, int spx_col);
+  bool SetSPXVarBound(const Bound& bound, int spx_col);
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
   void CreateArtificials(int spx_row);
 
@@ -38,7 +40,7 @@ class SoplexTheorySolver : public TheorySolver {
   soplex::VectorRational spx_upper_;
 
   std::vector<mpq_class> spx_rhs_;
-  std::vector<char> spx_sense_;
+  std::vector<LpRowSense> spx_sense_;
 };
 
 }  // namespace dlinear

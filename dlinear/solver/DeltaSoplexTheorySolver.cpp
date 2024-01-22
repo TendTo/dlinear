@@ -37,21 +37,19 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
+  // Just create simple bound in LP
+  // It will be handled when enabling the literal
+  if (IsSimpleBound(formula)) return;
+
   if (IsEqualTo(formula, truth)) {
-    // Just create simple bound in LP
-    if (IsSimpleBound(formula)) return;
-    spx_sense_.push_back('E');
+    spx_sense_.push_back(LpRowSense::EQ);
   } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
-    // Just create simple bound in LP
-    if (IsSimpleBound(formula)) return;
-    spx_sense_.push_back('G');
+    spx_sense_.push_back(LpRowSense::GE);
   } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
-    // Just create simple bound in LP
-    if (IsSimpleBound(formula)) return;
-    spx_sense_.push_back('L');
+    spx_sense_.push_back(LpRowSense::LE);
   } else if (IsNotEqualTo(formula, truth)) {
-    // Nothing to do, because this constraint is always delta-sat for delta > 0.
-    return;
+    // This constraint will be ignored, because it is always delta-sat for delta > 0.
+    spx_sense_.push_back(LpRowSense::NQ);
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
@@ -97,32 +95,42 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), std::tuple(truth, spx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
   theory_row_to_lit_.emplace_back(formulaVar, truth);
+  theory_row_to_truth_.push_back(truth);
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
 std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
-  const Variable &var = lit.first;
-  const bool truth = lit.second;
-
+  const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
     const auto &[stored_truth, spx_row, spx_row2] = it_row->second;
 
+    const LpRowSense sense = spx_sense_[spx_row];
+    const mpq_class &rhs{spx_rhs_[spx_row]};
     if (stored_truth == truth) {
-      const char sense = spx_sense_[spx_row];
-      const mpq_class &rhs{spx_rhs_[spx_row]};
-      spx_.changeRangeRational(
-          spx_row, sense == 'G' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
-          sense == 'L' || sense == 'E' ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
-      DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({})", spx_row);
-      return {};
+      if (sense == LpRowSense::NQ) return {};
+      spx_.changeRangeRational(spx_row,
+                               sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs))
+                                                                                  : Rational(-soplex::infinity),
+                               sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs))
+                                                                                  : Rational(soplex::infinity));
+    } else {
+      if (sense == LpRowSense::EQ) return {};
+      spx_.changeRangeRational(spx_row,
+                               sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs))
+                                                                                  : Rational(-soplex::infinity),
+                               sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs))
+                                                                                  : Rational(soplex::infinity));
     }
+    // Update the truth value for the current iteration with the last SAT solver assignment
+    theory_row_to_truth_[spx_row] = truth;
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", stored_truth == truth ? "" : "¬", spx_row);
+    return {};
   }
 
   // If the literal was not already among the constraints (rows) of the LP, it must be a bound
-  // on a variable (column), a learned literal, or a not-equal literal from the
-  // input problem (if delta > 0).
+  // on a variable (column) or a learned literal.
   const auto it = predicate_abstractor_.var_to_formula_map().find(var);
   // The variable is not in the map (it is not a theory literal) or it is not a simple bound
   if (it == predicate_abstractor_.var_to_formula_map().end() || !IsSimpleBound(it->second)) {
@@ -132,20 +140,20 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
 
   // A simple bound - set it directly
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", it->second);
-  // bound = (variable, type, value)
-  // variable is the box variable
-  // type is 'L' for lower bound, 'U' for upper bound, 'B' for both, 'N' for not equal and 'I' for ignore
-  // value is the bound value
-  std::tuple<const Variable &, const char, const mpq_class &> bound = GetBound(it->second, truth);
-  // If the bound type is 'I' or 'N', we can just ignore the bound
-  if (std::get<1>(bound) == 'I' || std::get<1>(bound) == 'N') return {};
+  // bound = (variable, type, value), where:
+  // - variable is the box variable
+  // - type is 'L' for lower bound, 'U' for upper bound, 'B' for both, 'F' for free
+  // - value is the bound value
+  Bound bound = GetBound(it->second, truth);
+  // If the bound type is 'I' or 'N' (delta > 0), we can just ignore the bound
+  if (std::get<1>(bound) == LpColBound::F) return {};
 
   // Add the active bound to the LP solver bounds
   int theory_col = var_to_theory_col_[std::get<0>(bound).get_id()];
   bool valid_bound = SetSPXVarBound(bound, theory_col);
-  theory_col_to_explanation_[theory_col].insert(lit);
+  theory_bound_to_explanation_[theory_col].insert(lit);
   // If the bound is invalid, return the explanation and update the SAT solver immediately
-  if (!valid_bound) return theory_col_to_explanation_[theory_col];
+  if (!valid_bound) return theory_bound_to_explanation_[theory_col];
   return {};
 }
 
@@ -172,12 +180,10 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     }
   }
 
-  // The solver can't handle problems with inverted bounds, so we need to handle that here
-  if (!CheckBounds()) return SatResult::SAT_UNSATISFIABLE;
-
   // If we can immediately return SAT afterward
   if (rowcount == 0) {
     DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: no need to call LP solver");
+    UpdateModelBounds();
     return SatResult::SAT_DELTA_SATISFIABLE;
   }
 
@@ -210,9 +216,9 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   x.reDim(colcount);
   bool haveSoln = spx_.getPrimalRational(x);
   if (haveSoln && x.dim() != colcount) {
-    DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be > colcount");
-    DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
-                     colcount, x.dim());
+    DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
+    DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
+                      colcount, x.dim());
   }
   DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || haveSoln,
                  "status must either be not OPTIMAL or a solution must be present");
@@ -225,16 +231,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
         break;
       case SoplexStatus::INFEASIBLE:
         sat_status = SatResult::SAT_UNSATISFIABLE;
-        {
-          soplex::VectorRational infeasibility_rows;
-          infeasibility_rows.reDim(rowcount);
-          [[maybe_unused]] bool res = spx_.getDualFarkasRational(infeasibility_rows);
-          DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
-          explanation.clear();
-          for (int i = 0; i < rowcount; ++i) {
-            if (infeasibility_rows[i] > 0) explanation.insert(theory_row_to_lit_[i]);
-          }
-        }
+        UpdateExplanation(explanation);
         break;
       default:
         DLINEAR_UNREACHABLE();

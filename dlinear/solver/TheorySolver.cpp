@@ -72,27 +72,27 @@ bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, bool truth) {
   return IsGreaterThanOrEqualTo(formula, !truth);
 }
 
-std::tuple<const Variable &, const char, const mpq_class &> TheorySolver::GetBound(const Formula &formula, bool truth) {
+TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
-  
+
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'B', get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'B', get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::B, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::B, get_constant_value_ref(lhs)};
   }
   if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'L', get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'U', get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::L, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value_ref(lhs)};
   }
   if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'U', get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'L', get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value_ref(lhs)};
   }
   if (IsNotEqualTo(formula, truth)) {
     // If delta > 0, we can ignore not-equal bounds on variables, for they will always be satisfied.
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), 'N', get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), 'N', get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::F, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::F, get_constant_value_ref(lhs)};
   }
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }

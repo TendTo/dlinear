@@ -4,8 +4,8 @@
 
 #include "QsoptexTheorySolver.h"
 
-#include <map>
 #include <limits>
+#include <map>
 
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Timer.h"
@@ -27,6 +27,8 @@ QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstract
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config.precision());
 }
 
+QsoptexTheorySolver::~QsoptexTheorySolver() { mpq_QSfree_prob(qsx_); }
+
 void QsoptexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());
   // Found.
@@ -37,10 +39,30 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   var_to_theory_col_.emplace(var.get_id(), qsx_col);
   theory_col_to_var_[qsx_col] = var;
+  theory_bound_to_explanation_.emplace_back();
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
-bool QsoptexTheorySolver::CheckBounds() {
+void QsoptexTheorySolver::UpdateModelBounds() {
+  DLINEAR_ASSERT(mpq_QSget_rowcount(qsx_) == 0, "There must be no rows in the LP solver");
+  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
+                             [this](const std::pair<int, Variable> &it) {
+                               const auto &[theory_col, var] = it;
+                               [[maybe_unused]] int res;
+                               mpq_t temp;
+                               mpq_init(temp);
+                               res = mpq_QSget_bound(qsx_, theory_col, 'L', &temp);
+                               DLINEAR_ASSERT(!res, "Invalid res");
+                               mpq_class lb{temp};
+                               res = mpq_QSget_bound(qsx_, theory_col, 'U', &temp);
+                               DLINEAR_ASSERT(!res, "Invalid res");
+                               mpq_class ub{temp};
+                               mpq_clear(temp);
+                               return lb <= ub;
+                             }),
+                 "All lower bounds must be <= upper bounds");
+
+  // Update the box with the new bounds, since the theory solver won't be called, for there are no constraints.
   mpq_t temp;
   mpq_init(temp);
   for (const auto &[theory_col, var] : theory_col_to_var_) {
@@ -51,30 +73,24 @@ bool QsoptexTheorySolver::CheckBounds() {
     res = mpq_QSget_bound(qsx_, theory_col, 'U', &temp);
     DLINEAR_ASSERT(!res, "Invalid res");
     mpq_class ub{temp};
-    if (lb > ub) {
-      DLINEAR_DEBUG_FMT("QsoptexTheorySolver::CheckSat: variable {} has invalid bounds [{}, {}]", var, lb, ub);
-      mpq_clear(temp);
-      return false;
+    mpq_class val;
+    if (Infinity::Ninfty() < lb) {
+      val = lb;
+    } else if (ub < Infinity::Infty()) {
+      val = ub;
+    } else {
+      val = 0;
     }
-    if (mpq_QSget_rowcount(qsx_) == 0) {
-      mpq_class val;
-      if (Infinity::Ninfty() < lb) {
-        val = lb;
-      } else if (ub < Infinity::Infty()) {
-        val = ub;
-      } else {
-        val = 0;
-      }
-      DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "Val must be in bounds");
-      model_[var] = val;
-    }
+    DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "Val must be in bounds");
+    model_[var] = val;
   }
   mpq_clear(temp);
-  return true;
 }
 
 void QsoptexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::Reset(): Box =\n{}", box);
+  // Clear all the sets in the bounds to explanation map
+  for (auto &explanation : theory_bound_to_explanation_) explanation.clear();
   // Clear constraint bounds
   const int qsx_rows{mpq_QSget_rowcount(qsx_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
@@ -171,30 +187,42 @@ void QsoptexTheorySolver::SetQSXVarObjCoef(const Variable &var, const mpq_class 
   mpq_clear(c_value);
 }
 
-void QsoptexTheorySolver::SetQSXVarBound(const Variable &var, const char type, const mpq_class &value) {
-  if (type == 'B') {
-    // Both
-    SetQSXVarBound(var, 'L', value);
-    SetQSXVarBound(var, 'U', value);
-    return;
+bool QsoptexTheorySolver::SetQSXVarBound(const Bound &bound, int qsx_col) {
+  const auto &[var, type, value] = bound;
+  DLINEAR_ASSERT_FMT(type == LpColBound::L || type == LpColBound::U || type == LpColBound::B || type == LpColBound::F,
+                     "type must be 'L', 'U', 'B' or 'N', received {}", type);
+
+  // Add both bounds
+  if (type == LpColBound::B) {
+    return SetQSXVarBound({var, LpColBound::L, value}, qsx_col) && SetQSXVarBound({var, LpColBound::U, value}, qsx_col);
   }
-  DLINEAR_ASSERT(type == 'L' || type == 'U', "Type must be 'L' or 'U'");
-  const auto it = var_to_theory_col_.find(var.get_id());
-  if (it == var_to_theory_col_.end()) {
-    DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
-  }
+
+  DLINEAR_ASSERT(type == LpColBound::L || type == LpColBound::U, "Type must be '<=' or '>='");
   if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
     DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
   }
+
   mpq_t c_value;
   mpq_init(c_value);
-  mpq_QSget_bound(qsx_, it->second, type, &c_value);
+
+  mpq_QSget_bound(qsx_, qsx_col, toChar(type), &c_value);
   mpq_class existing{c_value};
-  if ((type == 'L' && existing < value) || (type == 'U' && value < existing)) {
+  if ((type == LpColBound::L && value > existing) || (type == LpColBound::U && value < existing)) {
     mpq_set(c_value, value.get_mpq_t());
-    mpq_QSchange_bound(qsx_, it->second, type, c_value);
+    mpq_QSchange_bound(qsx_, qsx_col, toChar(type), c_value);
   }
+
+  // Make sure there are no inverted bounds
+  mpq_QSget_bound(qsx_, qsx_col, toChar(~type), &c_value);
+  mpq_class opposite_bound{c_value};
+  if ((type == LpColBound::L && opposite_bound < value) || (type == LpColBound::U && opposite_bound > value)) {
+    DLINEAR_DEBUG_FMT("SoplexSatSolver::SetSPXVarBound: variable {} has invalid bounds [{}, {}]", var,
+                      type == LpColBound::L ? value : opposite_bound, type == LpColBound::L ? opposite_bound : value);
+    return false;
+  }
+
   mpq_clear(c_value);
+  return true;
 }
 
 extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_t *const /*x*/, const mpq_t infeas,
@@ -210,6 +238,38 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
     fmt::print(" after {} seconds", main_timer.seconds());
   }
   fmt::print("\n");
+}
+
+void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explanation) {
+  DLINEAR_RUNTIME_ERROR("Use UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) instead");
+}
+
+void QsoptexTheorySolver::UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) const {
+  // TODO: the ray is not minimal in the slightest. It should be possible to improve it
+  explanation.clear();
+  // For each row in the ray
+  for (int i = 0; i < static_cast<int>(ray.size()); ++i) {
+    if (mpq_sgn(ray[i]) == 0) continue;  // The row did not participate in the conflict, ignore it
+    if (DLINEAR_TRACE_ENABLED) {
+      mpq_t temp;
+      mpq_init(temp);
+      mpq_QSget_bound(qsx_, i, 'L', &temp);
+      mpq_class l{temp};
+      mpq_QSget_bound(qsx_, i, 'U', &temp);
+      mpq_class u{temp};
+      mpq_clear(temp);
+      DLINEAR_TRACE_FMT("QsoptexTheorySolver::UpdateExplanation: ray[{}] = {} <= {} <= {}", i, l, mpq_class{ray[i]}, u);
+    }
+    const Literal &lit = theory_row_to_lit_[i];
+    // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
+    explanation.insert({lit.first, theory_row_to_truth_[i]});
+    // For each free variable in the literal, add their bounds to the explanation
+    for (const auto &col_var : predicate_abstractor_[lit.first].GetFreeVariables()) {
+      const int theory_col = var_to_theory_col_.at(col_var.get_id());
+      const LiteralSet &theory_bound_to_explanation = theory_bound_to_explanation_.at(theory_col);
+      explanation.insert(theory_bound_to_explanation.cbegin(), theory_bound_to_explanation.cend());
+    }
+  }
 }
 
 }  // namespace dlinear
