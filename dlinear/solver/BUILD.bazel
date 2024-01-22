@@ -28,6 +28,13 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "lp_bound",
+    srcs = ["LpColBound.cpp"],
+    hdrs = ["LpColBound.h"],
+    deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
     name = "sat_result",
     srcs = ["SatResult.cpp"],
     hdrs = ["SatResult.h"],
@@ -86,6 +93,7 @@ dlinear_cc_library(
         "TheorySolver.h",
     ],
     deps = [
+        ":lp_bound",
         ":lp_sense",
         ":sat_result",
         "//dlinear/libs:gmp",
