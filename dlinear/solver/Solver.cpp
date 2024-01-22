@@ -124,5 +124,11 @@ void Solver::CheckSatCore() {
 }
 std::string Solver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
 std::string Solver::GetOption(const std::string &key) const { return context_.GetOption(key); }
+SolverResult Solver::GetExpected() const {
+  std::string status = context_.GetOption(":status");
+  if (status == "sat") return SolverResult::SAT;
+  if (status == "unsat") return SolverResult::UNSAT;
+  return SolverResult::UNKNOWN;
+}
 
 }  // namespace dlinear

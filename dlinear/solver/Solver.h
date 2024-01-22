@@ -35,6 +35,7 @@ class Solver {
 
   [[nodiscard]] std::string GetInfo(const std::string &key) const;
   [[nodiscard]] std::string GetOption(const std::string &key) const;
+  [[nodiscard]] SolverResult GetExpected() const;
 
   /**
    * Check the satisfiability of the current context.
