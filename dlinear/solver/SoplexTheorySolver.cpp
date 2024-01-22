@@ -132,7 +132,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   for (int i = 0; i < spx_rows; i++) spx_.changeRangeRational(i, -soplex::infinity, soplex::infinity);
 
   // Clear variable bounds
-  const int spx_cols{spx_.numColsRational()};
+  [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   DLINEAR_ASSERT(2 == simplex_sat_phase_ || static_cast<size_t>(spx_cols) == theory_col_to_var_.size(),
                  "spx_cols must match from_spx_col_.size(), unless we are in phase 2");
   for (const auto &[theory_col, var] : theory_col_to_var_) {

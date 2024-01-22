@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "dlinear/solver/ContextImpl.h"
+#include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
 using std::make_unique;

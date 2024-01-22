@@ -45,7 +45,7 @@ class ConfigFileReader {
  private:
   const std::string solver_key_{"solver"};
   const std::string precision_key_{"precision"};
-  const std::string lp_modes_key_{"lp_modes"};
+  const std::string lp_modes_key_{"lp_mode"};
   const std::string configFile_;
   std::map<std::string, std::vector<std::string>>
       parameters_;  ///< Map containing all the configuration loaded from the configuration file.
