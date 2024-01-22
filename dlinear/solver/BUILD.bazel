@@ -22,8 +22,8 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "lp_sense",
-    srcs = ["LpSense.cpp"],
-    hdrs = ["LpSense.h"],
+    srcs = ["LpRowSense.cpp"],
+    hdrs = ["LpRowSense.h"],
     deps = ["//dlinear/util:exception"],
 )
 
