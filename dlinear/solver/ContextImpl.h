@@ -75,6 +75,15 @@ class Context::Impl {
    */
   void AddToBox(const Variable &v);
 
+  /**
+   * The TheorySolver found a conflict.
+   * The literals that are responsible for the conflict are stored in the explanation.
+   * The explanation is then returned to the SAT solver so that it can use them to learn a new clause and backtrack,
+   * looking for a new, non-conflicting assignment.
+   * @param explanation set of literals that are responsible for the conflict
+   */
+  void LearnExplanation(const LiteralSet &explanation);
+
   /** Return the current box in the stack. */
   virtual SatResult CheckSatCore(mpq_class *actual_precision);
   virtual LpResult CheckOptCore(mpq_class *obj_lo, mpq_class *obj_up);

@@ -325,14 +325,11 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
     if (explanation_bounds) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}",
-                        explanation_bounds.value().size(), stack_.get_vector().size());
-      DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation_bounds.value());
-      sat_solver_->AddLearnedClause(explanation_bounds.value());
+      LearnExplanation(explanation_bounds.value());
       continue;
     }
 
-    LiteralSet explanation_theory{};
+    LiteralSet explanation_theory{theory_model.cbegin(), theory_model.cend()};
     // If the SAT solver found a model, we have to check if it is consistent with the theory
     SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, explanation_theory);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
@@ -348,9 +345,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
         have_unsolved = true;  // Will prevent return of UNSAT
       }
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}",
-                        explanation_theory.size(), stack_.get_vector().size());
-      sat_solver_->AddLearnedClause(explanation_theory);
+      LearnExplanation(explanation_theory);
     }
   }
 }
@@ -373,6 +368,12 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
     default:
       DLINEAR_UNREACHABLE();
   }
+}
+void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
+  DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
+                    stack_.get_vector().size());
+  DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
+  sat_solver_->AddLearnedClause(explanation);
 }
 
 }  // namespace dlinear
