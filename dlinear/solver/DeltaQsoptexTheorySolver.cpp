@@ -52,8 +52,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
 
-  Expression expr;
-  expr = (get_lhs_expression(formula) - get_rhs_expression(formula)).Expand();
+  Expression expr = (get_lhs_expression(formula) - get_rhs_expression(formula)).Expand();
   const int qsx_row{mpq_QSget_rowcount(qsx_)};
   // Add inactive constraint
   mpq_QSnew_row(qsx_, mpq_NINFTY, 'G', nullptr);
