@@ -63,7 +63,7 @@ class Term {
    * @return mutable reference to the expression inside
    * @throw runtime_error if it does not include an expression
    */
-  Expression &mutable_expression();
+  Expression &m_expression();
 
   /**
    * Return the formula inside.
@@ -77,7 +77,7 @@ class Term {
    * @return mutable reference to the formula inside
    * @throw runtime_error if it does not include a formula
    */
-  Formula &mutable_formula();
+  Formula &m_formula();
 
  private:
   Type type_;     ///< Type of this term.
@@ -87,5 +87,3 @@ class Term {
 
 std::ostream &operator<<(std::ostream &os, const Term &t);
 }  // namespace dlinear::smt2
-
-#pragma once

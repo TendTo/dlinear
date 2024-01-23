@@ -25,7 +25,7 @@ namespace dlinear {
 
 Formula IfThenElseEliminator::Process(const Formula &f) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "ITE Elim", "Total time spent in Processing", "Total # of Process"};
-  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
   stat.Increase();
 
   Formula new_f{Visit(f, Formula::True())};

@@ -114,11 +114,11 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("__exit__", [](Solver &self, py::object, py::object, py::object) { self.Exit(); })
       .def("CheckSat", &Solver::CheckSat);
 
-  SolverOutputClass.def_property_readonly("result", &SolverOutput::mutable_result)
-      .def_property_readonly("actual_precision", &SolverOutput::mutable_actual_precision)
-      .def_property_readonly("lower_bound", &SolverOutput::mutable_lower_bound)
-      .def_property_readonly("upper_bound", &SolverOutput::mutable_upper_bound)
-      .def_property_readonly("model", &SolverOutput::mutable_model)
+  SolverOutputClass.def_property_readonly("result", &SolverOutput::m_result)
+      .def_property_readonly("actual_precision", &SolverOutput::m_actual_precision)
+      .def_property_readonly("lower_bound", &SolverOutput::m_lower_bound)
+      .def_property_readonly("upper_bound", &SolverOutput::m_upper_bound)
+      .def_property_readonly("model", &SolverOutput::m_model)
       .def_property_readonly("with_timings", &SolverOutput::with_timings)
       .def_property_readonly("produce_models", &SolverOutput::produce_models)
       .def_property_readonly("n_assertions", &SolverOutput::n_assertions)
@@ -434,64 +434,64 @@ PYBIND11_MODULE(_pydlinear, m) {
                   })
       .def_property(
           "continuous_output", &Config::continuous_output,
-          [](Config &self, const bool continuous_output) { self.mutable_continuous_output() = continuous_output; })
+          [](Config &self, const bool continuous_output) { self.m_continuous_output() = continuous_output; })
       .def_property("debug_parsing", &Config::debug_parsing,
-                    [](Config &self, const bool debug_parsing) { self.mutable_debug_parsing() = debug_parsing; })
+                    [](Config &self, const bool debug_parsing) { self.m_debug_parsing() = debug_parsing; })
       .def_property("debug_scanning", &Config::debug_scanning,
-                    [](Config &self, const bool debug_scanning) { self.mutable_debug_scanning() = debug_scanning; })
+                    [](Config &self, const bool debug_scanning) { self.m_debug_scanning() = debug_scanning; })
       .def_property("filename", &Config::filename,
-                    [](Config &self, const std::string &filename) { self.mutable_filename() = filename; })
+                    [](Config &self, const std::string &filename) { self.m_filename() = filename; })
       .def_property("format", &Config::format,
-                    [](Config &self, const Config::Format &format) { self.mutable_format() = format; })
+                    [](Config &self, const Config::Format &format) { self.m_format() = format; })
       .def_property("lp_solver", &Config::lp_solver,
-                    [](Config &self, const Config::LPSolver lp_solver) { self.mutable_lp_solver() = lp_solver; })
+                    [](Config &self, const Config::LPSolver lp_solver) { self.m_lp_solver() = lp_solver; })
       .def_property("nlopt_ftol_abs", &Config::nlopt_ftol_abs,
-                    [](Config &self, const bool nlopt_ftol_abs) { self.mutable_nlopt_ftol_abs() = nlopt_ftol_abs; })
+                    [](Config &self, const bool nlopt_ftol_abs) { self.m_nlopt_ftol_abs() = nlopt_ftol_abs; })
       .def_property("nlopt_ftol_rel", &Config::nlopt_ftol_rel,
-                    [](Config &self, const bool nlopt_ftol_rel) { self.mutable_nlopt_ftol_rel() = nlopt_ftol_rel; })
+                    [](Config &self, const bool nlopt_ftol_rel) { self.m_nlopt_ftol_rel() = nlopt_ftol_rel; })
       .def_property("nlopt_maxeval", &Config::nlopt_maxeval,
-                    [](Config &self, const bool nlopt_maxeval) { self.mutable_nlopt_maxeval() = nlopt_maxeval; })
+                    [](Config &self, const bool nlopt_maxeval) { self.m_nlopt_maxeval() = nlopt_maxeval; })
       .def_property("nlopt_maxtime", &Config::nlopt_maxtime,
-                    [](Config &self, const bool nlopt_maxtime) { self.mutable_nlopt_maxtime() = nlopt_maxtime; })
+                    [](Config &self, const bool nlopt_maxtime) { self.m_nlopt_maxtime() = nlopt_maxtime; })
       .def_property("number_of_jobs", &Config::number_of_jobs,
-                    [](Config &self, const int number_of_jobs) { self.mutable_number_of_jobs() = number_of_jobs; })
+                    [](Config &self, const int number_of_jobs) { self.m_number_of_jobs() = number_of_jobs; })
       .def_property("precision", &Config::precision,
-                    [](Config &self, const double prec) { self.mutable_precision() = prec; })
+                    [](Config &self, const double prec) { self.m_precision() = prec; })
       .def_property("produce_models", &Config::produce_models,
-                    [](Config &self, const bool produce_models) { self.mutable_produce_models() = produce_models; })
+                    [](Config &self, const bool produce_models) { self.m_produce_models() = produce_models; })
       .def_property("random_seed", &Config::random_seed,
-                    [](Config &self, const int random_seed) { self.mutable_random_seed() = random_seed; })
+                    [](Config &self, const int random_seed) { self.m_random_seed() = random_seed; })
       .def_property("read_from_stdin", &Config::read_from_stdin,
-                    [](Config &self, const bool read_from_stdin) { self.mutable_read_from_stdin() = read_from_stdin; })
+                    [](Config &self, const bool read_from_stdin) { self.m_read_from_stdin() = read_from_stdin; })
       .def_property("sat_default_phase", &Config::sat_default_phase,
                     [](Config &self, const Config::SatDefaultPhase sat_default_phase) {
-                      self.mutable_sat_default_phase() = sat_default_phase;
+                      self.m_sat_default_phase() = sat_default_phase;
                     })
-      .def_property("silent", &Config::silent, [](Config &self, const bool silent) { self.mutable_silent() = silent; })
+      .def_property("silent", &Config::silent, [](Config &self, const bool silent) { self.m_silent() = silent; })
       .def_property(
           "simplex_sat_phase", &Config::simplex_sat_phase,
-          [](Config &self, const int simplex_sat_phase) { self.mutable_simplex_sat_phase() = simplex_sat_phase; })
+          [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
       .def_property("skip_check_sat", &Config::skip_check_sat,
-                    [](Config &self, const bool skip_check_sat) { self.mutable_skip_check_sat() = skip_check_sat; })
+                    [](Config &self, const bool skip_check_sat) { self.m_skip_check_sat() = skip_check_sat; })
       .def_property("use_local_optimization", &Config::use_local_optimization,
                     [](Config &self, const bool use_local_optimization) {
-                      self.mutable_use_local_optimization() = use_local_optimization;
+                      self.m_use_local_optimization() = use_local_optimization;
                     })
       .def_property("use_polytope", &Config::use_polytope,
-                    [](Config &self, const bool use_polytope) { self.mutable_use_polytope() = use_polytope; })
+                    [](Config &self, const bool use_polytope) { self.m_use_polytope() = use_polytope; })
       .def_property("use_polytope_in_forall", &Config::use_polytope_in_forall,
                     [](Config &self, const bool use_polytope_in_forall) {
-                      self.mutable_use_polytope_in_forall() = use_polytope_in_forall;
+                      self.m_use_polytope_in_forall() = use_polytope_in_forall;
                     })
       .def_property("use_worklist_fixpoint", &Config::use_worklist_fixpoint,
                     [](Config &self, const bool use_worklist_fixpoint) {
-                      self.mutable_use_worklist_fixpoint() = use_worklist_fixpoint;
+                      self.m_use_worklist_fixpoint() = use_worklist_fixpoint;
                     })
       .def_property("verbose_dlinear", &Config::verbose_dlinear,
-                    [](Config &self, const int verbose_dlinear) { self.mutable_verbose_dlinear() = verbose_dlinear; })
+                    [](Config &self, const int verbose_dlinear) { self.m_verbose_dlinear() = verbose_dlinear; })
       .def_property("verbose_simplex", &Config::verbose_simplex,
-                    [](Config &self, const int verbose_simplex) { self.mutable_verbose_simplex() = verbose_simplex; })
+                    [](Config &self, const int verbose_simplex) { self.m_verbose_simplex() = verbose_simplex; })
       .def_property("with_timings", &Config::with_timings,
-                    [](Config &self, const bool with_timings) { self.mutable_with_timings() = with_timings; })
+                    [](Config &self, const bool with_timings) { self.m_with_timings() = with_timings; })
       .def("__str__", [](const Config &self) { return (std::stringstream() << self).str(); });
 }

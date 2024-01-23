@@ -54,16 +54,16 @@ class SolverOutput {
         produce_models_{produce_models},
         with_timings_{with_timings} {}
 
-  Timer &mutable_parser_timer() { return parser_timer_; }
-  Timer &mutable_smt_solver_timer() { return smt_solver_timer_; }
-  SolverResult &mutable_result() { return result_; }
-  mpq_class &mutable_actual_precision() { return actual_precision_; }
-  mpq_class &mutable_lower_bound() { return lower_bound_; }
-  mpq_class &mutable_upper_bound() { return upper_bound_; }
-  Box &mutable_model() { return model_; }
-  bool &mutable_with_timings() { return with_timings_; }
-  bool &mutable_produce_models() { return produce_models_; }
-  uint &mutable_n_assertions() { return n_assertions_; }
+  Timer &m_parser_timer() { return parser_timer_; }
+  Timer &m_smt_solver_timer() { return smt_solver_timer_; }
+  SolverResult &m_result() { return result_; }
+  mpq_class &m_actual_precision() { return actual_precision_; }
+  mpq_class &m_lower_bound() { return lower_bound_; }
+  mpq_class &m_upper_bound() { return upper_bound_; }
+  Box &m_model() { return model_; }
+  bool &m_with_timings() { return with_timings_; }
+  bool &m_produce_models() { return produce_models_; }
+  uint &m_n_assertions() { return n_assertions_; }
 
   [[nodiscard]] double parser_time() const { return parser_timer_.seconds(); }
   [[nodiscard]] double smt_solver_time() const { return smt_solver_timer_.seconds(); }

@@ -54,7 +54,7 @@ class Context::Impl {
   void SetOption(const std::string &key, const std::string &val);
   [[nodiscard]] std::string GetOption(const std::string &key) const;
   const Config &config() const { return config_; }
-  Config &mutable_config() { return config_; }
+  Config &m_config() { return config_; }
   const ScopedVector<Formula> &assertions() const;
   Box &box() { return boxes_.last(); }
   const Box &get_model() { return model_; }

@@ -21,7 +21,7 @@ namespace dlinear {
 
 optional<Box> CheckSatisfiability(const Formula &f, const double delta) {
   Config config;
-  config.mutable_precision() = delta;
+  config.m_precision() = delta;
   return CheckSatisfiability(f, config);
 }
 
@@ -38,7 +38,7 @@ optional<Box> CheckSatisfiability(const Formula &f, const Config &config) {
 
 bool CheckSatisfiability(const Formula &f, const double delta, Box *const box) {
   Config config;
-  config.mutable_precision() = delta;
+  config.m_precision() = delta;
   return CheckSatisfiability(f, config, box);
 }
 
@@ -55,7 +55,7 @@ bool CheckSatisfiability(const Formula &f, const Config &config, Box *const box)
 
 optional<Box> Minimize(const Expression &objective, const Formula &constraint, double delta) {
   Config config;
-  config.mutable_precision() = delta;
+  config.m_precision() = delta;
   return Minimize(objective, constraint, config);
 }
 
@@ -76,7 +76,7 @@ optional<Box> Minimize(const Expression &objective, const Formula &constraint, c
 
 bool Minimize(const Expression &objective, const Formula &constraint, const double delta, Box *const box) {
   Config config;
-  config.mutable_precision() = delta;
+  config.m_precision() = delta;
   return Minimize(objective, constraint, config, box);
 }
 

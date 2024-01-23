@@ -154,7 +154,7 @@ class Context {
   [[nodiscard]] const Config &config() const;
 
   /** Returns a mutable reference of configuration */
-  Config &mutable_config();
+  Config &m_config();
 
   /** Returns the version string */
   static std::string version();

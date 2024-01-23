@@ -84,7 +84,7 @@ void Context::SetOption(const string &key, const string &val) { impl_->SetOption
 std::string Context::GetOption(const std::string &key) const { return impl_->GetInfo(key); }
 
 const Config &Context::config() const { return impl_->config(); }
-Config &Context::mutable_config() { return impl_->mutable_config(); }
+Config &Context::m_config() { return impl_->m_config(); }
 
 string Context::version() { return DLINEAR_VERSION_STRING; }
 

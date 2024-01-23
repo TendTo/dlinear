@@ -47,12 +47,11 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_FALSE(parser_.get<bool>("continuous-output"));
   EXPECT_FALSE(parser_.get<bool>("debug-parsing"));
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
-  EXPECT_FALSE(parser_.get<bool>("exhaustive"));
   EXPECT_FALSE(parser_.get<bool>("forall-polytope"));
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
   EXPECT_FALSE(parser_.get<bool>("in"));
   EXPECT_FALSE(parser_.get<bool>("local-optimization"));
-  EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::QSOPTEX);
+  EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::SOPLEX);
   EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-abs"), 1e-6);
   EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-rel"), 1e-6);
   EXPECT_EQ(parser_.get<uint>("nlopt-maxeval"), 100u);
@@ -222,10 +221,9 @@ TEST_F(TestArgParser, WrongSkipCheckSat) {
 }
 
 TEST_F(TestArgParser, Exhaustive) {
-  const int argc = 3;
-  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--exhaustive"};
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--precision", "0"};
   parser_.parse(argc, argv);
-  EXPECT_TRUE(parser_.get<bool>("exhaustive"));
   auto config = parser_.toConfig();
   EXPECT_DOUBLE_EQ(config.precision(), 0.0);
 }

@@ -20,11 +20,11 @@ using std::unique_ptr;
 class TestSolver : public ::testing::Test {
  protected:
   Config config_;
-  explicit TestSolver(Config::LPSolver lp_solver = dlinear::Config::QSOPTEX) : config_{} {
+  explicit TestSolver(Config::LPSolver lp_solver = dlinear::Config::LPSolver::QSOPTEX) : config_{} {
     DLINEAR_LOG_INIT_VERBOSITY(2);
-    config_.mutable_lp_solver() = lp_solver;
-    config_.mutable_filename() = "test.smt2";
-    config_.mutable_format() = Config::Format::AUTO;
+    config_.m_lp_solver() = lp_solver;
+    config_.m_filename() = "test.smt2";
+    config_.m_format() = Config::Format::AUTO;
   }
 };
 

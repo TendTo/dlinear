@@ -29,27 +29,8 @@ using dlinear::drake::symbolic::VisitFormula;
 using dlinear::qsopt_ex::QSXFinish;
 using dlinear::qsopt_ex::QSXStart;
 
-// Important: must be defined the same as Config::LPSolver in dreal/solver/config.h
-// (We can't include that file here, as it leads to namespace clashes.)
-enum LPSolver {
-  SOPLEX = 0,
-  QSOPTEX,
-};
-
 struct DrakeSymbolicGuard {
-  int solver_;
-  explicit DrakeSymbolicGuard(int solver = QSOPTEX) : solver_{solver} {
-    switch (solver) {
-      case SOPLEX:
-        Infinity::InftyStart(Config::SOPLEX);
-        break;
-      case QSOPTEX:
-        Infinity::InftyStart(Config::QSOPTEX);
-        break;
-      default:
-        throw std::runtime_error("Unknown solver");
-    }
-  }
+  explicit DrakeSymbolicGuard(Config::LPSolver solver = Config::LPSolver::SOPLEX) { Infinity::InftyStart(solver); }
   ~DrakeSymbolicGuard() { Infinity::InftyFinish(); }
 };
 

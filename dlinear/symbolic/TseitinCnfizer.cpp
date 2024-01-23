@@ -37,7 +37,7 @@ void CnfizeDisjunction(const Variable &b, const Formula &f, vector<Formula> *cla
 vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "Tseitin Cnfizer", "Total time spent in Converting",
                              "Total # of Convert"};
-  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
   stat.Increase();
   map_.clear();
   vector<Formula> ret;

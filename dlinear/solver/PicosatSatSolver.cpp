@@ -69,7 +69,7 @@ std::optional<Model> PicosatSatSolver::CheckSat() {
                              "Total # of CheckSat"};
   DLINEAR_DEBUG_FMT("PicosatSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
-  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), DLINEAR_INFO_ENABLED);
+  TimerGuard check_sat_timer_guard(&stat.m_timer(), DLINEAR_INFO_ENABLED);
   stat.Increase();
 
   // Call SAT solver.

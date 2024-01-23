@@ -42,7 +42,7 @@ Smt2Driver::Smt2Driver(Context &context)
 
 bool Smt2Driver::parse_stream(istream &in, const string &sname) {
   static Stats stat{DLINEAR_INFO_ENABLED, "SMT2 Driver", "Total time spent in SMT2 parsing"};
-  TimerGuard check_sat_timer_guard(&stat.mutable_timer(), stat.enabled(), true);
+  TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true);
   streamname_ = sname;
 
   Smt2Scanner scanner(&in);

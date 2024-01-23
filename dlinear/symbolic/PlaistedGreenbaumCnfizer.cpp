@@ -22,7 +22,7 @@ namespace dlinear {
 vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "PlaistedGreenbaum Cnfizer", "Total time spent in Converting",
                              "Total # of Convert"};
-  TimerGuard timer_guard(&stat.mutable_timer(), stat.enabled());
+  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
   stat.Increase();
   // Put the Formula into negation normal form
   const Formula &g{nnfizer_.Convert(f, true /* push_negation_into_relationals */)};

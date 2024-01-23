@@ -33,9 +33,7 @@ const Expression &Term::expression() const {
   return e_;
 }
 
-Expression &Term::mutable_expression() {
-  return const_cast<Expression &>(expression());
-}
+Expression &Term::m_expression() { return const_cast<Expression &>(expression()); }
 
 const Formula &Term::formula() const {
   if (type() != Term::Type::FORMULA) {
@@ -44,12 +42,14 @@ const Formula &Term::formula() const {
   return f_;
 }
 
-Formula &Term::mutable_formula() { return const_cast<Formula &>(formula()); }
+Formula &Term::m_formula() { return const_cast<Formula &>(formula()); }
 
 ostream &operator<<(ostream &os, const Term &t) {
   switch (t.type()) {
-    case Term::Type::EXPRESSION:return os << t.expression();
-    case Term::Type::FORMULA:return os << t.formula();
+    case Term::Type::EXPRESSION:
+      return os << t.expression();
+    case Term::Type::FORMULA:
+      return os << t.formula();
   }
   DLINEAR_UNREACHABLE();
 }

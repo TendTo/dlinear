@@ -148,10 +148,10 @@ class Smt2Driver {
   bool trace_parsing() const { return debug_parsing_; }
   void set_trace_parsing(bool b) { debug_parsing_ = b; }
 
-  Context &mutable_context() { return context_; }
+  Context &m_context() { return context_; }
   const Context &context() const { return context_; }
 
-  std::string &mutable_streamname() { return streamname_; }
+  std::string &m_streamname() { return streamname_; }
 
   /** Pointer to the current scanenr instance, this is used to connect the
    * parser to the scanner. It is used in the yylex macro. */

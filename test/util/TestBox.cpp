@@ -104,7 +104,7 @@ TEST_F(TestBox, IntervalVector) {
   EXPECT_EQ(b1.interval_vector()[0], b1[x_]);
 
   // Update
-  b1.mutable_interval_vector()[0] = Box::Interval(0, 1);
+  b1.m_interval_vector()[0] = Box::Interval(0, 1);
   EXPECT_EQ(b1[x_].lb(), 0);
   EXPECT_EQ(b1[x_].ub(), 1);
 

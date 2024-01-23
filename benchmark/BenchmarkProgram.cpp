@@ -20,10 +20,10 @@ namespace {
 inline dlinear::Config GetConfig(const string &filename, const string &solver, const string &precision,
                                  int simplex_phase, const string &lp_mode = "auto") {
   dlinear::Config config{filename};
-  config.mutable_lp_solver().set_from_command_line(InfoGatherer::GetLPSolver(solver));
-  config.mutable_precision().set_from_command_line(stod(precision));
-  config.mutable_simplex_sat_phase().set_from_command_line(simplex_phase);
-  config.mutable_lp_mode().set_from_command_line(InfoGatherer::GetLPMode(lp_mode));
+  config.m_lp_solver().set_from_command_line(InfoGatherer::GetLPSolver(solver));
+  config.m_precision().set_from_command_line(stod(precision));
+  config.m_simplex_sat_phase().set_from_command_line(simplex_phase);
+  config.m_lp_mode().set_from_command_line(InfoGatherer::GetLPMode(lp_mode));
   return config;
 }
 
@@ -64,7 +64,8 @@ void BenchmarkProgram::StartBenchmarks() {
       for (const string &precision : config_file.precisions()) {
         for (const string &lp_mode : config_file.lp_modes()) {
           dlinear::Config dlinear_config{GetConfig(filename, solver, precision, config_.simplex_sat_phase(), lp_mode)};
-          if (dlinear_config.lp_solver() == Config::QSOPTEX && dlinear_config.lp_mode() != Config::LPMode::AUTO)
+          if (dlinear_config.lp_solver() == Config::LPSolver::QSOPTEX &&
+              dlinear_config.lp_mode() != Config::LPMode::AUTO)
             continue;
           InfoGatherer info_gatherer{dlinear_config, config_.timeout()};
           if (config_.isDryRun()) continue;

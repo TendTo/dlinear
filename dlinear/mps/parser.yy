@@ -47,7 +47,7 @@ using dlinear::qsopt_ex::StringToMpq;
 %initial-action
 {
     // initialize the initial location object
-    @$.begin.filename = @$.end.filename = &driver.mutable_stream_name();
+    @$.begin.filename = @$.end.filename = &driver.m_stream_name();
 };
 
 /* The driver is passed by reference to the parser and to the scanner. This
@@ -112,10 +112,10 @@ section: name_section
     ;
 
 name_section: NAME_DECLARATION SYMBOL '\n' { 
-        driver.mutable_problem_name() = *$2;
+        driver.m_problem_name() = *$2;
         delete $2;
     }
-    | NAME_DECLARATION '\n' { driver.mutable_problem_name() = "unnamed"; }
+    | NAME_DECLARATION '\n' { driver.m_problem_name() = "unnamed"; }
     ;
 
 objsense_section: OBJSENSE_DECLARATION '\n' MAX '\n' { driver.ObjectiveSense(false); }

@@ -55,7 +55,7 @@ using dlinear::qsopt_ex::StringToMpq;
 %initial-action
 {
     // initialize the initial location object
-    @$.begin.filename = @$.end.filename = &driver.mutable_streamname();
+    @$.begin.filename = @$.end.filename = &driver.m_streamname();
 };
 
 /* The driver is passed by reference to the parser and to the scanner. This
@@ -158,7 +158,7 @@ command:        command_assert
         ;
 
 command_assert: '('TK_ASSERT term ')' {
-                    driver.mutable_context().Assert($3->formula());
+                    driver.m_context().Assert($3->formula());
                     delete $3;
                 }
                 ;
@@ -195,9 +195,9 @@ command_define_fun:
                 '(' TK_DEFINE_FUN SYMBOL '(' ')' sort term ')' {
                     const Variable v{driver.DeclareVariable(*$3, $6)};
                     if ($7->type() == Term::Type::FORMULA) {
-                        driver.mutable_context().Assert(v == $7->formula());
+                        driver.m_context().Assert(v == $7->formula());
                     } else {
-                        driver.mutable_context().Assert(v == $7->expression());
+                        driver.m_context().Assert(v == $7->expression());
                     }
                     delete $3;
                     delete $7;
@@ -205,7 +205,7 @@ command_define_fun:
                 ;
 
 command_exit:   '('TK_EXIT ')' {
-                    driver.mutable_context().Exit();
+                    driver.m_context().Exit();
                 }
                 ;
 
@@ -230,21 +230,21 @@ command_minimize: '(' TK_MINIMIZE term ')' {
 command_set_info:
                 '(' TK_SET_INFO KEYWORD SYMBOL ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetInfo(*$3, *$4);
                     delete $3;
                     delete $4;
                 }
         |       '(' TK_SET_INFO KEYWORD STRING ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetInfo(*$3, *$4);
                     delete $3;
                     delete $4;
                 }
         |       '(' TK_SET_INFO KEYWORD RATIONAL ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetInfo(*$3, std::stod(*$4));
                     delete $3; delete $4;
                 }
@@ -252,7 +252,7 @@ command_set_info:
 command_set_logic:
                 '(' TK_SET_LOGIC SYMBOL ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetLogic(parseLogic(*$3));
                     delete $3;
                 }
@@ -260,26 +260,26 @@ command_set_logic:
 command_set_option:
                 '(' TK_SET_OPTION KEYWORD SYMBOL ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetOption(*$3, *$4);
                     delete $3;
                     delete $4;
                 }
         |       '('TK_SET_OPTION KEYWORD RATIONAL ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetOption(*$3, std::stod(*$4));
                     delete $3; delete $4;
                 }
         |       '('TK_SET_OPTION KEYWORD TK_TRUE ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetOption(*$3, "true");
                     delete $3;
                 }
         |       '('TK_SET_OPTION KEYWORD TK_FALSE ')' {
                     driver
-                        .mutable_context()
+                        .m_context()
                         .SetOption(*$3, "false");
                     delete $3;
                 }
@@ -287,12 +287,12 @@ command_set_option:
                 ;
 
 command_push:   '(' TK_PUSH INT ')' {
-                    driver.mutable_context().Push(convert_int64_to_int($3));
+                    driver.m_context().Push(convert_int64_to_int($3));
                 }
                 ;
 
 command_pop:    '(' TK_POP INT ')' {
-                    driver.mutable_context().Pop(convert_int64_to_int($3));
+                    driver.m_context().Pop(convert_int64_to_int($3));
                 }
                 ;
 
@@ -429,7 +429,7 @@ term:           TK_TRUE { $$ = new Term(Formula::True()); }
         }
         |       '(' TK_PLUS term term_list ')' {
             for (const Term& term : *$4) {
-                $3->mutable_expression() += term.expression();
+                $3->m_expression() += term.expression();
             }
             $$ = $3;
             delete $4;
@@ -440,21 +440,21 @@ term:           TK_TRUE { $$ = new Term(Formula::True()); }
         }
         |       '(' TK_MINUS term term_list ')' {
             for (const Term& term : *$4) {
-                $3->mutable_expression() -= term.expression();
+                $3->m_expression() -= term.expression();
             }
             $$ = $3;
             delete $4;
         }
         |       '(' TK_TIMES term term_list ')' {
             for (const Term& term : *$4) {
-                $3->mutable_expression() *= term.expression();
+                $3->m_expression() *= term.expression();
             }
             $$ = $3;
             delete $4;
         }
         |       '(' TK_DIV term term_list ')' {
             for (const Term& term : *$4) {
-                $3->mutable_expression() /= term.expression();
+                $3->m_expression() /= term.expression();
             }
             $$ = $3;
             delete $4;
@@ -544,12 +544,12 @@ let_binding_list: '(' var_binding_list ')' {
                     const Variable v{ driver.DeclareLocalVariable(name, sort) };
                     const Formula fv{v};
                     const Formula& ft{ term.formula() };
-                    driver.mutable_context().Assert((fv && ft) || (!fv && !ft));
+                    driver.m_context().Assert((fv && ft) || (!fv && !ft));
                 } else if (is_constant(term.expression())) {
                     driver.DefineLocalConstant(name, term.expression());
                 } else {
                     const Variable v{ driver.DeclareLocalVariable(name, sort) };
-                    driver.mutable_context().Assert(Expression{v} == term.expression());
+                    driver.m_context().Assert(Expression{v} == term.expression());
                 }
             }
             delete $2;

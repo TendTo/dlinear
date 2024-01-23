@@ -68,7 +68,7 @@ void ArgParser::addOptions() {
   parser_.add_description(prompt());
   parser_.add_argument("file").help("input file").default_value("");
 
-  DLINEAR_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous_output");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
@@ -151,7 +151,6 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("debug-parsing"))
     config.m_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
   if (parser_.is_used("debug-scanning")) config.m_debug_scanning().set_from_command_line(true);
-  if (parser_.is_used("exhaustive")) config.m_precision().set_from_command_line(0);
   if (parser_.is_used("format")) config.m_format().set_from_command_line(parser_.get<Config::Format>("format"));
   if (parser_.is_used("forall-polytope"))
     config.m_use_polytope_in_forall().set_from_command_line(parser_.get<bool>("forall-polytope"));

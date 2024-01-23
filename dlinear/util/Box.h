@@ -127,7 +127,7 @@ class Box {
   [[nodiscard]] const std::vector<Interval> &interval_vector() const;
 
   /// Returns the interval vector of the box.
-  std::vector<Interval> &mutable_interval_vector();
+  std::vector<Interval> &m_interval_vector();
 
   /// Returns the index associated with @p var.
   [[nodiscard]] int index(const Variable &var) const;

@@ -218,9 +218,9 @@ class MpsDriver {
   void End();
 
   const std::string &stream_name() const { return stream_name_; }
-  std::string &mutable_stream_name() { return stream_name_; }
+  std::string &m_stream_name() { return stream_name_; }
   const std::string &problem_name() const { return problem_name_; }
-  std::string &mutable_problem_name() { return problem_name_; }
+  std::string &m_problem_name() { return problem_name_; }
   bool debug_scanning() const { return debug_scanning_; }
   void set_debug_scanning(bool b) { debug_scanning_ = b; }
   bool debug_parsing() const { return debug_parsing_; }

@@ -178,7 +178,7 @@ bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(va
 int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
 
 const std::vector<Box::Interval> &Box::interval_vector() const { return values_; }
-std::vector<Box::Interval> &Box::mutable_interval_vector() { return values_; }
+std::vector<Box::Interval> &Box::m_interval_vector() { return values_; }
 
 pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};

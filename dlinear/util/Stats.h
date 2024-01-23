@@ -41,7 +41,7 @@ class Stats {
    * Return a mutable reference to the timer
    * @return timer
    */
-  [[nodiscard]] Timer &mutable_timer() { return timer_; }
+  [[nodiscard]] Timer &m_timer() { return timer_; }
   /**
    * Return a constant reference to the timer
    * @return timer

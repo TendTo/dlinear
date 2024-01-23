@@ -203,21 +203,21 @@ void Context::Impl::SetOption(const string &key, const double val) {
 
   if (key == ":precision") {
     if (val <= 0.0) DLINEAR_RUNTIME_ERROR_FMT("Precision has to be positive (input = {}).", val);
-    return config_.mutable_precision().set_from_file(val);
+    return config_.m_precision().set_from_file(val);
   }
 }
 
 void Context::Impl::SetOption(const string &key, const string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
-  if (key == ":polytope") return config_.mutable_use_polytope().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
   if (key == ":forall-polytope")
-    return config_.mutable_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
+    return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
   if (key == ":local-optimization")
-    return config_.mutable_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
+    return config_.m_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
   if (key == ":worklist-fixpoint")
-    return config_.mutable_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":produce-models") return config_.mutable_produce_models().set_from_file(ParseBooleanOption(key, val));
+    return config_.m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
 std::string Context::Impl::GetOption(const string &key) const {

@@ -75,11 +75,11 @@ class Config {
   DLINEAR_PARAMETER(use_local_optimization, bool, false, "Use local optimization algorithm for exist-forall problems")
   DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(lp_mode, LPMode, dlinear::Config::LPMode::AUTO,
-                    "LP mode used by the LP solver."
-                    "\t\t\nOne of: auto (0), pure-precision-boosting (1), pure-iterative-refinement (2), hybrid (3)")
+                    "LP mode used by the LP solver.\n"
+                    "\t\t\tOne of: auto (0), pure-precision-boosting (1), pure-iterative-refinement (2), hybrid (3)")
   DLINEAR_PARAMETER(lp_solver, LPSolver, dlinear::Config::LPSolver::SOPLEX,
-                    "LP solver used by the LP solver."
-                    "\t\t\nOne of: soplex (1), qsoptex (2)")
+                    "LP solver used by the LP solver.\n"
+                    "\t\t\tOne of: soplex (1), qsoptex (2)")
   DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
   DLINEAR_PARAMETER(
       verbose_dlinear, int, 2,
@@ -91,7 +91,7 @@ class Config {
   DLINEAR_PARAMETER(nlopt_ftol_rel, double, 1e-6, "Set the relative tolerance on function value")
   DLINEAR_PARAMETER(nlopt_ftol_abs, double, 1e-6, "Set the absolute tolerance on function value")
   DLINEAR_PARAMETER(nlopt_maxeval, uint, 100u, "Set the maximum number of function evaluations")
-  DLINEAR_PARAMETER(nlopt_maxtime, double, false, "Set the maximum optimization time (in second)")
+  DLINEAR_PARAMETER(nlopt_maxtime, double, 0.01, "Set the maximum optimization time (in second)")
   DLINEAR_PARAMETER(sat_default_phase, SatDefaultPhase, dlinear::Config::SatDefaultPhase::JeroslowWang,
                     "set default initial phase for SAT solver.\n"
                     "\t\t\t0 = false\n"

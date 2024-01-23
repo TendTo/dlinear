@@ -33,7 +33,7 @@ class InfoGatherer {
   static Config::LPMode GetLPMode(const std::string &mode);
   bool run();
 
-  [[nodiscard]] const std::string &filename() const { return config_.filename(); }
+  [[nodiscard]] std::string filename() const { return config_.filename(); }
   [[nodiscard]] std::string solver() const { return (std::ostringstream{} << config_.lp_solver()).str(); }
   [[nodiscard]] double precision() const { return precision_; }
   [[nodiscard]] double actualPrecision() const { return actualPrecision_; }

@@ -9,14 +9,14 @@ namespace dlinear::benchmark {
 
 InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision)
     : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{0} {
-  config_.mutable_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
-  config_.mutable_precision().set_from_command_line(precision_);
+  config_.m_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
+  config_.m_precision().set_from_command_line(precision_);
 }
 
 InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision, uint timeout)
     : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{timeout} {
-  config_.mutable_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
-  config_.mutable_precision().set_from_command_line(precision_);
+  config_.m_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
+  config_.m_precision().set_from_command_line(precision_);
 }
 
 InfoGatherer::InfoGatherer(Config config, uint timeout)
@@ -100,9 +100,9 @@ void InfoGatherer::ParseResults(shared_results *results) {
 
 Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) {
   if (solver == "soplex") {
-    return Config::SOPLEX;
+    return Config::LPSolver::SOPLEX;
   } else if (solver == "qsoptex") {
-    return Config::QSOPTEX;
+    return Config::LPSolver::QSOPTEX;
   }
   DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
 }
