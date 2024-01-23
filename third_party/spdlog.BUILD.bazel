@@ -1,10 +1,21 @@
-"""Include the header only spdlog librari in the project.
+"""Include the header only spdlog library in the project.
 It is used as the logging system in dlinear.
 """
 licenses(["notice"])  # MIT
 
-cc_library(
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+cmake(
     name = "spdlog",
+    lib_source = ":all_srcs",
+    targets = ["spdlog"],
+    lib_name = "libspdlog",
+    visibility = ["//visibility:public"],
+    defines = ["SPDLOG_COMPILED_LIB"],
+)
+
+cc_library(
+    name = "spdlog_header",
     hdrs = glob([
         "include/spdlog/*.h",
         "include/spdlog/fmt/**/*.h",
@@ -13,4 +24,10 @@ cc_library(
     ]),
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:private"],
 )
