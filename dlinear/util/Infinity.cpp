@@ -30,7 +30,7 @@ Infinity::Infinity(Config::LPSolver lp_solver, const mpq_t infty, const mpq_t ni
 Infinity::~Infinity() {
   delete infty_;
   delete ninfty_;
-  if (lp_solver_ == Config::QSOPTEX) qsopt_ex::QSXFinish();
+  if (lp_solver_ == Config::LPSolver::QSOPTEX) qsopt_ex::QSXFinish();
 }
 
 void Infinity::InftyStart(const Config& config) { InftyStart(config.lp_solver()); }
@@ -41,11 +41,11 @@ void Infinity::InftyStart(Config::LPSolver lp_solver) {
     return;
   }
   switch (lp_solver) {
-    case Config::QSOPTEX:
+    case Config::LPSolver::QSOPTEX:
       qsopt_ex::QSXStart();
       instance_ = new Infinity(lp_solver, mpq_INFTY, mpq_NINFTY);
       break;
-    case Config::SOPLEX:
+    case Config::LPSolver::SOPLEX:
       instance_ = new Infinity(lp_solver, soplex::infinity);
       break;
     default:
