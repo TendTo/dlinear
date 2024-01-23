@@ -10,6 +10,9 @@ cmake(
     lib_source = ":all_srcs",
     targets = ["spdlog"],
     lib_name = "libspdlog",
+    cache_entries = {
+        "CMAKE_BUILD_TYPE": "Release",
+    },
     visibility = ["//visibility:public"],
     defines = ["SPDLOG_COMPILED_LIB"],
 )
