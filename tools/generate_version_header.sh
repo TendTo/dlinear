@@ -2,9 +2,10 @@
 # This script generates a version header file for dlinear.
 # It is called from the Bazel build system, and uses some information
 # about the workspace provided by Bazel in the file bazel-out/stable-status.txt.
-# Usage: ./tools/generate_version_header.sh [VERSION]
+# Usage: ./tools/generate_version_header.sh [NAME] [VERSION]
 
-VERSION=${1:-unknown.unknown.unknown} # read version from command line argument or use default 'unknown.unknown.unknown'
+NAME=${1:-unknown} # read name of the software from command line argument or use default 'unknown'
+VERSION=${2:-unknown.unknown.unknown} # read version from command line argument or use default 'unknown.unknown.unknown'
 IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION" # split string into an array on '.' delimiter
 MAJOR=${VERSION_ARRAY[0]} # get major version
 MINOR=${VERSION_ARRAY[1]} # get minor version
@@ -15,7 +16,7 @@ REPOSITORY_STATUS="$(grep '^STABLE_REPOSITORY_STATUS ' bazel-out/stable-status.t
 cat <<EOF
 #pragma once
 
-#define DLINEAR_PROGRAM_NAME    "dlinear"
+#define DLINEAR_PROGRAM_NAME    "${NAME}"
 #define DLINEAR_VERSION_STRING  "${VERSION}"
 #define DLINEAR_VERSION_FULL     ${VERSION}
 #define DLINEAR_VERSION_MAJOR    ${MAJOR}
