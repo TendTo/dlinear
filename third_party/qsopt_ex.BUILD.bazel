@@ -20,8 +20,8 @@ configure_make(
         "--warnings=all",
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
-    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],  # -DEG_LPNUM_MEMSLAB=0 disables memory slab allocator
-    deps = ["@zlib", "@bzip2lib"],
+    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],
+    deps = ["@zlib", "@bzip2lib", "@gmp"],
 )
 
 configure_make(
@@ -40,27 +40,12 @@ configure_make(
         "--warnings=all",
     ],
     configure_options = ["CFLAGS='-Dredacted=\"redacted\"'", "RANLIB=ranlib"],
-    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],  # -DEG_LPNUM_MEMSLAB=0 disables memory slab allocator
-    deps = ["@zlib", "@bzip2lib"],
+    args = ["-j4", "CPPFLAGS=-DEG_LPNUM_MEMSLAB=0"],
+    deps = ["@zlib", "@bzip2lib", "@gmp"],
 )
 
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
-    visibility = ["//visibility:private"],
-)
-
-genrule(
-    name = "qsopt_ex_git",
-    srcs = [],
-    outs = [".git"],
-    cmd = """
-        git init
-        git config user.name 'Snail Mail'
-        git config user.email '<>'
-        git commit --allow-empty -m "Initial commit"
-        git tag -a v2.1.0 -m "Version 2.1.0"
-        mv .git $(location .git)
-    """,
     visibility = ["//visibility:private"],
 )

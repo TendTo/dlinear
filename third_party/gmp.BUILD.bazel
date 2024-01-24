@@ -2,7 +2,6 @@
 This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 See https://llvm.org/LICENSE.txt for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-TODO: Remove this file if gmp remains a dependency to be installed in the system
 """
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
@@ -11,27 +10,32 @@ licenses(["notice"])
 
 configure_make(
     name = "gmp",
-    configure_options = ["--with-pic"],
     lib_name = "libgmp",
-    lib_source = ":all_srcs",
+    lib_source = ":all_srcs_gmp",
     visibility = ["//visibility:public"],
 )
 
 configure_make(
     name = "gmpxx",
     configure_options = ["--enable-cxx"],
-    env = {
-        "CXX": "g++",
-        "CXXFLAGS": "-lstdc++",
-    },
     lib_name = "libgmpxx",
-    lib_source = ":all_srcs",
+    env = select({
+        "@dlinear//tools:clang_build": {"CXX": "clang"},
+        "//conditions:default": {"CXX": "g++"},
+    }),
+    lib_source = ":all_srcs_gmpxx",
     visibility = ["//visibility:public"],
     deps = [":gmp"],
 )
 
 filegroup(
-    name = "all_srcs",
+    name = "all_srcs_gmp",
+    srcs = glob(["**"], exclude = ["**/*.cc", "**/*.cpp", "gmpxx.h"]),
+    visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "all_srcs_gmpxx",
     srcs = glob(["**"]),
     visibility = ["//visibility:private"],
 )

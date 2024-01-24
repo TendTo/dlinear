@@ -1,6 +1,7 @@
 workspace(name = "dlinear")
 
-load("//tools:github.bzl", "github_archive")
+load("//tools:git_archive.bzl", "github_archive", "gitlab_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 github_archive(
     name = "rules_python",
@@ -124,11 +125,21 @@ github_archive(
     sha256 = "db106b740252669664fd8f3a1c69fe7f689d5cd4b132f82ba82b9afba27627df",
 )
 
-# https://groups.google.com/forum/#!topic/bazel-discuss/Ndd820uaq2U
-new_local_repository(
-    name = "linux_libs",
-    build_file = "//third_party:linux_libs.BUILD.bazel",
-    path = "/usr/lib/x86_64-linux-gnu",
+gitlab_archive(
+    name = "mpfr",
+    build_file = "//third_party:mpfr.BUILD.bazel",
+    commit = "4.2.1",
+    domain = "inria.fr",
+    repository = "mpfr/mpfr",
+    sha256 = "e34aab8b2cdcc3f37ef8bd1b33fcd9867b472412698c6a0ec60dbb4970f88a3d",
+)
+
+http_archive(
+    name = "gmp",
+    build_file = "//third_party:gmp.BUILD.bazel",
+    sha256 = "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
+    strip_prefix = "gmp-6.3.0",
+    url = "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
 )
 
 load("//tools:deps.bzl", "load_dependencies")

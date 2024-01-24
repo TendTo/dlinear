@@ -13,7 +13,7 @@ dlinear_cc_library(
     name = "gmp",
     srcs = ["gmp.cpp"],
     hdrs = ["gmp.h"],
-    deps = ["@linux_libs//:gmpxx"],
+    deps = ["@gmp//:gmpxx"],
 )
 
 dlinear_cc_library(
@@ -33,7 +33,7 @@ dlinear_cc_library(
     srcs = ["qsopt_ex.cpp"],
     hdrs = ["qsopt_ex.h"],
     deps = [
-        "@linux_libs//:gmpxx",
+        "@gmp//:gmpxx",
     ] + select({
         "//tools:dynamic_build": ["@qsopt_ex//:qsopt_ex.so"],
         "//conditions:default": ["@qsopt_ex//:qsopt_ex.a"],
