@@ -17,6 +17,7 @@ cmake(
     out_static_libs = ["libsoplex.a"],
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
     visibility = ["//visibility:public"],
+    defines = ["SOPLEX_WITH_GMP"],
 )
 
 cmake(
@@ -32,6 +33,7 @@ cmake(
     out_shared_libs = ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
     visibility = ["//visibility:public"],
+    defines = ["SOPLEX_WITH_GMP"],
 )
 
 filegroup(

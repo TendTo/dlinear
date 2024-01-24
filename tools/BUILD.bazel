@@ -21,6 +21,11 @@ bool_flag(
 )
 
 bool_flag(
+    name = "enable_static_build",
+    build_setting_default = False,
+)
+
+bool_flag(
     name = "enable_qsoptex",
     build_setting_default = False,
 )
@@ -42,6 +47,11 @@ bool_flag(
 config_setting(
     name = "dynamic_build",
     flag_values = {":enable_dynamic_build": "True"},
+)
+
+config_setting(
+    name = "static_build",
+    flag_values = {":enable_static_build": "True"},
 )
 
 config_setting(
@@ -67,15 +77,15 @@ config_setting(
 )
 
 config_setting(
-    name = "debug",
-    values = {"compilation_mode": "dbg"},
-)
-
-config_setting(
     name = "gcc_build",
     flag_values = {
         "@bazel_tools//tools/cpp:compiler": "gcc",
     },
+)
+
+config_setting(
+    name = "debug",
+    values = {"compilation_mode": "dbg"},
 )
 
 ###########################################

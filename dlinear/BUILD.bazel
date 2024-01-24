@@ -57,8 +57,10 @@ dlinear_cc_binary(
     }),
     linkstatic = True,
     deps = [
-        "//dlinear/solver",
-        "//dlinear/util:logging",
+        "@gmp//:gmpxx",
+        "@mpfr",
+        "@qsopt_ex",
+        "@soplex//:soplex.a",
     ],
 )
 
