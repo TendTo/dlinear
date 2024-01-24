@@ -7,14 +7,56 @@ exports_files([
     "requirements.txt",
 ])
 
+######################################################################################
+# Custom flags that control build behavior
+#
+# Pass them to bazel with --//tools:<flag>=<value>
+# Example:
+# bazel build //dlinear --//tools:enable_soplex=False --//tools:enable_qsoptex=True
+######################################################################################
+
 bool_flag(
     name = "enable_dynamic_build",
     build_setting_default = False,
 )
 
+bool_flag(
+    name = "enable_qsoptex",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "enable_soplex",
+    build_setting_default = True,
+)
+
+bool_flag(
+    name = "enable_picosat",
+    build_setting_default = True,
+)
+
+###########################################
+# Configuration settings
+###########################################
+
 config_setting(
     name = "dynamic_build",
     flag_values = {":enable_dynamic_build": "True"},
+)
+
+config_setting(
+    name = "enabled_qsoptex",
+    flag_values = {":enable_qsoptex": "True"},
+)
+
+config_setting(
+    name = "enabled_soplex",
+    flag_values = {":enable_soplex": "True"},
+)
+
+config_setting(
+    name = "enabled_picosat",
+    flag_values = {":enable_picosat": "True"},
 )
 
 config_setting(
@@ -35,6 +77,10 @@ config_setting(
         "@bazel_tools//tools/cpp:compiler": "gcc",
     },
 )
+
+###########################################
+# Version header script
+###########################################
 
 sh_binary(
     name = "generate_version_header",

@@ -45,6 +45,9 @@ GCC_FLAGS = CXX_FLAGS + [
 # when building with gcc.
 GCC_CC_TEST_FLAGS = []
 
+# Default defines for all C++ rules in the project.
+DLINEAR_DEFINES = []
+
 def _get_copts(rule_copts, cc_test = False):
     """Returns both the rule_copts, and platform-specific copts.
 
@@ -65,6 +68,26 @@ def _get_copts(rule_copts, cc_test = False):
         "//conditions:default": CXX_FLAGS + rule_copts,
     })
 
+def _get_defines(rule_defines):
+    """Returns both the rule_defines, and platform-specific defines.
+
+    Args:
+        rule_defines: The defines passed to the rule.
+
+    Returns:
+        A list of defines.
+    """
+    return rule_defines + DLINEAR_DEFINES + select({
+        "//tools:enabled_qsoptex": ["DLINEAR_ENABLED_QSOPTEX"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": ["DLINEAR_ENABLED_SOPLEX"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_picosat": ["DLINEAR_ENABLED_PICOSAT"],
+        "//conditions:default": [],
+    })
+
 def dlinear_cc_library(
         name,
         hdrs = None,
@@ -72,8 +95,19 @@ def dlinear_cc_library(
         deps = None,
         copts = [],
         linkstatic = True,
+        defines = [],
         **kwargs):
     """Creates a rule to declare a C++ library.
+
+    Args:
+        name: The name of the library.
+        hdrs: A list of header files to compile.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        linkstatic: Whether to link statically.
+        defines: A list of defines to add to the library.
+        **kwargs: Additional arguments to pass to native.cc_library.
     """
     native.cc_library(
         name = name,
@@ -82,6 +116,7 @@ def dlinear_cc_library(
         deps = deps,
         copts = _get_copts(copts),
         linkstatic = linkstatic,
+        defines = _get_defines(defines),
         **kwargs
     )
 
@@ -90,14 +125,24 @@ def dlinear_cc_binary(
         srcs = None,
         deps = None,
         copts = [],
+        defines = [],
         **kwargs):
     """Creates a rule to declare a C++ binary.
+
+    Args:
+        name: The name of the binary.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        defines: A list of defines to add to the binary.
+        **kwargs: Additional arguments to pass to native.cc_binary.
     """
     native.cc_binary(
         name = name,
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
+        defines = _get_defines(defines),
         **kwargs
     )
 
@@ -106,6 +151,7 @@ def dlinear_cc_test(
         srcs = None,
         copts = [],
         tags = [],
+        defines = [],
         **kwargs):
     """Creates a rule to declare a C++ unit test.
 
@@ -120,6 +166,7 @@ def dlinear_cc_test(
         srcs: A list of source files to compile.
         copts: A list of compiler options.
         tags: A list of tags to add to the test. Allows for test filtering.
+        defines: A list of defines to add to the test.
         **kwargs: Additional arguments to pass to native.cc_test.
     """
     if srcs == None:
@@ -129,6 +176,7 @@ def dlinear_cc_test(
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
         tags = tags + ["dlinear"],
+        defines = _get_defines(defines),
         **kwargs
     )
 
@@ -139,6 +187,7 @@ def dlinear_cc_googletest(
         size = "small",
         tags = [],
         use_default_main = True,
+        defines = [],
         **kwargs):
     """Creates a rule to declare a C++ unit test using googletest.
 
@@ -158,6 +207,7 @@ def dlinear_cc_googletest(
         size: The size of the test.
         tags: A list of tags to add to the test. Allows for test filtering.
         use_default_main: Whether to use googletest's main.
+        defines: A list of defines to add to the test.
         **kwargs: Additional arguments to pass to dlinear_cc_test.
     """
     if deps == None:
@@ -172,6 +222,7 @@ def dlinear_cc_googletest(
         deps = deps,
         size = size,
         tags = tags + ["googletest"],
+        defines = _get_defines(defines),
         **kwargs
     )
 
