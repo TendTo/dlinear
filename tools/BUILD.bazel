@@ -40,6 +40,11 @@ bool_flag(
     build_setting_default = True,
 )
 
+bool_flag(
+    name = "enable_patchelf",
+    build_setting_default = False,
+)
+
 ###########################################
 # Configuration settings
 ###########################################
@@ -67,6 +72,11 @@ config_setting(
 config_setting(
     name = "enabled_picosat",
     flag_values = {":enable_picosat": "True"},
+)
+
+config_setting(
+    name = "enabled_patchelf",
+    flag_values = {":enable_patchelf": "True"},
 )
 
 config_setting(

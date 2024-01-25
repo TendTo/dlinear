@@ -5,7 +5,7 @@ load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 licenses(["notice"])  # Apache 2.0 License
 
 cmake(
-    name = "soplex.a",
+    name = "soplex",
     lib_source = ":all_srcs",
     lib_name = "libsoplex",
     cache_entries = {
@@ -15,25 +15,14 @@ cmake(
     },
     targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
     out_static_libs = ["libsoplex.a"],
+    out_shared_libs = ["libsoplex.so"],
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
     visibility = ["//visibility:public"],
     defines = ["SOPLEX_WITH_GMP"],
-)
-
-cmake(
-    name = "soplex.so",
-    lib_source = ":all_srcs",
-    lib_name = "libsoplex",
-    cache_entries = {
-        "GMP": "on",
-        "BOOST": "on",
-        "CMAKE_BUILD_TYPE": "Release",
-    },
-    targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
-    out_shared_libs = ["libsoplexshared.so", "libsoplexshared.so.6.0", "libsoplexshared.so.6.0.3.0"],
-    deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
-    visibility = ["//visibility:public"],
-    defines = ["SOPLEX_WITH_GMP"],
+    postfix_script = "cp -L $INSTALLDIR/lib/libsoplexshared.so.6.0 $INSTALLDIR/lib/libsoplex.so" + select({
+        "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
+        "//conditions:default": "",
+    }),
 )
 
 filegroup(
