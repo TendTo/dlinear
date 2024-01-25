@@ -34,12 +34,6 @@ dlinear_cc_library(
 dlinear_cc_binary(
     name = "dlinear",
     srcs = ["main.cpp"],
-    features = select({
-        "//tools:dynamic_build": [],
-        "//tools:debug": [],
-        "//conditions:default": ["fully_static_link"],
-    }),
-    linkstatic = True,
     deps = [
         "//dlinear/solver",
         "//dlinear/util:argparser",
@@ -50,29 +44,16 @@ dlinear_cc_binary(
 dlinear_cc_binary(
     name = "test",
     srcs = ["test.cpp"],
-    features = select({
-        "//tools:dynamic_build": [],
-        "//tools:debug": [],
-        "//conditions:default": ["fully_static_link"],
-    }),
-    linkstatic = True,
     deps = [
         "@gmp//:gmpxx",
         "@mpfr",
         "@qsopt_ex",
-        "@soplex//:soplex.a",
     ],
 )
 
 dlinear_cc_binary(
     name = "soplex",
     srcs = ["soplex.cpp"],
-    features = select({
-        "//tools:dynamic_build": [],
-        "//tools:debug": [],
-        "//conditions:default": ["fully_static_link"],
-    }),
-    linkstatic = True,
     deps = [
         "//dlinear/libs:soplex",
         "//dlinear/util:logging",

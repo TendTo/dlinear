@@ -1,6 +1,7 @@
 """Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
 
 load("@rules_python//python:defs.bzl", "py_test")
+load("//tools:cc_import_foreign.bzl", "cc_import_foreign")
 
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"
@@ -19,6 +20,7 @@ CXX_FLAGS = [
     "-Woverloaded-virtual",
     "-Wpedantic",
     "-Wshadow",
+    "-Wunused-macros",
     "-Werror",
 ]
 
@@ -49,7 +51,7 @@ GCC_CC_TEST_FLAGS = []
 DLINEAR_DEFINES = []
 
 def _get_copts(rule_copts, cc_test = False):
-    """Returns both the rule_copts, and platform-specific copts.
+    """Alter the provided rule specific copts, adding the platform-specific ones.
 
     When cc_test is True, the GCC_CC_TEST_FLAGS will be added.
     It should only be set on cc_test rules or rules that are boil down to cc_test rules.
@@ -69,7 +71,7 @@ def _get_copts(rule_copts, cc_test = False):
     })
 
 def _get_defines(rule_defines):
-    """Returns both the rule_defines, and platform-specific defines.
+    """Alter the provided rule specific defines, adding the platform-specific ones.
 
     Args:
         rule_defines: The defines passed to the rule.
@@ -88,13 +90,64 @@ def _get_defines(rule_defines):
         "//conditions:default": [],
     })
 
+def _get_static(rule_linkstatic):
+    """Alter the provided linkstatic, by considering the platform-specific one.
+
+    The files are linked statically by default.
+
+    Args:
+        rule_linkstatic: The linkstatic passed to the rule.
+
+    Returns:
+        The linkstatic value to use
+    """
+    if rule_linkstatic != None:
+        return rule_linkstatic
+    return select({
+        "//tools:static_build": True,
+        "//tools:dynamic_build": False,
+        "//conditions:default": True,
+    })
+
+def _get_features(rule_features):
+    """Alter the provided features, adding the platform-specific ones.
+
+    Args:
+        rule_features: The features passed to the rule.
+
+    Returns:
+        A list of features.
+    """
+    return rule_features + select({
+        "//tools:dynamic_build": [],
+        "//tools:static_build": ["fully_static_link"],
+        "//conditions:default": [],
+    })
+
+def dlinear_cc_import_foreign(name, deps, mode = None, **kwargs):
+    if mode == None:
+        mode = select({
+            "@dlinear//tools:dynamic_build": "dynamic",
+            "@dlinear//tools:static_build": "static",
+            "@dlinear//conditions:default": "auto",
+        })
+
+    return [
+        cc_import_foreign(
+            name = name,
+            deps = deps,
+            mode = mode,
+            **kwargs
+        ),
+    ]
+
 def dlinear_cc_library(
         name,
         hdrs = None,
         srcs = None,
         deps = None,
         copts = [],
-        linkstatic = True,
+        linkstatic = None,
         defines = [],
         **kwargs):
     """Creates a rule to declare a C++ library.
@@ -115,7 +168,7 @@ def dlinear_cc_library(
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
-        linkstatic = linkstatic,
+        linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
         **kwargs
     )
@@ -125,7 +178,9 @@ def dlinear_cc_binary(
         srcs = None,
         deps = None,
         copts = [],
+        linkstatic = None,
         defines = [],
+        features = [],
         **kwargs):
     """Creates a rule to declare a C++ binary.
 
@@ -134,7 +189,9 @@ def dlinear_cc_binary(
         srcs: A list of source files to compile.
         deps: A list of dependencies.
         copts: A list of compiler options.
+        linkstatic: Whether to link statically.
         defines: A list of defines to add to the binary.
+        features: A list of features to add to the binary.
         **kwargs: Additional arguments to pass to native.cc_binary.
     """
     native.cc_binary(
@@ -142,7 +199,9 @@ def dlinear_cc_binary(
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
+        linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
+        features = _get_features(features),
         **kwargs
     )
 
