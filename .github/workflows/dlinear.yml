@@ -2,15 +2,18 @@ name: dlinear CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "dlinear/**"
       - "test/**"
   pull_request:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "dlinear/**"
       - "test/**"
+
+env:
+  PACKAGES: 'python3 build-essential automake libtool flex bison'
 
 jobs:
   build:
@@ -22,15 +25,15 @@ jobs:
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: build-essential g++ libgmp-dev autoconf flex bison
+          packages: ${{ env.PACKAGES }}
           version: 1.0
 
       - name: Cache Bazel
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/dlinear_bazel
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel') }}
           restore-keys: |
             ${{ runner.os }}-bazel-
 
@@ -50,15 +53,15 @@ jobs:
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: build-essential g++ libgmp-dev autoconf flex bison
+          packages: ${{ env.PACKAGES }}
           version: 1.0
 
       - name: Cache Bazel
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/dlinear_bazel
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel') }}
           restore-keys: |
             ${{ runner.os }}-bazel-
 
@@ -75,15 +78,15 @@ jobs:
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: build-essential g++ libgmp-dev autoconf flex bison
+          packages: ${{ env.PACKAGES }}
           version: 1.0
 
       - name: Cache Bazel
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/dlinear_bazel
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel') }}
           restore-keys: |
             ${{ runner.os }}-bazel-
 
@@ -104,15 +107,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/dlinear_bazel
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelrc', 'WORKSPACE.bazel') }}
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel') }}
           restore-keys: |
             ${{ runner.os }}-bazel-
 
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: build-essential g++ libgmp-dev autoconf flex bison
+          packages: ${{ env.PACKAGES }}
           version: 1.0
 
       - name: Test
