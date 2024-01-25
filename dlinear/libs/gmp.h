@@ -14,6 +14,9 @@
 
 #include <gmpxx.h>
 
+#include <cassert>
+#include <cmath>
+
 namespace std {
 
 template <>
@@ -92,5 +95,83 @@ const inline mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast
  * @return mpq_class reference
  */
 inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(mpq); }  // NOLINT
+
+static constexpr long pow_10(size_t n) {
+  constexpr long powers_of_10[] = {1,
+                                   10,
+                                   100,
+                                   1000,
+                                   10000,
+                                   100000,
+                                   1000000,
+                                   10000000,
+                                   100000000,
+                                   1000000000,
+                                   100000000,
+                                   10000000000,
+                                   100000000000,
+                                   1000000000000,
+                                   10000000000000,
+                                   100000000000000,
+                                   1000000000000000,
+                                   10000000000000000,
+                                   100000000000000000,
+                                   1000000000000000000};
+  return powers_of_10[n];
+}
+
+inline mpq_class mpq_from_string(const char *desc) {
+  if (0 == strcmp(desc, "inf")) return 1e100;
+  if (0 == strcmp(desc, "-inf")) return -1e100;
+
+  std::string_view s{desc};
+
+  /* case 1: string is given in nom/decimal format */
+  if (s.find_first_of(".Ee") == std::string::npos) {
+    return s[0] == '+' ? mpq_class(s.substr(1).data()) : mpq_class(s.data());
+  }
+
+  /* case 2: string is given as base-10 decimal number */
+  size_t e_pos = s.find_first_of("Ee");
+  long mult = 0, numerator = 0, decimal = 1;
+
+  if (e_pos != std::string::npos) {
+    mult = std::stol(s.substr(e_pos + 1, s.length()).data());
+    // Remove the exponent
+    s = s.substr(0, e_pos);
+  }
+
+  /* case 3a: string starts with a . */
+  // if (s[0] == '.') s.insert(0, "0");
+  size_t dot_pos = s.find('.');
+
+  // if s contains a ., convert it to a rational
+  switch (dot_pos) {
+    case 0:
+      assert(std::all_of(s.cbegin() + 1, s.cend(), ::isdigit));
+      numerator = 0;
+      decimal = std::stol(s.substr(1, s.length()).data());
+      break;
+    case std::string::npos:
+      assert(std::all_of(s.cbegin(), s.cend(), ::isdigit));
+      numerator = std::stol(s.data());
+      dot_pos = s.length() + 1;
+      decimal = 0;
+      break;
+    default:
+      assert(std::all_of(s.cbegin(), s.cend() + dot_pos, ::isdigit));
+      assert(std::all_of(s.cbegin() + dot_pos + 1, s.cend(), ::isdigit));
+      numerator = std::stol(s.substr(0, dot_pos).data());
+      decimal = std::stol(s.substr(dot_pos + 1, s.length()).data());
+  }
+
+  size_t n_decimals = s.length() - dot_pos - 1;
+  numerator *= pow_10(n_decimals);
+  numerator += decimal;
+
+  mpq_class res(numerator, mpz_class(pow_10(n_decimals)));
+  res *= pow_10(mult);
+  return res;
+}
 
 }  // namespace dlinear::gmp
