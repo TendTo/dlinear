@@ -6,8 +6,12 @@
  */
 #pragma once
 
+#ifdef DLINEAR_ENABLED_QSOPT_EX
 #include "dlinear/libs/qsopt_ex.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/soplex.h"
+#endif
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_formula.h"
@@ -26,8 +30,6 @@ using dlinear::drake::symbolic::Variable;
 using dlinear::drake::symbolic::Variables;
 using dlinear::drake::symbolic::VisitExpression;
 using dlinear::drake::symbolic::VisitFormula;
-using dlinear::qsopt_ex::QSXFinish;
-using dlinear::qsopt_ex::QSXStart;
 
 struct DrakeSymbolicGuard {
   explicit DrakeSymbolicGuard(Config::LPSolver solver = Config::LPSolver::SOPLEX) { Infinity::InftyStart(solver); }

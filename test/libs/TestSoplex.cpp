@@ -4,11 +4,13 @@
  * @date 19 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/libs/soplex.h"
-
+#ifdef DLINEAR_ENABLED_SOPLEX
 #include <gtest/gtest.h>
+
+#include "dlinear/libs/soplex.h"
 
 TEST(TestSoplex, TestSoplex) {
   soplex::SoPlex soplex;
   EXPECT_NO_THROW(soplex.printVersion());
 }
+#endif

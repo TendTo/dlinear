@@ -23,8 +23,8 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:logging",
     ] + select({
-        "//tools:dynamic_build": ["@soplex//:soplex.so"],
-        "//conditions:default": ["@soplex//:soplex.a"],
+        "//tools:enabled_soplex": ["@soplex"],
+        "//conditions:default": [],
     }),
 )
 
@@ -35,8 +35,8 @@ dlinear_cc_library(
     deps = [
         "@gmp//:gmpxx",
     ] + select({
-        "//tools:dynamic_build": ["@qsopt_ex//:qsopt_ex.so"],
-        "//conditions:default": ["@qsopt_ex//:qsopt_ex.a"],
+        "//tools:enabled_qsoptex": ["@qsopt_ex"],
+        "//conditions:default": [],
     }),
 )
 

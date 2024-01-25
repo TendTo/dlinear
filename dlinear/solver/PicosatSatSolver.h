@@ -1,7 +1,17 @@
-//
-// Created by c3054737 on 10/01/24.
-//
+/**
+ * @file PicosatSatSolver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief SAT solver based on PicoSAT.
+ *
+ * PicoSAT is a SAT solver written in C. It is used as a library in dlinear.
+ */
 #pragma once
+
+#ifndef DLINEAR_ENABLED_PICOSAT
+#error "PicoSAT is not enabled. Please enable it by adding \"--\/\/tools:enable_picosat\" to the bazel command."
+#endif
 
 #include <picosat/picosat.h>
 

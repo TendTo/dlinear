@@ -54,13 +54,17 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "sat_solver",
     srcs = [
-        "PicosatSatSolver.cpp",
         "SatSolver.cpp",
-    ],
+    ] + select({
+        "//tools:enabled_picosat": ["PicosatSatSolver.cpp"],
+        "//conditions:default": [],
+    }),
     hdrs = [
-        "PicosatSatSolver.h",
         "SatSolver.h",
-    ],
+    ] + select({
+        "//tools:enabled_picosat": ["PicosatSatSolver.h"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
@@ -72,33 +76,49 @@ dlinear_cc_library(
         "//dlinear/util:infinity",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
-        "@picosat",
-    ],
+    ] + select({
+        "//tools:enabled_picosat": ["@picosat"],
+        "//conditions:default": [],
+    }),
 )
 
 dlinear_cc_library(
     name = "theory_solver",
     srcs = [
-        "DeltaQsoptexTheorySolver.cpp",
-        "DeltaSoplexTheorySolver.cpp",
-        "QsoptexTheorySolver.cpp",
-        "SoplexTheorySolver.cpp",
         "TheorySolver.cpp",
-    ],
+    ] + select({
+        "//tools:enabled_qsoptex": [
+            "DeltaQsoptexTheorySolver.cpp",
+            "QsoptexTheorySolver.cpp",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": [
+            "DeltaSoplexTheorySolver.cpp",
+            "SoplexTheorySolver.cpp",
+        ],
+        "//conditions:default": [],
+    }),
     hdrs = [
-        "DeltaQsoptexTheorySolver.h",
-        "DeltaSoplexTheorySolver.h",
-        "QsoptexTheorySolver.h",
-        "SoplexTheorySolver.h",
         "TheorySolver.h",
-    ],
+    ] + select({
+        "//tools:enabled_qsoptex": [
+            "DeltaQsoptexTheorySolver.h",
+            "QsoptexTheorySolver.h",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": [
+            "DeltaSoplexTheorySolver.h",
+            "SoplexTheorySolver.h",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":lp_bound",
         ":lp_sense",
         ":sat_result",
         "//dlinear/libs:gmp",
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
@@ -107,7 +127,13 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:infinity",
         "//dlinear/util:logging",
-    ],
+    ] + select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }),
 )
 
 dlinear_cc_library(

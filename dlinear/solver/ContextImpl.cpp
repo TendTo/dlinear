@@ -1,16 +1,19 @@
 /**
  * @file ContextImpl.cpp
- * @author dlinear
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
-
 #include "ContextImpl.h"
 
 #include <utility>
 
+#ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/solver/DeltaQsoptexTheorySolver.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/solver/DeltaSoplexTheorySolver.h"
+#endif
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
@@ -211,12 +214,10 @@ void Context::Impl::SetOption(const string &key, const string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
   if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":forall-polytope")
-    return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":forall-polytope") return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
   if (key == ":local-optimization")
     return config_.m_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":worklist-fixpoint")
-    return config_.m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":worklist-fixpoint") return config_.m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
   if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
@@ -359,12 +360,16 @@ void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
 }
 std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
   switch (config.lp_solver()) {
-    case Config::LPSolver::SOPLEX:
-      return config.precision() >= 0 ? std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_, config)
-                                     : nullptr;
+#ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
       return config.precision() >= 0 ? std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config)
                                      : nullptr;
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
+    case Config::LPSolver::SOPLEX:
+      return config.precision() >= 0 ? std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_, config)
+                                     : nullptr;
+#endif
     default:
       DLINEAR_UNREACHABLE();
   }

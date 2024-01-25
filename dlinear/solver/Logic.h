@@ -1,11 +1,11 @@
 /**
- * @file logic.h
- * @author dlinear
- * @date 13 Aug 2023
- * @copyright 2023 dlinear
+ * @file Logic.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * @brief Describes the logic of the SMT2 file using an enum class.
  *
- * Dlinear supports either QL_LRA or QF_LIA logic.
+ * dlinear supports only QL_LRA logic for now.
  */
 #pragma once
 

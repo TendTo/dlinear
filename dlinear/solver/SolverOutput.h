@@ -1,11 +1,10 @@
 /**
  * @file SolverOutput.h
- * @author dlinear
- * @date 16 Sep 2023
- * @copyright 2023 dlinear
- *
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * @brief Simple class that holds the output of the solver.
- *
+ * @todo Use a struct instead of a class.
  */
 #pragma once
 

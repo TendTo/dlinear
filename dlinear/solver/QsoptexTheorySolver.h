@@ -1,7 +1,18 @@
-//
-// Created by c3054737 on 15/01/24.
-//
+/**
+ * @file QsoptexTheorySolver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence GPL-3.0 license
+ * @brief Theory solver using QSopt_ex.
+ * 
+ * QSopt_ex is an exact LP solver written in C.
+ * It uses the technique of precision boosting to efficiently solve LPs exactly.
+ */
 #pragma once
+
+#ifndef DLINEAR_ENABLED_QSOPTEX
+#error "QSopt_ex is not enabled. Please enable it by adding \"--\/\/tools:enable_qsoptex\" to the bazel command."
+#endif
 
 #include <vector>
 

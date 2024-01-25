@@ -1,7 +1,9 @@
-//
-// Created by c3054737 on 16/01/24.
-//
-
+/**
+ * @file LpRowSense.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "LpRowSense.h"
 
 #include "dlinear/util/exception.h"

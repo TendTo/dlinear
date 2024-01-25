@@ -1,8 +1,8 @@
 /**
  * @file Context.h
- * @author dlinear
- * @date 13 Aug 2023
- * @copyright 2023 dlinear
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * @brief Context holding the information about the resolution of the problem.
  *
  * While the solver is running, the context holds the information about the

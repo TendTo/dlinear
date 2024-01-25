@@ -1,7 +1,9 @@
-//
-// Created by c3054737 on 11/01/24.
-//
-
+/**
+ * @file SatSolver.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "SatSolver.h"
 
 #include "dlinear/util/exception.h"

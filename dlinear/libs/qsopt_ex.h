@@ -12,6 +12,10 @@
  */
 #pragma once
 
+#ifndef DLINEAR_ENABLED_QSOPTEX
+#error "QSopt_ex is not enabled. Please enable it by adding \"--\/\/tools:enable_qsoptex\" to the bazel command."
+#endif
+
 #include <gmpxx.h>
 
 extern "C" {
@@ -21,6 +25,7 @@ extern "C" {
 #include <string>
 
 // These #defines from <qsopt_ex/QSopt_ex.h> cause problems for us
+// because they mess with SoPlex's enums.
 #undef OPTIMAL
 #undef DUAL_INFEASIBLE
 

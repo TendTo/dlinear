@@ -4,15 +4,16 @@
  * @date 19 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "dlinear/libs/qsopt_ex.h"
-
+#ifdef DLINEAR_ENABLED_QSOPT_EX
 #include <gtest/gtest.h>
 
-using dlinear::qsopt_ex::StringToMpqPtr;
-using dlinear::qsopt_ex::StringToMpq;
+#include "dlinear/libs/qsopt_ex.h"
+
 using dlinear::qsopt_ex::MpqArray;
-using dlinear::qsopt_ex::QSXStart;
 using dlinear::qsopt_ex::QSXFinish;
+using dlinear::qsopt_ex::QSXStart;
+using dlinear::qsopt_ex::StringToMpq;
+using dlinear::qsopt_ex::StringToMpqPtr;
 
 TEST(TestQsoptEx, QSXStartAndFinish) {
   EXPECT_NO_THROW(QSXStart());
@@ -46,3 +47,4 @@ TEST(TestQsoptEx, TestStringToMpq) {
   EXPECT_EQ(StringToMpq("1/2"), mpq_class(1, 2u));
   EXPECT_EQ(StringToMpq("1/20"), mpq_class(1, 20));
 }
+#endif

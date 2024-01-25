@@ -1,7 +1,9 @@
-//
-// Created by c3054737 on 10/01/24.
-//
-
+/**
+ * @file PicosatSatSolver.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "PicosatSatSolver.h"
 
 #include "dlinear/util/Stats.h"

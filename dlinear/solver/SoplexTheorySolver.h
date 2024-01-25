@@ -1,7 +1,19 @@
-//
-// Created by c3054737 on 12/01/24.
-//
+/**
+ * @file SoplexTheorySolver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief Theory solver using SoPlex.
+ *
+ * SoPlex is an exact LP solver written in C++.
+ * It uses a mixture of techniques, from iterative refinement to precision boosting, in order to efficiently solve LPs
+ * exactly.
+ */
 #pragma once
+
+#ifndef DLINEAR_ENABLED_SOPLEX
+#error "SoPlex is not enabled. Please enable it by adding \"--\/\/tools:enable_soplex\" to the bazel command."
+#endif
 
 #include <optional>
 #include <vector>

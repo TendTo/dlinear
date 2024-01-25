@@ -8,8 +8,12 @@
 
 #include <utility>
 
+#ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/libs/qsopt_ex.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/soplex.h"
+#endif
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 #include "dlinear/util/logging.h"
@@ -40,8 +44,13 @@ namespace dlinear {
 
 ArgParser::ArgParser()
     : parser_{DLINEAR_PROGRAM_NAME, DLINEAR_VERSION_STRING},
+#ifdef DLINEAR_ENABLED_QSOPTEX
       qsoptex_hash_{QSopt_ex_repository_status()},
-      soplex_hash_{soplex::getGitHash()} {
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
+      soplex_hash_{soplex::getGitHash()}
+#endif
+{
   DLINEAR_TRACE("ArgParser::ArgParser");
   addOptions();
 }

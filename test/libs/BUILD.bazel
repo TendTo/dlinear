@@ -7,10 +7,16 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_soplex",
-    deps = ["//dlinear/libs:soplex"],
+    deps = select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }),
 )
 
 dlinear_cc_googletest(
     name = "test_qsopt_ex",
-    deps = ["//dlinear/libs:qsopt_ex"],
+    deps = select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
+        "//conditions:default": [],
+    }),
 )

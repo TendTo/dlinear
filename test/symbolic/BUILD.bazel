@@ -5,12 +5,16 @@ dlinear_cc_library(
     hdrs = ["TestSymbolicUtils.h"],
     visibility = ["//test:__subpackages__"],
     deps = [
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
         "//dlinear/symbolic",
         "//dlinear/util:infinity",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
-    ],
+    ] + select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
+        "//conditions:default": [],
+    }),
 )
 
 dlinear_cc_googletest(

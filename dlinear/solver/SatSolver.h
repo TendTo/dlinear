@@ -1,6 +1,16 @@
-//
-// Created by c3054737 on 11/01/24.
-//
+/**
+ * @file SatSolver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief Base class for SAT solvers.
+ *
+ * The SAT solver's role is to convert a generic formula into a CNF of boolean clauses,
+ * abstracting away the theory literals.
+ * Then, it checks the satisfiability of the CNF.
+ * If the CNF is satisfiable, it returns a model for the formula.
+ * Otherwise, it returns an empty optional.
+ */
 #pragma once
 
 #include <map>

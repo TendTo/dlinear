@@ -32,5 +32,4 @@ cc_library(
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
-    visibility = ["//visibility:private"],
 )

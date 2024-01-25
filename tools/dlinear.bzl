@@ -20,7 +20,6 @@ CXX_FLAGS = [
     "-Woverloaded-virtual",
     "-Wpedantic",
     "-Wshadow",
-    "-Wunused-macros",
     "-Werror",
 ]
 
@@ -234,6 +233,7 @@ def dlinear_cc_test(
         name = name,
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
+        linkstatic = True,
         tags = tags + ["dlinear"],
         defines = _get_defines(defines),
         **kwargs
@@ -271,7 +271,12 @@ def dlinear_cc_googletest(
     """
     if deps == None:
         deps = []
-    if use_default_main:
+    if type(deps) == "select":
+        if use_default_main:
+            deps += select({"//conditions:default": ["@com_google_googletest//:gtest_main"]})
+        else:
+            deps += select({"//conditions:default": ["@com_google_googletest//:gtest"]})
+    elif use_default_main:
         deps.append("@com_google_googletest//:gtest_main")
     else:
         deps.append("@com_google_googletest//:gtest")

@@ -1,11 +1,13 @@
 /**
  * @file ContextImpl.h
- * @author dlinear
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief Implementation of Context.
+ * 
+ * The context juggles between the SAT solver and the theory solver, in order to produce a model.
+ * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
+ * This follows the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
  */
 #pragma once
 

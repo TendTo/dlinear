@@ -9,8 +9,12 @@
 
 #include <utility>
 
+#ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/libs/qsopt_ex.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/soplex.h"
+#endif
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -30,7 +34,9 @@ Infinity::Infinity(Config::LPSolver lp_solver, const mpq_t infty, const mpq_t ni
 Infinity::~Infinity() {
   delete infty_;
   delete ninfty_;
+#ifdef DLINEAR_ENABLED_QSOPTEX
   if (lp_solver_ == Config::LPSolver::QSOPTEX) qsopt_ex::QSXFinish();
+#endif
 }
 
 void Infinity::InftyStart(const Config& config) { InftyStart(config.lp_solver()); }
@@ -41,13 +47,17 @@ void Infinity::InftyStart(Config::LPSolver lp_solver) {
     return;
   }
   switch (lp_solver) {
+#ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
       qsopt_ex::QSXStart();
       instance_ = new Infinity(lp_solver, mpq_INFTY, mpq_NINFTY);
       break;
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
       instance_ = new Infinity(lp_solver, soplex::infinity);
       break;
+#endif
     default:
       DLINEAR_UNREACHABLE();
   }

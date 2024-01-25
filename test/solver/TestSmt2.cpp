@@ -36,14 +36,14 @@ class TestSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, st
   Config config_;
   explicit TestSmt2() : config_{} {
     DLINEAR_LOG_INIT_VERBOSITY(2);
-    config_.mutable_precision() = 0;
+    config_.m_precision() = 0;
   }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestSmt2, TestSmt2,
                          // TODO: add back QSOPTEX
-                         ::testing::Combine(::testing::Values(Config::SOPLEX), ::testing::ValuesIn(getFiles()),
-                                            ::testing::Values(0.0, 0.1)));
+                         ::testing::Combine(::testing::Values(Config::LPSolver::SOPLEX),
+                                            ::testing::ValuesIn(getFiles()), ::testing::Values(0.0, 0.1)));
 
 std::vector<SolverResult> expected_results(SolverResult res) {
   switch (res) {
@@ -63,9 +63,9 @@ std::vector<SolverResult> expected_results(SolverResult res) {
 
 TEST_P(TestSmt2, TestSmt2InputAgainstExpectedOutputExhaustive) {
   const auto& [lp_solver, filename, precision] = GetParam();
-  config_.mutable_filename() = filename;
-  config_.mutable_lp_solver() = lp_solver;
-  config_.mutable_precision() = precision;
+  config_.m_filename() = filename;
+  config_.m_lp_solver() = lp_solver;
+  config_.m_precision() = precision;
   Solver s{config_};
   const SolverResult result = s.CheckSat().result();
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));

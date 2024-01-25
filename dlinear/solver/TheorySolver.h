@@ -1,6 +1,14 @@
-//
-// Created by c3054737 on 11/01/24.
-//
+/**
+ * @file TheorySolver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief Base class for theory solvers.
+ *
+ * Theory solvers are used to solve the theory of a given logic.
+ * When given an assignment from the SAT solver, they will check whether the assignment is satisfiable.
+ * If that is not the case, they will produce an explanation to guide the SAT solver and find a new assignment.
+ */
 #pragma once
 
 #include <map>
@@ -149,9 +157,9 @@ class TheorySolver {
                                             ///< The row is the constraint used by the theory solver.
                                             ///< The tuple contains the truth value of the literal when it was first
                                             ///< added to the LP solver,
-  std::vector<bool> theory_row_to_truth_;  ///< Theory row ⇔ truth value
-                                           ///< The row is the constraint used by the theory solver.
-                                           ///< The truth is the boolean assignment of the literal during this iteration
+  std::vector<bool> theory_row_to_truth_;   ///< Theory row ⇔ truth value
+                                            ///< The row is the constraint used by the theory solver.
+  ///< The truth is the boolean assignment of the literal during this iteration
   std::vector<LiteralSet>
       theory_bound_to_explanation_;  ///< Theory bound ⇔ Explanation
                                      ///< The bound is used by the theory solver to limit a variable.
