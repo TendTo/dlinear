@@ -1,8 +1,19 @@
-load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_googletest", "solver_test_all")
+load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_googletest", "dlinear_cc_library", "solver_test_all")
+
+dlinear_cc_library(
+    name = "test_solver_utils",
+    hdrs = ["TestSolverUtils.h"],
+    visibility = ["//test:__subpackages__"],
+    deps = [
+        "//dlinear/util:config",
+        "@com_google_googletest//:gtest",
+    ],
+)
 
 dlinear_cc_googletest(
     name = "test_context",
     deps = [
+        ":test_solver_utils",
         "//dlinear/solver:context",
         "//test/symbolic:test_symbolic_utils",
     ],
@@ -10,7 +21,10 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_solver",
-    deps = ["//dlinear/solver"],
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver",
+    ],
 )
 
 dlinear_cc_googletest(
@@ -24,7 +38,10 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_smt2",
     data = glob(["smt2/*.smt2"]),
-    deps = ["//dlinear/solver"],
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver",
+    ],
 )
 
 dlinear_cc_binary(

@@ -13,6 +13,7 @@
 #include <string_view>
 
 #include "dlinear/solver/Solver.h"
+#include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
 using dlinear::Solver;
@@ -23,11 +24,7 @@ using std::unique_ptr;
 std::vector<std::string> getFiles() {
   const std::string path = "test/solver/smt2";
   std::vector<std::string> files;
-  for (const auto& entry : std::filesystem::directory_iterator(path)) {
-    files.emplace_back(entry.path());
-    std::cout << entry.path() << std::endl;
-  }
-  std::cout << "Found " << files.size() << " files in " << path << std::endl;
+  for (const auto& entry : std::filesystem::directory_iterator(path)) files.emplace_back(entry.path());
   return files;
 }
 
@@ -41,9 +38,8 @@ class TestSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, st
 };
 
 INSTANTIATE_TEST_SUITE_P(TestSmt2, TestSmt2,
-                         // TODO: add back QSOPTEX
-                         ::testing::Combine(::testing::Values(Config::LPSolver::SOPLEX),
-                                            ::testing::ValuesIn(getFiles()), ::testing::Values(0.0, 0.1)));
+                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(getFiles()),
+                                            ::testing::Values(0.0, 0.1)));
 
 std::vector<SolverResult> expected_results(SolverResult res) {
   switch (res) {

@@ -10,13 +10,14 @@
 #include <memory>
 
 #include "dlinear/solver/Context.h"
+#include "test/solver/TestSolverUtils.h"
 #include "test/symbolic/TestSymbolicUtils.h"
 
 using dlinear::Config;
 using dlinear::Context;
 using std::unique_ptr;
 
-class TestContext : public ::testing::Test {
+class TestContext : public ::testing::TestWithParam<Config::LPSolver> {
   const DrakeSymbolicGuard guard_;
 
  protected:
@@ -24,16 +25,17 @@ class TestContext : public ::testing::Test {
   const Variable y_{"Y"};
   Config config_;
   unique_ptr<Context> context_;
-  explicit TestContext(Config::LPSolver lp_solver = dlinear::Config::LPSolver::QSOPTEX)
-      : guard_{lp_solver}, config_{}, context_{std::make_unique<Context>(config_)} {
-    config_.m_lp_solver() = lp_solver;
+  explicit TestContext() : guard_{GetParam()}, config_{}, context_{std::make_unique<Context>(config_)} {
+    config_.m_lp_solver() = GetParam();
   }
   void SetUp() override { context_->DeclareVariable(x_); }
 };
 
-TEST_F(TestContext, Constructor) { EXPECT_NO_THROW(Context ctx); }
+INSTANTIATE_TEST_SUITE_P(TestContext, TestContext, enabled_test_solvers);
 
-TEST_F(TestContext, DeclareVariable) {
+TEST_P(TestContext, Constructor) { EXPECT_NO_THROW(Context ctx); }
+
+TEST_P(TestContext, DeclareVariable) {
   Context ctx;
   ctx.DeclareVariable(x_);
   EXPECT_EQ(ctx.box().size(), 1);
@@ -41,7 +43,7 @@ TEST_F(TestContext, DeclareVariable) {
   EXPECT_EQ(ctx.box().size(), 1);
 }
 
-TEST_F(TestContext, AddMultipleVariables) {
+TEST_P(TestContext, AddMultipleVariables) {
   Context ctx;
   ctx.DeclareVariable(x_);
   EXPECT_EQ(ctx.box().size(), 1);
