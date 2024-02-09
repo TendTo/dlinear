@@ -23,7 +23,6 @@ template <>
 struct hash<mpq_class> {
   size_t operator()(const mpq_class &val) const;
 };
-
 }  // namespace std
 
 namespace dlinear::gmp {
@@ -96,82 +95,123 @@ const inline mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast
  */
 inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(mpq); }  // NOLINT
 
-static constexpr long pow_10(size_t n) {
-  constexpr long powers_of_10[] = {1,
-                                   10,
-                                   100,
-                                   1000,
-                                   10000,
-                                   100000,
-                                   1000000,
-                                   10000000,
-                                   100000000,
-                                   1000000000,
-                                   100000000,
-                                   10000000000,
-                                   100000000000,
-                                   1000000000000,
-                                   10000000000000,
-                                   100000000000000,
-                                   1000000000000000,
-                                   10000000000000000,
-                                   100000000000000000,
-                                   1000000000000000000};
-  return powers_of_10[n];
-}
+/**
+ * Convert a string to a mpq_class.
+ *
+ * The number is converted exactly, without any rounding,
+ * by interpreting the string as a base-10 rational number.
+ * @code
+ *  string_to_mpq("0") == 0
+ *  string_to_mpq(".") == 0
+ *  string_to_mpq("0.") == 0
+ *  string_to_mpq(".0") == 0
+ *  string_to_mpq("15") == 15/1
+ *  string_to_mpq("1.5") == 15/10
+ *  string_to_mpq("15.") == 15/1
+ *  string_to_mpq(".15") == 15/100
+ *  string_to_mpq("15.0") == 15/1
+ *  string_to_mpq("15.00") == 15/1
+ *  string_to_mpq("15") == 15/1
+ *  string_to_mpq("1.5E2") == 15/10 * 10^2
+ *  string_to_mpq("1.5E-2") == 15/10 * 10^-2
+ *  string_to_mpq("E+2") == 1/1 * 10^2
+ *  string_to_mpq("15/6") == 15/6
+ *  string_to_mpq("0/1010") == 0
+ *  @endcode
+ *  @warning If the string is not a valid rational number, the result is undefined.
+ * @param str The string to convert.
+ * @return The mpq_class instance.
+ */
+inline mpq_class string_to_mpq(std::string_view str) {
+  if (str == "inf") return {1e100};
+  if (str == "-inf") return {-1e100};
 
-inline mpq_class mpq_from_string(const char *desc) {
-  if (0 == strcmp(desc, "inf")) return 1e100;
-  if (0 == strcmp(desc, "-inf")) return -1e100;
-
-  std::string_view s{desc};
-
-  /* case 1: string is given in nom/decimal format */
-  if (s.find_first_of(".Ee") == std::string::npos) {
-    return s[0] == '+' ? mpq_class(s.substr(1).data()) : mpq_class(s.data());
+  // case 1: string is given in integer format
+  size_t symbol_pos = str.find_first_of("/.Ee");
+  if (symbol_pos == std::string::npos) {
+    const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
+    if (start_pos == std::string_view::npos) return {0};
+    assert(std::all_of(str.cbegin() + start_pos, str.cend(), ::isdigit));
+    return mpq_class{str.data() + start_pos};
   }
 
-  /* case 2: string is given as base-10 decimal number */
-  size_t e_pos = s.find_first_of("Ee");
-  long mult = 0, numerator = 0, decimal = 1;
+  // case 2: string is given in nom/denom format
+  if (str[symbol_pos] == '/') {
+    mpq_class res{str.data()};
+    res.canonicalize();
+    return res;
+  }
 
+  const size_t e_pos = str[symbol_pos] == 'e' || str[symbol_pos] == 'E' ? symbol_pos : str.find_first_of("Ee");
+  mpz_class mult{1};
+  bool is_exp_positive = true;
+
+  // case 3a: string is given as base-10 decimal number (e)
   if (e_pos != std::string::npos) {
-    mult = std::stol(s.substr(e_pos + 1, s.length()).data());
+    const long exponent = std::stol(str.data() + e_pos + 1);
+    is_exp_positive = exponent >= 0;
+    mult = 10;
+    mpz_pow_ui(mult.get_mpz_t(), mult.get_mpz_t(), std::abs(exponent));
     // Remove the exponent
-    s = s.substr(0, e_pos);
+    str = str.substr(0, e_pos);
+
+    if (str.empty()) return is_exp_positive ? mpq_class{mult} : mpq_class{1, mult};
   }
 
-  /* case 3a: string starts with a . */
-  // if (s[0] == '.') s.insert(0, "0");
-  size_t dot_pos = s.find('.');
+  const size_t &len = str.length();
 
-  // if s contains a ., convert it to a rational
-  switch (dot_pos) {
-    case 0:
-      assert(std::all_of(s.cbegin() + 1, s.cend(), ::isdigit));
-      numerator = 0;
-      decimal = std::stol(s.substr(1, s.length()).data());
-      break;
-    case std::string::npos:
-      assert(std::all_of(s.cbegin(), s.cend(), ::isdigit));
-      numerator = std::stol(s.data());
-      dot_pos = s.length() + 1;
-      decimal = 0;
-      break;
-    default:
-      assert(std::all_of(s.cbegin(), s.cend() + dot_pos, ::isdigit));
-      assert(std::all_of(s.cbegin() + dot_pos + 1, s.cend(), ::isdigit));
-      numerator = std::stol(s.substr(0, dot_pos).data());
-      decimal = std::stol(s.substr(dot_pos + 1, s.length()).data());
+  // case 3b: string does not contain a . , only an exponent E
+  if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
+    int plus_pos = str[0] == '+' ? 1 : 0;
+    assert(std::all_of(str.cbegin() + plus_pos, str.cend(), ::isdigit));
+
+    char *const str_number = new char[len - plus_pos + 1];
+    memcpy(str_number, str.data() + plus_pos, len - plus_pos);
+    str_number[len - plus_pos] = '\0';
+    mpq_class res{str_number, 10};
+    delete[] str_number;
+    return res * mult;
   }
 
-  size_t n_decimals = s.length() - dot_pos - 1;
-  numerator *= pow_10(n_decimals);
-  numerator += decimal;
+  const size_t &dot_pos = symbol_pos;
 
-  mpq_class res(numerator, mpz_class(pow_10(n_decimals)));
-  res *= pow_10(mult);
-  return res;
+  // case 3c: string contains a .
+  size_t start_pos = str.find_first_not_of('0');
+  size_t digits;
+
+  // case 4a: string starts with a . or the numbers before the . are all 0
+  if (start_pos == dot_pos) {
+    start_pos = str.find_first_not_of('0', dot_pos + 1);
+    // case 5: string contains only a .
+    if (start_pos == std::string_view::npos) {
+      return {0};
+    } else {
+      digits = len - start_pos;
+    }
+  } else {  // case 4b: string does not start with a . and the numbers before the . are not all 0
+    digits = len - start_pos - 1;
+  }
+
+  const size_t n_decimals = len - dot_pos - 1;
+  assert(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, ::isdigit));
+  assert(std::all_of(str.begin() + dot_pos + 1, str.cend(), ::isdigit));
+  char *const str_number = new char[digits + n_decimals + 3];
+
+  if (digits > n_decimals) {
+    memcpy(str_number, str.data() + start_pos, digits - n_decimals);
+    memcpy(str_number + dot_pos, str.data() + dot_pos + 1, n_decimals);
+  } else {
+    memcpy(str_number, str.data() + start_pos, n_decimals);
+  }
+
+  str_number[digits] = '/';
+  str_number[digits + 1] = '1';
+  memset(str_number + digits + 2, '0', n_decimals);
+  str_number[digits + 2 + n_decimals] = '\0';
+
+  mpq_class res{str_number, 10};
+  res.canonicalize();
+  return is_exp_positive ? mpq_class{res * mult} : res / mult;
 }
 
 }  // namespace dlinear::gmp

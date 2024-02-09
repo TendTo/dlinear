@@ -8,11 +8,11 @@
 #include <tuple>
 #include <utility>
 
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/gmp.h"
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/BoundType.h"
 
-using dlinear::qsopt_ex::StringToMpq;
+using dlinear::gmp::string_to_mpq;
 
 /* void yyerror(SmtPrsr parser, const char *); */
 #define YYMAXDEPTH 1024 * 1024
@@ -153,8 +153,8 @@ columns: columns column
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
 column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
-        driver.AddColumn(*$1, *$4, mpq_class{StringToMpq(*$5)});
+        driver.AddColumn(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
+        driver.AddColumn(*$1, *$4, mpq_class{string_to_mpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
@@ -162,7 +162,7 @@ column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
+        driver.AddColumn(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
         delete $1;
         delete $2;
         delete $3;
@@ -187,8 +187,8 @@ rhs: rhs rhs_row
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
 rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs(*$1, *$2, mpq_class{StringToMpq(*$3)});
-        driver.AddRhs(*$1, *$4, mpq_class{StringToMpq(*$5)});
+        driver.AddRhs(*$1, *$2, mpq_class{string_to_mpq(*$3)});
+        driver.AddRhs(*$1, *$4, mpq_class{string_to_mpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
@@ -196,21 +196,21 @@ rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", *$1, mpq_class{StringToMpq(*$2)});
-        driver.AddRhs("", *$3, mpq_class{StringToMpq(*$4)});
+        driver.AddRhs("", *$1, mpq_class{string_to_mpq(*$2)});
+        driver.AddRhs("", *$3, mpq_class{string_to_mpq(*$4)});
         delete $1;
         delete $2;
         delete $3;
         delete $4;
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs(*$1, *$2, mpq_class{StringToMpq(*$3)});
+        driver.AddRhs(*$1, *$2, mpq_class{string_to_mpq(*$3)});
         delete $1;
         delete $2;
         delete $3;
     }
     | SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", *$1, mpq_class{StringToMpq(*$2)});
+        driver.AddRhs("", *$1, mpq_class{string_to_mpq(*$2)});
         delete $1;
         delete $2;
     }
@@ -233,8 +233,8 @@ ranges: ranges range
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
 range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange(*$1, *$2, mpq_class{StringToMpq(*$3)});
-        driver.AddRange(*$1, *$4, mpq_class{StringToMpq(*$5)});
+        driver.AddRange(*$1, *$2, mpq_class{string_to_mpq(*$3)});
+        driver.AddRange(*$1, *$4, mpq_class{string_to_mpq(*$5)});
         delete $1;
         delete $2;
         delete $3;
@@ -242,7 +242,7 @@ range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $5;
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange(*$1, *$2, mpq_class{StringToMpq(*$3)}); 
+        driver.AddRange(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
         delete $1;
         delete $2;
         delete $3;
@@ -271,13 +271,13 @@ bounds: bounds bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
 bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, *$2, *$3, mpq_class{StringToMpq(*$4)});
+        driver.AddBound($1, *$2, *$3, mpq_class{string_to_mpq(*$4)});
         delete $2;
         delete $3;
         delete $4;
     }
     | BOUND_TYPE SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, "", *$2, mpq_class{StringToMpq(*$3)});
+        driver.AddBound($1, "", *$2, mpq_class{string_to_mpq(*$3)});
         delete $2;
         delete $3;
     }

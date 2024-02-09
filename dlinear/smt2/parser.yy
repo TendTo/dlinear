@@ -14,9 +14,9 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/math.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/gmp.h"
 
-using dlinear::qsopt_ex::StringToMpq;
+using dlinear::gmp::string_to_mpq;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -396,7 +396,7 @@ term:           TK_TRUE { $$ = new Term(Formula::True()); }
             $$ = $5;
         }
         |       RATIONAL {
-            const mpq_class& rational{StringToMpq(*$1)};
+            const mpq_class& rational{string_to_mpq(*$1)};
             delete $1;
             $$ = new Term{rational};
         }
