@@ -12,6 +12,12 @@ cmake(
         "GMP": "on",
         "BOOST": "on",
         "CMAKE_BUILD_TYPE": "Release",
+        "GMP_DIR": "$EXT_BUILD_DEPS/libgmpxx",
+        "MPFR_INCLUDE_DIRS": "$EXT_BUILD_DEPS/libmpfr/include",  # Hack to force boost to find mpfr
+    },
+    env = {
+        "GMPDIR": "$$EXT_BUILD_DEPS/libmpfr/lib",  # Hack to find the mpfr library
+        "MPFRDIR": "$$EXT_BUILD_DEPS/libmpfr/include",  # Hack to find the mpfr headers
     },
     targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
     out_static_libs = ["libsoplex.a"],
