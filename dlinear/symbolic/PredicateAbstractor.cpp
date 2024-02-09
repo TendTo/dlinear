@@ -10,13 +10,10 @@
 
 #include "PredicateAbstractor.h"
 
-#include <string>
-
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 
-using fmt::print;
 using std::cout;
 using std::set;
 using std::stringstream;

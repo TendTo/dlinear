@@ -13,7 +13,7 @@
 #pragma once
 
 #ifndef DLINEAR_ENABLED_SOPLEX
-#error "SoPlex is not enabled. Please enable it by adding \"--\/\/tools:enable_soplex\" to the bazel command."
+#error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
 // This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.

@@ -13,7 +13,7 @@
 #pragma once
 
 #ifndef DLINEAR_ENABLED_QSOPTEX
-#error "QSopt_ex is not enabled. Please enable it by adding \"--\/\/tools:enable_qsoptex\" to the bazel command."
+#error QSopt_ex is not enabled. Please enable it by adding "--//tools:enable_qsoptex" to the bazel command.
 #endif
 
 #include "dlinear/libs/gmp.h"

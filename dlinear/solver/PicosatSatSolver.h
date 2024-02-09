@@ -10,7 +10,7 @@
 #pragma once
 
 #ifndef DLINEAR_ENABLED_PICOSAT
-#error "PicoSAT is not enabled. Please enable it by adding \"--\/\/tools:enable_picosat\" to the bazel command."
+#error PicoSAT is not enabled. Please enable it by adding "--//tools:enable_picosat" to the bazel command.
 #endif
 
 #include <picosat/picosat.h>
