@@ -11,13 +11,20 @@ Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://g
 
 ## Requirements
 
-- [g++](https://gcc.gnu.org/) and [build-essential](https://packages.ubuntu.com/bionic/build-essential)
-- [Bazel](https://bazel.build/)
-- [gmp](https://gmplib.org/) to compile [qsopt_ex](https://gmplib.org/) and [soplex](https://soplex.zib.de/)
+- [g++](https://gcc.gnu.org/) and [build-essential](https://packages.ubuntu.com/bionic/build-essential) for the standard
+  c++ toolchain
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
+  and [mpfr](https://www.mpfr.org/)
 - [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/)
-- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` and `.mps` files
-- [mpfr](https://www.mpfr.org/) to compile [soplex](https://soplex.zib.de/) with iterative refinement with arbitrary precision
+  and [mpfr](https://www.mpfr.org/)
+- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser
+  for `.smt2` and `.mps` files
+- [Bazel](https://bazel.build/)
+
+### Optional
+
+- [patchelf](https://github.com/NixOS/patchelf) allows to create a fully self-contained shared library. Needs
+  `--//tools:enable_patchelf=True`
 
 ## Default parsing and solving behavior
 
