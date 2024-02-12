@@ -15,11 +15,13 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
     : simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
       predicate_abstractor_{predicate_abstractor} {}
-const std::map<int, Variable> &TheorySolver::GetLinearVarMap() const {
+
+const std::vector<Variable> &TheorySolver::GetLinearVarMap() const {
   DLINEAR_TRACE("TheorySolver::GetLinearVarMap(): theory_col_to_var_ =");
   if (DLINEAR_TRACE_ENABLED) {
-    for (const auto &[theory_idx, var] : theory_col_to_var_) {
-      std::cerr << theory_idx << ": " << var << "\n";
+    for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+      const Variable &var{theory_col_to_var_[theory_col]};
+      std::cerr << theory_col << ": " << var << "\n";
     }
   }
   return theory_col_to_var_;

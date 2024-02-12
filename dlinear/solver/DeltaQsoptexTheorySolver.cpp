@@ -166,11 +166,11 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   qsopt_ex::MpqArray y{rowcount};
 
   model_ = box;
-  for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
-    if (!model_.has_variable(kv.second)) {
+  for (const auto &var : theory_col_to_var_) {
+    if (!model_.has_variable(var)) {
       // Variable should already be present
-      DLINEAR_WARN_FMT("DeltaQsoptexTheorySolver::CheckSat: Adding var {} to model from SAT", kv.second);
-      model_.Add(kv.second);
+      DLINEAR_WARN_FMT("DeltaQsoptexTheorySolver::CheckSat: Adding var {} to model from SAT", var);
+      model_.Add(var);
     }
   }
 
@@ -223,7 +223,8 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   switch (sat_status) {
     case SatResult::SAT_DELTA_SATISFIABLE:
       // Copy delta-feasible point from x into model_
-      for (const auto &[theory_col, var] : theory_col_to_var_) {
+      for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+        const Variable &var{theory_col_to_var_[theory_col]};
         DLINEAR_ASSERT(model_[var].lb() <= mpq_class(x[theory_col]) && mpq_class(x[theory_col]) <= model_[var].ub(),
                        "x[kv.first] must be in bounds");
         model_[var] = x[theory_col];

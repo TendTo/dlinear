@@ -174,11 +174,11 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   int colcount = spx_.numColsRational();
 
   model_ = box;
-  for (const std::pair<const int, Variable> &kv : theory_col_to_var_) {
-    if (!model_.has_variable(kv.second)) {
+  for (const Variable &var : theory_col_to_var_) {
+    if (!model_.has_variable(var)) {
       // Variable should already be present
-      DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", kv.second);
-      model_.Add(kv.second);
+      DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", var);
+      model_.Add(var);
     }
   }
 
@@ -262,7 +262,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     case SatResult::SAT_DELTA_SATISFIABLE:
       if (haveSoln) {
         // Copy delta-feasible point from x into model_
-        for (const auto &[theory_col, var] : theory_col_to_var_) {
+        for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+          const Variable &var{theory_col_to_var_[theory_col]};
           DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
                              gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
                          "val must be in bounds");

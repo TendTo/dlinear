@@ -41,7 +41,7 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   [[maybe_unused]] int status = mpq_QSnew_col(qsx_, mpq_zeroLpNum, mpq_NINFTY, mpq_INFTY, var.get_name().c_str());
   DLINEAR_ASSERT(!status, "Invalid status");
   var_to_theory_col_.emplace(var.get_id(), qsx_col);
-  theory_col_to_var_[qsx_col] = var;
+  theory_col_to_var_.emplace_back(var);
   theory_bound_to_explanation_.emplace_back();
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
@@ -49,8 +49,8 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
 void QsoptexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(mpq_QSget_rowcount(qsx_) == 0, "There must be no rows in the LP solver");
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
-                             [this](const std::pair<int, Variable> &it) {
-                               const auto &[theory_col, var] = it;
+                             [this](const Variable &it) {
+                               const int theory_col = &it - &theory_col_to_var_[0];
                                [[maybe_unused]] int res;
                                mpq_t temp;
                                mpq_init(temp);
@@ -68,7 +68,8 @@ void QsoptexTheorySolver::UpdateModelBounds() {
   // Update the box with the new bounds, since the theory solver won't be called, for there are no constraints.
   mpq_t temp;
   mpq_init(temp);
-  for (const auto &[theory_col, var] : theory_col_to_var_) {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
     [[maybe_unused]] int res;
     res = mpq_QSget_bound(qsx_, theory_col, 'L', &temp);
     DLINEAR_ASSERT(!res, "Invalid res");
@@ -104,16 +105,17 @@ void QsoptexTheorySolver::Reset(const Box &box) {
   // Clear variable bounds
   [[maybe_unused]] const int qsx_cols{mpq_QSget_colcount(qsx_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_cols) == theory_col_to_var_.size(), "Column count mismatch");
-  for (const auto &[col_idx, var] : theory_col_to_var_) {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
     if (box.has_variable(var)) {
       DLINEAR_ASSERT(Infinity::Ninfty() <= box[var].lb(), "Lower bound too low");
       DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "Lower bound must be smaller than upper bound");
       DLINEAR_ASSERT(box[var].ub() <= Infinity::Infty(), "Upper bound too high");
-      mpq_QSchange_bound(qsx_, col_idx, 'L', box[var].lb().get_mpq_t());
-      mpq_QSchange_bound(qsx_, col_idx, 'U', box[var].ub().get_mpq_t());
+      mpq_QSchange_bound(qsx_, theory_col, 'L', box[var].lb().get_mpq_t());
+      mpq_QSchange_bound(qsx_, theory_col, 'U', box[var].ub().get_mpq_t());
     } else {
-      mpq_QSchange_bound(qsx_, col_idx, 'L', mpq_NINFTY);
-      mpq_QSchange_bound(qsx_, col_idx, 'U', mpq_INFTY);
+      mpq_QSchange_bound(qsx_, theory_col, 'L', mpq_NINFTY);
+      mpq_QSchange_bound(qsx_, theory_col, 'U', mpq_INFTY);
     }
   }
 }

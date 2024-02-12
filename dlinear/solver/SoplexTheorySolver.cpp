@@ -59,7 +59,7 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   // obj, coeffs, upper, lower
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
-  theory_col_to_var_[spx_col] = var;
+  theory_col_to_var_.emplace_back(var);
   theory_bound_to_explanation_.emplace_back();
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
 }
@@ -138,7 +138,8 @@ void SoplexTheorySolver::Reset(const Box &box) {
   [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   DLINEAR_ASSERT(2 == simplex_sat_phase_ || static_cast<size_t>(spx_cols) == theory_col_to_var_.size(),
                  "spx_cols must match from_spx_col_.size(), unless we are in phase 2");
-  for (const auto &[theory_col, var] : theory_col_to_var_) {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(0 <= theory_col && theory_col < spx_cols, "theory_col must be in bounds");
     if (box.has_variable(var)) {
       DLINEAR_ASSERT(-soplex::infinity <= box[var].lb(), "lower bound must be >= -infinity");
@@ -157,14 +158,15 @@ void SoplexTheorySolver::Reset(const Box &box) {
 void SoplexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(spx_.numRowsRational() == 0, "There must be no rows in the LP solver");
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
-                             [this](const std::pair<int, Variable> &it) {
-                               const auto &[theory_col, var] = it;
+                             [this](const Variable &it) {
+                               const int theory_col = &it - &theory_col_to_var_[0];
                                return spx_lower_[theory_col] <= spx_upper_[theory_col];
                              }),
                  "All lower bounds must be <= upper bounds");
 
   // Update the box with the new bounds, since the theory solver won't be called, for there are no constraints.
-  for (const auto &[theory_col, var] : theory_col_to_var_) {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
     const Rational &lb{spx_lower_[theory_col]};
     const Rational &ub{spx_upper_[theory_col]};
     Rational val;

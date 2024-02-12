@@ -86,7 +86,7 @@ class TheorySolver {
    */
   [[nodiscard]] const Box &GetModel() const;
 
-  [[nodiscard]] const std::map<int, Variable> &GetLinearVarMap() const;
+  [[nodiscard]] const std::vector<Variable> &GetLinearVarMap() const;
 
   virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
 
@@ -145,7 +145,7 @@ class TheorySolver {
   std::map<Variable::Id, int> var_to_theory_col_;  ///< Variable ⇔ theory column.
                                                    ///< The Variable is the one created by the PredicateAbstractor
                                                    ///< The column is the one used by the theory solver.
-  std::map<int, Variable> theory_col_to_var_;      ///< Theory column ⇔ Variable.
+  std::vector<Variable> theory_col_to_var_;        ///< Theory column ⇔ Variable.
                                                    ///< The column is the one used by the theory solver.
                                                    ///< The Variable is the one created by the PredicateAbstractor
 
