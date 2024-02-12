@@ -164,7 +164,7 @@ void SoplexTheorySolver::UpdateModelBounds() {
                              }),
                  "All lower bounds must be <= upper bounds");
 
-  // Update the box with the new bounds, since the theory solver won't be called, for there are no constraints.
+  // Update the box with the new bounds, since the LP solver won't be called, for there are no constraints.
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
     const Rational &lb{spx_lower_[theory_col]};
@@ -194,11 +194,11 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   for (int i = 0; i < rowcount; ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexSatSolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
-    const Literal &lit = theory_row_to_lit_[i];
+    const Variable &var = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.insert({lit.first, theory_row_to_truth_[i]});
+    explanation.insert({var, theory_row_to_truth_[i]});
     // For each free variable in the literal, add their bounds to the explanation
-    for (const auto &col_var : predicate_abstractor_[lit.first].GetFreeVariables()) {
+    for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
       int theory_col = var_to_theory_col_.at(col_var.get_id());
       const LiteralSet &theory_bound_to_explanation = theory_bound_to_explanation_.at(theory_col);
       explanation.insert(theory_bound_to_explanation.cbegin(), theory_bound_to_explanation.cend());

@@ -43,20 +43,21 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // It will be handled when enabling the literal
   if (IsSimpleBound(formula)) return;
 
-  if (IsEqualTo(formula, truth)) {
+  if (IsEqualTo(formula)) {
     spx_sense_.push_back(LpRowSense::EQ);
-  } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
+  } else if (IsGreaterThan(formula) || IsGreaterThanOrEqualTo(formula)) {
     spx_sense_.push_back(LpRowSense::GE);
-  } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
+  } else if (IsLessThan(formula) || IsLessThanOrEqualTo(formula)) {
     spx_sense_.push_back(LpRowSense::LE);
-  } else if (IsNotEqualTo(formula, truth)) {
+  } else if (IsNotEqualTo(formula)) {
     // This constraint will be ignored, because it is always delta-sat for delta > 0.
     spx_sense_.push_back(LpRowSense::NQ);
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
 
-  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula)).Expand()};
+  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
+  if (needs_expansion_) expr = expr.Expand();
   const int spx_row{spx_.numRowsRational()};
   soplex::DSVectorRational coeffs;
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "spx_row must match spx_sense_.size() - 1");
@@ -94,9 +95,9 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), std::tuple(truth, spx_row, -1));
+  lit_to_theory_row_.emplace(formulaVar.get_id(), std::pair(spx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
-  theory_row_to_lit_.emplace_back(formulaVar, truth);
+  theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(truth);
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
@@ -106,11 +107,11 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const auto &[stored_truth, spx_row, spx_row2] = it_row->second;
+    const auto &[spx_row, spx_row2] = it_row->second;
 
     const LpRowSense sense = spx_sense_[spx_row];
     const mpq_class &rhs{spx_rhs_[spx_row]};
-    if (stored_truth == truth) {
+    if (truth) {
       if (sense == LpRowSense::NQ) return {};
       spx_.changeRangeRational(spx_row,
                                sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs))
@@ -127,7 +128,7 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
     }
     // Update the truth value for the current iteration with the last SAT solver assignment
     theory_row_to_truth_[spx_row] = truth;
-    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", stored_truth == truth ? "" : "¬", spx_row);
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);
     return {};
   }
 

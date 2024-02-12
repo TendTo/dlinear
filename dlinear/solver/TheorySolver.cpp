@@ -14,6 +14,7 @@ namespace dlinear {
 TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config)
     : simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
+      needs_expansion_{config.filename_extension() == "smt2"},
       predicate_abstractor_{predicate_abstractor} {}
 
 const std::vector<Variable> &TheorySolver::GetLinearVarMap() const {

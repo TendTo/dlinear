@@ -100,12 +100,12 @@ class TheorySolver {
 
  protected:
   static bool IsSimpleBound(const Formula &formula);
-  static bool IsEqualTo(const Formula &formula, bool truth);
-  static bool IsNotEqualTo(const Formula &formula, bool truth);
-  static bool IsGreaterThan(const Formula &formula, bool truth);
-  static bool IsLessThan(const Formula &formula, bool truth);
-  static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth);
-  static bool IsLessThanOrEqualTo(const Formula &formula, bool truth);
+  static bool IsEqualTo(const Formula &formula, bool truth = true);
+  static bool IsNotEqualTo(const Formula &formula, bool truth = true);
+  static bool IsGreaterThan(const Formula &formula, bool truth = true);
+  static bool IsLessThan(const Formula &formula, bool truth = true);
+  static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
+  static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
 
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
@@ -121,7 +121,7 @@ class TheorySolver {
    * @param truth whether the formula is to be interpreted as it is (true) or must be inverted (false)
    * @return tuple representing a bound
    */
-  static Bound GetBound(const Formula &formula, bool truth);
+  static Bound GetBound(const Formula &formula, bool truth = true);
 
   /**
    * Update each variable in the model with the bounds passed to the theory solver.
@@ -138,7 +138,10 @@ class TheorySolver {
   virtual void UpdateExplanation(LiteralSet &explanation) = 0;
 
   int simplex_sat_phase_;
-  double precision_;
+  double precision_;            ///< Precision used to check the satisfiability of the theory
+  const bool needs_expansion_;  ///< Whether the formulas need to be expanded before building the LP constraints.
+                                ///< - SMT2 files: the expansion is needed.
+                                ///< - MPS files: the expansion is not needed.
 
   const PredicateAbstractor &predicate_abstractor_;
 
@@ -149,16 +152,15 @@ class TheorySolver {
                                                    ///< The column is the one used by the theory solver.
                                                    ///< The Variable is the one created by the PredicateAbstractor
 
-  std::map<Variable::Id, std::tuple<bool, int, int>>
+  std::map<Variable::Id, std::pair<int, int>>
       lit_to_theory_row_;  ///< Literal ⇔ theory row.
-                           ///< The tuple contains the truth value of the literal when it was added to the LP solver
-                           ///< Up to two rows that map to the constraint the theory solver will check.
-  std::vector<Literal> theory_row_to_lit_;  ///< Theory row ⇔ Literal
-                                            ///< The row is the constraint used by the theory solver.
-                                            ///< The tuple contains the truth value of the literal when it was first
-                                            ///< added to the LP solver,
-  std::vector<bool> theory_row_to_truth_;   ///< Theory row ⇔ truth value
-                                            ///< The row is the constraint used by the theory solver.
+                           ///< The pair contains up to two rows that map to the constraint the theory solver will check
+  std::vector<Variable> theory_row_to_lit_;  ///< Theory row ⇔ Literal
+                                             ///< The row is the constraint used by the theory solver.
+                                             ///< The tuple contains the truth value of the literal when it was first
+                                             ///< added to the LP solver,
+  std::vector<bool> theory_row_to_truth_;    ///< Theory row ⇔ truth value
+                                             ///< The row is the constraint used by the theory solver.
   ///< The truth is the boolean assignment of the literal during this iteration
   std::vector<LiteralSet>
       theory_bound_to_explanation_;  ///< Theory bound ⇔ Explanation
