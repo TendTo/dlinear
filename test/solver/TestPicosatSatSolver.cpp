@@ -27,7 +27,7 @@ class TestPicosatSatSolver : public ::testing::Test {
  protected:
   Config config_;
   SolverGuard guard{config_};
-  PredicateAbstractor* pa_;
+  PredicateAbstractor pa_;
   const Variable x_{"x"}, y_{"y"};
   const Formula f_{x_ > 1};
   const Formula f2_{!(y_ > 2)};
@@ -39,35 +39,32 @@ class TestPicosatSatSolver : public ::testing::Test {
     config_.m_filename() = "test.smt2";
     config_.m_format() = Config::Format::AUTO;
   }
-  PredicateAbstractor& pa() { return *pa_; }
-  void SetUp() override { pa_ = new PredicateAbstractor{}; }
-  void TearDown() override { delete pa_; }
 };
 
-TEST_F(TestPicosatSatSolver, ConstructorDefault) { PicosatSatSolver s{pa()}; }
+TEST_F(TestPicosatSatSolver, ConstructorDefault) { PicosatSatSolver s{pa_}; }
 
-TEST_F(TestPicosatSatSolver, ConstructorConfig) { PicosatSatSolver s{pa(), config_}; }
+TEST_F(TestPicosatSatSolver, ConstructorConfig) { PicosatSatSolver s{pa_, config_}; }
 
 TEST_F(TestPicosatSatSolver, AddFormula) {
-  PicosatSatSolver s{pa(), config_};
+  PicosatSatSolver s{pa_, config_};
   s.AddFormula(f_);
 
   EXPECT_EQ(s.theory_literals().size(), 1u);
-  EXPECT_EQ(pa().var_to_formula_map().size(), 1u);
+  EXPECT_EQ(pa_.var_to_formula_map().size(), 1u);
 }
 
 TEST_F(TestPicosatSatSolver, AddClauseLiteral) {
-  PicosatSatSolver s{pa(), config_};
+  PicosatSatSolver s{pa_, config_};
   s.AddClause(Formula{Variable{"x_", Variable::Type::BOOLEAN}});
 
   EXPECT_EQ(s.theory_literals().size(), 1u);
-  EXPECT_EQ(pa().var_to_formula_map().size(), 0u);
+  EXPECT_EQ(pa_.var_to_formula_map().size(), 0u);
 }
 
 TEST_F(TestPicosatSatSolver, AddClauseDisjunction) {
-  PicosatSatSolver s{pa(), config_};
+  PicosatSatSolver s{pa_, config_};
   s.AddClause(Formula{Variable{"x_", Variable::Type::BOOLEAN}} || Formula{Variable{"y_", Variable::Type::BOOLEAN}});
 
   EXPECT_EQ(s.theory_literals().size(), 2u);
-  EXPECT_EQ(pa().var_to_formula_map().size(), 0u);
+  EXPECT_EQ(pa_.var_to_formula_map().size(), 0u);
 }

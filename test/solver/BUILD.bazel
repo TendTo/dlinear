@@ -36,6 +36,15 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
+    name = "test_soplex_theory_solver",
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver",
+        "//test/symbolic:test_symbolic_utils",
+    ],
+)
+
+dlinear_cc_googletest(
     name = "test_smt2",
     data = glob(["smt2/*.smt2"]),
     deps = [

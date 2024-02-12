@@ -21,25 +21,13 @@ using dlinear::SolverOutput;
 using dlinear::SolverResult;
 using std::unique_ptr;
 
+namespace {
 std::vector<std::string> getFiles() {
   const std::string path = "test/solver/smt2";
   std::vector<std::string> files;
   for (const auto& entry : std::filesystem::directory_iterator(path)) files.emplace_back(entry.path());
   return files;
 }
-
-class TestSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
- protected:
-  Config config_;
-  explicit TestSmt2() : config_{} {
-    DLINEAR_LOG_INIT_VERBOSITY(2);
-    config_.m_precision() = 0;
-  }
-};
-
-INSTANTIATE_TEST_SUITE_P(TestSmt2, TestSmt2,
-                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(getFiles()),
-                                            ::testing::Values(0.0, 0.1)));
 
 std::vector<SolverResult> expected_results(SolverResult res) {
   switch (res) {
@@ -56,6 +44,20 @@ std::vector<SolverResult> expected_results(SolverResult res) {
       DLINEAR_UNREACHABLE();
   }
 }
+}  // namespace
+
+class TestSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
+ protected:
+  Config config_;
+  explicit TestSmt2() : config_{} {
+    DLINEAR_LOG_INIT_VERBOSITY(2);
+    config_.m_precision() = 0;
+  }
+};
+
+INSTANTIATE_TEST_SUITE_P(TestSmt2, TestSmt2,
+                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(getFiles()),
+                                            ::testing::Values(0.0, 0.1)));
 
 TEST_P(TestSmt2, TestSmt2InputAgainstExpectedOutputExhaustive) {
   const auto& [lp_solver, filename, precision] = GetParam();
@@ -65,6 +67,9 @@ TEST_P(TestSmt2, TestSmt2InputAgainstExpectedOutputExhaustive) {
   Solver s{config_};
   const SolverResult result = s.CheckSat().result();
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
+  if (result != s.GetExpected()) {
+    std::cout << "Expected: " << s.GetExpected() << " Actual: " << result << std::endl;
+  }
 }
 
 #if 0
