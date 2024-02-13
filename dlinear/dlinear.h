@@ -8,8 +8,8 @@
 #pragma once
 
 #include "dlinear/api/api.h"
-#include "dlinear/solver/Logic.h"
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"

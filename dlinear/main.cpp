@@ -6,7 +6,7 @@
  * Entry point of dLinear.
  * Run the dLinear program.
  *
- * Use the @verbatim-h@verbatim flag to show the help tooltip.
+ * Use the @verbatim-h @verbatim flag to show the help tooltip.
  */
 #include <csignal>
 

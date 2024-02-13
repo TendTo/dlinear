@@ -140,7 +140,7 @@ class SatSolver {
    * This method is called from @ref GetMainActiveLiterals.
    * The set of literals is updated by reference.
    *
-   * @param lits[out] set of literals
+   * @param[out] lits set of literals
    */
   void GetMainActiveLiterals(std::set<int> &lits) const;
   /**

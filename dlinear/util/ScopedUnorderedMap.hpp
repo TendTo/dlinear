@@ -33,8 +33,9 @@ class ScopedUnorderedMap {
   using size_type = typename UnorderedMapType::size_type;
   using const_iterator = typename UnorderedMapType::const_iterator;
 
-  // To backtrack, we need to record the actions applied to this
-  // container.
+  /**
+   * Action to perform on the scoped unordered map.
+   */
   enum class ActionKind {
     INSERT,  ///< Insert(k, v) means that (k, v) is inserted.
     UPDATE,  ///< Update(k, v) means that (k, v) was replaced by a new value.

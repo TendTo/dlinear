@@ -7,7 +7,7 @@
  * Used to store the configuration of the program.
  *
  * Simple dataclass to store the configuration of the program.
- * It is generated from @ref ArgParser.
+ * It is generated from @ref dlinear::ArgParser.
  */
 #pragma once
 
@@ -30,21 +30,34 @@ namespace dlinear {
 
 class Config {
  public:
+  /**
+   * LP solver used by the theory solver.
+   * @see Config::lp_solver
+   */
   enum class LPSolver {
     SOPLEX = 0,
     QSOPTEX = 1,
   };
+  /**
+   * Default phase for the SAT solver.
+   */
   enum class SatDefaultPhase {
     False = 0,
     True = 1,
     JeroslowWang = 2,  ///< Default option
     RandomInitialPhase = 3
   };
+  /**
+   * Format of the input file.
+   */
   enum class Format {
     AUTO = 0,  ///< Default option
     SMT2 = 1,
     MPS = 2,
   };
+  /**
+   * LP mode used by the LP solver.
+   */
   enum class LPMode {
     AUTO = 0,  ///< Default option
     PURE_PRECISION_BOOSTING = 1,

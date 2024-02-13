@@ -95,7 +95,7 @@ class MpsDriver {
    * In the mps file, the objective name is defined by:
    *
    * OBJNAME
-   *  <name>
+   *   name
    * @param row name of the objective row
    */
   void ObjectiveName(const std::string &row);
@@ -264,7 +264,7 @@ class MpsDriver {
 
   /**
    * The rows of the problem. Contains a map between each variable, stored as an expression, and the
-   * coefficient. It will be used to build the final row_expression using the @ref ExpressionAddFactory class.
+   * coefficient. It will be used to build the final row_expression using the ExpressionAddFactory class.
    * The result is then combined with the rhs value and the correct row sense to build the Formula that makes up the
    * assertion.
    */

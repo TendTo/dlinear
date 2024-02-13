@@ -35,6 +35,11 @@ namespace dlinear {
 template <typename T>
 class OptionValue {
  public:
+  /**
+   * Type of the value.
+   * Each type encodes a priority, and an update is executed only if it is requested
+   * by the same type or a higher type.
+   */
   enum class Type {
     DEFAULT,            ///< Default value
     FROM_FILE,          ///< Updated by a set-option/set-info in a file

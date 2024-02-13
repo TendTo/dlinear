@@ -159,10 +159,12 @@ Config ArgParser::toConfig() const {
     config.m_continuous_output().set_from_command_line(parser_.get<bool>("continuous-output"));
   if (parser_.is_used("debug-parsing"))
     config.m_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
-  if (parser_.is_used("debug-scanning")) config.m_debug_scanning().set_from_command_line(true);
+  if (parser_.is_used("debug-scanning"))
+    config.m_debug_scanning().set_from_command_line(parser_.get<bool>("debug-scanning"));
   if (parser_.is_used("format")) config.m_format().set_from_command_line(parser_.get<Config::Format>("format"));
   if (parser_.is_used("forall-polytope"))
     config.m_use_polytope_in_forall().set_from_command_line(parser_.get<bool>("forall-polytope"));
+  if (parser_.is_used("in")) config.m_read_from_stdin().set_from_command_line(parser_.get<bool>("in"));
   if (parser_.is_used("lp-solver"))
     config.m_lp_solver().set_from_command_line(parser_.get<Config::LPSolver>("lp-solver"));
   if (parser_.is_used("lp-mode")) config.m_lp_mode().set_from_command_line(parser_.get<Config::LPMode>("lp-mode"));
@@ -205,16 +207,19 @@ void ArgParser::validateOptions() {
     DLINEAR_INVALID_ARGUMENT("--in", "cannot be set if file is specified");
   if (!parser_.is_used("in") && !parser_.is_used("file"))
     DLINEAR_INVALID_ARGUMENT("file", "must be specified if --in is not used");
-  // Check file extension
-  Config::Format format = parser_.get<Config::Format>("format");
-  string extension{get_extension(parser_.get<string>("file"))};
-  if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
-    DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
-  } else if ((format == Config::Format::SMT2 && extension != "smt2") ||
-             (format == Config::Format::MPS && extension != "mps")) {
-    DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
+  // Check file extension if a file is provided
+  if (parser_.is_used("file")) {
+    Config::Format format = parser_.get<Config::Format>("format");
+    string extension{get_extension(parser_.get<string>("file"))};
+    if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
+      DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
+    } else if ((format == Config::Format::SMT2 && extension != "smt2") ||
+               (format == Config::Format::MPS && extension != "mps")) {
+      DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
+    }
   }
-  if (!parser_.get<bool>("in") && !file_exists(parser_.get<string>("file")))
+  // Check if the file exists
+  if (!parser_.is_used("in") && !file_exists(parser_.get<string>("file")))
     DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
   if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
   if (parser_.get<bool>("skip-check-sat") && parser_.get<bool>("produce-models"))

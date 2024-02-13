@@ -67,14 +67,11 @@ class Context {
   /**
    * Checks the satisfiability of the asserted formulas, and sets
    * @p actual_precision to the actual max infeasibility where
-   * appropriate. If the result is SAT_SATISFIABLE or SAT_DELTA_SATISFIABLE,
-   * @p model is set to the output model.
+   * appropriate.
    *
-   * @param actual_precision[in,out] initialized with the desired precision, it will be
+   * @param[in,out] actual_precision initialized with the desired precision, it will be
    * set to the lowest possible precision below the given one that satisfies the
    * constraints.
-   * @param model[out] is set to the model if the result is SAT_SATISFIABLE or
-   * SAT_DELTA_SATISFIABLE.
    * @return the satisfiability result.
    */
   SatResult CheckSat(mpq_class *actual_precision);
