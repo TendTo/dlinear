@@ -50,7 +50,7 @@ typedef dlinear::smt2::Smt2Parser::token_type token_type;
 
 /* the manual says "somewhat more optimized" -
  * however, it also prevents interactive use */
-/* %option batch */
+%option batch
 
 /* enable scanner to generate debug output. disable this for release
  * versions. */

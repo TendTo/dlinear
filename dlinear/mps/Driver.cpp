@@ -43,7 +43,6 @@ MpsDriver::MpsDriver(Context &context)
 bool MpsDriver::parse_stream(istream &in, const string &sname) {
   static Stats stat{DLINEAR_INFO_ENABLED, "MPS Driver", "Total time spent in MPS parsing"};
   TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true);
-
   stream_name_ = sname;
 
   MpsScanner scanner(&in);
@@ -52,7 +51,6 @@ bool MpsDriver::parse_stream(istream &in, const string &sname) {
 
   MpsParser parser(*this);
   parser.set_debug_level(debug_parsing_);
-
   return parser.parse() == 0;
 }
 
