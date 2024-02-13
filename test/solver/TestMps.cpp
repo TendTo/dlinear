@@ -31,7 +31,7 @@ INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/mps")),
                                             ::testing::Values(0.0, 0.1)));
 
-TEST_P(TestMps, TestMpsInputAgainstExpectedOutputExhaustive) {
+TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   const auto& [lp_solver, filename, precision] = GetParam();
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;

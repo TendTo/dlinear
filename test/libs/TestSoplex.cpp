@@ -9,7 +9,7 @@
 
 #include "dlinear/libs/soplex.h"
 
-TEST(TestSoplex, TestSoplex) {
+TEST(TestSoplex, Soplex) {
   soplex::SoPlex soplex;
   EXPECT_NO_THROW(soplex.printVersion());
 }

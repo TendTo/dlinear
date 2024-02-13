@@ -33,7 +33,7 @@ INSTANTIATE_TEST_SUITE_P(TestGmp, TestGmp,
                                            make_pair("E-2", mpq_class{1, 100}), make_pair("15/6", mpq_class{15, 6}),
                                            make_pair("0/1010", mpq_class{0})));
 
-TEST(TestGmp, TestFloorFractions) {
+TEST(TestGmp, FloorFractions) {
   EXPECT_EQ(floor(mpq_class{1, 2}), 0);
   EXPECT_EQ(floor(mpq_class{3, 2}), 1);
   EXPECT_EQ(floor(mpq_class{7, 3}), 2);
@@ -42,13 +42,13 @@ TEST(TestGmp, TestFloorFractions) {
   EXPECT_EQ(floor(mpq_class{-7, 3}), -3);
 }
 
-TEST(TestGmp, TestFloorIntegers) {
+TEST(TestGmp, FloorIntegers) {
   EXPECT_EQ(floor(mpq_class{1}), 1);
   EXPECT_EQ(floor(mpq_class{-1}), -1);
   EXPECT_EQ(floor(mpq_class{0}), 0);
 }
 
-TEST(TestGmp, TestCeilFractions) {
+TEST(TestGmp, CeilFractions) {
   EXPECT_EQ(ceil(mpq_class{1, 2}), 1);
   EXPECT_EQ(ceil(mpq_class{3, 2}), 2);
   EXPECT_EQ(ceil(mpq_class{7, 3}), 3);
@@ -57,13 +57,13 @@ TEST(TestGmp, TestCeilFractions) {
   EXPECT_EQ(ceil(mpq_class{-7, 3}), -2);
 }
 
-TEST(TestGmp, TestCeilIntegers) {
+TEST(TestGmp, CeilIntegers) {
   EXPECT_EQ(ceil(mpq_class{1}), 1);
   EXPECT_EQ(ceil(mpq_class{-1}), -1);
   EXPECT_EQ(ceil(mpq_class{0}), 0);
 }
 
-TEST(TestGmp, TestToMpqClass) {
+TEST(TestGmp, ToMpqClass) {
   mpq_t a;
   mpq_init(a);
 
@@ -79,7 +79,7 @@ TEST(TestGmp, TestToMpqClass) {
   mpq_clear(a);
 }
 
-TEST(TestGmp, TestToMpqT) {
+TEST(TestGmp, ToMpqT) {
   mpq_class a{1};
   mpq_t b;
   mpq_init(b);
@@ -98,19 +98,19 @@ TEST(TestGmp, TestToMpqT) {
   mpq_clear(b);
 }
 
-TEST_P(TestGmp, TesConvertStringToMpq) {
+TEST_P(TestGmp, ConvertStringToMpq) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
   EXPECT_EQ(string_to_mpq(s), expected);
 }
 
-TEST_P(TestGmp, TesConvertStringToMpqPrefixPlus) {
+TEST_P(TestGmp, ConvertStringToMpqPrefixPlus) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
   EXPECT_EQ(string_to_mpq("+" + s), expected);
 }
 
-TEST_P(TestGmp, TesConvertStringToMpqPrefixMinus) {
+TEST_P(TestGmp, ConvertStringToMpqPrefixMinus) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
   EXPECT_EQ(string_to_mpq("-" + s), -expected);

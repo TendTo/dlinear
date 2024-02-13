@@ -20,7 +20,7 @@ TEST(TestQsoptEx, QSXStartAndFinish) {
   EXPECT_NO_THROW(QSXFinish());
 }
 
-TEST(TestQsoptEx, TestArray) {
+TEST(TestQsoptEx, Array) {
   const uint n{10};
   mpq_class a{1};
   MpqArray array{n};
@@ -32,7 +32,7 @@ TEST(TestQsoptEx, TestArray) {
   EXPECT_EQ(array.size(), n);
 }
 
-TEST(TestQsoptEx, TestStringToMpqPtr) {
+TEST(TestQsoptEx, StringToMpqPtr) {
   EXPECT_EQ(*StringToMpqPtr("1"), mpq_class{1});
   EXPECT_EQ(*StringToMpqPtr("0"), mpq_class{0});
   EXPECT_EQ(*StringToMpqPtr("-1"), mpq_class{-1});
@@ -40,7 +40,7 @@ TEST(TestQsoptEx, TestStringToMpqPtr) {
   EXPECT_EQ(*StringToMpqPtr("1/20"), mpq_class(1, 20));
 }
 
-TEST(TestQsoptEx, TestStringToMpq) {
+TEST(TestQsoptEx, StringToMpq) {
   EXPECT_EQ(StringToMpq("1"), mpq_class{1});
   EXPECT_EQ(StringToMpq("0"), mpq_class{0});
   EXPECT_EQ(StringToMpq("-1"), mpq_class{-1});

@@ -240,3 +240,11 @@ TEST_F(TestArgParser, WrongSilentWithVerbosity) {
   const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--silent", "--verbosity", "1"};
   EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --verbosity");
 }
+
+TEST_F(TestArgParser, In) {
+  const int argc = 2;
+  const char *argv[argc] = {"dlinear", "--in"};
+  parser_.parse(argc, argv);
+  auto config = parser_.toConfig();
+  EXPECT_TRUE(config.read_from_stdin());
+}

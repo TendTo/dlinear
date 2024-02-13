@@ -14,6 +14,6 @@ using dlinear::smt2::Command;
 using dlinear::smt2::CommandCell;
 using dlinear::smt2::exit_command;
 
-TEST(TestCommand, Test) {
+TEST(TestCommand, Command) {
   EXPECT_NO_THROW(exit_command());
 }

@@ -31,7 +31,7 @@ INSTANTIATE_TEST_SUITE_P(TestSmt2, TestSmt2,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/smt2")),
                                             ::testing::Values(0.0, 0.1)));
 
-TEST_P(TestSmt2, TestSmt2InputAgainstExpectedOutputExhaustive) {
+TEST_P(TestSmt2, Smt2InputAgainstExpectedOutput) {
   const auto& [lp_solver, filename, precision] = GetParam();
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;

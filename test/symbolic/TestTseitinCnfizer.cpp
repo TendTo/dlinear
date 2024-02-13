@@ -77,7 +77,7 @@ class TestTseitinCnfizer : public ::testing::Test {
   TseitinCnfizer cnfizer_;
 };
 
-TEST_F(TestTseitinCnfizer, Test) {
+TEST_F(TestTseitinCnfizer, CnfChecker) {
   vector<Formula> formulas;
   formulas.emplace_back(b1_);
   formulas.push_back(!b1_);

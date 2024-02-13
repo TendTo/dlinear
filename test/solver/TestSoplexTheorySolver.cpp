@@ -59,7 +59,7 @@ class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
 
 INSTANTIATE_TEST_SUITE_P(TestSoplexTheorySolver, TestSoplexTheorySolver, ::testing::Values(0.0, 0.1));
 
-TEST_P(TestSoplexTheorySolver, TestAddVariable) {
+TEST_P(TestSoplexTheorySolver, AddVariable) {
   const int theory_col = 0;
   config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_, config_};
@@ -76,7 +76,7 @@ TEST_P(TestSoplexTheorySolver, TestAddVariable) {
   EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
 }
 
-TEST_P(TestSoplexTheorySolver, TestEnableLiterals) {
+TEST_P(TestSoplexTheorySolver, EnableLiterals) {
   config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_, config_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
@@ -87,7 +87,7 @@ TEST_P(TestSoplexTheorySolver, TestEnableLiterals) {
   s.EnableLiterals(literals);
 }
 
-TEST_P(TestSoplexTheorySolver, TestResetBoxEmpty) {
+TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
   const int theory_col = 0;
   config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_, config_};
@@ -101,7 +101,7 @@ TEST_P(TestSoplexTheorySolver, TestResetBoxEmpty) {
   EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
 }
 
-TEST_P(TestSoplexTheorySolver, TestResetBoxBounds) {
+TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
   const int theory_col = 0;
   mpq_class lb = 5, ub = 10;
   Box box{};
