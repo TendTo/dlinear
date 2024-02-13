@@ -228,6 +228,7 @@ inline mpq_class string_to_mpq(std::string_view str) {
   str_number[digits + 2 + n_decimals] = '\0';
 
   mpq_class res{str_number, 10};
+  delete[] str_number;
   res.canonicalize();
   return is_exp_positive ? mpq_class{res * mult} : res / mult;
 }
