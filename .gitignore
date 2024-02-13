@@ -92,4 +92,7 @@ tests/
 /mps/
 /smt2/
 
+# Checks
+valgrind-out.txt
+
 !.gitkeep
