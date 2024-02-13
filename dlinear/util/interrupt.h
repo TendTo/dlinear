@@ -15,7 +15,7 @@ extern volatile std::atomic_bool g_interrupted;  ///< Flag to indicate an interr
 
 /**
  * Signal handler for SIGINT.
- * Set the @ref g_interrupted flag to true.
+ * Set the @link g_interrupted @endlink flag to true.
  */
 void interrupt_handler(int);
 

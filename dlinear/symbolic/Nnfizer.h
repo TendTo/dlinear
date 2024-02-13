@@ -1,5 +1,5 @@
 /**
- * @file nnfizer.h
+ * @file Nnfizer.h
  * @author dlinear
  * @date 15 Aug 2023
  * @copyright 2023 dlinear
@@ -22,13 +22,13 @@ namespace dlinear {
  * Implementation of NNF (Negation Normal Form) conversion.
  * When @code push_negation_into_relationals @endcode is true, it pushed
  * negations into relational formulas by flipping relational
- * @example ¬(x >= 10) becomes (x < 10).
+ * @par Example:
+ *   @f$ ¬(x >= 10) @f$ becomes @f$ (x < 10) @f$.
  *
  * @see https://en.wikipedia.org/wiki/Negation_normal_form
  */
 class Nnfizer {
  public:
-  /// Converts @p f into an equivalent formula @c f' in NNF.
   /**
    * Convert a @p f into an equivalent formula @c f' in NNF.
    * @param f Formula to be converted.

@@ -25,6 +25,9 @@
 
 namespace dlinear {
 
+/**
+ * Describes the bound of a linear program variable.
+ */
 enum class LpColBound {
   U,   ///< Upper bound
   SU,  ///< Strict upper bound

@@ -24,6 +24,9 @@
 
 namespace dlinear {
 
+/**
+ * Sense of a linear programming row describing a constraint.
+ */
 enum class LpRowSense {
   GT,  ///< Greater than
   GE,  ///< Greater than or equal to

@@ -1,5 +1,5 @@
 /**
- * @file ScopedUnorderedSet.h
+ * @file ScopedUnorderedSet.hpp
  * @author dlinear
  * @date 18 Aug 2023
  * @copyright 2023 dlinear

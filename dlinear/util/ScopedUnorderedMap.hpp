@@ -1,5 +1,5 @@
 /**
- * @file ScopedUnorderedMap.h
+ * @file ScopedUnorderedMap.hpp
  * @author dlinear
  * @date 17 Aug 2023
  * @copyright 2023 dlinear

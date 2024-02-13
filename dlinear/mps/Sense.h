@@ -18,6 +18,9 @@
 
 namespace dlinear::mps {
 
+/**
+ * Sense of a constraint row.
+ */
 enum class Sense {
   L,  ///< Less or equal to
   E,  ///< Equal to

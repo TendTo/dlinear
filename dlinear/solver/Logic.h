@@ -14,6 +14,9 @@
 
 namespace dlinear {
 
+/**
+ * Describes the logic the SMT2 file is using.
+ */
 enum class Logic {
   QF_NRA,      ///< Quantifier free non-linear real arithmetic
   QF_NRA_ODE,  ///< Quantifier free non-linear real arithmetic with ODEs

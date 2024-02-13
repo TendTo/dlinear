@@ -20,6 +20,9 @@
 
 namespace dlinear {
 
+/**
+ * Result of running the LP solver over the input problem.
+ */
 enum class LpResult {
   LP_NO_RESULT,      ///< No result has been obtained yet.
   LP_UNSOLVED,       ///< The problem has not been solved. An error may have occurred.

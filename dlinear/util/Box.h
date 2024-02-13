@@ -25,7 +25,9 @@ class Box {
    public:
     /**
      * Constructs an interval from a string.
-     * @example Box::Interval::fromString("100"); // [-100, 100]
+     * @code
+     * Box::Interval::fromString("100"); // [-100, 100]
+     * @endcode
      * @param s value used to construct the interval
      * @return newly constructed interval
      */

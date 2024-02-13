@@ -1,12 +1,12 @@
 /**
- * @file main.h
+ * @file main.cpp
  * @author dlinear
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
  * Entry point of dLinear.
  * Run the dLinear program.
  *
- * Use the @verbatim-h @verbatim flag to show the help tooltip.
+ * Use the @verbatim-h @endverbatim flag to show the help tooltip.
  */
 #include <csignal>
 
