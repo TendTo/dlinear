@@ -5,3 +5,7 @@
 # in Windows via a file share from Linux, the scripts will work.
 *.{cmd,[cC][mM][dD]} text eol=crlf
 *.{bat,[bB][aA][tT]} text eol=crlf
+
+# Ignore language of test files
+test/solver/smt2/* linguist-vendored
+test/solver/mps/* linguist-vendored

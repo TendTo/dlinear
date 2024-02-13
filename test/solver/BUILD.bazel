@@ -1,4 +1,4 @@
-load("//tools:dlinear.bzl", "dlinear_cc_binary", "dlinear_cc_googletest", "dlinear_cc_library", "solver_test_all")
+load("//tools:dlinear.bzl", "dlinear_cc_googletest", "dlinear_cc_library")
 
 dlinear_cc_library(
     name = "test_solver_utils",
@@ -63,15 +63,3 @@ dlinear_cc_googletest(
         "//dlinear/solver",
     ],
 )
-
-dlinear_cc_binary(
-    name = "test_solver_binary",
-    srcs = ["MainTestSolver.cpp"],
-    deps = [
-        "//dlinear/solver",
-        "//dlinear/util:argparser",
-        "//dlinear/util:config",
-    ],
-)
-
-solver_test_all()
