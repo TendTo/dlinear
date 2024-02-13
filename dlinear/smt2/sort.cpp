@@ -26,7 +26,7 @@ Sort ParseSort(const string &s) {
   if (s == "Binary") {
     return Sort::Binary;
   }
-  DLINEAR_RUNTIME_ERROR_FMT("{} is not one of {Real, Int, Bool}.", s);
+  DLINEAR_RUNTIME_ERROR_FMT("{} is not one of [Real, Int, Bool, Binary].", s);
 }
 
 ostream &operator<<(ostream &os, const Sort &sort) {

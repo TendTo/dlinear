@@ -14,8 +14,9 @@
 
 #include <gmpxx.h>
 
-#include <cassert>
 #include <cmath>
+
+#include "dlinear/util/exception.h"
 
 namespace std {
 
@@ -96,6 +97,14 @@ const inline mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast
 inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(mpq); }  // NOLINT
 
 /**
+ * Check if the char is either a digit or a plus/minus sign.
+ * @param c The char to check.
+ * @return True if the char is a digit or a plus/minus sign.
+ * @return False otherwise.
+ */
+inline bool is_digit_or_sign(char c) { return ::isdigit(c) || c == '+' || c == '-'; }
+
+/**
  * Convert a string to a mpq_class.
  *
  * The number is converted exactly, without any rounding,
@@ -117,12 +126,18 @@ inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &
  *  string_to_mpq("E+2") == 1/1 * 10^2
  *  string_to_mpq("15/6") == 15/6
  *  string_to_mpq("0/1010") == 0
+ *  string_to_mpq("inf") == 1e100
+ *  string_to_mpq("-inf") == -1e100
  *  @endcode
+ *  @note Only a single leading + or - sign is allowed.
  *  @warning If the string is not a valid rational number, the result is undefined.
  * @param str The string to convert.
  * @return The mpq_class instance.
  */
 inline mpq_class string_to_mpq(std::string_view str) {
+  // Remove leading + and - sign
+  bool is_negative = str[0] == '-';
+  if (is_negative || str[0] == '+') str.remove_prefix(1);
   if (str == "inf") return {1e100};
   if (str == "-inf") return {-1e100};
 
@@ -131,19 +146,19 @@ inline mpq_class string_to_mpq(std::string_view str) {
   if (symbol_pos == std::string::npos) {
     const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
     if (start_pos == std::string_view::npos) return {0};
-    assert(std::all_of(str.cbegin() + start_pos, str.cend(), ::isdigit));
-    return mpq_class{str.data() + start_pos};
+    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
+    return is_negative ? -mpq_class{str.data() + start_pos} : mpq_class{str.data() + start_pos};
   }
 
   // case 2: string is given in nom/denom format
   if (str[symbol_pos] == '/') {
     mpq_class res{str.data()};
     res.canonicalize();
-    return res;
+    return is_negative ? -res : res;
   }
 
   const size_t e_pos = str[symbol_pos] == 'e' || str[symbol_pos] == 'E' ? symbol_pos : str.find_first_of("Ee");
-  mpz_class mult{1};
+  mpz_class mult{is_negative ? -1 : 1};
   bool is_exp_positive = true;
 
   // case 3a: string is given as base-10 decimal number (e)
@@ -152,10 +167,11 @@ inline mpq_class string_to_mpq(std::string_view str) {
     is_exp_positive = exponent >= 0;
     mult = 10;
     mpz_pow_ui(mult.get_mpz_t(), mult.get_mpz_t(), std::abs(exponent));
+    if (is_negative) mult = -mult;
     // Remove the exponent
     str = str.substr(0, e_pos);
 
-    if (str.empty()) return is_exp_positive ? mpq_class{mult} : mpq_class{1, mult};
+    if (str.empty()) return is_exp_positive ? mpq_class{mult} : is_negative ? mpq_class{-1, -mult} : mpq_class{1, mult};
   }
 
   const size_t &len = str.length();
@@ -163,7 +179,7 @@ inline mpq_class string_to_mpq(std::string_view str) {
   // case 3b: string does not contain a . , only an exponent E
   if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
     int plus_pos = str[0] == '+' ? 1 : 0;
-    assert(std::all_of(str.cbegin() + plus_pos, str.cend(), ::isdigit));
+    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
 
     char *const str_number = new char[len - plus_pos + 1];
     memcpy(str_number, str.data() + plus_pos, len - plus_pos);
@@ -193,8 +209,9 @@ inline mpq_class string_to_mpq(std::string_view str) {
   }
 
   const size_t n_decimals = len - dot_pos - 1;
-  assert(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, ::isdigit));
-  assert(std::all_of(str.begin() + dot_pos + 1, str.cend(), ::isdigit));
+  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, is_digit_or_sign),
+                     "Invalid number: {}", str);
+  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
   char *const str_number = new char[digits + n_decimals + 3];
 
   if (digits > n_decimals) {

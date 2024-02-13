@@ -22,15 +22,16 @@ INSTANTIATE_TEST_SUITE_P(TestGmp, TestGmp,
                                            make_pair("0.", mpq_class{0}), make_pair("0.0", mpq_class{0}),
                                            make_pair(".0", mpq_class{0}), make_pair("15", mpq_class{15}),
                                            make_pair("1.5", mpq_class{15, 10}), make_pair("0000015.", mpq_class{15}),
-                                           make_pair(".15", mpq_class{15, 100}),
+                                           make_pair(".15", mpq_class{15, 100}), make_pair(".15", mpq_class{15, 100}),
                                            make_pair(".0015", mpq_class{15, 10000}), make_pair("15.0", mpq_class{15}),
                                            make_pair("15.00", mpq_class{15}), make_pair("0150", mpq_class{150}),
                                            make_pair("1.5E2", mpq_class{150}), make_pair("1.5E-2", mpq_class{15, 1000}),
                                            make_pair(".e+2", mpq_class{0}), make_pair(".5E+2", mpq_class{50}),
                                            make_pair("000000.5E+2", mpq_class{50}),
                                            make_pair("000000.005E-2", mpq_class{5, 100000}),
-                                           make_pair("E+2", mpq_class{100}), make_pair("E-2", mpq_class{1, 100}),
-                                           make_pair("15/6", mpq_class{15, 6}), make_pair("0/1010", mpq_class{0})));
+                                           make_pair("E+2", mpq_class{100}), make_pair("7E+2", mpq_class{700}),
+                                           make_pair("E-2", mpq_class{1, 100}), make_pair("15/6", mpq_class{15, 6}),
+                                           make_pair("0/1010", mpq_class{0})));
 
 TEST(TestGmp, TestFloorFractions) {
   EXPECT_EQ(floor(mpq_class{1, 2}), 0);
@@ -101,4 +102,16 @@ TEST_P(TestGmp, TesConvertStringToMpq) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
   EXPECT_EQ(string_to_mpq(s), expected);
+}
+
+TEST_P(TestGmp, TesConvertStringToMpqPrefixPlus) {
+  auto [s, expected] = GetParam();
+  expected.canonicalize();
+  EXPECT_EQ(string_to_mpq("+" + s), expected);
+}
+
+TEST_P(TestGmp, TesConvertStringToMpqPrefixMinus) {
+  auto [s, expected] = GetParam();
+  expected.canonicalize();
+  EXPECT_EQ(string_to_mpq("-" + s), -expected);
 }
