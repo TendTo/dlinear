@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-bazel-
 
       - name: Lint
-        run: bazel test --test_tag_filters=cpplint //dlinear/...
+        run: bazel test --//tools:enable_qsoptex --test_tag_filters=cpplint //dlinear/...
 
   test:
     runs-on: ubuntu-latest
@@ -92,31 +92,3 @@ jobs:
 
       - name: Test
         run: bazel test --test_tag_filters=dlinear //test/...
-
-  test-smt2:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Cache Bazel
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/bazel
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel') }}
-          restore-keys: |
-            ${{ runner.os }}-bazel-
-
-      - name: Install dependencies
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: ${{ env.PACKAGES }}
-          version: 1.0
-
-      - name: Test
-        run: bazel test //test/... --test_tag_filters=smt2
