@@ -81,13 +81,17 @@ mps_yycolumn += yyleng;
 %}
 
 whitespace      [ \t\r]
-comment         ^\*[^\n\r]*
+comment_start   ^\*
+comment         {comment_start}[^\n\r]*
 symbol          [^ \t\r\n'"]+
+rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?) 
 
 /*** End of Declarations ***/
 
 %x NAME_SECTION
 %x END_SECTION
+%x COMMENT
+%x COMMAND
 
 %% /*** Regular Expressions Part ***/
 
@@ -98,7 +102,19 @@ symbol          [^ \t\r\n'"]+
 
  /*** BEGIN - lexer rules ***/
 
-{comment}[\n\r]+                { mps_yycolumn=1; }
+
+
+{comment_start}                 { BEGIN(COMMENT); }
+<COMMENT>[^\n\r]*               { }
+<COMMENT>[\n]                   { BEGIN(INITIAL); }
+
+{comment_start}{whitespace}*"@set-info"{whitespace}   { BEGIN(COMMAND); return token::SET_INFO; }
+{comment_start}{whitespace}*"@set-option"{whitespace} { BEGIN(COMMAND); return token::SET_OPTION; }
+
+<COMMAND>{rational}             { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
+<COMMAND>{symbol}               { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
+<COMMAND>{whitespace}+          {  }
+<COMMAND>[\n]                   { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
 
 (?i:NAME)                       { BEGIN(NAME_SECTION); return token::NAME_DECLARATION; }
 (?i:ROWS)                       { return token::ROWS_DECLARATION; }

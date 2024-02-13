@@ -68,15 +68,17 @@ using dlinear::gmp::string_to_mpq;
 
 %token NAME_DECLARATION ROWS_DECLARATION COLUMNS_DECLARATION RHS_DECLARATION RANGES_DECLARATION BOUNDS_DECLARATION OBJSENSE_DECLARATION OBJNAME_DECLARATION ENDATA
 %token MIN MAX
+%token SET_INFO SET_OPTION
 
 %token                 END          0        "end of file"
+%token <stringVal>     RATIONAL              "rational used in comments"
 %token <stringVal>     SYMBOL                "symbol"
 %token <stringVal>     QUOTED_SYMBOL         "symbol in quotes"
 %token <senseVal>      SENSE                 "sense. Acceptable values are: E, L, G, N"
 %token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
 %token <boundTypeVal>  BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 
-%destructor { delete $$; } SYMBOL
+%destructor { delete $$; } SYMBOL QUOTED_SYMBOL
 
 %{
 
@@ -98,6 +100,7 @@ script: sections END
 
 sections: sections section
     | section
+    | command
     ;
 
 section: name_section
@@ -134,6 +137,7 @@ rows: rows row
     ;
 
 row: SENSE SYMBOL '\n' { driver.AddRow($1, *$2); delete $2; }
+    | command
     | '\n'
     ;
 
@@ -168,6 +172,7 @@ column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $3;
     }
     | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { delete $1; delete $2; delete $3;}
+    | command
     | '\n'
     ;
 
@@ -214,6 +219,7 @@ rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $1;
         delete $2;
     }
+    | command
     | '\n'
     ;
 
@@ -247,6 +253,7 @@ range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         delete $2;
         delete $3;
     }
+    | command
     | '\n'
     ;
 
@@ -292,11 +299,39 @@ bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
         delete $2;
         delete $3;
     }
+    | command
     | '\n'
 
 end_section: ENDATA '\n'
     | ENDATA { driver.End(); }
     ;
+
+/**
+ * Extension to the standarm MPS format to support smt2 like commands
+ * to set info (e.g. expected result) and options for the LP solver
+ */
+command: SET_INFO SYMBOL SYMBOL '\n' {
+        driver.SetInfo(*$2, *$3);
+        delete $2;
+        delete $3;
+    }
+    | SET_INFO SYMBOL RATIONAL '\n' {
+        driver.SetInfo(*$2, std::stod(*$3));
+        delete $2;
+        delete $3;
+    } 
+    | SET_OPTION SYMBOL SYMBOL '\n'{
+        driver.SetOption(*$2, *$3);
+        delete $2;
+        delete $3;
+    }
+    | SET_OPTION SYMBOL RATIONAL '\n' {
+        driver.SetOption(*$2, std::stod(*$3));
+        delete $2;
+        delete $3;
+    }
+    ;
+
 
 %% /*** Additional Code ***/
 

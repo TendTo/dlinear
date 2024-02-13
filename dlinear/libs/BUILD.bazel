@@ -13,7 +13,10 @@ dlinear_cc_library(
     name = "gmp",
     srcs = ["gmp.cpp"],
     hdrs = ["gmp.h"],
-    deps = ["@gmp//:gmpxx"],
+    deps = [
+        "//dlinear/util:exception",
+        "@gmp//:gmpxx",
+    ],
 )
 
 dlinear_cc_library(

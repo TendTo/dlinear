@@ -215,7 +215,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
 }
 
 void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column) {
-  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column);
+  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {}", bound_type, bound, column);
   if (!VerifyStrictBound(bound)) return;
   try {
     switch (bound_type) {
@@ -271,5 +271,10 @@ void MpsDriver::End() {
     }
   }
 }
+
+void MpsDriver::SetOption(const std::string &option, const std::string &value) { context_.SetOption(option, value); }
+void MpsDriver::SetOption(const std::string &option, double value) { context_.SetOption(option, value); }
+void MpsDriver::SetInfo(const std::string &info, const std::string &value) { context_.SetInfo(info, value); }
+void MpsDriver::SetInfo(const std::string &info, double value) { context_.SetInfo(info, value); }
 
 }  // namespace dlinear::mps
