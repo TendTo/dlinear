@@ -86,7 +86,7 @@ bazel run //benchmark
 
 - `--//tools:enable_dynamic_build=[True|False]` to enable or disable dynamic linking. Used for the python bindings. Default is `False`
 
-## Enabling autocompletion for `dlinear` and `pydlinear` in bash
+## Enabling autocompletion
 
 ### On Ubuntu
 
