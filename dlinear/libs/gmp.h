@@ -15,6 +15,7 @@
 #include <gmpxx.h>
 
 #include <cmath>
+#include <string>
 
 #include "dlinear/util/exception.h"
 
@@ -163,7 +164,7 @@ inline mpq_class string_to_mpq(std::string_view str) {
 
   // case 3a: string is given as base-10 decimal number (e)
   if (e_pos != std::string::npos) {
-    const long exponent = std::stol(str.data() + e_pos + 1);
+    const long exponent = std::stol(str.data() + e_pos + 1);  // NOLINT(runtime/int)
     is_exp_positive = exponent >= 0;
     mult = 10;
     mpz_pow_ui(mult.get_mpz_t(), mult.get_mpz_t(), std::abs(exponent));

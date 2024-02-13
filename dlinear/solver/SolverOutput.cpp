@@ -6,6 +6,8 @@
  */
 #include "SolverOutput.h"
 
+#include <spdlog/fmt/fmt.h>
+
 #include <limits>
 #include <sstream>
 

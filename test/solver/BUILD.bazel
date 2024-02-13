@@ -5,7 +5,9 @@ dlinear_cc_library(
     hdrs = ["TestSolverUtils.h"],
     visibility = ["//test:__subpackages__"],
     deps = [
+        "//dlinear/solver",
         "//dlinear/util:config",
+        "//dlinear/util:filesystem",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -47,6 +49,15 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_smt2",
     data = glob(["smt2/*.smt2"]),
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_mps",
+    data = glob(["mps/*.mps"]),
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",

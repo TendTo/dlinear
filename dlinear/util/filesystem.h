@@ -50,4 +50,12 @@ std::string get_extension(const std::string &name);
  */
 std::vector<std::string> split_string_by_whitespace(const char *in);
 
+/**
+ * Get the files in a directory.
+ *
+ * @param path The path to the directory.
+ * @return A vector of strings, each string being the path to each file in the directory.
+ */
+std::vector<std::string> get_files(const std::string &path);
+
 }  // namespace dlinear

@@ -48,7 +48,7 @@ ArgParser::ArgParser()
       qsoptex_hash_{QSopt_ex_repository_status()},
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-      soplex_hash_{soplex::getGitHash()}
+      soplex_hash_{soplex::getGitHash()}  // NOLINT(whitespace/braces)
 #endif
 {
   DLINEAR_TRACE("ArgParser::ArgParser");

@@ -12,6 +12,8 @@
 
 #include <sys/stat.h>
 
+#include <filesystem>
+
 #include "dlinear/util/logging.h"
 
 using std::string;
@@ -52,6 +54,12 @@ std::vector<std::string> split_string_by_whitespace(const char *in) {
     p += length - 1;
   }
   return r;
+}
+
+std::vector<std::string> get_files(const std::string &path) {
+  std::vector<std::string> files;
+  for (const auto &entry : std::filesystem::directory_iterator(path)) files.emplace_back(entry.path());
+  return files;
 }
 
 }  // namespace dlinear
