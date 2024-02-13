@@ -80,6 +80,11 @@ class ArgParser {
    */
   [[nodiscard]] Config toConfig() const;
 
+  template <typename T = std::string>
+  [[nodiscard]] T get(const std::string &key) const {
+    return parser_.get<T>(key);
+  }
+
   friend std::ostream &operator<<(std::ostream &os, const dlinear::ArgParser &parser);
 };
 
