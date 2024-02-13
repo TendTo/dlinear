@@ -89,9 +89,9 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   }
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), std::make_tuple(truth, qsx_row, -1));
+  lit_to_theory_row_.emplace(formulaVar.get_id(), std::pair(qsx_row, -1));
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
-  theory_row_to_lit_.emplace_back(formulaVar, truth);
+  theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(truth);
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
@@ -101,12 +101,12 @@ std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal 
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const auto &[stored_truth, qsx_row, qsx_row2] = it_row->second;
+    const auto &[qsx_row, qsx_row2] = it_row->second;
 
     const LpRowSense row_sense = qsx_sense_[qsx_row];
     mpq_class &rhs{qsx_rhs_[qsx_row]};
     char sense;
-    if (stored_truth == truth) {
+    if (truth) {
       if (row_sense == LpRowSense::NQ) return {};
       sense = toChar(row_sense);
     } else {
@@ -116,7 +116,7 @@ std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal 
     mpq_QSchange_sense(qsx_, qsx_row, sense);
     mpq_QSchange_rhscoef(qsx_, qsx_row, rhs.get_mpq_t());
     theory_row_to_truth_[qsx_row] = truth;
-    DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", stored_truth == truth ? "" : "¬", qsx_row);
+    DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", qsx_row);
     return {};
   }
 

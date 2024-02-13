@@ -1,6 +1,5 @@
 """Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
 
-load("@rules_python//python:defs.bzl", "py_test")
 load("//tools:cc_import_foreign.bzl", "cc_import_foreign")
 
 DLINEAR_NAME = "dlinear"

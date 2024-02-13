@@ -265,11 +265,11 @@ void QsoptexTheorySolver::UpdateExplanation(const qsopt_ex::MpqArray &ray, Liter
       mpq_clear(temp);
       DLINEAR_TRACE_FMT("QsoptexTheorySolver::UpdateExplanation: ray[{}] = {} <= {} <= {}", i, l, mpq_class{ray[i]}, u);
     }
-    const Literal &lit = theory_row_to_lit_[i];
+    const Variable &var = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.insert({lit.first, theory_row_to_truth_[i]});
+    explanation.insert({var, theory_row_to_truth_[i]});
     // For each free variable in the literal, add their bounds to the explanation
-    for (const auto &col_var : predicate_abstractor_[lit.first].GetFreeVariables()) {
+    for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
       const LiteralSet &theory_bound_to_explanation = theory_bound_to_explanation_.at(theory_col);
       explanation.insert(theory_bound_to_explanation.cbegin(), theory_bound_to_explanation.cend());
