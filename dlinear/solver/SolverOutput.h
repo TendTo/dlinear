@@ -18,7 +18,7 @@
 namespace dlinear {
 
 /**
- * Solver Result.
+ * SmtSolver Result.
  * The solver can produce the following outputs:
  * - UNSOLVED: The solver has not been run.
  * - SAT: The context is satisfiable.
@@ -45,54 +45,28 @@ enum class SolverResult {
   ERROR,          // An error occurred.
 };
 
-class SolverOutput {
- public:
-  explicit SolverOutput(mpq_class precision, bool produce_models = false, bool with_timings = false)
-      : result_{SolverResult::UNSOLVED},
-        actual_precision_{std::move(precision)},
-        produce_models_{produce_models},
-        with_timings_{with_timings} {}
+struct SolverOutput {
+  explicit SolverOutput(mpq_class _precision, bool _produce_models = false, bool _with_timings = false)
+      : actual_precision{std::move(_precision)}, produce_models{_produce_models}, with_timings{_with_timings} {}
 
-  Timer &m_parser_timer() { return parser_timer_; }
-  Timer &m_smt_solver_timer() { return smt_solver_timer_; }
-  SolverResult &m_result() { return result_; }
-  mpq_class &m_actual_precision() { return actual_precision_; }
-  mpq_class &m_lower_bound() { return lower_bound_; }
-  mpq_class &m_upper_bound() { return upper_bound_; }
-  Box &m_model() { return model_; }
-  bool &m_with_timings() { return with_timings_; }
-  bool &m_produce_models() { return produce_models_; }
-  uint &m_n_assertions() { return n_assertions_; }
-
-  [[nodiscard]] double parser_time() const { return parser_timer_.seconds(); }
-  [[nodiscard]] double smt_solver_time() const { return smt_solver_timer_.seconds(); }
-  [[nodiscard]] SolverResult result() const { return result_; }
-  [[nodiscard]] const mpq_class &actual_precision() const { return actual_precision_; }
   [[nodiscard]] double precision_upper_bound() const;
-  [[nodiscard]] const mpq_class &lower_bound() const { return lower_bound_; }
-  [[nodiscard]] const mpq_class &upper_bound() const { return upper_bound_; }
-  [[nodiscard]] const Box &model() const { return model_; }
-  [[nodiscard]] bool with_timings() const { return with_timings_; }
-  [[nodiscard]] bool produce_models() const { return produce_models_; }
-  [[nodiscard]] uint n_assertions() const { return n_assertions_; }
   [[nodiscard]] bool is_sat() const {
-    return result_ == SolverResult::SAT || result_ == SolverResult::DELTA_SAT || result_ == SolverResult::OPTIMAL ||
-           result_ == SolverResult::DELTA_OPTIMAL;
+    return result == SolverResult::SAT || result == SolverResult::DELTA_SAT || result == SolverResult::OPTIMAL ||
+           result == SolverResult::DELTA_OPTIMAL;
   }
 
   [[nodiscard]] std::string ToString() const;
 
- private:
-  Timer parser_timer_{};
-  Timer smt_solver_timer_{};
-  uint n_assertions_{0};
-  SolverResult result_{SolverResult::UNSOLVED};
-  mpq_class lower_bound_{0};
-  mpq_class upper_bound_{0};
-  Box model_{};
-  mpq_class actual_precision_;
-  bool produce_models_;
-  bool with_timings_;
+  Timer parser_timer{};
+  Timer smt_solver_timer{};
+  uint n_assertions{0};
+  SolverResult result{SolverResult::UNSOLVED};
+  mpq_class lower_bound{0};
+  mpq_class upper_bound{0};
+  Box model{};
+  mpq_class actual_precision{0};
+  bool produce_models{false};
+  bool with_timings{false};
 };
 
 std::ostream &operator<<(std::ostream &os, const SolverResult &result);

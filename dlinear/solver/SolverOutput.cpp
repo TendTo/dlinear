@@ -19,7 +19,7 @@
 namespace dlinear {
 
 double SolverOutput::precision_upper_bound() const {
-  return nextafter(actual_precision_.get_d(), std::numeric_limits<double>::infinity());
+  return nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
 }
 
 std::string SolverOutput::ToString() const {
@@ -58,7 +58,7 @@ std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
 }
 
 std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
-  switch (s.result()) {
+  switch (s.result) {
     case SolverResult::UNSOLVED:
       return os << "unsolved";
     case SolverResult::UNKNOWN:
@@ -69,18 +69,18 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
       os << "sat with delta = 0";
       break;
     case SolverResult::DELTA_SAT:
-      os << fmt::format("delta-sat with delta = {} ( > {})", s.precision_upper_bound(), s.actual_precision());
+      os << fmt::format("delta-sat with delta = {} ( > {})", s.precision_upper_bound(), s.actual_precision);
       break;
     case SolverResult::UNSAT:
       os << "unsat";
       break;
     case SolverResult::OPTIMAL:
-      os << fmt::format("optimal with delta = 0, range = [{}, {}]", s.lower_bound(), s.upper_bound());
+      os << fmt::format("optimal with delta = 0, range = [{}, {}]", s.lower_bound, s.upper_bound);
       break;
     case SolverResult::DELTA_OPTIMAL: {
-      mpq_class diff = s.upper_bound() - s.lower_bound();
-      os << fmt::format("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, s.lower_bound(),
-                        s.upper_bound());
+      mpq_class diff = s.upper_bound - s.lower_bound;
+      os << fmt::format("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, s.lower_bound,
+                        s.upper_bound);
     } break;
     case SolverResult::UNBOUNDED:
       os << "unbounded";
@@ -96,12 +96,12 @@ std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
     default:
       DLINEAR_UNREACHABLE();
   }
-  if (s.with_timings()) {
+  if (s.with_timings) {
     os << fmt::format(" after {} seconds", main_timer.seconds());
   }
-  if (!s.model().empty() && s.produce_models()) {
+  if (!s.model.empty() && s.produce_models) {
     os << "\n";
-    os << fmt::format("{}", s.model());
+    os << fmt::format("{}", s.model);
   }
   return os;
 }

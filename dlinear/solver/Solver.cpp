@@ -38,13 +38,13 @@ void Solver::Exit() { guard_.DeInit(); }
 
 SolverOutput Solver::CheckSat() {
   DLINEAR_TRACE("Solver::CheckSat");
-  if (output_.result() != SolverResult::UNSOLVED) return output_;
+  if (output_.result != SolverResult::UNSOLVED) return output_;
   DLINEAR_DEBUG("Solver::CheckSat -- No cached result fond.");
   if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
-  output_.m_n_assertions() = context_.assertions().size();
+  output_.n_assertions = context_.assertions().size();
 
   if (config_.skip_check_sat())
-    output_.m_result() = SolverResult::SKIP_SAT;
+    output_.result = SolverResult::SKIP_SAT;
   else if (context_.have_objective())
     CheckObjCore();
   else
@@ -61,7 +61,7 @@ void Solver::Visualize() {
 
 bool Solver::ParseInput() {
   DLINEAR_TRACE("Solver::ParseInput");
-  TimerGuard timer_guard{&output_.m_parser_timer(), true};
+  TimerGuard timer_guard{&output_.parser_timer, true};
   switch (config_.format()) {
     case Config::Format::AUTO:
       if (config_.read_from_stdin()) return ParseSmt2();
@@ -93,34 +93,34 @@ bool Solver::ParseMps() {
 
 void Solver::CheckObjCore() {
   DLINEAR_DEBUG("Solver::CheckObjCore");
-  TimerGuard timer_guard{&output_.m_smt_solver_timer(), true};
-  LpResult status = context_.CheckOpt(&output_.m_lower_bound(), &output_.m_upper_bound());
+  TimerGuard timer_guard{&output_.smt_solver_timer, true};
+  LpResult status = context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
   if (LpResult::LP_DELTA_OPTIMAL == status) {
-    output_.m_result() = SolverResult::DELTA_OPTIMAL;
+    output_.result = SolverResult::DELTA_OPTIMAL;
   } else if (LpResult::LP_UNBOUNDED == status) {
-    output_.m_result() = SolverResult::UNBOUNDED;
+    output_.result = SolverResult::UNBOUNDED;
   } else if (LpResult::LP_INFEASIBLE == status) {
-    output_.m_result() = SolverResult::INFEASIBLE;
+    output_.result = SolverResult::INFEASIBLE;
   } else {
     DLINEAR_UNREACHABLE();
   }
-  output_.m_model() = context_.model();
+  output_.model = context_.model();
 }
 
 void Solver::CheckSatCore() {
   DLINEAR_DEBUG("Solver::CheckSatCore");
-  TimerGuard timer_guard{&output_.m_smt_solver_timer(), true};
-  const SatResult res = context_.CheckSat(&output_.m_actual_precision());
+  TimerGuard timer_guard{&output_.smt_solver_timer, true};
+  const SatResult res = context_.CheckSat(&output_.actual_precision);
   if (res == SatResult::SAT_SATISFIABLE) {
-    output_.m_result() = SolverResult::SAT;
+    output_.result = SolverResult::SAT;
   } else if (res == SatResult::SAT_DELTA_SATISFIABLE) {
-    output_.m_result() = SolverResult::DELTA_SAT;
+    output_.result = SolverResult::DELTA_SAT;
   } else if (res == SatResult::SAT_UNSATISFIABLE) {
-    output_.m_result() = SolverResult::UNSAT;
+    output_.result = SolverResult::UNSAT;
   } else {
-    output_.m_result() = SolverResult::UNKNOWN;
+    output_.result = SolverResult::UNKNOWN;
   }
-  output_.m_model() = context_.model();
+  output_.model = context_.model();
 }
 std::string Solver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
 std::string Solver::GetOption(const std::string &key) const { return context_.GetOption(key); }

@@ -37,6 +37,6 @@ TEST_P(TestSmt2, Smt2InputAgainstExpectedOutput) {
   config_.m_lp_solver() = lp_solver;
   config_.m_precision() = precision;
   Solver s{config_};
-  const SolverResult result = s.CheckSat().result();
+  const SolverResult result = s.CheckSat().result;
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
 }
