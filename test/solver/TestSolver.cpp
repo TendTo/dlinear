@@ -8,13 +8,13 @@
 
 #include <memory>
 
-#include "dlinear/solver/Solver.h"
+#include "dlinear/solver/SmtSolver.h"
 #include "dlinear/util/Infinity.h"
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
 using dlinear::Infinity;
-using dlinear::Solver;
+using dlinear::SmtSolver;
 using std::unique_ptr;
 
 class TestSolver : public ::testing::TestWithParam<Config::LPSolver> {
@@ -31,7 +31,7 @@ INSTANTIATE_TEST_SUITE_P(TestSolver, TestSolver, enabled_test_solvers);
 
 TEST_P(TestSolver, ConstructorDefault) {
   {
-    Solver s{};
+    SmtSolver s{};
     EXPECT_TRUE(Infinity::IsInitialized());
   }
   EXPECT_FALSE(Infinity::IsInitialized());
@@ -39,7 +39,7 @@ TEST_P(TestSolver, ConstructorDefault) {
 
 TEST_P(TestSolver, ConstructorFilename) {
   {
-    Solver s{config_};
+    SmtSolver s{config_};
     EXPECT_TRUE(Infinity::IsInitialized());
   }
   EXPECT_FALSE(Infinity::IsInitialized());
@@ -47,13 +47,13 @@ TEST_P(TestSolver, ConstructorFilename) {
 
 TEST_P(TestSolver, ConstructorConfig) {
   {
-    Solver s{config_};
+    SmtSolver s{config_};
     EXPECT_TRUE(Infinity::IsInitialized());
   }
   EXPECT_FALSE(Infinity::IsInitialized());
 }
 
 TEST_P(TestSolver, CheckSatWrongFilename) {
-  Solver s{"test.err"};
+  SmtSolver s{"test.err"};
   EXPECT_DEATH(s.CheckSat(), "");
 }

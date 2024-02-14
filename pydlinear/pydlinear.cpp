@@ -16,8 +16,8 @@
 #include "dlinear/api/api.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/qsopt_ex.h"
-#include "dlinear/solver/Solver.h"
-#include "dlinear/solver/SolverOutput.h"
+#include "dlinear/solver/SmtSolver.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Box.h"
@@ -103,7 +103,7 @@ PYBIND11_MODULE(_pydlinear, m) {
   auto ConfigClass = py::class_<Config>(m, "Config");
   auto SolverClass = py::class_<Solver>(m, "Solver");
   auto ContextClass = py::class_<Context>(m, "Context");
-  auto SolverOutputClass = py::class_<SolverOutput>(m, "SolverOutput");
+  auto SolverOutputClass = py::class_<SmtSolverOutput>(m, "SmtSolverOutput");
   auto BoxClass = py::class_<Box>(m, "Box");
   auto BoxIntervalClass = py::class_<Box::Interval>(m, "Interval");
 
@@ -114,16 +114,16 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("__exit__", [](Solver &self, py::object, py::object, py::object) { self.Exit(); })
       .def("CheckSat", &Solver::CheckSat);
 
-  SolverOutputClass.def_property_readonly("result", &SolverOutput::m_result)
-      .def_property_readonly("actual_precision", &SolverOutput::m_actual_precision)
-      .def_property_readonly("lower_bound", &SolverOutput::m_lower_bound)
-      .def_property_readonly("upper_bound", &SolverOutput::m_upper_bound)
-      .def_property_readonly("model", &SolverOutput::m_model)
-      .def_property_readonly("with_timings", &SolverOutput::with_timings)
-      .def_property_readonly("produce_models", &SolverOutput::produce_models)
-      .def_property_readonly("n_assertions", &SolverOutput::n_assertions)
-      .def_property_readonly("is_sat", &SolverOutput::is_sat)
-      .def("__str__", [](const SolverOutput &self) { return (std::stringstream() << self).str(); });
+  SolverOutputClass.def_property_readonly("result", &SmtSolverOutput::m_result)
+      .def_property_readonly("actual_precision", &SmtSolverOutput::m_actual_precision)
+      .def_property_readonly("lower_bound", &SmtSolverOutput::m_lower_bound)
+      .def_property_readonly("upper_bound", &SmtSolverOutput::m_upper_bound)
+      .def_property_readonly("model", &SmtSolverOutput::m_model)
+      .def_property_readonly("with_timings", &SmtSolverOutput::with_timings)
+      .def_property_readonly("produce_models", &SmtSolverOutput::produce_models)
+      .def_property_readonly("n_assertions", &SmtSolverOutput::n_assertions)
+      .def_property_readonly("is_sat", &SmtSolverOutput::is_sat)
+      .def("__str__", [](const SmtSolverOutput &self) { return (std::stringstream() << self).str(); });
 
   ContextClass.def(py::init<>()).def(py::init<const Config &>());
 

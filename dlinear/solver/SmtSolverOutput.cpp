@@ -1,10 +1,10 @@
 /**
- * @file SolverOutput.cpp
+ * @file SmtSolverOutput.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "SolverOutput.h"
+#include "SmtSolverOutput.h"
 
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
@@ -18,11 +18,11 @@
 
 namespace dlinear {
 
-double SolverOutput::precision_upper_bound() const {
+double SmtSolverOutput::precision_upper_bound() const {
   return nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
 }
 
-std::string SolverOutput::ToString() const {
+std::string SmtSolverOutput::ToString() const {
   std::ostringstream oss;
   oss << *this;
   return oss.str();
@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
   }
 }
 
-std::ostream& operator<<(std::ostream& os, const SolverOutput& s) {
+std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
   switch (s.result) {
     case SolverResult::UNSOLVED:
       return os << "unsolved";

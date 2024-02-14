@@ -1,5 +1,5 @@
 /**
- * @file SolverOutput.h
+ * @file SmtSolverOutput.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
@@ -45,8 +45,8 @@ enum class SolverResult {
   ERROR,          // An error occurred.
 };
 
-struct SolverOutput {
-  explicit SolverOutput(mpq_class _precision, bool _produce_models = false, bool _with_timings = false)
+struct SmtSolverOutput {
+  explicit SmtSolverOutput(mpq_class _precision, bool _produce_models = false, bool _with_timings = false)
       : actual_precision{std::move(_precision)}, produce_models{_produce_models}, with_timings{_with_timings} {}
 
   [[nodiscard]] double precision_upper_bound() const;
@@ -70,6 +70,6 @@ struct SolverOutput {
 };
 
 std::ostream &operator<<(std::ostream &os, const SolverResult &result);
-std::ostream &operator<<(std::ostream &os, const SolverOutput &output);
+std::ostream &operator<<(std::ostream &os, const SmtSolverOutput &output);
 
 }  // namespace dlinear

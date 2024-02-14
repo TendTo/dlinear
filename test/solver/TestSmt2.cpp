@@ -12,13 +12,13 @@
 #include <memory>
 #include <string_view>
 
-#include "dlinear/solver/Solver.h"
+#include "dlinear/solver/SmtSolver.h"
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
 using dlinear::get_files;
-using dlinear::Solver;
-using dlinear::SolverOutput;
+using dlinear::SmtSolver;
+using dlinear::SmtSolver;
 using dlinear::SolverResult;
 using std::unique_ptr;
 
@@ -36,7 +36,7 @@ TEST_P(TestSmt2, Smt2InputAgainstExpectedOutput) {
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   config_.m_precision() = precision;
-  Solver s{config_};
+  SmtSolver s{config_};
   const SolverResult result = s.CheckSat().result;
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
 }

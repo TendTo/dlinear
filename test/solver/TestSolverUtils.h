@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "dlinear/solver/SolverOutput.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/filesystem.h"
 

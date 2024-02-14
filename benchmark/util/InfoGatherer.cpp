@@ -86,7 +86,7 @@ void InfoGatherer::ParseResults(shared_results *results) {
 
 void InfoGatherer::GatherInfo(shared_results *results) {
   auto start = std::chrono::high_resolution_clock::now();
-  Solver solver{config_};
+  SmtSolver solver{config_};
   auto res = solver.CheckSat();
 
   results->nAssertions = res.n_assertions();

@@ -8,7 +8,7 @@
 #include <regex>
 #include <sstream>
 
-#include "dlinear/solver/Solver.h"
+#include "dlinear/solver/SmtSolver.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear::benchmark {

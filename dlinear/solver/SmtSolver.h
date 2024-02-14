@@ -1,13 +1,13 @@
 /**
- * @file Solver.h
+ * @file SmtSolver.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Solver interface class.
+ * @brief SmtSolver interface class.
  *
  * This class provides an easy interface for using the underling solver.
  * Once the correct configuration is set, the user can simply call
- * `Solver::CheckSat()` to get the result.
+ * `SmtSolver::CheckSat()` to get the result.
  * It will handle the parsing of the input.
  */
 #pragma once
@@ -17,21 +17,21 @@
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/SolverGuard.h"
-#include "dlinear/solver/SolverOutput.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear {
 
-class Solver {
+class SmtSolver {
  public:
-  Solver();
-  explicit Solver(const std::string &filename);
-  explicit Solver(Config config);
-  Solver(const Solver &) = delete;
-  Solver(Solver &&) = delete;
-  Solver &operator=(const Solver &) = delete;
-  Solver &operator=(Solver &&) = delete;
+  SmtSolver();
+  explicit SmtSolver(const std::string &filename);
+  explicit SmtSolver(Config config);
+  SmtSolver(const SmtSolver &) = delete;
+  SmtSolver(SmtSolver &&) = delete;
+  SmtSolver &operator=(const SmtSolver &) = delete;
+  SmtSolver &operator=(SmtSolver &&) = delete;
 
   [[nodiscard]] std::string GetInfo(const std::string &key) const;
   [[nodiscard]] std::string GetOption(const std::string &key) const;
@@ -39,9 +39,9 @@ class Solver {
 
   /**
    * Check the satisfiability of the current context.
-   * @return SolverOutput
+   * @return SmtSolverOutput
    */
-  SolverOutput CheckSat();
+  SmtSolverOutput CheckSat();
 
   void Visualize();
 
@@ -49,9 +49,9 @@ class Solver {
   /**
    * Enter the solver.
    * Allows to use the with statement in python.
-   * @return Solver reference
+   * @return SmtSolver reference
    */
-  Solver &Enter();
+  SmtSolver &Enter();
 
   /**
    * Cleanup the infinity values forcefully.
@@ -67,7 +67,7 @@ class Solver {
   const Config config_;  ///< Configuration of the solver.
   SolverGuard guard_;    ///< Takes care of initializing and de-initializing the correct infinity values.
   Context context_;      ///< Context obtained from the input file and passed to the SAT and SMT solvers.
-  SolverOutput output_;  ///< Output of the solver.
+  SmtSolverOutput output_;  ///< Output of the solver.
 
   bool ParseInput();
   bool ParseSmt2();

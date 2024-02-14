@@ -10,8 +10,8 @@
  */
 #include <csignal>
 
-#include "dlinear/solver/Solver.h"
-#include "dlinear/solver/SolverOutput.h"
+#include "dlinear/solver/SmtSolver.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Timer.h"
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[]) {
   dlinear::Config config = parser.toConfig();
 
   // Setup the infinity values.
-  dlinear::Solver solver{config};
+  dlinear::SmtSolver solver{config};
 
   // Start the main timer and run the solver.
   dlinear::main_timer.start();

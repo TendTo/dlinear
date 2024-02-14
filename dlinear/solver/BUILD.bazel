@@ -178,12 +178,12 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "solver",
     srcs = [
-        "Solver.cpp",
-        "SolverOutput.cpp",
+        "SmtSolver.cpp",
+        "SmtSolverOutput.cpp",
     ],
     hdrs = [
-        "Solver.h",
-        "SolverOutput.h",
+        "SmtSolver.h",
+        "SmtSolverOutput.h",
     ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
