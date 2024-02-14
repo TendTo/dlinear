@@ -13,9 +13,6 @@
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
 #define DLINEAR_ITERATION_STATS_FMT "{:<35} @ {:<26} = {:>15}"
 
-using std::endl;
-using std::ostream;
-
 namespace dlinear {
 
 Stats::Stats(const bool enabled, std::string class_name, std::string operations_name)
@@ -52,7 +49,7 @@ IterationStats::~IterationStats() {
 void IterationStats::operator++() { Increase(); }
 void IterationStats::operator++(int) { Increase(); }
 
-ostream &operator<<(ostream &os, const Stats &stats) { return os << stats.ToString(); }
-std::ostream &operator<<(ostream &os, const IterationStats &stats) { return os << stats.ToString(); }
+std::ostream &operator<<(std::ostream &os, const Stats &stats) { return os << stats.ToString(); }
+std::ostream &operator<<(std::ostream &os, const IterationStats &stats) { return os << stats.ToString(); }
 
 }  // namespace dlinear

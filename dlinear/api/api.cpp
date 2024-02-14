@@ -15,17 +15,15 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/exception.h"
 
-using std::optional;
-
 namespace dlinear {
 
-optional<Box> CheckSatisfiability(const Formula &f, const double delta) {
+std::optional<Box> CheckSatisfiability(const Formula &f, const double delta) {
   Config config;
   config.m_precision() = delta;
   return CheckSatisfiability(f, config);
 }
 
-optional<Box> CheckSatisfiability(const Formula &f, const Config &config) {
+std::optional<Box> CheckSatisfiability(const Formula &f, const Config &config) {
   mpq_class actual_precision = config.precision();
   Context context{config};
   for (const Variable &v : f.GetFreeVariables()) {
@@ -43,7 +41,7 @@ bool CheckSatisfiability(const Formula &f, const double delta, Box *const box) {
 }
 
 bool CheckSatisfiability(const Formula &f, const Config &config, Box *const box) {
-  const optional<Box> result{CheckSatisfiability(f, config)};
+  const std::optional<Box> result{CheckSatisfiability(f, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");
     *box = *result;
@@ -53,13 +51,13 @@ bool CheckSatisfiability(const Formula &f, const Config &config, Box *const box)
   }
 }
 
-optional<Box> Minimize(const Expression &objective, const Formula &constraint, double delta) {
+std::optional<Box> Minimize(const Expression &objective, const Formula &constraint, double delta) {
   Config config;
   config.m_precision() = delta;
   return Minimize(objective, constraint, config);
 }
 
-optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config &config) {
+std::optional<Box> Minimize(const Expression &objective, const Formula &constraint, const Config &config) {
   mpq_class actual_precision = config.precision();
   Context context{config};
   for (const Variable &v : constraint.GetFreeVariables()) {
@@ -81,7 +79,7 @@ bool Minimize(const Expression &objective, const Formula &constraint, const doub
 }
 
 bool Minimize(const Expression &objective, const Formula &constraint, const Config &config, Box *const box) {
-  const optional<Box> result{Minimize(objective, constraint, config)};
+  const std::optional<Box> result{Minimize(objective, constraint, config)};
   if (result) {
     DLINEAR_ASSERT(box, "box must not be a nullptr");
     *box = *result;

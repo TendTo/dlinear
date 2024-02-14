@@ -12,9 +12,6 @@
 
 #include "dlinear/util/exception.h"
 
-using std::set;
-using std::accumulate;
-
 namespace dlinear {
 
 // The main function of the NaiveCnfizer:
@@ -26,9 +23,7 @@ Formula NaiveCnfizer::Convert(const Formula &f) const {
   return Visit(nnfizer_.Convert(f, true));
 }
 
-Formula NaiveCnfizer::Visit(const Formula &f) const {
-  return VisitFormula<Formula>(this, f);
-}
+Formula NaiveCnfizer::Visit(const Formula &f) const { return VisitFormula<Formula>(this, f); }
 Formula NaiveCnfizer::VisitFalse(const Formula &f) const { return f; }
 Formula NaiveCnfizer::VisitTrue(const Formula &f) const { return f; }
 Formula NaiveCnfizer::VisitVariable(const Formula &f) const { return f; }
@@ -49,52 +44,49 @@ Formula NaiveCnfizer::VisitLessThanOrEqualTo(const Formula &f) const { return f;
 Formula NaiveCnfizer::VisitForall(const Formula &f) const {
   // f = ∀y. φ(x, y).
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
-  const Formula &quantified_formula{get_quantified_formula(f)};  // φ(x, y)
+  const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   return forall(quantified_variables, Convert(quantified_formula));
 }
 
 Formula NaiveCnfizer::VisitConjunction(const Formula &f) const {
-  const set<Formula> transformed_operands{
-      map(get_operands(f),
-          [this](const Formula &formula) { return this->Visit(formula); })};
+  const std::set<Formula> transformed_operands{
+      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   return make_conjunction(transformed_operands);
 }
 
 Formula NaiveCnfizer::VisitDisjunction(const Formula &f) const {
-  const set<Formula> &transformed_operands{
-      map(get_operands(f),
-          [this](const Formula &formula) { return this->Visit(formula); })};
-  return accumulate(transformed_operands.begin(), transformed_operands.end(),
-                    Formula::False(),
-                    [](const Formula &cnf1, const Formula &cnf2) {
-                      set<Formula> clauses;
-                      if (is_conjunction(cnf1)) {
-                        if (is_conjunction(cnf2)) {
-                          // Both of cnf1 and cnf2 are conjunctions.
-                          for (const Formula &c1 : get_operands(cnf1)) {
-                            for (const Formula &c2 : get_operands(cnf2)) {
-                              clauses.insert(c1 || c2);
-                            }
-                          }
-                        } else {
-                          // Only cnf1 is a conjunction.
-                          for (const Formula &c1 : get_operands(cnf1)) {
-                            clauses.insert(c1 || cnf2);
-                          }
-                        }
-                      } else {
-                        if (is_conjunction(cnf2)) {
-                          // Only cnf2 is a conjunction.
-                          for (const Formula &c2 : get_operands(cnf2)) {
-                            clauses.insert(cnf1 || c2);
-                          }
-                        } else {
-                          // None of them is a conjunction.
-                          clauses.insert(cnf1 || cnf2);
-                        }
-                      }
-                      return make_conjunction(clauses);
-                    });
+  const std::set<Formula> &transformed_operands{
+      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  return std::accumulate(transformed_operands.begin(), transformed_operands.end(), Formula::False(),
+                         [](const Formula &cnf1, const Formula &cnf2) {
+                           std::set<Formula> clauses;
+                           if (is_conjunction(cnf1)) {
+                             if (is_conjunction(cnf2)) {
+                               // Both of cnf1 and cnf2 are conjunctions.
+                               for (const Formula &c1 : get_operands(cnf1)) {
+                                 for (const Formula &c2 : get_operands(cnf2)) {
+                                   clauses.insert(c1 || c2);
+                                 }
+                               }
+                             } else {
+                               // Only cnf1 is a conjunction.
+                               for (const Formula &c1 : get_operands(cnf1)) {
+                                 clauses.insert(c1 || cnf2);
+                               }
+                             }
+                           } else {
+                             if (is_conjunction(cnf2)) {
+                               // Only cnf2 is a conjunction.
+                               for (const Formula &c2 : get_operands(cnf2)) {
+                                 clauses.insert(cnf1 || c2);
+                               }
+                             } else {
+                               // None of them is a conjunction.
+                               clauses.insert(cnf1 || cnf2);
+                             }
+                           }
+                           return make_conjunction(clauses);
+                         });
 }
 
 Formula NaiveCnfizer::VisitNegation(const Formula &f) const {
@@ -102,4 +94,4 @@ Formula NaiveCnfizer::VisitNegation(const Formula &f) const {
   return f;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

@@ -6,12 +6,9 @@
  */
 #include "BenchConfig.h"
 
-using std::endl;
-using std::ostream;
-
 namespace dlinear::benchmark {
 
-ostream &operator<<(ostream &os, const BenchConfig &config) {
+std::ostream &operator<<(std::ostream &os, const BenchConfig &config) {
   os << "Config {\n"
      << "config_file = '" << config.config_file() << "', \n"
      << "is_dry_run = '" << config.is_dry_run() << "', \n"

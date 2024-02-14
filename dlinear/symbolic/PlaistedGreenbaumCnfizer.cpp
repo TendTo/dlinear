@@ -12,14 +12,8 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
-using std::cout;
-using std::set;
-using std::string;
-using std::to_string;
-using std::vector;
-
 namespace dlinear {
-vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
+std::vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "PlaistedGreenbaum Cnfizer", "Total time spent in Converting",
                              "Total # of Convert"};
   TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
@@ -28,7 +22,7 @@ vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   const Formula &g{nnfizer_.Convert(f, true /* push_negation_into_relationals */)};
   aux_.clear();
   vars_.clear();
-  vector<Formula> ret;
+  std::vector<Formula> ret;
   const Formula head{Visit(g)};
   aux_.push_back(head);
   return aux_;
@@ -42,7 +36,7 @@ Formula PlaistedGreenbaumCnfizer::Visit(const Formula &f) {
 Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   // We always need a variable
   static size_t id{0};
-  const Variable bvar{string("forall") + to_string(id++), Variable::Type::BOOLEAN};
+  const Variable bvar{std::string("forall") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
 
   // Given: f := ∀y. φ(x, y), this process CNFizes φ(x, y), pushes the
@@ -53,12 +47,12 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
   const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
-  const set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
+  const std::set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
   for (const Formula &clause : clauses) {
-    set<Formula> new_clause_set{!bvar};
+    std::set<Formula> new_clause_set{!bvar};
     if (is_disjunction(clause)) {
       DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
-      set<Formula> temp{get_operands(clause)};
+      std::set<Formula> temp{get_operands(clause)};
       new_clause_set.insert(temp.begin(), temp.end());
     } else {
       new_clause_set.insert(clause);
@@ -81,7 +75,7 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
 Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
   static size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
-  const Variable bvar{string("conj") + to_string(id++), Variable::Type::BOOLEAN};
+  const Variable bvar{std::string("conj") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
   for (const Formula &op : get_operands(f)) {
     aux_.emplace_back(!bvar || this->Visit(op));
@@ -92,9 +86,10 @@ Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
 Formula PlaistedGreenbaumCnfizer::VisitDisjunction(const Formula &f) {
   static size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
-  const Variable bvar{string("disj") + to_string(id++), Variable::Type::BOOLEAN};
+  const Variable bvar{std::string("disj") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
-  set<Formula> clause{::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  std::set<Formula> clause{
+      ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   clause.insert(!bvar);
   aux_.emplace_back(make_disjunction(clause));
   return Formula{bvar};

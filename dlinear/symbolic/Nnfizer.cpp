@@ -9,10 +9,7 @@
 
 #include "dlinear/util/logging.h"
 
-using std::set;
-
 namespace dlinear {
-
 
 Formula Nnfizer::Convert(const Formula &f, const bool push_negation_into_relationals) const {
   DLINEAR_TRACE_FMT("Nnfizer::Convert({}, {})", f, push_negation_into_relationals);
@@ -47,24 +44,21 @@ Formula Nnfizer::VisitEqualTo(const Formula &f, const bool polarity, const bool 
   return push_negation_into_relationals ? get_lhs_expression(f) != get_rhs_expression(f) : !f;
 }
 
-Formula Nnfizer::VisitNotEqualTo(const Formula &f,
-                                 const bool polarity,
+Formula Nnfizer::VisitNotEqualTo(const Formula &f, const bool polarity,
                                  const bool push_negation_into_relationals) const {
   if (polarity) return f;
   // push_negation_into_relationals ? ¬(e₁ ≠ e₂) ↦ (e₁ = e₂) : ¬f
   return push_negation_into_relationals ? get_lhs_expression(f) == get_rhs_expression(f) : !f;
 }
 
-Formula Nnfizer::VisitGreaterThan(const Formula &f,
-                                  const bool polarity,
+Formula Nnfizer::VisitGreaterThan(const Formula &f, const bool polarity,
                                   const bool push_negation_into_relationals) const {
   if (polarity) return f;
   // push_negation_into_relationals ? ¬(e₁ > e₂) ↦ (e₁ <= e₂) : ¬f
   return push_negation_into_relationals ? get_lhs_expression(f) <= get_rhs_expression(f) : !f;
 }
 
-Formula Nnfizer::VisitGreaterThanOrEqualTo(const Formula &f,
-                                           const bool polarity,
+Formula Nnfizer::VisitGreaterThanOrEqualTo(const Formula &f, const bool polarity,
                                            const bool push_negation_into_relationals) const {
   if (polarity) return f;
   // push_negation_into_relationals ? ¬(e₁ >= e₂) ↦ (e₁ < e₂) : ¬f
@@ -77,35 +71,30 @@ Formula Nnfizer::VisitLessThan(const Formula &f, const bool polarity, const bool
   return push_negation_into_relationals ? get_lhs_expression(f) >= get_rhs_expression(f) : !f;
 }
 
-Formula Nnfizer::VisitLessThanOrEqualTo(const Formula &f,
-                                        const bool polarity,
+Formula Nnfizer::VisitLessThanOrEqualTo(const Formula &f, const bool polarity,
                                         const bool push_negation_into_relationals) const {
   if (polarity) return f;
   // push_negation_into_relationals ? ¬(e₁ <= e₂) ↦ (e₁ > e₂) : ¬f
   return push_negation_into_relationals ? get_lhs_expression(f) > get_rhs_expression(f) : !f;
 }
 
-Formula Nnfizer::VisitConjunction(const Formula &f,
-                                  const bool polarity,
+Formula Nnfizer::VisitConjunction(const Formula &f, const bool polarity,
                                   const bool push_negation_into_relationals) const {
   // NNF(f₁ ∧ ... ∨ fₙ)    = NNF(f₁) ∧ ... ∧ NNF(fₙ)
   // NNF(¬(f₁ ∧ ... ∨ fₙ)) = NNF(¬f₁) ∨ ... ∨ NNF(¬fₙ)
-  const set<Formula> new_operands{map(
-      get_operands(f),
-      [this, polarity, push_negation_into_relationals](const Formula &formula) {
+  const std::set<Formula> new_operands{
+      map(get_operands(f), [this, polarity, push_negation_into_relationals](const Formula &formula) {
         return this->Visit(formula, polarity, push_negation_into_relationals);
       })};
   return polarity ? make_conjunction(new_operands) : make_disjunction(new_operands);
 }
 
-Formula Nnfizer::VisitDisjunction(const Formula &f,
-                                  const bool polarity,
+Formula Nnfizer::VisitDisjunction(const Formula &f, const bool polarity,
                                   const bool push_negation_into_relationals) const {
   // NNF(f₁ ∨ ... ∨ fₙ)    = NNF(f₁) ∨ ... ∨ NNF(fₙ)
   // NNF(¬(f₁ ∨ ... ∨ fₙ)) = NNF(¬f₁) ∧ ... ∧ NNF(¬fₙ)
-  const set<Formula> new_operands{map(
-      get_operands(f),
-      [this, polarity, push_negation_into_relationals](const Formula &formula) {
+  const std::set<Formula> new_operands{
+      map(get_operands(f), [this, polarity, push_negation_into_relationals](const Formula &formula) {
         return this->Visit(formula, polarity, push_negation_into_relationals);
       })};
   return polarity ? make_disjunction(new_operands) : make_conjunction(new_operands);
@@ -127,4 +116,4 @@ Formula Nnfizer::VisitForall(const Formula &f, const bool polarity, const bool) 
   return polarity ? f : !f;
 }
 
-} // namespace dlinear
+}  // namespace dlinear

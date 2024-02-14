@@ -13,44 +13,24 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
-using std::function;
-using std::inserter;
-using std::ostream;
-using std::set;
-using std::string;
-using std::to_string;
-using std::transform;
-using std::vector;
-using std::all_of;
-
 namespace dlinear {
 
 Formula imply(const Formula &f1, const Formula &f2) { return !f1 || f2; }
-Formula imply(const Variable &v, const Formula &f) {
-  return imply(Formula{v}, f);
-}
-Formula imply(const Formula &f, const Variable &v) {
-  return imply(f, Formula{v});
-}
-Formula imply(const Variable &v1, const Variable &v2) {
-  return imply(Formula{v1}, Formula{v2});
-}
+Formula imply(const Variable &v, const Formula &f) { return imply(Formula{v}, f); }
+Formula imply(const Formula &f, const Variable &v) { return imply(f, Formula{v}); }
+Formula imply(const Variable &v1, const Variable &v2) { return imply(Formula{v1}, Formula{v2}); }
 
-Formula iff(const Formula &f1, const Formula &f2) {
-  return imply(f1, f2) && imply(f2, f1);
-}
+Formula iff(const Formula &f1, const Formula &f2) { return imply(f1, f2) && imply(f2, f1); }
 
 Formula iff(const Variable &v, const Formula &f) { return iff(Formula{v}, f); }
 
 Formula iff(const Formula &f, const Variable &v) { return iff(f, Formula{v}); }
 
-Formula iff(const Variable &v1, const Variable &v2) {
-  return iff(Formula{v1}, Formula{v2});
-}
+Formula iff(const Variable &v1, const Variable &v2) { return iff(Formula{v1}, Formula{v2}); }
 
-set <Formula> map(const set <Formula> &formulas, const function<Formula(const Formula &)> &func) {
-  set<Formula> result;
-  transform(formulas.cbegin(), formulas.cend(), inserter(result, result.begin()), func);
+std::set<Formula> map(const std::set<Formula> &formulas, const std::function<Formula(const Formula &)> &func) {
+  std::set<Formula> result;
+  std::transform(formulas.cbegin(), formulas.cend(), std::inserter(result, result.begin()), func);
   return result;
 }
 
@@ -65,14 +45,17 @@ bool is_atomic(const Formula &f) {
     case FormulaKind::Geq:
     case FormulaKind::Lt:
     case FormulaKind::Leq:
-    case FormulaKind::Forall:return true;
+    case FormulaKind::Forall:
+      return true;
     case FormulaKind::And:
-    case FormulaKind::Or:return false;
+    case FormulaKind::Or:
+      return false;
     case FormulaKind::Not: {
       const Formula &negated_formula{get_operand(f)};
       return is_variable(negated_formula) || is_relational(negated_formula);
     }
-    default:DLINEAR_UNREACHABLE();
+    default:
+      DLINEAR_UNREACHABLE();
   }
 }
 
@@ -90,14 +73,13 @@ bool is_clause(const Formula &f) {
     const auto &operands = get_operands(f);
     // FIXME: should this also be checking for negated atomic formulas?
     const bool result{
-        all_of(operands.cbegin(), operands.cend(),
-               [](const Formula &formula) { return is_atomic(formula); })};
+        std::all_of(operands.cbegin(), operands.cend(), [](const Formula &formula) { return is_atomic(formula); })};
     return result;
   }
   DLINEAR_UNREACHABLE();
 }
 
-set <Formula> get_clauses(const Formula &f) {
+std::set<Formula> get_clauses(const Formula &f) {
   if (is_conjunction(f)) {
 #ifndef NDEBUG
     for (const Formula &clause : get_operands(f)) {
@@ -121,15 +103,13 @@ bool is_cnf(const Formula &f) {
   if (is_conjunction(f)) {
     const auto &operands = get_operands(f);
     const bool result{
-        all_of(operands.cbegin(), operands.cend(),
-               [](const Formula &formula) { return is_clause(formula); })};
+        std::all_of(operands.cbegin(), operands.cend(), [](const Formula &formula) { return is_clause(formula); })};
     return result;
   }
   DLINEAR_UNREACHABLE();
 }
 
-bool HaveIntersection(const Variables &variables1,
-                      const Variables &variables2) {
+bool HaveIntersection(const Variables &variables1, const Variables &variables2) {
   auto begin1 = variables1.begin();
   auto begin2 = variables2.begin();
   const auto end1 = variables1.end();
@@ -184,8 +164,7 @@ class DeltaStrengthenVisitor {
     return ret;
   }
   [[nodiscard]] Expression VisitDivision(const Expression &e, const double delta) const {
-    return Visit(get_first_argument(e), delta) /
-        Visit(get_second_argument(e), delta);
+    return Visit(get_first_argument(e), delta) / Visit(get_second_argument(e), delta);
   }
   [[nodiscard]] Expression VisitLog(const Expression &e, const double delta) const {
     return log(Visit(get_argument(e), delta));
@@ -200,8 +179,7 @@ class DeltaStrengthenVisitor {
     return sqrt(Visit(get_argument(e), delta));
   }
   [[nodiscard]] Expression VisitPow(const Expression &e, const double delta) const {
-    return pow(Visit(get_first_argument(e), delta),
-               Visit(get_second_argument(e), delta));
+    return pow(Visit(get_first_argument(e), delta), Visit(get_second_argument(e), delta));
   }
   [[nodiscard]] Expression VisitSin(const Expression &e, const double delta) const {
     return sin(Visit(get_argument(e), delta));
@@ -222,8 +200,7 @@ class DeltaStrengthenVisitor {
     return atan(Visit(get_argument(e), delta));
   }
   [[nodiscard]] Expression VisitAtan2(const Expression &e, const double delta) const {
-    return atan2(Visit(get_first_argument(e), delta),
-                 Visit(get_second_argument(e), delta));
+    return atan2(Visit(get_first_argument(e), delta), Visit(get_second_argument(e), delta));
   }
   [[nodiscard]] Expression VisitSinh(const Expression &e, const double delta) const {
     return sinh(Visit(get_argument(e), delta));
@@ -235,16 +212,13 @@ class DeltaStrengthenVisitor {
     return tanh(Visit(get_argument(e), delta));
   }
   [[nodiscard]] Expression VisitMin(const Expression &e, const double delta) const {
-    return min(Visit(get_first_argument(e), delta),
-               Visit(get_second_argument(e), delta));
+    return min(Visit(get_first_argument(e), delta), Visit(get_second_argument(e), delta));
   }
   [[nodiscard]] Expression VisitMax(const Expression &e, const double delta) const {
-    return max(Visit(get_first_argument(e), delta),
-               Visit(get_second_argument(e), delta));
+    return max(Visit(get_first_argument(e), delta), Visit(get_second_argument(e), delta));
   }
   [[nodiscard]] Expression VisitIfThenElse(const Expression &e, const double delta) const {
-    return if_then_else(Visit(get_conditional_formula(e), delta),
-                        Visit(get_then_expression(e), delta),
+    return if_then_else(Visit(get_conditional_formula(e), delta), Visit(get_then_expression(e), delta),
                         Visit(get_else_expression(e), delta));
   }
   [[nodiscard]] Expression VisitUninterpretedFunction(const Expression &e, const double) const { return e; }
@@ -264,8 +238,7 @@ class DeltaStrengthenVisitor {
       // -> (lhs >= rhs) ∧ (lhs <= rhs)
       const Expression lhs{Visit(get_lhs_expression(f), delta)};
       const Expression rhs{Visit(get_rhs_expression(f), delta)};
-      return VisitGreaterThanOrEqualTo(lhs >= rhs, delta) &&
-          VisitLessThanOrEqualTo(lhs <= rhs, delta);
+      return VisitGreaterThanOrEqualTo(lhs >= rhs, delta) && VisitLessThanOrEqualTo(lhs <= rhs, delta);
     }
   }
   [[nodiscard]] Formula VisitNotEqualTo(const Formula &f, const double delta) const {
@@ -274,8 +247,7 @@ class DeltaStrengthenVisitor {
       // -> (lhs > rhs) ∨ (lhs < rhs)
       const Expression lhs{Visit(get_lhs_expression(f), delta)};
       const Expression rhs{Visit(get_rhs_expression(f), delta)};
-      return VisitGreaterThan(lhs > rhs, delta) ||
-          VisitLessThan(lhs < rhs, delta);
+      return VisitGreaterThan(lhs > rhs, delta) || VisitLessThan(lhs < rhs, delta);
     } else {
       return Formula::True();
     }
@@ -371,14 +343,12 @@ class DeltaStrengthenVisitor {
 
   // Makes VisitExpression a friend of this class so that it can use private
   // operator()s.
-  friend Expression drake::symbolic::VisitExpression<Expression>(const DeltaStrengthenVisitor *,
-                                                                 const Expression &,
+  friend Expression drake::symbolic::VisitExpression<Expression>(const DeltaStrengthenVisitor *, const Expression &,
                                                                  const double &);
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
-  friend Formula drake::symbolic::VisitFormula<Formula>(const DeltaStrengthenVisitor *,
-                                                        const Formula &,
+  friend Formula drake::symbolic::VisitFormula<Formula>(const DeltaStrengthenVisitor *, const Formula &,
                                                         const double &);
 };
 
@@ -414,25 +384,13 @@ class IsDifferentiableVisitor {
   }
   [[nodiscard]] bool VisitConjunction(const Formula &f) const {
     // TODO: test this.
-    set<Formula> formulae = get_operands(f);
-    return all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
-    for (const Formula &formula : get_operands(f)) {
-      if (!Visit(formula)) {
-        return false;
-      }
-    }
-    return true;
+    std::set<Formula> formulae = get_operands(f);
+    return std::all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
   }
   [[nodiscard]] bool VisitDisjunction(const Formula &f) const {
     // TODO: test this.
-    set<Formula> formulae = get_operands(f);
-    return all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
-    for (const Formula &formula : get_operands(f)) {
-      if (!Visit(formula)) {
-        return false;
-      }
-    }
-    return true;
+    std::set<Formula> formulae = get_operands(f);
+    return std::all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
   }
   [[nodiscard]] bool VisitNegation(const Formula &f) const { return Visit(get_operand(f)); }
   [[nodiscard]] bool VisitForall(const Formula &) const { return false; }
@@ -508,15 +466,11 @@ Formula DeltaWeaken(const Formula &f, const double delta) {
   return DeltaStrengthenVisitor{}.Strengthen(f, -delta);
 }
 
-bool IsDifferentiable(const Formula &f) {
-  return IsDifferentiableVisitor{}.Visit(f);
-}
+bool IsDifferentiable(const Formula &f) { return IsDifferentiableVisitor{}.Visit(f); }
 
-bool IsDifferentiable(const Expression &e) {
-  return IsDifferentiableVisitor{}.Visit(e);
-}
+bool IsDifferentiable(const Expression &e) { return IsDifferentiableVisitor{}.Visit(e); }
 
-Formula make_conjunction(const vector <Formula> &formulas) {
+Formula make_conjunction(const std::vector<Formula> &formulas) {
   Formula ret{Formula::True()};
   for (const auto &f_i : formulas) {
     ret = std::move(ret) && f_i;
@@ -524,7 +478,7 @@ Formula make_conjunction(const vector <Formula> &formulas) {
   return ret;
 }
 
-Formula make_disjunction(const vector <Formula> &formulas) {
+Formula make_disjunction(const std::vector<Formula> &formulas) {
   Formula ret{Formula::False()};
   for (const auto &f_i : formulas) {
     ret = std::move(ret) || f_i;
@@ -532,38 +486,52 @@ Formula make_disjunction(const vector <Formula> &formulas) {
   return ret;
 }
 
-vector <Variable> CreateVector(const string &prefix, const int size, const Variable::Type type) {
-  DLINEAR_ASSERT(prefix.length() > 0, "prefix must not be empty.");
+std::vector<Variable> CreateVector(const std::string &prefix, const int size, const Variable::Type type) {
+  DLINEAR_ASSERT(!prefix.empty(), "prefix must not be empty.");
   DLINEAR_ASSERT(size >= 1, "size must be positive.");
-  vector<Variable> v;
+  std::vector<Variable> v;
   v.reserve(size);
   for (int i = 0; i < size; ++i) {
-    v.emplace_back(prefix + to_string(i), type);
+    v.emplace_back(prefix + std::to_string(i), type);
   }
   return v;
 }
 
 RelationalOperator operator!(const RelationalOperator op) {
   switch (op) {
-    case RelationalOperator::EQ:return RelationalOperator::NEQ;
-    case RelationalOperator::NEQ:return RelationalOperator::EQ;
-    case RelationalOperator::GT:return RelationalOperator::LEQ;
-    case RelationalOperator::GEQ:return RelationalOperator::LT;
-    case RelationalOperator::LT:return RelationalOperator::GEQ;
-    case RelationalOperator::LEQ:return RelationalOperator::GT;
-    default:DLINEAR_UNREACHABLE();
+    case RelationalOperator::EQ:
+      return RelationalOperator::NEQ;
+    case RelationalOperator::NEQ:
+      return RelationalOperator::EQ;
+    case RelationalOperator::GT:
+      return RelationalOperator::LEQ;
+    case RelationalOperator::GEQ:
+      return RelationalOperator::LT;
+    case RelationalOperator::LT:
+      return RelationalOperator::GEQ;
+    case RelationalOperator::LEQ:
+      return RelationalOperator::GT;
+    default:
+      DLINEAR_UNREACHABLE();
   }
 }
 
-ostream &operator<<(ostream &os, const RelationalOperator op) {
+std::ostream &operator<<(std::ostream &os, const RelationalOperator op) {
   switch (op) {
-    case RelationalOperator::EQ:return os << "=";
-    case RelationalOperator::NEQ:return os << "≠";
-    case RelationalOperator::GT:return os << ">";
-    case RelationalOperator::GEQ:return os << "≥";
-    case RelationalOperator::LT:return os << "<";
-    case RelationalOperator::LEQ:return os << "≤";
-    default:DLINEAR_UNREACHABLE();
+    case RelationalOperator::EQ:
+      return os << "=";
+    case RelationalOperator::NEQ:
+      return os << "≠";
+    case RelationalOperator::GT:
+      return os << ">";
+    case RelationalOperator::GEQ:
+      return os << "≥";
+    case RelationalOperator::LT:
+      return os << "<";
+    case RelationalOperator::LEQ:
+      return os << "≤";
+    default:
+      DLINEAR_UNREACHABLE();
   }
 }
 

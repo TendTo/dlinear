@@ -8,9 +8,6 @@
 
 #include "dlinear/util/exception.h"
 
-using std::ostream;
-using std::string;
-
 namespace dlinear {
 
 LpResult parseLogic(const int res) {
@@ -24,7 +21,7 @@ LpResult parseLogic(const int res) {
   }
 }
 
-ostream &operator<<(ostream &os, const LpResult &logic) {
+std::ostream &operator<<(std::ostream &os, const LpResult &logic) {
   switch (logic) {
     case LpResult::LP_NO_RESULT:
       return os << "no-result";

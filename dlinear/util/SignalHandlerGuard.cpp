@@ -7,15 +7,11 @@
  */
 #include "SignalHandlerGuard.h"
 
-#include <iostream>
 #include <stdexcept>
 
 namespace dlinear {
 
-using std::atomic_bool;
-using std::runtime_error;
-
-SignalHandlerGuard::SignalHandlerGuard(const int sig, handler_t handler, volatile atomic_bool* flag)
+SignalHandlerGuard::SignalHandlerGuard(const int sig, handler_t handler, volatile std::atomic_bool* flag)
     : sig_{sig}, flag_{flag}, old_action_{} {
   // Register the new handler and save the current one.
   struct sigaction new_action {};
@@ -24,7 +20,7 @@ SignalHandlerGuard::SignalHandlerGuard(const int sig, handler_t handler, volatil
   new_action.sa_flags = SA_RESTART;
   const int result = sigaction(sig_, &new_action, &old_action_);
   if (result != 0) {
-    throw runtime_error("Failed to register the signal handler.");
+    throw std::runtime_error("Failed to register the signal handler.");
   }
 }
 

@@ -14,33 +14,27 @@
 
 namespace dlinear {
 
-using std::cout;
-using std::set;
-using std::string;
-using std::to_string;
-using std::vector;
-
 namespace {
 // A class to show statistics information at destruction.
 
 // Forward declarations for the helper functions.
-void Cnfize(const Variable &b, const Formula &f, vector<Formula> *clauses);
-void CnfizeNegation(const Variable &b, const Formula &f, vector<Formula> *clauses);
-void CnfizeConjunction(const Variable &b, const Formula &f, vector<Formula> *clauses);
-void CnfizeDisjunction(const Variable &b, const Formula &f, vector<Formula> *clauses);
+void Cnfize(const Variable &b, const Formula &f, std::vector<Formula> *clauses);
+void CnfizeNegation(const Variable &b, const Formula &f, std::vector<Formula> *clauses);
+void CnfizeConjunction(const Variable &b, const Formula &f, std::vector<Formula> *clauses);
+void CnfizeDisjunction(const Variable &b, const Formula &f, std::vector<Formula> *clauses);
 }  // namespace
 
 // The main function of the TseitinCnfizer:
 //  - It visits each node and introduce a Boolean variable `b` for
 //    each subterm `f`, and keep the relation `b ⇔ f`.
 //  - Then it cnfizes each `b ⇔ f` and make a conjunction of them.
-vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
+std::vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
   static IterationStats stat{DLINEAR_INFO_ENABLED, "Tseitin Cnfizer", "Total time spent in Converting",
                              "Total # of Convert"};
   TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
   stat.Increase();
   map_.clear();
-  vector<Formula> ret;
+  std::vector<Formula> ret;
   const Formula head{Visit(f)};
   if (map_.empty()) {
     return {head};
@@ -48,7 +42,7 @@ vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
   for (auto const &p : map_) {
     if (get_variable(head).equal_to(p.first)) {
       if (is_conjunction(p.second)) {
-        const set<Formula> &conjuncts(get_operands(p.second));
+        const std::set<Formula> &conjuncts(get_operands(p.second));
         copy(conjuncts.begin(), conjuncts.end(), back_inserter(ret));
       } else {
         ret.push_back(p.second);
@@ -74,8 +68,8 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
   const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
-  const set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
-  const set<Formula> new_clauses{::dlinear::map(clauses, [&quantified_variables](const Formula &clause) {
+  const std::set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
+  const std::set<Formula> new_clauses{::dlinear::map(clauses, [&quantified_variables](const Formula &clause) {
     DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
     if (HaveIntersection(clause.GetFreeVariables(), quantified_variables)) {
       return forall(quantified_variables, clause);
@@ -89,7 +83,7 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
     return *(new_clauses.begin());
   } else {
     static size_t id{0};
-    const Variable bvar{string("forall") + to_string(id++), Variable::Type::BOOLEAN};
+    const Variable bvar{std::string("forall") + std::to_string(id++), Variable::Type::BOOLEAN};
     map_.emplace(bvar, make_conjunction(new_clauses));
     return Formula{bvar};
   }
@@ -99,18 +93,18 @@ Formula TseitinCnfizer::VisitConjunction(const Formula &f) {
   // Introduce a new Boolean variable, `bvar` for `f` and record the
   // relation `bvar ⇔ f`.
   static size_t id{0};
-  const set<Formula> transformed_operands{
+  const std::set<Formula> transformed_operands{
       ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
-  const Variable bvar{string("conj") + to_string(id++), Variable::Type::BOOLEAN};
+  const Variable bvar{std::string("conj") + std::to_string(id++), Variable::Type::BOOLEAN};
   map_.emplace(bvar, make_conjunction(transformed_operands));
   return Formula{bvar};
 }
 
 Formula TseitinCnfizer::VisitDisjunction(const Formula &f) {
   static size_t id{0};
-  const set<Formula> &transformed_operands{
+  const std::set<Formula> &transformed_operands{
       ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
-  const Variable bvar{string("disj") + to_string(id++), Variable::Type::BOOLEAN};
+  const Variable bvar{std::string("disj") + std::to_string(id++), Variable::Type::BOOLEAN};
   map_.emplace(bvar, make_disjunction(transformed_operands));
   return Formula{bvar};
 }
@@ -130,7 +124,7 @@ Formula TseitinCnfizer::VisitNegation(const Formula &f) {
 namespace {
 // Cnfize b ⇔ f and add it to @p clauses. It calls Cnfize<FormulaKind> using
 // pattern-matching.
-void Cnfize(const Variable &b, const Formula &f, vector<Formula> *clauses) {
+void Cnfize(const Variable &b, const Formula &f, std::vector<Formula> *clauses) {
   switch (f.get_kind()) {
     case FormulaKind::False:
       DLINEAR_UNREACHABLE();
@@ -163,14 +157,14 @@ void Cnfize(const Variable &b, const Formula &f, vector<Formula> *clauses) {
 }
 
 // Add f to clauses if f is not true.
-void Add(const Formula &f, vector<Formula> *clauses) {
+void Add(const Formula &f, std::vector<Formula> *clauses) {
   if (!is_true(f)) {
     clauses->push_back(f);
   }
 }
 
 // Add f₁ ⇔ f₂ to clauses.
-void AddIff(const Formula &f1, const Formula &f2, vector<Formula> *clauses) {
+void AddIff(const Formula &f1, const Formula &f2, std::vector<Formula> *clauses) {
   Add(imply(f1, f2), clauses);
   Add(imply(f2, f1), clauses);
 }
@@ -179,7 +173,7 @@ void AddIff(const Formula &f1, const Formula &f2, vector<Formula> *clauses) {
 //   b ⇔ ¬b₁
 // = (b → ¬b₁) ∧ (¬b₁ → b)
 // = (¬b ∨ ¬b₁) ∧ (b₁ ∨ b)   (✓CNF)
-void CnfizeNegation(const Variable &b, const Formula &f, vector<Formula> *clauses) {
+void CnfizeNegation(const Variable &b, const Formula &f, std::vector<Formula> *clauses) {
   AddIff(Formula{b}, f, clauses);
 }  // namespace
 
@@ -189,11 +183,11 @@ void CnfizeNegation(const Variable &b, const Formula &f, vector<Formula> *clause
 // = (b → (b₁ ∧ ... ∧ bₙ)) ∧ ((b₁ ∧ ... ∧ bₙ) → b)
 // = (¬b ∨ (b₁ ∧ ... ∧ bₙ)) ∧ (¬b₁ ∨ ... ∨ ¬bₙ ∨ b)
 // = (¬b ∨ b₁) ∧ ... (¬b ∨ bₙ) ∧ (¬b₁ ∨ ... ∨ ¬bₙ ∨ b)   (✓CNF)
-void CnfizeConjunction(const Variable &b, const Formula &f, vector<Formula> *clauses) {
+void CnfizeConjunction(const Variable &b, const Formula &f, std::vector<Formula> *clauses) {
   // operands = {b₁, ..., bₙ}
-  const set<Formula> &operands{get_operands(f)};
+  const std::set<Formula> &operands{get_operands(f)};
   // negated_operands = {¬b₁, ..., ¬bₙ}
-  const set<Formula> &negated_operands{map(operands, [](const Formula &formula) { return !formula; })};
+  const std::set<Formula> &negated_operands{map(operands, [](const Formula &formula) { return !formula; })};
   Formula ret{Formula::True()};
   for (const Formula &b_i : operands) {
     Add(!b || b_i, clauses);
@@ -207,9 +201,9 @@ void CnfizeConjunction(const Variable &b, const Formula &f, vector<Formula> *cla
 // = (b → (b₁ ∨ ... ∨ bₙ)) ∧ ((b₁ ∨ ... ∨ bₙ) → b)
 // = (¬b ∨ b₁ ∨ ... ∨ bₙ) ∧ ((¬b₁ ∧ ... ∧ ¬bₙ) ∨ b)
 // = (¬b ∨ b₁ ∨ ... ∨ bₙ) ∧ (¬b₁ ∨ b) ∧ ... ∧ (¬bₙ ∨ b)   (✓CNF)
-void CnfizeDisjunction(const Variable &b, const Formula &f, vector<Formula> *clauses) {
+void CnfizeDisjunction(const Variable &b, const Formula &f, std::vector<Formula> *clauses) {
   // negated_operands = {¬b₁, ..., ¬bₙ}
-  const set<Formula> &negated_operands{map(get_operands(f), [](const Formula &formula) { return !formula; })};
+  const std::set<Formula> &negated_operands{map(get_operands(f), [](const Formula &formula) { return !formula; })};
   Add(!b || f, clauses);  // (¬b ∨ b₁ ∨ ... ∨ bₙ)
   for (const Formula &neg_b_i : negated_operands) {
     Add(neg_b_i || b, clauses);

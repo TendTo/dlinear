@@ -8,12 +8,9 @@
 
 #include "dlinear/util/exception.h"
 
-using std::ostream;
-using std::string;
-
 namespace dlinear {
 
-Logic parseLogic(const string &s) {
+Logic parseLogic(const std::string &s) {
   if (s == "QF_NRA") return Logic::QF_NRA;
   if (s == "QF_NRA_ODE") return Logic::QF_NRA_ODE;
   if (s == "QF_LRA") return Logic::QF_LRA;
@@ -22,7 +19,7 @@ Logic parseLogic(const string &s) {
   DLINEAR_RUNTIME_ERROR_FMT("set-logic '{}' is not supported", s);
 }
 
-ostream &operator<<(ostream &os, const Logic &logic) {
+std::ostream &operator<<(std::ostream &os, const Logic &logic) {
   switch (logic) {
     case Logic::QF_NRA:
       return os << "QF_NRA";

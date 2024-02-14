@@ -3,8 +3,6 @@
 #include <chrono>
 #include <utility>
 
-using std::string;
-
 namespace dlinear::benchmark {
 
 InfoGatherer::InfoGatherer(Config config, uint timeout)

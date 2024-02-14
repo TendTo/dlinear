@@ -20,14 +20,9 @@
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
 
-using std::pair;
-using std::string;
-using std::unordered_set;
-using std::vector;
-
 namespace {
 
-bool ParseBooleanOption([[maybe_unused]] const string &key, const string &val) {
+bool ParseBooleanOption([[maybe_unused]] const std::string &key, const std::string &val) {
   if (val == "true") return true;
   if (val == "false") return false;
   DLINEAR_RUNTIME_ERROR_FMT("Unknown value {} is provided for option {}", val, key);
@@ -154,7 +149,7 @@ void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Exp
   SetInterval(v, lb_fp, ub_fp);
 }
 
-void Context::Impl::Minimize(const vector<Expression> &functions) {
+void Context::Impl::Minimize(const std::vector<Expression> &functions) {
   DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   const Expression &obj_expr{functions[0].Expand()};
@@ -163,7 +158,7 @@ void Context::Impl::Minimize(const vector<Expression> &functions) {
   MinimizeCore(obj_expr);
 }
 
-void Context::Impl::Maximize(const vector<Expression> &functions) {
+void Context::Impl::Maximize(const std::vector<Expression> &functions) {
   DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
 
   // Negate objective function
@@ -173,17 +168,17 @@ void Context::Impl::Maximize(const vector<Expression> &functions) {
   MinimizeCore(obj_expr);
 }
 
-void Context::Impl::SetInfo(const string &key, const double val) {
+void Context::Impl::SetInfo(const std::string &key, const double val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInfo({} ↦ {})", key, val);
   info_[key] = fmt::format("{}", val);
 }
 
-void Context::Impl::SetInfo(const string &key, const string &val) {
+void Context::Impl::SetInfo(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInfo({} ↦ {})", key, val);
   info_[key] = val;
 }
 
-std::string Context::Impl::GetInfo(const string &key) const {
+std::string Context::Impl::GetInfo(const std::string &key) const {
   const auto it = info_.find(key);
   if (it == info_.end()) return "";
   return it->second;
@@ -200,7 +195,7 @@ void Context::Impl::SetLogic(const Logic &logic) {
   logic_ = logic;
 }
 
-void Context::Impl::SetOption(const string &key, const double val) {
+void Context::Impl::SetOption(const std::string &key, const double val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = fmt::format("{}", val);
 
@@ -210,7 +205,7 @@ void Context::Impl::SetOption(const string &key, const double val) {
   }
 }
 
-void Context::Impl::SetOption(const string &key, const string &val) {
+void Context::Impl::SetOption(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
   if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
@@ -221,7 +216,7 @@ void Context::Impl::SetOption(const string &key, const string &val) {
   if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
-std::string Context::Impl::GetOption(const string &key) const {
+std::string Context::Impl::GetOption(const std::string &key) const {
   const auto it = option_.find(key);
   if (it == option_.end()) return "";
   return it->second;
@@ -312,13 +307,13 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
     // Here, we modify Boolean variables only (not used by the LP solver).
-    const vector<pair<Variable, bool>> &boolean_model{optional_model->first};
-    for (const pair<Variable, bool> &p : boolean_model) {
+    const std::vector<std::pair<Variable, bool>> &boolean_model{optional_model->first};
+    for (const std::pair<Variable, bool> &p : boolean_model) {
       box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
     }
 
     // Extrapolate the theory model from the SAT model.
-    const vector<pair<Variable, bool>> &theory_model{optional_model->second};
+    const std::vector<std::pair<Variable, bool>> &theory_model{optional_model->second};
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 

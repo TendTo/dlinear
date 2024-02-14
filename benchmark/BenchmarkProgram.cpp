@@ -12,14 +12,11 @@
 #include "benchmark/util/BenchArgParser.h"
 #include "benchmark/util/InfoGatherer.h"
 
-using std::string;
-using std::vector;
-
 namespace dlinear::benchmark {
 
 namespace {
 
-inline dlinear::Config GetConfig(const string &filename, const Config::LPSolver solver, const double precision,
+inline dlinear::Config GetConfig(const std::string &filename, const Config::LPSolver solver, const double precision,
                                  int simplex_phase, const Config::LPMode lp_mode = Config::LPMode::AUTO) {
   dlinear::Config config{filename};
   config.m_lp_solver().set_from_command_line(solver);
@@ -68,7 +65,7 @@ void BenchmarkProgram::StartBenchmarks() {
       true);
 
   std::cout << "Starting benchmarking" << std::endl;
-  for (const string &filename : config_.files()) {
+  for (const std::string &filename : config_.files()) {
     for (Config::LPSolver solver : config_file.solvers()) {
       for (double precision : config_file.precisions()) {
         for (Config::LPMode lp_mode : config_file.lp_modes()) {

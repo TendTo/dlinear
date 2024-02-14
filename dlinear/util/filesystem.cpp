@@ -16,29 +16,27 @@
 
 #include "dlinear/util/logging.h"
 
-using std::string;
-
 namespace dlinear {
 
-bool file_exists(const string &name) {
+bool file_exists(const std::string &name) {
   DLINEAR_TRACE_FMT("file_exists({})", name);
   struct stat buffer {};
   if (stat(name.c_str(), &buffer) != 0) return false;
   return S_ISREG(buffer.st_mode);
 }
 
-bool dir_exists(const string &name) {
+bool dir_exists(const std::string &name) {
   DLINEAR_TRACE_FMT("dir_exists({})", name);
   struct stat buffer {};
   if (stat(name.c_str(), &buffer) != 0) return false;
   return S_ISDIR(buffer.st_mode);
 }
 
-string get_extension(const string &name) {
+std::string get_extension(const std::string &name) {
   DLINEAR_TRACE_FMT("get_extension({})", name);
   const size_t idx = name.rfind('.');
   DLINEAR_TRACE_FMT("position of the '.': {}", idx);
-  if (idx == string::npos)  // No extension found
+  if (idx == std::string::npos)  // No extension found
     return "";
   return name.substr(idx + 1);
 }

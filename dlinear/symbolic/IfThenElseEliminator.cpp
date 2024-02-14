@@ -7,7 +7,6 @@
 
 #include "IfThenElseEliminator.h"
 
-#include <algorithm>
 #include <set>
 #include <string>
 
@@ -15,11 +14,6 @@
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
-
-using std::cout;
-using std::set;
-using std::to_string;
-using std::unordered_set;
 
 namespace dlinear {
 
@@ -33,7 +27,9 @@ Formula IfThenElseEliminator::Process(const Formula &f) {
   return new_f && make_conjunction(added_formulas_);
 }
 
-const unordered_set<Variable, hash_value<Variable>> &IfThenElseEliminator::variables() const { return ite_variables_; }
+const std::unordered_set<Variable, hash_value<Variable>> &IfThenElseEliminator::variables() const {
+  return ite_variables_;
+}
 
 Expression IfThenElseEliminator::Visit(const Expression &e, const Formula &guard) {
   if (e.include_ite()) return VisitExpression<Expression>(this, e, guard);
@@ -140,7 +136,7 @@ Expression IfThenElseEliminator::VisitMax(const Expression &e, const Formula &gu
 
 Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Formula &guard) {
   static int counter{0};
-  const Variable new_var{"ITE" + to_string(counter++), Variable::Type::CONTINUOUS};
+  const Variable new_var{"ITE" + std::to_string(counter++), Variable::Type::CONTINUOUS};
   ite_variables_.insert(new_var);
   const Formula c{Visit(get_conditional_formula(e), guard)};
   const Formula then_guard{guard && c};
@@ -190,7 +186,7 @@ Formula IfThenElseEliminator::VisitLessThanOrEqualTo(const Formula &f, const For
 
 Formula IfThenElseEliminator::VisitConjunction(const Formula &f, const Formula &guard) {
   // f := f₁ ∧ ... ∧ fₙ
-  set<Formula> new_conjuncts;
+  std::set<Formula> new_conjuncts;
   for (const Formula &f_i : get_operands(f)) {
     new_conjuncts.emplace(Visit(f_i, guard));
   }
@@ -199,7 +195,7 @@ Formula IfThenElseEliminator::VisitConjunction(const Formula &f, const Formula &
 
 Formula IfThenElseEliminator::VisitDisjunction(const Formula &f, const Formula &guard) {
   // f := f₁ ∨ ... ∨ fₙ
-  set<Formula> new_disjuncts;
+  std::set<Formula> new_disjuncts;
   for (const Formula &f_i : get_operands(f)) {
     new_disjuncts.emplace(Visit(f_i, guard));
   }

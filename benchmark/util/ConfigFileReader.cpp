@@ -15,12 +15,10 @@
 
 #include "dlinear/util/exception.h"
 
-using std::string;
-
 namespace dlinear::benchmark {
 
 namespace {
-Config::LPSolver GetLPSolver(const string &solver) {
+Config::LPSolver GetLPSolver(const std::string &solver) {
   if (solver == "soplex") {
     return Config::LPSolver::SOPLEX;
   } else if (solver == "qsoptex") {
@@ -29,7 +27,7 @@ Config::LPSolver GetLPSolver(const string &solver) {
   DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
 }
 
-Config::LPMode GetLPMode(const string &mode) {
+Config::LPMode GetLPMode(const std::string &mode) {
   if (mode == "auto") {
     return Config::LPMode::AUTO;
   } else if (mode == "pure-precision-boosting") {
@@ -49,7 +47,7 @@ void ConfigFileReader::read() {
 
   const std::regex conf_regex("^(\\w+) *= *(.+?) *$");
   std::smatch conf_matches;
-  string line;
+  std::string line;
 
   while (conf_file) {
     std::getline(conf_file, line);
@@ -57,9 +55,9 @@ void ConfigFileReader::read() {
     if (std::regex_match(line, conf_matches, conf_regex)) {
       if (conf_matches.size() != 3) continue;
 
-      string parameter = conf_matches[1].str();
+      std::string parameter = conf_matches[1].str();
       std::stringstream values{conf_matches[2].str()};
-      string value;
+      std::string value;
       while (values >> value) parameters_[parameter].push_back(value);
     }
   }
@@ -77,7 +75,7 @@ std::vector<double> ConfigFileReader::precisions() const {
   std::vector<double> precisions;
   precisions.reserve(parameters_.at(precision_key_).size());
   std::transform(parameters_.at(precision_key_).begin(), parameters_.at(precision_key_).end(),
-                 std::back_inserter(precisions), [](const string &precision) { return std::stod(precision); });
+                 std::back_inserter(precisions), [](const std::string &precision) { return std::stod(precision); });
   return precisions;
 }
 

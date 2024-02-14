@@ -9,29 +9,12 @@
 
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <sstream>
-#include <utility>
-#include <vector>
 
-#include "dlinear/mps/parser.yy.hpp"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
-
-using std::cerr;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::ifstream;
-using std::istream;
-using std::istringstream;
-using std::numeric_limits;
-using std::ostream;
-using std::ostringstream;
-using std::string;
-using std::vector;
 
 namespace dlinear::mps {
 
@@ -40,7 +23,7 @@ MpsDriver::MpsDriver(Context &context)
       debug_scanning_{context_.config().debug_scanning()},
       debug_parsing_{context_.config().debug_parsing()} {}
 
-bool MpsDriver::parse_stream(istream &in, const string &sname) {
+bool MpsDriver::parse_stream(std::istream &in, const std::string &sname) {
   static Stats stat{DLINEAR_INFO_ENABLED, "MPS Driver", "Total time spent in MPS parsing"};
   TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true);
   stream_name_ = sname;
@@ -54,16 +37,16 @@ bool MpsDriver::parse_stream(istream &in, const string &sname) {
   return parser.parse() == 0;
 }
 
-bool MpsDriver::parse_file(const string &filename) {
-  ifstream in(filename.c_str());
+bool MpsDriver::parse_file(const std::string &filename) {
+  std::ifstream in(filename.c_str());
   if (!in.good()) {
     return false;
   }
   return parse_stream(in, filename);
 }
 
-bool MpsDriver::parse_string(const string &input, const string &sname) {
-  istringstream iss(input);
+bool MpsDriver::parse_string(const std::string &input, const std::string &sname) {
+  std::istringstream iss(input);
   return parse_stream(iss, sname);
 }
 
@@ -91,8 +74,8 @@ bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
   return true;
 }
 
-void MpsDriver::error(const location &l, const string &m) { cerr << l << " : " << m << endl; }
-void MpsDriver::error(const string &m) { cerr << m << endl; }
+void MpsDriver::error(const location &l, const std::string &m) { std::cerr << l << " : " << m << std::endl; }
+void MpsDriver::error(const std::string &m) { std::cerr << m << std::endl; }
 
 void MpsDriver::ObjectiveSense(bool is_min) {
   DLINEAR_TRACE_FMT("Driver::ObjectiveSense {}", is_min);

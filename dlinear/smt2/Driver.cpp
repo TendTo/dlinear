@@ -12,26 +12,11 @@
 #include <limits>
 #include <sstream>
 #include <utility>
-#include <vector>
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
-
-using std::cerr;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::ifstream;
-using std::istream;
-using std::istringstream;
-using std::nextafter;
-using std::numeric_limits;
-using std::ostream;
-using std::ostringstream;
-using std::string;
-using std::vector;
 
 namespace dlinear::smt2 {
 
@@ -40,7 +25,7 @@ Smt2Driver::Smt2Driver(Context &context)
       debug_scanning_{context_.config().debug_scanning()},
       debug_parsing_{context_.config().debug_parsing()} {}
 
-bool Smt2Driver::parse_stream(istream &in, const string &sname) {
+bool Smt2Driver::parse_stream(std::istream &in, const std::string &sname) {
   static Stats stat{DLINEAR_INFO_ENABLED, "SMT2 Driver", "Total time spent in SMT2 parsing"};
   TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true);
   streamname_ = sname;
@@ -54,22 +39,22 @@ bool Smt2Driver::parse_stream(istream &in, const string &sname) {
   return parser.parse() == 0;
 }
 
-bool Smt2Driver::parse_file(const string &filename) {
-  ifstream in(filename.c_str());
+bool Smt2Driver::parse_file(const std::string &filename) {
+  std::ifstream in(filename.c_str());
   if (!in.good()) {
     return false;
   }
   return parse_stream(in, filename);
 }
 
-bool Smt2Driver::parse_string(const string &input, const string &sname) {
-  istringstream iss(input);
+bool Smt2Driver::parse_string(const std::string &input, const std::string &sname) {
+  std::istringstream iss(input);
   return parse_stream(iss, sname);
 }
 
-void Smt2Driver::error(const location &l, const string &m) { cerr << l << " : " << m << endl; }
+void Smt2Driver::error(const location &l, const std::string &m) { std::cerr << l << " : " << m << std::endl; }
 
-void Smt2Driver::error(const string &m) { cerr << m << endl; }
+void Smt2Driver::error(const std::string &m) { std::cerr << m << std::endl; }
 
 void Smt2Driver::CheckSat() {}
 
@@ -82,38 +67,38 @@ void Smt2Driver::Minimize(const Expression &f) {
   if (context_.config().produce_models()) context_.Minimize(f);
 }
 
-Variable Smt2Driver::RegisterVariable(const string &name, const Sort sort) {
+Variable Smt2Driver::RegisterVariable(const std::string &name, const Sort sort) {
   const Variable v{ParseVariableSort(name, sort)};
   scope_.insert(v.get_name(), VariableOrConstant(v));
   return v;
 }
 
-Variable Smt2Driver::DeclareVariable(const string &name, const Sort sort) {
+Variable Smt2Driver::DeclareVariable(const std::string &name, const Sort sort) {
   Variable v{RegisterVariable(name, sort)};
   context_.DeclareVariable(v);
   return v;
 }
 
-void Smt2Driver::DeclareVariable(const string &name, const Sort sort, const Term &lb, const Term &ub) {
+void Smt2Driver::DeclareVariable(const std::string &name, const Sort sort, const Term &lb, const Term &ub) {
   const Variable v{RegisterVariable(name, sort)};
   context_.DeclareVariable(v, lb.expression(), ub.expression());
 }
 
-string Smt2Driver::MakeUniqueName(const string &name) {
-  ostringstream oss;
+std::string Smt2Driver::MakeUniqueName(const std::string &name) {
+  std::stringstream oss;
   // The \ character ensures that the name cannot occur in an SMT-LIBv2 file.
   oss << "L" << nextUniqueId_++ << "\\" << name;
   return oss.str();
 }
 
-Variable Smt2Driver::DeclareLocalVariable(const string &name, const Sort sort) {
+Variable Smt2Driver::DeclareLocalVariable(const std::string &name, const Sort sort) {
   const Variable v{ParseVariableSort(MakeUniqueName(name), sort)};
   scope_.insert(name, VariableOrConstant(v));  // v is not inserted under its own name.
   context_.DeclareVariable(v, false /* This local variable is not a model variable. */);
   return v;
 }
 
-const Smt2Driver::VariableOrConstant &Smt2Driver::lookup_variable(const string &name) {
+const Smt2Driver::VariableOrConstant &Smt2Driver::lookup_variable(const std::string &name) {
   const auto it = scope_.find(name);
   if (it == scope_.cend()) {
     DLINEAR_RUNTIME_ERROR_FMT("{} is an undeclared variable.", name);
@@ -121,9 +106,9 @@ const Smt2Driver::VariableOrConstant &Smt2Driver::lookup_variable(const string &
   return it->second;
 }
 
-Variable Smt2Driver::ParseVariableSort(const string &name, const Sort s) { return Variable{name, SortToType(s)}; }
+Variable Smt2Driver::ParseVariableSort(const std::string &name, const Sort s) { return Variable{name, SortToType(s)}; }
 
-void Smt2Driver::DefineLocalConstant(const string &name, const Expression &value) {
+void Smt2Driver::DefineLocalConstant(const std::string &name, const Expression &value) {
   DLINEAR_ASSERT(is_constant(value), "Value must be a constant expression.");
   scope_.insert(name, VariableOrConstant(value));
 }

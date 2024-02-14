@@ -13,19 +13,10 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/util/math.h"
 
-using dlinear::gmp::ceil;
-using dlinear::gmp::floor;
-using std::equal;
-using std::find_if;
-using std::make_pair;
-using std::make_shared;
-using std::numeric_limits;
-using std::ostream;
-using std::pair;
-using std::unordered_map;
-using std::vector;
-
 namespace dlinear {
+
+using gmp::ceil;
+using gmp::floor;
 
 Box::Interval::Interval() : lb_(Infinity::Ninfty()), ub_(Infinity::Infty()) {}
 
@@ -79,20 +70,20 @@ Box::Interval Box::Interval::fromString(const std::string &s) {
 }
 
 Box::Box()
-    : variables_{make_shared<vector<Variable>>()},
+    : variables_{std::make_shared<std::vector<Variable>>()},
       // We have this hack here because it is not allowed to have a
       // zero interval vector. Note that because of this special case,
       // `variables_->size() == values_.size()` do not hold. We should
       // rely on `values_.size()`.
       values_(1),
-      var_to_idx_{make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared<unordered_map<int, Variable>>()} {}
+      var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {}
 
 Box::Box(const std::vector<Variable> &variables)
-    : variables_{make_shared<vector<Variable>>()},
+    : variables_{std::make_shared<std::vector<Variable>>()},
       values_(static_cast<int>(variables.size())),
-      var_to_idx_{make_shared<unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{make_shared<unordered_map<int, Variable>>()} {
+      var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
+      idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {
   for (const Variable &var : variables) {
     Add(var);
   }
@@ -105,17 +96,17 @@ void Box::Add(const Variable &v) {
   }
 
   // Duplicate variables are not allowed.
-  DLINEAR_ASSERT(find_if(variables_->begin(), variables_->end(),
-                         [&v](const Variable &var) { return v.equal_to(var); }) == variables_->end(),
+  DLINEAR_ASSERT(std::find_if(variables_->begin(), variables_->end(),
+                              [&v](const Variable &var) { return v.equal_to(var); }) == variables_->end(),
                  "Duplicate variables are not allowed");
 
   if (!variables_.unique()) {
     // If the components of this box is shared by more than one
     // entity, we need to clone this before adding the variable `v`
     // so that these changes remain local.
-    variables_ = make_shared<vector<Variable>>(*variables_);
-    var_to_idx_ = make_shared<unordered_map<Variable, int, hash_value<Variable>>>(*var_to_idx_);
-    idx_to_var_ = make_shared<unordered_map<int, Variable>>(*idx_to_var_);
+    variables_ = std::make_shared<std::vector<Variable>>(*variables_);
+    var_to_idx_ = std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>(*var_to_idx_);
+    idx_to_var_ = std::make_shared<std::unordered_map<int, Variable>>(*idx_to_var_);
   }
   const int n{size()};
   idx_to_var_->emplace(n, v);
@@ -128,7 +119,7 @@ void Box::Add(const Variable &v) {
   if (v.get_type() == Variable::Type::BOOLEAN || v.get_type() == Variable::Type::BINARY) {
     values_[n] = Interval(0, 1);
   } else if (v.get_type() == Variable::Type::INTEGER) {
-    values_[n] = Interval(-numeric_limits<int>::max(), numeric_limits<int>::max());
+    values_[n] = Interval(-std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
   }
 }
 
@@ -156,7 +147,7 @@ void Box::set_empty() {
   }
 }
 
-int Box::size() const { return variables_->size(); }
+int Box::size() const { return static_cast<int>(variables_->size()); }
 
 Box::Interval &Box::operator[](const int i) {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
@@ -169,7 +160,7 @@ const Box::Interval &Box::operator[](const int i) const {
 }
 const Box::Interval &Box::operator[](const Variable &var) const { return values_[(*var_to_idx_)[var]]; }
 
-const vector<Variable> &Box::variables() const { return *variables_; }
+const std::vector<Variable> &Box::variables() const { return *variables_; }
 
 const Variable &Box::variable(const int i) const { return (*idx_to_var_)[i]; }
 
@@ -180,7 +171,7 @@ int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
 const std::vector<Box::Interval> &Box::interval_vector() const { return values_; }
 std::vector<Box::Interval> &Box::m_interval_vector() { return values_; }
 
-pair<mpq_class, int> Box::MaxDiam() const {
+std::pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};
   int idx{-1};
   for (size_t i{0}; i < variables_->size(); ++i) {
@@ -190,10 +181,10 @@ pair<mpq_class, int> Box::MaxDiam() const {
       idx = i;
     }
   }
-  return make_pair(max_diam, idx);
+  return std::make_pair(max_diam, idx);
 }
 
-pair<Box, Box> Box::bisect(const int i) const {
+std::pair<Box, Box> Box::bisect(const int i) const {
   const Variable &var{(*idx_to_var_)[i]};
   if (!values_[i].is_bisectable()) {
     DLINEAR_RUNTIME_ERROR_FMT("Variable {} = {} is not bisectable but Box::bisect is called.", var, values_[i]);
@@ -210,7 +201,7 @@ pair<Box, Box> Box::bisect(const int i) const {
   DLINEAR_UNREACHABLE();
 }
 
-pair<Box, Box> Box::bisect(const Variable &var) const {
+std::pair<Box, Box> Box::bisect(const Variable &var) const {
   auto it = var_to_idx_->find(var);
   if (it != var_to_idx_->end()) {
     return bisect(it->second);
@@ -220,7 +211,7 @@ pair<Box, Box> Box::bisect(const Variable &var) const {
   return bisect((*var_to_idx_)[var]);
 }
 
-pair<Box, Box> Box::bisect_int(const int i) const {
+std::pair<Box, Box> Box::bisect_int(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::INTEGER ||
                      idx_to_var_->at(i).get_type() == Variable::Type::BINARY,
                  "Variable must be integer or binary");
@@ -238,19 +229,19 @@ pair<Box, Box> Box::bisect_int(const int i) const {
   Box b2{*this};
   b1[i] = Interval(lb, mid_floor);
   b2[i] = Interval(mid_floor + 1, ub);
-  return make_pair(b1, b2);
+  return std::make_pair(b1, b2);
 }
 
-pair<Box, Box> Box::bisect_continuous(const int i) const {
+std::pair<Box, Box> Box::bisect_continuous(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::CONTINUOUS, "Variable must be continuous");
   Box b1{*this};
   Box b2{*this};
   const Interval intv_i{values_[i]};
   constexpr double kHalf{0.5};
-  const pair<Interval, Interval> bisected_intervals{intv_i.bisect(kHalf)};
+  const std::pair<Interval, Interval> bisected_intervals{intv_i.bisect(kHalf)};
   b1[i] = bisected_intervals.first;
   b2[i] = bisected_intervals.second;
-  return make_pair(b1, b2);
+  return std::make_pair(b1, b2);
 }
 
 #if 0
@@ -268,7 +259,7 @@ namespace {
 // RAII which preserves the FmtFlags of an ostream.
 class IosFmtFlagSaver {
  public:
-  explicit IosFmtFlagSaver(ostream &os) : os_(os), flags_(os.flags()) {}
+  explicit IosFmtFlagSaver(std::ostream &os) : os_(os), flags_(os.flags()) {}
   ~IosFmtFlagSaver() { os_.flags(flags_); }
 
   IosFmtFlagSaver(const IosFmtFlagSaver &rhs) = delete;
@@ -277,12 +268,12 @@ class IosFmtFlagSaver {
   IosFmtFlagSaver &operator=(IosFmtFlagSaver &&rhs) = delete;
 
  private:
-  ostream &os_;
+  std::ostream &os_;
   std::ios::fmtflags flags_;
 };
 }  // namespace
 
-ostream &operator<<(ostream &os, const Box &box) {
+std::ostream &operator<<(std::ostream &os, const Box &box) {
   IosFmtFlagSaver saver{os};
   int i{0};
   for (const Variable &var : *(box.variables_)) {
@@ -309,15 +300,15 @@ ostream &operator<<(ostream &os, const Box &box) {
 }
 
 bool operator==(const Box &b1, const Box &b2) {
-  return equal(b1.variables().begin(), b1.variables().end(), b2.variables().begin(), b2.variables().end(),
-               std::equal_to<Variable>{}) &&
+  return std::equal(b1.variables().begin(), b1.variables().end(), b2.variables().begin(), b2.variables().end(),
+                    std::equal_to<Variable>{}) &&
          (b1.interval_vector() == b2.interval_vector());
 }
 
 bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 
-ostream &DisplayDiff(ostream &os, const vector<Variable> &variables, const std::vector<Box::Interval> &old_iv,
-                     const std::vector<Box::Interval> &new_iv) {
+std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables,
+                          const std::vector<Box::Interval> &old_iv, const std::vector<Box::Interval> &new_iv) {
   IosFmtFlagSaver saver{os};
   for (size_t i = 0; i < variables.size(); ++i) {
     const Box::Interval &old_i{old_iv[i]};

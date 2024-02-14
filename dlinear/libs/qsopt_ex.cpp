@@ -7,12 +7,10 @@
 
 #include "qsopt_ex.h"
 
-using std::string;
-
 namespace dlinear::qsopt_ex {
 
-mpq_class *StringToMpqPtr(const string &str) { return CStringToMpqPtr(str.c_str()); }
-mpq_class StringToMpq(const string &str) { return CStringToMpq(str.c_str()); }
+mpq_class *StringToMpqPtr(const std::string &str) { return CStringToMpqPtr(str.c_str()); }
+mpq_class StringToMpq(const std::string &str) { return CStringToMpq(str.c_str()); }
 mpq_class *CStringToMpqPtr(const char str[]) {
   mpq_t val;
   mpq_init(val);

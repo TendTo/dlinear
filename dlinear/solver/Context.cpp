@@ -13,11 +13,6 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
-using std::make_unique;
-using std::string;
-using std::unique_ptr;
-using std::vector;
-
 namespace dlinear {
 
 Context::Context() : Context{Config{}} {}
@@ -48,7 +43,7 @@ void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }
 
 void Context::Minimize(const Expression &f) { impl_->Minimize({f}); }
 
-void Context::Minimize(const vector<Expression> &functions) { impl_->Minimize(functions); }
+void Context::Minimize(const std::vector<Expression> &functions) { impl_->Minimize(functions); }
 
 void Context::Maximize(const Expression &f) { impl_->Maximize({f}); }
 
@@ -64,9 +59,9 @@ void Context::Push(int n) {
   while (n-- > 0) impl_->Push();
 }
 
-void Context::SetInfo(const string &key, const double val) { impl_->SetInfo(key, val); }
+void Context::SetInfo(const std::string &key, const double val) { impl_->SetInfo(key, val); }
 
-void Context::SetInfo(const string &key, const string &val) { impl_->SetInfo(key, val); }
+void Context::SetInfo(const std::string &key, const std::string &val) { impl_->SetInfo(key, val); }
 
 std::string Context::GetInfo(const std::string &key) const { return impl_->GetInfo(key); }
 
@@ -76,18 +71,18 @@ void Context::SetInterval(const Variable &v, const mpq_class &lb, const mpq_clas
 
 void Context::SetLogic(const Logic &logic) { impl_->SetLogic(logic); }
 
-void Context::SetOption(const string &key, const double val) { impl_->SetOption(key, val); }
+void Context::SetOption(const std::string &key, const double val) { impl_->SetOption(key, val); }
 
-void Context::SetOption(const string &key, const string &val) { impl_->SetOption(key, val); }
+void Context::SetOption(const std::string &key, const std::string &val) { impl_->SetOption(key, val); }
 
 std::string Context::GetOption(const std::string &key) const { return impl_->GetInfo(key); }
 
 const Config &Context::config() const { return impl_->config(); }
 Config &Context::m_config() { return impl_->m_config(); }
 
-string Context::version() { return DLINEAR_VERSION_STRING; }
+std::string Context::version() { return DLINEAR_VERSION_STRING; }
 
-string Context::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
+std::string Context::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
 
 const Box &Context::box() const { return impl_->box(); }
 

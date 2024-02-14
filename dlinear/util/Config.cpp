@@ -11,16 +11,13 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 
-using std::endl;
-using std::ostream;
-
 namespace dlinear {
 Config::Config(std::string filename) : filename_{std::move(filename)} {}
 Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
-ostream &operator<<(ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
+std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
   switch (sat_default_phase) {
     case Config::SatDefaultPhase::False:
       return os << "False";
@@ -74,8 +71,8 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
   }
 }
 
-ostream &operator<<(ostream &os, const Config &config) {
-  return os << "Config {" << endl
+std::ostream &operator<<(std::ostream &os, const Config &config) {
+  return os << "Config {\n"
             << "continuous_output = " << config.continuous_output_.get() << ",\n"
             << "debug_parsing = " << config.debug_parsing_.get() << ",\n"
             << "debug_scanning = " << config.debug_scanning_.get() << ",\n"

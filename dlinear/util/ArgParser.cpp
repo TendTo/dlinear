@@ -19,11 +19,6 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
-using std::cerr;
-using std::endl;
-using std::ostream;
-using std::string;
-
 namespace dlinear {
 
 #define DLINEAR_PARSE_PARAM_BOOL(parser, name, ...)     \
@@ -62,12 +57,12 @@ void ArgParser::parse(int argc, const char **argv) {
     validateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   } catch (const std::runtime_error &err) {
-    cerr << err.what() << endl;
-    cerr << parser_;
+    std::cerr << err.what() << std::endl;
+    std::cerr << parser_;
     exit(EXIT_FAILURE);
   } catch (const std::invalid_argument &err) {
-    cerr << err.what() << endl;
-    cerr << parser_.usage() << endl;
+    std::cerr << err.what() << std::endl;
+    std::cerr << parser_.usage() << std::endl;
     exit(EXIT_FAILURE);
   }
 }
@@ -131,7 +126,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("--sat-default-phase")
       .help(Config::help_sat_default_phase)
       .default_value(Config::default_sat_default_phase)
-      .action([](const string &value) {
+      .action([](const std::string &value) {
         int v = std::stoi(value);
         if (v == 0) return Config::SatDefaultPhase::False;
         if (v == 1) return Config::SatDefaultPhase::True;
@@ -143,8 +138,8 @@ void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
 
-ostream &operator<<(ostream &os, const ArgParser &parser) {
-  os << parser.parser_ << endl;
+std::ostream &operator<<(std::ostream &os, const ArgParser &parser) {
+  os << parser.parser_ << std::endl;
   return os;
 }
 
@@ -152,7 +147,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
   Config config{};
 
-  config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<string>("file") : "");
+  config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
 
   // Add all the options to the config in alphabetical order
   if (parser_.is_used("continuous-output"))
@@ -210,7 +205,7 @@ void ArgParser::validateOptions() {
   // Check file extension if a file is provided
   if (parser_.is_used("file")) {
     Config::Format format = parser_.get<Config::Format>("format");
-    string extension{get_extension(parser_.get<string>("file"))};
+    std::string extension{get_extension(parser_.get<std::string>("file"))};
     if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
       DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
     } else if ((format == Config::Format::SMT2 && extension != "smt2") ||
@@ -219,7 +214,7 @@ void ArgParser::validateOptions() {
     }
   }
   // Check if the file exists
-  if (!parser_.is_used("in") && !file_exists(parser_.get<string>("file")))
+  if (!parser_.is_used("in") && !file_exists(parser_.get<std::string>("file")))
     DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
   if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
   if (parser_.get<bool>("skip-check-sat") && parser_.get<bool>("produce-models"))
@@ -232,23 +227,23 @@ void ArgParser::validateOptions() {
       DLINEAR_INVALID_ARGUMENT("--lp-solver", "QSopt_ex only supports 'auto' and 'pure-precision-boosting' modes");
 }
 
-string ArgParser::version() const { return DLINEAR_VERSION_STRING; }
+std::string ArgParser::version() { return DLINEAR_VERSION_STRING; }
 
-string ArgParser::repositoryStatus() const { return DLINEAR_VERSION_REPOSTAT; }
+std::string ArgParser::repositoryStatus() { return DLINEAR_VERSION_REPOSTAT; }
 
-string ArgParser::prompt() const {
+std::string ArgParser::prompt() const {
 #ifndef NDEBUG
-  const string build_type{"Debug"};
+  const std::string build_type{"Debug"};
 #else
-  const string build_type{"Release"};
+  const std::string build_type{"Release"};
 #endif
-  string repo_stat = repositoryStatus();
+  std::string repo_stat = repositoryStatus();
   if (!repo_stat.empty()) {
     repo_stat = " (repository: " + repo_stat + ")";
   }
 
-  string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}", DLINEAR_PROGRAM_NAME, version(),
-                            build_type, repo_stat);
+  std::string vstr = fmt::format("{} (v{}): delta-complete SMT solver ({} Build) {}", DLINEAR_PROGRAM_NAME, version(),
+                                 build_type, repo_stat);
   if (!qsoptex_hash_.empty()) vstr += fmt::format(" (qsopt-ex: {})", qsoptex_hash_);
   if (!soplex_hash_.empty()) vstr += fmt::format(" (soplex: {})", soplex_hash_);
   return vstr;

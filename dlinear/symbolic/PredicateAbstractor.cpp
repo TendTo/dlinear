@@ -14,11 +14,6 @@
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
 
-using std::cout;
-using std::set;
-using std::stringstream;
-using std::vector;
-
 namespace dlinear {
 
 void PredicateAbstractor::Add(const Variable &var, const Formula &f) {
@@ -34,8 +29,8 @@ Formula PredicateAbstractor::Convert(const Formula &f) {
   return Visit(f);
 }
 
-Formula PredicateAbstractor::Convert(const vector<Formula> &formulas) {
-  return Convert(make_conjunction(set<Formula>{formulas.begin(), formulas.end()}));
+Formula PredicateAbstractor::Convert(const std::vector<Formula> &formulas) {
+  return Convert(make_conjunction(std::set<Formula>{formulas.begin(), formulas.end()}));
 }
 
 Formula PredicateAbstractor::Visit(const Formula &f) {
@@ -53,7 +48,7 @@ Formula PredicateAbstractor::Visit(const Formula &f) {
 Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
   // Leaf case: create a new Boolean variable `bvar` and record the
   // relation between `bvar` and `f`.
-  stringstream ss;
+  std::stringstream ss;
   ss << "b(" << f << ")";
   auto it = formula_to_var_map_.find(f);
   if (it == formula_to_var_map_.end()) {
@@ -90,12 +85,14 @@ Formula PredicateAbstractor::VisitLessThan(const Formula &f) { return VisitAtomi
 Formula PredicateAbstractor::VisitLessThanOrEqualTo(const Formula &f) { return VisitAtomic(f); }
 
 Formula PredicateAbstractor::VisitConjunction(const Formula &f) {
-  const set<Formula> operands{map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const std::set<Formula> operands{
+      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   return make_conjunction(operands);
 }
 
 Formula PredicateAbstractor::VisitDisjunction(const Formula &f) {
-  const set<Formula> operands{map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const std::set<Formula> operands{
+      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   return make_disjunction(operands);
 }
 
