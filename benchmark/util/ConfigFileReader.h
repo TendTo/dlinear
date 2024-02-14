@@ -10,37 +10,49 @@
  * where parameter is one of the following:
  * - solver
  * - precision
+ * - lp_mode
  */
 #pragma once
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "dlinear/util/Config.h"
 
 namespace dlinear::benchmark {
 
 class ConfigFileReader {
  public:
-  explicit ConfigFileReader(const std::string &configFile) : configFile_(configFile) {
+  explicit ConfigFileReader(std::string configFile) : configFile_(std::move(configFile)) {
     parameters_[solver_key_] = std::vector<std::string>{};
     parameters_[precision_key_] = std::vector<std::string>{};
   }
-  explicit ConfigFileReader(std::string &&configFile) : configFile_(std::move(configFile)) {}
-  ~ConfigFileReader() = default;
-  ConfigFileReader(const ConfigFileReader &) = delete;
-  ConfigFileReader(ConfigFileReader &&) = delete;
-  ConfigFileReader &operator=(const ConfigFileReader &) = delete;
-  ConfigFileReader &operator=(ConfigFileReader &&) = delete;
 
   /**
    * Parse the configuration file.
+   *
    * All line are expected in the format
    * parameter = value1 [value2 ...]
+   * The result is stored in the @ref parameters_ map.
    */
   void read();
-  [[nodiscard]] const std::vector<std::string> &solvers() const { return parameters_.at(solver_key_); }
-  [[nodiscard]] const std::vector<std::string> &precisions() const { return parameters_.at(precision_key_); }
-  [[nodiscard]] const std::vector<std::string> &lp_modes() const { return parameters_.at(lp_modes_key_); }
+  /**
+   * Get the solvers indicated in the configuration file.
+   * @return vector containing the solvers indicated in the configuration file.
+   */
+  [[nodiscard]] std::vector<Config::LPSolver> solvers() const;
+  /**
+   * Get the precisions indicated in the configuration file.
+   * @return vector containing the precisions indicated in the configuration file.
+   */
+  [[nodiscard]] std::vector<double> precisions() const;
+  /**
+   * Get the lp_modes indicated in the configuration file.
+   * @return vector containing the lp_modes indicated in the configuration file.
+   */
+  [[nodiscard]] std::vector<Config::LPMode> lp_modes() const;
 
  private:
   const std::string solver_key_{"solver"};

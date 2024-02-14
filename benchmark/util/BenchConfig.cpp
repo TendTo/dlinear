@@ -12,20 +12,19 @@ using std::ostream;
 namespace dlinear::benchmark {
 
 ostream &operator<<(ostream &os, const BenchConfig &config) {
-  os << "Config {" << endl
-     << "config_file = '" << config.config_file() << "', " << endl
-     << "is_dry_run = '" << config.isDryRun() << "', " << endl
-     << "timeout = '" << config.timeout() << "', " << endl
-     << "path = '" << config.path() << "', " << endl
-     << "files_provided = '" << config.filesProvided() << "', " << endl
-     << "output_file = '" << config.output_file() << "', " << endl
-     << "files" << " = [";
+  os << "Config {\n"
+     << "config_file = '" << config.config_file() << "', \n"
+     << "is_dry_run = '" << config.is_dry_run() << "', \n"
+     << "timeout = '" << config.timeout() << "', \n"
+     << "path = '" << config.path() << "', \n"
+     << "are_files_provided = '" << config.are_files_provided() << "', \n"
+     << "output_file = '" << config.output_file() << "', \n"
+     << "files = [";
   for (const auto &file : config.files_) {
     os << file << ", ";
   }
-  os << "] " << endl
-     << '}';
+  os << "] \n}";
 
   return os;
 }
-} // namespace dlinear
+}  // namespace dlinear::benchmark

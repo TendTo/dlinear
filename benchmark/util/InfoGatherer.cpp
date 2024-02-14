@@ -7,20 +7,8 @@ using std::string;
 
 namespace dlinear::benchmark {
 
-InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision)
-    : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{0} {
-  config_.m_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
-  config_.m_precision().set_from_command_line(precision_);
-}
-
-InfoGatherer::InfoGatherer(string filename, string lp_solver, const string &precision, uint timeout)
-    : config_{std::move(filename)}, precision_{stod(precision)}, timeout_{timeout} {
-  config_.m_lp_solver().set_from_command_line(GetLPSolver(lp_solver));
-  config_.m_precision().set_from_command_line(precision_);
-}
-
 InfoGatherer::InfoGatherer(Config config, uint timeout)
-    : config_{config}, precision_{config.precision()}, timeout_{timeout} {}
+    : config_{std::move(config)}, precision_{config_.precision()}, timeout_{timeout} {}
 
 bool InfoGatherer::run() {
   std::cout << "Running " << config_.filename() << " with " << config_.lp_solver() << " and " << precision_
@@ -80,7 +68,7 @@ void InfoGatherer::StartIntermediateProcess(shared_results *results) {
   }
 }
 
-bool InfoGatherer::WaitChild() {
+bool InfoGatherer::WaitChild() const {
   int status;
   int pid = waitpid(intermediate_pid_, &status, 0);
   if (pid == -1) {
@@ -96,28 +84,6 @@ void InfoGatherer::ParseResults(shared_results *results) {
   time_ = results->time;
   smt_solver_time_ = results->smt_solver_time;
   parser_time_ = results->parser_time;
-}
-
-Config::LPSolver InfoGatherer::GetLPSolver(const string &solver) {
-  if (solver == "soplex") {
-    return Config::LPSolver::SOPLEX;
-  } else if (solver == "qsoptex") {
-    return Config::LPSolver::QSOPTEX;
-  }
-  DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
-}
-
-Config::LPMode InfoGatherer::GetLPMode(const string &mode) {
-  if (mode == "auto") {
-    return Config::LPMode::AUTO;
-  } else if (mode == "pure-precision-boosting") {
-    return Config::LPMode::PURE_PRECISION_BOOSTING;
-  } else if (mode == "pure-iterative-refinement") {
-    return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
-  } else if (mode == "hybrid") {
-    return Config::LPMode::HYBRID;
-  }
-  DLINEAR_RUNTIME_ERROR_FMT("Unknown LP mode {}", mode);
 }
 
 void InfoGatherer::GatherInfo(shared_results *results) {

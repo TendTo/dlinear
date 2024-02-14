@@ -19,6 +19,30 @@ using std::string;
 
 namespace dlinear::benchmark {
 
+namespace {
+Config::LPSolver GetLPSolver(const string &solver) {
+  if (solver == "soplex") {
+    return Config::LPSolver::SOPLEX;
+  } else if (solver == "qsoptex") {
+    return Config::LPSolver::QSOPTEX;
+  }
+  DLINEAR_RUNTIME_ERROR_FMT("Unknown solver {}", solver);
+}
+
+Config::LPMode GetLPMode(const string &mode) {
+  if (mode == "auto") {
+    return Config::LPMode::AUTO;
+  } else if (mode == "pure-precision-boosting") {
+    return Config::LPMode::PURE_PRECISION_BOOSTING;
+  } else if (mode == "pure-iterative-refinement") {
+    return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  } else if (mode == "hybrid") {
+    return Config::LPMode::HYBRID;
+  }
+  DLINEAR_RUNTIME_ERROR_FMT("Unknown LP mode {}", mode);
+}
+}  // namespace
+
 void ConfigFileReader::read() {
   std::ifstream conf_file{configFile_};
   if (!conf_file.is_open()) DLINEAR_RUNTIME_ERROR_FMT("File '{}' could not be opened", configFile_);
@@ -39,6 +63,30 @@ void ConfigFileReader::read() {
       while (values >> value) parameters_[parameter].push_back(value);
     }
   }
+}
+
+std::vector<Config::LPSolver> ConfigFileReader::solvers() const {
+  std::vector<Config::LPSolver> solvers;
+  solvers.reserve(parameters_.at(solver_key_).size());
+  std::transform(parameters_.at(solver_key_).begin(), parameters_.at(solver_key_).end(), std::back_inserter(solvers),
+                 GetLPSolver);
+  return solvers;
+}
+
+std::vector<double> ConfigFileReader::precisions() const {
+  std::vector<double> precisions;
+  precisions.reserve(parameters_.at(precision_key_).size());
+  std::transform(parameters_.at(precision_key_).begin(), parameters_.at(precision_key_).end(),
+                 std::back_inserter(precisions), [](const string &precision) { return std::stod(precision); });
+  return precisions;
+}
+
+std::vector<Config::LPMode> ConfigFileReader::lp_modes() const {
+  std::vector<Config::LPMode> lp_modes;
+  lp_modes.reserve(parameters_.at(lp_modes_key_).size());
+  std::transform(parameters_.at(lp_modes_key_).begin(), parameters_.at(lp_modes_key_).end(),
+                 std::back_inserter(lp_modes), GetLPMode);
+  return lp_modes;
 }
 
 std::ostream &operator<<(std::ostream &os, const ConfigFileReader &configFileReader) {

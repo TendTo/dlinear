@@ -16,10 +16,12 @@ dlinear_cc_library(
     ],
     deps = [
         "//dlinear:version",
+        "//dlinear/util:config",
         "//dlinear/util:exception",
         "//dlinear/util:filesystem",
         "//dlinear/util:logging",
         "@argparse",
+        "@spdlog",
     ],
 )
 

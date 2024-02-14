@@ -24,9 +24,6 @@
 #include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
-#define CONF_FILE "benchmark/benchmark.conf"
-#define SMT2_DIR "benchmark/smt2"
-
 namespace dlinear::benchmark {
 
 class BenchArgParser {
@@ -44,18 +41,18 @@ class BenchArgParser {
    */
   [[nodiscard]] std::vector<std::string> getFilesVector() const;
 
-  bool EndsWith(const char str[], const char suffix[]) const;
+  static bool EndsWith(const char str[], const char suffix[]);
 
  public:
   BenchArgParser();
 
   void parse(int argc, const char **argv);
 
-  [[nodiscard]] std::string version() const;
+  [[nodiscard]] static std::string version();
 
-  [[nodiscard]] std::string repositoryStatus() const;
+  [[nodiscard]] static std::string repositoryStatus();
 
-  [[nodiscard]] std::string prompt() const;
+  [[nodiscard]] static std::string prompt();
 
   friend std::ostream &operator<<(std::ostream &os, const BenchArgParser &parser);
 

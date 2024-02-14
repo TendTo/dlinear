@@ -15,9 +15,20 @@
 #include <string>
 #include <vector>
 
+#include "dlinear/util/Config.h"
 #include "dlinear/util/exception.h"
 
 namespace dlinear::benchmark {
+
+#define DLINEAR_BENCHMARK_PARAMETER(param_name, type, default_value, help) \
+ public:                                                                   \
+  type &m_##param_name() { return param_name##_; }                         \
+  [[nodiscard]] const type &param_name() const { return param_name##_; }   \
+  static inline type default_##param_name{default_value};                  \
+  static constexpr const char *const help_##param_name{help};              \
+                                                                           \
+ private:                                                                  \
+  type param_name##_{default_value};
 
 class BenchConfig {
  public:
@@ -28,39 +39,24 @@ class BenchConfig {
   BenchConfig &operator=(BenchConfig &&) = default;
   ~BenchConfig() = default;
 
-  [[nodiscard]] bool isDryRun() const { return isDryRun_; }
-  [[nodiscard]] bool filesProvided() const { return !files_.empty(); }
-  [[nodiscard]] const std::vector<std::string> &files() const { return files_; }
+  [[nodiscard]] bool are_files_provided() const { return !files_.empty(); }
   [[nodiscard]] std::vector<std::string> copyFiles() const { return files_; }
-  [[nodiscard]] uint timeout() const { return timeout_; }
-  [[nodiscard]] const std::string &config_file() const { return config_file_; }
-  [[nodiscard]] const std::string &path() const { return path_; }
-  [[nodiscard]] const std::string &extension() const { return extension_; }
-  [[nodiscard]] const std::string &output_file() const { return output_file_; }
-  [[nodiscard]] int simplex_sat_phase() const { return simplex_sat_phase_; }
 
-  void setDryRun(bool isDryRun) { isDryRun_ = isDryRun; }
-  void setFiles(const std::vector<std::string> &files) { files_ = files; }
-  void setTimeout(uint timeout) { timeout_ = timeout; }
-  void setConfigFile(const std::string &configFile) { config_file_ = configFile; }
-  void setPath(const std::string &path) { path_ = path; }
-  void setFiles(std::vector<std::string> &&files) { files_ = std::move(files); }
-  void setConfigFile(std::string &&configFile) { config_file_ = std::move(configFile); }
-  void setPath(std::string &&path) { path_ = std::move(path); }
-  void setExtension(const std::string &extension) { extension_ = extension; }
-  void setOutputFile(const std::string &outputFile) { output_file_ = outputFile; }
-  void setSimplexSatPhase(int simplexSatPhase) { simplex_sat_phase_ = simplexSatPhase; }
+  DLINEAR_BENCHMARK_PARAMETER(is_dry_run, bool, false, "Whether to run in dry mode. No benchmarks are produced")
+  DLINEAR_BENCHMARK_PARAMETER(timeout, uint, 0,
+                              "Max time in seconds allowed for info gathering for each problem. "
+                              "Only problems taking less than the timeout are benchmarked. If set "
+                              "to 0, it is disabled.")
+  DLINEAR_BENCHMARK_PARAMETER(config_file, std::string, "benchmark/benchmark.conf", "Path to the configuration file")
+  DLINEAR_BENCHMARK_PARAMETER(path, std::string, "benchmark/smt2", "Path to the directory containing the problems")
+  DLINEAR_BENCHMARK_PARAMETER(output_file, std::string, "", "Path to the output file")
+  DLINEAR_BENCHMARK_PARAMETER(simplex_sat_phase, int, 1, "Simplex SAT phase to use. Must be either 1 or 2")
+  DLINEAR_BENCHMARK_PARAMETER(files, std::vector<std::string>, {},
+                              "List of files to benchmark. If specified, path is ignored")
+  DLINEAR_BENCHMARK_PARAMETER(extension, std::string, "smt2", "Extension of the files to benchmark")
+  DLINEAR_BENCHMARK_PARAMETER(info_verbosity, bool, false, "Apply the verbosity level INFO when running dlinear")
 
  private:
-  std::string config_file_;
-  std::string path_;
-  std::string extension_;
-  std::vector<std::string> files_;
-  std::string output_file_;
-  bool isDryRun_{};
-  uint timeout_{};
-  int simplex_sat_phase_{};
-
   friend std::ostream &operator<<(std::ostream &os, const BenchConfig &config);
 };
 

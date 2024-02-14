@@ -7,6 +7,8 @@
 
 #include "BenchmarkProgram.h"
 
+#include <fstream>
+
 #include "benchmark/util/BenchArgParser.h"
 #include "benchmark/util/InfoGatherer.h"
 
@@ -17,14 +19,21 @@ namespace dlinear::benchmark {
 
 namespace {
 
-inline dlinear::Config GetConfig(const string &filename, const string &solver, const string &precision,
-                                 int simplex_phase, const string &lp_mode = "auto") {
+inline dlinear::Config GetConfig(const string &filename, const Config::LPSolver solver, const double precision,
+                                 int simplex_phase, const Config::LPMode lp_mode = Config::LPMode::AUTO) {
   dlinear::Config config{filename};
-  config.m_lp_solver().set_from_command_line(InfoGatherer::GetLPSolver(solver));
-  config.m_precision().set_from_command_line(stod(precision));
+  config.m_lp_solver().set_from_command_line(solver);
+  config.m_precision().set_from_command_line(precision);
   config.m_simplex_sat_phase().set_from_command_line(simplex_phase);
-  config.m_lp_mode().set_from_command_line(InfoGatherer::GetLPMode(lp_mode));
+  config.m_lp_mode().set_from_command_line(lp_mode);
   return config;
+}
+
+inline bool ValidConfig(const dlinear::Config &config) {
+  if (config.lp_solver() == Config::LPSolver::QSOPTEX) {
+    return config.lp_mode() == Config::LPMode::AUTO || config.lp_mode() == Config::LPMode::PURE_PRECISION_BOOSTING;
+  }
+  return true;
 }
 
 }  // namespace
@@ -60,15 +69,13 @@ void BenchmarkProgram::StartBenchmarks() {
 
   std::cout << "Starting benchmarking" << std::endl;
   for (const string &filename : config_.files()) {
-    for (const string &solver : config_file.solvers()) {
-      for (const string &precision : config_file.precisions()) {
-        for (const string &lp_mode : config_file.lp_modes()) {
+    for (Config::LPSolver solver : config_file.solvers()) {
+      for (double precision : config_file.precisions()) {
+        for (Config::LPMode lp_mode : config_file.lp_modes()) {
           dlinear::Config dlinear_config{GetConfig(filename, solver, precision, config_.simplex_sat_phase(), lp_mode)};
-          if (dlinear_config.lp_solver() == Config::LPSolver::QSOPTEX &&
-              dlinear_config.lp_mode() != Config::LPMode::AUTO)
-            continue;
+          if (!ValidConfig(dlinear_config)) continue;
           InfoGatherer info_gatherer{dlinear_config, config_.timeout()};
-          if (config_.isDryRun()) continue;
+          if (config_.is_dry_run()) continue;
           if (info_gatherer.run() && info_gatherer.nAssertions() > 0) {
             PrintRow((std::stringstream{} << info_gatherer).str());
           } else {
@@ -79,23 +86,6 @@ void BenchmarkProgram::StartBenchmarks() {
       }
     }
   }
-}
-
-inline int BenchmarkProgram::InitArgv(const char *argv[], const string &filename, const string &solver,
-                                      const string &precision) {
-  int argc = DEFAULT_ARGC;
-  argv[0] = "dlinear";
-  argv[1] = filename.c_str();
-  argv[2] = "--lp-solver";
-  argv[3] = solver.c_str();
-  if (stof(precision) == 0) {
-    argv[4] = "--exhaustive";
-    argc--;
-  } else {
-    argv[4] = "--precision";
-    argv[5] = precision.c_str();
-  }
-  return argc;
 }
 
 }  // namespace dlinear::benchmark

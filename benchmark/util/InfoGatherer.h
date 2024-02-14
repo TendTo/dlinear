@@ -25,12 +25,8 @@ struct shared_results {
 class InfoGatherer {
  public:
   InfoGatherer() = delete;
-  InfoGatherer(std::string filename, std::string solver, const std::string &precision);
-  InfoGatherer(std::string filename, std::string solver, const std::string &precision, uint timeout);
   InfoGatherer(Config config, uint timeout);
 
-  static Config::LPSolver GetLPSolver(const std::string &solver);
-  static Config::LPMode GetLPMode(const std::string &mode);
   bool run();
 
   [[nodiscard]] std::string filename() const { return config_.filename(); }
@@ -73,7 +69,7 @@ class InfoGatherer {
 
   void GatherInfo(shared_results *results);
   void StartIntermediateProcess(shared_results *results);
-  bool WaitChild();
+  bool WaitChild() const;
   void ParseResults(shared_results *results);
 };
 
