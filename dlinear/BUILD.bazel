@@ -1,5 +1,6 @@
 load("//tools:cpplint.bzl", "cpplint")
 load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "dlinear_cc_binary", "dlinear_cc_library")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -39,6 +40,68 @@ dlinear_cc_binary(
         "//dlinear/util:argparser",
         "//dlinear/util:config",
     ],
+)
+
+# ----------------------
+# Distribution
+# ----------------------
+#cc_shared_library(
+#    name = "libdlinear.so",
+#    shared_lib_name = "libdlinear.so",
+#    deps = ["//dlinear/solver"],
+#)
+
+cc_binary(
+    name = "libdlinear.so",
+    linkopts = [
+        "-lpicosat",
+    ],
+    linkshared = True,
+    linkstatic = select({
+        "//tools:dynamic_build": True,
+        "//conditions:default": False,
+    }),
+    deps = ["//dlinear/solver"],
+)
+
+filegroup(
+    name = "headers",
+    srcs = [
+        "dlinear.h",
+        "version.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "package_headers",
+    srcs = [
+        ":headers",
+    ],
+    extension = "tar.gz",
+    package_dir = "include/dlinear",
+    tags = ["manual"],
+)
+
+pkg_tar(
+    name = "package_bin",
+    srcs = [
+        ":dlinear",
+    ],
+    extension = "tar.gz",
+    mode = "0755",
+    package_dir = "bin",
+    tags = ["manual"],
+)
+
+pkg_tar(
+    name = "package_sharedlib",
+    srcs = [
+        ":libdlinear.so",
+    ],
+    extension = "tar.gz",
+    package_dir = "lib",
+    tags = ["manual"],
 )
 
 cpplint()

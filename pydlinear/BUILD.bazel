@@ -6,7 +6,6 @@ pybind_extension(
     srcs = ["pydlinear.cpp"],
     linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
     linkstatic = False,
-    local_defines = ["DLINEAR_PYDLINEAR"],
     deps = [
         "//dlinear:version",
         "//dlinear/libs:gmp",

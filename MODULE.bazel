@@ -41,6 +41,9 @@ bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
 # BSD-3-Clause license | c++ test suite by Google
 bazel_dep(name = "googletest", version = "1.14.0", dev_dependency = True)
 
+# Apache License 2.0 | Bazel rules for packaging the project
+bazel_dep(name = "rules_pkg", version = "0.10.1", dev_dependency = True)
+
 # Apache License 2.0 | Integration of Boost into Bazel
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
 git_override(

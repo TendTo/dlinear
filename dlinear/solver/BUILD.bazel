@@ -266,10 +266,6 @@ dlinear_cc_library(
         "//dlinear/util:logging",
         "//dlinear/util:timer",
     ],
-    local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     visibility = [
         "//benchmark:__subpackages__",
         "//dlinear:__subpackages__",
