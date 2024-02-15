@@ -11,6 +11,13 @@ github_archive(
 )
 
 github_archive(
+    name = "rules_pkg",
+    commit = "0.10.1",
+    repository = "bazelbuild/rules_pkg",
+    sha256 = "d330dbe3e3004241ddb9b377416ffc5c823e3e2c08c0d56a7e1935499e7f8577",
+)
+
+github_archive(
     name = "rules_foreign_cc",  # Apache License 2.0 | rules_foreign_cc for building C++ libraries with other build systems
     commit = "0.9.0",
     repository = "bazelbuild/rules_foreign_cc",

@@ -6,6 +6,7 @@ load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 load("@rules_python//python:repositories.bzl", "py_repositories")
 load("@rules_python//python:pip.bzl", "pip_parse")
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 
 # Create a central repo that knows about the dependencies needed from
 # requirements_lock.txt.
@@ -17,6 +18,7 @@ def load_dependencies(name):
         name: Unused.
     """
     rules_foreign_cc_dependencies()
+    rules_pkg_dependencies()
     register_toolchain("linux")
     python_configure(
         name = "local_config_python",

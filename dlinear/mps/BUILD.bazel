@@ -47,10 +47,6 @@ dlinear_cc_library(
         ":scanner",
     ],
     hdrs = ["Driver.h"],
-    local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     deps = [
         ":mps_data",
         "//dlinear/solver:context",

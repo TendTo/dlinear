@@ -146,10 +146,6 @@ dlinear_cc_library(
     hdrs = [
         "Context.h",
     ],
-    local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     deps = [
         ":logic",
         ":lp_result",
@@ -185,10 +181,6 @@ dlinear_cc_library(
         "SmtSolver.h",
         "SmtSolverOutput.h",
     ],
-    local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     visibility = [
         "//benchmark:__subpackages__",
         "//dlinear:__subpackages__",

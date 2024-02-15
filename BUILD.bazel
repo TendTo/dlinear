@@ -1,3 +1,56 @@
+load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
+load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION")
+
 licenses(["notice"])  # Apache v2
 
 exports_files(["CPPLINT.cfg"])
+
+pkg_tar(
+    name = "archive",
+    extension = "tar.gz",
+    tags = ["manual"],
+    deps = [
+        "//dlinear:package_bin",
+        "//dlinear:package_headers",
+        "//dlinear:package_sharedlib",
+    ],
+)
+
+pkg_deb(
+    name = "package_deb",
+    architecture = "amd64",
+    built_using = "bazel (3.4.1)",
+    data = ":archive",
+    depends = select({
+        "//tools:dynamic_build": [
+            "libstdc++6",
+            "libc6",
+            "libgcc-s1",
+            # External dependencies
+            "libbz2-1.0",
+            "libgmp10",
+            "libgmpxx4ldbl",
+            "libmpfr6",
+            "picosat",
+            "coinor-libclp1",
+            "libboost-chrono1.74-dev",
+            "libboost-atomic1.74-dev",
+            "libboost-container1.74-dev",
+            "libboost-system1.74-dev",
+            "libboost-regex1.74-dev",
+            "libboost-exception1.74-dev",
+        ],
+        "//tools:static_build": [],
+        "//conditions:default": [
+            "libstdc++6",
+            "libc6",
+            "libgcc-s1",
+        ],
+    }),
+    description = "SMT solver for linear rational theories",
+    homepage = "http://tendto.github.io/dlinear",
+    maintainer = "Ernesto Casablanca <casablanca.ernesto@gmail.com>",
+    package = DLINEAR_NAME,
+    tags = ["manual"],
+    version = DLINEAR_VERSION,
+)

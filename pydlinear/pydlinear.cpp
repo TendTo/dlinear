@@ -10,7 +10,7 @@
 #include <spdlog/spdlog.h>
 
 #ifndef DLINEAR_PYDLINEAR
-#define DLINEAR_PYDLINEAR
+#error The DLINEAR_PYDLINEAR macro must be defined
 #endif
 
 #include "dlinear/api/api.h"
@@ -432,9 +432,8 @@ PYBIND11_MODULE(_pydlinear, m) {
                     argparser.parse(args.size(), argv);
                     return argparser.toConfig();
                   })
-      .def_property(
-          "continuous_output", &Config::continuous_output,
-          [](Config &self, const bool continuous_output) { self.m_continuous_output() = continuous_output; })
+      .def_property("continuous_output", &Config::continuous_output,
+                    [](Config &self, const bool continuous_output) { self.m_continuous_output() = continuous_output; })
       .def_property("debug_parsing", &Config::debug_parsing,
                     [](Config &self, const bool debug_parsing) { self.m_debug_parsing() = debug_parsing; })
       .def_property("debug_scanning", &Config::debug_scanning,
@@ -455,8 +454,7 @@ PYBIND11_MODULE(_pydlinear, m) {
                     [](Config &self, const bool nlopt_maxtime) { self.m_nlopt_maxtime() = nlopt_maxtime; })
       .def_property("number_of_jobs", &Config::number_of_jobs,
                     [](Config &self, const int number_of_jobs) { self.m_number_of_jobs() = number_of_jobs; })
-      .def_property("precision", &Config::precision,
-                    [](Config &self, const double prec) { self.m_precision() = prec; })
+      .def_property("precision", &Config::precision, [](Config &self, const double prec) { self.m_precision() = prec; })
       .def_property("produce_models", &Config::produce_models,
                     [](Config &self, const bool produce_models) { self.m_produce_models() = produce_models; })
       .def_property("random_seed", &Config::random_seed,
@@ -468,9 +466,8 @@ PYBIND11_MODULE(_pydlinear, m) {
                       self.m_sat_default_phase() = sat_default_phase;
                     })
       .def_property("silent", &Config::silent, [](Config &self, const bool silent) { self.m_silent() = silent; })
-      .def_property(
-          "simplex_sat_phase", &Config::simplex_sat_phase,
-          [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
+      .def_property("simplex_sat_phase", &Config::simplex_sat_phase,
+                    [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
       .def_property("skip_check_sat", &Config::skip_check_sat,
                     [](Config &self, const bool skip_check_sat) { self.m_skip_check_sat() = skip_check_sat; })
       .def_property("use_local_optimization", &Config::use_local_optimization,
