@@ -1,8 +1,15 @@
 # Workspace status command
 build --workspace_status_command=script/workspace_status.sh
+build --experimental_cc_shared_library
+
+# Flag aliases
+build --flag_alias=enable_static_build=//tools:enable_static_build
+build --flag_alias=enable_dynamic_build=//tools:enable_dynamic_build
+build --flag_alias=static_boost=@boost//:use_linkstatic
 
 # Default build
 build --cxxopt=-std=c++17
+build --static_boost
 
 # Ignore env vars from shell. Avoids rebuilding when env vars change.
 build --incompatible_strict_action_env

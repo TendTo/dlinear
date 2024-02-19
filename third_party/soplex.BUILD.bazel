@@ -20,12 +20,13 @@ cmake(
         "MPFRDIR": "$$EXT_BUILD_DEPS/libmpfr/include",  # Hack to find the mpfr headers
     },
     targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
+    out_binaries = ["soplex"],
     out_static_libs = ["libsoplex.a"],
     out_shared_libs = ["libsoplex.so"],
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
     visibility = ["//visibility:public"],
     defines = ["SOPLEX_WITH_GMP"],
-    postfix_script = "cp -L $INSTALLDIR/lib/libsoplexshared.so.6.0 $INSTALLDIR/lib/libsoplex.so" + select({
+    postfix_script = "cp -L $INSTALLDIR/lib/libsoplexshared.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so" + select({
         "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
         "//conditions:default": "",
     }),

@@ -51,9 +51,9 @@ github_archive(
 github_archive(
     name = "soplex",  # Apache License 2.0 | linear programming solver
     build_file = "//third_party:soplex.BUILD.bazel",
-    commit = "00b608823b00e7829aea71d99e17fb89f7f6af74",
+    commit = "07911134f4c7e478b9131895eeabc15d652ecb29",
     repository = "scipopt/soplex",
-    sha256 = "ac5578f9c1660e46ccf3261b9f49b921fb1cd44b4d935fb3d21ae52a1a8101ec",
+    sha256 = "fe33bc01c0f98efe4473c4e0bf23390b0af130ce96ee93e8d14d828ed732613f",
 )
 
 github_archive(
@@ -112,9 +112,9 @@ github_archive(
 
 github_archive(
     name = "com_github_nelhage_rules_boost",  # Apache License 2.0 | Integration of Boost into Bazel
-    commit = "3649e5ea16a1ed85e45a809c165a3540bd701849",
-    repository = "nelhage/rules_boost",
-    sha256 = "e484ad49ceec1843c2fa0f6fcf90c631d52fd97a96105d2fb75d8f4c2fa58c0b",
+    commit = "dd42441e8bc13feb57a2013111f922314338da82",
+    repository = "TendTo/rules_boost",
+    sha256 = "e69cc2bac2f85d66e9718276ed26567377a055f7721b2c9515150cdd8a8e899c",
 )
 
 github_archive(
