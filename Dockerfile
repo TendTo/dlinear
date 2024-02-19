@@ -1,5 +1,6 @@
 FROM ubuntu:22.04 as build
 
+LABEL author="Ernesto Casablanca"
 LABEL workspace="dlinear"
 
 WORKDIR /app

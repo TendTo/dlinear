@@ -1,9 +1,10 @@
 """Include the header only spdlog library in the project.
 It is used as the logging system in dlinear.
 """
-licenses(["notice"])  # MIT
 
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+licenses(["notice"])  # MIT
 
 cmake(
     name = "spdlog",
@@ -12,7 +13,10 @@ cmake(
     lib_name = "libspdlog",
     cache_entries = {
         "CMAKE_BUILD_TYPE": "Release",
-    },
+    } | select({
+        "@dlinear//tools:dynamic_build": {"CMAKE_CXX_FLAGS": "-fPIC"},
+        "//conditions:default": {},
+    }),
     visibility = ["//visibility:public"],
     defines = ["SPDLOG_COMPILED_LIB"],
 )

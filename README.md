@@ -121,7 +121,7 @@ script/upload_pydlinear.sh
 
 If the package has been installed, either locally or from PyPI, it can be invoked with the same command as the binary.
 
-```shell
+```bash
 pydlinear --help
 ```
 
