@@ -1,0 +1,177 @@
+\documentclass[preview,border=12pt,varwidth]{report}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{Strict inequalities in linear programming problems for SMT solving}
+\author{Ernesto Casabalanca}
+\date{\today}
+
+\renewcommand*{\equationautorefname}{Eq.}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\begin{document}
+\maketitle
+
+\section*{Definitions}
+
+\begin{definition}
+    A \textbf{linear programming problem} is a mathematical optimization where the goal is to maximise or minimise a linear objective function subject to a set of linear constraints. The general form of a linear programming problem is
+
+    \begin{align*}
+        \text{Maximise (or minimise) } \quad & c_1x_1 + c_2x_2 + \ldots + c_nx_n                            \\
+        \text{subject to }             \quad & a_{11} x_1 + a_{12} x_2 + \ldots + a_{1n} x_n \gtreqless b_1 \\
+                                             & a_{21} x_1 + a_{22} x_2 + \ldots + a_{2n} x_n \gtreqless b_2 \\
+                                             & \vdots                                                       \\
+                                             & a_{m1} x_1 + a_{m2} x_2 + \ldots + a_{mn} x_n \gtreqless b_m \\
+    \end{align*}
+
+    where $x_1, x_2, \ldots, x_n$ are decision variables, $c_1, c_2, \ldots, c_n$ are coefficients of the objective function, $a_{11}, a_{12}, \ldots, a_{mn}$ are coefficients of the constraints, and $b_1, b_2, \ldots, b_m$ are constants.
+\end{definition}
+
+\begin{definition}
+    A linear programming problem is said to be in \textbf{standard form} if the objective function is to be maximised, the constraints are of the form $\leq$, and all the decision variables are non-negative.
+
+    \begin{align*}
+        \text{Maximise }   \quad & c_1x_1 + c_2x_2 + \ldots + c_nx_n                       \\
+        \text{subject to } \quad & a_{11} x_1 + a_{12} x_2 + \ldots + a_{1n} x_n  \leq b_1 \\
+                                 & a_{21} x_1 + a_{22} x_2 + \ldots + a_{2n} x_n \leq b_2  \\
+                                 & \vdots                                                  \\
+                                 & a_{m1} x_1 + a_{m2} x_2 + \ldots + a_{mn} x_n  \leq b_m \\
+                                 & x_1, x_2, \ldots, x_n \geq 0                            \\
+    \end{align*}
+\end{definition}
+
+\begin{theorem}
+    It is always possible to convert a linear programming problem from standard form to general form as long as the goal is to either maximise or minimise the objective function and the constraints are of the form $\le, \ge, =$.
+\end{theorem}
+\begin{proof}
+    It is useful to enumerate all the possible violations of the standard form and how they can be removed.
+    \begin{itemize}
+        \item \textbf{Minimisation problem}: the objective function can be multiplied by $-1$ to convert it to a maximisation problem, since $\min(f(x)) = -\max(-f(x))$.
+        \item \textbf{Constraints with $\geq$}: they can be multiplied by $-1$ to convert them to the form $\leq$.
+        \item \textbf{Constraints with $=$}: they can be replaced by two constraints of the form $\leq$ and $\geq$.
+              The latter is to be converted as seen above.
+        \item \textbf{Unrestricted decision variables}: they can be replaced by the difference of two non-negative variables.
+    \end{itemize}
+\end{proof}
+
+\begin{definition}
+    Constraints can be of different types:
+
+    \begin{itemize}
+        \item \textbf{Strict inequality}: is an inequality that is either $<$ or $>$
+        \item \textbf{Non-strict inequality}: is an inequality that is either $\leq$ or $\geq$
+        \item \textbf{Not-equality}: an inequality $\neq$
+        \item \textbf{Equality}: an equality $=$
+    \end{itemize}
+\end{definition}
+
+Standard linear programming problems only deal with non-strict inequalities and equalities.
+
+\section*{Feasibility}
+
+\begin{definition}
+    A linear programming problem is \textbf{feasible} if there exists a solution that satisfies all the constraints.
+\end{definition}
+
+Verifying the feasibility of a linear programming problem is a core step in solving SMT problems dealing with \textbf{QF\_LIA} and \textbf{QF\_LRA} logics.
+There is no reason to find the optimal solution, hence the objective function is usually set to the constant $0$.
+
+Unfortunately, LP solvers do not tackle strict inequalities, since that would cause the feasible region to become an open set.
+Finding the optimal solution would not make sense, for maximum and minimum do not exist over open sets.
+In SMT problems, though, such constraints can arise very often, such as when negating any other non-strict inequality.
+
+The common approach to deal with this issue is to subtract an arbitrarily small $\epsilon$ to the right-hand side of each strict inequality, making them non-strict.
+While valid, using this technique implies the choice of a suitable $\epsilon$ value, which introduces an, albeit controllable, error.
+What happens, for instance, if the system is still infeasible after the alteration?
+Is the $\epsilon$ value too large, or is the problem inherently infeasible?
+
+\subsection*{Relaxing strict inequalities}
+
+A different approach to deal with strict inequalities is to introduce a new variable we will call \textbf{strict variable}, $t$, that will be used to convert strict inequalities into non-strict ones.
+To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$, since they can always be converted to $<$ by multiplying both sides by $-1$.
+Indicate with $J$ the set of indexes of strict inequality constraints, and with $K$ the set of indexes for all other constraints.
+
+The idea is to replace each strict inequality
+
+\begin{align*}
+    \sum_{i=1}^{n} a_{ji}x_{i} < b_j \\
+    \forall j \in J                  \\
+\end{align*}
+
+with the corresponding non strict inequalities using the strict variable $t$:
+
+\begin{align*}
+    \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j \\
+    \forall j \in J                        \\
+    t > 0                                  \\
+\end{align*}
+
+This would only move the strict inequality problem to the bound on $t$.
+However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to $\max(t)$.
+The lp problem used to verify the feasibility of the constraints
+
+\begin{equation}
+    \label{eq:lp-original}
+    \begin{split}
+        \text{Maximise }   \quad & 0                                  \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j   \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k \\
+        & x_i \ge 0                            \\
+        & i \in \{1, 2, \ldots, n\}, \quad \forall j, \in J \quad \forall k \in K
+    \end{split}
+\end{equation}
+
+can be relaxed to
+
+\begin{equation}
+    \label{eq:lp-relaxed}
+    \begin{split}
+        \text{Maximise }   \quad & t                                      \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{li}x_{i} + t \le b_l \\
+        & x_i \ge 0                                                       \\
+        & t \ge 0                                                         \\
+        & i \in \{1, 2, \ldots, n\}, \quad \forall j, \in J \quad \forall k \in K
+    \end{split}
+\end{equation}
+
+\begin{theorem}
+    The original problem (\autoref{eq:lp-original}) is feasible if and only if the relaxed problem (\autoref{eq:lp-relaxed}) is feasible with an optimal value grater than $0$.
+\end{theorem}
+
+\begin{proof}
+    Without loss of generality, assume that both linear programming problems are in standard form.
+\\
+
+    (\autoref{eq:lp-original}) feasible $\implies$ (\autoref{eq:lp-relaxed}) feasible $\land$  (\autoref{eq:lp-relaxed}) optimal value $> 0$
+
+    If the original problem is feasible, then there exists a solution that satisfies all the constraints.
+    For the strict inequality constraints to be satisfied, it means that there exists a value $\delta_j > 0, \quad j \in J$ such that
+    \begin{align*}
+        \sum_{i=1}^{n} a_{ji}x_{i} + \delta_j = b_j \\
+        \forall j \in J                             \\
+    \end{align*}
+    Let $t = \min(\delta_j), \quad j \in J$.
+    The expression becomes
+    \begin{align*}
+        \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j \\
+        \forall j \in J                        \\
+        t > 0                                  \\
+    \end{align*}
+    which is the formulation of the previously strict constraints used in the relaxed problem (\autoref{eq:lp-relaxed}).
+    All other constraints have been left unchanged, so they are satisfied.
+    The objective function of (\autoref{eq:lp-relaxed}) is $\max(t)$, which has just been set to a value greater than $0$.
+    Hence the optimal value of the relaxed problem must be $> 0$.
+    \\
+
+    (\autoref{eq:lp-relaxed}) feasible $\land$  (\autoref{eq:lp-relaxed}) optimal value $> 0$ $\implies$ (\autoref{eq:lp-original}) feasible
+    
+    The relaxed problem is feasible with an optimal value $t > 0$.
+
+\end{proof}
+
+
+\end{document}
