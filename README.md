@@ -7,26 +7,23 @@
 Delta-complete SMT solver for linear programming.
 Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://github.com/dreal/dreal4).
 
-## Tested toolchain
+## Installation
 
-- gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+The following instructions are for Linux systems. The installation process for Windows and MacOS is not yet supported.
+For more information, refer to the [installation guide](https://tendto.github.io/dlinear/md_docs_Installation).
 
-## Requirements
+```bash
+bazel build //:package_deb
+sudo dpkg -i bazel-bin/dlinear/dlinear.deb
+```
 
-- [g++](https://gcc.gnu.org/) and [build-essential](https://packages.ubuntu.com/bionic/build-essential) for the standard
-  c++ toolchain
-- [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
-  and [mpfr](https://www.mpfr.org/)
-- [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/)
-  and [mpfr](https://www.mpfr.org/)
-- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser
-  for `.smt2` and `.mps` files
-- [Bazel](https://bazel.build/)
+## Usage
 
-### Optional
+For more information, refer to the [usage guide](https://tendto.github.io/dlinear/md_docs_Usage).
 
-- [patchelf](https://github.com/NixOS/patchelf) allows to create a fully self-contained shared library. Needs
-  `--//tools:enable_patchelf=True`
+```bash
+dlinear --help
+```
 
 ## Default parsing and solving behavior
 
