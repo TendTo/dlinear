@@ -94,6 +94,7 @@ dlinear_cc_library(
         "//conditions:default": [],
     }) + select({
         "//tools:enabled_soplex": [
+            "CompleteSoplexTheorySolver.cpp",
             "DeltaSoplexTheorySolver.cpp",
             "SoplexTheorySolver.cpp",
         ],
@@ -109,6 +110,7 @@ dlinear_cc_library(
         "//conditions:default": [],
     }) + select({
         "//tools:enabled_soplex": [
+            "CompleteSoplexTheorySolver.h",
             "DeltaSoplexTheorySolver.h",
             "SoplexTheorySolver.h",
         ],
