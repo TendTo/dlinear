@@ -42,21 +42,55 @@ LpColBound parseLpBound(char bound);
 char toChar(LpColBound bound);
 /**
  * Invert the bound with delta == 0
- * @note This is not the same as operator!()
+ *
  * More specifically, !U == SL, !SU == L, !B == D, !D == B, !IN == IN, !L == SU, !SL == U.
- * @param bound
- * @return
+ * @warning This is not the same as operator-()
+ * @param bound bound to invert
+ * @return inverted bound
  */
 LpColBound operator!(LpColBound bound);
 /**
  * Invert the bound with delta > 0
- * @note This is not the same as operator!()
- * More specifically, ~U == L, ~L == U, ~B == F, ~F == B.
+ *
+ * More specifically, -U == L, -L == U, -B == F, -F == B.
  * Any other bound generates an assertion error
+ * @warning This is not the same as operator!()
  * @param bound bound to invert
  * @return inverted bound
  */
+LpColBound operator-(LpColBound bound);
+/**
+ * Relax the bound.
+ *
+ * More specifically, ~SL == L, ~SU == U, ~D == F.
+ * Any other bound remain unchanged.
+ * @param bound bound to relax
+ * @return relaxed bound
+ */
 LpColBound operator~(LpColBound bound);
+/**
+ * Relax the bound.
+ *
+ * More specifically, ~SL == L, ~SU == U, ~D == F.
+ * Any other bound remain unchanged.
+ * @param bound bound to relax
+ * @return relaxed bound
+ */
+inline LpColBound relax(LpColBound bound) { return ~bound; }
+/**
+ * Invert the bound.
+ *
+ * Depending on whether the value of delta is > 0 or not, there are two possible conversion:
+ * - If delta > 0: !U == SL, !SU == L, !B == D, !D == B, !IN == IN, !L == SU, !SL == U
+ * - If delta == 0: -U == L, -L == U, -B == F, -F == B
+ * Any other bound generates an assertion error
+ * @note this function combines both ! and - operators
+ * @param bound bound to invert
+ * @param delta whether delta is greater than 0
+ * @return inverted bound
+ */
+inline LpColBound invert(LpColBound bound, bool delta) { return delta ? -bound : !bound; }
+
 std::ostream &operator<<(std::ostream &os, const LpColBound &bound);
 
 }  // namespace dlinear

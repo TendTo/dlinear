@@ -71,7 +71,7 @@ LpColBound operator!(LpColBound bound) {
   }
 }
 
-LpColBound operator~(LpColBound bound) {
+LpColBound operator-(LpColBound bound) {
   switch (bound) {
     case LpColBound::U:
       return LpColBound::L;
@@ -83,6 +83,19 @@ LpColBound operator~(LpColBound bound) {
       return LpColBound::B;
     default:
       DLINEAR_UNREACHABLE();
+  }
+}
+
+LpColBound operator~(LpColBound bound) {
+  switch (bound) {
+    case LpColBound::SL:
+      return LpColBound::L;
+    case LpColBound::SU:
+      return LpColBound::U;
+    case LpColBound::D:
+      return LpColBound::F;
+    default:
+      return bound;
   }
 }
 
