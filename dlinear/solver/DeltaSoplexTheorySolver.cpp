@@ -76,6 +76,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
     SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
+    coeffs.setMax(static_cast<int>(map.size()));
     for (const auto &pair : map) {
       if (!is_variable(pair.first)) {
         DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);

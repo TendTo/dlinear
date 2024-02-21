@@ -7,6 +7,7 @@
 
 #include "IfThenElseEliminator.h"
 
+#include <algorithm>
 #include <set>
 #include <string>
 

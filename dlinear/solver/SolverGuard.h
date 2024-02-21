@@ -9,6 +9,8 @@
  * used.
  * When the guard is destroyed by the solver's destructor, the global state is cleaned up.
  */
+#pragma once
+
 #include "dlinear/util/Config.h"
 
 namespace dlinear {

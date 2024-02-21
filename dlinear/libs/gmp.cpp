@@ -53,4 +53,4 @@ mpz_class ceil(const mpq_class &val) {
   }
 }
 
-} // namespace dlinear::gmp
+}  // namespace dlinear::gmp

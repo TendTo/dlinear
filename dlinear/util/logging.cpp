@@ -31,6 +31,6 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type) {
   return logger;
 }
 
-} // namespace dlinear
+}  // namespace dlinear
 
 #endif

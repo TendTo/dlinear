@@ -58,12 +58,12 @@ class ArgParser {
    * Version of the program.
    * @return version of the program
    */
-  [[nodiscard]] static std::string version() ;
+  [[nodiscard]] static std::string version();
   /**
    * Status of the repository.
    * @return status of the repository
    */
-  [[nodiscard]] static std::string repositoryStatus() ;
+  [[nodiscard]] static std::string repositoryStatus();
   /**
    * Complete prompt to print on the console.
    * @return complete prompt
