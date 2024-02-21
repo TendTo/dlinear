@@ -218,7 +218,7 @@ bool QsoptexTheorySolver::SetQSXVarBound(const Bound &bound, int qsx_col) {
   }
 
   // Make sure there are no inverted bounds
-  mpq_QSget_bound(qsx_, qsx_col, toChar(~type), &c_value);
+  mpq_QSget_bound(qsx_, qsx_col, toChar(-type), &c_value);
   mpq_class opposite_bound{c_value};
   if ((type == LpColBound::L && opposite_bound < value) || (type == LpColBound::U && opposite_bound > value)) {
     DLINEAR_DEBUG_FMT("SoplexSatSolver::SetSPXVarBound: variable {} has invalid bounds [{}, {}]", var,

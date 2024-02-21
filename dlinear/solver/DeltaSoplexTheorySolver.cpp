@@ -56,50 +56,21 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
 
-  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
-  if (needs_expansion_) expr = expr.Expand();
   const int spx_row{spx_.numRowsRational()};
-  soplex::DSVectorRational coeffs;
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "spx_row must match spx_sense_.size() - 1");
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size(), "spx_row must match spx_rhs_.size()");
-  spx_rhs_.emplace_back(0);
-  if (is_constant(expr)) {
-    spx_rhs_.back() = -get_constant_value(expr);
-  } else if (is_variable(expr)) {
-    SetSPXVarCoeff(coeffs, get_variable(expr), 1);
-  } else if (is_multiplication(expr)) {
-    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
-        get_constant_value(map.begin()->second) != 1) {
-      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
-    }
-    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
-  } else if (is_addition(expr)) {
-    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
-    coeffs.setMax(static_cast<int>(map.size()));
-    for (const auto &pair : map) {
-      if (!is_variable(pair.first)) {
-        DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
-      }
-      SetSPXVarCoeff(coeffs, get_variable(pair.first), pair.second);
-    }
-    spx_rhs_.back() = -get_constant_in_addition(expr);
-  } else {
-    DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
-  }
-  if (spx_rhs_.back() <= -soplex::infinity || spx_rhs_.back() >= soplex::infinity) {
-    DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", spx_rhs_.back());
-  }
 
-  // Add inactive constraint
+  // Add an inactive constraint with the right coefficients for the decisional variables
+  soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), std::pair(spx_row, -1));
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size(), "spx_row must match from_spx_row_.size()");
   theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(truth);
+
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size() - 1, "incorrect theory_row_to_lit_.size()");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
@@ -146,10 +117,12 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", it->second);
   // bound = (variable, type, value), where:
   // - variable is the box variable
-  // - type is 'L' for lower bound, 'U' for upper bound, 'B' for both, 'F' for free
+  // - type of bound
   // - value is the bound value
   Bound bound = GetBound(it->second, truth);
-  // If the bound type is 'I' or 'N' (delta > 0), we can just ignore the bound
+  // Since delta > 0, we can relax the bound type
+  std::get<1>(bound) = ~std::get<1>(bound);
+  // If the bound is now free, there is no need to consider it
   if (std::get<1>(bound) == LpColBound::F) return {};
 
   // Add the active bound to the LP solver bounds
@@ -159,6 +132,38 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
   // If the bound is invalid, return the explanation and update the SAT solver immediately
   if (!valid_bound) return theory_bound_to_explanation_[theory_col];
   return {};
+}
+
+bool DeltaSoplexTheorySolver::SetSPXVarBound(const Bound &bound, int spx_col) {
+  const auto &[var, type, value] = bound;
+  DLINEAR_ASSERT_FMT(type == LpColBound::L || type == LpColBound::U || type == LpColBound::B,
+                     "type must be 'L', 'U', or 'B', received {}", type);
+
+  if (value <= -soplex::infinity || value >= soplex::infinity) {
+    DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
+  }
+
+  if (type == LpColBound::L || type == LpColBound::B) {
+    if (gmp::to_mpq_t(value) > spx_lower_[spx_col]) {
+      spx_lower_[spx_col] = gmp::to_mpq_t(value);
+      DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::SetSPXVarBound ('{}'): set lower bound of {} to {}", type, var,
+                        spx_lower_[spx_col]);
+    }
+  }
+  if (type == LpColBound::U || type == LpColBound::B) {
+    if (gmp::to_mpq_t(value) < spx_upper_[spx_col]) {
+      spx_upper_[spx_col] = gmp::to_mpq_t(value);
+      DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::SetSPXVarBound ('{}'): set upper bound of {} to {}", type, var,
+                        spx_upper_[spx_col]);
+    }
+  }
+  // Make sure there are no inverted bounds
+  if (spx_lower_[spx_col] > spx_upper_[spx_col]) {
+    DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::SetSPXVarBound: variable {} has invalid bounds [{}, {}]", var,
+                      spx_lower_[spx_col], spx_upper_[spx_col]);
+    return false;
+  }
+  return true;
 }
 
 SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {

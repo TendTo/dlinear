@@ -88,6 +88,8 @@ class TheorySolver {
 
   [[nodiscard]] const std::vector<Variable> &GetLinearVarMap() const;
 
+  [[nodiscard]] size_t n_variables() const;
+
   virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
 
   /**
@@ -112,10 +114,12 @@ class TheorySolver {
    *
    * - var: theory variable the bound is associated with
    * - type: the type of bound:
-   *    - B: value <= var <= value
-   *    - L: value <= var
-   *    - U:          var <= value
-   *    - F: -inf  <= var <= inf
+   *    - B:  value <= var <= value
+   *    - SL: value <  var
+   *    - L:  value <= var
+   *    - SU:          var <  value
+   *    - U:           var <= value
+   *    - F:  -inf  <= var <= inf
    * - value: value of the bound
    * @param formula symbolic formula that represents a simple relational bound
    * @param truth whether the formula is to be interpreted as it is (true) or must be inverted (false)

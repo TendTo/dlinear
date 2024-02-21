@@ -33,6 +33,8 @@ const Box &TheorySolver::GetModel() const {
   return model_;
 }
 
+size_t TheorySolver::n_variables() const { return theory_col_to_var_.size(); }
+
 void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
   for (const auto &lit : theory_literals) AddLiteral(lit);
 }
@@ -86,18 +88,25 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
     if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::B, get_constant_value_ref(rhs)};
     if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::B, get_constant_value_ref(lhs)};
   }
-  if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
+  if (IsGreaterThan(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SL, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SU, get_constant_value_ref(lhs)};
+  }
+  if (IsGreaterThanOrEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::L, get_constant_value_ref(rhs)};
     if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value_ref(lhs)};
   }
-  if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
+  if (IsLessThan(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value_ref(rhs)};
     if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value_ref(lhs)};
   }
+  if (IsLessThanOrEqualTo(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SU, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SL, get_constant_value_ref(lhs)};
+  }
   if (IsNotEqualTo(formula, truth)) {
-    // If delta > 0, we can ignore not-equal bounds on variables, for they will always be satisfied.
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::F, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::F, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::D, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::D, get_constant_value_ref(lhs)};
   }
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }

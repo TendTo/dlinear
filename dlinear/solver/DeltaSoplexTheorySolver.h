@@ -36,6 +36,9 @@ class DeltaSoplexTheorySolver : public SoplexTheorySolver {
   void AddLiteral(const Literal& lit) override;
 
   SatResult CheckSat(const Box& box, mpq_class* actual_precision, LiteralSet& explanation) override;
+
+ protected:
+  bool SetSPXVarBound(const Bound& bound, int spx_col) override;
 };
 
 }  // namespace dlinear

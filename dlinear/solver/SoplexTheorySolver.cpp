@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
@@ -64,39 +65,46 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
-bool SoplexTheorySolver::SetSPXVarBound(const Bound &bound, int spx_col) {
-  const auto &[var, type, value] = bound;
-  DLINEAR_ASSERT_FMT(type == LpColBound::L || type == LpColBound::U || type == LpColBound::B || type == LpColBound::F,
-                     "type must be 'L', 'U', 'B' or 'N', received {}", type);
+soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formula) {
+  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
+  if (needs_expansion_) expr = expr.Expand();
+  DLINEAR_ASSERT(expr == expr.Expand(), "The expression must be expanded");
 
-  if (value <= -soplex::infinity || value >= soplex::infinity) {
-    DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
-  }
+  soplex::DSVectorRational coeffs;
+  spx_rhs_.emplace_back(0);
 
-  if (type == LpColBound::L || type == LpColBound::B) {
-    if (gmp::to_mpq_t(value) > spx_lower_[spx_col]) {
-      spx_lower_[spx_col] = gmp::to_mpq_t(value);
-      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set lower bound of {} to {}", type, var,
-                        spx_lower_[spx_col]);
+  if (is_constant(expr)) {
+    spx_rhs_.back() = -get_constant_value(expr);
+  } else if (is_variable(expr)) {
+    SetSPXVarCoeff(coeffs, get_variable(expr), 1);
+  } else if (is_multiplication(expr)) {
+    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
+    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
+        get_constant_value(map.begin()->second) != 1) {
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
     }
-  }
-  if (type == LpColBound::U || type == LpColBound::B) {
-    if (gmp::to_mpq_t(value) < spx_upper_[spx_col]) {
-      spx_upper_[spx_col] = gmp::to_mpq_t(value);
-      DLINEAR_TRACE_FMT("SoplexSatSolver::SetSPXVarBound ('{}'): set upper bound of {} to {}", type, var,
-                        spx_upper_[spx_col]);
+    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
+  } else if (is_addition(expr)) {
+    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
+    coeffs.setMax(static_cast<int>(map.size()));
+    for (const auto &[var, coeff] : map) {
+      if (!is_variable(var)) {
+        DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+      }
+      SetSPXVarCoeff(coeffs, get_variable(var), coeff);
     }
+    spx_rhs_.back() = -get_constant_in_addition(expr);
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
   }
-  // Make sure there are no inverted bounds
-  if (spx_lower_[spx_col] > spx_upper_[spx_col]) {
-    DLINEAR_DEBUG_FMT("SoplexSatSolver::SetSPXVarBound: variable {} has invalid bounds [{}, {}]", var,
-                      spx_lower_[spx_col], spx_upper_[spx_col]);
-    return false;
+  if (spx_rhs_.back() <= -soplex::infinity || spx_rhs_.back() >= soplex::infinity) {
+    DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", spx_rhs_.back());
   }
-  return true;
+  return coeffs;
 }
 
-void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const Variable &var, const mpq_class &value) {
+void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const Variable &var,
+                                        const mpq_class &value) const {
   const auto it = var_to_theory_col_.find(var.get_id());
   if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
   if (value <= -soplex::infinity || value >= soplex::infinity) {

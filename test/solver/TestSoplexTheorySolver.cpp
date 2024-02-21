@@ -32,6 +32,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
       : SoplexTheorySolver{abstractor, config} {}
   MOCK_METHOD(void, AddLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(std::optional<LiteralSet>, EnableLiteral, (const dlinear::Literal &lit), (override));
+  MOCK_METHOD(bool, SetSPXVarBound, (const Bound &bound, int spx_col), (override));
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, dlinear::LiteralSet &explanation), (override));
 

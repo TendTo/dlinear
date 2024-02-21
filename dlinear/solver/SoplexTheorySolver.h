@@ -42,8 +42,17 @@ class SoplexTheorySolver : public TheorySolver {
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet& explanation) override;
 
-  bool SetSPXVarBound(const Bound& bound, int spx_col);
-  void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value);
+  virtual bool SetSPXVarBound(const Bound& bound, int spx_col) = 0;
+  /**
+   * Parse a row and return the vector of coefficients to apply to the decisional variables.
+   *
+   * Parse an formula representing a row in order to produce store the rhs term in @link spx_rhs_ @endlink and create a vector
+   * of coefficients for the row to pass to the LP solver
+   * @param formula symbolic formula representing the row
+   * @return vector of coefficients to apply to the decisional variables in the row
+   */
+  soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
+  void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
   void CreateArtificials(int spx_row);
 
   // Exact LP solver (SoPlex)
