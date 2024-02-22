@@ -91,18 +91,6 @@ LpRowSense operator~(LpRowSense sense) {
   }
 }
 
-double epsilon_multiplier(LpRowSense sense) {
-  switch (sense) {
-    case LpRowSense::GT:
-      return -1;
-    case LpRowSense::NQ:
-    case LpRowSense::LE:
-      return 1;
-    default:
-      return 0;
-  }
-}
-
 std::ostream &operator<<(std::ostream &os, const LpRowSense &lp_result) { return os << toChar(lp_result); }
 
 }  // namespace dlinear

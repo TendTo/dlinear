@@ -116,16 +116,16 @@ Model SatSolver::OnSatResult() {
     const Variable &var{it_var->second};
     const auto it = var_to_formula_map.find(var);
     if (it != var_to_formula_map.end()) {  // The variable is a theory literal
-      DLINEAR_TRACE_FMT("SoplexSatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);
+      DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);
       model.second.emplace_back(var, i > 0);
     } else if (cnf_variables_.count(var.get_id()) == 0) {  // The variable wasn't introduced by CNF transformations
-      DLINEAR_TRACE_FMT("SoplexSatSolver::CheckSat: Add Boolean literal {}{} to Model ", i > 0 ? "" : "¬", var);
+      DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add Boolean literal {}{} to Model ", i > 0 ? "" : "¬", var);
       model.first.emplace_back(var, i > 0);
     } else {  // The variable was introduced by CNF transformations
-      DLINEAR_TRACE_FMT("SoplexSatSolver::CheckSat: Skip {}{} which is a temporary variable.", i > 0 ? "" : "¬", var);
+      DLINEAR_TRACE_FMT("SatSolver::CheckSat: Skip {}{} which is a temporary variable.", i > 0 ? "" : "¬", var);
     }
   }
-  DLINEAR_DEBUG("SoplexSatSolver::CheckSat() Found a model.");
+  DLINEAR_DEBUG("SatSolver::CheckSat() Found a model.");
   //  DLINEAR_TRACE_FMT("SatSolver::CheckSat(): Model: {}", model);
   return model;
 }

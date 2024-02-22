@@ -64,6 +64,6 @@
   } while (false)
 
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) \
-  throw std::invalid_argument(fmt::format("Invalid argument for {} - {}\n", argument, actual))
+  throw std::invalid_argument(fmt::format("Invalid argument for {}: {}\n", argument, actual))
 
 #endif  // NDEBUG

@@ -93,9 +93,11 @@ class TheorySolver {
   virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
 
   /**
-   * Reset the linear problem, disabling all constraints and bounds to the ones
-   * in the box.
+   * Reset the linear problem.
    *
+   * All constraints will be disabled and the bounds will be set to the ones in the box.
+   * @note The variables and constraints will not be modified.
+   * If you need to change the variables or constraints, you must create a new theory solver.
    * @param box cox containing the bounds for the variables that will be applied to the theory solver
    */
   virtual void Reset(const Box &box) = 0;
@@ -141,7 +143,21 @@ class TheorySolver {
    */
   virtual void UpdateExplanation(LiteralSet &explanation) = 0;
 
-  int simplex_sat_phase_;
+  /**
+   * Consolidate the solver.
+   *
+   * This method must be called after all the literals have been added to the solver and before calling
+   * any other method.
+   * Once the solver has been consolidated, no more literals can be added to it.
+   * A previously added literal can be enabled using the @ref EnableLiteral method and disabled with @ref Reset.
+   * @note A solver can be consolidated only once.
+   * If you need to change the variables or constraints, you must create a new theory solver.
+   */
+  virtual void Consolidate();
+
+  bool is_consolidated_;        ///< Whether the solver has been consolidated.
+                                ///< This method must be called after all the literals have been added to the solver.
+  int simplex_sat_phase_;       ///< Phase of the simplex algorithm
   double precision_;            ///< Precision used to check the satisfiability of the theory
   const bool needs_expansion_;  ///< Whether the formulas need to be expanded before building the LP constraints.
                                 ///< - SMT2 files: the expansion is needed.

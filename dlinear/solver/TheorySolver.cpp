@@ -12,7 +12,8 @@
 namespace dlinear {
 
 TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config)
-    : simplex_sat_phase_{config.simplex_sat_phase()},
+    : is_consolidated_{false},
+      simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
       needs_expansion_{config.filename_extension() == "smt2"},
       predicate_abstractor_{predicate_abstractor} {}
@@ -47,6 +48,12 @@ std::optional<LiteralSet> TheorySolver::EnableLiterals(const std::vector<Literal
     if (explanation) return explanation;
   }
   return {};
+}
+
+void TheorySolver::Consolidate() {
+  if (is_consolidated_) return;
+  DLINEAR_DEBUG("TheorySolver::Consolidate()");
+  is_consolidated_ = true;
 }
 
 bool TheorySolver::IsSimpleBound(const Formula &formula) {

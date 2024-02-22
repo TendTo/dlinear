@@ -25,6 +25,7 @@ DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_
     : SoplexTheorySolver(predicate_abstractor, config) {}
 
 void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
+  if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
   const auto &[formulaVar, truth] = lit;
   const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
   const auto it = var_to_formula_map.find(formulaVar);
@@ -75,6 +76,9 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
 }
 
 std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
@@ -167,6 +171,9 @@ bool DeltaSoplexTheorySolver::SetSPXVarBound(const Bound &bound, int spx_col) {
 }
 
 SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+
   static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaSoplexTheorySolver", "Total # of CheckSat",
                              "Total time spent in CheckSat"};
   TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true /* start_timer */);

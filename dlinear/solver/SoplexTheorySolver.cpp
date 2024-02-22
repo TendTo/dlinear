@@ -31,9 +31,10 @@ SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor
   spx_.setIntParam(soplex::SoPlex::SOLVEMODE, soplex::SoPlex::SOLVEMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::CHECKMODE, soplex::SoPlex::CHECKMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SYNCMODE, soplex::SoPlex::SYNCMODE_AUTO);
+  spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
   spx_.setIntParam(soplex::SoPlex::VERBOSITY, config.verbose_simplex());
   // Default is maximize.
-  spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
+  spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MAXIMIZE);
   // Enable precision boosting
   bool enable_precision_boosting = config.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
   spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
@@ -131,6 +132,8 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
 
 void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("SoplexSatSolver::Reset(): Box =\n{}", box);
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
   // Clear all the sets in the bounds to explanation map
@@ -144,8 +147,6 @@ void SoplexTheorySolver::Reset(const Box &box) {
 
   // Clear variable bounds
   [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
-  DLINEAR_ASSERT(2 == simplex_sat_phase_ || static_cast<size_t>(spx_cols) == theory_col_to_var_.size(),
-                 "spx_cols must match from_spx_col_.size(), unless we are in phase 2");
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(0 <= theory_col && theory_col < spx_cols, "theory_col must be in bounds");
