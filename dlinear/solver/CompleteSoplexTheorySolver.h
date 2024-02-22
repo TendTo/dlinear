@@ -42,6 +42,12 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
  protected:
   bool SetSPXVarBound(const Bound& bound, int spx_col) override;
 
+  void UpdateExplanationStrict(LiteralSet& explanation);
+
+  void Consolidate() override;
+
+  int strict_variable_idx() const;
+
   std::vector<std::set<soplex::Rational>> spx_diff_;
 };
 

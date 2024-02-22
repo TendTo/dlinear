@@ -12,6 +12,7 @@
 #include "dlinear/solver/DeltaQsoptexTheorySolver.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
+#include "dlinear/solver/CompleteSoplexTheorySolver.h"
 #include "dlinear/solver/DeltaSoplexTheorySolver.h"
 #endif
 #include "dlinear/solver/PicosatSatSolver.h"
@@ -357,13 +358,17 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
   switch (config.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
-      return config.precision() >= 0 ? std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config)
-                                     : nullptr;
+      if (config.complete()) // TODO: add support for complete QSOPTEX
+        return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config);
+      else
+        return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config);
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
-      return config.precision() >= 0 ? std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_, config)
-                                     : nullptr;
+      if (config.complete())
+        return std::make_unique<CompleteSoplexTheorySolver>(predicate_abstractor_, config);
+      else
+        return std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_, config);
 #endif
     default:
       DLINEAR_UNREACHABLE();

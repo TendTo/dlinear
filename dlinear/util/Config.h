@@ -80,7 +80,12 @@ class Config {
 
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO, "Input file format")
   DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
-  DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4, "Delta precision used by the LP solver solver")
+  DLINEAR_PARAMETER(
+      precision, double, 9.999999999999996e-4,
+      "Delta precision used by the LP solver solver.\n"
+      "\t\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
+      "\t\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
+      "\t\t\tUse the --complete flag if you are looking for a complete solution")
   DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
   DLINEAR_PARAMETER(use_polytope, bool, false, "Use polytope contractor")
   DLINEAR_PARAMETER(use_polytope_in_forall, bool, false, "Use polytope contractor in forall contractor")
@@ -98,6 +103,9 @@ class Config {
       verbose_dlinear, int, 2,
       "Verbosity level for dlinear. In the range [0, 5]. 0 or any other value outside the range disables logging")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
+  DLINEAR_PARAMETER(complete, bool, false,
+                    "Complete mode.\n"
+                    "\t\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
   DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
   DLINEAR_PARAMETER(number_of_jobs, uint, 1u, "Number of jobs")
   DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")

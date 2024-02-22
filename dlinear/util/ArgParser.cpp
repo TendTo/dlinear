@@ -73,6 +73,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("file").help("input file").default_value("");
 
   DLINEAR_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
@@ -150,6 +151,10 @@ Config ArgParser::toConfig() const {
   config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
 
   // Add all the options to the config in alphabetical order
+  if (parser_.is_used("complete")) {
+    config.m_complete().set_from_command_line(parser_.get<bool>("complete"));
+    config.m_precision().set_from_command_line(0.0);
+  }
   if (parser_.is_used("continuous-output"))
     config.m_continuous_output().set_from_command_line(parser_.get<bool>("continuous-output"));
   if (parser_.is_used("debug-parsing"))
@@ -199,9 +204,9 @@ Config ArgParser::toConfig() const {
 void ArgParser::validateOptions() {
   DLINEAR_TRACE("ArgParser::validateOptions: validating options");
   if (parser_.is_used("in") && parser_.is_used("file"))
-    DLINEAR_INVALID_ARGUMENT("--in", "cannot be set if file is specified");
+    DLINEAR_INVALID_ARGUMENT("--in", "--in and file are mutually exclusive");
   if (!parser_.is_used("in") && !parser_.is_used("file"))
-    DLINEAR_INVALID_ARGUMENT("file", "must be specified if --in is not used");
+    DLINEAR_INVALID_ARGUMENT("file", "must be specified unless --in is used");
   // Check file extension if a file is provided
   if (parser_.is_used("file")) {
     Config::Format format = parser_.get<Config::Format>("format");
@@ -216,9 +221,11 @@ void ArgParser::validateOptions() {
   // Check if the file exists
   if (!parser_.is_used("in") && !file_exists(parser_.get<std::string>("file")))
     DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
+  if (parser_.is_used("precision") && parser_.is_used("complete"))
+    DLINEAR_INVALID_ARGUMENT("--complete", "--complete and --precision are mutually exclusive");
   if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");
   if (parser_.get<bool>("skip-check-sat") && parser_.get<bool>("produce-models"))
-    DLINEAR_INVALID_ARGUMENT("--produce-models", "no models will be produced if --skip-check-sat is provided");
+    DLINEAR_INVALID_ARGUMENT("--produce-models", "--produce-models and --skip-check-sat are mutually exclusive");
   if (parser_.is_used("verbosity") && parser_.is_used("silent"))
     DLINEAR_INVALID_ARGUMENT("--verbosity", "verbosity is set to 0 if --silent is provided");
   if (parser_.get<Config::LPSolver>("lp-solver") == Config::LPSolver::QSOPTEX)
