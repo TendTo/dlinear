@@ -65,7 +65,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), std::pair(spx_row, -1));
+  lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
   theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(truth);
 
@@ -83,7 +83,7 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const auto &[spx_row, spx_row2] = it_row->second;
+    const int spx_row = it_row->second;
 
     const LpRowSense sense = spx_sense_[spx_row];
     const mpq_class &rhs{spx_rhs_[spx_row]};

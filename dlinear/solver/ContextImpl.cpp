@@ -358,7 +358,7 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
   switch (config.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
-      if (config.complete()) // TODO: add support for complete QSOPTEX
+      if (config.complete())  // TODO: add support for complete QSOPTEX
         return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config);
       else
         return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_, config);

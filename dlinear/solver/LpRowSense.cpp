@@ -76,7 +76,7 @@ LpRowSense operator!(LpRowSense sense) {
   }
 }
 
-LpRowSense operator~(LpRowSense sense) {
+LpRowSense operator-(LpRowSense sense) {
   switch (sense) {
     case LpRowSense::GE:
       return LpRowSense::LE;

@@ -172,15 +172,14 @@ class TheorySolver {
                                                    ///< The column is the one used by the theory solver.
                                                    ///< The Variable is the one created by the PredicateAbstractor
 
-  std::map<Variable::Id, std::pair<int, int>>
-      lit_to_theory_row_;  ///< Literal ⇔ theory row.
-                           ///< The pair contains up to two rows that map to the constraint the theory solver will check
-  std::vector<Variable> theory_row_to_lit_;  ///< Theory row ⇔ Literal
-                                             ///< The row is the constraint used by the theory solver.
-                                             ///< The tuple contains the truth value of the literal when it was first
-                                             ///< added to the LP solver,
-  std::vector<bool> theory_row_to_truth_;    ///< Theory row ⇔ truth value
-                                             ///< The row is the constraint used by the theory solver.
+  std::map<Variable::Id, int> lit_to_theory_row_;  ///< Literal ⇔ theory row.
+                                                   ///< The literal is the one created by the PredicateAbstractor
+                                                   ///< The row is the constraint used by the theory solver.
+  std::vector<Variable> theory_row_to_lit_;        ///< Theory row ⇔ Literal
+                                                   ///< The row is the constraint used by the theory solver.
+                                                   ///< The literal is the one created by the PredicateAbstractor
+  std::vector<bool> theory_row_to_truth_;          ///< Theory row ⇔ truth value
+                                                   ///< The row is the constraint used by the theory solver.
   ///< The truth is the boolean assignment of the literal during this iteration
   std::vector<LiteralSet>
       theory_bound_to_explanation_;  ///< Theory bound ⇔ Explanation

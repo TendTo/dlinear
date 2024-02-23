@@ -89,7 +89,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   }
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), std::pair(qsx_row, -1));
+  lit_to_theory_row_.emplace(formulaVar.get_id(), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(truth);
@@ -101,7 +101,7 @@ std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal 
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
-    const auto &[qsx_row, qsx_row2] = it_row->second;
+    const int qsx_row = it_row->second;
 
     const LpRowSense row_sense = qsx_sense_[qsx_row];
     mpq_class &rhs{qsx_rhs_[qsx_row]};
@@ -111,7 +111,7 @@ std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal 
       sense = toChar(row_sense);
     } else {
       if (row_sense == LpRowSense::EQ) return {};
-      sense = toChar(~row_sense);
+      sense = toChar(-row_sense);
     }
     mpq_QSchange_sense(qsx_, qsx_row, sense);
     mpq_QSchange_rhscoef(qsx_, qsx_row, rhs.get_mpq_t());
