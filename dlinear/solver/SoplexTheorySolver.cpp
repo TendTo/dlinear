@@ -66,6 +66,60 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
+std::vector<std::pair<int, Rational>> SoplexTheorySolver::GetActiveRows() {
+  std::vector<std::pair<int, Rational>> active_rows;
+  soplex::VectorRational row_values{spx_.numRowsRational()};
+  soplex::LPRowSetRational lp_rows;
+  [[maybe_unused]] const bool res = spx_.getRowsActivityRational(row_values);
+  DLINEAR_ASSERT(res, "The problem must have a solution");
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::GetActiveRows: row_values = {}", row_values);
+  spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
+  for (int i = 0; i < lp_rows.num(); i++) {
+    if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
+    DLINEAR_WARN_FMT("row_idx: {}, row_value: {}, is_active: {}", i, lp_rows.value(i),
+                     lp_rows.value(i) == row_values[i]);
+  }
+  return active_rows;
+}
+
+std::vector<std::pair<int, soplex::Rational>> SoplexTheorySolver::GetActiveRows(const std::vector<int> &spx_rows) {
+  std::vector<std::pair<int, Rational>> active_rows;
+  soplex::VectorRational row_values{spx_.numRowsRational()};
+  soplex::LPRowSetRational lp_rows;
+  [[maybe_unused]] const bool res = spx_.getRowsActivityRational(spx_rows, row_values);
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::GetActiveRows: row_values = {} in {} rows", row_values, spx_rows.size());
+  DLINEAR_ASSERT(res, "The problem must have a solution");
+  spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
+  for (const int i : spx_rows) {
+    if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
+    DLINEAR_WARN_FMT("row_idx: {}, row_value: {}, is_active: {}", i, lp_rows.value(i),
+                     lp_rows.value(i) == row_values[i]);
+  }
+  return active_rows;
+}
+
+std::optional<Rational> SoplexTheorySolver::IsRowActive(const int spx_row) {
+  Rational row_value;
+  soplex::LPRowRational lp_row;
+  [[maybe_unused]] const bool res = spx_.getRowActivityRational(spx_row, row_value);
+  DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
+  spx_.getRowRational(spx_row, lp_row);
+  DLINEAR_WARN_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  return lp_row.lhs() == row_value || lp_row.rhs() == row_value ? std::optional{std::move(row_value)}
+                                                                : std::optional<Rational>{};
+}
+
+bool SoplexTheorySolver::IsRowActive(const int spx_row, const Rational &value) {
+  Rational row_value;
+  soplex::LPRowRational lp_row;
+  [[maybe_unused]] const bool res = spx_.getRowActivityRational(spx_row, row_value);
+  DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
+  if (row_value != value) return false;
+  spx_.getRowRational(spx_row, lp_row);
+  DLINEAR_WARN_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  return lp_row.lhs() == row_value || lp_row.rhs() == row_value;
+}
+
 soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formula) {
   Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
   if (needs_expansion_) expr = expr.Expand();

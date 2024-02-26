@@ -42,12 +42,56 @@ class SoplexTheorySolver : public TheorySolver {
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet& explanation) override;
 
+  /**
+   * Get all active rows in the current solution.
+   *
+   * An active row is a row where the sum of the coefficients times the current solution is equal to either the
+   * lower or upper bound of the row.
+   * @note The problem must be feasible and a solution must have been found before calling this function.
+   * @return vector of active rows with their value
+   */
+  std::vector<std::pair<int, soplex::Rational>> GetActiveRows();
+  /**
+   * Get active rows in the current solution among the rows in @p spx_rows.
+   *
+   * An active row is a row where the sum of the coefficients times the current solution is equal to either the
+   * lower or upper bound of the row.
+   * @note The problem must be feasible and a solution must have been found before calling this function.
+   * @param spx_rows rows to check
+   * @return vector of active rows among @p spx_rows with their value
+   */
+  std::vector<std::pair<int, soplex::Rational>> GetActiveRows(const std::vector<int>& spx_rows);
+  /**
+   * Check if the @p spx_row is active.
+   *
+   * An active row is a row where the sum of the coefficients times the current solution is equal to either the
+   * lower or upper bound of the row.
+   * @note The problem must be feasible and a solution must have been found before calling this function.
+   * @param spx_row row to check
+   * @return the value of the row if it is active
+   * @return std::nullopt if the row is not active
+   */
+  std::optional<soplex::Rational> IsRowActive(int spx_row);
+  /**
+   * Check if the @p spx_row is active with value @p value.
+   *
+   * An active row is a row where the sum of the coefficients times the current solution is equal to either the
+   * lower or upper bound of the row.
+   * The value must be equal to @p value for the row to be considered active in this case.
+   * @note The problem must be feasible and a solution must have been found before calling this function.
+   * @param spx_row row to check
+   * @param value value the row must be equal to in order to be considered active
+   * @return true if the row is active with value @p value
+   * @return false if the row is not active or if the value is not equal to @p value
+   */
+  bool IsRowActive(int spx_row, const soplex::Rational& value);
+
   virtual bool SetSPXVarBound(const Bound& bound, int spx_col) = 0;
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
    *
-   * Parse an formula representing a row in order to produce store the rhs term in @link spx_rhs_ @endlink and create a vector
-   * of coefficients for the row to pass to the LP solver
+   * Parse an formula representing a row in order to produce store the rhs term in @link spx_rhs_ @endlink and create a
+   * vector of coefficients for the row to pass to the LP solver
    * @param formula symbolic formula representing the row
    * @return vector of coefficients to apply to the decisional variables in the row
    */
