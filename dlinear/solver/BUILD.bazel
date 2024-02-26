@@ -124,6 +124,7 @@ dlinear_cc_library(
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:bit_increment_iterator",
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:exception",

@@ -152,4 +152,10 @@ dlinear_cc_library(
     hdrs = ["SignalHandlerGuard.h"],
 )
 
+dlinear_cc_library(
+    name = "bit_increment_iterator",
+    srcs = ["BitIncrementIterator.cpp"],
+    hdrs = ["BitIncrementIterator.h"],
+)
+
 cpplint()
