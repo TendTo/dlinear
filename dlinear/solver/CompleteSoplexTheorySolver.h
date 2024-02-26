@@ -40,6 +40,8 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Reset(const Box& box) override;
 
  protected:
+  SatResult SpxCheckSat(mpq_class* actual_precision, LiteralSet& explanation);
+
   bool SetSPXVarBound(const Bound& bound, int spx_col) override;
 
   void UpdateExplanationStrict(LiteralSet& explanation);
@@ -48,7 +50,11 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
 
   int strict_variable_idx() const;
 
-  std::vector<std::set<soplex::Rational>> spx_diff_;
+  std::vector<std::set<soplex::Rational>> spx_nq_;  ///< Vector that maps each var to the set of values they can't take
+  std::vector<int> enabled_strict_theory_rows_;     ///< Vector of enabled strict theory rows
+  std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_rows_;  ///< variable id -> theory row
+  std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
+                                             ///< mapped to the corresponding spx_row
 };
 
 }  // namespace dlinear
