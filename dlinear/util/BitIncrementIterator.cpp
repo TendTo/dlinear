@@ -4,10 +4,7 @@
 
 namespace dlinear {
 BitIncrementIterator& BitIncrementIterator::operator++() {
-  DLINEAR_ASSERT(!*this, "Incrementing past the end of the iterator");
-  DLINEAR_ASSERT(!vector_.empty(), "Incrementing an empty iterator");
-
-  if (std::all_of(vector_.begin(), vector_.end(), [](bool b) { return b; })) {
+    if (std::all_of(vector_.begin(), vector_.end(), [](bool b) { return b; })) {
     vector_.clear();
     return *this;
   }
