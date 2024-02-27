@@ -39,7 +39,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
   const std::vector<Variable> &theory_row_to_lit() const { return theory_row_to_lit_; }
   const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
-  const std::map<Variable::Id, std::pair<int, int>> &lit_to_theory_row() const { return lit_to_theory_row_; }
+  const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
   const soplex::VectorRational &spx_upper() const { return spx_upper_; }
   const soplex::VectorRational &spx_lower() const { return spx_lower_; }
 };

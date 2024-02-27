@@ -70,20 +70,24 @@ bool TheorySolver::IsEqualTo(const Formula &formula, bool truth) {
   return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
-bool TheorySolver::IsNotEqualTo(const Formula &formula, bool truth) { return IsEqualTo(formula, !truth); }
-
-bool TheorySolver::IsGreaterThan(const Formula &formula, bool truth) {
-  return truth ? is_greater_than(formula) : is_less_than(formula);
+bool TheorySolver::IsNotEqualTo(const Formula &formula, bool truth) {
+  return truth ? is_not_equal_to(formula) : is_equal_to(formula);
 }
 
-bool TheorySolver::IsLessThan(const Formula &formula, bool truth) { return IsGreaterThan(formula, !truth); }
+bool TheorySolver::IsGreaterThan(const Formula &formula, bool truth) {
+  return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
+}
+
+bool TheorySolver::IsLessThan(const Formula &formula, bool truth) {
+  return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
+}
 
 bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, bool truth) {
-  return truth ? is_greater_than_or_equal_to(formula) : is_less_than_or_equal_to(formula);
+  return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
 }
 
 bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, bool truth) {
-  return IsGreaterThanOrEqualTo(formula, !truth);
+  return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
 }
 
 TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
@@ -104,12 +108,12 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
     if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value_ref(lhs)};
   }
   if (IsLessThan(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value_ref(lhs)};
-  }
-  if (IsLessThanOrEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SU, get_constant_value_ref(rhs)};
     if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SL, get_constant_value_ref(lhs)};
+  }
+  if (IsLessThanOrEqualTo(formula, truth)) {
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value_ref(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value_ref(lhs)};
   }
   if (IsNotEqualTo(formula, truth)) {
     if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::D, get_constant_value_ref(rhs)};

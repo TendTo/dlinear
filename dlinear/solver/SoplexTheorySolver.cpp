@@ -76,8 +76,6 @@ std::vector<std::pair<int, Rational>> SoplexTheorySolver::GetActiveRows() {
   spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
   for (int i = 0; i < lp_rows.num(); i++) {
     if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
-    DLINEAR_WARN_FMT("row_idx: {}, row_value: {}, is_active: {}", i, lp_rows.value(i),
-                     lp_rows.value(i) == row_values[i]);
   }
   return active_rows;
 }
@@ -92,8 +90,6 @@ std::vector<std::pair<int, soplex::Rational>> SoplexTheorySolver::GetActiveRows(
   spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
   for (const int i : spx_rows) {
     if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
-    DLINEAR_WARN_FMT("row_idx: {}, row_value: {}, is_active: {}", i, lp_rows.value(i),
-                     lp_rows.value(i) == row_values[i]);
   }
   return active_rows;
 }
