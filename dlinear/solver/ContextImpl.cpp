@@ -326,7 +326,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
       continue;
     }
 
-    LiteralSet explanation_theory{theory_model.cbegin(), theory_model.cend()};
+    LiteralSet explanation_theory;
     // If the SAT solver found a model, we have to check if it is consistent with the theory
     SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, explanation_theory);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
@@ -341,6 +341,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
         have_unsolved = true;  // Will prevent return of UNSAT
+        explanation_theory = {theory_model.cbegin(), theory_model.cend()};
       }
       LearnExplanation(explanation_theory);
     }
