@@ -63,7 +63,7 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
   theory_bound_to_explanation_.emplace_back();
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::AddVariable({} ↦ {})", var, spx_col);
+  DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
 std::vector<std::pair<int, Rational>> SoplexTheorySolver::GetActiveRows() {
@@ -177,11 +177,11 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   soplex::DSVectorRational coeffsNeg;
   coeffsNeg.add(spx_row, -1);
   spx_.addColRational(soplex::LPColRational(1, coeffsNeg, soplex::infinity, 0));
-  DLINEAR_DEBUG_FMT("SoplexSatSolver::CreateArtificials({} -> ({}, {}))", spx_row, spx_cols, spx_cols + 1);
+  DLINEAR_DEBUG_FMT("SoplexTheorySolver::CreateArtificials({} -> ({}, {}))", spx_row, spx_cols, spx_cols + 1);
 }
 
 void SoplexTheorySolver::Reset(const Box &box) {
-  DLINEAR_TRACE_FMT("SoplexSatSolver::Reset(): Box =\n{}", box);
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::Reset(): Box =\n{}", box);
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
   // Omitting to do this seems to cause problems in soplex
@@ -252,7 +252,7 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   // For each row in the ray
   for (int i = 0; i < rowcount; ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
-    DLINEAR_TRACE_FMT("SoplexSatSolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
+    DLINEAR_TRACE_FMT("SoplexTheorySolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
     const Variable &var = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
     explanation.insert({var, theory_row_to_truth_[i]});
