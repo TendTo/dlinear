@@ -1,10 +1,9 @@
 /**
- * @file BoundType.cpp
- * @author dlinear
- * @date 21 Aug 2023
- * @copyright 2023 dlinear
+ * @file TestBoundType.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
-
 #include <gtest/gtest.h>
 
 #include "dlinear/mps/BoundType.h"

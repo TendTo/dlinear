@@ -1,10 +1,9 @@
 /**
  * @file TestCommand.cpp
- * @author dlinear
- * @date 21 Aug 2023
- * @copyright 2023 dlinear
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
-
 #include "dlinear/smt2/Command.h"
 #include "dlinear/smt2/CommandCell.h"
 

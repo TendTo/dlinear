@@ -2,15 +2,18 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest")
 
 dlinear_cc_googletest(
     name = "test_sort",
+    tags = ["smt2"],
     deps = ["//dlinear/smt2:sort"],
 )
 
 dlinear_cc_googletest(
     name = "test_term",
+    tags = ["smt2"],
     deps = ["//dlinear/smt2:term"],
 )
 
 dlinear_cc_googletest(
     name = "test_command",
+    tags = ["smt2"],
     deps = ["//dlinear/smt2:command"],
 )

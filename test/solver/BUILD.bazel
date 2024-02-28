@@ -3,6 +3,7 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest", "dlinear_cc_library")
 dlinear_cc_library(
     name = "test_solver_utils",
     hdrs = ["TestSolverUtils.h"],
+    tags = ["solver"],
     visibility = ["//test:__subpackages__"],
     deps = [
         "//dlinear/solver",
@@ -14,6 +15,7 @@ dlinear_cc_library(
 
 dlinear_cc_googletest(
     name = "test_context",
+    tags = ["solver"],
     deps = [
         ":test_solver_utils",
         "//dlinear/solver:context",
@@ -23,6 +25,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_solver",
+    tags = ["solver"],
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
@@ -31,6 +34,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_picosat_sat_solver",
+    tags = ["solver"],
     deps = [
         "//dlinear/solver:sat_solver",
         "//dlinear/solver:solver_guard",
@@ -39,6 +43,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_soplex_theory_solver",
+    tags = ["solver"],
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
@@ -49,6 +54,7 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_smt2",
     data = glob(["smt2/*.smt2"]),
+    tags = ["solver"],
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
@@ -58,6 +64,7 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_mps",
     data = glob(["mps/*.mps"]),
+    tags = ["solver"],
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",

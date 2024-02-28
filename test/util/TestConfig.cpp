@@ -1,10 +1,9 @@
 /**
- * @file TestOptionValue.cpp
- * @author dlinear
- * @date 17 Aug 2023
- * @copyright 2023 dlinear
+ * @file TestConfig.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
-
 #include "dlinear/util/OptionValue.hpp"
 
 #include <gtest/gtest.h>

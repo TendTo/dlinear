@@ -1,8 +1,8 @@
 /**
- * @file TestScopedUnorderedMap.cpp
- * @author dlinear
- * @date 18 Aug 2023
- * @copyright 2023 dlinear
+ * @file TestScopedStructures.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
 #include "dlinear/util/ScopedVector.hpp"
 #include "dlinear/util/ScopedUnorderedMap.hpp"

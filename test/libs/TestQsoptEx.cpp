@@ -1,8 +1,8 @@
 /**
  * @file TestQsoptEx.cpp
- * @author dlinear
- * @date 19 Aug 2023
- * @copyright 2023 dlinear
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
 #ifdef DLINEAR_ENABLED_QSOPT_EX
 #include <gtest/gtest.h>

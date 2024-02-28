@@ -2,16 +2,19 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest")
 
 dlinear_cc_googletest(
     name = "test_argparser",
+    tags = ["util"],
     deps = ["//dlinear/util:argparser"],
 )
 
 dlinear_cc_googletest(
     name = "test_logging",
+    tags = ["util"],
     deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_googletest(
     name = "test_box",
+    tags = ["util"],
     deps = [
         "//dlinear/util:box",
         "//test/symbolic:test_symbolic_utils",
@@ -20,30 +23,42 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_exception",
+    tags = ["util"],
     deps = ["//dlinear/util:exception"],
 )
 
 dlinear_cc_googletest(
     name = "test_filesystem",
+    tags = ["util"],
     deps = ["//dlinear/util:filesystem"],
 )
 
 dlinear_cc_googletest(
     name = "test_math",
+    tags = ["util"],
     deps = ["//dlinear/util:math"],
 )
 
 dlinear_cc_googletest(
     name = "test_scoped_structures",
+    tags = ["util"],
     deps = ["//dlinear/util:scoped_structures"],
 )
 
 dlinear_cc_googletest(
     name = "test_timer",
+    tags = ["util"],
     deps = ["//dlinear/util:timer"],
 )
 
 dlinear_cc_googletest(
     name = "test_config",
+    tags = ["util"],
     deps = ["//dlinear/util:config"],
+)
+
+dlinear_cc_googletest(
+    name = "test_bit_increment_iterator",
+    tags = ["util"],
+    deps = ["//dlinear/util:bit_increment_iterator"],
 )

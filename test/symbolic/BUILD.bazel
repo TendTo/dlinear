@@ -3,6 +3,7 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest", "dlinear_cc_library")
 dlinear_cc_library(
     name = "test_symbolic_utils",
     hdrs = ["TestSymbolicUtils.h"],
+    tags = ["symbolic"],
     visibility = ["//test:__subpackages__"],
     deps = [
         "//dlinear/symbolic",
@@ -19,6 +20,7 @@ dlinear_cc_library(
 
 dlinear_cc_googletest(
     name = "test_if_then_else_eliminator",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:if_then_else_eliminator",
@@ -27,6 +29,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_nnfizer",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:nnfizier",
@@ -35,6 +38,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_symbolic",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic",
@@ -43,6 +47,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_prefix_printer",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:prefix_printer",
@@ -51,6 +56,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_predicate_abstractor",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:predicate_abstractor",
@@ -59,6 +65,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_plaisted_greenbaum_cnfizer",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:plaisted_greenbaum_cnfizer",
@@ -67,6 +74,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_tseitin_cnfizer",
+    tags = ["symbolic"],
     deps = [
         ":test_symbolic_utils",
         "//dlinear/symbolic:tseitin_cnfizer",

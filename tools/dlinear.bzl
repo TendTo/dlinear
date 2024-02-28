@@ -233,7 +233,7 @@ def dlinear_cc_test(
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
         linkstatic = True,
-        tags = tags + ["dlinear"],
+        tags = tags + ["dlinear", "".join([word.lower() for word in name.split("_")][1:])],
         defines = _get_defines(defines),
         **kwargs
     )
