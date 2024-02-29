@@ -135,8 +135,8 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
 
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
   if (IsSimpleBound(formula)) {
-    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
     // bound = (variable, type, value), where:
     // - variable is the box variable
     // - type of bound
@@ -164,7 +164,6 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
   soplex::LPRowRational lp_row;
   spx_.getRowRational(spx_row, lp_row);
   soplex::DSVectorRational row_vector{lp_row.rowVector()};
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: {} {} rhs", row_vector, sense);
   // Remove the strict variable from the row and add it back with the right coefficient
   int pos = row_vector.pos(strict_variable_idx());
   if (pos < 0) {
@@ -183,6 +182,7 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
     case LpRowSense::EQ:
     case LpRowSense::LE:
     case LpRowSense::GE:
+      row_vector.value(pos) = 0;
       break;
     case LpRowSense::NQ:
       // Initialise the inequality based on the last status stored ( < or > )
@@ -203,11 +203,10 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
                     ? Rational(gmp::to_mpq_t(rhs))
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: lp row {} ↦ {}", spx_row, row_vector);
 
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_truth_[spx_row] = truth;
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({} ↦ {})", spx_row, row_vector);
   return {};
 }
 
@@ -309,7 +308,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     // If the problem is SAT, we can return immediately
     if (sat_status == SatResult::SAT_SATISFIABLE) break;
 
-    // Use some heuristics to update the iterator based on the current explanation, if any.
+    // Use some heuristics to update the iterator based on the current explanation.
     // Otherwise, just increment the iterator with the next configuration and try again
     if (!UpdateBitIteratorBasedOnExplanation(it)) break;
   } while (it);
