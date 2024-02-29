@@ -11,11 +11,38 @@
 
 #include "dlinear/libs/soplex.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/BitIncrementIterator.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
+
+// Utility print function for standard containers.
+std::ostream &operator<<(std::ostream &os, const std::vector<bool> &v) {
+  os << "[";
+  for (size_t i = 0; i < v.size(); i++) {
+    os << (i > 0 ? ", " : "") << (v[i] ? "T" : "F");
+  }
+  os << "]";
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const std::vector<size_t> &v) {
+  os << "[";
+  for (size_t i = 0; i < v.size(); i++) {
+    os << (i > 0 ? ", " : "") << v[i];
+  }
+  os << "]";
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const std::set<int> &s) {
+  os << "{";
+  for (const auto &i : s) {
+    os << (i != *s.begin() ? ", " : "") << i;
+  }
+  os << "}";
+  return os;
+}
 
 namespace dlinear {
 
@@ -33,11 +60,13 @@ void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   // Add the set of differences for the new variable that will map to a column of the LP problem
   spx_nq_.emplace_back();
   var_to_enabled_theory_rows_.emplace(var.get_id(), std::vector<int>());
+  var_to_enabled_theory_bounds_.emplace(var.get_id(), std::vector<int>());
+  last_nq_status_.push_back(false);
 }
 
 void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
-  const auto &[formulaVar, truth] = lit;
+  const Variable &formulaVar = lit.first;
   const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
   const auto it = var_to_formula_map.find(formulaVar);
   // Boolean variable - no need to involve theory solver
@@ -66,6 +95,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   } else {
     DLINEAR_UNREACHABLE();
   }
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLinearLiteral: {} -> {}", formula, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};
 
@@ -77,12 +107,12 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
   theory_row_to_lit_.emplace_back(formulaVar);
-  theory_row_to_truth_.push_back(truth);
+  theory_row_to_truth_.push_back(true);
 
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size() - 1, "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({} ↦ {})", it->second, spx_row);
 }
 
 std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal &lit) {
@@ -94,7 +124,7 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
 
   // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
   if (it_row == lit_to_theory_row_.end()) {
-    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: ignoring ({}{})", truth ? "" : "¬", var);
     return {};
   }
 
@@ -102,7 +132,7 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
   const int spx_row = it_row->second;
 
   // A simple bound - set it directly
-  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var maps to a theory literal");
+  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
 
   if (IsSimpleBound(formula)) {
@@ -112,6 +142,8 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
     // - type of bound
     // - value is the bound value
     Bound bound = GetBound(formula, truth);
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: bound ({}, {} {})", std::get<0>(bound),
+                      std::get<1>(bound), std::get<2>(bound));
 
     // Add the active bound to the LP solver bounds
     int theory_col = var_to_theory_col_[std::get<0>(bound).get_id()];
@@ -119,10 +151,12 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
     theory_bound_to_explanation_[theory_col].insert(lit);
     // If the bound is invalid, return the explanation and update the SAT solver immediately
     if (!valid_bound) return theory_bound_to_explanation_[theory_col];
-  }
 
-  for (const Variable &row_var : formula.GetFreeVariables()) {
-    var_to_enabled_theory_rows_.at(row_var.get_id()).push_back(spx_row);
+    var_to_enabled_theory_bounds_.at(std::get<0>(bound).get_id()).push_back(spx_row);
+  } else {
+    for (const Variable &row_var : formula.GetFreeVariables()) {
+      var_to_enabled_theory_rows_.at(row_var.get_id()).push_back(spx_row);
+    }
   }
 
   const LpRowSense sense = truth ? spx_sense_[spx_row] : !spx_sense_[spx_row];
@@ -130,35 +164,46 @@ std::optional<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Litera
   soplex::LPRowRational lp_row;
   spx_.getRowRational(spx_row, lp_row);
   soplex::DSVectorRational row_vector{lp_row.rowVector()};
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: {} {} rhs", row_vector, sense);
+  // Remove the strict variable from the row and add it back with the right coefficient
+  int pos = row_vector.pos(strict_variable_idx());
+  if (pos < 0) {
+    row_vector.add(strict_variable_idx(), 1);
+    pos = row_vector.pos(strict_variable_idx());
+  }
   switch (sense) {
     case LpRowSense::LT:
-      row_vector.add(strict_variable_idx(), 1);
+      row_vector.value(pos) = 1;
       enabled_strict_theory_rows_.push_back(spx_row);
       break;
     case LpRowSense::GT:
-      row_vector.add(strict_variable_idx(), -1);
+      row_vector.value(pos) = -1;
       enabled_strict_theory_rows_.push_back(spx_row);
       break;
     case LpRowSense::EQ:
     case LpRowSense::LE:
     case LpRowSense::GE:
-      row_vector.add(strict_variable_idx(), 0);
       break;
     case LpRowSense::NQ:
-      row_vector.add(strict_variable_idx(), 1);
+      // Initialise the inequality based on the last status stored ( < or > )
+      row_vector.value(pos) = last_nq_status_[spx_row] ? -1 : 1;
+      enabled_strict_theory_rows_.push_back(spx_row);
       nq_row_to_theory_rows_.push_back(spx_row);
       break;
     default:
       DLINEAR_UNREACHABLE();
   }
   lp_row.setRowVector(row_vector);
-  lp_row.setLhs(sense == LpRowSense::GE || sense == LpRowSense::EQ || sense == LpRowSense::GT
+  lp_row.setLhs(sense == LpRowSense::GE || sense == LpRowSense::EQ || sense == LpRowSense::GT ||
+                        (sense == LpRowSense::NQ && last_nq_status_[spx_row])
                     ? Rational(gmp::to_mpq_t(rhs))
                     : Rational(-soplex::infinity));
-  lp_row.setRhs(sense == LpRowSense::LE || sense == LpRowSense::EQ || sense == LpRowSense::LT
+  lp_row.setRhs(sense == LpRowSense::LE || sense == LpRowSense::EQ || sense == LpRowSense::LT ||
+                        (sense == LpRowSense::NQ && !last_nq_status_[spx_row])
                     ? Rational(gmp::to_mpq_t(rhs))
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: lp row {} ↦ {}", spx_row, row_vector);
 
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_truth_[spx_row] = truth;
@@ -241,48 +286,67 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})",
                     1 == simplex_sat_phase_ ? "one" : "two");
 
-  int colcount = spx_.numColsRational();
-  explanation.clear();
-  // TODO: iterate over all possible sub-problems
-  // status (true -> less, false -> greater)
+  SatResult sat_status;
+  // Initialise the iterator with the last nq statuses
+  //  std::vector<bool> starting_iterator(nq_row_to_theory_rows_.size());
+  //  std::transform(nq_row_to_theory_rows_.cbegin(), nq_row_to_theory_rows_.cend(), starting_iterator.begin(),
+  //                 [&](int i) { return last_nq_status_[i]; });
+  //  DLINEAR_ERROR_FMT("Starting iterator: {}", starting_iterator);
+  //  BitIncrementIterator it(starting_iterator);
   BitIncrementIterator it(nq_row_to_theory_rows_.size());
   do {
-    for (bool b : *it) {
-      std::cout << b << " ";
-    }
-    SatResult sat_status = SpxCheckSat(actual_precision, explanation);
+    // Enable the non-equal constraints based on the current iterator value.
+    // If the iterator is empty (there are no not-equal constraints), this will do nothing
+    EnableNqLiterals(*it);
 
-    soplex::VectorRational x;
-    [[maybe_unused]] bool haveSoln;
-    switch (sat_status) {
-      case SatResult::SAT_SATISFIABLE:
-        x.reDim(spx_.numColsRational());
-        haveSoln = spx_.getPrimalRational(x);
-        DLINEAR_ASSERT(haveSoln, "haveSoln must be true");
-        DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
-        if (x.dim() > colcount) {
-          DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
-        }
-        // Copy delta-feasible point from x into model_
-        for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-          const Variable &var{theory_col_to_var_[theory_col]};
-          DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                             gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
-                         "val must be in bounds");
-          model_[var] = x[theory_col].backend().data();
-        }
-        DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: returning {}", SatResult::SAT_SATISFIABLE);
-        return SatResult::SAT_SATISFIABLE;
-      default:
-        DLINEAR_ASSERT(sat_status == SatResult::SAT_UNSATISFIABLE, "sat_status must be SAT_UNSATISFIABLE");
-        break;
-    }
-  } while (++it);
+    // Store the last assignment for the next EnableNqLiterals and warm start of next iterations
+    // last_nq_status_ = *it;
 
-  return SatResult::SAT_UNSATISFIABLE;
+    // Solve the sub-problem
+    sat_status = SpxCheckSat(actual_precision);
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: intermediate sat_status = {}", sat_status);
+
+    // If the problem is SAT, we can return immediately
+    if (sat_status == SatResult::SAT_SATISFIABLE) break;
+
+    // Use some heuristics to update the iterator based on the current explanation, if any.
+    // Otherwise, just increment the iterator with the next configuration and try again
+    if (!UpdateBitIteratorBasedOnExplanation(it)) break;
+  } while (it);
+
+  soplex::VectorRational x;
+  [[maybe_unused]] bool haveSoln;
+  const int colcount = spx_.numColsRational();
+  switch (sat_status) {
+    case SatResult::SAT_SATISFIABLE:
+      x.reDim(spx_.numColsRational());
+      haveSoln = spx_.getPrimalRational(x);
+      DLINEAR_ASSERT(haveSoln, "haveSoln must be true");
+      DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
+      if (x.dim() > colcount) {
+        DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
+      }
+      // Copy delta-feasible point from x into model_
+      for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+        const Variable &var{theory_col_to_var_[theory_col]};
+        DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
+                           gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
+                       "val must be in bounds");
+        model_[var] = x[theory_col].backend().data();
+      }
+      DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: returning {}", SatResult::SAT_SATISFIABLE);
+      return SatResult::SAT_SATISFIABLE;
+    case SatResult::SAT_UNSATISFIABLE:
+      DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: all options explored, returning unsat");
+      GetExplanation(explanation);
+      DLINEAR_WARN_FMT("Explanation: {}", explanation);
+      return SatResult::SAT_UNSATISFIABLE;
+    default:
+      DLINEAR_UNREACHABLE();
+  }
 }
 
-SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision, LiteralSet &explanation) {
+SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
   int colcount = spx_.numColsRational();
   SoplexStatus status = spx_.optimize();
   Rational max_violation, sum_violation;
@@ -305,10 +369,10 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision, L
     switch (status) {
       case SoplexStatus::OPTIMAL:
         if (spx_.objValueRational() > 0) return SatResult::SAT_SATISFIABLE;
-        if (explanation.empty()) UpdateExplanationStrict(explanation);
+        UpdateExplanationStrictInfeasible();
         return SatResult::SAT_UNSATISFIABLE;
       case SoplexStatus::INFEASIBLE:
-        if (explanation.empty()) UpdateExplanation(explanation);
+        UpdateExplanationInfeasible();
         return SatResult::SAT_UNSATISFIABLE;
       default:
         DLINEAR_UNREACHABLE();
@@ -329,7 +393,7 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision, L
     }
     // ok = std::ranges::all_of(0, colcount, [&] (int i) { return obj[i] == 0 || x[i] == 0; });
     for (int i = 0; i < colcount; ++i) {
-      if (!(ok = (obj[i] == 0 || x[i] == 0))) {
+      if (!(ok = (obj[i].is_zero() || x[i].is_zero()))) {
         break;
       }
     }
@@ -342,8 +406,10 @@ void CompleteSoplexTheorySolver::Reset(const Box &box) {
   SoplexTheorySolver::Reset(box);
   for (auto &diff : spx_nq_) diff.clear();
   for (auto &rows : var_to_enabled_theory_rows_) rows.second.clear();
+  for (auto &rows : var_to_enabled_theory_bounds_) rows.second.clear();
   enabled_strict_theory_rows_.clear();
   nq_row_to_theory_rows_.clear();
+  theory_rows_to_explanation_.clear();
 }
 
 void CompleteSoplexTheorySolver::Consolidate() {
@@ -359,7 +425,7 @@ void CompleteSoplexTheorySolver::Consolidate() {
   // Column of the strict auxiliary variable t bound between 0 and 1
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), 1, 0));
   spx_.changeObjRational(spx_col, 1);
-  DLINEAR_DEBUG("CompleteSoplexTheorySolver::InitCheckSat: initialised");
+  DLINEAR_DEBUG("CompleteSoplexTheorySolver::Consolidate: consolidated");
 }
 
 int CompleteSoplexTheorySolver::strict_variable_idx() const {
@@ -367,11 +433,70 @@ int CompleteSoplexTheorySolver::strict_variable_idx() const {
   return spx_.numColsRational() - 1;
 }
 
+void CompleteSoplexTheorySolver::EnableNqLiterals(const std::vector<bool> &nq_status) {
+  DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::EnableNqLiterals: nq_status = {}", nq_status);
+  for (size_t i = 0; i < nq_status.size(); i++) {
+    const int &spx_row = nq_row_to_theory_rows_[i];
+    // The row's sense has not changed, skip
+    if (last_nq_status_[spx_row] == nq_status[i]) continue;
+
+    const Rational rhs = Rational(spx_rhs_[spx_row].get_mpq_t());
+
+    soplex::LPRowRational lp_row(spx_.numColsRational());
+    spx_.getRowRational(spx_row, lp_row);
+    soplex::DSVectorRational row_vector{lp_row.rowVector()};
+
+    const int pos = row_vector.pos(strict_variable_idx());
+    DLINEAR_ERROR_FMT("Row vector: {} - pos {}", row_vector, pos);
+    DLINEAR_ASSERT(!row_vector.value(pos).is_zero(), "Coefficient of the strict auxiliary variable cannot be 0");
+    row_vector.value(pos) = nq_status[i] ? -1 : 1;
+
+    lp_row.setLhs(nq_status[i] ? rhs : ninfinity_);
+    lp_row.setRhs(nq_status[i] ? infinity_ : rhs);
+    lp_row.setRowVector(row_vector);
+
+    spx_.changeRowRational(spx_row, lp_row);
+  }
+}
+
+// TODO: maybe we can avoid to add non useful bounds to the explanation?
+void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
+  const int rowcount = spx_.numRowsRational();
+  soplex::VectorRational ray;
+  ray.reDim(rowcount);
+  // Get the Farkas ray to identify which rows are responsible for the conflict
+  [[maybe_unused]] bool res = spx_.getDualFarkasRational(ray);
+  DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
+  theory_rows_to_explanation_.clear();
+  DLINEAR_CRITICAL_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: ray = {}. Num rows: {}", ray,
+                       rowcount);
+  // For each row in the ray
+  for (int i = 0; i < rowcount; ++i) {
+    if (ray[i].is_zero()) continue;  // The row did not participate in the conflict, ignore it
+    DLINEAR_TRACE_FMT("SoplexSatSolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
+    // Insert the conflicting row literal to the explanation
+    theory_rows_to_explanation_.insert(i);
+
+    // Add all the free variables in the row to the explanation
+    const auto &row_formula = predicate_abstractor_.var_to_formula_map().at(theory_row_to_lit_[i]);
+    for (const Variable &var : row_formula.GetFreeVariables()) {
+      for (const int &spx_row : var_to_enabled_theory_rows_.at(var.get_id())) {
+        theory_rows_to_explanation_.insert(spx_row);
+      }
+    }
+  }
+
+  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+
+  DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: explanation = {}",
+                   theory_rows_to_explanation_);
+}
+
 // TODO: implement cache between first GetActiveRows call and the second one to keep track of rows in
 // enabled_strict_theory_rows_
-void CompleteSoplexTheorySolver::UpdateExplanationStrict(LiteralSet &explanation) {
-  DLINEAR_TRACE("CompleteSoplexTheorySolver::UpdateExplanationStrict");
-  explanation.clear();
+// TODO: make sure this includes bounds (it dshould)
+void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
+  DLINEAR_TRACE("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible");
   // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
   // Find all strict theory row. The active ones indicate a violation in the strict bound.
   std::set<int> candidate_rows;
@@ -404,13 +529,67 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrict(LiteralSet &explanation
         visited_variables.insert(var.get_id());
       }
     }
+
+    for (int spx_row : var_to_enabled_theory_bounds_.at(var_id)) {
+      // Since it is a simple bound, there are no other variables to check
+      candidate_rows.insert(spx_row);
+    }
   }
 
   // Add all active rows in the candidate rows to the explanation
+  theory_rows_to_explanation_.clear();
   for (const auto &[spx_row, value] : GetActiveRows({candidate_rows.begin(), candidate_rows.end()})) {
+    theory_rows_to_explanation_.insert(spx_row);
+  }
+  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+
+  DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible: explanation = {}",
+                   theory_rows_to_explanation_);
+}
+
+// TODO: need a way to improve bound explanation. A lot.
+void CompleteSoplexTheorySolver::GetExplanation(LiteralSet &explanation) {
+  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+  explanation.clear();
+  for (const auto &spx_row : theory_rows_to_explanation_) {
     explanation.insert({theory_row_to_lit_[spx_row], theory_row_to_truth_[spx_row]});
   }
-
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrict: explanation = {}", explanation);
 }
+
+std::vector<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInExplanation() const {
+  std::vector<size_t> nq_row_to_iterator_index;
+  for (size_t i = 0; i < nq_row_to_theory_rows_.size(); i++) {
+    const int &spx_row = nq_row_to_theory_rows_[i];
+    if (theory_rows_to_explanation_.find(spx_row) != theory_rows_to_explanation_.end()) {
+      nq_row_to_iterator_index.push_back(i);
+    }
+  }
+  return nq_row_to_iterator_index;
+}
+
+bool CompleteSoplexTheorySolver::UpdateBitIteratorBasedOnExplanation(BitIncrementIterator &bit_iterator) {
+  // No explanation yet
+  if (theory_rows_to_explanation_.empty()) return true;
+
+  std::vector<size_t> nq_in_explanation = IteratorNqRowsInExplanation();
+  DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
+  // If no non-equal is violated, we can return immediately since the problem is UNSAT for other reasons
+  if (nq_in_explanation.empty()) {
+    DLINEAR_WARN("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasibility detected");
+    return false;
+  }
+  // If there is just a single non-equal row in the explanation...
+  if (nq_in_explanation.size() == 1) {
+    DLINEAR_WARN("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
+    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: the row was {} fixed before",
+                     bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : "NOT");
+    // ... if it is the first time this happens, skip to an iterator values that doesn't violate the row anymore
+    // otherwise, it meas that this row cannot be satisfied by the current model, so we can return immediately
+    return bit_iterator.Learn(nq_in_explanation.back());
+  }
+  // No heuristics to update the iterator based on the current explanation, so just increment the iterator
+  ++bit_iterator;
+  return true;
+}
+
 }  // namespace dlinear
