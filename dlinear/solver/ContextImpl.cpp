@@ -308,13 +308,13 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
     // Here, we modify Boolean variables only (not used by the LP solver).
-    const std::vector<std::pair<Variable, bool>> &boolean_model{optional_model->first};
-    for (const std::pair<Variable, bool> &p : boolean_model) {
+    const std::vector<Literal> &boolean_model{optional_model->first};
+    for (const Literal &p : boolean_model) {
       box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
     }
 
     // Extrapolate the theory model from the SAT model.
-    const std::vector<std::pair<Variable, bool>> &theory_model{optional_model->second};
+    const std::vector<Literal> &theory_model{optional_model->second};
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
@@ -322,7 +322,9 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
     if (explanation_bounds) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      LearnExplanation(explanation_bounds.value());
+      LiteralSet &explanation_theory = explanation_bounds.value();
+      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
+      LearnExplanation(explanation_theory);
       continue;
     }
 
@@ -343,6 +345,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         have_unsolved = true;  // Will prevent return of UNSAT
         explanation_theory = {theory_model.cbegin(), theory_model.cend()};
       }
+      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
       LearnExplanation(explanation_theory);
     }
   }
