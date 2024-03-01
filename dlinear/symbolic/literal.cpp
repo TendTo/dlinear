@@ -42,4 +42,8 @@ std::ostream &operator<<(std::ostream &os, const Model &model) {
   return os;
 }
 
+bool LiteralSetComparator::operator()(const LiteralSet &a, const LiteralSet &b) const {
+  return std::lexicographical_compare(a.cbegin(), a.cend(), b.cbegin(), b.cend(), LiteralComparator());
+}
+
 }  // namespace dlinear

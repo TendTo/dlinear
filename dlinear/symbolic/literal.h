@@ -27,6 +27,10 @@ struct LiteralComparator {
 
 using LiteralSet = std::set<Literal, LiteralComparator>;
 
+struct LiteralSetComparator {
+  bool operator()(const LiteralSet &a, const LiteralSet &b) const;
+};
+
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
 
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
