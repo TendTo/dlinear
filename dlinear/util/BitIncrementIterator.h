@@ -120,7 +120,7 @@ class BitIncrementIterator {
    * @param value new value of the bit
    * @param force whether to ignore if the bit is fixed. This will not change it's fixed status
    */
-  void Set(size_t i, bool value, bool force = false) { vector_[i] = fixed_[i] ? vector_[i] : value; }
+  void Set(size_t i, bool value, bool force = false) { vector_[i] = force || !fixed_[i] ? value : vector_[i]; }
 
   /**
    * Set whether the @p i 'th bit of the vector is fixed.
