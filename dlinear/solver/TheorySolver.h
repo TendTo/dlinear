@@ -90,6 +90,21 @@ class TheorySolver {
 
   [[nodiscard]] size_t n_variables() const;
 
+  /**
+   * Check the satisfiability of the theory.
+   *
+   * Run the internal LP solver to check whether the underlying linear programming problem is feasible.
+   * If it is, SAT will be returned, along with the actual precision required to obtain that result.
+   * Otherwise, UNSAT will be returned, along with an explanation of the conflict.
+   * In that case, the precision will remain the same as the one passed as input.
+   * @param[in,out] box current box with the bounds for the variables. It will be updated with the model if SAT is
+   * returned
+   * @param actual_precision[in,out] desired precision. It will be updated with the actual precision if SAT is returned
+   * @param explanation[out] set of literals that explain the conflict if UNSAT is returned
+   * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
+   * model
+   * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
+   */
   virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
 
   /**
