@@ -50,7 +50,14 @@ using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
 CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SoplexTheorySolver(predicate_abstractor, config) {}
+    : SoplexTheorySolver(predicate_abstractor, config),
+      spx_nq_{},
+      enabled_strict_theory_rows_{},
+      var_to_enabled_theory_rows_{},
+      var_to_enabled_theory_bounds_{},
+      nq_row_to_theory_rows_{},
+      last_nq_status_{},
+      theory_rows_to_explanation_{} {}
 
 void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());
@@ -61,7 +68,6 @@ void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   spx_nq_.emplace_back();
   var_to_enabled_theory_rows_.emplace(var.get_id(), std::vector<int>());
   var_to_enabled_theory_bounds_.emplace(var.get_id(), std::vector<int>());
-  last_nq_status_.push_back(false);
 }
 
 void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
@@ -108,6 +114,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
   theory_row_to_lit_.emplace_back(formulaVar);
   theory_row_to_truth_.push_back(true);
+  last_nq_status_.push_back(false);
 
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size() - 1, "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
@@ -287,19 +294,15 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 
   SatResult sat_status;
   // Initialise the iterator with the last nq statuses
-  //  std::vector<bool> starting_iterator(nq_row_to_theory_rows_.size());
-  //  std::transform(nq_row_to_theory_rows_.cbegin(), nq_row_to_theory_rows_.cend(), starting_iterator.begin(),
-  //                 [&](int i) { return last_nq_status_[i]; });
-  //  DLINEAR_ERROR_FMT("Starting iterator: {}", starting_iterator);
-  //  BitIncrementIterator it(starting_iterator);
-  BitIncrementIterator it(nq_row_to_theory_rows_.size());
+  std::vector<bool> starting_iterator(nq_row_to_theory_rows_.size(), false);
+  std::transform(nq_row_to_theory_rows_.cbegin(), nq_row_to_theory_rows_.cend(), starting_iterator.begin(),
+                 [&](int i) { return last_nq_status_[i]; });
+  DLINEAR_ERROR_FMT("Starting iterator: {}", starting_iterator);
+  BitIncrementIterator it(starting_iterator);
   do {
     // Enable the non-equal constraints based on the current iterator value.
     // If the iterator is empty (there are no not-equal constraints), this will do nothing
     EnableNqLiterals(*it);
-
-    // Store the last assignment for the next EnableNqLiterals and warm start of next iterations
-    // last_nq_status_ = *it;
 
     // Solve the sub-problem
     sat_status = SpxCheckSat(actual_precision);
@@ -436,8 +439,9 @@ void CompleteSoplexTheorySolver::EnableNqLiterals(const std::vector<bool> &nq_st
   DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::EnableNqLiterals: nq_status = {}", nq_status);
   for (size_t i = 0; i < nq_status.size(); i++) {
     const int &spx_row = nq_row_to_theory_rows_[i];
-    // The row's sense has not changed, skip
+    // The row's sense has not changed since last time, skip
     if (last_nq_status_[spx_row] == nq_status[i]) continue;
+    last_nq_status_[spx_row] = nq_status[i];
 
     const Rational rhs = Rational(spx_rhs_[spx_row].get_mpq_t());
 
@@ -467,8 +471,6 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
   [[maybe_unused]] bool res = spx_.getDualFarkasRational(ray);
   DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
   theory_rows_to_explanation_.clear();
-  DLINEAR_CRITICAL_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: ray = {}. Num rows: {}", ray,
-                       rowcount);
   // For each row in the ray
   for (int i = 0; i < rowcount; ++i) {
     if (ray[i].is_zero()) continue;  // The row did not participate in the conflict, ignore it
@@ -580,8 +582,8 @@ bool CompleteSoplexTheorySolver::UpdateBitIteratorBasedOnExplanation(BitIncremen
   // If there is just a single non-equal row in the explanation...
   if (nq_in_explanation.size() == 1) {
     DLINEAR_WARN("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
-    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: the row was {} fixed before",
-                     bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : "NOT");
+    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: the row was{} fixed before",
+                     bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : " NOT");
     // ... if it is the first time this happens, skip to an iterator values that doesn't violate the row anymore
     // otherwise, it meas that this row cannot be satisfied by the current model, so we can return immediately
     return bit_iterator.Learn(nq_in_explanation.back());
