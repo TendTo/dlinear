@@ -83,6 +83,16 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "theory_solver_cache",
+    srcs = ["TheorySolverCache.cpp"],
+    hdrs = ["TheorySolverCache.h"],
+    deps = [
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
     name = "theory_solver",
     srcs = [
         "TheorySolver.cpp",
@@ -159,6 +169,7 @@ dlinear_cc_library(
         ":sat_result",
         ":sat_solver",
         ":theory_solver",
+        ":theory_solver_cache",
         "//dlinear:version",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",

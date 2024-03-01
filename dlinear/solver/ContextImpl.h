@@ -4,7 +4,7 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * @brief Implementation of Context.
- * 
+ *
  * The context juggles between the SAT solver and the theory solver, in order to produce a model.
  * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
  * This follows the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
@@ -22,6 +22,7 @@
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/TheorySolver.h"
+#include "dlinear/solver/TheorySolverCache.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
@@ -78,13 +79,24 @@ class Context::Impl {
   void AddToBox(const Variable &v);
 
   /**
-   * The TheorySolver found a conflict.
-   * The literals that are responsible for the conflict are stored in the explanation.
-   * The explanation is then returned to the SAT solver so that it can use them to learn a new clause and backtrack,
+   * The TheorySolver found a conflict and the explanation is the set of literals that are responsible.
+   *
+   * The explanation is returned to the SAT solver so that it can use them to learn a new clause and backtrack,
    * looking for a new, non-conflicting assignment.
    * @param explanation set of literals that are responsible for the conflict
    */
   void LearnExplanation(const LiteralSet &explanation);
+  /**
+   * The TheorySolver found a conflict and the explanation is the set of literals that are responsible.
+   *
+   * The explanation is returned to the SAT solver so that it can use them to learn a new clause and backtrack,
+   * looking for a new, non-conflicting assignment.
+   * The boolean literals didn't play a role in the conflict from the theory prospective,
+   * but they are still be required to avoid reporting a set smaller than the core unsatisfiable set.
+   * @param explanation_boolean set of boolean literals that are responsible for the conflict
+   * @param explanation_theory set of theory literals that are responsible for the conflict
+   */
+  void LearnExplanation(const std::vector<Literal> &explanation_boolean, const LiteralSet &explanation_theory);
 
   /** Return the current box in the stack. */
   virtual SatResult CheckSatCore(mpq_class *actual_precision);
@@ -128,6 +140,8 @@ class Context::Impl {
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
+  // TODO: we may not need this
+  TheorySolverCache theory_solver_cache_;        ///< Cache of theory solvers
 };
 
 }  // namespace dlinear

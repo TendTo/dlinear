@@ -41,7 +41,8 @@ Context::Impl::Impl(const Config &config)
       is_max_{false},
       theory_loaded_{false},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
-      theory_solver_{GetTheorySolver(config)} {
+      theory_solver_{GetTheorySolver(config)},
+      theory_solver_cache_{} {
   boxes_.push_back(Box{});
 }
 
@@ -51,7 +52,8 @@ Context::Impl::Impl(Config &&config)
       is_max_{false},
       theory_loaded_{false},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
-      theory_solver_{GetTheorySolver(config)} {
+      theory_solver_{GetTheorySolver(config)},
+      theory_solver_cache_{} {
   boxes_.push_back(Box{});
 }
 
@@ -307,14 +309,24 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     // The SAT solver found a model that satisfies the formula. SAT from SATSolver.
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
-    // Here, we modify Boolean variables only (not used by the LP solver).
+    // Extrapolate the boolean and theory model from the SAT model.
     const std::vector<Literal> &boolean_model{optional_model->first};
+    const std::vector<Literal> &theory_model{optional_model->second};
+
+    // TODO: ensure we need the cache
+    // If the theory model is already cached, we can use it to update the explanation.
+    //    std::optional<const LiteralSet *const>
+    //    explanation_cached{theory_solver_cache_.GetTheoryExplanation(theory_model)}; if (explanation_cached) {
+    //      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Found cached explanation");
+    //      LearnExplanation( **explanation_cached);
+    //      continue;
+    //    }
+
+    // Update the Boolean variables in the model (not used by the LP solver).
     for (const Literal &p : boolean_model) {
       box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
     }
 
-    // Extrapolate the theory model from the SAT model.
-    const std::vector<Literal> &theory_model{optional_model->second};
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
@@ -322,10 +334,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
     if (explanation_bounds) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      LiteralSet &explanation_theory = explanation_bounds.value();
       // TODO: make sure this part is not necessary when dealing with simple bounds
-      //      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
-      LearnExplanation(explanation_theory);
+      LearnExplanation(*explanation_bounds);
       continue;
     }
 
@@ -342,11 +352,12 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
       } else {
         DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
-        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
+        DLINEAR_ERROR("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
         have_unsolved = true;  // Will prevent return of UNSAT
         explanation_theory = {theory_model.cbegin(), theory_model.cend()};
       }
-      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
+      // TODO: ensure we need the cache
+      //      theory_solver_cache_.CacheTheoryExplanation(theory_model, explanation_theory);
       LearnExplanation(explanation_theory);
     }
   }
@@ -380,6 +391,15 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
   }
 }
 void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
+  DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
+                    stack_.get_vector().size());
+  DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
+  sat_solver_->AddLearnedClause(explanation);
+}
+void Context::Impl::LearnExplanation(const std::vector<Literal> &explanation_boolean,
+                                     const LiteralSet &explanation_theory) {
+  LiteralSet explanation = explanation_theory;
+  explanation.insert(explanation_boolean.cbegin(), explanation_boolean.cend());
   DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
