@@ -323,7 +323,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (explanation_bounds) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
       LiteralSet &explanation_theory = explanation_bounds.value();
-      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
+      // TODO: make sure this part is not necessary when dealing with simple bounds
+      //      explanation_theory.insert(boolean_model.cbegin(), boolean_model.cend());
       LearnExplanation(explanation_theory);
       continue;
     }
