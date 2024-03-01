@@ -22,6 +22,7 @@ namespace dlinear {
  * size. It stores a vector of booleans and each time it is incremented, it changes the vector to the next possible bit
  * vector. The result simulates the increment operation of a binary number. If the iterator is incremented when boolean
  * vector if filled with true, the vector itself is cleared and the iterator is considered done.
+ *
  * @code
  * // Example usage:
  * for (BitIncrementIterator it(3); it; ++it) {
@@ -33,6 +34,27 @@ namespace dlinear {
  * std::cout << std::endl;
  * // Output:
  * // 000, 001, 010, 011, 100, 101, 110, 111,
+ * @endcode
+ *
+ * The default behaviour of this class ensures `full-exploration-guarantee`: all possible
+ * configuration the bit vector can be in will be explored.
+ * Using any @ref Learn method will continue to maintain the guarantee over the now halved configuration space, but
+ * some previously visited configuration may appear again.
+ * @warning Any manual alteration of the vector invalidates the guarantee.
+ *
+ * @code
+ * // Example learn:
+ * BitIncrementIterator it(3);
+ * it.Learn(1, true); // Fix the second bit to 1
+ * for (; it; ++it) {
+ *   for (bool b : *it) {
+ *     std::cout << b;
+ *   }
+ *   std::cout << ", ";
+ * }
+ * std::cout << std::endl;
+ * // Output:
+ * // 010, 011, 110, 111,
  * @endcode
  */
 class BitIncrementIterator {
@@ -50,7 +72,16 @@ class BitIncrementIterator {
    * If @p n is 0, the vector is empty and is considered done immediately.
    * @param n number of bits in the vector
    */
-  explicit BitIncrementIterator(size_t n) : vector_(n, false), fixed_(n, false) {}
+  explicit BitIncrementIterator(size_t n)
+      : vector_(n, false), fixed_(n, false), starting_vector_(n, false), ending_vector_(n, true) {}
+  /**
+   * Construct a new BitIncrementIterator object.
+   *
+   * The vector is initialized with the value of @p starting_value.
+   * After enumerating all possible boolean vectors, the iterator will terminate and the vector will be cleared.
+   * @param starting_value vector of booleans to initialize the iterator with
+   */
+  explicit BitIncrementIterator(std::vector<bool> starting_value);
 
   explicit operator bool() const { return !vector_.empty(); }
 
@@ -61,8 +92,12 @@ class BitIncrementIterator {
   bool operator!=(const BitIncrementIterator &rhs) const { return vector_ != rhs.vector_; }
 
   BitIncrementIterator &operator++();
-
   BitIncrementIterator operator++(int);
+
+  BitIncrementIterator &operator--();
+  BitIncrementIterator operator--(int);
+
+  bool operator[](size_t i) const;
 
   /**
    * Check if the bit at position @p i is fixed.
@@ -77,11 +112,33 @@ class BitIncrementIterator {
   [[nodiscard]] bool IsFixed(size_t i) const { return fixed_[i]; }
 
   /**
+   * Set the @p i 't bit of the vector to @p value.
+   *
+   * If the bit was fixed, no operation will be performed unless @p force is specified.
+   * @warning Using this method means losing the `full-exploration-guarantee`.
+   * @param i index of the bit to change
+   * @param value new value of the bit
+   * @param force whether to ignore if the bit is fixed. This will not change it's fixed status
+   */
+  void Set(size_t i, bool value, bool force = false) { vector_[i] = fixed_[i] ? vector_[i] : value; }
+
+  /**
+   * Set whether the @p i 'th bit of the vector is fixed.
+   *
+   * @warning Using this method means losing the `full-exploration-guarantee`.
+   * @param i index of the bit to make fixed or un-fixed
+   * @param fixed whether the bit should be fixed or not
+   */
+  void SetFixed(size_t i, bool fixed) { fixed_[i] = fixed; }
+
+  /**
    * Learn the value of the bit at position @p i by inverting the bit.
    *
    * Invert the bit at position @p i and fix it to the new value.
    * A fixed bit's value cannot be changed anymore by the increment operation.
-   * All the bits to the right of the fixed bit are reset to false.
+   * @note Other vector's values may change to maintain the `full-exploration-guarantee`.
+   * If you want to avoid this behaviour, use @ref Set and @ref SetFixed manually.
+   * @note Some previously visited configuration may appear again.
    * @param i index of the bit to check. The index must be in the range [0, n), big endian order.
    * @return true if the bit has been fixed
    * @return false if the bit was already fixed
@@ -89,11 +146,13 @@ class BitIncrementIterator {
    */
   bool Learn(size_t i);
   /**
-   * Learn the value of the bit at position @p i by setting the bit to @value.
+   * Learn the value of the bit at position @p i by setting the bit to @p value.
    *
-   * Set the value of the bit at position @p i to @value and fix it to the new value.
+   * Set the value of the bit at position @p i to @p value and fix it to the new value.
    * A fixed bit's value cannot be changed anymore by the increment operation.
-   * All the bits to the right of the fixed bit are reset to false.
+   * @note Other vector's values may change to maintain the `full-exploration-guarantee`.
+   * If you want to avoid this behaviour, use @ref Set and @ref SetFixed manually.
+   * @note Some previously visited configuration may appear again.
    * @param i index of the bit to check. The index must be in the range [0, n), big endian order.
    * @param value value to set the bit to
    * @return true if the bit has now value @p value
@@ -104,11 +163,19 @@ class BitIncrementIterator {
 
  private:
   /**
-   * Reset all the non-fixed bits to the right of @p start_pos to false.
+   * Reset all the non-fixed bits to the right of @p start_pos to their starting value.
    * @param start_pos starting position. The index must be in the range [0, n), big endian order.
-   * @throws std::out_of_range if @p start_pos is out of range
    */
-  void ResetNonFixed(size_t start_pos = 0);
+  void ResetNonFixedRight(size_t start_pos = 0);
+  /**
+   * Reset all the non-fixed bits to the left of @p start_pos to their starting value.
+   * @param start_pos starting position. The index must be in the range [0, n), big endian order.
+   */
+  void ResetNonFixedLeft(size_t start_pos);
+  /**
+   * Reset all the non-fixed bits in the vector to their starting value.
+   */
+  void ResetNonFixed();
   /**
    * Check if the iterator is done.
    *
@@ -118,8 +185,23 @@ class BitIncrementIterator {
    */
   [[nodiscard]] bool IsDone() const;
 
-  std::vector<bool> vector_;  ///< The bit vector that will assume all the possible values.
-  std::vector<bool> fixed_;   ///< Vector to indicate the fixed bits.
+  /**
+   * After a @ref Learn operation to set the @p i 'th bit to @p value, update the vector.
+   *
+   * Set the @p i 'th bit to @p value, potentially modifying the vector in order to ensure a full exploration.
+   * @param i index of the bit to set
+   * @param value new value of the bit
+   */
+  void UpdateVector(size_t i, bool value);
+
+  std::vector<bool> vector_;           ///< The bit vector that will assume all the possible values.
+  std::vector<bool> fixed_;            ///< Vector to indicate the fixed bits.
+  std::vector<bool> starting_vector_;  ///< Vector to store the starting value of the iterator.
+  std::vector<bool> ending_vector_;    ///< Vector to store the ending value of the iterator.
 };
+
+std::vector<bool> &operator++(std::vector<bool> &vector);
+std::vector<bool> &operator--(std::vector<bool> &vector);
+std::ostream &operator<<(std::ostream &os, const BitIncrementIterator &it);
 
 }  // namespace dlinear
