@@ -62,3 +62,9 @@ dlinear_cc_googletest(
     tags = ["util"],
     deps = ["//dlinear/util:bit_increment_iterator"],
 )
+
+dlinear_cc_googletest(
+    name = "test_sorted_vector",
+    tags = ["util"],
+    deps = ["//dlinear/util:sorted_vector"],
+)

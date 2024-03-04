@@ -147,6 +147,11 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "sorted_vector",
+    hdrs = ["SortedVector.hpp"],
+)
+
+dlinear_cc_library(
     name = "signal_handler_guard",
     srcs = ["SignalHandlerGuard.cpp"],
     hdrs = ["SignalHandlerGuard.h"],
