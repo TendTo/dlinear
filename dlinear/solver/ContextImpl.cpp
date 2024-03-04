@@ -313,15 +313,6 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     const std::vector<Literal> &boolean_model{optional_model->first};
     const std::vector<Literal> &theory_model{optional_model->second};
 
-    // TODO: ensure we need the cache
-    // If the theory model is already cached, we can use it to update the explanation.
-    //    std::optional<const LiteralSet *const>
-    //    explanation_cached{theory_solver_cache_.GetTheoryExplanation(theory_model)}; if (explanation_cached) {
-    //      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Found cached explanation");
-    //      LearnExplanation( **explanation_cached);
-    //      continue;
-    //    }
-
     // Update the Boolean variables in the model (not used by the LP solver).
     for (const Literal &p : boolean_model) {
       box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
@@ -334,7 +325,6 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
     if (explanation_bounds) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      // TODO: make sure this part is not necessary when dealing with simple bounds
       LearnExplanation(*explanation_bounds);
       continue;
     }
@@ -356,8 +346,6 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         have_unsolved = true;  // Will prevent return of UNSAT
         explanation_theory = {theory_model.cbegin(), theory_model.cend()};
       }
-      // TODO: ensure we need the cache
-      //      theory_solver_cache_.CacheTheoryExplanation(theory_model, explanation_theory);
       LearnExplanation(explanation_theory);
     }
   }
