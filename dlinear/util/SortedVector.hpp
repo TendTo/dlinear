@@ -26,13 +26,25 @@ namespace dlinear {
  * sorted_vector.insert(1);
  * sorted_vector.insert(2);
  * for (const auto& value : sorted_vector) {
- *  std::cout << value << " ";
+ *   std::cout << value << " ";
  * }
  * // Output: 1 2 3
  * @endcode
+ * Using a custom comparison function is also supported:
+ * @code
+ * SortedVector<int, std::greater<>> sorted_vector;
+ * sorted_vector.insert(3);
+ * sorted_vector.insert(1);
+ * sorted_vector.insert(2);
+ * for (const auto& value : sorted_vector) {
+ *   std::cout << value << " ";
+ * }
+ * // Output: 3 2 1
+ * @endcode
  * @tparam T type of the elements in the sorted list
+ * @tparam Compare comparison function to maintain the sorted order
  */
-template <typename T>
+template <class T, class Compare = std::less<T>>
 class SortedVector {
  public:
   using value_type = T;                                ///< Type of the elements in the sorted list
@@ -65,6 +77,7 @@ class SortedVector {
    * @param ilist initializer list of elements
    */
   SortedVector(std::initializer_list<T> ilist) {
+    vector_.reserve(ilist.size());
     for (const auto& value : ilist) insert(value);
   }
 
@@ -78,7 +91,7 @@ class SortedVector {
    */
   template <typename V>
   iterator insert(V&& value) {
-    auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value);
+    auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value, compare_);
     return vector_.insert(it, std::forward<V>(value));
   }
 
@@ -139,7 +152,10 @@ class SortedVector {
 
   /**
    * Remove an element from the sorted list.
+   * If the index is out of range, false is returned.
    * @param pos index of the element to remove
+   * @return true if the element has been removed
+   * @return false if the element was not found
    */
   bool erase(size_t pos) {
     if (pos >= vector_.size()) return false;
@@ -150,7 +166,10 @@ class SortedVector {
    * Remove an element from the sorted list.
    *
    * It also supports negative indices, where -1 is the last element, -2 is the second to last, and so on.
+   * If the index is out of range, false is returned.
    * @param pos index of the element to remove
+   * @return true if the element has been removed
+   * @return false if the element was not found
    */
   bool erase(int pos) {
     if (pos < 0) pos = static_cast<int>(vector_.size()) - pos;
@@ -164,11 +183,11 @@ class SortedVector {
    * If multiple elements have the same value, only the first one is removed.
    * If the element is not found, false is returned.
    * @param value element to remove
-   * @return true if the element is removed
+   * @return true if the element has been removed
    * @return false if the element was not found
    */
   bool erase_value(const T& value) {
-    auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value);
+    auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value, compare_);
     if (it == vector_.cend() || *it != value) return false;
     vector_.erase(it);
     return true;
@@ -177,13 +196,13 @@ class SortedVector {
   /**
    * Find the index of an element in the sorted list.
    *
-   * If the element is not found, -1 is returned.
+   * If the element is not found, the end iterator is returned.
    * @param value element to find
-   * @return index of the element in the sorted list
-   * @return -1 if the element is not found
+   * @return iterator to the element if it is found
+   * @return end iterator if the element is not found
    */
   const_iterator find(const T& value) const {
-    auto it = std::lower_bound(vector_.begin(), vector_.end(), value);
+    auto it = std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
     if (it == vector_.end() || *it != value) return end();
     return it;
   }
@@ -223,6 +242,7 @@ class SortedVector {
 
  private:
   std::vector<T> vector_;  ///< Underlying vector to store the sorted list
+  Compare compare_;        ///< Comparison function to maintain the sorted order
 };
 
 template <typename T>

@@ -84,6 +84,11 @@ TEST_F(TestSortedVector, MoveAssignment) {
   EXPECT_EQ(sv.size(), 0u);
 }
 
+TEST_F(TestSortedVector, CustomComparator) {
+  SortedVector<int, std::greater<>> sv{5, 2, 4, 1, 3};
+  EXPECT_THAT(sv, ::testing::ElementsAre(5, 4, 3, 2, 1));
+}
+
 TEST_F(TestSortedVector, Insert) {
   SortedVector<int> sv;
   const size_t dim = 5;

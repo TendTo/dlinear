@@ -111,27 +111,27 @@ inline bool is_digit_or_sign(char c) { return ::isdigit(c) || c == '+' || c == '
  * The number is converted exactly, without any rounding,
  * by interpreting the string as a base-10 rational number.
  * @code
- *  string_to_mpq("0") == 0
- *  string_to_mpq(".") == 0
- *  string_to_mpq("0.") == 0
- *  string_to_mpq(".0") == 0
- *  string_to_mpq("15") == 15/1
- *  string_to_mpq("1.5") == 15/10
- *  string_to_mpq("15.") == 15/1
- *  string_to_mpq(".15") == 15/100
- *  string_to_mpq("15.0") == 15/1
- *  string_to_mpq("15.00") == 15/1
- *  string_to_mpq("15") == 15/1
- *  string_to_mpq("1.5E2") == 15/10 * 10^2
- *  string_to_mpq("1.5E-2") == 15/10 * 10^-2
- *  string_to_mpq("E+2") == 1/1 * 10^2
- *  string_to_mpq("15/6") == 15/6
- *  string_to_mpq("0/1010") == 0
- *  string_to_mpq("inf") == 1e100
- *  string_to_mpq("-inf") == -1e100
- *  @endcode
- *  @note Only a single leading + or - sign is allowed.
- *  @warning If the string is not a valid rational number, the result is undefined.
+ * string_to_mpq("0") == 0
+ * string_to_mpq(".") == 0
+ * string_to_mpq("0.") == 0
+ * string_to_mpq(".0") == 0
+ * string_to_mpq("15") == 15/1
+ * string_to_mpq("1.5") == 15/10
+ * string_to_mpq("15.") == 15/1
+ * string_to_mpq(".15") == 15/100
+ * string_to_mpq("15.0") == 15/1
+ * string_to_mpq("15.00") == 15/1
+ * string_to_mpq("15") == 15/1
+ * string_to_mpq("1.5E2") == 15/10 * 10^2
+ * string_to_mpq("1.5E-2") == 15/10 * 10^-2
+ * string_to_mpq("E+2") == 1/1 * 10^2
+ * string_to_mpq("15/6") == 15/6
+ * string_to_mpq("0/1010") == 0
+ * string_to_mpq("inf") == 1e100
+ * string_to_mpq("-inf") == -1e100
+ * @endcode
+ * @note Only a single leading + or - sign is allowed.
+ * @warning If the string is not a valid rational number, the result is undefined.
  * @param str The string to convert.
  * @return The mpq_class instance.
  */

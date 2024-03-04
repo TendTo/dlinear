@@ -22,7 +22,6 @@ namespace dlinear {
  * size. It stores a vector of booleans and each time it is incremented, it changes the vector to the next possible bit
  * vector. The result simulates the increment operation of a binary number. If the iterator is incremented when boolean
  * vector if filled with true, the vector itself is cleared and the iterator is considered done.
- *
  * @code
  * // Example usage:
  * for (BitIncrementIterator it(3); it; ++it) {
@@ -35,13 +34,11 @@ namespace dlinear {
  * // Output:
  * // 000, 001, 010, 011, 100, 101, 110, 111,
  * @endcode
- *
  * The default behaviour of this class ensures `full-exploration-guarantee`: all possible
  * configuration the bit vector can be in will be explored.
  * Using any @ref Learn method will continue to maintain the guarantee over the now halved configuration space, but
  * some previously visited configuration may appear again.
  * @warning Any manual alteration of the vector invalidates the guarantee.
- *
  * @code
  * // Example learn:
  * BitIncrementIterator it(3);
