@@ -72,12 +72,14 @@ class SortedVector {
    * Insert an element into the sorted list.
    *
    * The element is placed in the correct position to maintain the sorted order.
+   * It returns an iterator to the inserted element.
    * @param value element to insert
+   * @return iterator to the inserted element
    */
   template <typename V>
-  void insert(V&& value) {
+  iterator insert(V&& value) {
     auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value);
-    vector_.insert(it, std::forward<V>(value));
+    return vector_.insert(it, std::forward<V>(value));
   }
 
   /**

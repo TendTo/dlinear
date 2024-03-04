@@ -89,7 +89,8 @@ TEST_F(TestSortedVector, Insert) {
   const size_t dim = 5;
   const int elements[dim] = {5, 2, 4, 1, 3};
   for (size_t i = 0; i < dim; i++) {
-    sv.insert(elements[i]);
+    auto it = sv.insert(elements[i]);
+    EXPECT_EQ(*it, elements[i]);
     EXPECT_FALSE(sv.empty());
     EXPECT_EQ(sv.size(), i + 1);
   }
@@ -98,12 +99,15 @@ TEST_F(TestSortedVector, Insert) {
 
 TEST_F(TestSortedVector, InsertDuplicate) {
   SortedVector<int> sv{5, 2, 4, 1, 3};
-  sv.insert(5);
+  auto it = sv.insert(5);
   EXPECT_THAT(sv, ::testing::ElementsAre(1, 2, 3, 4, 5, 5));
-  sv.insert(3);
+  EXPECT_EQ(it, sv.begin() + 4);
+  it = sv.insert(3);
   EXPECT_THAT(sv, ::testing::ElementsAre(1, 2, 3, 3, 4, 5, 5));
+  EXPECT_EQ(it, sv.begin() + 2);
   sv.insert(3);
   EXPECT_THAT(sv, ::testing::ElementsAre(1, 2, 3, 3, 3, 4, 5, 5));
+  EXPECT_EQ(it, sv.begin() + 2);
 }
 
 TEST_F(TestSortedVector, Emplace) {
