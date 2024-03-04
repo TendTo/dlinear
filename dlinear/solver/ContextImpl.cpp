@@ -41,8 +41,7 @@ Context::Impl::Impl(const Config &config)
       is_max_{false},
       theory_loaded_{false},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
-      theory_solver_{GetTheorySolver(config)},
-      theory_solver_cache_{} {
+      theory_solver_{GetTheorySolver(config)} {
   boxes_.push_back(Box{});
 }
 
@@ -52,8 +51,7 @@ Context::Impl::Impl(Config &&config)
       is_max_{false},
       theory_loaded_{false},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
-      theory_solver_{GetTheorySolver(config)},
-      theory_solver_cache_{} {
+      theory_solver_{GetTheorySolver(config)} {
   boxes_.push_back(Box{});
 }
 

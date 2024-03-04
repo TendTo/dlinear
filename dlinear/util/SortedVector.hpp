@@ -10,7 +10,10 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
+#include <iterator>
+#include <utility>
 #include <vector>
 
 namespace dlinear {
@@ -66,27 +69,27 @@ class SortedVector {
    */
   SortedVector() = default;
   /**
-   * Constructor with a given size.
+   * Constructor with a given @p size.
    * @param size size of the sorted list.
    */
   explicit SortedVector(size_t size) : vector_(size) {}
   /**
-   * Constructor with using an initializer list.
+   * Constructor with using an initializer @p list.
    *
    * The elements are placed in the correct position to maintain the sorted order.
-   * @param ilist initializer list of elements
+   * @param list initializer list of elements
    */
-  SortedVector(std::initializer_list<T> ilist) {
-    vector_.reserve(ilist.size());
-    for (const auto& value : ilist) insert(value);
+  SortedVector(std::initializer_list<T> list) {
+    vector_.reserve(list.size());
+    for (const auto& value : list) insert(value);
   }
 
   /**
-   * Insert an element into the sorted list.
+   * Insert an element with the provided @p value into the sorted list.
    *
    * The element is placed in the correct position to maintain the sorted order.
    * It returns an iterator to the inserted element.
-   * @param value element to insert
+   * @param value value of the element to insert
    * @return iterator to the inserted element
    */
   template <typename V>
@@ -121,68 +124,72 @@ class SortedVector {
   [[nodiscard]] bool empty() const { return vector_.empty(); }
 
   /**
-   * Access element at a given position with bounds checking.
-   * @param pos position of the element to access
+   * Access element at index @p i with bounds checking.
+   * @param i position of the element to access
    * @return element at the given position
+   * @throws std::out_of_range if @p i is out of range
    */
-  T at(size_t pos) const {
-    if (pos >= vector_.size()) throw std::out_of_range("Index out of range");
-    return vector_[pos];
+  T at(size_t i) const {
+    if (i >= vector_.size()) throw std::out_of_range("Index out of range");
+    return vector_[i];
   }
 
   /**
-   * Access element at a given position with bounds checking.
+   * Access element at index @p i with bounds checking.
    *
    * It also supports negative indices, where -1 is the last element, -2 is the second to last, and so on.
-   * @param pos position of the element to access (negative indices are supported)
+   * @param i position of the element to access (negative indices are supported)
    * @return element at the given position
+   * @throws std::out_of_range if @p i is out of range
    */
-  T at(int pos) const {
-    if (pos < 0) pos = static_cast<int>(vector_.size()) + pos;
-    if (pos < 0 || pos >= static_cast<int>(vector_.size())) throw std::out_of_range("Index out of range");
-    return vector_[pos];
+  T at(int i) const {
+    if (i < 0) i = static_cast<int>(vector_.size()) + i;
+    if (i < 0 || i >= static_cast<int>(vector_.size())) throw std::out_of_range("Index out of range");
+    return vector_[i];
   }
 
   /**
    * Direct access to the underlying vector.
-   * @param pos position of the element to access
+   * @param i position of the element to access
    * @return element at the given position
    */
-  T operator[](size_t pos) const { return vector_[pos]; }
+  T operator[](size_t i) const { return vector_[i]; }
+
+  T front() const { return at(0); }
 
   /**
-   * Remove an element from the sorted list.
+   * Remove the element at index @p i from the sorted list.
    * If the index is out of range, false is returned.
-   * @param pos index of the element to remove
+   * @param i index of the element to remove
    * @return true if the element has been removed
    * @return false if the element was not found
    */
-  bool erase(size_t pos) {
-    if (pos >= vector_.size()) return false;
-    vector_.erase(vector_.begin() + pos);
+  bool erase(size_t i) {
+    if (i >= vector_.size()) return false;
+    vector_.erase(vector_.begin() + i);
     return true;
   }
   /**
-   * Remove an element from the sorted list.
+   * Remove the element at index @p i from the sorted list.
    *
    * It also supports negative indices, where -1 is the last element, -2 is the second to last, and so on.
    * If the index is out of range, false is returned.
-   * @param pos index of the element to remove
+   * @param i index of the element to remove
    * @return true if the element has been removed
    * @return false if the element was not found
    */
-  bool erase(int pos) {
-    if (pos < 0) pos = static_cast<int>(vector_.size()) - pos;
-    if (pos < 0 || pos >= static_cast<int>(vector_.size())) return false;
-    vector_.erase(vector_.begin() + pos);
+  bool erase(int i) {
+    if (i < 0) i = static_cast<int>(vector_.size()) - i;
+    if (i < 0 || i >= static_cast<int>(vector_.size())) return false;
+    vector_.erase(vector_.begin() + i);
     return true;
   }
   /**
-   * Remove an element from the sorted list.
+   * Remove an element with the provided @p value from the sorted list.
    *
-   * If multiple elements have the same value, only the first one is removed.
+   * If multiple elements have the same @p value, only the first one is removed.
    * If the element is not found, false is returned.
-   * @param value element to remove
+   * @param value value of the element to remove
    * @return true if the element has been removed
    * @return false if the element was not found
    */
@@ -194,10 +201,10 @@ class SortedVector {
   }
 
   /**
-   * Find the index of an element in the sorted list.
+   * Find the index of an element with the provided @p value in the sorted list.
    *
    * If the element is not found, the end iterator is returned.
-   * @param value element to find
+   * @param value value of the element to find
    * @return iterator to the element if it is found
    * @return end iterator if the element is not found
    */
@@ -208,10 +215,10 @@ class SortedVector {
   }
 
   /**
-   * Count the number of occurrences of an element in the sorted list.
+   * Count the number of occurrences of an element with the provided @p value in the sorted list.
    *
    * If the element is not found, 0 is returned.
-   * @param value element to count
+   * @param value value of the element to count
    * @return number of occurrences of the element in the sorted list
    */
   [[nodiscard]] size_t count(const T& value) const {
@@ -222,13 +229,31 @@ class SortedVector {
     return count;
   }
 
+  /**
+   * Check if the element with the provided @p value is contained in the vector.
+   * @param value value of the element to search
+   * @return true if the element is present
+   * @return false if the element is not present
+   */
   [[nodiscard]] bool contains(const T& value) const { return find(value) != end(); }
 
-  [[nodiscard]] const_iterator lower_bound(const T& value) const {
+  /**
+   * Find the last element in the vector with a value lesser than @p value
+   * and return an iterator to the position after that one.
+   * @param value upper bound for the search
+   * @return iterator to the position after the last element with value less than @p value
+   */
+  [[nodiscard]] const_iterator lesser_end(const T& value) const {
     return std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
-  [[nodiscard]] const_iterator upper_bound(const T& value) const {
+  /**
+   * Find the first element in the vector with a value greater than @p value
+   * and return an iterator to its position.
+   * @param value lower bound for the search
+   * @return iterator to the first element with value less than @p value
+   */
+  [[nodiscard]] const_iterator greater_begin(const T& value) const {
     return std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
@@ -257,8 +282,8 @@ class SortedVector {
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const SortedVector<T>& it) {
-  std::copy(it->begin(), std::prev(it->end()), std::ostream_iterator<T>(os, ", "));
-  return os << *(it->rbegin());
+  std::copy(it.cbegin(), std::prev(it.cend()), std::ostream_iterator<T>(os, ", "));
+  return os << *(it.crbegin());
 }
 
 }  // namespace dlinear

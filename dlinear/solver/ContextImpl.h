@@ -22,7 +22,6 @@
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/TheorySolver.h"
-#include "dlinear/solver/TheorySolverCache.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {
@@ -140,8 +139,6 @@ class Context::Impl {
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
-  // TODO: we may not need this
-  TheorySolverCache theory_solver_cache_;        ///< Cache of theory solvers
 };
 
 }  // namespace dlinear

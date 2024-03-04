@@ -221,32 +221,41 @@ TEST_F(TestSortedVector, ContainsMultiple) {
 
 TEST_F(TestSortedVector, LowerBound) {
   for (int i = 1; i <= 10; i++) {
-    EXPECT_EQ(sv_.lower_bound(i), sv_.begin() + (i - 1));
+    EXPECT_EQ(sv_.lesser_end(i), sv_.begin() + (i - 1));
   }
 }
+TEST_F(TestSortedVector, LowerBoundMultiple) {
+  EXPECT_EQ(dsv_.lesser_end(5), dsv_.begin() + 4);
+  EXPECT_EQ(*((sv_.lesser_end(5)) - 1), 4);
+}
 TEST_F(TestSortedVector, LowerBoundOutOfRange) {
-  EXPECT_EQ(sv_.lower_bound(11), sv_.end());
-  EXPECT_EQ(sv_.lower_bound(0), sv_.begin());
+  EXPECT_EQ(sv_.lesser_end(11), sv_.end());
+  EXPECT_EQ(sv_.lesser_end(0), sv_.begin());
 }
 TEST_F(TestSortedVector, LowerBoundAbsent) {
   sv_.erase_value(5);
-  EXPECT_EQ(sv_.lower_bound(5), sv_.begin() + 4);
-  EXPECT_EQ(*sv_.lower_bound(5), 6);
+  EXPECT_EQ(sv_.lesser_end(5), sv_.begin() + 4);
+  EXPECT_EQ(*sv_.lesser_end(5), 6);
+  EXPECT_EQ(*(sv_.lesser_end(5) - 1), 4);
 }
 
 TEST_F(TestSortedVector, UpperBound) {
   for (int i = 1; i <= 10; i++) {
-    EXPECT_EQ(sv_.upper_bound(i), sv_.begin() + i);
+    EXPECT_EQ(sv_.greater_begin(i), sv_.begin() + i);
   }
 }
+TEST_F(TestSortedVector, UpperBoundMultiple) {
+  EXPECT_EQ(dsv_.greater_begin(5), dsv_.begin() + 6);
+  EXPECT_EQ(*(sv_.greater_begin(5)), 6);
+}
 TEST_F(TestSortedVector, UpperBoundOutOfRange) {
-  EXPECT_EQ(sv_.upper_bound(11), sv_.end());
-  EXPECT_EQ(sv_.upper_bound(0), sv_.begin());
+  EXPECT_EQ(sv_.greater_begin(11), sv_.end());
+  EXPECT_EQ(sv_.greater_begin(0), sv_.begin());
 }
 TEST_F(TestSortedVector, UpperBoundAbsent) {
   sv_.erase_value(5);
-  EXPECT_EQ(sv_.upper_bound(5), sv_.begin() + 4);
-  EXPECT_EQ(*sv_.upper_bound(5), 6);
+  EXPECT_EQ(sv_.greater_begin(5), sv_.begin() + 4);
+  EXPECT_EQ(*sv_.greater_begin(5), 6);
 }
 
 TEST_F(TestSortedVector, Clear) {
@@ -254,3 +263,5 @@ TEST_F(TestSortedVector, Clear) {
   EXPECT_TRUE(sv_.empty());
   EXPECT_EQ(sv_.size(), 0u);
 }
+
+TEST_F(TestSortedVector, Stdout) { EXPECT_NO_THROW(std::cout << sv_); }

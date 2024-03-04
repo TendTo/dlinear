@@ -6,6 +6,8 @@
  */
 #include "BitIncrementIterator.h"
 
+#include <utility>
+
 #include "dlinear/util/exception.h"
 
 namespace dlinear {
