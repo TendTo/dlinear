@@ -104,7 +104,7 @@ class SortedVector {
    */
   template <typename... Args>
   void emplace(Args&&... args) {
-    insert(std::forward<Args>(args)...);
+    insert(T(std::forward<Args>(args)...));
   }
 
   /**
@@ -220,6 +220,16 @@ class SortedVector {
     size_t count = 1;
     for (it++; it != vector_.end() && *it == value; ++it) ++count;
     return count;
+  }
+
+  [[nodiscard]] bool contains(const T& value) const { return find(value) != end(); }
+
+  [[nodiscard]] const_iterator lower_bound(const T& value) const {
+    return std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
+  }
+
+  [[nodiscard]] const_iterator upper_bound(const T& value) const {
+    return std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
   /**

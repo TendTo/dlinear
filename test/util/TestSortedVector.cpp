@@ -160,14 +160,14 @@ TEST_F(TestSortedVector, EraseElement) {
   EXPECT_THAT(sv, ::testing::ElementsAre(2, 4));
 }
 
-TEST_F(TestSortedVector, EraseElementMultiple) {
-  EXPECT_TRUE(dsv_.erase_value(5));
-  EXPECT_THAT(dsv_, ::testing::ElementsAreArray(v_));
-}
-
 TEST_F(TestSortedVector, EraseElementNonExistent) {
   EXPECT_FALSE(sv_.erase_value(11));
   EXPECT_THAT(sv_, ::testing::ElementsAreArray(v_));
+}
+
+TEST_F(TestSortedVector, EraseElementMultiple) {
+  EXPECT_TRUE(dsv_.erase_value(5));
+  EXPECT_THAT(dsv_, ::testing::ElementsAreArray(v_));
 }
 
 TEST_F(TestSortedVector, Erase) {
@@ -180,15 +180,15 @@ TEST_F(TestSortedVector, Erase) {
   EXPECT_THAT(sv, ::testing::ElementsAre(3, 5));
 }
 
+TEST_F(TestSortedVector, EraseOutOfRange) {
+  EXPECT_FALSE(sv_.erase(11));
+  EXPECT_THAT(sv_, ::testing::ElementsAreArray(v_));
+}
+
 TEST_F(TestSortedVector, EraseMultiple) {
   EXPECT_TRUE(dsv_.erase(5));
   EXPECT_THAT(dsv_, ::testing::ElementsAreArray(v_));
   EXPECT_TRUE(dsv_.erase(5));
-}
-
-TEST_F(TestSortedVector, EraseOutOfRange) {
-  EXPECT_FALSE(sv_.erase(11));
-  EXPECT_THAT(sv_, ::testing::ElementsAreArray(v_));
 }
 
 TEST_F(TestSortedVector, Find) {
@@ -196,24 +196,58 @@ TEST_F(TestSortedVector, Find) {
     EXPECT_EQ(sv_.find(i), sv_.begin() + (i - 1));
   }
 }
-
+TEST_F(TestSortedVector, FindAbsent) { EXPECT_EQ(sv_.find(11), sv_.end()); }
 TEST_F(TestSortedVector, FindMutiple) {
   EXPECT_EQ(dsv_.find(5), dsv_.begin() + 4);
   dsv_.erase_value(5);  // Erase one of the 5s
   EXPECT_EQ(dsv_.find(5), dsv_.begin() + 4);
 }
 
-TEST_F(TestSortedVector, FindAbsent) { EXPECT_EQ(sv_.find(11), sv_.end()); }
-
 TEST_F(TestSortedVector, CountSingle) { EXPECT_EQ(dsv_.count(1), 1u); }
-
+TEST_F(TestSortedVector, ConuntAbsent) { EXPECT_EQ(dsv_.count(11), 0u); }
 TEST_F(TestSortedVector, CountMutilple) {
   EXPECT_EQ(dsv_.count(5), 2u);
   dsv_.erase_value(5);  // Erase one of the 5s
   EXPECT_EQ(dsv_.count(5), 1u);
 }
 
-TEST_F(TestSortedVector, ConuntAbsent) { EXPECT_EQ(dsv_.count(11), 0u); }
+TEST_F(TestSortedVector, Contains) { EXPECT_TRUE(sv_.contains(1)); }
+TEST_F(TestSortedVector, ContainsAbsent) { EXPECT_FALSE(dsv_.contains(11)); }
+TEST_F(TestSortedVector, ContainsMultiple) {
+  EXPECT_TRUE(dsv_.contains(5));
+  dsv_.erase_value(5);  // Erase one of the 5s
+  EXPECT_TRUE(dsv_.contains(5));
+}
+
+TEST_F(TestSortedVector, LowerBound) {
+  for (int i = 1; i <= 10; i++) {
+    EXPECT_EQ(sv_.lower_bound(i), sv_.begin() + (i - 1));
+  }
+}
+TEST_F(TestSortedVector, LowerBoundOutOfRange) {
+  EXPECT_EQ(sv_.lower_bound(11), sv_.end());
+  EXPECT_EQ(sv_.lower_bound(0), sv_.begin());
+}
+TEST_F(TestSortedVector, LowerBoundAbsent) {
+  sv_.erase_value(5);
+  EXPECT_EQ(sv_.lower_bound(5), sv_.begin() + 4);
+  EXPECT_EQ(*sv_.lower_bound(5), 6);
+}
+
+TEST_F(TestSortedVector, UpperBound) {
+  for (int i = 1; i <= 10; i++) {
+    EXPECT_EQ(sv_.upper_bound(i), sv_.begin() + i);
+  }
+}
+TEST_F(TestSortedVector, UpperBoundOutOfRange) {
+  EXPECT_EQ(sv_.upper_bound(11), sv_.end());
+  EXPECT_EQ(sv_.upper_bound(0), sv_.begin());
+}
+TEST_F(TestSortedVector, UpperBoundAbsent) {
+  sv_.erase_value(5);
+  EXPECT_EQ(sv_.upper_bound(5), sv_.begin() + 4);
+  EXPECT_EQ(*sv_.upper_bound(5), 6);
+}
 
 TEST_F(TestSortedVector, Clear) {
   sv_.clear();
