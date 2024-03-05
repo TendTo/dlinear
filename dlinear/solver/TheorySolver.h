@@ -99,8 +99,8 @@ class TheorySolver {
    * In that case, the precision will remain the same as the one passed as input.
    * @param[in,out] box current box with the bounds for the variables. It will be updated with the model if SAT is
    * returned
-   * @param actual_precision[in,out] desired precision. It will be updated with the actual precision if SAT is returned
-   * @param explanation[out] set of literals that explain the conflict if UNSAT is returned
+   * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
+   * @param[out] explanation set of literals that explain the conflict if UNSAT is returned
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict

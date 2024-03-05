@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <utility>
 
 #include "dlinear/libs/gmp.h"
@@ -16,38 +17,42 @@
 #include "dlinear/util/SortedVector.hpp"
 #include "dlinear/util/exception.h"
 
+namespace std {
+
+template <>
+struct less<std::pair<mpq_class, int>> {
+  bool operator()(const std::pair<mpq_class, int>& lhs, const std::pair<mpq_class, int>& rhs) const;
+};
+
+}  // namespace std
+
 namespace dlinear {
 
 class TheorySolverBoundVector {
-  using sorted_value = std::pair<mpq_class, int>;
-
  public:
+  using Bound = std::pair<mpq_class, int>;
+  using Violation = std::pair<SortedVector<Bound>::const_iterator, SortedVector<Bound>::const_iterator>;
   TheorySolverBoundVector() : n_lower_bounds_{0}, bounds_{} {}
 
-  void AddBound(int row_idx, LpColBound bound, const mpq_class& value);
+  std::optional<Violation> AddBound(const mpq_class& value, LpColBound bound, int row_idx);
   void Clear();
+
+  [[nodiscard]] int n_upper_bounds() const { return static_cast<int>(bounds_.size()) - n_lower_bounds_; }
+  [[nodiscard]] int n_lower_bounds() const { return n_lower_bounds_; }
+  [[nodiscard]] const SortedVector<Bound>& bounds() const { return bounds_; }
+
+  const Bound& operator[](size_t idx) const { return bounds_[idx]; }
+
+  [[nodiscard]] std::optional<Violation> ViolatedBounds(const mpq_class& value, LpColBound bound) const;
+
   [[nodiscard]] bool IsLowerBound(const mpq_class& value) const;
   [[nodiscard]] bool IsUpperBound(const mpq_class& value) const;
 
-  [[nodiscard]] int n_less_than() const { return static_cast<int>(bounds_.size()) - n_lower_bounds_; }
-  [[nodiscard]] int n_greater_than() const { return n_lower_bounds_; }
-  [[nodiscard]] const SortedVector<sorted_value>& bounds() const { return bounds_; }
-
-  std::pair<mpq_class, int> operator[](size_t idx) const { return bounds_[idx]; }
-
-  [[nodiscard]] std::pair<SortedVector<sorted_value>::const_iterator, SortedVector<sorted_value>::const_iterator>
-  ViolatedBounds(const mpq_class& value) const;
-
  private:
   int n_lower_bounds_;
-  SortedVector<sorted_value> bounds_;
+  SortedVector<Bound> bounds_;
 };
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector& bounds_vector);
-
-// Sort the pairs std::pair<mpq_class, null*> by the first element.
-bool operator<(const std::pair<mpq_class, int>& lhs, const std::pair<mpq_class, int>& rhs) {
-  return lhs.first < rhs.first;
-}
 
 }  // namespace dlinear
