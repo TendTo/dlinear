@@ -129,7 +129,7 @@ class SortedVector {
    * @return element at the given position
    * @throws std::out_of_range if @p i is out of range
    */
-  T at(size_t i) const {
+  const T& at(size_t i) const {
     if (i >= vector_.size()) throw std::out_of_range("Index out of range");
     return vector_[i];
   }
@@ -142,7 +142,7 @@ class SortedVector {
    * @return element at the given position
    * @throws std::out_of_range if @p i is out of range
    */
-  T at(int i) const {
+  const T& at(int i) const {
     if (i < 0) i = static_cast<int>(vector_.size()) + i;
     if (i < 0 || i >= static_cast<int>(vector_.size())) throw std::out_of_range("Index out of range");
     return vector_[i];
@@ -153,9 +153,19 @@ class SortedVector {
    * @param i position of the element to access
    * @return element at the given position
    */
-  T operator[](size_t i) const { return vector_[i]; }
+  const T& operator[](size_t i) const { return vector_[i]; }
 
-  T front() const { return at(0); }
+  /**
+   * Reference to the first element in the sorted list.
+   * @return reference to the first element
+   */
+  const T& front() const { return vector_.front(); }
+
+  /**
+   * Reference to the last element in the sorted list.
+   * @return reference to the last element
+   */
+  const T& back() const { return vector_.back(); }
 
   /**
    * Remove the element at index @p i from the sorted list.
@@ -195,7 +205,7 @@ class SortedVector {
    */
   bool erase_value(const T& value) {
     auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value, compare_);
-    if (it == vector_.cend() || *it != value) return false;
+    if (it == vector_.cend() || !IsEqual(*it, value)) return false;
     vector_.erase(it);
     return true;
   }
@@ -210,8 +220,32 @@ class SortedVector {
    */
   const_iterator find(const T& value) const {
     auto it = std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
-    if (it == vector_.end() || *it != value) return end();
+    if (it == vector_.end() || !IsEqual(*it, value)) return end();
     return it;
+  }
+
+  /**
+   * Find the first position in which an element with the provided @p value could be inserted
+   * without changing the ordering.
+   *
+   * It is equivalent to using std::lower_bound with the @p Compare function.
+   * @param value value of the element to find
+   * @return iterator to the first valid position
+   */
+  const_iterator lower_bound(const T& value) const {
+    return std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
+  }
+
+  /**
+   * Find the last position in which an element with the provided @p value could be inserted
+   * without changing the ordering.
+   *
+   * It is equivalent to using std::upper_bound with the @p Compare function.
+   * @param value value of the element to find
+   * @return iterator to the last valid position
+   */
+  const_iterator upper_bound(const T& value) const {
+    return std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
   /**
@@ -225,7 +259,7 @@ class SortedVector {
     auto it = find(value);
     if (it == vector_.end()) return 0;
     size_t count = 1;
-    for (it++; it != vector_.end() && *it == value; ++it) ++count;
+    for (it++; it != vector_.end() && IsEqual(*it, value); ++it) ++count;
     return count;
   }
 
@@ -254,7 +288,9 @@ class SortedVector {
    * @return iterator to the first element with value less than @p value
    */
   [[nodiscard]] const_iterator greater_begin(const T& value) const {
-    return std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
+    auto it = std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
+    while (it != vector_.cend() && IsEqual(*it, value)) ++it;
+    return it;
   }
 
   /**
@@ -276,6 +312,8 @@ class SortedVector {
   const_reverse_iterator crend() const { return vector_.crend(); }
 
  private:
+  inline bool IsEqual(const T& lhs, const T& rhs) const { return !compare_(lhs, rhs) && !compare_(rhs, lhs); }
+
   std::vector<T> vector_;  ///< Underlying vector to store the sorted list
   Compare compare_;        ///< Comparison function to maintain the sorted order
 };
