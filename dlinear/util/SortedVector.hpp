@@ -106,8 +106,8 @@ class SortedVector {
    * @param args arguments to forward to the constructor of the element type
    */
   template <typename... Args>
-  void emplace(Args&&... args) {
-    insert(T(std::forward<Args>(args)...));
+  iterator emplace(Args&&... args) {
+    return insert(T(std::forward<Args>(args)...));
   }
 
   /**
@@ -167,6 +167,19 @@ class SortedVector {
    */
   const T& back() const { return vector_.back(); }
 
+  /**
+   * Remove the element at position @p it from the sorted list.
+   *
+   * If the iterator is out of range, false is returned.
+   * @param it iterator to the element to remove
+   * @return true if the element has been removed
+   * @return false if the element was not found
+   */
+  bool erase(const const_iterator& it) {
+    if (it == vector_.end()) return false;
+    vector_.erase(it);
+    return true;
+  }
   /**
    * Remove the element at index @p i from the sorted list.
    * If the index is out of range, false is returned.
