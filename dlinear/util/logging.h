@@ -19,6 +19,7 @@
 // Enable formatting with the override of operator<< for user-defined types.
 // Must be included after spdlog.h.
 #include <spdlog/fmt/ostr.h>
+#include <spdlog/fmt/ranges.h>
 
 #include <memory>
 
