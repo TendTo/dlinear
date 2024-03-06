@@ -123,4 +123,31 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
+LiteralSet TheorySolver::TheoryBoundsToExplanation(const Violation &violation) const {
+  LiteralSet explanation{};
+  TheoryBoundsToExplanation(violation, explanation);
+  return explanation;
+}
+void TheorySolver::TheoryBoundsToExplanation(const Violation &violation, LiteralSet &explanation) const {
+  for (auto it = violation.first; it != violation.second; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
+}
+void TheorySolver::TheoryBoundsToExplanation(int theory_col, LiteralSet &explanation) const {
+  for (const auto &bound : theory_bounds_[theory_col].bounds()) explanation.insert(theory_bound_to_lit_[bound.second]);
+}
+void TheorySolver::TheoryBoundsToExplanation(int theory_col, mpq_class value, LiteralSet &explanation) const {
+  const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
+  for (auto it = it_start; it != it_end; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
+}
+
+void TheorySolver::TheoryBoundsToBoundIdxs(const TheorySolver::Violation &violation, std::set<int> &bound_idxs) const {
+  for (auto it = violation.first; it != violation.second; ++it) bound_idxs.insert(it->second);
+}
+void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const {
+  for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.second);
+}
+void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, mpq_class value, std::set<int> &bound_idxs) const {
+  const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
+  for (auto it = it_start; it != it_end; ++it) bound_idxs.insert(it->second);
+}
+
 }  // namespace dlinear

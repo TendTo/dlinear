@@ -31,12 +31,11 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
       : SoplexTheorySolver{abstractor, config} {}
   MOCK_METHOD(void, AddLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(std::optional<LiteralSet>, EnableLiteral, (const dlinear::Literal &lit), (override));
-  MOCK_METHOD(bool, SetSPXVarBound, (const Bound &bound, int spx_col), (override));
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, dlinear::LiteralSet &explanation), (override));
 
   const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
-  const std::vector<Variable> &theory_row_to_lit() const { return theory_row_to_lit_; }
+  const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
   const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
   const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
   const soplex::VectorRational &spx_upper() const { return spx_upper_; }

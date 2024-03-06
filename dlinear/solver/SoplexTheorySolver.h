@@ -36,8 +36,8 @@ class SoplexTheorySolver : public TheorySolver {
   void Reset(const Box& box) override;
 
  protected:
-  static soplex::Rational infinity_;
-  static soplex::Rational ninfinity_;
+  static mpq_class infinity_;
+  static mpq_class ninfinity_;
 
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet& explanation) override;
@@ -86,7 +86,7 @@ class SoplexTheorySolver : public TheorySolver {
    */
   bool IsRowActive(int spx_row, const soplex::Rational& value);
 
-  virtual bool SetSPXVarBound(const Bound& bound, int spx_col) = 0;
+  void SetSPXVarBound();
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
    *

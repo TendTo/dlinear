@@ -16,8 +16,8 @@ namespace dlinear {
 
 using soplex::Rational;
 
-Rational SoplexTheorySolver::infinity_{0};
-Rational SoplexTheorySolver::ninfinity_{0};
+mpq_class SoplexTheorySolver::infinity_{0};
+mpq_class SoplexTheorySolver::ninfinity_{0};
 
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : TheorySolver(predicate_abstractor, config) {
@@ -54,15 +54,11 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   if (it != var_to_theory_col_.end()) return;
 
   const int spx_col{spx_.numColsRational()};
-  spx_lower_.reDim(spx_col + 1, false);
-  spx_upper_.reDim(spx_col + 1, false);
-  spx_lower_[spx_col] = -soplex::infinity;  // Set unbounded
-  spx_upper_[spx_col] = soplex::infinity;
   // obj, coeffs, upper, lower
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
-  theory_bound_to_explanation_.emplace_back();
+  theory_bounds_.emplace_back(soplex::infinity, -soplex::infinity);
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
@@ -165,6 +161,7 @@ void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const 
 }
 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
+  throw std::runtime_error("Not implemented");
   DLINEAR_ASSERT(2 == simplex_sat_phase_, "must be phase 2");
   const int spx_cols{spx_.numColsRational()};
   spx_lower_.reDim(spx_cols + 2, true);  // Set lower bounds to zero
@@ -186,8 +183,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
-  // Clear all the sets in the bounds to explanation map
-  for (auto &explanation : theory_bound_to_explanation_) explanation.clear();
+  for (auto &bound : theory_bounds_) bound.Clear();
 
   // Clear constraint bounds
   const int spx_rows = spx_.numRowsRational();
@@ -201,14 +197,10 @@ void SoplexTheorySolver::Reset(const Box &box) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(0 <= theory_col && theory_col < spx_cols, "theory_col must be in bounds");
     if (box.has_variable(var)) {
-      DLINEAR_ASSERT(-soplex::infinity <= box[var].lb(), "lower bound must be >= -infinity");
+      DLINEAR_ASSERT(ninfinity_ <= box[var].lb(), "lower bound must be >= -infinity");
       DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "lower bound must be <= upper bound");
-      DLINEAR_ASSERT(box[var].ub() <= soplex::infinity, "upper bound must be <= infinity");
-      spx_lower_[theory_col] = gmp::to_mpq_t(box[var].lb());
-      spx_upper_[theory_col] = gmp::to_mpq_t(box[var].ub());
-    } else {
-      spx_lower_[theory_col] = -soplex::infinity;
-      spx_upper_[theory_col] = soplex::infinity;
+      DLINEAR_ASSERT(box[var].ub() <= infinity_, "upper bound must be <= infinity");
+      theory_bounds_[theory_col].SetBounds(box[var].lb(), box[var].ub());
     }
     spx_.changeBoundsRational(theory_col, -soplex::infinity, soplex::infinity);
   }
@@ -219,16 +211,16 @@ void SoplexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
                              [this](const Variable &it) {
                                const int theory_col = &it - &theory_col_to_var_[0];
-                               return spx_lower_[theory_col] <= spx_upper_[theory_col];
+                               const auto &[lb, ub] = theory_bounds_[theory_col].active_bound_value();
+                               return lb <= ub;
                              }),
                  "All lower bounds must be <= upper bounds");
 
   // Update the box with the new bounds, since the LP solver won't be called, for there are no constraints.
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
-    const Rational &lb{spx_lower_[theory_col]};
-    const Rational &ub{spx_upper_[theory_col]};
-    Rational val;
+    const auto &[lb, ub] = theory_bounds_[theory_col].active_bound_value();
+    mpq_class val;
     if (-soplex::infinity < lb) {
       val = lb;
     } else if (ub < soplex::infinity) {
@@ -236,9 +228,8 @@ void SoplexTheorySolver::UpdateModelBounds() {
     } else {
       val = 0;
     }
-    DLINEAR_ASSERT(gmp::to_mpq_t(model_[var].lb()) <= val && val <= gmp::to_mpq_t(model_[var].ub()),
-                   "val must be in bounds");
-    model_[var] = val.backend().data();
+    DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "val must be in bounds");
+    model_[var] = val;
   }
 }
 void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
@@ -253,16 +244,32 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   for (int i = 0; i < rowcount; ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexTheorySolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
-    const Variable &var = theory_row_to_lit_[i];
+    const auto &[var, truth] = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.insert({var, theory_row_to_truth_[i]});
+    explanation.emplace(var, truth);
     // For each free variable in the literal, add their bounds to the explanation
     for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
-      int theory_col = var_to_theory_col_.at(col_var.get_id());
-      const LiteralSet &theory_bound_to_explanation = theory_bound_to_explanation_.at(theory_col);
-      explanation.insert(theory_bound_to_explanation.cbegin(), theory_bound_to_explanation.cend());
+      const int theory_col = var_to_theory_col_.at(col_var.get_id());
+      // TODO: get the value of the column from the ray for a smaller violation
+      TheoryBoundsToExplanation(theory_col, explanation);
     }
   }
+}
+
+// bool SoplexTheorySolver::SetSPXVarBound(const TheorySolver::Bound &bound, int spx_col) {
+//   const auto &[var, type, value] = bound;
+//   return SetSPXVarBound(var, type, value, spx_col);
+// }
+
+void SoplexTheorySolver::SetSPXVarBound() {
+  spx_upper_.reDim(spx_.numColsRational(), false);
+  spx_lower_.reDim(spx_.numColsRational(), false);
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    spx_lower_[theory_col] = theory_bounds_[theory_col].active_lower_bound().get_mpq_t();
+    spx_upper_[theory_col] = theory_bounds_[theory_col].active_upper_bound().get_mpq_t();
+  }
+  spx_.changeLowerRational(spx_lower_);
+  spx_.changeUpperRational(spx_upper_);
 }
 
 }  // namespace dlinear

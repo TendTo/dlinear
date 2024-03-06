@@ -19,6 +19,7 @@
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -118,6 +119,7 @@ class TheorySolver {
   virtual void Reset(const Box &box) = 0;
 
  protected:
+  using Violation = TheorySolverBoundVector::Violation;
   static bool IsSimpleBound(const Formula &formula);
   static bool IsEqualTo(const Formula &formula, bool truth = true);
   static bool IsNotEqualTo(const Formula &formula, bool truth = true);
@@ -125,6 +127,15 @@ class TheorySolver {
   static bool IsLessThan(const Formula &formula, bool truth = true);
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
+
+  [[nodiscard]] LiteralSet TheoryBoundsToExplanation(const Violation &violation) const;
+  void TheoryBoundsToExplanation(const Violation &violation, LiteralSet &explanation) const;
+  void TheoryBoundsToExplanation(int theory_col, LiteralSet &explanation) const;
+  void TheoryBoundsToExplanation(int theory_col, mpq_class value, LiteralSet &explanation) const;
+
+  void TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const;
+  void TheoryBoundsToBoundIdxs(int theory_col, mpq_class value, std::set<int> &bound_idxs) const;
+  void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs) const;
 
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
@@ -180,27 +191,30 @@ class TheorySolver {
 
   const PredicateAbstractor &predicate_abstractor_;
 
-  std::map<Variable::Id, int> var_to_theory_col_;  ///< Variable ⇔ theory column.
-                                                   ///< The Variable is the one created by the PredicateAbstractor
-                                                   ///< The column is the one used by the theory solver.
-  std::vector<Variable> theory_col_to_var_;        ///< Theory column ⇔ Variable.
-                                                   ///< The column is the one used by the theory solver.
-                                                   ///< The Variable is the one created by the PredicateAbstractor
-
-  std::map<Variable::Id, int> lit_to_theory_row_;  ///< Literal ⇔ theory row.
-                                                   ///< The literal is the one created by the PredicateAbstractor
-                                                   ///< The row is the constraint used by the theory solver.
-  std::vector<Variable> theory_row_to_lit_;        ///< Theory row ⇔ Literal
-                                                   ///< The row is the constraint used by the theory solver.
-                                                   ///< The literal is the one created by the PredicateAbstractor
-  std::vector<bool> theory_row_to_truth_;          ///< Theory row ⇔ truth value
-                                                   ///< The row is the constraint used by the theory solver.
-  ///< The truth is the boolean assignment of the literal during this iteration
-  std::vector<LiteralSet>
-      theory_bound_to_explanation_;  ///< Theory bound ⇔ Explanation
-                                     ///< The bound is used by the theory solver to limit a variable.
-                                     ///< The explanation is the set of literals that explain why
-                                     ///< the bound on the col (variable) is unsatisfiable
+  std::map<Variable::Id, int> var_to_theory_col_;    ///< Variable ⇔ theory column.
+                                                     ///< The Variable is the one created by the PredicateAbstractor
+                                                     ///< The column is the one used by the theory solver.
+  std::vector<Variable> theory_col_to_var_;          ///< Theory column ⇔ Variable.
+                                                     ///< The column is the one used by the theory solver.
+                                                     ///< The Variable is the one created by the PredicateAbstractor
+  std::map<Variable::Id, int> lit_to_theory_row_;    ///< Literal ⇔ theory row.
+                                                     ///< The literal is the one created by the PredicateAbstractor
+                                                     ///< The row is the constraint used by the theory solver.
+  std::vector<Literal> theory_row_to_lit_;           ///< Theory row ⇔ Literal
+                                                     ///< The row is the constraint used by the theory solver.
+                                                     ///< The literal is the one created by the PredicateAbstractor.
+                                                     ///< It may not contain simple bounds
+  std::vector<Literal> theory_bound_to_lit_;         ///< Theory bound ⇔ Literal
+                                                     ///< The bound is the constraint on the values of the variables.
+                                                     ///< The literal is the one created by the PredicateAbstractor.
+                                                     ///< It can only contain simple bounds
+  std::map<Variable::Id, int> lit_to_theory_bound_;  ///< Literal ⇔ theory bound.
+                                                     ///< The literal is the one created by the PredicateAbstractor
+                                                     ///< The bound is the constraint on the values of the variables.
+                                                     ///< It can only contain simple bounds
+  TheorySolverBoundVectorVector theory_bounds_;      ///< Theory bounds.
+                                                     ///< The bounds are the constraints on the values of the variables.
+  ///< It also verifies that the bounds are consistent every time a new one is added.
 
   Box model_;  ///< Model produced by the theory solver
 };

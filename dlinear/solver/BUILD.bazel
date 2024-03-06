@@ -133,6 +133,7 @@ dlinear_cc_library(
         ":lp_bound",
         ":lp_sense",
         ":sat_result",
+        ":theory_solver_bound_vector",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
