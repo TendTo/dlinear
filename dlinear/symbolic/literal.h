@@ -15,27 +15,34 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/symbolic/symbolic_variable.h"
 
 namespace dlinear {
 
+using drake::symbolic::Variable;
+
 using Literal = std::pair<Variable, bool>;
-
-struct LiteralComparator {
-  bool operator()(const Literal &a, const Literal &b) const;
-};
-
-using LiteralSet = std::set<Literal, LiteralComparator>;
-
-struct LiteralSetComparator {
-  bool operator()(const LiteralSet &a, const LiteralSet &b) const;
-};
-
+using LiteralSet = std::set<Literal>;
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
 
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
-std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set);
-std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literal_vec);
 std::ostream &operator<<(std::ostream &os, const Model &model);
 
 }  // namespace dlinear
+
+// Needed for spdlog ranges.h. They share the same implementation of the operator<<.
+std::ostream &operator<<(std::ostream &os, const ::dlinear::Literal &literal);
+std::ostream &operator<<(std::ostream &os, const ::dlinear::Model &model);
+
+namespace std {
+template <>
+struct less<::dlinear::Literal> {
+  bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;
+};
+
+template <>
+struct equal_to<::dlinear::Literal> {
+  bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;
+};
+
+}  // namespace std
