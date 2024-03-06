@@ -8,17 +8,14 @@
 
 #include <utility>
 
-namespace std {
-
-bool less<std::pair<mpq_class, ::dlinear::Literal>>::operator()(
-    const std::pair<mpq_class, ::dlinear::Literal>& lhs, const std::pair<mpq_class, ::dlinear::Literal>& rhs) const {
-  return lhs.first < rhs.first;
-}
-}  // namespace std
-
 namespace dlinear {
 
-const Literal TheorySolverBoundVector::default_lit_{};
+bool BoundComparator::operator()(const TheorySolverBoundVector::Bound& lhs,
+                                 const TheorySolverBoundVector::Bound& rhs) const {
+  return lhs.first < rhs.first;
+}
+
+const TheorySolverBoundVector::Bound::second_type TheorySolverBoundVector::default_idx_{0};
 
 TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf)
     : n_lower_bounds_{0},
@@ -39,37 +36,34 @@ TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf_l, mpq_class inf_
       inf_u_{std::move(inf_u)} {}
 
 std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBound(const mpq_class& value,
-                                                                                    LpColBound bound,
-                                                                                    const Literal& lit) {
-  DLINEAR_ASSERT_FMT(bound == LpColBound::L || bound == LpColBound::U || bound == LpColBound::B ||
-                         bound == LpColBound::SL || bound == LpColBound::SU || bound == LpColBound::D,
-                     "Valid must be L, U, B, SL, SU or D. Received: {}", bound);
-  const std::optional<Violation> violation{ViolatedBounds(value, bound)};
+                                                                                    LpColBound lp_bound,
+                                                                                    const int idx) {
+  DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
+                         lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D,
+                     "Valid must be L, U, B, SL, SU or D. Received: {}", lp_bound);
+  const std::optional<Violation> violation{ViolatedBounds(value, lp_bound)};
   if (violation.has_value()) return violation;
 
-  // Add the new bound
-  long distance = -2;
+  // Add the new lp_bound
   auto it = bounds_.end();
-  switch (bound) {
+  switch (lp_bound) {
     case LpColBound::SL:
     case LpColBound::L:
       ++n_lower_bounds_;
-      it = bounds_.emplace(value, lit);
-      distance = std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_lit_}));
+      it = bounds_.emplace(value, idx);
       break;
     case LpColBound::SU:
     case LpColBound::U:
-      it = bounds_.emplace(value, lit);
-      distance = std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_lit_}) - 1);
+      it = bounds_.emplace(value, idx);
       break;
     case LpColBound::B:
-      // Check if adding this bound will cause a violation
+      // Check if adding this lp_bound will cause a violation
       active_upper_bound_ = active_lower_bound_ = value;
       if (ViolatedStrictBounds())
-        return {{bounds_.lower_bound({value, default_lit_}), bounds_.upper_bound({value, default_lit_})}};
+        return {{bounds_.lower_bound({value, default_idx_}), bounds_.upper_bound({value, default_idx_})}};
       ++n_lower_bounds_;
-      bounds_.emplace(value, lit);
-      bounds_.emplace(value, lit);
+      bounds_.emplace(value, idx);
+      bounds_.emplace(value, idx);
       break;
     default:
       break;
@@ -77,10 +71,10 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
 
   bool changed_active_bounds = false;
   // Check if there has been a change in the active bounds
-  if (distance == n_lower_bounds_ - 1 && value > active_lower_bound_) {
+  if ((lp_bound == LpColBound::L || lp_bound == LpColBound::SL) && value > active_lower_bound_) {
     active_lower_bound_ = value;
     changed_active_bounds = true;
-  } else if (distance == n_lower_bounds_ && value < active_upper_bound_) {
+  } else if ((lp_bound == LpColBound::U || lp_bound == LpColBound::SU) && value < active_upper_bound_) {
     active_upper_bound_ = value;
     changed_active_bounds = true;
   }
@@ -88,22 +82,22 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
   if (changed_active_bounds) {
     if (ViolatedStrictBounds()) {
       bounds_.erase(it);
-      if (bound == LpColBound::L || bound == LpColBound::SL) --n_lower_bounds_;
-      return {{bounds_.lower_bound({active_upper_bound_, default_lit_}),
-               bounds_.upper_bound({active_upper_bound_, default_lit_})}};
+      if (lp_bound == LpColBound::L || lp_bound == LpColBound::SL) --n_lower_bounds_;
+      return {{bounds_.lower_bound({active_upper_bound_, default_idx_}),
+               bounds_.upper_bound({active_upper_bound_, default_idx_})}};
     }
   }
 
   // TODO: strict violation could be even stricter by avoiding taking into account same-sense bounds.
   //  This can be done by the TheorySolver
 
-  // A new strict bound has been added, verify whether it has caused a violation
-  if (bound == LpColBound::SL || bound == LpColBound::SU || bound == LpColBound::D) {
-    // Violated strict bound, remove the last added bound and return the interval
+  // A new strict lp_bound has been added, verify whether it has caused a violation
+  if (lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D) {
+    // Violated strict lp_bound, remove the last added lp_bound and return the interval
     if (IsActiveEquality(value)) {
       bounds_.erase(it);
-      if (bound == LpColBound::SL) --n_lower_bounds_;
-      return {{bounds_.lower_bound({value, default_lit_}), bounds_.upper_bound({value, default_lit_})}};
+      if (lp_bound == LpColBound::SL) --n_lower_bounds_;
+      return {{bounds_.lower_bound({value, default_idx_}), bounds_.upper_bound({value, default_idx_})}};
     }
     nq_values_.insert(value);
   }
@@ -112,43 +106,59 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
 }
 
 std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::ViolatedBounds(const mpq_class& value,
-                                                                                          LpColBound bound) const {
-  if (bound == LpColBound::D) return std::nullopt;
+                                                                                          LpColBound lp_bound) const {
+  if (lp_bound == LpColBound::D) return std::nullopt;
 
-  DLINEAR_ASSERT_FMT(bound == LpColBound::L || bound == LpColBound::U || bound == LpColBound::B ||
-                         bound == LpColBound::SL || bound == LpColBound::SU,
-                     "Valid must be L, U, B, SL or SU. Received: {}", bound);
+  DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
+                         lp_bound == LpColBound::SL || lp_bound == LpColBound::SU,
+                     "Valid must be L, U, B, SL or SU. Received: {}", lp_bound);
 
-  const Bound element{value, default_lit_};
+  const Bound element{value, default_idx_};
   long insert_position = 0;
-  switch (bound) {
+  switch (lp_bound) {
     case LpColBound::SL:
     case LpColBound::L:
       insert_position = std::distance(bounds_.cbegin(), bounds_.lower_bound(element));
-      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, bound);
+      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, lp_bound);
       if (insert_position <= n_lower_bounds_) return std::nullopt;
       DLINEAR_ASSERT(bounds_.cbegin() + n_lower_bounds_ < bounds_.lower_bound(element), "Bounds must not be inverted");
       return {{bounds_.cbegin() + n_lower_bounds_, bounds_.lower_bound(element)}};
     case LpColBound::SU:
     case LpColBound::U:
       insert_position = std::distance(bounds_.cbegin(), bounds_.upper_bound(element));
-      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, bound);
+      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, lp_bound);
       if (insert_position >= n_lower_bounds_) return std::nullopt;
       DLINEAR_ASSERT(bounds_.upper_bound(element) < bounds_.cbegin() + n_lower_bounds_, "Bounds must not be inverted");
       return {{bounds_.upper_bound(element), bounds_.cbegin() + n_lower_bounds_}};
     case LpColBound::B:
       insert_position = std::distance(bounds_.cbegin(), bounds_.lower_bound(element));
-      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, bound);
+      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, lp_bound);
       if (insert_position > n_lower_bounds_)
         return {{bounds_.cbegin() + n_lower_bounds_, bounds_.lower_bound(element)}};
       insert_position = std::distance(bounds_.cbegin(), bounds_.upper_bound(element));
-      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, bound);
+      DLINEAR_TRACE_FMT("ViolatedBounds: insert_position = {} | ({} {})", insert_position, value, lp_bound);
       if (insert_position < n_lower_bounds_)
         return {{bounds_.upper_bound(element), bounds_.cbegin() + n_lower_bounds_}};
       return std::nullopt;
     default:
       DLINEAR_UNREACHABLE();
   }
+}
+
+TheorySolverBoundVector::Violation TheorySolverBoundVector::ViolatedBounds(const mpq_class& value) const {
+  LpColBound lp_bound;
+  if (value < active_lower_bound_) {
+    lp_bound = LpColBound::U;  // Simulate insertion of an invalid upper bound
+  } else if (value > active_upper_bound_) {
+    lp_bound = LpColBound::L;  // Simulate insertion of an invalid lower bound
+  } else {
+    return {};  // No violation
+  }
+  // TODO: with precise mapping of strict inequalities the following call can be made more precise by
+  //  only including matching strict bounds instead of all matching bounds
+  const Bound element{value, default_idx_};
+  return {lp_bound == LpColBound::L ? bounds_.cbegin() + n_lower_bounds_ : bounds_.lower_bound(element),
+          lp_bound == LpColBound::L ? bounds_.upper_bound(element) : bounds_.cbegin() + n_lower_bounds_};
 }
 
 bool TheorySolverBoundVector::ViolatedStrictBounds() const {
@@ -185,17 +195,17 @@ bool TheorySolverBoundVector::IsActiveEquality(const mpq_class& value) const {
 }
 
 bool TheorySolverBoundVector::IsLowerBound(const mpq_class& value) const {
-  if (!bounds_.contains({value, default_lit_})) return false;
+  if (!bounds_.contains({value, default_idx_})) return false;
   std::cout << "IsLowerBound = distance: "
-            << std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_lit_})) << std::endl;
-  return std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_lit_})) < n_lower_bounds_;
+            << std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_idx_})) << std::endl;
+  return std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_idx_})) < n_lower_bounds_;
 }
 
 bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
-  if (!bounds_.contains({value, default_lit_})) return false;
+  if (!bounds_.contains({value, default_idx_})) return false;
   std::cout << "IsUpperBound = distance: "
-            << std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_lit_})) << std::endl;
-  return std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_lit_})) > n_lower_bounds_;
+            << std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_idx_})) << std::endl;
+  return std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_idx_})) > n_lower_bounds_;
 }
 
 std::pair<std::optional<TheorySolverBoundVector::Bound>, std::optional<TheorySolverBoundVector::Bound>>
