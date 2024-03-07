@@ -44,6 +44,9 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
   const std::optional<Violation> violation{ViolatedBounds(value, lp_bound)};
   if (violation.has_value()) return violation;
 
+  const mpq_class backup_active_lower_bound = active_lower_bound_;
+  const mpq_class backup_active_upper_bound = active_upper_bound_;
+
   // Add the new lp_bound
   auto it = bounds_.end();
   switch (lp_bound) {
@@ -59,8 +62,11 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
     case LpColBound::B:
       // Check if adding this lp_bound will cause a violation
       active_upper_bound_ = active_lower_bound_ = value;
-      if (ViolatedStrictBounds())
+      if (ViolatedStrictBounds()) {
+        active_lower_bound_ = backup_active_lower_bound;
+        active_upper_bound_ = backup_active_upper_bound;
         return {{bounds_.lower_bound({value, default_idx_}), bounds_.upper_bound({value, default_idx_})}};
+      }
       ++n_lower_bounds_;
       bounds_.emplace(value, idx);
       bounds_.emplace(value, idx);
@@ -83,8 +89,12 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
     if (ViolatedStrictBounds()) {
       bounds_.erase(it);
       if (lp_bound == LpColBound::L || lp_bound == LpColBound::SL) --n_lower_bounds_;
-      return {{bounds_.lower_bound({active_upper_bound_, default_idx_}),
-               bounds_.upper_bound({active_upper_bound_, default_idx_})}};
+      const std::pair<Violation::first_type, Violation::second_type> nq_violation = {
+          bounds_.lower_bound({active_upper_bound_, default_idx_}),
+          bounds_.upper_bound({active_upper_bound_, default_idx_})};
+      active_lower_bound_ = backup_active_lower_bound;
+      active_upper_bound_ = backup_active_upper_bound;
+      return nq_violation;
     }
   }
 
@@ -96,6 +106,8 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
     // Violated strict lp_bound, remove the last added lp_bound and return the interval
     if (IsActiveEquality(value)) {
       bounds_.erase(it);
+      active_lower_bound_ = backup_active_lower_bound;
+      active_upper_bound_ = backup_active_upper_bound;
       if (lp_bound == LpColBound::SL) --n_lower_bounds_;
       return {{bounds_.lower_bound({value, default_idx_}), bounds_.upper_bound({value, default_idx_})}};
     }
@@ -196,15 +208,11 @@ bool TheorySolverBoundVector::IsActiveEquality(const mpq_class& value) const {
 
 bool TheorySolverBoundVector::IsLowerBound(const mpq_class& value) const {
   if (!bounds_.contains({value, default_idx_})) return false;
-  std::cout << "IsLowerBound = distance: "
-            << std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_idx_})) << std::endl;
   return std::distance(bounds_.cbegin(), bounds_.lower_bound({value, default_idx_})) < n_lower_bounds_;
 }
 
 bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
   if (!bounds_.contains({value, default_idx_})) return false;
-  std::cout << "IsUpperBound = distance: "
-            << std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_idx_})) << std::endl;
   return std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_idx_})) > n_lower_bounds_;
 }
 

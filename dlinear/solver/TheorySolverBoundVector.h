@@ -32,8 +32,8 @@ struct BoundComparator {
  * It keeps track of the bounds in the LP solver in a sorted vector.
  * Every time a new bound is added, it checks if it violates any of the existing bounds.
  * This allows to keep track of the active lower and upper bound for the column.
- * @warning If a violation is detected, the vector remains in an inconsistent state and must be cleared before
- * adding new bounds.
+ * If a violation is detected, it returns the iterator to the first and last violated bound.
+ * The violating bound is @e not added and the vector remains unchanged.
  */
 class TheorySolverBoundVector {
  public:
