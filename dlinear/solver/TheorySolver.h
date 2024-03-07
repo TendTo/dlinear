@@ -62,7 +62,7 @@ class TheorySolver {
    *
    * @param theory_literals vector of literals to be activated
    */
-  std::optional<LiteralSet> EnableLiterals(const std::vector<Literal> &theory_literals);
+  std::vector<LiteralSet> EnableLiterals(const std::vector<Literal> &theory_literals);
   /**
    * Activate the literal that had previously been added to the theory solver.
    *
@@ -78,7 +78,7 @@ class TheorySolver {
    * @return an explanation with the literals that correspond to the conflicting bounds
    * @return an empty optional if no conflicts are detected at this step
    */
-  virtual std::optional<LiteralSet> EnableLiteral(const Literal &lit) = 0;
+  virtual std::vector<LiteralSet> EnableLiteral(const Literal &lit) = 0;
 
   /**
    * Get a model that satisfies all the constraints of the theory
@@ -128,14 +128,15 @@ class TheorySolver {
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
 
-  [[nodiscard]] LiteralSet TheoryBoundsToExplanation(const Violation &violation) const;
-  void TheoryBoundsToExplanation(const Violation &violation, LiteralSet &explanation) const;
-  void TheoryBoundsToExplanation(int theory_col, LiteralSet &explanation) const;
-  void TheoryBoundsToExplanation(int theory_col, mpq_class value, LiteralSet &explanation) const;
+  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(const Violation &violation, int theory_col) const;
+  void TheoryBoundsToExplanations(const Violation &violation, int theory_bound,
+                                  std::vector<LiteralSet> explanations) const;
+  void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
+  void TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const;
 
-  void TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const;
-  void TheoryBoundsToBoundIdxs(int theory_col, mpq_class value, std::set<int> &bound_idxs) const;
-  static void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs) ;
+  void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
+  void TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const;
+  static void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs);
 
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.

@@ -14,6 +14,7 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
+#include <map>
 #include <optional>
 
 #include "dlinear/libs/gmp.h"
@@ -30,7 +31,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit CompleteSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
 
-  std::optional<LiteralSet> EnableLiteral(const Literal& lit) override;
+  std::vector<LiteralSet> EnableLiteral(const Literal& lit) override;
 
   void AddVariable(const Variable& var) override;
 
@@ -41,6 +42,9 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Reset(const Box& box) override;
 
  private:
+  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanation(const TheorySolver::Violation& violation,
+                                                                  int spx_row) const;
+
   /**
    * Internal method to check the satisfiability of the current LP problem.
    *
@@ -52,8 +56,6 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @return The result of the SAT check
    */
   SatResult SpxCheckSat(mpq_class* actual_precision);
-
-  bool SetSPXVarBound(const Bound& bound, int spx_col) override;
 
   void UpdateExplanationStrictInfeasible();
 
@@ -90,18 +92,15 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @return true if the loop should continue to enumerate the sub-problems
    * @return false if there is no point in continuing the loop and it can be stopped with the current explanation
    */
-  bool UpdateBitIteratorBasedOnExplanation(BitIncrementIterator& bit_iterator);
+  bool UpdateBitIncrementIteratorBasedOnExplanation(BitIncrementIterator& bit_iterator);
 
   std::vector<size_t> IteratorNqRowsInExplanation() const;
 
   void GetExplanation(LiteralSet& explanation);
 
-  std::vector<std::set<soplex::Rational>> spx_nq_;  ///< Vector that maps each var to the set of values they can't take
-  std::vector<int> enabled_strict_theory_rows_;     ///< Vector of enabled strict theory rows
+  std::vector<int> enabled_strict_theory_rows_;                          ///< Vector of enabled strict theory rows
   std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_rows_;  ///< variable id -> enabled theory row.
                                                                          ///< Does not include simple bounds
-  std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_bounds_; ///< variable id -> enabled theory row.
-                                                                          ///< It only includes simple bounds
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
                                             ///< mapped to the corresponding spx_row
   std::vector<bool> last_nq_status_;        ///< Last status of the non-equal constraints.
@@ -109,6 +108,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
   std::set<int> theory_rows_to_explanation_;  ///< Set of theory rows that are part of the explanation
+  LiteralSet explanation_;                    ///< Set of theory rows that are part of the explanation
 };
 
 }  // namespace dlinear

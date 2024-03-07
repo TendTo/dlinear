@@ -39,3 +39,17 @@ bool std::less<dlinear::Literal>::operator()(const dlinear::Literal &a, const dl
 bool std::equal_to<dlinear::Literal>::operator()(const dlinear::Literal &a, const dlinear::Literal &b) const {
   return a.first.equal_to(b.first) && a.second == b.second;
 }
+
+bool std::less<::dlinear::LiteralSet>::operator()(const dlinear::LiteralSet &a, const dlinear::LiteralSet &b) const {
+  return std::lexicographical_compare(
+      a.begin(), a.end(), b.begin(), b.end(), [](const dlinear::Literal &a_, const dlinear::Literal &b_) {
+        return a_.first.get_id() < b_.first.get_id() || (a_.first.equal_to(b_.first) && a_.second < b_.second);
+      });
+}
+bool std::equal_to<::dlinear::LiteralSet>::operator()(const dlinear::LiteralSet &a,
+                                                      const dlinear::LiteralSet &b) const {
+  return a.size() == b.size() &&
+         std::equal(a.begin(), a.end(), b.begin(), b.end(), [](const dlinear::Literal &a_, const dlinear::Literal &b_) {
+           return a_.first.equal_to(b_.first) && a_.second == b_.second;
+         });
+}

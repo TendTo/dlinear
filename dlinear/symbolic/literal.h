@@ -45,4 +45,15 @@ struct equal_to<::dlinear::Literal> {
   bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;
 };
 
+template <>
+struct less<::dlinear::LiteralSet> {
+  bool operator()(const ::dlinear::LiteralSet &a, const ::dlinear::LiteralSet &b) const;
+};
+
+
+template <>
+struct equal_to<::dlinear::LiteralSet> {
+  bool operator()(const ::dlinear::LiteralSet &a, const ::dlinear::LiteralSet &b) const;
+};
+
 }  // namespace std

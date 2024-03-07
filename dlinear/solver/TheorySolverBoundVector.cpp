@@ -146,17 +146,17 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::Viola
 }
 
 TheorySolverBoundVector::Violation TheorySolverBoundVector::ViolatedBounds(const mpq_class& value) const {
+  const Bound element{value, default_idx_};
   LpColBound lp_bound;
   if (value < active_lower_bound_) {
     lp_bound = LpColBound::U;  // Simulate insertion of an invalid upper bound
   } else if (value > active_upper_bound_) {
     lp_bound = LpColBound::L;  // Simulate insertion of an invalid lower bound
   } else {
-    return {};  // No violation
+    return {bounds_.lower_bound(element), bounds_.upper_bound(element)};  // No violation, return the active bounds
   }
   // TODO: with precise mapping of strict inequalities the following call can be made more precise by
   //  only including matching strict bounds instead of all matching bounds
-  const Bound element{value, default_idx_};
   return {lp_bound == LpColBound::L ? bounds_.cbegin() + n_lower_bounds_ : bounds_.lower_bound(element),
           lp_bound == LpColBound::L ? bounds_.upper_bound(element) : bounds_.cbegin() + n_lower_bounds_};
 }
@@ -208,12 +208,12 @@ bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
   return std::distance(bounds_.cbegin(), bounds_.upper_bound({value, default_idx_})) > n_lower_bounds_;
 }
 
-std::pair<std::optional<TheorySolverBoundVector::Bound>, std::optional<TheorySolverBoundVector::Bound>>
-TheorySolverBoundVector::active_bound() const {
-  if (bounds_.empty()) return {std::nullopt, std::nullopt};
-  if (n_lower_bounds_ == 0) return {std::nullopt, *bounds_.cbegin()};
-  if (n_lower_bounds_ == static_cast<int>(bounds_.size())) return {*std::prev(bounds_.cend()), std::nullopt};
-  return {bounds_[n_lower_bounds_ - 1], bounds_[n_lower_bounds_]};
+TheorySolverBoundVector::Violation TheorySolverBoundVector::active_bounds() const {
+  if (bounds_.empty()) return {bounds_.cend(), bounds_.cend()};
+  if (n_lower_bounds_ == 0 || n_lower_bounds_ == static_cast<int>(bounds_.size()))
+    return {bounds_.cbegin(), bounds_.cend()};
+  return {bounds_.lower_bound({active_upper_bound_, default_idx_}),
+          bounds_.upper_bound({active_upper_bound_, default_idx_})};
 }
 
 std::pair<mpq_class, mpq_class> TheorySolverBoundVector::active_bound_value() const {

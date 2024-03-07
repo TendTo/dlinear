@@ -247,11 +247,11 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
     const auto &[var, truth] = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
     explanation.emplace(var, truth);
-    // For each free variable in the literal, add their bounds to the explanation
+    // Add all the active bounds for the free variables in the row to the explanation
     for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
       // TODO: get the value of the column from the ray for a smaller violation
-      TheoryBoundsToExplanation(theory_col, explanation);
+      TheoryBoundsToExplanation(theory_col, true, explanation);
     }
   }
 }
@@ -264,7 +264,7 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
 void SoplexTheorySolver::SetSPXVarBound() {
   spx_upper_.reDim(spx_.numColsRational(), false);
   spx_lower_.reDim(spx_.numColsRational(), false);
-  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
     spx_lower_[theory_col] = theory_bounds_[theory_col].active_lower_bound().get_mpq_t();
     spx_upper_[theory_col] = theory_bounds_[theory_col].active_upper_bound().get_mpq_t();
   }

@@ -79,7 +79,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
-std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
+std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -138,7 +138,7 @@ std::optional<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &
   const int bound_idx = lit_to_theory_bound_.at(var.get_id());
   const auto violation{theory_bounds_[theory_col].AddBound(value, type, bound_idx)};
   // If the bound is invalid, return the explanation and update the SAT solver immediately
-  if (violation) return TheoryBoundsToExplanation(violation.value());
+  if (violation) return TheoryBoundsToExplanations(violation.value(), bound_idx);
   return {};
 }
 

@@ -30,7 +30,7 @@ class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
  public:
   explicit DeltaQsoptexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
 
-  std::optional<LiteralSet> EnableLiteral(const Literal& lit) override;
+  std::vector<LiteralSet> EnableLiteral(const Literal& lit) override;
 
   void AddLiteral(const Literal& lit) override;
 

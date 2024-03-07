@@ -41,14 +41,15 @@ void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
   for (const auto &lit : theory_literals) AddLiteral(lit);
 }
 
-std::optional<LiteralSet> TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+std::vector<LiteralSet> TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+  std::vector<LiteralSet> explanations{};
   for (const Literal &lit : theory_literals) {
-    std::optional<LiteralSet> explanation{EnableLiteral(lit)};
+    std::vector<LiteralSet> explanation{EnableLiteral(lit)};
+    explanations.insert(explanations.end(), explanation.begin(), explanation.end());
     // Check if the literal that was just enabled is conflicting with the current model.
     // If so, return the explanation containing a superset of the conflicting literals
-    if (explanation) return explanation;
   }
-  return {};
+  return explanations;
 }
 
 void TheorySolver::Consolidate() {
@@ -123,18 +124,29 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
-LiteralSet TheorySolver::TheoryBoundsToExplanation(const Violation &violation) const {
-  LiteralSet explanation{};
-  TheoryBoundsToExplanation(violation, explanation);
-  return explanation;
+std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(const Violation &violation, int theory_col) const {
+  std::vector<LiteralSet> explanations{};
+  TheoryBoundsToExplanations(violation, theory_col, explanations);
+  return explanations;
 }
-void TheorySolver::TheoryBoundsToExplanation(const Violation &violation, LiteralSet &explanation) const {
-  for (auto it = violation.first; it != violation.second; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
+void TheorySolver::TheoryBoundsToExplanations(const Violation &violation, int theory_bound,
+                                              std::vector<LiteralSet> explanations) const {
+  const Literal bound_lit{theory_bound_to_lit_[theory_bound]};
+  for (auto it = violation.first; it != violation.second; ++it) {
+    explanations.push_back({bound_lit, theory_bound_to_lit_[it->second]});
+  }
 }
-void TheorySolver::TheoryBoundsToExplanation(int theory_col, LiteralSet &explanation) const {
-  for (const auto &bound : theory_bounds_[theory_col].bounds()) explanation.insert(theory_bound_to_lit_[bound.second]);
+void TheorySolver::TheoryBoundsToExplanation(int theory_col, const bool active, LiteralSet &explanation) const {
+  if (active) {
+    const auto [start_it, end_it] = theory_bounds_[theory_col].active_bounds();
+    for (auto it = start_it; it != end_it; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
+  } else {
+    for (const auto &bound : theory_bounds_[theory_col].bounds()) {
+      explanation.insert(theory_bound_to_lit_[bound.second]);
+    }
+  }
 }
-void TheorySolver::TheoryBoundsToExplanation(int theory_col, mpq_class value, LiteralSet &explanation) const {
+void TheorySolver::TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const {
   const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
   for (auto it = it_start; it != it_end; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
 }
@@ -142,10 +154,15 @@ void TheorySolver::TheoryBoundsToExplanation(int theory_col, mpq_class value, Li
 void TheorySolver::TheoryBoundsToBoundIdxs(const TheorySolver::Violation &violation, std::set<int> &bound_idxs) {
   for (auto it = violation.first; it != violation.second; ++it) bound_idxs.insert(it->second);
 }
-void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const {
-  for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.second);
+void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const bool active, std::set<int> &bound_idxs) const {
+  if (active) {
+    const auto [start_it, end_it] = theory_bounds_[theory_col].active_bounds();
+    for (auto it = start_it; it != end_it; ++it) bound_idxs.insert(it->second);
+  } else {
+    for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.second);
+  }
 }
-void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, mpq_class value, std::set<int> &bound_idxs) const {
+void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const {
   const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
   for (auto it = it_start; it != it_end; ++it) bound_idxs.insert(it->second);
 }

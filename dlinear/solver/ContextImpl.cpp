@@ -320,10 +320,10 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
     theory_solver_->Reset(box());
-    std::optional<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
-    if (explanation_bounds) {
+    std::vector<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
+    if (!explanation_bounds.empty()) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      LearnExplanation(*explanation_bounds);
+      LearnExplanations(explanation_bounds);
       continue;
     }
 
@@ -382,14 +382,9 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
   sat_solver_->AddLearnedClause(explanation);
 }
-void Context::Impl::LearnExplanation(const std::vector<Literal> &explanation_boolean,
-                                     const LiteralSet &explanation_theory) {
-  LiteralSet explanation = explanation_theory;
-  explanation.insert(explanation_boolean.cbegin(), explanation_boolean.cend());
-  DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
-                    stack_.get_vector().size());
-  DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
-  sat_solver_->AddLearnedClause(explanation);
+
+void Context::Impl::LearnExplanations(const std::vector<LiteralSet> &explanations) {
+  for (const LiteralSet &explanation : explanations) LearnExplanation(explanation);
 }
 
 }  // namespace dlinear

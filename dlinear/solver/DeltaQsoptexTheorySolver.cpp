@@ -96,7 +96,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
-std::optional<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
+std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {

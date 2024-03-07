@@ -80,22 +80,19 @@ class Context::Impl {
   /**
    * The TheorySolver found a conflict and the explanation is the set of literals that are responsible.
    *
-   * The explanation is returned to the SAT solver so that it can use them to learn a new clause and backtrack,
+   * The explanation is returned to the SAT solver so that it can use it to learn a new clause and backtrack,
    * looking for a new, non-conflicting assignment.
    * @param explanation set of literals that are responsible for the conflict
    */
   void LearnExplanation(const LiteralSet &explanation);
   /**
-   * The TheorySolver found a conflict and the explanation is the set of literals that are responsible.
+   * The TheorySolver found a number of conflicts and the explanations are the set of literals that are responsible.
    *
-   * The explanation is returned to the SAT solver so that it can use them to learn a new clause and backtrack,
+   * The explanations are returned to the SAT solver so that it can use them to learn a new clause and backtrack,
    * looking for a new, non-conflicting assignment.
-   * The boolean literals didn't play a role in the conflict from the theory prospective,
-   * but they are still be required to avoid reporting a set smaller than the core unsatisfiable set.
-   * @param explanation_boolean set of boolean literals that are responsible for the conflict
-   * @param explanation_theory set of theory literals that are responsible for the conflict
+   * @param explanations vector of sets of literals that are responsible for the conflict
    */
-  void LearnExplanation(const std::vector<Literal> &explanation_boolean, const LiteralSet &explanation_theory);
+  void LearnExplanations(const std::vector<LiteralSet> &explanations);
 
   /** Return the current box in the stack. */
   virtual SatResult CheckSatCore(mpq_class *actual_precision);
@@ -139,6 +136,9 @@ class Context::Impl {
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
+
+  // TODO: remove
+  std::set<LiteralSet> learned_explanations_;  ///< Set of learned explanations.
 };
 
 }  // namespace dlinear
