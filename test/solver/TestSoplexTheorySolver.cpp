@@ -22,6 +22,7 @@ using dlinear::LiteralSet;
 using dlinear::PredicateAbstractor;
 using dlinear::SatResult;
 using dlinear::SoplexTheorySolver;
+using dlinear::TheorySolverBoundVectorVector;
 using dlinear::Variable;
 using std::unique_ptr;
 
@@ -40,6 +41,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
   const soplex::VectorRational &spx_upper() const { return spx_upper_; }
   const soplex::VectorRational &spx_lower() const { return spx_lower_; }
+  const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
 };
 
 class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
@@ -71,8 +73,8 @@ TEST_P(TestSoplexTheorySolver, AddVariable) {
   EXPECT_EQ(s.theory_col_to_var().at(theory_col), var_);
   EXPECT_EQ(s.var_to_theory_col().size(), 1u);
   EXPECT_EQ(s.var_to_theory_col().at(var_.get_id()), theory_col);
-  EXPECT_EQ(s.spx_lower()[theory_col], -soplex::infinity);
-  EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
 }
 
 TEST_P(TestSoplexTheorySolver, EnableLiterals) {
@@ -92,12 +94,12 @@ TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
   MockSoplexTheorySolver s{abstractor_, config_};
   s.AddVariable(var_);
 
-  EXPECT_EQ(s.spx_lower()[theory_col], -soplex::infinity);
-  EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
   s.Reset(Box{});
 
-  EXPECT_EQ(s.spx_lower()[theory_col], -soplex::infinity);
-  EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
 }
 
 TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
@@ -109,10 +111,10 @@ TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
   MockSoplexTheorySolver s{abstractor_, config_};
   s.AddVariable(var_);
 
-  EXPECT_EQ(s.spx_lower()[theory_col], -soplex::infinity);
-  EXPECT_EQ(s.spx_upper()[theory_col], soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
   s.Reset(box);
 
-  EXPECT_EQ(s.spx_lower()[theory_col].convert_to<mpq_class>(), lb);
-  EXPECT_EQ(s.spx_upper()[theory_col].convert_to<mpq_class>(), ub);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), lb);
+  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), ub);
 }

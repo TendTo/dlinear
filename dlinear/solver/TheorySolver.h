@@ -135,7 +135,7 @@ class TheorySolver {
 
   void TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const;
   void TheoryBoundsToBoundIdxs(int theory_col, mpq_class value, std::set<int> &bound_idxs) const;
-  void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs) const;
+  static void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs) ;
 
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.

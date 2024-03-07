@@ -58,7 +58,7 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
-  theory_bounds_.emplace_back(soplex::infinity, -soplex::infinity);
+  theory_bounds_.emplace_back(-soplex::infinity, soplex::infinity);
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
 

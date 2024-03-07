@@ -139,7 +139,7 @@ void TheorySolver::TheoryBoundsToExplanation(int theory_col, mpq_class value, Li
   for (auto it = it_start; it != it_end; ++it) explanation.insert(theory_bound_to_lit_[it->second]);
 }
 
-void TheorySolver::TheoryBoundsToBoundIdxs(const TheorySolver::Violation &violation, std::set<int> &bound_idxs) const {
+void TheorySolver::TheoryBoundsToBoundIdxs(const TheorySolver::Violation &violation, std::set<int> &bound_idxs) {
   for (auto it = violation.first; it != violation.second; ++it) bound_idxs.insert(it->second);
 }
 void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, std::set<int> &bound_idxs) const {

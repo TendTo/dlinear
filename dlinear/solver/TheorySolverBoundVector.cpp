@@ -234,7 +234,7 @@ void TheorySolverBoundVector::SetLowerBound(const mpq_class& value) {
   if (value > active_lower_bound_) active_lower_bound_ = value;
 }
 void TheorySolverBoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
-  if (std::min(ub, active_upper_bound_) < std::max(lb, active_lower_bound_))
+  if (ub < std::max(lb, active_lower_bound_) || lb > std::min(ub, active_upper_bound_))
     DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
                               active_lower_bound_, active_upper_bound_);
   if (lb > active_lower_bound_) active_lower_bound_ = lb;
