@@ -28,6 +28,7 @@ class TestSortedVector : public ::testing::Test {
     bounds_.AddBound(3, LpColBound::B, 8);
     bounds_.AddBound(4, LpColBound::U, 9);
     bounds_.AddBound(5, LpColBound::U, 10);
+    DLINEAR_LOG_INIT_VERBOSITY(5);
   }
 };
 
@@ -35,10 +36,10 @@ TEST_F(TestSortedVector, ConstructorSingle) {
   TheorySolverBoundVector bounds{inf_};
   EXPECT_EQ(bounds.n_upper_bounds(), 0);
   EXPECT_EQ(bounds.n_lower_bounds(), 0);
-  EXPECT_EQ(bounds.bounds().size(), 0u);
+  EXPECT_TRUE(bounds.bounds().empty());
   EXPECT_EQ(bounds.active_lower_bound(), -inf_);
   EXPECT_EQ(bounds.active_upper_bound(), inf_);
-  EXPECT_EQ(bounds.nq_values().size(), 0u);
+  EXPECT_TRUE(bounds.nq_values().empty());
   EXPECT_EQ(bounds.inf_l(), -inf_);
   EXPECT_EQ(bounds.inf_u(), inf_);
 }
@@ -47,10 +48,10 @@ TEST_F(TestSortedVector, ConstructorDouble) {
   TheorySolverBoundVector bounds{inf_l_, inf_u_};
   EXPECT_EQ(bounds.n_upper_bounds(), 0);
   EXPECT_EQ(bounds.n_lower_bounds(), 0);
-  EXPECT_EQ(bounds.bounds().size(), 0u);
+  EXPECT_TRUE(bounds.bounds().empty());
   EXPECT_EQ(bounds.active_lower_bound(), inf_l_);
   EXPECT_EQ(bounds.active_upper_bound(), inf_u_);
-  EXPECT_EQ(bounds.nq_values().size(), 0u);
+  EXPECT_TRUE(bounds.nq_values().empty());
   EXPECT_EQ(bounds.inf_l(), inf_l_);
   EXPECT_EQ(bounds.inf_u(), inf_u_);
 }
@@ -65,10 +66,11 @@ TEST_F(TestSortedVector, AddLBound) {
   EXPECT_EQ(bounds.bounds().size(), 1u);
   EXPECT_EQ(bounds.active_lower_bound(), value);
   EXPECT_EQ(bounds.active_upper_bound(), inf_);
-  const auto [b_value, b_bound_idx] = bounds.bounds()[0];
+  const auto [b_value, b_type, b_bound_idx] = bounds.bounds()[0];
   EXPECT_EQ(b_value, value);
+  EXPECT_EQ(b_type, LpColBound::L);
   EXPECT_EQ(b_bound_idx, bound_idx);
-  EXPECT_EQ(bounds.nq_values().size(), 0u);
+  EXPECT_TRUE(bounds.nq_values().empty());
 }
 
 TEST_F(TestSortedVector, AddUBound) {
@@ -81,10 +83,11 @@ TEST_F(TestSortedVector, AddUBound) {
   EXPECT_EQ(bounds.bounds().size(), 1u);
   EXPECT_EQ(bounds.active_lower_bound(), -inf_);
   EXPECT_EQ(bounds.active_upper_bound(), value);
-  const auto [b_value, b_bound_idx] = bounds.bounds()[0];
+  const auto [b_value, b_type, b_bound_idx] = bounds.bounds()[0];
   EXPECT_EQ(b_value, value);
+  EXPECT_EQ(b_type, LpColBound::U);
   EXPECT_EQ(b_bound_idx, bound_idx);
-  EXPECT_EQ(bounds.nq_values().size(), 0u);
+  EXPECT_TRUE(bounds.nq_values().empty());
 }
 
 TEST_F(TestSortedVector, AddBBound) {
@@ -97,13 +100,15 @@ TEST_F(TestSortedVector, AddBBound) {
   EXPECT_EQ(bounds.bounds().size(), 2u);
   EXPECT_EQ(bounds.active_lower_bound(), value);
   EXPECT_EQ(bounds.active_upper_bound(), value);
-  const auto [b_value, b_bound_idx] = bounds.bounds()[0];
+  const auto [b_value, b_type, b_bound_idx] = bounds.bounds()[0];
   EXPECT_EQ(b_value, value);
+  EXPECT_EQ(b_type, LpColBound::L);
   EXPECT_EQ(b_bound_idx, bound_idx);
-  const auto [b_value2, b_bound_idx2] = bounds.bounds()[1];
+  const auto [b_value2, b_type2, b_bound_idx2] = bounds.bounds()[1];
   EXPECT_EQ(b_value2, value);
+  EXPECT_EQ(b_type2, LpColBound::U);
   EXPECT_EQ(b_bound_idx2, bound_idx);
-  EXPECT_EQ(bounds.nq_values().size(), 0u);
+  EXPECT_TRUE(bounds.nq_values().empty());
 }
 
 TEST_F(TestSortedVector, AddSLBound) {
@@ -116,11 +121,11 @@ TEST_F(TestSortedVector, AddSLBound) {
   EXPECT_EQ(bounds.bounds().size(), 1u);
   EXPECT_EQ(bounds.active_lower_bound(), value);
   EXPECT_EQ(bounds.active_upper_bound(), inf_);
-  const auto [b_value, b_bound_idx] = bounds.bounds()[0];
+  const auto [b_value, b_type, b_bound_idx] = bounds.bounds()[0];
   EXPECT_EQ(b_value, value);
+  EXPECT_EQ(b_type, LpColBound::SL);
   EXPECT_EQ(b_bound_idx, bound_idx);
-  EXPECT_EQ(bounds.nq_values().size(), 1u);
-  EXPECT_EQ(*bounds.nq_values().begin(), value);
+  EXPECT_TRUE(bounds.nq_values().empty());
 }
 
 TEST_F(TestSortedVector, AddSUBound) {
@@ -133,11 +138,11 @@ TEST_F(TestSortedVector, AddSUBound) {
   EXPECT_EQ(bounds.bounds().size(), 1u);
   EXPECT_EQ(bounds.active_lower_bound(), -inf_);
   EXPECT_EQ(bounds.active_upper_bound(), value);
-  const auto [b_value, b_bound_idx] = bounds.bounds()[0];
+  const auto [b_value, b_type, b_bound_idx] = bounds.bounds()[0];
   EXPECT_EQ(b_value, value);
+  EXPECT_EQ(b_type, LpColBound::SU);
   EXPECT_EQ(b_bound_idx, bound_idx);
-  EXPECT_EQ(bounds.nq_values().size(), 1u);
-  EXPECT_EQ(*bounds.nq_values().begin(), value);
+  EXPECT_TRUE(bounds.nq_values().empty());
 }
 
 TEST_F(TestSortedVector, AddDBound) {
@@ -413,14 +418,14 @@ TEST_F(TestSortedVector, ViolationEqualOverUpperRight) {
 TEST_F(TestSortedVector, ViolationStrictLowerOverEquality) {
   const auto violation = bounds_.AddBound(3, LpColBound::SL, def_);
   EXPECT_TRUE(violation.has_value());
-  EXPECT_EQ(violation->first, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() - 1);
+  EXPECT_EQ(violation->first, bounds_.bounds().cbegin() + bounds_.n_lower_bounds());
   EXPECT_EQ(violation->second, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() + 1);
 }
 TEST_F(TestSortedVector, ViolationStrictUpperOverEquality) {
   const auto violation = bounds_.AddBound(3, LpColBound::SU, def_);
   EXPECT_TRUE(violation.has_value());
   EXPECT_EQ(violation->first, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() - 1);
-  EXPECT_EQ(violation->second, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() + 1);
+  EXPECT_EQ(violation->second, bounds_.bounds().cbegin() + bounds_.n_lower_bounds());
 }
 TEST_F(TestSortedVector, ViolationStrictInequalityOverEquality) {
   const auto violation = bounds_.AddBound(3, LpColBound::D, def_);
@@ -431,7 +436,9 @@ TEST_F(TestSortedVector, ViolationStrictInequalityOverEquality) {
 
 TEST_F(TestSortedVector, ViolationUpperOverStrictLower) {
   EXPECT_FALSE(empty_bounds_.AddBound(1, LpColBound::SL, def_));
+  std::cout << "bouds: " << empty_bounds_ << std::endl;
   auto violation = empty_bounds_.AddBound(1, LpColBound::U, def_);
+  std::cout << "bouds: " << empty_bounds_<< std::endl;
   EXPECT_TRUE(violation.has_value());
   EXPECT_EQ(violation->first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(violation->second, empty_bounds_.bounds().cbegin() + 1);
@@ -446,6 +453,7 @@ TEST_F(TestSortedVector, ViolationLowerOverStrictUpper) {
 }
 
 TEST_F(TestSortedVector, ViolationUpperOverStrictLowerStandardViolation) {
+  EXPECT_FALSE(empty_bounds_.AddBound(1, LpColBound::L, def_));
   EXPECT_FALSE(empty_bounds_.AddBound(1, LpColBound::SL, def_));
   EXPECT_FALSE(empty_bounds_.AddBound(2, LpColBound::SL, def_));
   auto violation = empty_bounds_.AddBound(1, LpColBound::U, def_);
@@ -457,10 +465,11 @@ TEST_F(TestSortedVector, ViolationUpperOverStrictLowerStandardViolation) {
 TEST_F(TestSortedVector, ViolationLowerOverStrictUpperStandardViolation) {
   EXPECT_FALSE(empty_bounds_.AddBound(1, LpColBound::SU, def_));
   EXPECT_FALSE(empty_bounds_.AddBound(2, LpColBound::SU, def_));
+  EXPECT_FALSE(empty_bounds_.AddBound(2, LpColBound::U, def_));
   auto violation = empty_bounds_.AddBound(2, LpColBound::L, def_);
   EXPECT_TRUE(violation.has_value());
   EXPECT_EQ(violation->first, empty_bounds_.bounds().cbegin());
-  EXPECT_EQ(violation->second, empty_bounds_.bounds().cbegin() + 1);
+  EXPECT_EQ(violation->second, empty_bounds_.bounds().cend() - 1);
 }
 
 TEST_F(TestSortedVector, ViolationUpperOverStrictLowerStandardNoViolation) {

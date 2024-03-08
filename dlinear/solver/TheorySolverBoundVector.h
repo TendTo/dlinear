@@ -22,8 +22,12 @@
 
 namespace dlinear {
 
+namespace {
+using Bound_ = std::tuple<mpq_class, LpColBound, int>;
+}
+
 struct BoundComparator {
-  bool operator()(const std::pair<mpq_class, int>& lhs, const std::pair<mpq_class, int>& rhs) const;
+  bool operator()(const Bound_& lhs, const Bound_& rhs) const;
 };
 
 /**
@@ -37,7 +41,7 @@ struct BoundComparator {
  */
 class TheorySolverBoundVector {
  public:
-  using Bound = std::pair<mpq_class, int>;
+  using Bound = Bound_;
   using Violation = std::pair<SortedVector<Bound>::const_iterator, SortedVector<Bound>::const_iterator>;
 
   explicit TheorySolverBoundVector(mpq_class inf);
@@ -67,14 +71,26 @@ class TheorySolverBoundVector {
 
   [[nodiscard]] std::optional<Violation> ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const;
   [[nodiscard]] Violation ViolatedBounds(const mpq_class& value) const;
-  [[nodiscard]] bool ViolatedStrictBounds() const;
+  [[nodiscard]] bool ViolatedNqBounds() const;
+  [[nodiscard]] bool ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const;
 
   [[nodiscard]] bool IsActiveEquality(const mpq_class& value) const;
   [[nodiscard]] bool IsLowerBound(const mpq_class& value) const;
   [[nodiscard]] bool IsUpperBound(const mpq_class& value) const;
 
  private:
-  static const Bound::second_type default_idx_;
+  inline static Bound GetDefaultLowerBound(const mpq_class& value) { return std::make_tuple(value, LpColBound::L, 0); }
+  inline static Bound GetDefaultUpperBound(const mpq_class& value) { return std::make_tuple(value, LpColBound::U, 0); }
+
+  [[nodiscard]] inline SortedVector<Bound, BoundComparator>::const_iterator FindLowerBoundValue(
+      const mpq_class& value) const {
+    return bounds_.lower_bound(GetDefaultLowerBound(value));
+  }
+  [[nodiscard]] inline SortedVector<Bound, BoundComparator>::const_iterator FindUpperBoundValue(
+      const mpq_class& value) const {
+    return bounds_.upper_bound(GetDefaultUpperBound(value));
+  }
+
   int n_lower_bounds_;
   SortedVector<Bound, BoundComparator> bounds_;
   std::set<mpq_class> nq_values_;

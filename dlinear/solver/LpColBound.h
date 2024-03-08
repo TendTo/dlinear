@@ -27,14 +27,16 @@ namespace dlinear {
 
 /**
  * Describes the bound of a linear program variable.
+ * @warning The order of the enum is important and should not be changed.
+ * It is used to compare the bounds.
  */
 enum class LpColBound {
-  U,   ///< Upper bound
-  SU,  ///< Strict upper bound
-  B,   ///< Both upper and lower bound are equal (fixed)
-  D,   ///< Variable must be different from the bound
   L,   ///< Lower bound
   SL,  ///< Strict lower bound
+  B,   ///< Both upper and lower bound are equal (fixed)
+  SU,  ///< Strict upper bound
+  U,   ///< Upper bound
+  D,   ///< Variable must be different from the bound
   F,   ///< Free variable
 };
 
