@@ -10,12 +10,12 @@
 #pragma once
 
 #include <map>
-#include <optional>
 #include <set>
 #include <utility>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/LpColBound.h"
+#include "dlinear/solver/TheorySolverBoundIterator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/SortedVector.hpp"
 #include "dlinear/util/exception.h"
@@ -24,7 +24,7 @@ namespace dlinear {
 
 namespace {
 using Bound_ = std::tuple<mpq_class, LpColBound, int>;
-}
+}  // namespace
 
 struct BoundComparator {
   bool operator()(const Bound_& lhs, const Bound_& rhs) const;
@@ -42,12 +42,13 @@ struct BoundComparator {
 class TheorySolverBoundVector {
  public:
   using Bound = Bound_;
-  using Violation = std::pair<SortedVector<Bound>::const_iterator, SortedVector<Bound>::const_iterator>;
+  using BoundVector = SortedVector<Bound, BoundComparator>;
+  using Violation = TheorySolverBoundIterator<BoundVector>;
 
   explicit TheorySolverBoundVector(mpq_class inf);
   TheorySolverBoundVector(mpq_class inf_l, mpq_class inf_u);
 
-  std::optional<Violation> AddBound(const mpq_class& value, LpColBound lp_bound, int lit);
+  Violation AddBound(const mpq_class& value, LpColBound lp_bound, int lit);
   void SetLowerBound(const mpq_class& value);
   void SetUpperBound(const mpq_class& value);
   void SetBounds(const mpq_class& lb, const mpq_class& ub);
@@ -60,16 +61,16 @@ class TheorySolverBoundVector {
   [[nodiscard]] int n_lower_bounds() const { return n_lower_bounds_; }
   [[nodiscard]] Violation active_bounds() const;
   [[nodiscard]] std::pair<mpq_class, mpq_class> active_bound_value() const;
-  [[nodiscard]] const SortedVector<Bound, BoundComparator>& bounds() const { return bounds_; }
+  [[nodiscard]] const BoundVector& bounds() const { return bounds_; }
+  [[nodiscard]] const BoundVector& nq_bounds() const { return nq_bounds_; }
   [[nodiscard]] const mpq_class& inf_l() const { return inf_l_; }
   [[nodiscard]] const mpq_class& inf_u() const { return inf_u_; }
   [[nodiscard]] const mpq_class& active_lower_bound() const { return active_lower_bound_; }
   [[nodiscard]] const mpq_class& active_upper_bound() const { return active_upper_bound_; }
-  [[nodiscard]] const std::set<mpq_class>& nq_values() const { return nq_values_; }
 
   [[nodiscard]] const Bound& operator[](size_t idx) const { return bounds_[idx]; }
 
-  [[nodiscard]] std::optional<Violation> ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const;
+  [[nodiscard]] Violation ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const;
   [[nodiscard]] Violation ViolatedBounds(const mpq_class& value) const;
   [[nodiscard]] bool ViolatedNqBounds() const;
   [[nodiscard]] bool ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const;
@@ -79,21 +80,33 @@ class TheorySolverBoundVector {
   [[nodiscard]] bool IsUpperBound(const mpq_class& value) const;
 
  private:
-  inline static Bound GetDefaultLowerBound(const mpq_class& value) { return std::make_tuple(value, LpColBound::L, 0); }
-  inline static Bound GetDefaultUpperBound(const mpq_class& value) { return std::make_tuple(value, LpColBound::U, 0); }
+  inline static Bound GetDefaultLowerBound(const mpq_class& value) { return {value, LpColBound::L, 0}; }
+  inline static Bound GetDefaultUpperBound(const mpq_class& value) { return {value, LpColBound::U, 0}; }
+  inline static Bound GetDefaultNqLowerBound(const mpq_class& value) { return {value, LpColBound::D, 0}; }
+  inline static Bound GetDefaultNqUpperBound(const mpq_class& value) { return {value, LpColBound::D, 0}; }
 
-  [[nodiscard]] inline SortedVector<Bound, BoundComparator>::const_iterator FindLowerBoundValue(
-      const mpq_class& value) const {
+  [[nodiscard]] inline BoundVector::const_iterator FindLowerBoundValue(const mpq_class& value) const {
     return bounds_.lower_bound(GetDefaultLowerBound(value));
   }
-  [[nodiscard]] inline SortedVector<Bound, BoundComparator>::const_iterator FindUpperBoundValue(
-      const mpq_class& value) const {
+  [[nodiscard]] inline BoundVector::const_iterator FindStrictLowerBoundValue(const mpq_class& value) const {
+    return bounds_.lower_bound({value, LpColBound::SL, 0});
+  }
+  [[nodiscard]] inline BoundVector::const_iterator FindUpperBoundValue(const mpq_class& value) const {
     return bounds_.upper_bound(GetDefaultUpperBound(value));
+  }
+  [[nodiscard]] inline BoundVector::const_iterator FindStrictUpperBoundValue(const mpq_class& value) const {
+    return bounds_.upper_bound({value, LpColBound::SU, 0});
+  }
+  [[nodiscard]] inline BoundVector::const_iterator FindLowerNqBoundValue(const mpq_class& value) const {
+    return nq_bounds_.lower_bound(GetDefaultNqLowerBound(value));
+  }
+  [[nodiscard]] inline BoundVector::const_iterator FindUpperNqBoundValue(const mpq_class& value) const {
+    return nq_bounds_.upper_bound(GetDefaultNqUpperBound(value));
   }
 
   int n_lower_bounds_;
-  SortedVector<Bound, BoundComparator> bounds_;
-  std::set<mpq_class> nq_values_;
+  BoundVector bounds_;
+  BoundVector nq_bounds_;
   mpq_class active_lower_bound_;
   mpq_class active_upper_bound_;
   mpq_class inf_l_;
@@ -104,7 +117,6 @@ using TheorySolverBoundVectorMap = std::map<Variable::Id, TheorySolverBoundVecto
 using TheorySolverBoundVectorVector = std::vector<TheorySolverBoundVector>;
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector& bounds_vector);
-std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector::Violation& violation);
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector::Bound& bound);
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVectorMap& bounds_vector_map);
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVectorVector& bounds_vector_vector);

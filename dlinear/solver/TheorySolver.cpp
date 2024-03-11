@@ -68,31 +68,31 @@ bool TheorySolver::IsSimpleBound(const Formula &formula) {
   return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
 }
 
-bool TheorySolver::IsEqualTo(const Formula &formula, bool truth) {
+bool TheorySolver::IsEqualTo(const Formula &formula, const bool truth) {
   return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
-bool TheorySolver::IsNotEqualTo(const Formula &formula, bool truth) {
+bool TheorySolver::IsNotEqualTo(const Formula &formula, const bool truth) {
   return truth ? is_not_equal_to(formula) : is_equal_to(formula);
 }
 
-bool TheorySolver::IsGreaterThan(const Formula &formula, bool truth) {
+bool TheorySolver::IsGreaterThan(const Formula &formula, const bool truth) {
   return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
 }
 
-bool TheorySolver::IsLessThan(const Formula &formula, bool truth) {
+bool TheorySolver::IsLessThan(const Formula &formula, const bool truth) {
   return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
 }
 
-bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, bool truth) {
+bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, const bool truth) {
   return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
 }
 
-bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, bool truth) {
+bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, const bool truth) {
   return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
 }
 
-TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
+TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool truth) {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
 
   const Expression &lhs{get_lhs_expression(formula)};
@@ -124,47 +124,47 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, bool truth) {
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
-std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(const Violation &violation, int theory_col) const {
+std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_col) const {
   std::vector<LiteralSet> explanations{};
   TheoryBoundsToExplanations(violation, theory_col, explanations);
   return explanations;
 }
-void TheorySolver::TheoryBoundsToExplanations(const Violation &violation, int theory_bound,
+void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_bound,
                                               std::vector<LiteralSet> explanations) const {
   const Literal bound_lit{theory_bound_to_lit_[theory_bound]};
-  for (auto it = violation.first; it != violation.second; ++it) {
-    explanations.push_back({bound_lit, theory_bound_to_lit_[std::get<2>(*it)]});
+  for (; violation; ++violation) {
+    explanations.push_back({bound_lit, theory_bound_to_lit_[std::get<2>(*violation)]});
   }
 }
-void TheorySolver::TheoryBoundsToExplanation(int theory_col, const bool active, LiteralSet &explanation) const {
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {
   if (active) {
-    const auto [start_it, end_it] = theory_bounds_[theory_col].active_bounds();
-    for (auto it = start_it; it != end_it; ++it) explanation.insert(theory_bound_to_lit_[std::get<2>(*it)]);
+    for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it)
+      explanation.insert(theory_bound_to_lit_[std::get<2>(*it)]);
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) {
       explanation.insert(theory_bound_to_lit_[std::get<2>(bound)]);
     }
   }
 }
-void TheorySolver::TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const {
-  const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
-  for (auto it = it_start; it != it_end; ++it) explanation.insert(theory_bound_to_lit_[std::get<2>(*it)]);
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const mpq_class &value,
+                                             LiteralSet &explanation) const {
+  for (auto it = theory_bounds_[theory_col].ViolatedBounds(value); it; ++it)
+    explanation.insert(theory_bound_to_lit_[std::get<2>(*it)]);
 }
 
-void TheorySolver::TheoryBoundsToBoundIdxs(const TheorySolver::Violation &violation, std::set<int> &bound_idxs) {
-  for (auto it = violation.first; it != violation.second; ++it) bound_idxs.insert(std::get<2>(*it));
+void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, std::set<int> &bound_idxs) {
+  for (; violation; ++violation) bound_idxs.insert(std::get<2>(*violation));
 }
-void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const bool active, std::set<int> &bound_idxs) const {
+void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool active, std::set<int> &bound_idxs) const {
   if (active) {
-    const auto [start_it, end_it] = theory_bounds_[theory_col].active_bounds();
-    for (auto it = start_it; it != end_it; ++it) bound_idxs.insert(std::get<2>(*it));
+    for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it) bound_idxs.insert(std::get<2>(*it));
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(std::get<2>(bound));
   }
 }
-void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const {
-  const auto [it_start, it_end] = theory_bounds_[theory_col].ViolatedBounds(value);
-  for (auto it = it_start; it != it_end; ++it) bound_idxs.insert(std::get<2>(*it));
+void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const mpq_class &value,
+                                           std::set<int> &bound_idxs) const {
+  for (auto it = theory_bounds_[theory_col].ViolatedBounds(value); it; ++it) bound_idxs.insert(std::get<2>(*it));
 }
 
 }  // namespace dlinear

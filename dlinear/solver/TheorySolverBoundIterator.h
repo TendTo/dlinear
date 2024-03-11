@@ -3,14 +3,12 @@
 #include <algorithm>
 #include <iterator>
 
-#include "dlinear/util/SortedVector.hpp"
-
 namespace dlinear {
 
-template <class T, class Comparator = std::less<T>>
+template <class T>
 class TheorySolverBoundIterator {
  public:
-  using vector_type = SortedVector<T, Comparator>;
+  using vector_type = T;
   using internal_iterator = typename vector_type::const_iterator;
   using iterator_category = std::input_iterator_tag;
   using value_type = typename vector_type::value_type;
@@ -18,7 +16,8 @@ class TheorySolverBoundIterator {
   using pointer = value_type const *;
   using difference_type = ptrdiff_t;
 
-  explicit TheorySolverBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
+  TheorySolverBoundIterator();
+  TheorySolverBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
   explicit TheorySolverBoundIterator(std::pair<internal_iterator, internal_iterator> bounds);
   TheorySolverBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it,
                             internal_iterator begin_nq_bounds_it, internal_iterator end_nq_bounds_it);
@@ -38,9 +37,17 @@ class TheorySolverBoundIterator {
 
   value_type operator[](int i) const;
 
-  [[nodiscard]] size_t size() const {
-    return std::distance(begin_bounds_it_, end_bounds_it_) + std::distance(begin_nq_bounds_it_, end_nq_bounds_it_);
-  }
+  std::pair<internal_iterator, internal_iterator> bounds() const { return {bounds_it_, end_bounds_it_}; }
+  std::pair<internal_iterator, internal_iterator> nq_bounds() const { return {nq_bounds_it_, end_nq_bounds_it_}; }
+  [[nodiscard]] size_t bounds_size() const { return std::distance(bounds_it_, end_bounds_it_); }
+  [[nodiscard]] size_t nq_bounds_size() const { return std::distance(nq_bounds_it_, end_nq_bounds_it_); }
+  [[nodiscard]] bool bounds_empty() const { return bounds_it_ == end_bounds_it_; }
+  [[nodiscard]] bool nq_bounds_empty() const { return nq_bounds_it_ == end_nq_bounds_it_; }
+  [[nodiscard]] bool empty() const { return bounds_empty() && nq_bounds_empty(); }
+  [[nodiscard]] size_t size() const { return bounds_size() + nq_bounds_size(); }
+
+ private:
+  static const vector_type default_empty_vector_;
 
   const internal_iterator begin_bounds_it_;
   internal_iterator bounds_it_;
@@ -50,5 +57,8 @@ class TheorySolverBoundIterator {
   internal_iterator nq_bounds_it_;
   const internal_iterator end_nq_bounds_it_;
 };
+
+template <class T>
+std::ostream &operator<<(std::ostream &os, const TheorySolverBoundIterator<T> &violation);
 
 }  // namespace dlinear

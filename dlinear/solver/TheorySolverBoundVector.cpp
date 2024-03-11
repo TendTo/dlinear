@@ -26,7 +26,7 @@ bool BoundComparator::operator()(const TheorySolverBoundVector::Bound& lhs,
 TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf)
     : n_lower_bounds_{0},
       bounds_{},
-      nq_values_{},
+      nq_bounds_{},
       active_lower_bound_{-inf},
       active_upper_bound_{inf},
       inf_l_{-inf},
@@ -35,20 +35,19 @@ TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf)
 TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf_l, mpq_class inf_u)
     : n_lower_bounds_{0},
       bounds_{},
-      nq_values_{},
+      nq_bounds_{},
       active_lower_bound_{inf_l},
       active_upper_bound_{inf_u},
       inf_l_{std::move(inf_l)},
       inf_u_{std::move(inf_u)} {}
 
-std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBound(const mpq_class& value,
-                                                                                    LpColBound lp_bound,
-                                                                                    const int idx) {
+TheorySolverBoundVector::Violation TheorySolverBoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
+                                                                     const int idx) {
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D,
                      "Valid must be L, U, B, SL, SU or D. Received: {}", lp_bound);
-  const std::optional<Violation> violation{ViolatedBounds(value, lp_bound)};
-  if (violation.has_value()) return violation;
+  const Violation violation{ViolatedBounds(value, lp_bound)};
+  if (!violation.empty()) return violation;
 
   // Add the new lp_bound
   auto it = bounds_.end();
@@ -63,16 +62,17 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
       break;
     case LpColBound::B:
       // Check if adding this lp_bound will cause a violation
-      if (ViolatedNqBounds(value, value)) return {{FindLowerBoundValue(value), FindUpperBoundValue(value)}};
+      if (ViolatedNqBounds(value, value))
+        return {bounds_.cend(), bounds_.cend(), FindLowerNqBoundValue(value), FindUpperNqBoundValue(value)};
       ++n_lower_bounds_;
       active_lower_bound_ = active_upper_bound_ = value;
       bounds_.emplace(value, LpColBound::L, idx);
       bounds_.emplace(value, LpColBound::U, idx);
-      return std::nullopt;
+      return {};
     case LpColBound::D:
-      if (IsActiveEquality(value)) return {{FindLowerBoundValue(value), FindUpperBoundValue(value)}};
-      nq_values_.insert(value);
-      return std::nullopt;
+      if (IsActiveEquality(value)) return {FindLowerBoundValue(value), FindUpperBoundValue(value)};
+      nq_bounds_.emplace(value, lp_bound, idx);
+      return {};
     default:
       break;
   }
@@ -93,20 +93,19 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::AddBo
     if (ViolatedNqBounds()) {
       bounds_.erase(it);
       if (lp_bound == LpColBound::L || lp_bound == LpColBound::SL) --n_lower_bounds_;
-      const std::pair<Violation::first_type, Violation::second_type> nq_violation = {
-          FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_)};
+      const Violation nq_violation{FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_)};
       active_lower_bound_ = backup_active_lower_bound;
       active_upper_bound_ = backup_active_upper_bound;
       return nq_violation;
     }
   }
 
-  return std::nullopt;
+  return {};
 }
 
-std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::ViolatedBounds(const mpq_class& value,
-                                                                                          LpColBound lp_bound) const {
-  if (lp_bound == LpColBound::D) return std::nullopt;
+TheorySolverBoundVector::Violation TheorySolverBoundVector::ViolatedBounds(const mpq_class& value,
+                                                                           LpColBound lp_bound) const {
+  if (lp_bound == LpColBound::D) return {};
 
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU,
@@ -114,43 +113,44 @@ std::optional<TheorySolverBoundVector::Violation> TheorySolverBoundVector::Viola
 
   DLINEAR_TRACE_FMT("TheorySolverBoundVector::ViolatedBounds: checking ({} {})", value, lp_bound);
   auto it = bounds_.cend();
+
   switch (lp_bound) {
     case LpColBound::SL:
     case LpColBound::L:
-      if (value > active_upper_bound_)
-        return {{bounds_.cbegin() + n_lower_bounds_, bounds_.upper_bound({value, LpColBound::SU, 0})}};
+      if (value > active_upper_bound_) return {bounds_.cbegin() + n_lower_bounds_, FindStrictUpperBoundValue(value)};
       it = bounds_.upper_bound({value, lp_bound, 0});
-      if (it == bounds_.cend() || std::get<0>(*it) != value) return std::nullopt;
-      if (lp_bound == LpColBound::L && std::get<1>(*it) != LpColBound::SU) return std::nullopt;
+      if (it == bounds_.cend() || std::get<0>(*it) != value) return {};
+      if (lp_bound == LpColBound::L && std::get<1>(*it) != LpColBound::SU) return {};
       TRACE_VIOLATED_BOUNDS(it);
-      DLINEAR_ASSERT(bounds_.cbegin() + n_lower_bounds_ < FindUpperBoundValue(value), "Bounds must not be inverted");
-      return {{bounds_.cbegin() + n_lower_bounds_, FindUpperBoundValue(value)}};
+      DLINEAR_ASSERT(bounds_.cbegin() + n_lower_bounds_ < FindStrictUpperBoundValue(value),
+                     "Bounds must not be inverted");
+      return {bounds_.cbegin() + n_lower_bounds_, FindStrictUpperBoundValue(value)};
     case LpColBound::SU:
     case LpColBound::U:
-      if (value < active_lower_bound_)
-        return {{bounds_.lower_bound({value, LpColBound::SL, 0}), bounds_.cbegin() + n_lower_bounds_}};
+      if (value < active_lower_bound_) return {FindStrictLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_};
       it = bounds_.lower_bound({value, lp_bound, 0});
-      if (it == bounds_.cbegin() || std::get<0>(*(it - 1)) != value) return std::nullopt;
-      if (lp_bound == LpColBound::U && std::get<1>(*(it - 1)) != LpColBound::SL) return std::nullopt;
+      if (it == bounds_.cbegin() || std::get<0>(*(it - 1)) != value) return {};
+      if (lp_bound == LpColBound::U && std::get<1>(*(it - 1)) != LpColBound::SL) return {};
       TRACE_VIOLATED_BOUNDS((it - 1));
-      DLINEAR_ASSERT(FindLowerBoundValue(value) < bounds_.cbegin() + n_lower_bounds_, "Bounds must not be inverted");
-      return {{FindLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_}};
+      DLINEAR_ASSERT(FindStrictLowerBoundValue(value) < bounds_.cbegin() + n_lower_bounds_,
+                     "Bounds must not be inverted");
+      return {FindStrictLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_};
     case LpColBound::B:
-      if (value < active_lower_bound_) return {{FindLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_}};
-      if (value > active_upper_bound_) return {{bounds_.cbegin() + n_lower_bounds_, FindUpperBoundValue(value)}};
+      if (value < active_lower_bound_) return {FindLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_};
+      if (value > active_upper_bound_) return {bounds_.cbegin() + n_lower_bounds_, FindUpperBoundValue(value)};
       it = bounds_.upper_bound({value, LpColBound::L, 0});
       if ((it != bounds_.cend() && std::get<0>(*it) == value && std::get<1>(*it) == LpColBound::SU)) {
         TRACE_VIOLATED_BOUNDS(it);
         DLINEAR_ASSERT(bounds_.cbegin() + n_lower_bounds_ < FindUpperBoundValue(value), "Bounds must not be inverted");
-        return {{bounds_.cbegin() + n_lower_bounds_, FindUpperBoundValue(value)}};
+        return {bounds_.cbegin() + n_lower_bounds_, FindUpperBoundValue(value)};
       }
       it = bounds_.lower_bound({value, LpColBound::U, 0});
       if ((it != bounds_.cbegin() && std::get<0>(*(it - 1)) == value && std::get<1>(*(it - 1)) == LpColBound::SL)) {
         TRACE_VIOLATED_BOUNDS((it - 1));
         DLINEAR_ASSERT(FindLowerBoundValue(value) < bounds_.cbegin() + n_lower_bounds_, "Bounds must not be inverted");
-        return {{FindLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_}};
+        return {FindLowerBoundValue(value), bounds_.cbegin() + n_lower_bounds_};
       }
-      return std::nullopt;
+      return {};
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -174,9 +174,9 @@ TheorySolverBoundVector::Violation TheorySolverBoundVector::ViolatedBounds(const
 bool TheorySolverBoundVector::ViolatedNqBounds() const {
   if (active_upper_bound_ != active_lower_bound_) return false;
   // The active bounds are equal, verify whether they are violated
-  auto nq_value_it = nq_values_.find(active_upper_bound_);
+  auto nq_value_it = nq_bounds_.find({active_upper_bound_, LpColBound::D, 0});
   // No violation, return
-  if (nq_value_it == nq_values_.end()) return false;
+  if (nq_value_it == nq_bounds_.end()) return false;
   // Violated strict bound, remove the last added bound and return the interval
   return true;
 }
@@ -184,9 +184,9 @@ bool TheorySolverBoundVector::ViolatedNqBounds() const {
 bool TheorySolverBoundVector::ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const {
   if (lb != ub) return false;
   // The active bounds are equal, verify whether they are violated
-  auto nq_value_it = nq_values_.find(lb);
+  auto nq_value_it = nq_bounds_.find({lb, LpColBound::D, 0});
   // No violation, return
-  if (nq_value_it == nq_values_.end()) return false;
+  if (nq_value_it == nq_bounds_.end()) return false;
   // Violated strict bound, remove the last added bound and return the interval
   return true;
 }
@@ -194,7 +194,7 @@ bool TheorySolverBoundVector::ViolatedNqBounds(const mpq_class& lb, const mpq_cl
 void TheorySolverBoundVector::Clear() {
   bounds_.clear();
   n_lower_bounds_ = 0;
-  nq_values_.clear();
+  nq_bounds_.clear();
   active_lower_bound_ = inf_l_;
   active_upper_bound_ = inf_u_;
 }
@@ -229,10 +229,8 @@ bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
 }
 
 TheorySolverBoundVector::Violation TheorySolverBoundVector::active_bounds() const {
-  if (bounds_.empty()) return {bounds_.cend(), bounds_.cend()};
-  if (n_lower_bounds_ == 0 || n_lower_bounds_ == static_cast<int>(bounds_.size()))
-    return {bounds_.cbegin(), bounds_.cend()};
-  return {FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_)};
+  return {FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_),
+          FindLowerNqBoundValue(active_lower_bound_), FindUpperNqBoundValue(active_upper_bound_)};
 }
 
 std::pair<mpq_class, mpq_class> TheorySolverBoundVector::active_bound_value() const {
@@ -272,9 +270,6 @@ std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector& bounds
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector::Bound& bound) {
   const auto& [value, type, idx] = bound;
   return os << "Bound{ " << value << ", " << type << ", " << idx << " }";
-}
-std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVector::Violation& violation) {
-  return os << "Violation{ " << *violation.first << ", violation.end() }";
 }
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVectorMap& bounds_vector_map) {
   os << "TheorySolverBoundVectorMap{ ";

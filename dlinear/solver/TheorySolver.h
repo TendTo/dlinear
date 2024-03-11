@@ -128,15 +128,14 @@ class TheorySolver {
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
 
-  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(const Violation &violation, int theory_col) const;
-  void TheoryBoundsToExplanations(const Violation &violation, int theory_bound,
-                                  std::vector<LiteralSet> explanations) const;
+  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_col) const;
+  void TheoryBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
   void TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const;
 
   void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
   void TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const;
-  static void TheoryBoundsToBoundIdxs(const Violation &violation, std::set<int> &bound_idxs);
+  static void TheoryBoundsToBoundIdxs(Violation violation, std::set<int> &bound_idxs);
 
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
