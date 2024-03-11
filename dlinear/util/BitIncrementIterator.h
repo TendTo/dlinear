@@ -89,10 +89,10 @@ class BitIncrementIterator {
   bool operator!=(const BitIncrementIterator &rhs) const { return vector_ != rhs.vector_; }
 
   BitIncrementIterator &operator++();
-  BitIncrementIterator operator++(int);
+  const BitIncrementIterator operator++(int);
 
   BitIncrementIterator &operator--();
-  BitIncrementIterator operator--(int);
+  const BitIncrementIterator operator--(int);
 
   bool operator[](size_t i) const;
 

@@ -83,9 +83,15 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "theory_solver_bound_vector",
-    srcs = ["TheorySolverBoundVector.cpp"],
-    hdrs = ["TheorySolverBoundVector.h"],
+    name = "theory_solver_bounds",
+    srcs = [
+        "TheorySolverBoundIterator.cpp",
+        "TheorySolverBoundVector.cpp",
+    ],
+    hdrs = [
+        "TheorySolverBoundIterator.h",
+        "TheorySolverBoundVector.h",
+    ],
     deps = [
         ":lp_bound",
         "//dlinear/libs:gmp",
@@ -133,7 +139,7 @@ dlinear_cc_library(
         ":lp_bound",
         ":lp_sense",
         ":sat_result",
-        ":theory_solver_bound_vector",
+        ":theory_solver_bounds",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",

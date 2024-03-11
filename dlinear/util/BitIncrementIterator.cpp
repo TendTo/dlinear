@@ -58,7 +58,7 @@ BitIncrementIterator &BitIncrementIterator::operator++() {
   return *this;
 }
 
-BitIncrementIterator BitIncrementIterator::operator++(int) {
+const BitIncrementIterator BitIncrementIterator::operator++(int) {
   BitIncrementIterator tmp(*this);
   operator++();
   return tmp;
@@ -78,6 +78,11 @@ BitIncrementIterator &BitIncrementIterator::operator--() {
   }
 
   return *this;
+}
+const BitIncrementIterator BitIncrementIterator::operator--(int) {
+  BitIncrementIterator tmp{*this};
+  operator--();
+  return tmp;
 }
 
 bool BitIncrementIterator::operator[](size_t i) const { return vector_[i]; }

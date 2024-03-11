@@ -16,7 +16,13 @@ dlinear_cc_library(
 dlinear_cc_googletest(
     name = "test_theory_solver_bound_vector",
     tags = ["solver"],
-    deps = ["//dlinear/solver:theory_solver_bound_vector"],
+    deps = ["//dlinear/solver:theory_solver_bounds"],
+)
+
+dlinear_cc_googletest(
+    name = "test_theory_solver_bound_iterator",
+    tags = ["solver"],
+    deps = ["//dlinear/solver:theory_solver_bounds"],
 )
 
 dlinear_cc_googletest(
