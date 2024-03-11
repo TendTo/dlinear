@@ -86,7 +86,13 @@ class SoplexTheorySolver : public TheorySolver {
    */
   bool IsRowActive(int spx_row, const soplex::Rational& value);
 
-  void SetSPXVarBound();
+  virtual void SetSPXVarBound();
+
+  void SetSpxRow(int spx_row);
+  void SetSpxRow(int spx_row, bool truth);
+  void SetSpxRow(int spx_row, const Variables& free_vars);
+  virtual void SetSpxRow(int spx_row, bool truth, const Variables& free_vars) = 0;
+
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
    *

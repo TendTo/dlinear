@@ -272,4 +272,15 @@ void SoplexTheorySolver::SetSPXVarBound() {
   spx_.changeUpperRational(spx_upper_);
 }
 
+void SoplexTheorySolver::SetSpxRow(const int spx_row) {
+  const auto &[var, truth] = theory_row_to_lit_[spx_row];
+  SetSpxRow(spx_row, truth, predicate_abstractor_[var].GetFreeVariables());
+}
+void SoplexTheorySolver::SetSpxRow(const int spx_row, const bool truth) {
+  SetSpxRow(spx_row, truth, predicate_abstractor_[theory_row_to_lit_[spx_row].first].GetFreeVariables());
+}
+void SoplexTheorySolver::SetSpxRow(int spx_row, const Variables &free_vars) {
+  SetSpxRow(spx_row, theory_row_to_lit_[spx_row].second, free_vars);
+}
+
 }  // namespace dlinear

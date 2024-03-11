@@ -88,27 +88,10 @@ std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &li
   if (it_row != lit_to_theory_row_.end()) {
     // A non-trivial linear literal from the input problem
     const int spx_row = it_row->second;
-
-    const LpRowSense sense = spx_sense_[spx_row];
-    const mpq_class &rhs{spx_rhs_[spx_row]};
-    if (truth) {
-      if (sense == LpRowSense::NQ) return {};
-      spx_.changeRangeRational(spx_row,
-                               sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs))
-                                                                                  : Rational(-soplex::infinity),
-                               sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs))
-                                                                                  : Rational(soplex::infinity));
-    } else {
-      if (sense == LpRowSense::EQ) return {};
-      spx_.changeRangeRational(spx_row,
-                               sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs))
-                                                                                  : Rational(-soplex::infinity),
-                               sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs))
-                                                                                  : Rational(soplex::infinity));
-    }
     // Update the truth value for the current iteration with the last SAT solver assignment
     theory_row_to_lit_[spx_row].second = truth;
-    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);
+
+    SetSpxRow(spx_row, truth, {});
     return {};
   }
 
@@ -264,6 +247,25 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: returning {}", sat_status);
 
   return sat_status;
+}
+
+void DeltaSoplexTheorySolver::SetSpxRow(int spx_row, bool truth, [[maybe_unused]] const Variables &free_vars) {
+  const LpRowSense sense = spx_sense_[spx_row];
+  const mpq_class &rhs{spx_rhs_[spx_row]};
+  if (truth) {
+    if (sense == LpRowSense::NQ) return;
+    spx_.changeRangeRational(
+        spx_row,
+        sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
+        sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
+  } else {
+    if (sense == LpRowSense::EQ) return;
+    spx_.changeRangeRational(
+        spx_row,
+        sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
+        sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
+  }
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);
 }
 
 }  // namespace dlinear

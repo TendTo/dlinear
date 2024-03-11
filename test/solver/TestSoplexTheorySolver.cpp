@@ -34,7 +34,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   MOCK_METHOD(std::vector<LiteralSet>, EnableLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, dlinear::LiteralSet &explanation), (override));
-
+  MOCK_METHOD(void, SetSpxRow, (int, bool, const dlinear::Variables &), (override));
   const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
   const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
   const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
@@ -52,7 +52,6 @@ class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
   Config config_;
   PredicateAbstractor abstractor_;
   explicit TestSoplexTheorySolver() : config_{} {
-    DLINEAR_LOG_INIT_VERBOSITY(2);
     config_.m_precision() = 0;
     config_.m_lp_solver() = Config::LPSolver::SOPLEX;
   }
