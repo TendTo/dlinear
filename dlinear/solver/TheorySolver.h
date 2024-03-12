@@ -131,12 +131,13 @@ class TheorySolver {
   [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_col) const;
   void TheoryBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
-  void TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const;
+
+  [[nodiscard]] std::vector<LiteralSet> TheoryRowBoundsToExplanations(Violation violation, int theory_col) const;
+  void TheoryRowBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
+  void TheoryRowBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
   void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
-  void TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const;
   static void TheoryBoundsToBoundIdxs(Violation violation, std::set<int> &bound_idxs);
-
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
    *
