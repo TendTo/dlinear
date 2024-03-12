@@ -99,9 +99,20 @@ typename TheorySolverBoundIterator<T>::value_type TheorySolverBoundIterator<T>::
 
 template <class T>
 std::ostream &operator<<(std::ostream &os, const TheorySolverBoundIterator<T> &violation) {
-  return os << "TheorySolverBoundIterator{" << violation.size() << "}";
+  TheorySolverBoundIterator<T> it{violation.bounds(), violation.nq_bounds()};
+  os << "TheorySolverBoundIterator{";
+  for (size_t i = 0; it; ++it, ++i) {
+    os << *it;
+    if (i + 1 < it.size()) {
+      os << ", ";
+    }
+  }
+  return os << "}";
 }
 
 template class TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound, BoundComparator>>;
+template std::ostream &operator<<(
+    std::ostream &os,
+    const TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound, BoundComparator>> &violation);
 
 }  // namespace dlinear
