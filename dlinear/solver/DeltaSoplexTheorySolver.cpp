@@ -119,9 +119,10 @@ std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &li
   // Add the active bound to the LP solver bounds
   const int theory_col = var_to_theory_col_.at(b_var.get_id());
   const int bound_idx = lit_to_theory_bound_.at(var.get_id());
+  theory_bound_to_lit_[bound_idx].second = truth;
   const auto violation{theory_bounds_[theory_col].AddBound(value, type, bound_idx)};
   // If the bound is invalid, return the explanation and update the SAT solver immediately
-  if (violation) return TheoryBoundsToExplanations(violation.value(), bound_idx);
+  if (violation) return TheoryBoundsToExplanations(violation, bound_idx);
   return {};
 }
 
