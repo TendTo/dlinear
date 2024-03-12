@@ -65,6 +65,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_smt2",
+    size = "medium",
     data = glob(["smt2/*.smt2"]),
     tags = ["solver"],
     deps = [
@@ -75,6 +76,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_mps",
+    size = "medium",
     data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [

@@ -31,11 +31,11 @@ INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
                                             ::testing::Values(0.0, 0.1)));
 
 TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
-//  const auto& [lp_solver, filename, precision] = GetParam();
-//  config_.m_filename() = filename;
-//  config_.m_lp_solver() = lp_solver;
-//  config_.m_precision() = precision;
-//  SmtSolver s{config_};
-//  const SolverResult result = s.CheckSat().result;
-//  EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
+  const auto& [lp_solver, filename, precision] = GetParam();
+  config_.m_filename() = filename;
+  config_.m_lp_solver() = lp_solver;
+  config_.m_precision() = precision;
+  SmtSolver s{config_};
+  const SolverResult result = s.CheckSat().result;
+  EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
 }
