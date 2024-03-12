@@ -80,28 +80,29 @@ class TheorySolverBoundVector {
   [[nodiscard]] bool IsUpperBound(const mpq_class& value) const;
 
  private:
-  inline static Bound GetDefaultLowerBound(const mpq_class& value) { return {value, LpColBound::L, 0}; }
-  inline static Bound GetDefaultUpperBound(const mpq_class& value) { return {value, LpColBound::U, 0}; }
-  inline static Bound GetDefaultNqLowerBound(const mpq_class& value) { return {value, LpColBound::D, 0}; }
-  inline static Bound GetDefaultNqUpperBound(const mpq_class& value) { return {value, LpColBound::D, 0}; }
-
   [[nodiscard]] inline BoundVector::const_iterator FindLowerBoundValue(const mpq_class& value) const {
-    return bounds_.lower_bound(GetDefaultLowerBound(value));
+    return bounds_.lower_bound({value, LpColBound::L, 0});
   }
   [[nodiscard]] inline BoundVector::const_iterator FindStrictLowerBoundValue(const mpq_class& value) const {
     return bounds_.lower_bound({value, LpColBound::SL, 0});
   }
+  [[nodiscard]] inline BoundVector::const_iterator FindLowerBound(const mpq_class& value, LpColBound bound) const {
+    return bounds_.lower_bound({value, bound, 0});
+  }
   [[nodiscard]] inline BoundVector::const_iterator FindUpperBoundValue(const mpq_class& value) const {
-    return bounds_.upper_bound(GetDefaultUpperBound(value));
+    return bounds_.upper_bound({value, LpColBound::U, 0});
   }
   [[nodiscard]] inline BoundVector::const_iterator FindStrictUpperBoundValue(const mpq_class& value) const {
     return bounds_.upper_bound({value, LpColBound::SU, 0});
   }
+  [[nodiscard]] inline BoundVector::const_iterator FindUpperBound(const mpq_class& value, LpColBound bound) const {
+    return bounds_.upper_bound({value, bound, 0});
+  }
   [[nodiscard]] inline BoundVector::const_iterator FindLowerNqBoundValue(const mpq_class& value) const {
-    return nq_bounds_.lower_bound(GetDefaultNqLowerBound(value));
+    return nq_bounds_.lower_bound({value, LpColBound::D, 0});
   }
   [[nodiscard]] inline BoundVector::const_iterator FindUpperNqBoundValue(const mpq_class& value) const {
-    return nq_bounds_.upper_bound(GetDefaultNqUpperBound(value));
+    return nq_bounds_.upper_bound({value, LpColBound::D, 0});
   }
 
   int n_lower_bounds_;

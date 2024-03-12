@@ -495,22 +495,33 @@ TEST_F(TestSortedVector, ViolationStrictInequalityOverEquality) {
 }
 
 TEST_F(TestSortedVector, ViolationLowerOverStrictInequality) {
+  empty_bounds_.AddBound(2, LpColBound::L, def_);
   empty_bounds_.AddBound(3, LpColBound::U, def_);
   empty_bounds_.AddBound(3, LpColBound::D, def_);
+  empty_bounds_.AddBound(4, LpColBound::U, def_);
   const auto violation = empty_bounds_.AddBound(3, LpColBound::L, def_);
   EXPECT_TRUE(violation);
-  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
-  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(std::distance(violation.bounds().first, violation.bounds().second), 1);
+  EXPECT_EQ(violation.bounds_size(), 1u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin() + 1);
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 1);
+  EXPECT_EQ(violation.nq_bounds_size(), 1u);
+  EXPECT_EQ(violation.nq_bounds().first, empty_bounds_.nq_bounds().cbegin());
+  EXPECT_EQ(violation.nq_bounds().second, empty_bounds_.nq_bounds().cend());
 }
+
 TEST_F(TestSortedVector, ViolationUpperOverStrictInequality) {
+  empty_bounds_.AddBound(2, LpColBound::L, def_);
   empty_bounds_.AddBound(3, LpColBound::L, def_);
   empty_bounds_.AddBound(3, LpColBound::D, def_);
+  empty_bounds_.AddBound(4, LpColBound::U, def_);
   const auto violation = empty_bounds_.AddBound(3, LpColBound::U, def_);
   EXPECT_TRUE(violation);
-  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
-  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(std::distance(violation.bounds().first, violation.bounds().second), 1);
+  EXPECT_EQ(violation.bounds_size(), 1u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin() + 1);
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 1);
+  EXPECT_EQ(violation.nq_bounds_size(), 1u);
+  EXPECT_EQ(violation.nq_bounds().first, empty_bounds_.nq_bounds().cbegin());
+  EXPECT_EQ(violation.nq_bounds().second, empty_bounds_.nq_bounds().cend());
 }
 
 TEST_F(TestSortedVector, ViolationUpperOverStrictLower) {
