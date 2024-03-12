@@ -71,7 +71,6 @@ class TheorySolverBoundVector {
   [[nodiscard]] const Bound& operator[](size_t idx) const { return bounds_[idx]; }
 
   [[nodiscard]] Violation ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const;
-  [[nodiscard]] Violation ViolatedBounds(const mpq_class& value) const;
   [[nodiscard]] bool ViolatedNqBounds() const;
   [[nodiscard]] bool ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const;
 
@@ -80,6 +79,8 @@ class TheorySolverBoundVector {
   [[nodiscard]] bool IsUpperBound(const mpq_class& value) const;
 
  private:
+  [[nodiscard]] inline BoundVector::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
+
   [[nodiscard]] inline BoundVector::const_iterator FindLowerBoundValue(const mpq_class& value) const {
     return bounds_.lower_bound({value, LpColBound::L, 0});
   }

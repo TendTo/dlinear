@@ -39,12 +39,12 @@ class TheorySolverBoundIterator {
 
   std::pair<internal_iterator, internal_iterator> bounds() const { return {bounds_it_, end_bounds_it_}; }
   std::pair<internal_iterator, internal_iterator> nq_bounds() const { return {nq_bounds_it_, end_nq_bounds_it_}; }
-  [[nodiscard]] size_t bounds_size() const { return std::distance(bounds_it_, end_bounds_it_); }
-  [[nodiscard]] size_t nq_bounds_size() const { return std::distance(nq_bounds_it_, end_nq_bounds_it_); }
-  [[nodiscard]] bool bounds_empty() const { return bounds_it_ == end_bounds_it_; }
-  [[nodiscard]] bool nq_bounds_empty() const { return nq_bounds_it_ == end_nq_bounds_it_; }
-  [[nodiscard]] bool empty() const { return bounds_empty() && nq_bounds_empty(); }
-  [[nodiscard]] size_t size() const { return bounds_size() + nq_bounds_size(); }
+  [[nodiscard]] inline size_t bounds_size() const { return std::distance(bounds_it_, end_bounds_it_); }
+  [[nodiscard]] inline size_t nq_bounds_size() const { return std::distance(nq_bounds_it_, end_nq_bounds_it_); }
+  [[nodiscard]] inline bool bounds_empty() const { return bounds_it_ == end_bounds_it_; }
+  [[nodiscard]] inline bool nq_bounds_empty() const { return nq_bounds_it_ == end_nq_bounds_it_; }
+  [[nodiscard]] inline bool empty() const { return bounds_empty() && nq_bounds_empty(); }
+  [[nodiscard]] inline size_t size() const { return bounds_size() + nq_bounds_size(); }
 
  private:
   static const vector_type default_empty_vector_;
