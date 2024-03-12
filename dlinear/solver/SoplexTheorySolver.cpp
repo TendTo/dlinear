@@ -71,7 +71,7 @@ std::vector<std::pair<int, Rational>> SoplexTheorySolver::GetActiveRows() {
   DLINEAR_TRACE_FMT("SoplexTheorySolver::GetActiveRows: row_values = {}", row_values);
   spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
   for (int i = 0; i < lp_rows.num(); i++) {
-    if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
+    if (lp_rows.lhs(i) == row_values[i] || lp_rows.rhs(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
   }
   return active_rows;
 }
@@ -85,7 +85,7 @@ std::vector<std::pair<int, soplex::Rational>> SoplexTheorySolver::GetActiveRows(
   DLINEAR_ASSERT(res, "The problem must have a solution");
   spx_.getRowsRational(0, spx_.numRowsRational() - 1, lp_rows);
   for (const int i : spx_rows) {
-    if (lp_rows.value(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
+    if (lp_rows.lhs(i) == row_values[i] || lp_rows.rhs(i) == row_values[i]) active_rows.emplace_back(i, row_values[i]);
   }
   return active_rows;
 }
