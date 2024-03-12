@@ -99,6 +99,23 @@ class SortedVector {
   }
 
   /**
+   * Insert an element with the provided @p value into the sorted list.
+   *
+   * The element is placed in the correct position to maintain the sorted order.
+   * It returns an iterator to the inserted element.
+   * This version allows to specify if the element should be inserted in the lower or upper bound.
+   * @param value value of the element to insert
+   * @param insert_lower if true, the element is inserted in the lower bound, otherwise in the upper bound
+   * @return iterator to the inserted element
+   */
+  template <typename V>
+  iterator insert(V&& value, bool insert_lower) {
+    auto it = insert_lower ? std::lower_bound(vector_.cbegin(), vector_.cend(), value, compare_)
+                           : std::upper_bound(vector_.cbegin(), vector_.cend(), value, compare_);
+    return vector_.insert(it, std::forward<V>(value));
+  }
+
+  /**
    * Emplace a new element into the sorted list.
    *
    * The arguments are forwarded to the constructor of the element type.
@@ -108,6 +125,20 @@ class SortedVector {
   template <typename... Args>
   iterator emplace(Args&&... args) {
     return insert(T(std::forward<Args>(args)...));
+  }
+
+  /**
+   * Emplace a new element into the sorted list.
+   *
+   * The arguments are forwarded to the constructor of the element type.
+   * The element is placed in the correct position to maintain the sorted order.
+   * This version allows to specify if the element should be inserted in the lower or upper bound.
+   * @param insert_lower if true, the element is inserted in the lower bound, otherwise in the upper bound
+   * @param args arguments to forward to the constructor of the element type
+   */
+  template <typename... Args>
+  iterator emplace(bool insert_lower, Args&&... args) {
+    return insert(T(std::forward<Args>(args)...), insert_lower);
   }
 
   /**
