@@ -42,6 +42,9 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Reset(const Box& box) override;
 
  private:
+  void SetSPXVarBound() override;
+  void SetSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
+
   [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanation(const TheorySolver::Violation& violation,
                                                                   int spx_row) const;
 
