@@ -91,12 +91,14 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
-  theory_row_to_lit_.emplace_back(formulaVar);
-  theory_row_to_truth_.push_back(truth);
+  theory_row_to_lit_.push_back(lit);
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
 std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
   if (it_row != lit_to_theory_row_.end()) {
@@ -115,7 +117,7 @@ std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &l
     }
     mpq_QSchange_sense(qsx_, qsx_row, sense);
     mpq_QSchange_rhscoef(qsx_, qsx_row, rhs.get_mpq_t());
-    theory_row_to_truth_[qsx_row] = truth;
+    theory_row_to_lit_[qsx_row].second = truth;
     DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", qsx_row);
     return {};
   }
@@ -135,19 +137,26 @@ std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &l
   // - variable is the box variable
   // - type is 'L' for lower bound, 'U' for upper bound, 'B' for both, 'F' for free
   // - value is the bound value
-  Bound bound = GetBound(it->second, truth);
-  // If the bound type is 'I' or 'N' (delta > 0), we can just ignore the bound
-  if (std::get<1>(bound) == LpColBound::F) return {};
+  auto [b_var, type, value] = GetBound(it->second, truth);
+  // Since delta > 0, we can relax the bound type
+  type = ~type;
+  // If the bound is now free, there is no need to consider it
+  if (type == LpColBound::F) return {};
 
   // Add the active bound to the LP solver bounds
-  int theory_col = var_to_theory_col_[std::get<0>(bound).get_id()];
-  bool valid_bound = SetQSXVarBound(bound, theory_col);
-  theory_bound_to_explanation_[theory_col].insert(lit);
-  if (!valid_bound) return theory_bound_to_explanation_[theory_col];
+  const int theory_col = var_to_theory_col_.at(b_var.get_id());
+  const int bound_idx = lit_to_theory_bound_.at(var.get_id());
+  theory_bound_to_lit_[bound_idx].second = truth;
+  const auto violation{theory_bounds_[theory_col].AddBound(value, type, bound_idx)};
+  // If the bound is invalid, return the explanation and update the SAT solver immediately
+  if (violation) return TheoryBoundsToExplanations(violation, bound_idx);
   return {};
 }
 
 SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+
   static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaQsoptexTheorySolver", "Total # of CheckSat",
                              "Total time spent in CheckSat"};
   TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true /* start_timer */);
@@ -156,7 +165,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::CheckSat: Box = \n{}", box);
 
   int status = -1;
-  SatResult sat_status;
+  SatResult sat_status = SatResult::SAT_NO_RESULT;
 
   size_t rowcount = mpq_QSget_rowcount(qsx_);
   size_t colcount = mpq_QSget_colcount(qsx_);
@@ -166,13 +175,9 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   qsopt_ex::MpqArray y{rowcount};
 
   model_ = box;
-  for (const auto &var : theory_col_to_var_) {
-    if (!model_.has_variable(var)) {
-      // Variable should already be present
-      DLINEAR_WARN_FMT("DeltaQsoptexTheorySolver::CheckSat: Adding var {} to model from SAT", var);
-      model_.Add(var);
-    }
-  }
+  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
+                             [&box](const Variable &var) { return box.has_variable(var); }),
+                 "All theory variables must be present in the box");
 
   // If there are no constraints, we can immediately return SAT afterward
   if (rowcount == 0) {
@@ -181,10 +186,12 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
     return SatResult::SAT_DELTA_SATISFIABLE;
   }
 
+  // Set the bounds for the variables
+  SetQPXVarBound();
+
   // Now we call the solver
   int lp_status = -1;
-  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})",
-                    1 == simplex_sat_phase_ ? "one" : "two");
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})", simplex_sat_phase_);
 
   if (1 == simplex_sat_phase_) {
     status =
@@ -214,7 +221,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
       break;
     case QS_LP_UNSOLVED:
       sat_status = SatResult::SAT_UNSOLVED;
-      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
+      DLINEAR_WARN("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
       break;
     default:
       DLINEAR_UNREACHABLE();

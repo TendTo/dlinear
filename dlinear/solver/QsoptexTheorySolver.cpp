@@ -34,7 +34,7 @@ QsoptexTheorySolver::~QsoptexTheorySolver() { mpq_QSfree_prob(qsx_); }
 
 void QsoptexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());
-  // Found.
+  // The variable is already present
   if (it != var_to_theory_col_.end()) return;
 
   const int qsx_col = mpq_QSget_colcount(qsx_);
@@ -42,7 +42,7 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   var_to_theory_col_.emplace(var.get_id(), qsx_col);
   theory_col_to_var_.emplace_back(var);
-  theory_bound_to_explanation_.emplace_back();
+  theory_bounds_.emplace_back(mpq_class{mpq_NINFTY}, mpq_class{mpq_INFTY});
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
@@ -93,9 +93,11 @@ void QsoptexTheorySolver::UpdateModelBounds() {
 
 void QsoptexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("QsoptexTheorySolver::Reset(): Box =\n{}", box);
-  // Clear all the sets in the bounds to explanation map
-  for (auto &explanation : theory_bound_to_explanation_) explanation.clear();
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
+
   // Clear constraint bounds
+  for (auto &bound : theory_bounds_) bound.Clear();
   const int qsx_rows{mpq_QSget_rowcount(qsx_)};
   DLINEAR_ASSERT(static_cast<size_t>(qsx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
   for (int i = 0; i < qsx_rows; i++) {
@@ -104,19 +106,17 @@ void QsoptexTheorySolver::Reset(const Box &box) {
   }
   // Clear variable bounds
   [[maybe_unused]] const int qsx_cols{mpq_QSget_colcount(qsx_)};
-  DLINEAR_ASSERT(static_cast<size_t>(qsx_cols) == theory_col_to_var_.size(), "Column count mismatch");
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
+    DLINEAR_ASSERT(0 <= theory_col && theory_col < qsx_cols, "theory_col must be in bounds");
     if (box.has_variable(var)) {
       DLINEAR_ASSERT(Infinity::Ninfty() <= box[var].lb(), "Lower bound too low");
       DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "Lower bound must be smaller than upper bound");
       DLINEAR_ASSERT(box[var].ub() <= Infinity::Infty(), "Upper bound too high");
-      mpq_QSchange_bound(qsx_, theory_col, 'L', box[var].lb().get_mpq_t());
-      mpq_QSchange_bound(qsx_, theory_col, 'U', box[var].ub().get_mpq_t());
-    } else {
-      mpq_QSchange_bound(qsx_, theory_col, 'L', mpq_NINFTY);
-      mpq_QSchange_bound(qsx_, theory_col, 'U', mpq_INFTY);
+      theory_bounds_[theory_col].SetBounds(box[var].lb(), box[var].ub());
     }
+    mpq_QSchange_bound(qsx_, theory_col, 'L', mpq_NINFTY);
+    mpq_QSchange_bound(qsx_, theory_col, 'U', mpq_INFTY);
   }
 }
 
@@ -158,6 +158,13 @@ void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
     }
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
+  }
+}
+
+void QsoptexTheorySolver::SetQPXVarBound() {
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
+    mpq_QSchange_bound(qsx_, theory_col, 'L', theory_bounds_[theory_col].active_lower_bound().get_mpq_t());
+    mpq_QSchange_bound(qsx_, theory_col, 'U', theory_bounds_[theory_col].active_upper_bound().get_mpq_t());
   }
 }
 
@@ -265,14 +272,13 @@ void QsoptexTheorySolver::UpdateExplanation(const qsopt_ex::MpqArray &ray, Liter
       mpq_clear(temp);
       DLINEAR_TRACE_FMT("QsoptexTheorySolver::UpdateExplanation: ray[{}] = {} <= {} <= {}", i, l, mpq_class{ray[i]}, u);
     }
-    const Variable &var = theory_row_to_lit_[i];
+    const Literal &lit = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.insert({var, theory_row_to_truth_[i]});
+    explanation.insert(lit);
     // For each free variable in the literal, add their bounds to the explanation
-    for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
+    for (const auto &col_var : predicate_abstractor_[lit.first].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
-      const LiteralSet &theory_bound_to_explanation = theory_bound_to_explanation_.at(theory_col);
-      explanation.insert(theory_bound_to_explanation.cbegin(), theory_bound_to_explanation.cend());
+      TheoryBoundsToExplanation(theory_col, true, explanation);
     }
   }
 }

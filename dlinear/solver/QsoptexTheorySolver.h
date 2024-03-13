@@ -44,6 +44,7 @@ class QsoptexTheorySolver : public TheorySolver {
   void UpdateExplanation(LiteralSet &explanation) override;
   void UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) const;
 
+  void SetQPXVarBound();
   void SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value);
   void SetQSXVarObjCoef(const Variable &var, const mpq_class &value);
   bool SetQSXVarBound(const Bound &bound, int qsx_col);
