@@ -39,7 +39,10 @@ int main(int argc, const char* argv[]) {
 
   // Start the main timer and run the solver.
   dlinear::main_timer.start();
-  if (!config.silent()) std::cout << solver.CheckSat() << std::endl;
+  dlinear::SmtSolverOutput result = solver.CheckSat();
+  if (!config.silent()) std::cout << result << std::endl;
 
-  return 0;
+  return result.result == dlinear::SolverResult::SAT || result.result == dlinear::SolverResult::DELTA_SAT
+             ? EXIT_SUCCESS
+             : EXIT_FAILURE;
 }
