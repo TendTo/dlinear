@@ -27,7 +27,7 @@ bool is_integer(const mpq_class &v);
 
 /**
  * Convert @p v of int64_t to int.
- * @throws std::runtime_error if this conversion result in a loss of precision.
+ * @throw std::runtime_error if this conversion result in a loss of precision.
  * @param v value to convert
  * @return converted value
  */
@@ -35,7 +35,7 @@ int convert_int64_to_int(int64_t v);
 
 /**
  * Convert @p v of int64_t to double.
- * @throws std::runtime_error if this conversion result in a loss of precision.
+ * @throw std::runtime_error if this conversion result in a loss of precision.
  * @param v value to convert
  * @return converted value
  */

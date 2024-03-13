@@ -8,17 +8,20 @@
 
 namespace dlinear::drake::symbolic {
 
-/// Calls visitor object @p v with a polynomial symbolic-expression @p e, and
-/// arguments @p args. Visitor object is expected to implement the following
-/// methods which take @p f and @p args: `VisitConstant`, `VisitVariable`,
-/// `VisitAddition`, `VisitMultiplication`, `VisitDivision`, `VisitPow`.
-///
-/// @throws std::runtime_error if NaN is detected during a visit.
-///
-/// See the implementation of @c DegreeVisitor class and @c Degree function in
-/// symbolic/monomial.cc as an example usage.
-///
-/// @pre e.is_polynomial() is true.
+/**
+ * Call visitor object @p v with a polynomial symbolic-expression @p e, and arguments @p args.
+ * Visitor object is expected to implement the following methods which take @p f and @p args:
+ * `VisitConstant`, `VisitVariable`, `VisitAddition`, `VisitMultiplication`, `VisitDivision`, `VisitPow`.
+ * @pre e.is_polynomial() is true.
+ * @tparam Result type of the result of the visit
+ * @tparam Visitor type of visitor object which implements the visit methods
+ * @tparam Args argument types
+ * @param v pointer to the visitor object
+ * @param e symbolic expression to visit
+ * @param args arguments to pass to the visitor methods
+ * @return result of the visit
+ * @throw std::runtime_error if NaN is detected during a visit.
+ */
 template<typename Result, typename Visitor, typename... Args>
 Result VisitPolynomial(Visitor *v, const Expression &e, Args &&... args) {
   assert(e.is_polynomial());
@@ -66,18 +69,23 @@ Result VisitPolynomial(Visitor *v, const Expression &e, Args &&... args) {
   throw std::runtime_error("Should not be reachable.");
 }
 
-/// Calls visitor object @p v with a symbolic-expression @p e, and
-/// arguments @p args. Visitor object is expected to implement the
-/// following methods which take @p f and @p args:
-/// `VisitConstant`, `VisitVariable`, `VisitAddition`,
-/// `VisitMultiplication`, `VisitDivision`, `VisitLog`, `VisitAbs`,
-/// `VisitExp`, `VisitSqrt`, `VisitPow`, `VisitSin`, `VisitCos`,
-/// `VisitTan`, `VisitAsin`, `VisitAtan`, `VisitAtan2`, `VisitSinh`,
-/// `VisitCosh`, `VisitTanh`, `VisitMin`, `VisitMax`,
-/// `VisitIfThenElse`, `VisitUninterpretedFunction.
-///
-/// @throws std::runtime_error if NaN or an infinity is detected during a
-/// visit.
+/**
+ * Calls visitor object @p v with a symbolic-expression @p e, and arguments @p args.
+ *
+ * Visitor object is expected to implement the following methods which take @p f and @p args:
+ * `VisitConstant`, `VisitVariable`, `VisitAddition`, `VisitMultiplication`, `VisitDivision`, `VisitLog`, `VisitAbs`,
+ * `VisitExp`, `VisitSqrt`, `VisitPow`, `VisitSin`, `VisitCos`, `VisitTan`, `VisitAsin`, `VisitAtan`,
+ * `VisitAtan2`, `VisitSinh`, `VisitCosh`, `VisitTanh`, `VisitMin`,
+ * `VisitMax`, `VisitIfThenElse`, `VisitUninterpretedFunction.
+ * @tparam Result type of the result of the visit
+ * @tparam Visitor type of visitor object which implements the visit methods
+ * @tparam Args argument types
+ * @param v pointer to the visitor object
+ * @param e symbolic expression to visit
+ * @param args arguments to pass to the visitor methods
+ * @return result of the visit
+ * @throw std::runtime_error if NaN or an infinity is detected during a visit.
+ */
 template<typename Result, typename Visitor, typename... Args>
 Result VisitExpression(Visitor *v, const Expression &e, Args &&... args) {
   switch (e.get_kind()) {

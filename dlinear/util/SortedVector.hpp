@@ -158,7 +158,7 @@ class SortedVector {
    * Access element at index @p i with bounds checking.
    * @param i position of the element to access
    * @return element at the given position
-   * @throws std::out_of_range if @p i is out of range
+   * @throw std::out_of_range if @p i is out of range
    */
   const T& at(size_t i) const {
     if (i >= vector_.size()) throw std::out_of_range("Index out of range");
@@ -171,7 +171,7 @@ class SortedVector {
    * It also supports negative indices, where -1 is the last element, -2 is the second to last, and so on.
    * @param i position of the element to access (negative indices are supported)
    * @return element at the given position
-   * @throws std::out_of_range if @p i is out of range
+   * @throw std::out_of_range if @p i is out of range
    */
   const T& at(int i) const {
     if (i < 0) i = static_cast<int>(vector_.size()) + i;
@@ -356,6 +356,15 @@ class SortedVector {
   const_reverse_iterator crend() const { return vector_.crend(); }
 
  private:
+  /**
+   * Use the @link compare_ @endlink function to check if two elements are equal.
+   *
+   * Since the function only checks ordering, to make sure two elements are equal @link compare_ @endlink must be used twice.
+   * @param lhs left-hand side element
+   * @param rhs right-hand side element
+   * @return true if the elements are equal
+   * @return false if the elements are not equal
+   */
   inline bool IsEqual(const T& lhs, const T& rhs) const { return !compare_(lhs, rhs) && !compare_(rhs, lhs); }
 
   std::vector<T> vector_;  ///< Underlying vector to store the sorted list

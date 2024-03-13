@@ -252,27 +252,27 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   }
 }
 
-// bool SoplexTheorySolver::SetSPXVarBound(const TheorySolver::Bound &bound, int spx_col) {
+// bool SoplexTheorySolver::EnableSPXVarBound(const TheorySolver::Bound &bound, int spx_col) {
 //   const auto &[var, type, value] = bound;
-//   return SetSPXVarBound(var, type, value, spx_col);
+//   return EnableSPXVarBound(var, type, value, spx_col);
 // }
 
-void SoplexTheorySolver::SetSPXVarBound() {
+void SoplexTheorySolver::EnableSPXVarBound() {
   for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
     spx_.changeBoundsRational(theory_col, theory_bounds_[theory_col].active_lower_bound().get_mpq_t(),
                               theory_bounds_[theory_col].active_upper_bound().get_mpq_t());
   }
 }
 
-void SoplexTheorySolver::SetSpxRow(const int spx_row) {
+void SoplexTheorySolver::EnableSpxRow(const int spx_row) {
   const auto &[var, truth] = theory_row_to_lit_[spx_row];
-  SetSpxRow(spx_row, truth, predicate_abstractor_[var].GetFreeVariables());
+  EnableSpxRow(spx_row, truth, predicate_abstractor_[var].GetFreeVariables());
 }
-void SoplexTheorySolver::SetSpxRow(const int spx_row, const bool truth) {
-  SetSpxRow(spx_row, truth, predicate_abstractor_[theory_row_to_lit_[spx_row].first].GetFreeVariables());
+void SoplexTheorySolver::EnableSpxRow(const int spx_row, const bool truth) {
+  EnableSpxRow(spx_row, truth, predicate_abstractor_[theory_row_to_lit_[spx_row].first].GetFreeVariables());
 }
-void SoplexTheorySolver::SetSpxRow(int spx_row, const Variables &free_vars) {
-  SetSpxRow(spx_row, theory_row_to_lit_[spx_row].second, free_vars);
+void SoplexTheorySolver::EnableSpxRow(int spx_row, const Variables &free_vars) {
+  EnableSpxRow(spx_row, theory_row_to_lit_[spx_row].second, free_vars);
 }
 
 }  // namespace dlinear

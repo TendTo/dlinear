@@ -104,7 +104,7 @@ class BitIncrementIterator {
    * @param i index of the bit to check. The index must be in the range [0, n), big endian order.
    * @return true if the bit is fixed
    * @return false if the bit is not fixed
-   * @throws std::out_of_range if @p i is out of range
+   * @throw std::out_of_range if @p i is out of range
    */
   [[nodiscard]] bool IsFixed(size_t i) const { return fixed_[i]; }
 
@@ -139,7 +139,7 @@ class BitIncrementIterator {
    * @param i index of the bit to check. The index must be in the range [0, n), big endian order.
    * @return true if the bit has been fixed
    * @return false if the bit was already fixed
-   * @throws std::out_of_range if @p i is out of range
+   * @throw std::out_of_range if @p i is out of range
    */
   bool Learn(size_t i);
   /**
@@ -154,7 +154,7 @@ class BitIncrementIterator {
    * @param value value to set the bit to
    * @return true if the bit has now value @p value
    * @return false if the bit was already fixed and therefore not changed
-   * @throws std::out_of_range if @p i is out of range
+   * @throw std::out_of_range if @p i is out of range
    */
   bool Learn(size_t i, bool value);
 

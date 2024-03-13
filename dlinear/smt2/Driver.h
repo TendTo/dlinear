@@ -129,9 +129,12 @@ class Smt2Driver {
     bool is_var_;
   };
 
-  /// Returns a variable or constant expression associated with a name @p name.
-  ///
-  /// @throws if no variable or constant expression is associated with @p name.
+  /**
+   * Return a variable or constant expression associated with a name @p name.
+   * @param name name of the variable or constant expression
+   * @return the variable or constant expression with name @p name
+   * @throw if no variable or constant expression is associated with @p name
+   */
   const VariableOrConstant &lookup_variable(const std::string &name);
 
   void PushScope() { scope_.push(); }
@@ -153,8 +156,10 @@ class Smt2Driver {
 
   std::string &m_streamname() { return streamname_; }
 
-  /** Pointer to the current scanenr instance, this is used to connect the
-   * parser to the scanner. It is used in the yylex macro. */
+  /**
+   * Pointer to the current scanner instance, this is used to connect the
+   * parser to the scanner. It is used in the yylex macro.
+   */
   Smt2Scanner *scanner() { return scanner_; }
 
  private:

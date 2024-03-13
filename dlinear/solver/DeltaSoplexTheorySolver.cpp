@@ -91,7 +91,7 @@ std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &li
     // Update the truth value for the current iteration with the last SAT solver assignment
     theory_row_to_lit_[spx_row].second = truth;
 
-    SetSpxRow(spx_row, truth, {});
+    EnableSpxRow(spx_row, truth, {});
     return {};
   }
 
@@ -156,7 +156,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   }
 
   // Set the bounds for the variables
-  SetSPXVarBound();
+  EnableSPXVarBound();
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
@@ -242,7 +242,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   return sat_status;
 }
 
-void DeltaSoplexTheorySolver::SetSpxRow(int spx_row, bool truth, [[maybe_unused]] const Variables &free_vars) {
+void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth, [[maybe_unused]] const Variables &free_vars) {
   const LpRowSense sense = spx_sense_[spx_row];
   const mpq_class &rhs{spx_rhs_[spx_row]};
   if (truth) {

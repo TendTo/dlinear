@@ -36,8 +36,8 @@ class SoplexTheorySolver : public TheorySolver {
   void Reset(const Box& box) override;
 
  protected:
-  static mpq_class infinity_;
-  static mpq_class ninfinity_;
+  static mpq_class infinity_;   ///< Positive infinity
+  static mpq_class ninfinity_;  ///< Negative infinity
 
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet& explanation) override;
@@ -86,12 +86,44 @@ class SoplexTheorySolver : public TheorySolver {
    */
   bool IsRowActive(int spx_row, const soplex::Rational& value);
 
-  virtual void SetSPXVarBound();
+  /** Set the bounds of the variables in the LP solver.  */
+  virtual void EnableSPXVarBound();
 
-  void SetSpxRow(int spx_row);
-  void SetSpxRow(int spx_row, bool truth);
-  void SetSpxRow(int spx_row, const Variables& free_vars);
-  virtual void SetSpxRow(int spx_row, bool truth, const Variables& free_vars) = 0;
+  /**
+   * Enable the @p spx_row row for the LP solver.
+   *
+   * The truth value and the free variables are collected from the state of the solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @pre The row's truth value must have been updated correctly
+   * @pre The row's free variables must have been updated correctly
+   * @param spx_row index of the row to enable
+   */
+  void EnableSpxRow(int spx_row);
+  /**
+   * Enable the @p spx_row row for the LP solver.
+   *
+   * The free variables are collected from the state of the solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @pre The row's truth value must have been updated correctly
+   * @param spx_row index of the row to enable
+   * @param truth truth value of the row
+   */
+  void EnableSpxRow(int spx_row, bool truth);
+  /**
+   * Enable the @p spx_row row for the LP solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @param spx_row index of the row to enable
+   * @param free_vars free variables appearing in the row
+   */
+  void EnableSpxRow(int spx_row, const Variables& free_vars);
+  /**
+   * Enable the @p spx_row row for the LP solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @param spx_row index of the row to enable
+   * @param truth truth value of the row
+   * @param free_vars free variables appearing in the row
+   */
+  virtual void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) = 0;
 
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
@@ -102,6 +134,12 @@ class SoplexTheorySolver : public TheorySolver {
    * @return vector of coefficients to apply to the decisional variables in the row
    */
   soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
+  /**
+   * Set the coefficients to apply to @p var on a specific row.
+   * @param coeffs vector of coefficients to apply to the decisional variables
+   * @param var variable to set the coefficients for
+   * @param value value to set the coefficients to
+   */
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
   void CreateArtificials(int spx_row);
 

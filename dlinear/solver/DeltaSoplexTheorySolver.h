@@ -28,6 +28,13 @@
 
 namespace dlinear {
 
+/**
+ * DeltaSoplexTheorySolver class.
+ *
+ * Delta complete solver using SoPlex.
+ * The LP problem is solver exactly, within a given precision, delta.
+ * Since the value of delta is considered strictly positive, strict inequalities will be relaxed and ignored.
+ */
 class DeltaSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit DeltaSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
@@ -39,7 +46,7 @@ class DeltaSoplexTheorySolver : public SoplexTheorySolver {
   SatResult CheckSat(const Box& box, mpq_class* actual_precision, LiteralSet& explanation) override;
 
  private:
-  void SetSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
+  void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
 };
 
 }  // namespace dlinear

@@ -15,6 +15,13 @@
 
 namespace dlinear {
 
+#define FindLowerBoundValue(value) bounds_.lower_bound({value, LpColBound::L, 0})
+#define FindLowerBound(value, bound) bounds_.lower_bound({value, bound, 0})
+#define FindUpperBoundValue(value) bounds_.upper_bound({value, LpColBound::U, 0})
+#define FindUpperBound(value, bound) bounds_.upper_bound({value, bound, 0})
+#define FindLowerNqBoundValue(value) nq_bounds_.lower_bound({value, LpColBound::D, 0})
+#define FindUpperNqBoundValue(value) nq_bounds_.upper_bound({value, LpColBound::D, 0})
+
 bool BoundComparator::operator()(const TheorySolverBoundVector::Bound& lhs,
                                  const TheorySolverBoundVector::Bound& rhs) const {
   const auto& [value_l, type_l, idx_l] = lhs;
@@ -42,12 +49,12 @@ TheorySolverBoundVector::TheorySolverBoundVector(mpq_class inf_l, mpq_class inf_
       inf_l_{std::move(inf_l)},
       inf_u_{std::move(inf_u)} {}
 
-TheorySolverBoundVector::Violation TheorySolverBoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
-                                                                     const int idx) {
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
+                                                                         const int idx) {
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D,
                      "Valid must be L, U, B, SL, SU or D. Received: {}", lp_bound);
-  const Violation violation{ViolatedBounds(value, lp_bound)};
+  const BoundIterator violation{ViolatedBounds(value, lp_bound)};
   if (!violation.empty()) return violation;
 
   // Add the new lp_bound
@@ -95,9 +102,9 @@ TheorySolverBoundVector::Violation TheorySolverBoundVector::AddBound(const mpq_c
     if (ViolatedNqBounds()) {
       bounds_.erase(it);
       if (lp_bound == LpColBound::L || lp_bound == LpColBound::SL) --n_lower_bounds_;
-      const Violation nq_violation{FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_),
-                                   FindLowerNqBoundValue(active_lower_bound_),
-                                   FindUpperNqBoundValue(active_upper_bound_)};
+      const BoundIterator nq_violation{
+          FindLowerBoundValue(active_lower_bound_), FindUpperBoundValue(active_upper_bound_),
+          FindLowerNqBoundValue(active_lower_bound_), FindUpperNqBoundValue(active_upper_bound_)};
       active_lower_bound_ = backup_active_lower_bound;
       active_upper_bound_ = backup_active_upper_bound;
       return nq_violation;
@@ -107,8 +114,8 @@ TheorySolverBoundVector::Violation TheorySolverBoundVector::AddBound(const mpq_c
   return {};
 }
 
-TheorySolverBoundVector::Violation TheorySolverBoundVector::ViolatedBounds(const mpq_class& value,
-                                                                           LpColBound lp_bound) const {
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::ViolatedBounds(const mpq_class& value,
+                                                                               LpColBound lp_bound) const {
   if (lp_bound == LpColBound::D) return {};
 
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
@@ -215,7 +222,7 @@ bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
   return it != bounds_.cend();
 }
 
-TheorySolverBoundVector::Violation TheorySolverBoundVector::active_bounds() const {
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::active_bounds() const {
   const auto lb = FindLowerBoundValue(active_lower_bound_);
   const auto ub = FindUpperBoundValue(active_upper_bound_);
   // The active bounds are empty or span the entire bounds_ vector
@@ -247,18 +254,17 @@ std::pair<mpq_class, mpq_class> TheorySolverBoundVector::active_bound_value() co
   return {active_lower_bound_, active_upper_bound_};
 }
 
-void TheorySolverBoundVector::SetUpperBound(const mpq_class& value) {
-  if (value < active_lower_bound_)
-    DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
-                              active_lower_bound_, active_upper_bound_);
-  if (value < active_upper_bound_) active_upper_bound_ = value;
-}
-
 void TheorySolverBoundVector::SetLowerBound(const mpq_class& value) {
   if (value > active_upper_bound_)
     DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
                               active_lower_bound_, active_upper_bound_);
   if (value > active_lower_bound_) active_lower_bound_ = value;
+}
+void TheorySolverBoundVector::SetUpperBound(const mpq_class& value) {
+  if (value < active_lower_bound_)
+    DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
+                              active_lower_bound_, active_upper_bound_);
+  if (value < active_upper_bound_) active_upper_bound_ = value;
 }
 void TheorySolverBoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
   if (ub < std::max(lb, active_lower_bound_) || lb > std::min(ub, active_upper_bound_))

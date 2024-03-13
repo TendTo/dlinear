@@ -68,103 +68,167 @@ class Box {
     mpq_class lb_, ub_;
   };
 
-  /// Constructs a zero-dimensional box.
+  /** Constructs an empty box. */
   Box();
 
-  /// Constructs a box from @p variables.
+  /**
+   * Construct a box from @p variables.
+   * @param variables variables contained in the box
+   */
   explicit Box(const std::vector<Variable> &variables);
 
-  /// Default copy constructor.
-  Box(const Box &) = default;
-
-  /// Default move constructor.
-  Box(Box &&) = default;
-
-  /// Default copy assign operator.
-  Box &operator=(const Box &) = default;
-
-  /// Default move assign operator.
-  Box &operator=(Box &&) = default;
-
-  /// Default destructor.
-  ~Box() = default;
-
-  /// Adds @p v to the box.
+  /**
+   * Add the variable @p v to the box.
+   * @param v variable to add
+   */
   void Add(const Variable &v);
 
-  /// Adds @p v to the box and sets its domain using @p lb and @p ub.
+  /**
+   * Add the variable @p v to the box and sets its domain using @p lb and @p ub.
+   * @param v variable to add
+   * @param lb lower bound
+   * @param ub upper bound
+   */
   void Add(const Variable &v, const mpq_class &lb, const mpq_class &ub);
 
-  /// Checks if this box is empty.
+  /**
+   * Check if the box is empty.
+   * @return true if the box is empty
+   * @return false if the box is not empty
+   * @see set_empty
+   */
   [[nodiscard]] bool empty() const;
 
-  /// Make this box empty.
+  /**
+   * Set the box to be empty.
+   * @see empty
+   */
   void set_empty();
 
-  /// Returns the size of the box.
+  /**
+   * Return the number of variables in the box.
+   * @return number of variables in the box
+   */
   [[nodiscard]] int size() const;
 
-  /// Returns @p i -th interval in the box.
+  /**
+   * Return the interval at index @p i.
+   * @param i index of the interval
+   * @return interval at index @p i
+   */
   Interval &operator[](int i);
 
-  /// Returns an interval associated with @p var.
+  /**
+   * Return the interval associated with @p var.
+   * @param var variable to get the interval from
+   * @return interval associated with @p var
+   */
   Interval &operator[](const Variable &var);
 
-  /// Returns @p i -th interval in the box.
+  /**
+   * Return the interval at index @p i.
+   * @param i index of the interval
+   * @return interval at index @p i
+   */
   const Interval &operator[](int i) const;
 
-  /// Returns an interval associated with @p var.
+  /**
+   * Return the interval associated with @p var.
+   * @param var variable to get the interval from
+   * @return interval associated with @p var
+   */
   const Interval &operator[](const Variable &var) const;
 
-  /// Returns the variables in the box.
+  /**
+   * Return the variables in the box.
+   * @return vector of variables in the box
+   */
   [[nodiscard]] const std::vector<Variable> &variables() const;
 
-  /// Returns i-th variable in the box.
+  /**
+   * Return the @p i -th variable in the box.
+   * @param i index of the variable
+   * @return variable at index @p i
+   */
   [[nodiscard]] const Variable &variable(int i) const;
 
-  /// Checks if this box has @p var.
+  /**
+   * Checks if this box contains @p var.
+   * @param var variable to check the presence of
+   * @return true if the box contains @p var
+   * @return false if the box does not contain @p var
+   */
   [[nodiscard]] bool has_variable(const Variable &var) const;
 
-  /// Returns the interval vector of the box.
+  /**
+   * Return the interval vector of the box.
+   * @return interval vector of the box
+   */
   [[nodiscard]] const std::vector<Interval> &interval_vector() const;
 
-  /// Returns the interval vector of the box.
+  /**
+   * Return the interval vector of the box.
+   * @return interval vector of the box
+   */
   std::vector<Interval> &m_interval_vector();
 
-  /// Returns the index associated with @p var.
+  /**
+   * Return the index associated with @p var.
+   * @param var variable to get the index from
+   * @return index associated with @p var
+   */
   [[nodiscard]] int index(const Variable &var) const;
 
-  /// Returns the max diameter of the box and the associated index .
+  /**
+   * Return the max diameter of the box and the associated index.
+   * @return max diameter of the box and the associated index
+   */
   [[nodiscard]] std::pair<mpq_class, int> MaxDiam() const;
 
-  /// Bisects the box at @p i -th dimension.
-  /// @throws std::runtime if @p i -th dimension is not bisectable.
+  /**
+   * Bisect the box at @p i -th dimension.
+   * @param i dimension to bisect
+   * @return pair of boxes resulting from the bisection
+   * @throw std::runtime if @p i -th dimension is not bisectable
+   */
   [[nodiscard]] std::pair<Box, Box> bisect(int i) const;
 
-  /// Bisects the box at @p the dimension represented by @p var.
-  /// @throws std::runtime if @p i -th dimension is not bisectable.
+  /**
+   * Bisect the box at @p var.
+   * @param var variable to bisect
+   * @return pair of boxes resulting from the bisection
+   * @throw std::runtime if @p var is not bisectable
+   */
   [[nodiscard]] std::pair<Box, Box> bisect(const Variable &var) const;
 
-  /// Updates the current box by taking union with @p b.
+  /// Update the current box by taking union with @p b.
   ///
   /// @pre variables() == b.variables().
   // Box& InplaceUnion(const Box& b);
 
  private:
-  /// Bisects the box at @p i -th dimension.
-  /// @pre i-th variable is bisectable.
-  /// @pre i-th variable is of integer type.
+  /**
+   * Bisects the box at @p i -th dimension.
+   * @pre @p i-th variable is bisectable.
+   * @pre @p i-th variable is of integer type.
+   * @param i index of the dimension to bisect
+   * @return pair of boxes resulting from the bisection
+   */
   [[nodiscard]] std::pair<Box, Box> bisect_int(int i) const;
 
-  /// Bisects the box at @p i -th dimension.
-  /// @pre i-th variable is bisectable.
-  /// @pre i-th variable is of continuous type.
+  /**
+   * @brief Bisects the box at @p i -th dimension.
+   * @pre @p i-th variable is bisectable.
+   * @pre @p i-th variable is of continuous type.
+   * @param i index of the dimension to bisect
+   * @return pair of boxes resulting from the bisection
+   */
   [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
-  std::shared_ptr<std::vector<Variable>> variables_;
-  std::vector<Interval> values_;
-  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;
-  std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;
+  std::shared_ptr<std::vector<Variable>> variables_;                                     ///< Variables in the box
+  std::vector<Interval> values_;                                                         ///< Interval vector of the box
+  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;  ///< Variable to index map
+  std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;                        ///< Index to variable map
 
   friend std::ostream &operator<<(std::ostream &os, const Box &box);
 };

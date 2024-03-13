@@ -28,39 +28,54 @@
 
 namespace dlinear {
 
+/**
+ * Theory solver class.
+ *
+ * Base class for theory solvers.
+ * Theory solvers pick up the literals from the SAT solver and check whether the assignment is satisfiable within
+ * the theory.
+ * If that is not the case, they will produce an explanation to guide the SAT solver and find a new assignment.
+ * This class has to be inherited and implemented by the specific theory solvers.
+ */
 class TheorySolver {
  public:
   using Bound = std::tuple<const Variable &, LpColBound, const mpq_class &>;
-
+  /**
+   * Construct a new Theory Solver object.
+   *
+   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
+   * understanding of the literals.
+   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
+   * @param config configuration of the theory solver
+   */
   explicit TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   virtual ~TheorySolver() = default;
 
   /**
    * Add a vector of literals to the theory solver.
+   *
    * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
    * and the truth value (sense) of such literal
-   *
    * @param theory_literals vector of literals
    */
   void AddLiterals(const std::vector<Literal> &theory_literals);
   /**
    * Add a Literal to the theory solver.
+   *
    * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
    * and the truth value (sense) of such literal
-   *
    * @param lit literal to be added
    */
   virtual void AddLiteral(const Literal &lit) = 0;
   /**
    * Add a variable (column) to the theory solver.
-   *
    * @param var variable to add
    */
   virtual void AddVariable(const Variable &var) = 0;
   /**
    * Activate the literals that have previously been added to the theory solver.
-   *
    * @param theory_literals vector of literals to be activated
+   * @return a vector of explanations with the literals that correspond to the conflicting bounds
    */
   std::vector<LiteralSet> EnableLiterals(const std::vector<Literal> &theory_literals);
   /**
@@ -82,7 +97,6 @@ class TheorySolver {
 
   /**
    * Get a model that satisfies all the constraints of the theory
-   *
    * @return model that satisfies all the constraints of the theory
    */
   [[nodiscard]] const Box &GetModel() const;
@@ -119,37 +133,159 @@ class TheorySolver {
   virtual void Reset(const Box &box) = 0;
 
  protected:
-  using Violation = TheorySolverBoundVector::Violation;
+  using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds
+  /**
+   * Check whether the formula is a simple relational bound.
+   *
+   * A simple relational bound is a formula in the form:
+   * @f[
+   * a \leq b \\
+   * a < b \\
+   * a \geq b \\
+   * a > b \\
+   * a = b \\
+   * a \neq b \\
+   * @f]
+   * Where @f$ a @f$ is a variable and @f$ b @f$ is a constant or vice versa.
+   * @param formula symbolic formula to check
+   * @return true if the formula is a simple relational bound
+   * @return false if the formula is not a simple relational bound
+   */
   static bool IsSimpleBound(const Formula &formula);
+  /**
+   * Check whether the formula is a simple relational bound with an equality operator (@f$ a = b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsEqualTo(const Formula &formula, bool truth = true);
+  /**
+   * Check whether the formula is a simple relational bound with a non-equality operator (@f$ a \neq b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsNotEqualTo(const Formula &formula, bool truth = true);
+  /**
+   * Check whether the formula is a simple relational bound with a greater than operator (@f$ a > b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsGreaterThan(const Formula &formula, bool truth = true);
+  /**
+   * Check whether the formula is a simple relational bound with a less than operator (@f$ a < b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsLessThan(const Formula &formula, bool truth = true);
+  /**
+   * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \ge b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
+  /**
+   * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \le b @f$).
+   * @param formula symbolic formula to check
+   * @param truth whether to consider the formula as it is (true) or to invert it (false)
+   * @return true if the formula respects the condition
+   * @return false if the formula does not respect the condition
+   * @see IsSimpleBound for more information about simple relational bounds
+   */
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
 
-  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_col) const;
+  /**
+   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
+   * @param violation violated bounds
+   * @param theory_bound bound of the theory solver that caused the violation
+   * @return vector of explanations with the literals that correspond to the conflicting bounds
+   */
+  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_bound) const;
+  /**
+   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
+   * @param violation violated bounds
+   * @param theory_bound bound that caused the violation
+   * @param[out] explanations vector of explanations with the literals that correspond to the conflicting bounds
+   */
   void TheoryBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
+  /**
+   * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
+   * @param theory_col column of the theory solver the bounds are associated with
+   * @param active whether to only consider the active bounds (true) or include the inactive ones as well (false)
+   * @param[out] explanation set of literals that correspond to the conflicting bounds
+   */
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
-  [[nodiscard]] std::vector<LiteralSet> TheoryRowBoundsToExplanations(Violation violation, int theory_col) const;
-  void TheoryRowBoundsToExplanations(Violation violation, int theory_bound,
-                                     std::vector<LiteralSet> &explanations) const;
+  /**
+   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
+   *
+   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
+   * @param violation violated bounds
+   * @param theory_row row of the theory solver that caused the violation
+   * @return vector of explanations with the literals that correspond to the conflicting bounds
+   */
+  [[nodiscard]] std::vector<LiteralSet> TheoryRowBoundsToExplanations(Violation violation, int theory_row) const;
+  /**
+   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
+   *
+   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
+   * @param violation violated bounds
+   * @param theory_row row of the theory solver that caused the violation
+   * @param explanations vector of explanations with the literals that correspond to the conflicting bounds
+   */
+  void TheoryRowBoundsToExplanations(Violation violation, int theory_row, std::vector<LiteralSet> &explanations) const;
+  /**
+   * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
+   *
+   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
+   * @param theory_col column of the theory solver the bounds are associated with
+   * @param active whether to only consider the active bounds (true) or include the inactive ones as well (false)
+   * @param[out] explanation set of literals that correspond to the conflicting bounds
+   */
   void TheoryRowBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
-  void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
+  /**
+   * Get the indexes of the violated bounds.
+   * @param violation violated bounds
+   * @param[out] bound_idxs set of indexes of the bounds
+   */
   static void TheoryBoundsToBoundIdxs(Violation violation, std::set<int> &bound_idxs);
+  /**
+   * Get all the indexes of the bounds that are associated with the @p theory_col.
+   * @param theory_col theory column the bounds are associated with
+   * @param active whether to only consider the active bounds (true) or include the inactive ones as well (false)
+   * @param[out] bound_idxs set of indexes of the bounds
+   */
+  void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
+
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
    *
    * - var: theory variable the bound is associated with
    * - type: the type of bound:
-   *    - B:  value <= var <= value
-   *    - SL: value <  var
-   *    - L:  value <= var
-   *    - SU:          var <  value
-   *    - U:           var <= value
-   *    - F:  -inf  <= var <= inf
+   * @f[
+   * \begin{gather*}
+   *     \text{B}  & \rightarrow & b \leq       & x & \leq b      \\
+   *     \text{SL} & \rightarrow & lb <         & x &             \\
+   *     \text{L}  & \rightarrow & lb \leq      & x &             \\
+   *     \text{SU} & \rightarrow & \            & x & < ub        \\
+   *     \text{U}  & \rightarrow & \            & x & \leq ub     \\
+   *     \text{F}  & \rightarrow & -\infty \leq & x & \leq \infty \\
+   * \end{gather*}
+   * @f]
    * - value: value of the bound
    * @param formula symbolic formula that represents a simple relational bound
    * @param truth whether the formula is to be interpreted as it is (true) or must be inverted (false)
@@ -162,9 +298,9 @@ class TheorySolver {
    * @note there is no check in place on whether the bounds are inverted or the constraints satisfied.
    */
   virtual void UpdateModelBounds() = 0;
-
   /**
-   * Use the result from the LP solver to update the explanation with the conflict that has been detected.
+   * Use the result from the theory solver to update the explanation with the conflict that has been detected.
+   *
    * This will allow the SAT solver to find a new assignment without the conflict.
    * @warning The explanation will be cleared before adding the conflicting literals
    * @param explanation set conflicting clauses to be updated
@@ -191,7 +327,7 @@ class TheorySolver {
                                 ///< - SMT2 files: the expansion is needed.
                                 ///< - MPS files: the expansion is not needed.
 
-  const PredicateAbstractor &predicate_abstractor_;
+  const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor used to create the theory solver
 
   std::map<Variable::Id, int> var_to_theory_col_;    ///< Variable ⇔ theory column.
                                                      ///< The Variable is the one created by the PredicateAbstractor

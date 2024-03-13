@@ -27,7 +27,9 @@ CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &pred
       var_to_enabled_theory_rows_{},
       nq_row_to_theory_rows_{},
       last_nq_status_{},
-      theory_rows_to_explanation_{} {}
+      theory_rows_to_explanation_{} {
+  DLINEAR_ASSERT(config.precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
+}
 
 void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());
@@ -125,14 +127,14 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
 
     // Add the active bound to the LP solver bounds
     int theory_col = var_to_theory_col_[b_var.get_id()];
-    const TheorySolverBoundVector::Violation violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
+    const TheorySolverBoundVector::BoundIterator violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
 
     // If the bound is invalid, return the explanation and update the SAT solver immediately
     if (violation) return TheoryRowBoundsToExplanations(violation, spx_row);
     return {};
   }
 
-  SetSpxRow(spx_row, truth, formula.GetFreeVariables());
+  EnableSpxRow(spx_row, truth, formula.GetFreeVariables());
   return {};
 }
 
@@ -160,7 +162,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   }
 
   // Set the bounds for the variables
-  SetSPXVarBound();
+  EnableSPXVarBound();
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
@@ -491,22 +493,22 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
   return true;
 }
 
-void CompleteSoplexTheorySolver::SetSPXVarBound() {
-  SoplexTheorySolver::SetSPXVarBound();
+void CompleteSoplexTheorySolver::EnableSPXVarBound() {
+  SoplexTheorySolver::EnableSPXVarBound();
   // For all columns...
   for (const auto &theory_bound : theory_bounds_) {
     // ... for each active bound of that column...
-    for (TheorySolverBoundVector::Violation it{theory_bound.active_bounds()}; it; ++it) {
+    for (TheorySolverBoundVector::BoundIterator it{theory_bound.active_bounds()}; it; ++it) {
       const auto &[value, bound, spx_row] = *it;
       // ... if we are dealing with a strict bound, add the strict row to the LP problem
       if (bound == LpColBound::SU || bound == LpColBound::SL || bound == LpColBound::D) {
-        SoplexTheorySolver::SetSpxRow(spx_row);
+        SoplexTheorySolver::EnableSpxRow(spx_row);
       }
     }
   }
 }
 
-void CompleteSoplexTheorySolver::SetSpxRow(int spx_row, bool truth, const Variables &free_vars) {
+void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth, const Variables &free_vars) {
   for (const Variable &row_var : free_vars) {
     var_to_enabled_theory_rows_.at(row_var.get_id()).push_back(spx_row);
   }

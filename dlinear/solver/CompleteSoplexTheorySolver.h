@@ -27,6 +27,14 @@
 
 namespace dlinear {
 
+/**
+ * CompleteSoPlexTheorySolver class.
+ *
+ * Complete solver using SoPlex.
+ * The linear is problem exactly, also dealing with strict inequalities.
+ * As a tradeoff, the objective function is used internally, so it is not possible to maximise or minimise an
+ * arbitrary expression.
+ */
 class CompleteSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit CompleteSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
@@ -42,8 +50,8 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Reset(const Box& box) override;
 
  private:
-  void SetSPXVarBound() override;
-  void SetSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
+  void EnableSPXVarBound() override;
+  void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
 
   /**
    * Internal method to check the satisfiability of the current LP problem.
@@ -57,12 +65,23 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    */
   SatResult SpxCheckSat(mpq_class* actual_precision);
 
+  /**
+   * Update the explanation with the current LP solution.
+   *
+   * A solution has been found, but a strict inequality has been violated.
+   * The explanation must be updated using an artificial infeasibility core.
+   */
   void UpdateExplanationStrictInfeasible();
 
+  /** Update the explanation with the infeasible core. */
   void UpdateExplanationInfeasible();
 
   void Consolidate() override;
 
+  /**
+   * Get the index of the strict variable used to enforce the strict inequalities.
+   * @return index of the strict variable
+   */
   int strict_variable_idx() const;
 
   /**
@@ -94,8 +113,16 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    */
   bool UpdateBitIncrementIteratorBasedOnExplanation(BitIncrementIterator& bit_iterator);
 
+  /**
+   * Find the non-equal rows in the current explanation.
+   * @return vector of the non-equal rows in the current explanation
+   */
   std::vector<size_t> IteratorNqRowsInExplanation() const;
 
+  /**
+   * Get the explanation from @link theory_rows_to_explanation_ @endlink.
+   * @param[out] explanation The explanation to be updated
+   */
   void GetExplanation(LiteralSet& explanation);
 
   std::vector<int> enabled_strict_theory_rows_;                          ///< Vector of enabled strict theory rows

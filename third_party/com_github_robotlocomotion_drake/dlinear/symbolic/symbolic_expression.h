@@ -231,7 +231,7 @@ class Expression {
   bool include_ite() const;
 
   /** Evaluates under a given environment (by default, an empty environment).
-   *  @throws std::runtime_error if NaN is detected during evaluation.
+   *  @throw std::runtime_error if NaN is detected during evaluation.
    */
   mpq_class Evaluate(const Environment &env = Environment{}) const;
 
@@ -239,7 +239,7 @@ class Expression {
    * env. Internally, this method promotes @p env into a substitution
    * (Variable → Expression) and call Evaluate::Substitute with it.
    *
-   * @throws std::runtime_error if NaN is detected during evaluation.
+   * @throw std::runtime_error if NaN is detected during evaluation.
    */
   Expression EvaluatePartial(const Environment &env) const;
 
@@ -250,13 +250,13 @@ class Expression {
    * 2y)`. It also simplifies "division by constant" cases. See
    * "symbolic/test/symbolic_expansion_test.cc" to find the examples.
    *
-   * @throws std::runtime_error if NaN is detected during expansion.
+   * @throw std::runtime_error if NaN is detected during expansion.
    */
   Expression Expand() const;
 
   /** Returns a copy of this expression replacing all occurrences of @p var
    * with @p e.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Expression Substitute(const Variable &var, const Expression &e) const;
 
@@ -268,7 +268,7 @@ class Expression {
    * Note that the substitutions occur simultaneously. For example,
    * (x / y).Substitute({{x, y}, {y, x}}, {}) gets (y / x).
    *
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Expression Substitute(const ExpressionSubstitution &expr_subst,
                         const FormulaSubstitution &formula_subst) const;
@@ -277,7 +277,7 @@ class Expression {
    * variables in @p expr_subst with corresponding expressions in @p expr_subst.
    *
    * @note This is equivalent to `Substitute(expr_subst, {})`.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Expression Substitute(const ExpressionSubstitution &expr_subst) const;
 
@@ -286,13 +286,13 @@ class Expression {
    * formula_subst.
    *
    * @note This is equivalent to `Substitute({}, formula_subst)`.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Expression Substitute(const FormulaSubstitution &formula_subst) const;
 
   /** Differentiates this symbolic expression with respect to the variable @p
    * var.
-   * @throws std::runtime_error if it is not differentiable.
+   * @throw std::runtime_error if it is not differentiable.
    */
   Expression Differentiate(const Variable &x) const;
 

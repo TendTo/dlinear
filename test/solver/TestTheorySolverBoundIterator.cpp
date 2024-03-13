@@ -11,7 +11,7 @@
 
 using dlinear::LpColBound;
 using dlinear::SortedVector;
-using Violation = dlinear::TheorySolverBoundVector::Violation;
+using Violation = dlinear::TheorySolverBoundVector::BoundIterator;
 using BoundVector = dlinear::TheorySolverBoundVector::BoundVector;
 
 class TestTheorySolverBoundIterator : public ::testing::Test {

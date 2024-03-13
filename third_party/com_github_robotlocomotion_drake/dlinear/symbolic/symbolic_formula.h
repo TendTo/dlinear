@@ -148,7 +148,7 @@ class Formula {
 
   /** Evaluates under a given environment (by default, an empty environment).
    *
-   * @throws runtime_error if a variable `v` is needed for an evaluation but not
+   * @throw runtime_error if a variable `v` is needed for an evaluation but not
    * provided by @p env.
    *
    * Note that for an equality e₁ = e₂ and an inequality e₁ ≠ e₂, this method
@@ -160,13 +160,13 @@ class Formula {
 
   /** Returns a copy of this formula replacing all occurrences of @p var
    * with @p e.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Formula Substitute(const Variable &var, const Expression &e) const;
 
   /** Returns a copy of this formula replacing all occurrences of @p var
    * with @p f.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Formula Substitute(const Variable &var, const Formula &f) const;
 
@@ -178,7 +178,7 @@ class Formula {
    * Note that the substitutions occur simultaneously. For example, (x / y >
    * 0).Substitute({{x, y}, {y, x}}, {}) gets (y / x > 0).
    *
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) const;
@@ -187,7 +187,7 @@ class Formula {
    * in @p expr_subst with corresponding expressions in @p expr_subst.
    *
    * @note This is equivalent to `Substitute(expr_subst, {})`.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Formula Substitute(const ExpressionSubstitution &expr_subst) const;
 
@@ -196,7 +196,7 @@ class Formula {
    * formulas in @p formula_subst.
    *
    * @note This is equivalent to `Substitute({}, formula_subst)`.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   Formula Substitute(const FormulaSubstitution &formula_subst) const;
 

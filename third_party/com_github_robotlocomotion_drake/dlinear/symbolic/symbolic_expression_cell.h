@@ -47,25 +47,25 @@ class ExpressionCell {
   bool include_ite() const { return include_ite_; }
 
   /** Evaluates under a given environment (by default, an empty environment).
-   *  @throws std::runtime_error if NaN is detected during evaluation.
+   *  @throw std::runtime_error if NaN is detected during evaluation.
    */
   virtual mpq_class Evaluate(const Environment &env) const = 0;
 
   /** Expands out products and positive integer powers in expression.
-   * @throws std::runtime_error if NaN is detected during expansion.
+   * @throw std::runtime_error if NaN is detected during expansion.
    */
   virtual Expression Expand() = 0;
 
   /** Returns an Expression obtained by replacing all occurrences of the
    * variables in @p s in the current expression cell with the corresponding
    * expressions in @p s.
-   * @throws std::runtime_error if NaN is detected during substitution.
+   * @throw std::runtime_error if NaN is detected during substitution.
    */
   virtual Expression Substitute(const ExpressionSubstitution &expr_subst, const FormulaSubstitution &formula_subst) = 0;
 
   /** Differentiates this symbolic expression with respect to the variable @p
    * var.
-   * @throws std::runtime_error if it is not differentiable.
+   * @throw std::runtime_error if it is not differentiable.
    */
   virtual Expression Differentiate(const Variable &x) const = 0;
 
