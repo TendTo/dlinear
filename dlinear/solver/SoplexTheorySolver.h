@@ -107,8 +107,6 @@ class SoplexTheorySolver : public TheorySolver {
 
   // Exact LP solver (SoPlex)
   soplex::SoPlex spx_;
-  soplex::VectorRational spx_lower_;
-  soplex::VectorRational spx_upper_;
 
   std::vector<mpq_class> spx_rhs_;
   std::vector<LpRowSense> spx_sense_;

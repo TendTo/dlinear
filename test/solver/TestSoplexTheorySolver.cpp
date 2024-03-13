@@ -39,8 +39,6 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
   const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
   const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
-  const soplex::VectorRational &spx_upper() const { return spx_upper_; }
-  const soplex::VectorRational &spx_lower() const { return spx_lower_; }
   const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
 };
 
@@ -64,8 +62,6 @@ TEST_P(TestSoplexTheorySolver, AddVariable) {
   config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_, config_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
-  EXPECT_EQ(s.spx_lower().dim(), 0);
-  EXPECT_EQ(s.spx_upper().dim(), 0);
 
   s.AddVariable(var_);
   EXPECT_EQ(s.theory_col_to_var().size(), 1u);

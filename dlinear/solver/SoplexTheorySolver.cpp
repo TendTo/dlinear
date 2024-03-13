@@ -58,7 +58,7 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
-  theory_bounds_.emplace_back(-soplex::infinity, soplex::infinity);
+  theory_bounds_.emplace_back(ninfinity_, infinity_);
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
@@ -164,10 +164,6 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   throw std::runtime_error("Not implemented");
   DLINEAR_ASSERT(2 == simplex_sat_phase_, "must be phase 2");
   const int spx_cols{spx_.numColsRational()};
-  spx_lower_.reDim(spx_cols + 2, true);  // Set lower bounds to zero
-  spx_upper_.reDim(spx_cols + 2, false);
-  spx_upper_[spx_cols] = soplex::infinity;  // Set upper bounds to infinity
-  spx_upper_[spx_cols + 1] = soplex::infinity;
   soplex::DSVectorRational coeffsPos;
   coeffsPos.add(spx_row, 1);
   spx_.addColRational(soplex::LPColRational(1, coeffsPos, soplex::infinity, 0));
@@ -181,14 +177,14 @@ void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("SoplexTheorySolver::Reset(): Box =\n{}", box);
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
+
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
-  for (auto &bound : theory_bounds_) bound.Clear();
 
   // Clear constraint bounds
+  for (auto &bound : theory_bounds_) bound.Clear();
   const int spx_rows = spx_.numRowsRational();
-  DLINEAR_ASSERT(static_cast<size_t>(spx_rows) == theory_row_to_lit_.size(),
-                 "spx_rows must be == from_spx_row_.size()");
+  DLINEAR_ASSERT(static_cast<size_t>(spx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
   for (int i = 0; i < spx_rows; i++) spx_.changeRangeRational(i, -soplex::infinity, soplex::infinity);
 
   // Clear variable bounds
@@ -262,14 +258,10 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
 // }
 
 void SoplexTheorySolver::SetSPXVarBound() {
-  spx_upper_.reDim(spx_.numColsRational(), false);
-  spx_lower_.reDim(spx_.numColsRational(), false);
   for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
-    spx_lower_[theory_col] = theory_bounds_[theory_col].active_lower_bound().get_mpq_t();
-    spx_upper_[theory_col] = theory_bounds_[theory_col].active_upper_bound().get_mpq_t();
+    spx_.changeBoundsRational(theory_col, theory_bounds_[theory_col].active_lower_bound().get_mpq_t(),
+                              theory_bounds_[theory_col].active_upper_bound().get_mpq_t());
   }
-  spx_.changeLowerRational(spx_lower_);
-  spx_.changeUpperRational(spx_upper_);
 }
 
 void SoplexTheorySolver::SetSpxRow(const int spx_row) {
