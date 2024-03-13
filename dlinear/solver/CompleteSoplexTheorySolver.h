@@ -108,7 +108,6 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
   std::set<int> theory_rows_to_explanation_;  ///< Set of theory rows that are part of the explanation
-  LiteralSet explanation_;                    ///< Set of theory rows that are part of the explanation
 };
 
 }  // namespace dlinear
