@@ -378,6 +378,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible({})", enabled_strict_theory_rows_);
 
   // TODO: REMOVE AFTER DEBUG
+#if 0
   {
     soplex::VectorRational x{spx_.numColsRational()};
     spx_.getPrimalRational(x);
@@ -398,7 +399,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
                           row.lhs(), row.rowVector(), row.rhs());
     }
   }
-
+#endif
   // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
   // Find all strict theory row. The active ones indicate a violation in the strict bound.
   std::set<int> candidate_rows;
@@ -559,7 +560,7 @@ void CompleteSoplexTheorySolver::SetSpxRow(int spx_row, bool truth, const Variab
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
 
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: Row({}) ↦ {} {} {} | Sense({})", spx_row,
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: Row({}) ↦ {} {} {} | Sense({})", spx_row,
                     lp_row.lhs(), lp_row.rowVector(), lp_row.rhs(), sense);
 }
 
