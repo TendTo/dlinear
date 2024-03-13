@@ -154,7 +154,7 @@ std::vector<LiteralSet> TheorySolver::TheoryRowBoundsToExplanations(Violation vi
   return explanations;
 }
 void TheorySolver::TheoryRowBoundsToExplanations(Violation violation, int theory_bound,
-                                                 std::vector<LiteralSet> explanations) const {
+                                                 std::vector<LiteralSet> &explanations) const {
   const Literal row_lit{theory_row_to_lit_[theory_bound]};
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryRowBoundsToExplanations: {} violates {}", row_lit, violation);
   if (violation.nq_bounds_empty() || violation.bounds_empty()) {

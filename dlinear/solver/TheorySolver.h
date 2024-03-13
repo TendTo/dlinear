@@ -133,7 +133,8 @@ class TheorySolver {
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
   [[nodiscard]] std::vector<LiteralSet> TheoryRowBoundsToExplanations(Violation violation, int theory_col) const;
-  void TheoryRowBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
+  void TheoryRowBoundsToExplanations(Violation violation, int theory_bound,
+                                     std::vector<LiteralSet> &explanations) const;
   void TheoryRowBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
   void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
