@@ -136,9 +136,6 @@ class Context::Impl {
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
-
-  // TODO: remove
-  std::set<LiteralSet> learned_explanations_;  ///< Set of learned explanations.
 };
 
 }  // namespace dlinear

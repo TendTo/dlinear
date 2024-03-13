@@ -6,6 +6,7 @@
  */
 #include "TheorySolverBoundVector.h"
 
+#include <algorithm>
 #include <utility>
 
 #define TRACE_VIOLATED_BOUNDS(it)                                                                                  \
@@ -238,7 +239,7 @@ TheorySolverBoundVector::Violation TheorySolverBoundVector::active_bounds() cons
   for (; type != type_lb; --it, type = std::get<1>(*it), idx = std::get<2>(*it)) {
     if (idx == idx_lb)
       return {lb, it + 1, FindLowerNqBoundValue(active_lower_bound_), FindUpperNqBoundValue(active_upper_bound_)};
-  };
+  }
   return {lb, ub, FindLowerNqBoundValue(active_lower_bound_), FindUpperNqBoundValue(active_upper_bound_)};
 }
 

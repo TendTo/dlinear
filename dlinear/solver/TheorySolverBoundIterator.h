@@ -1,7 +1,18 @@
+/**
+ * @file TheorySolverBoundIterator.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief TheorySolverBoundIterator class.
+ *
+ * It is used to iterate over the bounds of a theory solver without copying the @ref Bounds.
+ * Usually the results of bound violation.
+ */
 #pragma once
 
 #include <algorithm>
 #include <iterator>
+#include <utility>
 
 namespace dlinear {
 

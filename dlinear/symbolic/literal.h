@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <ostream>
 #include <set>
 #include <unordered_map>
@@ -49,7 +50,6 @@ template <>
 struct less<::dlinear::LiteralSet> {
   bool operator()(const ::dlinear::LiteralSet &a, const ::dlinear::LiteralSet &b) const;
 };
-
 
 template <>
 struct equal_to<::dlinear::LiteralSet> {

@@ -11,7 +11,9 @@
 
 #include <map>
 #include <set>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/LpColBound.h"
@@ -22,12 +24,9 @@
 
 namespace dlinear {
 
-namespace {
-using Bound_ = std::tuple<mpq_class, LpColBound, int>;
-}  // namespace
-
 struct BoundComparator {
-  bool operator()(const Bound_& lhs, const Bound_& rhs) const;
+  bool operator()(const std::tuple<mpq_class, LpColBound, int>& lhs,
+                  const std::tuple<mpq_class, LpColBound, int>& rhs) const;
 };
 
 /**
@@ -41,7 +40,7 @@ struct BoundComparator {
  */
 class TheorySolverBoundVector {
  public:
-  using Bound = Bound_;
+  using Bound = std::tuple<mpq_class, LpColBound, int>;
   using BoundVector = SortedVector<Bound, BoundComparator>;
   using Violation = TheorySolverBoundIterator<BoundVector>;
 
