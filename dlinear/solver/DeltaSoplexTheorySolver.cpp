@@ -47,7 +47,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
     lit_to_theory_bound_.emplace(formulaVar.get_id(), theory_bound_to_lit_.size());
     theory_bound_to_lit_.emplace_back(formulaVar, truth);
     return;
-  };
+  }
 
   if (IsEqualTo(formula)) {
     spx_sense_.push_back(LpRowSense::EQ);
@@ -144,13 +144,9 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   int colcount = spx_.numColsRational();
 
   model_ = box;
-  for (const Variable &var : theory_col_to_var_) {
-    if (!model_.has_variable(var)) {
-      // Variable should already be present
-      DLINEAR_WARN_FMT("DeltaSoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", var);
-      model_.Add(var);
-    }
-  }
+  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
+                             [&box](const Variable &var) { return box.has_variable(var); }),
+                 "All theory variables must be present in the box");
 
   // If we can immediately return SAT afterward
   if (rowcount == 0) {
@@ -159,11 +155,11 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     return SatResult::SAT_DELTA_SATISFIABLE;
   }
 
+  // Set the bounds for the variables
   SetSPXVarBound();
 
   // Now we call the solver
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})",
-                    1 == simplex_sat_phase_ ? "one" : "two");
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
 
   Rational max_violation, sum_violation;
 
@@ -185,19 +181,18 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   soplex::VectorRational x;
   x.reDim(colcount);
-  bool haveSoln = spx_.getPrimalRational(x);
-  if (haveSoln && x.dim() != colcount) {
+  bool has_sol = spx_.getPrimalRational(x);
+  if (has_sol && x.dim() != colcount) {
     DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
     DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
                       colcount, x.dim());
   }
-  DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || haveSoln,
+  DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || has_sol,
                  "status must either be not OPTIMAL or a solution must be present");
 
   if (1 == simplex_sat_phase_) {
     switch (status) {
       case SoplexStatus::OPTIMAL:
-      case SoplexStatus::UNBOUNDED:
         sat_status = SatResult::SAT_DELTA_SATISFIABLE;
         break;
       case SoplexStatus::INFEASIBLE:
@@ -229,17 +224,14 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   switch (sat_status) {
     case SatResult::SAT_DELTA_SATISFIABLE:
-      if (haveSoln) {
-        // Copy delta-feasible point from x into model_
-        for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-          const Variable &var{theory_col_to_var_[theory_col]};
-          DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                             gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
-                         "val must be in bounds");
-          model_[var] = x[theory_col].backend().data();
-        }
-      } else {
-        DLINEAR_RUNTIME_ERROR("delta-sat but no solution available: UNBOUNDED");
+      DLINEAR_ASSERT(has_sol, "has_sol must be true");
+      // Copy delta-feasible point from x into model_
+      for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+        const Variable &var{theory_col_to_var_[theory_col]};
+        DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
+                           gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
+                       "val must be in bounds");
+        model_[var] = x[theory_col].backend().data();
       }
       break;
     default:

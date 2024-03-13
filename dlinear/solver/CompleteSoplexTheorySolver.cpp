@@ -125,7 +125,7 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
 
     // Add the active bound to the LP solver bounds
     int theory_col = var_to_theory_col_[b_var.get_id()];
-    const auto violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
+    const TheorySolverBoundVector::Violation violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
 
     // If the bound is invalid, return the explanation and update the SAT solver immediately
     if (violation) return TheoryRowBoundsToExplanations(violation, spx_row);
@@ -148,13 +148,9 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: Box = \n{}", box);
 
   model_ = box;
-  for (const Variable &var : theory_col_to_var_) {
-    if (!model_.has_variable(var)) {
-      // Variable should already be present
-      DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: Adding var {} to model from theory solver", var);
-      model_.Add(var);
-    }
-  }
+  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
+                             [&box](const Variable &var) { return box.has_variable(var); }),
+                 "All theory variables must be present in the box");
 
   // If we can immediately return SAT afterward
   if (spx_.numRowsRational() == 0) {
@@ -163,11 +159,11 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     return SatResult::SAT_SATISFIABLE;
   }
 
+  // Set the bounds for the variables
   SetSPXVarBound();
 
   // Now we call the solver
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})",
-                    1 == simplex_sat_phase_ ? "one" : "two");
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
 
   SatResult sat_status;
   // Initialise the iterator with the last nq statuses
@@ -193,13 +189,13 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   } while (it);
 
   soplex::VectorRational x;
-  [[maybe_unused]] bool haveSoln;
+  [[maybe_unused]] bool has_sol;
   const int colcount = spx_.numColsRational();
   switch (sat_status) {
     case SatResult::SAT_SATISFIABLE:
       x.reDim(spx_.numColsRational());
-      haveSoln = spx_.getPrimalRational(x);
-      DLINEAR_ASSERT(haveSoln, "haveSoln must be true");
+      has_sol = spx_.getPrimalRational(x);
+      DLINEAR_ASSERT(has_sol, "has_sol must be true");
       DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
       if (x.dim() > colcount) {
         DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
@@ -262,8 +258,8 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
     DLINEAR_ASSERT(obj.dim() == colcount, "obj.dim() must be == colcount");
     bool ok = true;
     soplex::VectorRational x{colcount};
-    [[maybe_unused]] bool haveSoln = spx_.getPrimalRational(x);
-    DLINEAR_ASSERT(haveSoln, "haveSoln must be true");
+    [[maybe_unused]] bool has_sol = spx_.getPrimalRational(x);
+    DLINEAR_ASSERT(has_sol, "has_sol must be true");
     DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
     if (x.dim() > colcount) {
       DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
