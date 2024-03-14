@@ -35,4 +35,4 @@ WORKDIR /app
 
 COPY --from=build /app/bazel-bin/dlinear /sbin
 
-CMD ["sh"]
+ENTRYPOINT ["dlinear"]
