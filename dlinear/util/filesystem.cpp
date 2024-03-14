@@ -3,9 +3,6 @@
  * @author dlinear
  * @date 15 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
  */
 
 #include "filesystem.h"

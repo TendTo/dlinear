@@ -217,7 +217,7 @@ class Box {
   [[nodiscard]] std::pair<Box, Box> bisect_int(int i) const;
 
   /**
-   * @brief Bisects the box at @p i -th dimension.
+   * Bisects the box at @p i -th dimension.
    * @pre @p i-th variable is bisectable.
    * @pre @p i-th variable is of continuous type.
    * @param i index of the dimension to bisect

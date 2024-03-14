@@ -3,11 +3,12 @@
  * @author dlinear
  * @date 28 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
+ * @brief Main entry point for the benchmark program.
  *
- * Long Description
+ * The main function is used to start the benchmark program.
  */
 #include <csignal>
+
 #include "benchmark/BenchmarkProgram.h"
 
 using dlinear::benchmark::BenchmarkProgram;

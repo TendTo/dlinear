@@ -89,7 +89,7 @@ class GaussBenchmark {
 };
 
 /**
- * @brief Usage:
+ * Usage:
  * ./gauss [size] [seed] [output_file] [diff_file]
  */
 int main(int argc, char const* argv[]) {

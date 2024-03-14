@@ -35,7 +35,7 @@ class BenchArgParser {
   void validateOptions();
 
   /**
-   * @brief Load all the files found in the path parameter matching the provided
+   * Load all the files found in the path parameter matching the provided
    * fileExtension and return them as a vector of strings.
    * @return vector of strings containing the files found in the path parameter
    */

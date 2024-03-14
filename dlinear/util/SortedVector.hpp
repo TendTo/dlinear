@@ -357,9 +357,9 @@ class SortedVector {
 
  private:
   /**
-   * Use the @link compare_ @endlink function to check if two elements are equal.
+   * Use the @ref compare_ function to check if two elements are equal.
    *
-   * Since the function only checks ordering, to make sure two elements are equal @link compare_ @endlink must be used twice.
+   * Since the function only checks ordering, to make sure two elements are equal @ref compare_ must be used twice.
    * @param lhs left-hand side element
    * @param rhs right-hand side element
    * @return true if the elements are equal

@@ -119,22 +119,22 @@ class TheorySolverBoundVector {
   /**
    * Clear the vector and reset the active bounds.
    *
-   * Active bounds are set to @link inf_l_ @endlink and @link inf_u_ @endlink.
+   * Active bounds are set to @ref inf_l_ and @ref inf_u_.
    */
   void Clear();
   /**
-   * Clear the vector, update @link inf_l_ @endlink and @link inf_u_ @endlink and reset the active bounds.
+   * Clear the vector, update @ref inf_l_ and @ref inf_u_ and reset the active bounds.
    *
-   * More specifically, @link inf_l_ @endlink and @link inf_u_ @endlink are set to -@p inf and @p inf respectively.
-   * Active bounds are set to the new values of @link inf_l_ @endlink and @link inf_u_ @endlink.
+   * More specifically, @ref inf_l_ and @ref inf_u_ are set to -@p inf and @p inf respectively.
+   * Active bounds are set to the new values of @ref inf_l_ and @ref inf_u_.
    * @param inf new inf value
    */
   void Clear(mpq_class inf);
   /**
-   * Clear the vector, update @link inf_l_ @endlink and @link inf_u_ @endlink and reset the active bounds.
+   * Clear the vector, update @ref inf_l_ and @ref inf_u_ and reset the active bounds.
    *
-   * More specifically, @link inf_l_ @endlink and @link inf_u_ @endlink are set to @p inf_l and @p inf_u respectively.
-   * Active bounds are set to the new values of @link inf_l_ @endlink and @link inf_u_ @endlink.
+   * More specifically, @ref inf_l_ and @ref inf_u_ are set to @p inf_l and @p inf_u respectively.
+   * Active bounds are set to the new values of @ref inf_l_ and @ref inf_u_.
    * @param inf_l new lower bound
    * @param inf_u new upper bound
    */
@@ -249,7 +249,7 @@ class TheorySolverBoundVector {
 
  private:
   /**
-   * Return an iterator over @link bounds_ @endlink after the last lower bound and to the first upper bound.
+   * Return an iterator over @ref bounds_ after the last lower bound and to the first upper bound.
    * @return iterator after the last lower bound and to the first upper bound
    */
   [[nodiscard]] inline BoundVector::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }

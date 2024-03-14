@@ -17,7 +17,8 @@ namespace dlinear::benchmark {
 class BenchmarkProgram {
  public:
   /**
-   * @brief Create an instance of a BenchmarkProgram.
+   * Create an instance of a BenchmarkProgram.
+   * 
    * The object can than be used to run the benchmarks.
    * @param argc number of command line arguments. Passed by the main function
    * @param argv array of command line arguments. Passed by the main function
@@ -25,7 +26,7 @@ class BenchmarkProgram {
   BenchmarkProgram(int argc, const char *argv[]);
 
   /**
-   * @brief Run the benchmarks.
+   * Run the benchmarks.
    * @return exit status
    */
   int Run();

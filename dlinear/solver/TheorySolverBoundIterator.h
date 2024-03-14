@@ -5,7 +5,7 @@
  * @licence Apache-2.0 license
  * @brief TheorySolverBoundIterator class.
  *
- * It is used to iterate over the bounds of a theory solver without copying each @ref TheorySolverBoundVector::Bound.
+ * It is used to iterate over the bounds of a theory solver without copying each @ref dlinear::TheorySolverBoundVector::Bound.
  * Usually the results of bound violation.
  */
 #pragma once
@@ -57,7 +57,7 @@ class TheorySolverBoundIterator {
    */
   TheorySolverBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
   /**
-   * @brief Construct an iterator from a pair of iterators, @p bounds.
+   * Construct an iterator from a pair of iterators, @p bounds.
    * @param bounds pair of iterators to the bounds, begin and end
    */
   explicit TheorySolverBoundIterator(std::pair<internal_iterator, internal_iterator> bounds);

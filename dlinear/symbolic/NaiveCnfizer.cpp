@@ -3,9 +3,6 @@
  * @author dlinear
  * @date 18 Aug 2023
  * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
  */
 
 #include "NaiveCnfizer.h"

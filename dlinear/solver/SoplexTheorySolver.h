@@ -128,7 +128,7 @@ class SoplexTheorySolver : public TheorySolver {
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
    *
-   * Parse an formula representing a row in order to produce store the rhs term in @link spx_rhs_ @endlink and create a
+   * Parse an formula representing a row in order to produce store the rhs term in @ref spx_rhs_ and create a
    * vector of coefficients for the row to pass to the LP solver
    * @param formula symbolic formula representing the row
    * @return vector of coefficients to apply to the decisional variables in the row
@@ -143,11 +143,10 @@ class SoplexTheorySolver : public TheorySolver {
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
   void CreateArtificials(int spx_row);
 
-  // Exact LP solver (SoPlex)
-  soplex::SoPlex spx_;
+  soplex::SoPlex spx_;  ///< SoPlex exact LP solver
 
-  std::vector<mpq_class> spx_rhs_;
-  std::vector<LpRowSense> spx_sense_;
+  std::vector<mpq_class> spx_rhs_;     ///< Right-hand side of the rows
+  std::vector<LpRowSense> spx_sense_;  ///< Sense of the rows
 };
 
 }  // namespace dlinear

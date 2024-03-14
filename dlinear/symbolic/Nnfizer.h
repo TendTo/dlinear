@@ -23,7 +23,7 @@ namespace dlinear {
  * When @code push_negation_into_relationals @endcode is true, it pushed
  * negations into relational formulas by flipping relational
  * @par Example:
- *   @f$ ¬(x >= 10) @f$ becomes @f$ (x < 10) @f$.
+ *   @f$ ¬(x \ge 10) @f$ becomes @f$ (x < 10) @f$
  *
  * @see https://en.wikipedia.org/wiki/Negation_normal_form
  */

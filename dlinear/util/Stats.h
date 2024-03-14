@@ -48,13 +48,13 @@ class Stats {
    */
   [[nodiscard]] const Timer &timer() const { return timer_; }
   /**
-   * @brief Convert the current state of the object to a formatted string, only including the specific
+   * Convert the current state of the object to a formatted string, only including the specific
    * part the Stat object is concerned about
    * @return string representing a partial state of the Stats
    */
   [[nodiscard]] virtual std::string ToSegmentString() const;
   /**
-   * @brief Convert the current state of the object to a formatted string
+   * Convert the current state of the object to a formatted string
    * @return string representing the state of the Stats
    */
   [[nodiscard]] virtual std::string ToString() const;

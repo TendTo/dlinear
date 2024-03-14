@@ -75,14 +75,12 @@ class SatSolver {
   virtual void AddLearnedClause(const LiteralSet &literals) = 0;
   /**
    * Check the satisfiability of the current configuration.
-   *
    * @return a witness, satisfying model if the problem is SAT.
    * @return empty optional if UNSAT
    */
   virtual std::optional<Model> CheckSat() = 0;
   /**
    * Get the list of Literal which correspond to a theory literal that have been inserted into the SAT solver.
-   *
    * @return vector of literals
    */
   const std::vector<Literal> &theory_literals() const { return theory_literals_; }
@@ -90,19 +88,18 @@ class SatSolver {
  protected:
   /**
    * Add a clause @p f to the internal SAT solver.
-   * @p f must be a clause. That is, it is either a literal (b or ¬b)
+   * @pre @p f must be a clause. That is, it is either a literal (b or ¬b)
    * or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
-   *
    * @param f clause to add
    */
   virtual void AddClauseToSat(const Formula &f) = 0;
   /**
    * Add a variable to the internal SAT solver.
+   *
    * Also update the two mapping between each symbolic Variable and the
    * internal SAT solver's variable (@ref var_to_sat_) and the other way around
    * (@ref sat_to_var_).
    * If the variable had already been mapped, this function does nothing.
-   *
    * @param var variable to add
    */
   virtual void MakeSatVar(const Variable &var) = 0;

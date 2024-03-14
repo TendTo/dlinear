@@ -28,7 +28,7 @@
 namespace dlinear {
 
 /**
- * @brief Context class that holds a set of constraints and provide
+ * Context class that holds a set of constraints and provide
  * Assert/Push/Pop/CheckSat functionalities.
  *
  * @note The implementation details are in context_impl.h file.
