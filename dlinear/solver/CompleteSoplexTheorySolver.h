@@ -50,6 +50,9 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Reset(const Box& box) override;
 
  private:
+  static const mpq_class strict_col_lb_;  ///< Zero. Used for the strict variable lower bound
+  static const mpq_class strict_col_ub_;  ///< One. Used for the strict variable upper bound
+
   void EnableSPXVarBound() override;
   void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
 

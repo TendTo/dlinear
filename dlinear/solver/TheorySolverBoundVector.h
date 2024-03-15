@@ -25,8 +25,8 @@
 namespace dlinear {
 
 struct BoundComparator {
-  bool operator()(const std::tuple<mpq_class, LpColBound, int>& lhs,
-                  const std::tuple<mpq_class, LpColBound, int>& rhs) const;
+  bool operator()(const std::tuple<const mpq_class*, LpColBound, int>& lhs,
+                  const std::tuple<const mpq_class*, LpColBound, int>& rhs) const;
 };
 
 /**
@@ -56,21 +56,16 @@ struct BoundComparator {
  */
 class TheorySolverBoundVector {
  public:
-  using Bound = std::tuple<mpq_class, LpColBound, int>;      ///< Bound. It is a tuple of value, bound type and index
-  using BoundVector = SortedVector<Bound, BoundComparator>;  ///< Sorted vector of bounds
+  using Bound = std::tuple<const mpq_class*, LpColBound, int>;  ///< Bound. It is a tuple of value, bound type and index
+  using BoundVector = SortedVector<Bound, BoundComparator>;     ///< Sorted vector of bounds
   using BoundIterator = TheorySolverBoundIterator<BoundVector>;  ///< BoundIterator iterator over the violated bounds
 
-  /**
-   * Construct a new TheorySolverBoundVector using -@p inf as the the lower bound and @p inf as the upper bound.
-   * @param inf value to be used as the lower bound and upper bound
-   */
-  explicit TheorySolverBoundVector(mpq_class inf);
   /**
    * Construct a new TheorySolverBoundVector using @p inf_l as the the lower bound and @p inf_u as the upper bound.
    * @param inf_l lower bound
    * @param inf_u upper bound
    */
-  TheorySolverBoundVector(mpq_class inf_l, mpq_class inf_u);
+  TheorySolverBoundVector(const mpq_class& inf_l, const mpq_class& inf_u);
 
   /**
    * Add a new bound to the vector.
@@ -122,23 +117,6 @@ class TheorySolverBoundVector {
    * Active bounds are set to @ref inf_l_ and @ref inf_u_.
    */
   void Clear();
-  /**
-   * Clear the vector, update @ref inf_l_ and @ref inf_u_ and reset the active bounds.
-   *
-   * More specifically, @ref inf_l_ and @ref inf_u_ are set to -@p inf and @p inf respectively.
-   * Active bounds are set to the new values of @ref inf_l_ and @ref inf_u_.
-   * @param inf new inf value
-   */
-  void Clear(mpq_class inf);
-  /**
-   * Clear the vector, update @ref inf_l_ and @ref inf_u_ and reset the active bounds.
-   *
-   * More specifically, @ref inf_l_ and @ref inf_u_ are set to @p inf_l and @p inf_u respectively.
-   * Active bounds are set to the new values of @ref inf_l_ and @ref inf_u_.
-   * @param inf_l new lower bound
-   * @param inf_u new upper bound
-   */
-  void Clear(mpq_class inf_l, mpq_class inf_u);
 
   /**
    * Return the number of lower bounds in the vector, both strict and non-strict.
@@ -180,22 +158,22 @@ class TheorySolverBoundVector {
    * Return the starting lower bound.
    * @return starting lower bound
    */
-  [[nodiscard]] const mpq_class& inf_l() const { return inf_l_; }
+  [[nodiscard]] const mpq_class& inf_l() const { return *inf_l_; }
   /**
    * Return the starting upper bound.
    * @return starting upper bound
    */
-  [[nodiscard]] const mpq_class& inf_u() const { return inf_u_; }
+  [[nodiscard]] const mpq_class& inf_u() const { return *inf_u_; }
   /**
    * Return the active lower bound.
    * @return active lower bound
    */
-  [[nodiscard]] const mpq_class& active_lower_bound() const { return active_lower_bound_; }
+  [[nodiscard]] const mpq_class& active_lower_bound() const { return *active_lower_bound_; }
   /**
    * Return the active upper bound.
    * @return active upper bound
    */
-  [[nodiscard]] const mpq_class& active_upper_bound() const { return active_upper_bound_; }
+  [[nodiscard]] const mpq_class& active_upper_bound() const { return *active_upper_bound_; }
 
   [[nodiscard]] const Bound& operator[](size_t idx) const { return bounds_[idx]; }
 
@@ -254,13 +232,13 @@ class TheorySolverBoundVector {
    */
   [[nodiscard]] inline BoundVector::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
 
-  int n_lower_bounds_;            ///< Number of lower bounds, both strict and non-strict
-  BoundVector bounds_;            ///< Equality and inequality bounds
-  BoundVector nq_bounds_;         ///< Non-equality bounds
-  mpq_class active_lower_bound_;  ///< Active lower bound
-  mpq_class active_upper_bound_;  ///< Active upper bound
-  mpq_class inf_l_;               ///< Starting lower bound
-  mpq_class inf_u_;               ///< Starting upper bound
+  int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
+  BoundVector bounds_;                   ///< Equality and inequality bounds
+  BoundVector nq_bounds_;                ///< Non-equality bounds
+  const mpq_class* const inf_l_;         ///< Starting lower bound
+  const mpq_class* const inf_u_;         ///< Starting upper bound
+  const mpq_class* active_lower_bound_;  ///< Active lower bound
+  const mpq_class* active_upper_bound_;  ///< Active upper bound
 };
 
 using TheorySolverBoundVectorMap = std::map<Variable::Id, TheorySolverBoundVector>;

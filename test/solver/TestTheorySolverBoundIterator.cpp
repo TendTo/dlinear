@@ -19,10 +19,11 @@ class TestTheorySolverBoundIterator : public ::testing::Test {
   const BoundVector bound_vector_;
   const BoundVector nq_bound_vector_;
   Violation it_;
+  const mpq_class val_[6] = {0, 1, 2, 3, 4, 5};
 
   TestTheorySolverBoundIterator()
-      : bound_vector_{{1, LpColBound::SL, 0}, {2, LpColBound::L, 0}, {3, LpColBound::U, 0}, {4, LpColBound::SU, 0}},
-        nq_bound_vector_{{0, LpColBound::D, 0}, {5, LpColBound::D, 0}},
+      : bound_vector_{{&val_[1], LpColBound::SL, 0}, {&val_[2], LpColBound::L, 0}, {&val_[3], LpColBound::U, 0}, {&val_[4], LpColBound::SU, 0}},
+        nq_bound_vector_{{&val_[0], LpColBound::D, 0}, {&val_[5], LpColBound::D, 0}},
         it_{bound_vector_.begin(), bound_vector_.end(), nq_bound_vector_.begin(), nq_bound_vector_.end()} {}
 };
 

@@ -21,6 +21,9 @@ namespace dlinear {
 using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
+const mpq_class CompleteSoplexTheorySolver::strict_col_lb_{0};
+const mpq_class CompleteSoplexTheorySolver::strict_col_ub_{1};
+
 CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : SoplexTheorySolver(predicate_abstractor, config),
       enabled_strict_theory_rows_{},
@@ -291,7 +294,7 @@ void CompleteSoplexTheorySolver::Consolidate() {
   // Reserve memory for all possible active strict theory rows
   enabled_strict_theory_rows_.reserve(spx_.numRowsRational());
   const int spx_col = spx_.numColsRational();
-  theory_bounds_.emplace_back(0, 1);
+  theory_bounds_.emplace_back(strict_col_lb_, strict_col_ub_);
   // Column of the strict auxiliary variable t bound between 0 and 1
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), 1, 0));
   spx_.changeObjRational(spx_col, 1);

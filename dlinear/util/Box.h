@@ -40,8 +40,8 @@ class Box {
     [[nodiscard]] bool is_empty() const { return lb_ == 1 && ub_ == 0; }
     [[nodiscard]] bool is_degenerated() const { return lb_ == ub_; }
     [[nodiscard]] bool is_bisectable() const { return lb_ < ub_; }
-    [[nodiscard]] mpq_class lb() const { return lb_; }
-    [[nodiscard]] mpq_class ub() const { return ub_; }
+    [[nodiscard]] const mpq_class &lb() const { return lb_; }
+    [[nodiscard]] const mpq_class &ub() const { return ub_; }
     [[nodiscard]] mpq_class mid() const { return (lb_ + ub_) / 2; }
     [[nodiscard]] mpq_class diam() const { return is_empty() ? mpq_class(0) : mpq_class(ub_ - lb_); }
     [[nodiscard]] std::pair<Interval, Interval> bisect(const mpq_class &p) const;
