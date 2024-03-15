@@ -164,4 +164,9 @@ dlinear_cc_library(
     deps = [":exception"],
 )
 
+dlinear_cc_library(
+    name = "graph",
+    hdrs = ["Graph.hpp"],
+)
+
 cpplint()

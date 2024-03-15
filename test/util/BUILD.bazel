@@ -68,3 +68,9 @@ dlinear_cc_googletest(
     tags = ["util"],
     deps = ["//dlinear/util:sorted_vector"],
 )
+
+dlinear_cc_googletest(
+    name = "test_graph",
+    tags = ["util"],
+    deps = ["//dlinear/util:graph"],
+)
