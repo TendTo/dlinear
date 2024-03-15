@@ -175,6 +175,18 @@ class TheorySolverBoundVector {
    */
   [[nodiscard]] const mpq_class& active_upper_bound() const { return *active_upper_bound_; }
 
+  /**
+   * Return the active equality bound.
+   *
+   * An active equality bound is obtained when the active lower bound is equal to the active upper bound.
+   * If such condition is false, a nullptr is returned.
+   * @return active equality bound if the active lower bound is equal to the active upper bound
+   * @return nullptr if the active lower bound is not equal to the active upper bound
+   */
+  [[nodiscard]] const mpq_class* GetActiveEqualityBound() const {
+    return IsActiveEquality(*active_lower_bound_) ? active_lower_bound_ : nullptr;
+  }
+
   [[nodiscard]] const Bound& operator[](size_t idx) const { return bounds_[idx]; }
 
   /**
