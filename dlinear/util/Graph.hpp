@@ -7,10 +7,7 @@
  *
  * Generic graph implementation that can be used to represent a graph with vertices of type @p T.
  */
-#pragma once
-
 #include <functional>
-#include <iostream>
 #include <queue>
 #include <stack>
 #include <unordered_map>
@@ -19,10 +16,26 @@
 namespace dlinear {
 
 /**
+ * Result returned by the visit function.
+ *
+ * Depending on the result, the search algorithm will continue, skip adding the adjacent vertices to the stack/queue,
+ * or stop the search altogether.
+ * @see DFS
+ * @see BFS
+ */
+enum class VisitResult {
+  CONTINUE,  ///< Continue the search as usual and add the adjacent vertices to the stack/queue
+  SKIP,      ///< Skip adding the adjacent vertices to the stack/queue, but continue the search
+  STOP,      ///< Stop the search altogether
+};
+
+/**
  * Graph class.
  *
  * Generic implementation that can be used to represent a graph with vertices of type @p T.
- * @tparam T element type of the vertices
+ * @tparam T element type of the vertices.
+ * It implements basic graph operations such as adding and removing vertices and edges, as well as graph traversal
+ * algorithms such as depth-first search @ref Graph::DFS and breadth-first search @ref Graph::BFS.
  */
 template <class T>
 class Graph {
@@ -99,25 +112,45 @@ class Graph {
    * Explore the graph using depth-first search starting from vertex @p start.
    *
    * Each vertex is visited exactly once and the function @p func is called on each one.
+   * The return value of @p func will determine whether the search continues, skips adding the adjacent
+   * vertices to the stack, or stops altogether.
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
+   * @see VisitResult
    */
-  void DFS(const T& start, const std::function<void(const T&)>& func) {
+  void DFS(const T& start, const std::function<VisitResult(const T&)>& func) {
     std::unordered_set<T> visited{};
+    DFS(start, func, visited);
+  }
+  /**
+   * Explore the graph using depth-first search starting from vertex @p start.
+   *
+   * Each vertex is visited exactly once and the function @p func is called on each one.
+   * The function exposes the @p visited set, which can be used to keep track of visited vertices or to
+   * change the behavior of the search.
+   * The return value of @p func will determine whether the search continues, skips adding the adjacent
+   * vertices to the stack, or stops altogether.
+   * @param start starting vertex
+   * @param func function to call on each vertex upon visiting it. If the function returns false, the search stops.
+   * @param visited set of visited vertices
+   * @see VisitResult
+   */
+  void DFS(const T& start, const std::function<VisitResult(const T&)>& func, std::unordered_set<T>& visited) {
+    visited.clear();
     visited.reserve(adj_list_.size());
     std::stack<T> stack;
 
     stack.push(start);
-    visited.insert(start);
     while (!stack.empty()) {
-      T current = stack.top();
+      const T current = std::move(stack.top());
       stack.pop();
-      func(current);
-      for (const T& adjVertex : adj_list_[current]) {
-        if (visited.find(adjVertex) == visited.end()) {
-          stack.push(adjVertex);
-          visited.insert(adjVertex);
-        }
+      if (visited.find(current) != visited.end()) continue;
+      visited.insert(current);
+      const VisitResult res = func(current);
+      if (res == VisitResult::STOP) return;
+      if (res == VisitResult::SKIP) continue;
+      for (const T& adj_vertex : adj_list_[current]) {
+        if (visited.find(adj_vertex) == visited.end()) stack.push(adj_vertex);
       }
     }
   }
@@ -126,23 +159,127 @@ class Graph {
    * Explore the graph using breadth-first search starting from vertex @p start.
    *
    * Each vertex is visited exactly once and the function @p func is called on each one.
+   * The return value of @p func will determine whether the search continues, skips adding the adjacent
+   * vertices to the stack, or stops altogether.
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
+   * @see VisitResult
    */
-  void BFS(const T& start, const std::function<void(const T&)>& func) {
+  void BFS(const T& start, const std::function<VisitResult(const T&)>& func) {
     std::unordered_set<T> visited{};
+    BFS(start, func, visited);
+  }
+  /**
+   * Explore the graph using breadth-first search starting from vertex @p start.
+   *
+   * Each vertex is visited exactly once and the function @p func is called on each one.
+   * The function exposes the @p visited set, which can be used to keep track of visited vertices or to
+   * change the behavior of the search.
+   * The return value of @p func will determine whether the search continues, skips adding the adjacent
+   * vertices to the stack, or stops altogether.
+   * @param start starting vertex
+   * @param func function to call on each vertex upon visiting it
+   * @param visited set of visited vertices
+   * @see VisitResult
+   */
+  void BFS(const T& start, const std::function<VisitResult(const T&)>& func, std::unordered_set<T>& visited) {
     visited.reserve(adj_list_.size());
     std::queue<T> queue;
     visited.insert(start);
     queue.push(start);
     while (!queue.empty()) {
-      func(queue.front());
+      const VisitResult res = func(queue.front());
+      if (res == VisitResult::STOP) return;
+      if (res == VisitResult::SKIP) {
+        queue.pop();
+        continue;
+      };
       for (auto& neighbour : adj_list_[queue.front()]) {
         if (visited.find(neighbour) != visited.end()) continue;
         visited.insert(neighbour);
         queue.push(neighbour);
       }
       queue.pop();
+    }
+  }
+
+  /**
+   * Find all paths from vertex @p start to vertex @p end.
+   *
+   * Each path will be encountered exactly once and the function @p func is called on each one.
+   * Some path may contain the same vertexes but in different order.
+   * The return value of @p func will determine whether the search continues or should stop after the first path is
+   * found.
+   * @warning The path is passed to the function by reference.
+   * It should not be modified unless that is the intended behavior.
+   * @param start starting vertex
+   * @param end ending vertex
+   * @param func function to call on each path
+   * @see VisitResult
+   */
+  void AllPaths(const T& start, const T& end, const std::function<VisitResult(std::vector<T>&)>& func) {
+    std::unordered_set<T> visited;
+    AllPaths(start, end, func, visited);
+  }
+  /**
+   * Find all paths from vertex @p start to vertex @p end.
+   *
+   * Each path will be encountered exactly once and the function @p func is called on each one.
+   * Some path may contain the same vertexes but in different order.
+   * The function exposes the @p visited set, which can be used to keep track of visited vertices or to
+   * change the behavior of the search.
+   * The return value of @p func will determine whether the search continues or should stop after the first path is
+   * found.
+   * @warning The path is passed to the function by reference.
+   * It should not be modified unless that is the intended behavior.
+   * @param start starting vertex
+   * @param end ending vertex
+   * @param func function to call on each path
+   * @param visited set of visited vertices
+   * @see VisitResult
+   */
+  void AllPaths(const T& start, const T& end, const std::function<VisitResult(std::vector<T>&)>& func,
+                std::unordered_set<T>& visited) {
+    std::stack<T> stack;
+    std::unordered_map<T, typename std::unordered_set<T>::iterator> iterators;
+    std::vector<T> path;
+
+    iterators.reserve(adj_list_.size());
+    visited.reserve(adj_list_.size());
+    path.reserve(adj_list_.size());
+
+    stack.push(start);
+    visited.insert(start);
+    path.push_back(start);
+    iterators[start] = adj_list_[start].begin();
+
+    while (!stack.empty()) {
+      const T current = stack.top();
+
+      if (current == end) {
+        if (func(path) != VisitResult::CONTINUE) return;
+        stack.pop();
+        visited.erase(current);
+        path.pop_back();
+        continue;
+      }
+
+      auto& it = iterators.at(current);
+      if (it == adj_list_.at(current).end()) {
+        stack.pop();
+        visited.erase(current);
+        path.pop_back();
+        continue;
+      }
+
+      const T next = *it;
+      ++it;
+      if (visited.find(next) == visited.end()) {
+        stack.push(next);
+        visited.insert(next);
+        path.push_back(next);
+        iterators.insert_or_assign(next, adj_list_.at(next).begin());
+      }
     }
   }
 
