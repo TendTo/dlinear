@@ -210,7 +210,6 @@ TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   auto it = empty_bounds_.active_bounds();
-  std::cout << empty_bounds_ << std::endl;
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);

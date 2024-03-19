@@ -22,8 +22,8 @@ class TestGraph : public ::testing::Test {
    * |
    * 6 -> 7 - 8
    */
-  Graph<T> graph_;
-  Graph<T> empty_graph_;
+  Graph<T, float> graph_;
+  Graph<T, float> empty_graph_;
 
   TestGraph() {
     graph_.AddEdge(0, 1);
@@ -43,13 +43,13 @@ using TestParams = ::testing::Types<int, char>;
 TYPED_TEST_SUITE(TestGraph, TestParams);
 
 TYPED_TEST(TestGraph, Contructor) {
-  const Graph<TypeParam> graph;
+  const Graph<TypeParam, float> graph;
   EXPECT_TRUE(graph.IsEmpty());
 }
 
 TYPED_TEST(TestGraph, AddVertex) {
   const TypeParam vertex = 0;
-  Graph<TypeParam> graph;
+  Graph<TypeParam, float> graph;
   graph.AddVertex(vertex);
   EXPECT_FALSE(graph.IsEmpty());
   EXPECT_FALSE(graph.HasEdge(vertex, 0));
@@ -59,36 +59,93 @@ TYPED_TEST(TestGraph, AddVertex) {
 
 TYPED_TEST(TestGraph, AddEdge) {
   const TypeParam vertex = 0, other_vertex = 1;
-  Graph<TypeParam> graph;
-  graph.AddEdge(vertex, other_vertex);
-  EXPECT_FALSE(graph.IsEmpty());
-  EXPECT_TRUE(graph.HasEdge(vertex, other_vertex));
-  EXPECT_TRUE(graph.HasEdge(other_vertex, vertex));
-  EXPECT_EQ(graph.adj_list().at(vertex).size(), 1u);
-  EXPECT_EQ(graph.adj_list().at(other_vertex).size(), 1u);
+  this->empty_graph_.AddEdge(vertex, other_vertex);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 1.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f);
 }
 
 TYPED_TEST(TestGraph, AddEdgeTwice) {
   const TypeParam vertex = 0, other_vertex = 1;
-  Graph<TypeParam> graph;
-  graph.AddEdge(vertex, other_vertex);
-  graph.AddEdge(vertex, other_vertex);
-  EXPECT_FALSE(graph.IsEmpty());
-  EXPECT_TRUE(graph.HasEdge(vertex, other_vertex));
-  EXPECT_TRUE(graph.HasEdge(other_vertex, vertex));
-  EXPECT_EQ(graph.adj_list().at(vertex).size(), 1u);
-  EXPECT_EQ(graph.adj_list().at(other_vertex).size(), 1u);
+  this->empty_graph_.AddEdge(vertex, other_vertex);
+  this->empty_graph_.AddEdge(vertex, other_vertex);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 1.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f);
 }
 
 TYPED_TEST(TestGraph, AddEdgeDirected) {
   const TypeParam vertex = 0, other_vertex = 1;
-  Graph<TypeParam> graph;
-  graph.AddEdge(vertex, other_vertex, false);
-  EXPECT_FALSE(graph.IsEmpty());
-  EXPECT_TRUE(graph.HasEdge(vertex, other_vertex));
-  EXPECT_FALSE(graph.HasEdge(other_vertex, vertex));
-  EXPECT_EQ(graph.adj_list().at(vertex).size(), 1u);
-  EXPECT_EQ(graph.adj_list().count(other_vertex), 0u);
+  this->empty_graph_.AddEdge(vertex, other_vertex, false);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_FALSE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 0u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 1.0f);
+  EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
+}
+
+TYPED_TEST(TestGraph, AddEdgeWeighted) {
+  const TypeParam vertex = 0, other_vertex = 1;
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 2.0f);
+}
+
+TYPED_TEST(TestGraph, AddEdgeTwiceWeighted) {
+  const TypeParam vertex = 0, other_vertex = 1;
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
+  this->empty_graph_.AddEdge(vertex, other_vertex, 4.0f);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 4.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 4.0f);
+}
+
+TYPED_TEST(TestGraph, AddEdgeDirectedWeighted) {
+  const TypeParam vertex = 0, other_vertex = 1;
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
+  EXPECT_FALSE(this->empty_graph_.IsEmpty());
+  EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
+  EXPECT_FALSE(this->empty_graph_.HasEdge(other_vertex, vertex));
+  EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
+  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 0u);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
+  EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
+}
+
+TYPED_TEST(TestGraph, GetEdgeWeightPresent) {
+  const TypeParam vertex = 0, other_vertex = 1;
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 2.0f);
+}
+
+TYPED_TEST(TestGraph, GetEdgeWeightAbsent) {
+  const TypeParam vertex = 0, other_vertex = 1;
+  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
+  EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
+  EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex + 100, vertex), nullptr);
+  EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex + 100), nullptr);
 }
 
 TYPED_TEST(TestGraph, DFSVisitAllVerticesOnce) {
