@@ -6,9 +6,8 @@
  */
 #include "BitIncrementIterator.h"
 
+#include <iostream>
 #include <utility>
-
-#include "dlinear/util/exception.h"
 
 namespace dlinear {
 
@@ -109,7 +108,6 @@ bool BitIncrementIterator::IsDone() const {
   return true;
 }
 
-// TODO: smart reset
 void BitIncrementIterator::ResetNonFixedRight(size_t start_pos) {
   for (size_t i = start_pos; i < vector_.size(); i++) {
     if (!fixed_[i]) vector_[i] = starting_vector_[i];

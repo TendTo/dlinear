@@ -33,4 +33,14 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type) {
 
 }  // namespace dlinear
 
-#endif
+#else
+
+namespace dlinear {
+
+bool info_enabled{false};
+
+void init_verbosity(int verbosity) { info_enabled = verbosity > 2; }
+
+}  // namespace dlinear
+
+#endif  // NLOG

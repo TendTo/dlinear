@@ -20,7 +20,6 @@
 #include "dlinear/solver/TheorySolverBoundIterator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/SortedVector.hpp"
-#include "dlinear/util/exception.h"
 
 namespace dlinear {
 

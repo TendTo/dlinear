@@ -163,7 +163,7 @@ void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   throw std::runtime_error("Not implemented");
   DLINEAR_ASSERT(2 == simplex_sat_phase_, "must be phase 2");
-  const int spx_cols{spx_.numColsRational()};
+  [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   soplex::DSVectorRational coeffsPos;
   coeffsPos.add(spx_row, 1);
   spx_.addColRational(soplex::LPColRational(1, coeffsPos, soplex::infinity, 0));

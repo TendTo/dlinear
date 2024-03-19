@@ -64,9 +64,17 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #else
 
+namespace dlinear {
+
+extern bool info_enabled;
+
+void init_verbosity(int verbosity);
+
+}  // namespace dlinear
+
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) 0
 #define DLINEAR_LOG_INIT_LEVEL(level) void(0)
-#define DLINEAR_LOG_INIT_VERBOSITY(verbosity) void(0)
+#define DLINEAR_LOG_INIT_VERBOSITY(verbosity) init_verbosity(verbosity)
 #define DLINEAR_TRACE(msg) void(0)
 #define DLINEAR_TRACE_FMT(msg, ...) void(0)
 #define DLINEAR_DEBUG(msg) void(0)
@@ -79,7 +87,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #define DLINEAR_ERROR_FMT(msg, ...) void(0)
 #define DLINEAR_CRITICAL(msg) void(0)
 #define DLINEAR_CRITICAL_FMT(msg, ...) void(0)
-#define DLINEAR_INFO_ENABLED false
+#define DLINEAR_INFO_ENABLED info_enabled
 #define DLINEAR_TRACE_ENABLED false
 
 #endif

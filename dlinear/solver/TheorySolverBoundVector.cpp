@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <utility>
 
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+
 #define TRACE_VIOLATED_BOUNDS(it)                                                                                  \
   DLINEAR_TRACE_FMT("TheorySolverBoundVector::ViolatedBounds: ({} {}) incompatible with ({} {})", value, lp_bound, \
                     *std::get<0>(*it), std::get<1>(*it))
