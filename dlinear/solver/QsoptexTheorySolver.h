@@ -4,7 +4,7 @@
  * @copyright 2024 dlinear
  * @licence GPL-3.0 license
  * @brief Theory solver using QSopt_ex.
- * 
+ *
  * QSopt_ex is an exact LP solver written in C.
  * It uses the technique of precision boosting to efficiently solve LPs exactly.
  */
@@ -31,6 +31,8 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x,
 class QsoptexTheorySolver : public TheorySolver {
  public:
   explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  QsoptexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
+                      const Config &config = Config{});
   ~QsoptexTheorySolver() override;
 
   void AddVariable(const Variable &var) override;

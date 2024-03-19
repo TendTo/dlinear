@@ -22,7 +22,7 @@ using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
 DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SoplexTheorySolver(predicate_abstractor, config) {}
+    : SoplexTheorySolver("DeltaSoplexTheorySolver", predicate_abstractor, config) {}
 
 void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
@@ -130,10 +130,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaSoplexTheorySolver", "Total # of CheckSat",
-                             "Total time spent in CheckSat"};
-  TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true /* start_timer */);
-  stat.Increase();
+  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true /* start_timer */);
+  stats_.Increase();
 
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::CheckSat: Box = \n{}", box);
 

@@ -23,10 +23,7 @@ namespace dlinear {
 SmtSolver::SmtSolver() : SmtSolver{Config{true}} {}
 SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
 SmtSolver::SmtSolver(Config config)
-    : config_{std::move(config)},
-      guard_{config_},
-      context_{config_},
-      output_{config_.precision(), config_.produce_models(), config_.with_timings()} {}
+    : config_{std::move(config)}, guard_{config_}, context_{config_}, output_{config_} {}
 
 #ifdef DLINEAR_PYDLINEAR
 
@@ -39,7 +36,10 @@ void SmtSolver::Exit() { guard_.DeInit(); }
 SmtSolverOutput SmtSolver::CheckSat() {
   DLINEAR_TRACE("SmtSolver::CheckSat");
   if (output_.result != SolverResult::UNSOLVED) return output_;
-  DLINEAR_DEBUG("SmtSolver::CheckSat -- No cached result fond.");
+  TimerGuard timer_guard{&output_.total_timer, true};
+  DLINEAR_DEBUG("SmtSolver::CheckSat: No cached result fond.");
+  DLINEAR_INFO_FMT("SmtSolver::CheckSat: Checking satisfiability of '{}'", config_.filename());
+  dlinear::main_timer.start();
   if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
   output_.n_assertions = context_.assertions().size();
 
@@ -49,6 +49,10 @@ SmtSolverOutput SmtSolver::CheckSat() {
     CheckObjCore();
   else
     CheckSatCore();
+
+  output_.model = context_.model();
+  output_.sat_stats = context_.sat_stats();
+  output_.theory_stats = context_.theory_stats();
 
   return output_;
 }
@@ -94,33 +98,39 @@ bool SmtSolver::ParseMps() {
 void SmtSolver::CheckObjCore() {
   DLINEAR_DEBUG("SmtSolver::CheckObjCore");
   TimerGuard timer_guard{&output_.smt_solver_timer, true};
-  LpResult status = context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
-  if (LpResult::LP_DELTA_OPTIMAL == status) {
-    output_.result = SolverResult::DELTA_OPTIMAL;
-  } else if (LpResult::LP_UNBOUNDED == status) {
-    output_.result = SolverResult::UNBOUNDED;
-  } else if (LpResult::LP_INFEASIBLE == status) {
-    output_.result = SolverResult::INFEASIBLE;
-  } else {
-    DLINEAR_UNREACHABLE();
+  const LpResult res = context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
+  switch (res) {
+    case LpResult::LP_DELTA_OPTIMAL:
+      output_.result = SolverResult::DELTA_OPTIMAL;
+      break;
+    case LpResult::LP_UNBOUNDED:
+      output_.result = SolverResult::UNBOUNDED;
+      break;
+    case LpResult::LP_INFEASIBLE:
+      output_.result = SolverResult::INFEASIBLE;
+      break;
+    default:
+      output_.result = SolverResult::UNKNOWN;
   }
-  output_.model = context_.model();
 }
 
 void SmtSolver::CheckSatCore() {
   DLINEAR_DEBUG("SmtSolver::CheckSatCore");
   TimerGuard timer_guard{&output_.smt_solver_timer, true};
   const SatResult res = context_.CheckSat(&output_.actual_precision);
-  if (res == SatResult::SAT_SATISFIABLE) {
-    output_.result = SolverResult::SAT;
-  } else if (res == SatResult::SAT_DELTA_SATISFIABLE) {
-    output_.result = SolverResult::DELTA_SAT;
-  } else if (res == SatResult::SAT_UNSATISFIABLE) {
-    output_.result = SolverResult::UNSAT;
-  } else {
-    output_.result = SolverResult::UNKNOWN;
+  switch (res) {
+    case SatResult::SAT_SATISFIABLE:
+      output_.result = SolverResult::SAT;
+      break;
+    case SatResult::SAT_DELTA_SATISFIABLE:
+      output_.result = SolverResult::DELTA_SAT;
+      break;
+    case SatResult::SAT_UNSATISFIABLE:
+      output_.result = SolverResult::UNSAT;
+      break;
+    default:
+      output_.result = SolverResult::UNKNOWN;
   }
-  output_.model = context_.model();
 }
 std::string SmtSolver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
 std::string SmtSolver::GetOption(const std::string &key) const { return context_.GetOption(key); }

@@ -37,12 +37,9 @@ int main(int argc, const char* argv[]) {
   // Setup the infinity values.
   dlinear::SmtSolver solver{config};
 
-  // Start the main timer and run the solver.
-  dlinear::main_timer.start();
+  // Run the solver
   dlinear::SmtSolverOutput result = solver.CheckSat();
   if (!config.silent()) std::cout << result << std::endl;
 
-  return result.result == dlinear::SolverResult::SAT || result.result == dlinear::SolverResult::DELTA_SAT
-             ? EXIT_SUCCESS
-             : EXIT_FAILURE;
+  return result.exit_code();
 }

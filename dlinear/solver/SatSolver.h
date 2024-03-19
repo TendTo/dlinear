@@ -25,12 +25,46 @@
 #include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/ScopedUnorderedSet.hpp"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
+/**
+ * SatSolver class.
+ *
+ * Base class for SAT solvers.
+ * The SAT solver's role is to convert a generic formula into a CNF of boolean clauses,
+ * abstracting away the theory literals.
+ * Then, it checks the satisfiability of the CNF.
+ * If the CNF is satisfiable, it returns a model for the formula.
+ * Otherwise, it returns an empty optional.
+ * The SAT solver can learn clauses during the solving process, guided by the theory solver.
+ * @see TheorySolver
+ */
 class SatSolver {
  public:
+  /**
+   * Construct a new SatSolver object.
+   *
+   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
+   * understanding of the literals.
+   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
+   * @param config configuration of the SAT solver
+   * @see TheorySolver
+   */
   explicit SatSolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  /**
+   * Construct a new SatSolver object.
+   *
+   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
+   * understanding of the literals.
+   * The @p class_name is used to identify the theory solver in the logs.
+   * @param class_name name of the subclass of the SAT solver used
+   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
+   * @param config configuration of the SAT solver
+   * @see TheorySolver
+   */
+  SatSolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
   virtual ~SatSolver() = default;
 
   void Pop();
@@ -84,6 +118,11 @@ class SatSolver {
    * @return vector of literals
    */
   const std::vector<Literal> &theory_literals() const { return theory_literals_; }
+  /**
+   * Get the statistics of the SAT solver.
+   * @return statistics of the SAT solver
+   */
+  const IterationStats &stats() const { return stats_; }
 
  protected:
   /**
@@ -170,6 +209,8 @@ class SatSolver {
 
   PlaistedGreenbaumCnfizer cnfizer_;           ///< Converts the formula to CNF.
   PredicateAbstractor &predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
+
+  IterationStats stats_;  ///< Statistics for the solver.
 };
 
 }  // namespace dlinear

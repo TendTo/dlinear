@@ -23,14 +23,15 @@ class Stats {
   Timer timer_;
 
  protected:
-  const bool enabled_;
+  bool enabled_;
   std::string class_name_;
   std::string operations_name_;
 
  public:
   explicit Stats(bool enabled, std::string class_name, std::string name_time = "Time spent in Operations");
-
-  virtual ~Stats();
+  Stats(const Stats &other) = default;
+  Stats &operator=(const Stats &other) = default;
+  virtual ~Stats() = default;
 
   /**
    * Return whether the stats is enabled.
@@ -68,8 +69,8 @@ class IterationStats : public Stats {
  public:
   explicit IterationStats(bool enabled, std::string class_name, std::string name_time = "Time spent in Operations",
                           std::string iterations_name = "Total # of Iterations");
-
-  ~IterationStats() override;
+  IterationStats(const IterationStats &other);
+  IterationStats &operator=(const IterationStats &other);
 
   [[nodiscard]] std::string ToSegmentString() const override;
 

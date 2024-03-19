@@ -62,6 +62,8 @@ class Context::Impl {
   const Box &get_model() { return model_; }
   bool have_objective() const;
   bool is_max() const;
+  const IterationStats &sat_stats() { return sat_solver_->stats(); }
+  const IterationStats &theory_stats() { return theory_solver_->stats(); }
 
  private:
   std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);

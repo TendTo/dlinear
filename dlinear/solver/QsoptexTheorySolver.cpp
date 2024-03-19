@@ -18,7 +18,10 @@
 namespace dlinear {
 
 QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : TheorySolver(predicate_abstractor, config),
+    : QsoptexTheorySolver{"QsoptexTheorySolver", predicate_abstractor, config} {}
+QsoptexTheorySolver::QsoptexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
+                                         const Config &config)
+    : TheorySolver("QsoptexTheorySolver", predicate_abstractor, config),
       continuous_output_{config.continuous_output()},
       with_timings_{config.with_timings()},
       qsx_{mpq_QScreate_prob(nullptr, QS_MIN)} {

@@ -24,6 +24,7 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
@@ -192,13 +193,22 @@ class Context {
    */
   [[nodiscard]] bool is_max() const;
 
+  /**
+   * Returns the statistics up to the last call to CheckSat of the SAT solver.
+   * @return statistics of the SAT solver
+   */
+  [[nodiscard]] const IterationStats &sat_stats() const;
+  /**
+   * Returns the statistics up to the last call to CheckSat or CheckOpt of the LP solver.
+   * @return statistics of the LP solver
+   */
+  [[nodiscard]] const IterationStats &theory_stats() const;
+
  private:
   // This header is exposed to external users as a part of API. We use
   // PIMPL idiom to hide internals and to reduce number of '#includes' in this
   // file.
   class Impl;
-  class SoplexImpl;
-  class QsoptexImpl;
 
   std::unique_ptr<Impl> impl_;
 };

@@ -94,4 +94,8 @@ bool Context::have_objective() const { return impl_->have_objective(); }
 
 bool Context::is_max() const { return impl_->is_max(); }
 
+const IterationStats &Context::sat_stats() const { return impl_->sat_stats(); }
+
+const IterationStats &Context::theory_stats() const { return impl_->theory_stats(); }
+
 }  // namespace dlinear

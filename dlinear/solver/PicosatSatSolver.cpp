@@ -14,7 +14,7 @@
 namespace dlinear {
 
 PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SatSolver{predicate_abstractor, config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
+    : SatSolver{"PicosatSatSolver", predicate_abstractor, config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
   picosat_save_original_clauses(sat_);
   if (config.random_seed() != 0) {
     picosat_set_seed(sat_, config.random_seed());
@@ -67,12 +67,11 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
 }
 
 std::optional<Model> PicosatSatSolver::CheckSat() {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "PicosatSatSolver", "Total time spent in SAT checks",
-                             "Total # of CheckSat"};
+  TimerGuard check_sat_timer_guard(&stats_.m_timer(), DLINEAR_INFO_ENABLED);
+  stats_.Increase();
+
   DLINEAR_DEBUG_FMT("PicosatSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
                     picosat_added_original_clauses(sat_));
-  TimerGuard check_sat_timer_guard(&stat.m_timer(), DLINEAR_INFO_ENABLED);
-  stat.Increase();
 
   // Call SAT solver.
   const int ret{picosat_sat(sat_, -1)};

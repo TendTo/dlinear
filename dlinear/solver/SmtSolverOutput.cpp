@@ -12,7 +12,6 @@
 #include <limits>
 #include <sstream>
 
-#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -26,6 +25,26 @@ std::string SmtSolverOutput::ToString() const {
   std::ostringstream oss;
   oss << *this;
   return oss.str();
+}
+
+int SmtSolverOutput::exit_code() const {
+  switch (result) {
+    case SolverResult::SAT:
+    case SolverResult::DELTA_SAT:
+    case SolverResult::OPTIMAL:
+    case SolverResult::DELTA_OPTIMAL:
+    case SolverResult::UNBOUNDED:
+      return EXIT_SUCCESS;
+    case SolverResult::UNSAT:
+    case SolverResult::INFEASIBLE:
+      return 1;
+    case SolverResult::UNKNOWN:
+      return 2;
+    case SolverResult::ERROR:
+      return 3;
+    default:
+      return 4;
+  }
 }
 
 std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
@@ -97,7 +116,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
       DLINEAR_UNREACHABLE();
   }
   if (s.with_timings) {
-    os << fmt::format(" after {} seconds", main_timer.seconds());
+    os << fmt::format(" after {} seconds", s.total_timer.seconds());
   }
   if (!s.model.empty() && s.produce_models) {
     os << "\n";

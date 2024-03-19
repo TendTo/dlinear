@@ -113,8 +113,8 @@ class TimerGuard {
    * If @p start_timer is true, starts the @p timer in the constructor.
    * Otherwise, it does not start it and a user has to call `resume()` to start it.
    * @param timer the timer to be guarded
-   * @param enabled whether the timer is enabled
-   * @param start_timer whether the timer should be started
+   * @param enabled whether the timer is enabled and will run
+   * @param start_timer whether the timer should be started as soon as the guard is created
    */
   TimerGuard(Timer *timer, bool enabled, bool start_timer = true);
 

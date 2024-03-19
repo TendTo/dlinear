@@ -25,7 +25,7 @@ const mpq_class CompleteSoplexTheorySolver::strict_col_lb_{0};
 const mpq_class CompleteSoplexTheorySolver::strict_col_ub_{1};
 
 CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SoplexTheorySolver(predicate_abstractor, config),
+    : SoplexTheorySolver("CompleteSoplexTheorySolver", predicate_abstractor, config),
       enabled_strict_theory_rows_{},
       var_to_enabled_theory_rows_{},
       nq_row_to_theory_rows_{},
@@ -145,10 +145,8 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "CompleteSoplexTheorySolver", "Total # of CheckSat",
-                             "Total time spent in CheckSat"};
-  TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true /* start_timer */);
-  stat.Increase();
+  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true /* start_timer */);
+  stats_.Increase();
 
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: Box = \n{}", box);
 

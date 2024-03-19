@@ -25,6 +25,7 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
@@ -49,6 +50,18 @@ class TheorySolver {
    * @param config configuration of the theory solver
    */
   explicit TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  /**
+   * Construct a new Theory Solver object.
+   *
+   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
+   * understanding of the literals.
+   * The @p class_name is used to identify the theory solver in the logs.
+   * @param class_name name of the subclass of the theory solver used
+   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
+   * @param config  configuration of the theory solver
+   */
+  TheorySolver(const std::string &class_name, const PredicateAbstractor &predicate_abstractor,
+               const Config &config = Config{});
   virtual ~TheorySolver() = default;
 
   /**
@@ -131,6 +144,12 @@ class TheorySolver {
    * @param box cox containing the bounds for the variables that will be applied to the theory solver
    */
   virtual void Reset(const Box &box) = 0;
+
+  /**
+   * Get the statistics of the theory solver.
+   * @return statistics of the theory solver
+   */
+  const IterationStats &stats() const { return stats_; }
 
  protected:
   using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds
@@ -355,6 +374,8 @@ class TheorySolver {
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
   Box model_;  ///< Model produced by the theory solver
+
+  IterationStats stats_;  ///< Statistics of the theory solver
 };
 
 }  // namespace dlinear

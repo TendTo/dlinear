@@ -19,8 +19,12 @@ using soplex::Rational;
 mpq_class SoplexTheorySolver::infinity_{0};
 mpq_class SoplexTheorySolver::ninfinity_{0};
 
+SoplexTheorySolver::SoplexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
+                                       const Config &config)
+    : TheorySolver(class_name, predicate_abstractor, config) {}
+
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : TheorySolver(predicate_abstractor, config) {
+    : TheorySolver("SoplexTheorySolver", predicate_abstractor, config) {
   // Initialize infinities
   infinity_ = soplex::infinity;
   ninfinity_ = -soplex::infinity;

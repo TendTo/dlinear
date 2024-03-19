@@ -20,7 +20,7 @@
 namespace dlinear {
 
 DeltaQsoptexTheorySolver::DeltaQsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : QsoptexTheorySolver(predicate_abstractor, config) {}
+    : QsoptexTheorySolver("DeltaQsoptexTheorySolver", predicate_abstractor, config) {}
 
 void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   const auto &[formulaVar, truth] = lit;
@@ -157,10 +157,8 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "DeltaQsoptexTheorySolver", "Total # of CheckSat",
-                             "Total time spent in CheckSat"};
-  TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true /* start_timer */);
-  stat.Increase();
+  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true /* start_timer */);
+  stats_.Increase();
 
   DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::CheckSat: Box = \n{}", box);
 

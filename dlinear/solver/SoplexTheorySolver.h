@@ -30,6 +30,8 @@ namespace dlinear {
 class SoplexTheorySolver : public TheorySolver {
  public:
   explicit SoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
+  explicit SoplexTheorySolver(const std::string& class_name, PredicateAbstractor& predicate_abstractor,
+                              const Config& config = Config{});
 
   void AddVariable(const Variable& var) override;
 
