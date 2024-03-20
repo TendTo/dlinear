@@ -150,8 +150,8 @@ TYPED_TEST(TestGraph, GetEdgeWeightAbsent) {
 
 TYPED_TEST(TestGraph, DFSVisitAllVerticesOnce) {
   std::vector<TypeParam> visited;
-  this->graph_.DFS(0, [&visited](const TypeParam& val) {
-    visited.push_back(val);
+  this->graph_.DFS(0, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+    visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(0, 1, 2, 3, 5, 4, 6, 7, 8));
@@ -159,8 +159,8 @@ TYPED_TEST(TestGraph, DFSVisitAllVerticesOnce) {
 
 TYPED_TEST(TestGraph, DFSVisitIsolatedVerticesOnce) {
   std::vector<TypeParam> visited;
-  this->graph_.DFS(8, [&visited](const TypeParam& val) {
-    visited.push_back(val);
+  this->graph_.DFS(8, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+    visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));
@@ -168,8 +168,8 @@ TYPED_TEST(TestGraph, DFSVisitIsolatedVerticesOnce) {
 
 TYPED_TEST(TestGraph, BFSVisitAllVerticesOnce) {
   std::vector<TypeParam> visited;
-  this->graph_.BFS(0, [&visited](const TypeParam& val) {
-    visited.push_back(val);
+  this->graph_.BFS(0, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+    visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(0, 1, 3, 4, 5, 2, 6, 7, 8));
@@ -177,8 +177,8 @@ TYPED_TEST(TestGraph, BFSVisitAllVerticesOnce) {
 
 TYPED_TEST(TestGraph, BFSVisitIsolatedVerticesOnce) {
   std::vector<TypeParam> visited;
-  this->graph_.BFS(8, [&visited](const TypeParam& val) {
-    visited.push_back(val);
+  this->graph_.BFS(8, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+    visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));

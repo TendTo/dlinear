@@ -21,8 +21,8 @@ namespace dlinear {
  *
  * Depending on the result, the search algorithm will continue, skip adding the adjacent vertices to the stack/queue,
  * or stop the search altogether.
- * @see DFS
- * @see BFS
+ * @see Graph<T, W>::DFS
+ * @see Graph<T, W>::BFS
  */
 enum class VisitResult {
   CONTINUE,  ///< Continue the search as usual and add the adjacent vertices to the stack/queue
@@ -37,7 +37,9 @@ struct EdgeHash_ {
 
 template <class T, class W>
 struct EdgeEqual_ {
-  bool operator()(const std::pair<T, W>& lhs, const std::pair<T, W>& rhs) const { return lhs.first == rhs.first; }
+  bool operator()(const std::pair<T, W>& lhs, const std::pair<T, W>& rhs) const {
+    return std::equal_to<T>{}(lhs.first, rhs.first);
+  }
 };
 
 /**
@@ -54,13 +56,39 @@ struct EdgeEqual_ {
 
 // using T = int;
 // using W = double;
-// using EdgeHash = _EdgeHash<T, W>;
-// using EdgeEqual = _EdgeEqual<T, W>;
+// using EdgeHash = EdgeHash_<T, W>;
+// using EdgeEqual = EdgeEqual_<T, W>;
 template <class T, class W, class EdgeHash = EdgeHash_<T, W>, class EdgeEqual = EdgeEqual_<T, W>>
 class Graph {
  public:
   using Edge = std::pair<T, W>;
   using AdjSet = std::unordered_set<Edge, EdgeHash, EdgeEqual>;
+  using VisitFunc = std::function<VisitResult(const T&, const T&, const W&)>;  ///< Visit function for DFS and BFS.
+  ///< It will be called on each vertex visited with the following parameters:
+  ///< - previous vertex
+  ///< - current vertex
+  ///< - weight of the edge
+  ///<
+  ///< When called on the starting vertex of visit, previous and current vertex will be the same and weight will be 0.
+  ///<
+  ///< Its return value will determine the behavior of the search:
+  ///< - @ref VisitResult::CONTINUE : continue the search as usual and add the adjacent vertices to the stack/queue
+  ///< - @ref VisitResult::SKIP : skip adding the adjacent vertices to the stack/queue, but continue the search
+  ///< - @ref VisitResult::STOP : stop the search altogether
+  ///<
+  ///< @see VisitResult
+  using PathsFunc = std::function<VisitResult(
+      std::vector<T>&)>;  ///< Function to call on each path found.
+                          ///< It will be called on each path found with the following parameter:
+                          ///< - path: vector of vertices in the path
+                          ///<
+                          ///< Its return value will determine the behavior of the search:
+                          ///< - @ref VisitResult::CONTINUE : continue the search
+                          ///< - @ref VisitResult::SKIP |  @ref VisitResult::STOP : stop the search after the first path
+                          ///< is found
+                          ///<
+                          ///< @see VisitResult
+
   /**
    * Add an edge to the graph from vertex @p u to vertex @p v.
    *
@@ -169,6 +197,10 @@ class Graph {
 
   /** Clear the graph, removing all vertices and edges. */
   void Clear() { adj_list_.clear(); }
+  /** Clear the graph, removing only the edges and leaving the vertices. */
+  void ClearEdges() {
+    for (auto& [node, edges] : adj_list_) edges.clear();
+  }
 
   /**
    * Return the number of vertices in the graph
@@ -192,11 +224,14 @@ class Graph {
    * Each vertex is visited exactly once and the function @p func is called on each one.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
+   * @see VisitFunc
    * @see VisitResult
    */
-  void DFS(const T& start, const std::function<VisitResult(const T&)>& func) {
+  void DFS(const T& start, const VisitFunc& func) {
     std::unordered_set<T> visited{};
     DFS(start, func, visited);
   }
@@ -208,15 +243,22 @@ class Graph {
    * change the behavior of the search.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
-   * @param func function to call on each vertex upon visiting it. If the function returns false, the search stops.
+   * @param func function to call on each vertex upon visiting it.
+   * The return value will determine the behavior of the search
    * @param visited set of visited vertices
+   * @see VisitFunc
    * @see VisitResult
    */
-  void DFS(const T& start, const std::function<VisitResult(const T&)>& func, std::unordered_set<T>& visited) {
+  void DFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
+    // If the starting vertex is not in the graph, return
+    if (adj_list_.find(start) == adj_list_.end()) return;
     visited.clear();
     visited.reserve(adj_list_.size());
     std::stack<T> stack;
+    std::unordered_map<T, std::pair<T, const W*>> edges;
 
     stack.push(start);
     while (!stack.empty()) {
@@ -224,11 +266,15 @@ class Graph {
       stack.pop();
       if (visited.find(current) != visited.end()) continue;
       visited.insert(current);
-      const VisitResult res = func(current);
+      const VisitResult res =
+          edges.empty() ? func(current, current, 0) : func(edges.at(current).first, current, *edges.at(current).second);
       if (res == VisitResult::STOP) return;
       if (res == VisitResult::SKIP) continue;
-      for (const auto& [adj_vertex, weight] : adj_list_[current]) {
-        if (visited.find(adj_vertex) == visited.end()) stack.push(adj_vertex);
+      for (auto adj_it = adj_list_.at(current).begin(); adj_it != adj_list_.at(current).end(); ++adj_it) {
+        const auto& [adj_vertex, weight] = *adj_it;
+        if (visited.find(adj_vertex) != visited.end()) continue;
+        stack.push(adj_vertex);
+        edges.insert_or_assign(adj_vertex, std::make_pair(current, &weight));
       }
     }
   }
@@ -239,11 +285,14 @@ class Graph {
    * Each vertex is visited exactly once and the function @p func is called on each one.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
+   * @see VisitFunc
    * @see VisitResult
    */
-  void BFS(const T& start, const std::function<VisitResult(const T&)>& func) {
+  void BFS(const T& start, const VisitFunc& func) {
     std::unordered_set<T> visited{};
     BFS(start, func, visited);
   }
@@ -255,27 +304,35 @@ class Graph {
    * change the behavior of the search.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
    * @param visited set of visited vertices
+   * @see VisitFunc
    * @see VisitResult
    */
-  void BFS(const T& start, const std::function<VisitResult(const T&)>& func, std::unordered_set<T>& visited) {
+  void BFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
     visited.reserve(adj_list_.size());
     std::queue<T> queue;
+    std::unordered_map<T, std::pair<T, const W*>> edges;
     visited.insert(start);
     queue.push(start);
     while (!queue.empty()) {
-      const VisitResult res = func(queue.front());
+      const VisitResult res = edges.empty()
+                                  ? func(queue.front(), queue.front(), 0)
+                                  : func(edges.at(queue.front()).first, queue.front(), *edges.at(queue.front()).second);
       if (res == VisitResult::STOP) return;
       if (res == VisitResult::SKIP) {
         queue.pop();
         continue;
       }
-      for (auto& [adj_vertex, weight] : adj_list_[queue.front()]) {
+      for (auto adj_it = adj_list_.at(queue.front()).begin(); adj_it != adj_list_.at(queue.front()).end(); ++adj_it) {
+        const auto& [adj_vertex, weight] = *adj_it;
         if (visited.find(adj_vertex) != visited.end()) continue;
         visited.insert(adj_vertex);
         queue.push(adj_vertex);
+        edges.insert_or_assign(adj_vertex, std::make_pair(queue.front(), &weight));
       }
       queue.pop();
     }
@@ -288,14 +345,16 @@ class Graph {
    * Some path may contain the same vertexes but in different order.
    * The return value of @p func will determine whether the search continues or should stop after the first path is
    * found.
+   * @note If @p start or @p end are not in the graph, the search stops immediately
    * @warning The path is passed to the function by reference.
    * It should not be modified unless that is the intended behavior.
    * @param start starting vertex
    * @param end ending vertex
    * @param func function to call on each path
+   * @see PathsFunc
    * @see VisitResult
    */
-  void AllPaths(const T& start, const T& end, const std::function<VisitResult(std::vector<T>&)>& func) {
+  void AllPaths(const T& start, const T& end, const PathsFunc& func) {
     std::unordered_set<T> visited;
     AllPaths(start, end, func, visited);
   }
@@ -308,16 +367,18 @@ class Graph {
    * change the behavior of the search.
    * The return value of @p func will determine whether the search continues or should stop after the first path is
    * found.
+   * @note If @p start or @p end are not in the graph, the search stops immediately
    * @warning The path is passed to the function by reference.
    * It should not be modified unless that is the intended behavior.
    * @param start starting vertex
    * @param end ending vertex
    * @param func function to call on each path
    * @param visited set of visited vertices
+   * @see PathsFunc
    * @see VisitResult
    */
-  void AllPaths(const T& start, const T& end, const std::function<VisitResult(std::vector<T>&)>& func,
-                std::unordered_set<T>& visited) {
+  void AllPaths(const T& start, const T& end, const PathsFunc& func, std::unordered_set<T>& visited) {
+    if (adj_list_.find(start) == adj_list_.end() || adj_list_.find(end) == adj_list_.end()) return;
     std::stack<T> stack;
     std::unordered_map<T, typename std::unordered_set<Edge>::iterator> iterators;
     std::vector<T> path;
