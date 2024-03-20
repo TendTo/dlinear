@@ -128,39 +128,15 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool tr
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
-std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_bound) const {
+std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_row) const {
   std::vector<LiteralSet> explanations{};
-  TheoryBoundsToExplanations(violation, theory_bound, explanations);
+  TheoryBoundsToExplanations(violation, theory_row, explanations);
   return explanations;
 }
-void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_bound,
-                                              std::vector<LiteralSet> explanations) const {
-  const Literal bound_lit{theory_bound_to_lit_[theory_bound]};
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryBoundsToExplanation: {} violates {}", bound_lit, violation);
-  for (; violation; ++violation) {
-    explanations.push_back({bound_lit, theory_bound_to_lit_[std::get<2>(*violation)]});
-  }
-}
-void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {
-  if (active) {
-    for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it)
-      explanation.insert(theory_bound_to_lit_[std::get<2>(*it)]);
-  } else {
-    for (const auto &bound : theory_bounds_[theory_col].bounds()) {
-      explanation.insert(theory_bound_to_lit_[std::get<2>(bound)]);
-    }
-  }
-}
-
-std::vector<LiteralSet> TheorySolver::TheoryRowBoundsToExplanations(Violation violation, const int theory_row) const {
-  std::vector<LiteralSet> explanations{};
-  TheoryRowBoundsToExplanations(violation, theory_row, explanations);
-  return explanations;
-}
-void TheorySolver::TheoryRowBoundsToExplanations(Violation violation, int theory_row,
-                                                 std::vector<LiteralSet> &explanations) const {
+void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_row,
+                                              std::vector<LiteralSet> &explanations) const {
   const Literal row_lit{theory_row_to_lit_[theory_row]};
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryRowBoundsToExplanations: {} violates {}", row_lit, violation);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryBoundsToExplanations: {} violates {}", row_lit, violation);
   if (violation.nq_bounds_empty() || violation.bounds_empty()) {
     for (; violation; ++violation) explanations.push_back({row_lit, theory_row_to_lit_[std::get<2>(*violation)]});
   } else {
@@ -168,8 +144,7 @@ void TheorySolver::TheoryRowBoundsToExplanations(Violation violation, int theory
     for (; violation; ++violation) explanations.back().insert(theory_row_to_lit_[std::get<2>(*violation)]);
   }
 }
-void TheorySolver::TheoryRowBoundsToExplanation(const int theory_col, const bool active,
-                                                LiteralSet &explanation) const {
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {
   if (active) {
     for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it)
       explanation.insert(theory_row_to_lit_[std::get<2>(*it)]);

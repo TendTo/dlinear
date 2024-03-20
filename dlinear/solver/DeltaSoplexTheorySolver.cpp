@@ -40,15 +40,6 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
-  // Just create simple bound in LP
-  // It will be handled when enabling the literal
-  if (IsSimpleBound(formula)) {
-    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: ignoring simple bound ({}, {})", formulaVar, truth);
-    lit_to_theory_bound_.emplace(formulaVar.get_id(), theory_bound_to_lit_.size());
-    theory_bound_to_lit_.emplace_back(formulaVar, truth);
-    return;
-  }
-
   if (IsEqualTo(formula)) {
     spx_sense_.push_back(LpRowSense::EQ);
   } else if (IsGreaterThan(formula) || IsGreaterThanOrEqualTo(formula)) {
@@ -59,13 +50,14 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
     // This constraint will be ignored, because it is always delta-sat for delta > 0.
     spx_sense_.push_back(LpRowSense::NQ);
   } else {
-    DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
+    DLINEAR_UNREACHABLE();
   }
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: {} -> {}", formula, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};
 
-  // Add an inactive constraint with the right coefficients for the decisional variables
-  soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
+  soplex::DSVectorRational coeffs{IsSimpleBound(formula) ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
+  if (IsSimpleBound(formula)) spx_rhs_.emplace_back(0);
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
   if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
 
@@ -85,44 +77,44 @@ std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &li
 
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
-  if (it_row != lit_to_theory_row_.end()) {
-    // A non-trivial linear literal from the input problem
-    const int spx_row = it_row->second;
-    // Update the truth value for the current iteration with the last SAT solver assignment
-    theory_row_to_lit_[spx_row].second = truth;
 
-    EnableSpxRow(spx_row, truth, {});
+  // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
+  if (it_row == lit_to_theory_row_.end()) {
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({}{})", truth ? "" : "¬", var);
     return {};
   }
 
-  // If the literal was not already among the constraints (rows) of the LP, it must be a bound
-  // on a variable (column) or a learned literal.
-  const auto it = predicate_abstractor_.var_to_formula_map().find(var);
-  // The variable is not in the map (it is not a theory literal) or it is not a simple bound
-  if (it == predicate_abstractor_.var_to_formula_map().end() || !IsSimpleBound(it->second)) {
-    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({}, {})", var, truth);
+  // A non-trivial linear literal from the input problem
+  const int spx_row = it_row->second;
+  // Update the truth value for the current iteration with the last SAT solver assignment
+  theory_row_to_lit_[spx_row].second = truth;
+
+  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
+  const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+
+  // If it is a simple bound, we add it to the theory_bounds.
+  if (IsSimpleBound(formula)) {
+    // bound = (variable, type, value), where:
+    // - variable is the box variable
+    // - type of bound
+    // - value is the bound value
+    auto [b_var, type, value] = GetBound(formula, truth);
+    type = ~type;
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: bound ({}, {} {})", b_var, type, value);
+    // If the bound is now free, there is no need to consider it
+    if (type == LpColBound::F) return {};
+
+    // Add the active bound to the LP solver bounds
+    int theory_col = var_to_theory_col_[b_var.get_id()];
+    const TheorySolverBoundVector::BoundIterator violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
+
+    // If the bound is invalid, return the explanation and update the SAT solver immediately
+    if (violation) return TheoryBoundsToExplanations(violation, spx_row);
     return {};
   }
 
-  // A simple bound - set it directly
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", it->second);
-  // bound = (variable, type, value), where:
-  // - variable is the box variable
-  // - type of bound
-  // - value is the bound value
-  auto [b_var, type, value] = GetBound(it->second, truth);
-  // Since delta > 0, we can relax the bound type
-  type = ~type;
-  // If the bound is now free, there is no need to consider it
-  if (type == LpColBound::F) return {};
-
-  // Add the active bound to the LP solver bounds
-  const int theory_col = var_to_theory_col_.at(b_var.get_id());
-  const int bound_idx = lit_to_theory_bound_.at(var.get_id());
-  theory_bound_to_lit_[bound_idx].second = truth;
-  const auto violation{theory_bounds_[theory_col].AddBound(value, type, bound_idx)};
-  // If the bound is invalid, return the explanation and update the SAT solver immediately
-  if (violation) return TheoryBoundsToExplanations(violation, bound_idx);
+  EnableSpxRow(spx_row, truth, {});
   return {};
 }
 

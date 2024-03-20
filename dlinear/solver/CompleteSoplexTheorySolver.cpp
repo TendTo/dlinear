@@ -113,11 +113,10 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_lit_[spx_row].second = truth;
 
-  // A simple bound - set it directly
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
-
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+
   // If it is a simple bound, we add it to the theory_bounds.
   // Later, active strict bounds will also appear in the LP problem as strict rows
   if (IsSimpleBound(formula)) {
@@ -133,7 +132,7 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
     const TheorySolverBoundVector::BoundIterator violation{theory_bounds_[theory_col].AddBound(value, type, spx_row)};
 
     // If the bound is invalid, return the explanation and update the SAT solver immediately
-    if (violation) return TheoryRowBoundsToExplanations(violation, spx_row);
+    if (violation) return TheoryBoundsToExplanations(violation, spx_row);
     return {};
   }
 

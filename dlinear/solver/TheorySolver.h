@@ -225,21 +225,20 @@ class TheorySolver {
    * @see IsSimpleBound for more information about simple relational bounds
    */
   static bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
-
   /**
    * Use the @p violation of the bounds to produce an explanation for the SAT solver.
    * @param violation violated bounds
-   * @param theory_bound bound of the theory solver that caused the violation
+   * @param theory_row row of the theory solver that caused the violation
    * @return vector of explanations with the literals that correspond to the conflicting bounds
    */
-  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_bound) const;
+  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_row) const;
   /**
    * Use the @p violation of the bounds to produce an explanation for the SAT solver.
    * @param violation violated bounds
-   * @param theory_bound bound that caused the violation
-   * @param[out] explanations vector of explanations with the literals that correspond to the conflicting bounds
+   * @param theory_row row of the theory solver that caused the violation
+   * @param explanations vector of explanations with the literals that correspond to the conflicting bounds
    */
-  void TheoryBoundsToExplanations(Violation violation, int theory_bound, std::vector<LiteralSet> explanations) const;
+  void TheoryBoundsToExplanations(Violation violation, int theory_row, std::vector<LiteralSet> &explanations) const;
   /**
    * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
    * @param theory_col column of the theory solver the bounds are associated with
@@ -247,34 +246,6 @@ class TheorySolver {
    * @param[out] explanation set of literals that correspond to the conflicting bounds
    */
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
-
-  /**
-   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
-   *
-   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
-   * @param violation violated bounds
-   * @param theory_row row of the theory solver that caused the violation
-   * @return vector of explanations with the literals that correspond to the conflicting bounds
-   */
-  [[nodiscard]] std::vector<LiteralSet> TheoryRowBoundsToExplanations(Violation violation, int theory_row) const;
-  /**
-   * Use the @p violation of the bounds to produce an explanation for the SAT solver.
-   *
-   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
-   * @param violation violated bounds
-   * @param theory_row row of the theory solver that caused the violation
-   * @param explanations vector of explanations with the literals that correspond to the conflicting bounds
-   */
-  void TheoryRowBoundsToExplanations(Violation violation, int theory_row, std::vector<LiteralSet> &explanations) const;
-  /**
-   * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
-   *
-   * Unlike @ref TheoryBoundsToExplanations, this method will consider the rows indexes instead of the bound indexes.
-   * @param theory_col column of the theory solver the bounds are associated with
-   * @param active whether to only consider the active bounds (true) or include the inactive ones as well (false)
-   * @param[out] explanation set of literals that correspond to the conflicting bounds
-   */
-  void TheoryRowBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
 
   /**
    * Get the indexes of the violated bounds.
@@ -348,29 +319,21 @@ class TheorySolver {
 
   const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor used to create the theory solver
 
-  std::map<Variable::Id, int> var_to_theory_col_;    ///< Variable ⇔ theory column.
-                                                     ///< The Variable is the one created by the PredicateAbstractor
-                                                     ///< The column is the one used by the theory solver.
-  std::vector<Variable> theory_col_to_var_;          ///< Theory column ⇔ Variable.
-                                                     ///< The column is the one used by the theory solver.
-                                                     ///< The Variable is the one created by the PredicateAbstractor
-  std::map<Variable::Id, int> lit_to_theory_row_;    ///< Literal ⇔ theory row.
-                                                     ///< The literal is the one created by the PredicateAbstractor
-                                                     ///< The row is the constraint used by the theory solver.
-  std::vector<Literal> theory_row_to_lit_;           ///< Theory row ⇔ Literal
-                                                     ///< The row is the constraint used by the theory solver.
-                                                     ///< The literal is the one created by the PredicateAbstractor.
-                                                     ///< It may not contain simple bounds
-  std::vector<Literal> theory_bound_to_lit_;         ///< Theory bound ⇔ Literal
-                                                     ///< The bound is the constraint on the values of the variables.
-                                                     ///< The literal is the one created by the PredicateAbstractor.
-                                                     ///< It can only contain simple bounds
-  std::map<Variable::Id, int> lit_to_theory_bound_;  ///< Literal ⇔ theory bound.
-                                                     ///< The literal is the one created by the PredicateAbstractor
-                                                     ///< The bound is the constraint on the values of the variables.
-                                                     ///< It can only contain simple bounds
-  TheorySolverBoundVectorVector theory_bounds_;      ///< Theory bounds.
-                                                     ///< The bounds are the constraints on the values of the variables.
+  std::map<Variable::Id, int> var_to_theory_col_;  ///< Variable ⇔ theory column.
+                                                   ///< The Variable is the one created by the PredicateAbstractor
+                                                   ///< The column is the one used by the theory solver.
+  std::vector<Variable> theory_col_to_var_;        ///< Theory column ⇔ Variable.
+                                                   ///< The column is the one used by the theory solver.
+                                                   ///< The Variable is the one created by the PredicateAbstractor
+  std::map<Variable::Id, int> lit_to_theory_row_;  ///< Literal ⇔ theory row.
+                                                   ///< The literal is the one created by the PredicateAbstractor
+                                                   ///< The row is the constraint used by the theory solver.
+  std::vector<Literal> theory_row_to_lit_;         ///< Theory row ⇔ Literal
+                                                   ///< The row is the constraint used by the theory solver.
+                                                   ///< The literal is the one created by the PredicateAbstractor.
+                                                   ///< It may not contain simple bounds
+  TheorySolverBoundVectorVector theory_bounds_;    ///< Theory bounds.
+                                                   ///< The bounds are the constraints on the values of the variables.
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
   Box model_;  ///< Model produced by the theory solver

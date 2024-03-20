@@ -255,11 +255,6 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   }
 }
 
-// bool SoplexTheorySolver::EnableSPXVarBound(const TheorySolver::Bound &bound, int spx_col) {
-//   const auto &[var, type, value] = bound;
-//   return EnableSPXVarBound(var, type, value, spx_col);
-// }
-
 void SoplexTheorySolver::EnableSPXVarBound() {
   for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
     spx_.changeBoundsRational(theory_col, theory_bounds_[theory_col].active_lower_bound().get_mpq_t(),
