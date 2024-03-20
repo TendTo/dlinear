@@ -31,12 +31,12 @@ enum class VisitResult {
 };
 
 template <class T, class W>
-struct _EdgeHash {
+struct EdgeHash_ {
   size_t operator()(const std::pair<T, W>& lhs) const { return std::hash<T>{}(lhs.first); }
 };
 
 template <class T, class W>
-struct _EdgeEqual {
+struct EdgeEqual_ {
   bool operator()(const std::pair<T, W>& lhs, const std::pair<T, W>& rhs) const { return lhs.first == rhs.first; }
 };
 
@@ -56,7 +56,7 @@ struct _EdgeEqual {
 // using W = double;
 // using EdgeHash = _EdgeHash<T, W>;
 // using EdgeEqual = _EdgeEqual<T, W>;
-template <class T, class W, class EdgeHash = _EdgeHash<T, W>, class EdgeEqual = _EdgeEqual<T, W>>
+template <class T, class W, class EdgeHash = EdgeHash_<T, W>, class EdgeEqual = EdgeEqual_<T, W>>
 class Graph {
  public:
   using Edge = std::pair<T, W>;
@@ -82,20 +82,26 @@ class Graph {
    * @param v to vertex
    * @param weight weight of the edge
    * @param bidirectional whether to add another edge from @p v to @p u
+   * @return true if the edge was updated with a new weight
+   * @return false if the edge was absent or if it was already present and the weight is the same
    */
-  void AddEdge(const T& u, const T& v, W weight, bool bidirectional = true) {
+  bool AddEdge(const T& u, const T& v, W weight, bool bidirectional = true) {
+    bool updated = false;
     const auto [it, inserted] = adj_list_[u].emplace(v, weight);
-    if (it->second != weight) {
+    if (!inserted && it->second != weight) {
       adj_list_.at(u).erase(it);
       adj_list_.at(u).emplace(v, weight);
+      updated = true;
     }
     if (bidirectional) {
       const auto [b_it, b_inserted] = adj_list_[v].emplace(u, 1 / weight);
-      if (b_it->second != 1 / weight) {
+      if (!b_inserted && b_it->second != 1 / weight) {
         adj_list_.at(v).erase(b_it);
         adj_list_.at(v).emplace(u, 1 / weight);
+        updated = true;
       }
     }
+    return updated;
   }
 
   /**

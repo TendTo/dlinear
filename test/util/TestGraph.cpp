@@ -96,7 +96,7 @@ TYPED_TEST(TestGraph, AddEdgeDirected) {
 
 TYPED_TEST(TestGraph, AddEdgeWeighted) {
   const TypeParam vertex = 0, other_vertex = 1;
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f));
   EXPECT_FALSE(this->empty_graph_.IsEmpty());
   EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
   EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
@@ -108,8 +108,8 @@ TYPED_TEST(TestGraph, AddEdgeWeighted) {
 
 TYPED_TEST(TestGraph, AddEdgeTwiceWeighted) {
   const TypeParam vertex = 0, other_vertex = 1;
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
-  this->empty_graph_.AddEdge(vertex, other_vertex, 4.0f);
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f));
+  EXPECT_TRUE(this->empty_graph_.AddEdge(vertex, other_vertex, 4.0f));
   EXPECT_FALSE(this->empty_graph_.IsEmpty());
   EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
   EXPECT_TRUE(this->empty_graph_.HasEdge(other_vertex, vertex));
@@ -121,8 +121,8 @@ TYPED_TEST(TestGraph, AddEdgeTwiceWeighted) {
 
 TYPED_TEST(TestGraph, AddEdgeDirectedWeighted) {
   const TypeParam vertex = 0, other_vertex = 1;
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false));
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false));
   EXPECT_FALSE(this->empty_graph_.IsEmpty());
   EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
   EXPECT_FALSE(this->empty_graph_.HasEdge(other_vertex, vertex));
@@ -134,14 +134,14 @@ TYPED_TEST(TestGraph, AddEdgeDirectedWeighted) {
 
 TYPED_TEST(TestGraph, GetEdgeWeightPresent) {
   const TypeParam vertex = 0, other_vertex = 1;
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f);
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f));
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 2.0f);
 }
 
 TYPED_TEST(TestGraph, GetEdgeWeightAbsent) {
   const TypeParam vertex = 0, other_vertex = 1;
-  this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false);
+  EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f, false));
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
   EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
   EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex + 100, vertex), nullptr);

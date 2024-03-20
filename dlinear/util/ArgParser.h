@@ -12,10 +12,9 @@
  */
 #pragma once
 
+#include <argparse/argparse.hpp>
 #include <iostream>
 #include <string>
-// Argparse is a header-only library for parsing command line arguments.
-#include <argparse/argparse.hpp>
 
 #include "dlinear/util/Config.h"
 
