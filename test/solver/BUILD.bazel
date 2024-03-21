@@ -26,6 +26,16 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
+    name = "test_theory_solver_bound_preprocessor",
+    tags = ["solver"],
+    deps = [
+        "//dlinear/solver:theory_solver",
+        "//dlinear/solver:theory_solver_bound_preprocessor",
+        "//test/symbolic:test_symbolic_utils",
+    ],
+)
+
+dlinear_cc_googletest(
     name = "test_context",
     tags = ["solver"],
     deps = [

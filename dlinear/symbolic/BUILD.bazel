@@ -35,7 +35,13 @@ dlinear_cc_library(
     name = "literal",
     srcs = ["literal.cpp"],
     hdrs = ["literal.h"],
-    deps = [":symbolic"],
+    deps = ["//third_party/com_github_robotlocomotion_drake:drake_symbolic"],
+)
+
+dlinear_cc_library(
+    name = "environment",
+    hdrs = ["environment.h"],
+    deps = ["//third_party/com_github_robotlocomotion_drake:drake_symbolic"],
 )
 
 dlinear_cc_library(

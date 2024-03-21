@@ -102,6 +102,28 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "theory_solver_bound_preprocessor",
+    srcs = [
+        "TheorySolver.h",  # For the forward declaration of TheorySolver
+        "TheorySolverBoundPreprocessor.cpp",
+    ],
+    hdrs = ["TheorySolverBoundPreprocessor.h"],
+    deps = [
+        ":lp_bound",
+        ":sat_result",
+        ":theory_solver_bounds",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:environment",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:box",
+        "//dlinear/util:graph",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+    ],
+)
+
+dlinear_cc_library(
     name = "theory_solver",
     srcs = [
         "TheorySolver.cpp",
@@ -132,6 +154,7 @@ dlinear_cc_library(
             "CompleteSoplexTheorySolver.h",
             "DeltaSoplexTheorySolver.h",
             "SoplexTheorySolver.h",
+            "//dlinear/util:stats",
         ],
         "//conditions:default": [],
     }),
@@ -139,6 +162,7 @@ dlinear_cc_library(
         ":lp_bound",
         ":lp_sense",
         ":sat_result",
+        ":theory_solver_bound_preprocessor",
         ":theory_solver_bounds",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
@@ -150,6 +174,7 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:infinity",
         "//dlinear/util:logging",
+        "//dlinear/util:stats",
     ] + select({
         "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
         "//conditions:default": [],
@@ -189,6 +214,7 @@ dlinear_cc_library(
         "//dlinear/util:infinity",
         "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
+        "//dlinear/util:stats",
     ] + select({
         "//tools:dynamic_build": [
             "//dlinear/util:interrupt",
