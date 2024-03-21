@@ -5,10 +5,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
-
-#include "dlinear/libs/gmp.h"
 
 namespace dlinear::drake::symbolic {
 /** Represents a symbolic environment (mapping from a variable to a value).
@@ -81,7 +80,7 @@ class Environment {
 
   /** Constructs an environment from @p m*/
   explicit Environment(map m);
-  explicit Environment(const double_map& m);
+  explicit Environment(const double_map &m);
 
   /** Returns an iterator to the beginning. */
   iterator begin() { return map_.begin(); }
@@ -108,6 +107,9 @@ class Environment {
   /** Finds element with specific key. */
   const_iterator find(const key_type &key) const { return map_.find(key); }
 
+  /** Returns the value that is mapped to a key equivalent to @p key. */
+  const mapped_type &at(const key_type &key) const;
+
   /** Returns the domain of this environment. */
   Variables domain() const;
 
@@ -128,6 +130,4 @@ class Environment {
  private:
   map map_;
 };
-} // namespace dlinear::drake::symbolic
-
-
+}  // namespace dlinear::drake::symbolic

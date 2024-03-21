@@ -205,17 +205,7 @@ bool FormulaVar::Less(const FormulaCell &f) const {
 }
 
 bool FormulaVar::Evaluate(const Environment &env) const {
-  const Environment::const_iterator it{env.find(var_)};
-  if (it != env.cend()) {
-    return static_cast<bool>(it->second);
-  } else {
-    ostringstream oss;
-    oss << "The following environment does not have an entry for the "
-           "variable "
-        << var_ << "\n";
-    oss << env << "\n";
-    throw runtime_error(oss.str());
-  }
+    return static_cast<bool>(env.at(var_));
 }
 
 Formula FormulaVar::Substitute(const ExpressionSubstitution &,

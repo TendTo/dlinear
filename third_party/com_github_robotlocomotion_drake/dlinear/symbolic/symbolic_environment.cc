@@ -28,8 +28,7 @@ void throw_if_dummy(const Variable &var) {
 }
 }  // anonymous namespace
 
-Environment::Environment(const std::initializer_list<value_type> init)
-    : map_(init) {
+Environment::Environment(const std::initializer_list<value_type> init) : map_(init) {
   for (const auto &p : init) {
     throw_if_dummy(p.first);
   }
@@ -48,7 +47,7 @@ Environment::Environment(Environment::map m) : map_{std::move(m)} {
   }
 }
 
-Environment::Environment(const Environment::double_map& m) : map_{m.size()} {
+Environment::Environment(const Environment::double_map &m) : map_{m.size()} {
   for (const auto &p : m) {
     throw_if_dummy(p.first);
     map_.emplace(p.first, p.second);
@@ -74,6 +73,12 @@ string Environment::to_string() const {
   return oss.str();
 }
 
+const Environment::mapped_type &Environment::at(const Environment::key_type &key) const {
+  const auto &value = map_.at(key);
+  if (key.is_dummy()) throw runtime_error("Environment::at is called with a dummy variable.");
+  return value;
+}
+
 Environment::mapped_type &Environment::operator[](const key_type &key) {
   if (key.is_dummy()) {
     ostringstream oss;
@@ -83,8 +88,7 @@ Environment::mapped_type &Environment::operator[](const key_type &key) {
   return map_[key];
 }
 
-const Environment::mapped_type &Environment::operator[](
-    const key_type &key) const {
+const Environment::mapped_type &Environment::operator[](const key_type &key) const {
   if (key.is_dummy()) {
     ostringstream oss;
     oss << "Environment::operator[] is called with a dummy variable.";
@@ -105,6 +109,5 @@ ostream &operator<<(ostream &os, const Environment &env) {
   }
   return os;
 }
-} // namespace dlinear::drake::symbolic
 
-
+}  // namespace dlinear::drake::symbolic

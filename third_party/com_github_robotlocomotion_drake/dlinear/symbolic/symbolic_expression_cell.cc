@@ -317,16 +317,7 @@ bool ExpressionVar::Less(const ExpressionCell &e) const {
 }
 
 mpq_class ExpressionVar::Evaluate(const Environment &env) const {
-  Environment::const_iterator const it{env.find(var_)};
-  if (it != env.cend()) {
-    return it->second;
-  }
-  ostringstream oss;
-  oss << "The following environment does not have an entry for the "
-         "variable "
-      << var_ << endl;
-  oss << env << endl;
-  throw runtime_error(oss.str());
+    return env.at(var_);
 }
 
 Expression ExpressionVar::Expand() { return GetExpression(); }
