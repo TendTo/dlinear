@@ -36,6 +36,12 @@ std::ostream &operator<<(std::ostream &os, const ::dlinear::Literal &literal);
 std::ostream &operator<<(std::ostream &os, const ::dlinear::Model &model);
 
 namespace std {
+
+template <>
+bool operator==(const dlinear::Literal &x, const dlinear::Literal &y);
+template <>
+bool operator<=(const dlinear::Literal &x, const dlinear::Literal &y);
+
 template <>
 struct less<::dlinear::Literal> {
   bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;

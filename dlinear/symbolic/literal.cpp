@@ -22,12 +22,19 @@ inline std::ostream &print_model(std::ostream &os, const dlinear::Model &model) 
 
 namespace dlinear {
 
-bool operator==(const Literal &a, const Literal &b) { return a.first.equal_to(b.first) && a.second == b.second; }
-
 std::ostream &operator<<(std::ostream &os, const Literal &literal) { return print_literal(os, literal); }
 
 std::ostream &operator<<(std::ostream &os, const Model &model) { return print_model(os, model); }
 }  // namespace dlinear
+
+template <>
+bool std::operator==(const dlinear::Literal &x, const dlinear::Literal &y) {
+  return x.first.equal_to(y.first) && x.second == y.second;
+}
+template <>
+bool std::operator<(const dlinear::Literal &x, const dlinear::Literal &y) {
+  return x.first.get_id() < y.first.get_id() && x.second < y.second;
+}
 
 std::ostream &operator<<(std::ostream &os, const dlinear::Literal &literal) { return print_literal(os, literal); }
 
