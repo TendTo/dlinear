@@ -91,6 +91,7 @@ class Config {
   DLINEAR_PARAMETER(use_polytope_in_forall, bool, false, "Use polytope contractor in forall contractor")
   DLINEAR_PARAMETER(use_worklist_fixpoint, bool, false, "Use worklist fixpoint algorithm in ICP")
   DLINEAR_PARAMETER(use_local_optimization, bool, false, "Use local optimization algorithm for exist-forall problems")
+  DLINEAR_PARAMETER(disable_theory_preprocessor, bool, false, "Disable the preprocessor in the Theory solver")
   DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(lp_mode, LPMode, dlinear::Config::LPMode::AUTO,
                     "LP mode used by the LP solver.\n"

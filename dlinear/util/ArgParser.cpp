@@ -76,6 +76,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, disable_theory_preprocessor, "--disable-theory-preprocessor");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope, "--polytope");
@@ -161,6 +162,8 @@ Config ArgParser::toConfig() const {
     config.m_debug_parsing().set_from_command_line(parser_.get<bool>("debug-parsing"));
   if (parser_.is_used("debug-scanning"))
     config.m_debug_scanning().set_from_command_line(parser_.get<bool>("debug-scanning"));
+  if (parser_.is_used("disable-theory-preprocessor"))
+    config.m_disable_theory_preprocessor().set_from_command_line(parser_.get<bool>("disable-theory-preprocessor"));
   if (parser_.is_used("format")) config.m_format().set_from_command_line(parser_.get<Config::Format>("format"));
   if (parser_.is_used("forall-polytope"))
     config.m_use_polytope_in_forall().set_from_command_line(parser_.get<bool>("forall-polytope"));
