@@ -113,10 +113,36 @@ class TheorySolver {
    * @return model that satisfies all the constraints of the theory
    */
   [[nodiscard]] const Box &GetModel() const;
-
-  [[nodiscard]] const std::vector<Variable> &GetLinearVarMap() const;
-
-  [[nodiscard]] size_t n_variables() const;
+  /**
+   * Get the predicate abstractor.
+   * @return predicate abstractr
+   */
+  [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
+  /**
+   * Get the map of the variables to the theory columns.
+   * @return map of the variables to the theory columns
+   */
+  [[nodiscard]] const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
+  /**
+   * Get the map of theories columns to the variables.
+   * @return map of theories columns to the variables
+   */
+  [[nodiscard]] const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
+  /**
+   * Get the map of literals to the theory rows.
+   * @return map of literals to the theory rows
+   */
+  [[nodiscard]] const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
+  /**
+   * Get the map of theory rows to the literals.
+   * @return map of theory rows to the literals
+   */
+  [[nodiscard]] const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
+  /**
+   * Get the theory bounds.
+   * @return theory bounds
+   */
+  [[nodiscard]] const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
 
   /**
    * Check the satisfiability of the theory.
@@ -149,7 +175,7 @@ class TheorySolver {
    * Get the statistics of the theory solver.
    * @return statistics of the theory solver
    */
-  const IterationStats &stats() const { return stats_; }
+  [[nodiscard]] const IterationStats &stats() const { return stats_; }
 
  protected:
   using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds

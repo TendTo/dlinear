@@ -35,11 +35,6 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, dlinear::LiteralSet &explanation), (override));
   MOCK_METHOD(void, EnableSpxRow, (int, bool, const dlinear::Variables &), (override));
-  const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
-  const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
-  const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
-  const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
-  const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
 };
 
 class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
