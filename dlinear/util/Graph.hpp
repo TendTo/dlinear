@@ -42,6 +42,11 @@ struct EdgeEqual_ {
   }
 };
 
+// using T = int;
+// using W = double;
+// using EdgeHash = EdgeHash_<T, W>;
+// using EdgeEqual = EdgeEqual_<T, W>;
+
 /**
  * Graph class.
  *
@@ -53,13 +58,10 @@ struct EdgeEqual_ {
  * It implements basic graph operations such as adding and removing vertices and edges, as well as graph traversal
  * algorithms such as depth-first search @ref Graph::DFS and breadth-first search @ref Graph::BFS.
  */
-
-// using T = int;
-// using W = double;
-// using EdgeHash = EdgeHash_<T, W>;
-// using EdgeEqual = EdgeEqual_<T, W>;
 template <class T, class W, class EdgeHash = EdgeHash_<T, W>, class EdgeEqual = EdgeEqual_<T, W>>
 class Graph {
+  static_assert(std::is_default_constructible_v<W>, "W must be default constructable");
+
  public:
   using Edge = std::pair<T, W>;
   using AdjSet = std::unordered_set<Edge, EdgeHash, EdgeEqual>;
@@ -69,7 +71,7 @@ class Graph {
   ///< - current vertex
   ///< - weight of the edge
   ///<
-  ///< When called on the starting vertex of visit, previous and current vertex will be the same and weight will be 0.
+  ///< When called on the starting vertex, previous and current vertex will be the same and weight have a default value.
   ///<
   ///< Its return value will determine the behavior of the search:
   ///< - @ref VisitResult::CONTINUE : continue the search as usual and add the adjacent vertices to the stack/queue
@@ -150,7 +152,7 @@ class Graph {
    * @return false if either @p u or @p v is not in the graph or if there is no edge from @p u to @p v
    */
   bool HasEdge(const T& u, const T& v) const {
-    return adj_list_.find(u) != adj_list_.cend() && adj_list_.at(u).find({v, 0}) != adj_list_.at(u).cend();
+    return adj_list_.find(u) != adj_list_.cend() && adj_list_.at(u).find({v, W{}}) != adj_list_.at(u).cend();
   }
 
   /**
@@ -162,7 +164,7 @@ class Graph {
    */
   const W* GetEdgeWeight(const T& u, const T& v) const {
     if (auto it = adj_list_.find(u); it != adj_list_.cend()) {
-      if (auto it2 = adj_list_.at(u).find({v, 0}); it2 != adj_list_.at(u).cend()) {
+      if (auto it2 = adj_list_.at(u).find({v, W{}}); it2 != adj_list_.at(u).cend()) {
         return &it2->second;
       }
     }
@@ -182,8 +184,8 @@ class Graph {
    * @param bidirectional whether to remove the edge from @p v to @p u too
    */
   void RemoveEdge(const T& u, const T& v, bool bidirectional = true) {
-    adj_list_[u].erase({v, 0});
-    if (bidirectional) adj_list_[v].erase({u, 0});
+    adj_list_[u].erase({v, W{}});
+    if (bidirectional) adj_list_[v].erase({u, W{}});
   }
 
   /**
@@ -192,7 +194,7 @@ class Graph {
    */
   void RemoveVertex(const T& v) {
     adj_list_.erase(v);
-    for (auto& [node, edges] : adj_list_) edges.erase({v, 0});
+    for (auto& [node, edges] : adj_list_) edges.erase({v, W{}});
   }
 
   /** Clear the graph, removing all vertices and edges. */
@@ -224,7 +226,7 @@ class Graph {
    * Each vertex is visited exactly once and the function @p func is called on each one.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
-   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be default
    * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
@@ -243,7 +245,7 @@ class Graph {
    * change the behavior of the search.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
-   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be default
    * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it.
@@ -255,19 +257,19 @@ class Graph {
   void DFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
     // If the starting vertex is not in the graph, return
     if (adj_list_.find(start) == adj_list_.end()) return;
-    visited.clear();
+
     visited.reserve(adj_list_.size());
     std::stack<T> stack;
     std::unordered_map<T, std::pair<T, const W*>> edges;
 
+    edges.emplace(start, std::make_pair(start, &zero_));
     stack.push(start);
     while (!stack.empty()) {
       const T current = std::move(stack.top());
       stack.pop();
       if (visited.find(current) != visited.end()) continue;
       visited.insert(current);
-      const VisitResult res =
-          edges.empty() ? func(current, current, 0) : func(edges.at(current).first, current, *edges.at(current).second);
+      const VisitResult res = func(edges.at(current).first, current, *edges.at(current).second);
       if (res == VisitResult::STOP) return;
       if (res == VisitResult::SKIP) continue;
       for (auto adj_it = adj_list_.at(current).begin(); adj_it != adj_list_.at(current).end(); ++adj_it) {
@@ -285,7 +287,7 @@ class Graph {
    * Each vertex is visited exactly once and the function @p func is called on each one.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
-   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be default
    * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
@@ -304,7 +306,7 @@ class Graph {
    * change the behavior of the search.
    * The return value of @p func will determine whether the search continues, skips adding the adjacent
    * vertices to the stack, or stops altogether.
-   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be 0
+   * @note When visiting @p start, both the previous and current vertex will be @p start and the weight will be default
    * @note If @p start is not in the graph, the search stops immediately
    * @param start starting vertex
    * @param func function to call on each vertex upon visiting it
@@ -313,15 +315,18 @@ class Graph {
    * @see VisitResult
    */
   void BFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
+    // If the starting vertex is not in the graph, return
+    if (adj_list_.find(start) == adj_list_.end()) return;
+
     visited.reserve(adj_list_.size());
     std::queue<T> queue;
     std::unordered_map<T, std::pair<T, const W*>> edges;
+
     visited.insert(start);
+    edges.emplace(start, std::make_pair(start, &zero_));
     queue.push(start);
     while (!queue.empty()) {
-      const VisitResult res = edges.empty()
-                                  ? func(queue.front(), queue.front(), 0)
-                                  : func(edges.at(queue.front()).first, queue.front(), *edges.at(queue.front()).second);
+      const VisitResult res = func(edges.at(queue.front()).first, queue.front(), *edges.at(queue.front()).second);
       if (res == VisitResult::STOP) return;
       if (res == VisitResult::SKIP) {
         queue.pop();
@@ -423,6 +428,7 @@ class Graph {
   }
 
  private:
+  const W zero_{};
   std::unordered_map<T, AdjSet> adj_list_;  ///< Adjacency list of the graph
 };
 

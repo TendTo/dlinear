@@ -101,7 +101,7 @@ const Environment::mapped_type &Environment::operator[](
 
 ostream &operator<<(ostream &os, const Environment &env) {
   for (const auto &p : env) {
-    os << p.first << " -> " << p.second << endl;
+    os << p.first << " -> " << p.second << ", ";
   }
   return os;
 }

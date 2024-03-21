@@ -149,8 +149,16 @@ TYPED_TEST(TestGraph, GetEdgeWeightAbsent) {
 }
 
 TYPED_TEST(TestGraph, DFSVisitAllVerticesOnce) {
+  const TypeParam start = 0;
   std::vector<TypeParam> visited;
-  this->graph_.DFS(0, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+  this->graph_.DFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
     visited.push_back(to);
     return VisitResult::CONTINUE;
   });
@@ -158,17 +166,42 @@ TYPED_TEST(TestGraph, DFSVisitAllVerticesOnce) {
 }
 
 TYPED_TEST(TestGraph, DFSVisitIsolatedVerticesOnce) {
+  const TypeParam start = 8;
   std::vector<TypeParam> visited;
-  this->graph_.DFS(8, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+  this->graph_.DFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
     visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));
 }
 
+TYPED_TEST(TestGraph, DFSOnAbsentVertex) {
+  int counter = 0;
+  this->graph_.DFS(10, [&counter](const TypeParam&, const TypeParam&, const float&) {
+    counter++;
+    return VisitResult::CONTINUE;
+  });
+  EXPECT_EQ(counter, 0);
+}
+
 TYPED_TEST(TestGraph, BFSVisitAllVerticesOnce) {
+  const TypeParam start = 0;
   std::vector<TypeParam> visited;
-  this->graph_.BFS(0, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+  this->graph_.BFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
     visited.push_back(to);
     return VisitResult::CONTINUE;
   });
@@ -176,12 +209,29 @@ TYPED_TEST(TestGraph, BFSVisitAllVerticesOnce) {
 }
 
 TYPED_TEST(TestGraph, BFSVisitIsolatedVerticesOnce) {
+  const TypeParam start = 8;
   std::vector<TypeParam> visited;
-  this->graph_.BFS(8, [&visited](const TypeParam&, const TypeParam& to, const float&) {
+  this->graph_.BFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
     visited.push_back(to);
     return VisitResult::CONTINUE;
   });
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));
+}
+
+TYPED_TEST(TestGraph, BFSOnAbsentVertex) {
+  int counter = 0;
+  this->graph_.BFS(10, [&counter](const TypeParam&, const TypeParam&, const float&) {
+    counter++;
+    return VisitResult::CONTINUE;
+  });
+  EXPECT_EQ(counter, 0);
 }
 
 TYPED_TEST(TestGraph, AllPathsIsolated) {
