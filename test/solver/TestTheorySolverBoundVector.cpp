@@ -143,7 +143,7 @@ TEST_F(TestTheorySolverBoundVector, AddDBound) {
 }
 
 TEST_F(TestTheorySolverBoundVector, NoNqActiveBounds) {
-  auto it = bounds_.active_bounds();
+  auto it = bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_EQ(it.bounds_size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -156,7 +156,7 @@ TEST_F(TestTheorySolverBoundVector, OnlyLowerBoundsActiveBounds) {
   empty_bounds_.AddBound(val_[2], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::SL, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_EQ(it.bounds_size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -169,7 +169,7 @@ TEST_F(TestTheorySolverBoundVector, OnlyUpperBoundsActiveBounds) {
   empty_bounds_.AddBound(val_[2], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_EQ(it.bounds_size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -191,7 +191,7 @@ TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBounds) {
   empty_bounds_.AddBound(val_[4], LpColBound::D, idx());
   empty_bounds_.AddBound(val_[4], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[4], LpColBound::SU, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 7u);
   EXPECT_EQ(it.nq_bounds_size(), 3u);
   EXPECT_EQ(it.bounds_size(), 4u);
@@ -209,7 +209,7 @@ TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
@@ -224,7 +224,7 @@ TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverUpper) {
   empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
@@ -238,7 +238,7 @@ TEST_F(TestTheorySolverBoundVector, EqBoundsActiveBounds) {
   empty_bounds_.AddBound(val_[3], LpColBound::B, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
-  auto it = empty_bounds_.active_bounds();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 7u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 7u);

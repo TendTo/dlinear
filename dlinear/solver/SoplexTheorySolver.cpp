@@ -210,7 +210,7 @@ void SoplexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
                              [this](const Variable &it) {
                                const int theory_col = &it - &theory_col_to_var_[0];
-                               const auto &[lb, ub] = theory_bounds_[theory_col].active_bound_value();
+                               const auto &[lb, ub] = theory_bounds_[theory_col].GetActiveBoundsValue();
                                return lb <= ub;
                              }),
                  "All lower bounds must be <= upper bounds");
@@ -218,7 +218,7 @@ void SoplexTheorySolver::UpdateModelBounds() {
   // Update the box with the new bounds, since the LP solver won't be called, for there are no constraints.
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
-    const auto &[lb, ub] = theory_bounds_[theory_col].active_bound_value();
+    const auto &[lb, ub] = theory_bounds_[theory_col].GetActiveBoundsValue();
     mpq_class val;
     if (-soplex::infinity < lb) {
       val = lb;

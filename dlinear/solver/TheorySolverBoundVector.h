@@ -133,12 +133,30 @@ class TheorySolverBoundVector {
    * @note Active equality bounds will hide non-paired inequality bounds.
    * @return iterator over the active bounds
    */
-  [[nodiscard]] BoundIterator active_bounds() const;
+  [[nodiscard]] BoundIterator GetActiveBounds() const;
+  /**
+   * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
+   *
+   * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
+   * @note Active equality bounds will hide non-paired inequality bounds.
+   * @param theory_bound_to_lit map between the bound id and the theory literal
+   * @param explanation set of literal corresponding to the explanation
+   */
+  void GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit, LiteralSet& explanation) const;
+  /**
+   * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
+   *
+   * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
+   * @note Active equality bounds will hide non-paired inequality bounds.
+   * @param theory_bound_to_lit map between the bound id and the theory literal
+   * @return set of literal corresponding to the explanation
+   */
+  [[nodiscard]] LiteralSet GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit) const;
   /**
    * Return a pair containing the active lower and upper bound.
    * @return active lower and upper bound
    */
-  [[nodiscard]] std::pair<mpq_class, mpq_class> active_bound_value() const;
+  [[nodiscard]] std::pair<const mpq_class&, const mpq_class&> GetActiveBoundsValue() const;
   /**
    * Return the bounds vector.
    *

@@ -205,7 +205,7 @@ bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
   return it != bounds_.cend();
 }
 
-TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::active_bounds() const {
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds() const {
   const auto lb = FindLowerBoundValue(active_lower_bound_);
   const auto ub = FindUpperBoundValue(active_upper_bound_);
   // The active bounds are empty or span the entire bounds_ vector
@@ -233,7 +233,17 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::active_bounds() 
   return {lb, ub, FindLowerNqBoundValue(active_lower_bound_), FindUpperNqBoundValue(active_upper_bound_)};
 }
 
-std::pair<mpq_class, mpq_class> TheorySolverBoundVector::active_bound_value() const {
+LiteralSet TheorySolverBoundVector::GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit) const {
+  LiteralSet explanation;
+  GetActiveExplanation(theory_bound_to_lit, explanation);
+  return explanation;
+}
+void TheorySolverBoundVector::GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit,
+                                                   LiteralSet& explanation) const {
+  for (BoundIterator it = GetActiveBounds(); it; ++it) explanation.emplace(theory_bound_to_lit.at(std::get<2>(*it)));
+}
+
+std::pair<const mpq_class&, const mpq_class&> TheorySolverBoundVector::GetActiveBoundsValue() const {
   return {*active_lower_bound_, *active_upper_bound_};
 }
 

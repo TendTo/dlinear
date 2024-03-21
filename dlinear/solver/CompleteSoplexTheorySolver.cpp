@@ -498,7 +498,7 @@ void CompleteSoplexTheorySolver::EnableSPXVarBound() {
   // For all columns...
   for (const auto &theory_bound : theory_bounds_) {
     // ... for each active bound of that column...
-    for (TheorySolverBoundVector::BoundIterator it{theory_bound.active_bounds()}; it; ++it) {
+    for (TheorySolverBoundVector::BoundIterator it{theory_bound.GetActiveBounds()}; it; ++it) {
       const auto &[value, bound, spx_row] = *it;
       // ... if we are dealing with a strict bound, add the strict row to the LP problem
       if (bound == LpColBound::SU || bound == LpColBound::SL || bound == LpColBound::D) {

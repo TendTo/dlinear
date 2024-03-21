@@ -23,23 +23,10 @@ TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstrac
       model_{},
       stats_{DLINEAR_INFO_ENABLED, class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
-const std::vector<Variable> &TheorySolver::GetLinearVarMap() const {
-  DLINEAR_TRACE("TheorySolver::GetLinearVarMap(): theory_col_to_var_ =");
-  if (DLINEAR_TRACE_ENABLED) {
-    for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-      const Variable &var{theory_col_to_var_[theory_col]};
-      std::cerr << theory_col << ": " << var << "\n";
-    }
-  }
-  return theory_col_to_var_;
-}
-
 const Box &TheorySolver::GetModel() const {
   DLINEAR_DEBUG_FMT("TheorySolver::GetModel():\n{}", model_);
   return model_;
 }
-
-size_t TheorySolver::n_variables() const { return theory_col_to_var_.size(); }
 
 void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
   for (const auto &lit : theory_literals) AddLiteral(lit);
@@ -146,8 +133,7 @@ void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_ro
 }
 void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {
   if (active) {
-    for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it)
-      explanation.insert(theory_row_to_lit_[std::get<2>(*it)]);
+    theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) {
       explanation.insert(theory_row_to_lit_[std::get<2>(bound)]);
@@ -160,7 +146,7 @@ void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, st
 }
 void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool active, std::set<int> &bound_idxs) const {
   if (active) {
-    for (auto it = theory_bounds_[theory_col].active_bounds(); it; ++it) bound_idxs.insert(std::get<2>(*it));
+    for (auto it = theory_bounds_[theory_col].GetActiveBounds(); it; ++it) bound_idxs.insert(std::get<2>(*it));
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(std::get<2>(bound));
   }
