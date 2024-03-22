@@ -20,6 +20,7 @@ TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstrac
       precision_{config.precision()},
       needs_expansion_{config.filename_extension() == "smt2"},
       predicate_abstractor_{predicate_abstractor},
+      preprocessor_{config, *this},
       model_{},
       stats_{DLINEAR_INFO_ENABLED, class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
@@ -32,15 +33,22 @@ void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
   for (const auto &lit : theory_literals) AddLiteral(lit);
 }
 
-std::vector<LiteralSet> TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
-  std::vector<LiteralSet> explanations{};
+TheorySolver::Explanations TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+  Explanations explanations{};
   for (const Literal &lit : theory_literals) {
-    std::vector<LiteralSet> explanation{EnableLiteral(lit)};
-    explanations.insert(explanations.end(), explanation.begin(), explanation.end());
+    const Explanations explanation{EnableLiteral(lit)};
     // Check if the literal that was just enabled is conflicting with the current model.
     // If so, return the explanation containing a superset of the conflicting literals
+    explanations.insert(explanation.begin(), explanation.end());
   }
   return explanations;
+}
+
+void TheorySolver::UpdateExplanations(Explanations &explanations) {
+  DLINEAR_TRACE("TheorySolver::UpdateExplanation()");
+  LiteralSet explanation{};
+  UpdateExplanation(explanation);
+  explanations.insert(explanation);
 }
 
 void TheorySolver::Consolidate() {
@@ -115,20 +123,20 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool tr
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
-std::vector<LiteralSet> TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_row) const {
-  std::vector<LiteralSet> explanations{};
+TheorySolver::Explanations TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_row) const {
+  Explanations explanations{};
   TheoryBoundsToExplanations(violation, theory_row, explanations);
   return explanations;
 }
-void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_row,
-                                              std::vector<LiteralSet> &explanations) const {
+void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_row, Explanations &explanations) const {
   const Literal row_lit{theory_row_to_lit_[theory_row]};
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryBoundsToExplanations: {} violates {}", row_lit, violation);
   if (violation.nq_bounds_empty() || violation.bounds_empty()) {
-    for (; violation; ++violation) explanations.push_back({row_lit, theory_row_to_lit_[std::get<2>(*violation)]});
+    for (; violation; ++violation) explanations.insert({row_lit, theory_row_to_lit_[std::get<2>(*violation)]});
   } else {
-    explanations.emplace_back();
-    for (; violation; ++violation) explanations.back().insert(theory_row_to_lit_[std::get<2>(*violation)]);
+    LiteralSet explanation{};
+    for (; violation; ++violation) explanation.insert(theory_row_to_lit_[std::get<2>(*violation)]);
+    explanations.insert(explanation);
   }
 }
 void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {

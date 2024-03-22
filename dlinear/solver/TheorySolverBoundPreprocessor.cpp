@@ -6,7 +6,7 @@
  */
 #include "TheorySolverBoundPreprocessor.h"
 
-#include <optional>
+#include <unordered_set>
 
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/util/logging.h"
@@ -50,7 +50,7 @@ bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Fo
   return true;
 }
 
-std::vector<LiteralSet> TheorySolverBoundPreprocessor::EnableConstraint(const int theory_row) {
+TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::EnableConstraint(const int theory_row) {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::EnableConstraint({})", theory_row);
   // If the row was never added as an edge, skip
   const auto it = row_to_edges_.find(theory_row);
@@ -68,21 +68,21 @@ std::vector<LiteralSet> TheorySolverBoundPreprocessor::EnableConstraint(const in
   return {};
 }
 
-std::vector<LiteralSet> TheorySolverBoundPreprocessor::Process() {
-  std::vector<LiteralSet> explanations;
+TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Process() {
+  Explanations explanations;
   Process(explanations);
   return explanations;
 }
-void TheorySolverBoundPreprocessor::Process(std::vector<LiteralSet>& explanations) {
+void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::Process()");
-  DLINEAR_WARN_FMT("Start env_ = {}", env_);
-  DLINEAR_WARN_FMT("Start graph_ = {}", graph_);
   SetEnvironmentFromBounds();
   PropagateEnvironment(explanations);
   DLINEAR_WARN_FMT("End: env_ = {}", env_);
   DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
-  DLINEAR_WARN_FMT("Explanation: expl = {}", explanations);
-  if (!explanations.empty()) return;
+  if (!explanations.empty()) {
+    DLINEAR_DEBUG("TheorySolverBoundPreprocessor::Process: found explanation");
+    return;
+  }
   //  EvaluateFormulas(explanations);
 }
 
@@ -102,10 +102,9 @@ void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
   }
 }
 
-void TheorySolverBoundPreprocessor::PropagateEnvironment(std::vector<LiteralSet>& explanations) {
+void TheorySolverBoundPreprocessor::PropagateEnvironment(Explanations& explanations) {
   DLINEAR_ERROR("TheorySolverBoundPreprocessor::PropagateEnvironment: start propagation");
   std::unordered_set<Variable> visited;
-  std::set<LiteralSet> explanations_set;
   visited.reserve(theory_cols_.size());
   for (const auto& start_it : env_) {
     const auto [start_var, start_value] = start_it;
@@ -144,18 +143,16 @@ void TheorySolverBoundPreprocessor::PropagateEnvironment(std::vector<LiteralSet>
               explanation.insert(theory_rows_[forward_it->second]);
             }
           }
-          explanations_set.insert(explanation);
+          explanations.insert(explanation);
           return VisitResult::CONTINUE;
         });
       }
       return VisitResult::CONTINUE;
     });
   }
-  explanations.reserve(explanations.size() + explanations_set.size());
-  explanations.insert(explanations.end(), explanations_set.begin(), explanations_set.end());
 }
 
-void TheorySolverBoundPreprocessor::EvaluateFormulas(std::vector<LiteralSet>& explanations) {
+void TheorySolverBoundPreprocessor::EvaluateFormulas(Explanations& explanations) {
   DLINEAR_ASSERT(explanations.empty(), "The explanations vector must be empty");
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::EvaluateFormulas()");
   for (const auto& lit : theory_rows_) {
@@ -166,8 +163,7 @@ void TheorySolverBoundPreprocessor::EvaluateFormulas(std::vector<LiteralSet>& ex
   }
 }
 
-void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Formula& formula,
-                                                                std::vector<LiteralSet>& explanations) {
+void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Formula& formula, Explanations&) {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::FormulaViolationExplanation({})", formula);
   // TODO: produce explanation out of the violation
 }

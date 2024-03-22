@@ -12,9 +12,11 @@
  */
 #pragma once
 
-#include <argparse/argparse.hpp>
 #include <iostream>
 #include <string>
+
+// Argparser library
+#include <argparse/argparse.hpp>
 
 #include "dlinear/util/Config.h"
 

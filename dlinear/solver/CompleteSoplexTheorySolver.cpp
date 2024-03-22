@@ -95,7 +95,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({} ↦ {})", it->second, spx_row);
 }
 
-std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal &lit) {
+CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -112,6 +112,9 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
   const int spx_row = it_row->second;
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_lit_[spx_row].second = truth;
+
+  // Enable the row in the preprocessor
+  preprocessor_.EnableConstraint(spx_row);
 
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
@@ -140,7 +143,8 @@ std::vector<LiteralSet> CompleteSoplexTheorySolver::EnableLiteral(const Literal 
   return {};
 }
 
-SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
+SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision,
+                                               Explanations &explanations) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -160,6 +164,8 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     UpdateModelBounds();
     return SatResult::SAT_SATISFIABLE;
   }
+
+  preprocessor_.Process();
 
   // Set the bounds for the variables
   EnableSPXVarBound();
@@ -214,7 +220,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
       return SatResult::SAT_SATISFIABLE;
     case SatResult::SAT_UNSATISFIABLE:
       DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: all options explored, returning unsat");
-      GetExplanation(explanation);
+      GetExplanation(explanations);
       return SatResult::SAT_UNSATISFIABLE;
     default:
       DLINEAR_UNREACHABLE();
@@ -448,7 +454,12 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible: ↦ {}", theory_rows_to_explanation_);
 }
 
-// TODO: need a way to improve bound explanation. A lot.
+void CompleteSoplexTheorySolver::GetExplanation(Explanations &explanations) {
+  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+  LiteralSet explanation;
+  GetExplanation(explanation);
+  explanations.insert(explanation);
+}
 void CompleteSoplexTheorySolver::GetExplanation(LiteralSet &explanation) {
   DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
   explanation.clear();

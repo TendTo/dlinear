@@ -120,6 +120,9 @@ soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formul
   if (needs_expansion_) expr = expr.Expand();
   DLINEAR_ASSERT(expr == expr.Expand(), "The expression must be expanded");
 
+  // Add constraint to the preprocessor
+  preprocessor_.AddConstraint(static_cast<int>(spx_rhs_.size()), formula, expr);
+
   soplex::DSVectorRational coeffs;
   spx_rhs_.emplace_back(0);
 
@@ -183,6 +186,8 @@ void SoplexTheorySolver::Reset(const Box &box) {
 
   // Omitting to do this seems to cause problems in soplex
   spx_.clearBasis();
+  // Clear the preprocessor
+  preprocessor_.Clear();
 
   // Clear constraint bounds
   for (auto &bound : theory_bounds_) bound.Clear();

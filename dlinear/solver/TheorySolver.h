@@ -12,13 +12,15 @@
 #pragma once
 
 #include <map>
-#include <optional>
+#include <set>
+#include <string>
 #include <tuple>
 #include <vector>
 
 #include "dlinear/libs/gmp.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/TheorySolverBoundPreprocessor.h"
 #include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -40,7 +42,9 @@ namespace dlinear {
  */
 class TheorySolver {
  public:
-  using Bound = std::tuple<const Variable &, LpColBound, const mpq_class &>;
+  using Bound = std::tuple<const Variable &, LpColBound, const mpq_class &>;  ///< Bound on the variable
+  using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds
+  using Explanations = std::set<LiteralSet>;                 ///< Set of explanations of the conflict
   /**
    * Construct a new Theory Solver object.
    *
@@ -90,7 +94,7 @@ class TheorySolver {
    * @param theory_literals vector of literals to be activated
    * @return a vector of explanations with the literals that correspond to the conflicting bounds
    */
-  std::vector<LiteralSet> EnableLiterals(const std::vector<Literal> &theory_literals);
+  Explanations EnableLiterals(const std::vector<Literal> &theory_literals);
   /**
    * Activate the literal that had previously been added to the theory solver.
    *
@@ -106,7 +110,7 @@ class TheorySolver {
    * @return an explanation with the literals that correspond to the conflicting bounds
    * @return an empty optional if no conflicts are detected at this step
    */
-  virtual std::vector<LiteralSet> EnableLiteral(const Literal &lit) = 0;
+  virtual Explanations EnableLiteral(const Literal &lit) = 0;
 
   /**
    * Get a model that satisfies all the constraints of the theory
@@ -159,7 +163,7 @@ class TheorySolver {
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
    */
-  virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) = 0;
+  virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations) = 0;
 
   /**
    * Reset the linear problem.
@@ -178,7 +182,6 @@ class TheorySolver {
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
 
  protected:
-  using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds
   /**
    * Check whether the formula is a simple relational bound.
    *
@@ -257,14 +260,14 @@ class TheorySolver {
    * @param theory_row row of the theory solver that caused the violation
    * @return vector of explanations with the literals that correspond to the conflicting bounds
    */
-  [[nodiscard]] std::vector<LiteralSet> TheoryBoundsToExplanations(Violation violation, int theory_row) const;
+  [[nodiscard]] Explanations TheoryBoundsToExplanations(Violation violation, int theory_row) const;
   /**
    * Use the @p violation of the bounds to produce an explanation for the SAT solver.
    * @param violation violated bounds
    * @param theory_row row of the theory solver that caused the violation
    * @param explanations vector of explanations with the literals that correspond to the conflicting bounds
    */
-  void TheoryBoundsToExplanations(Violation violation, int theory_row, std::vector<LiteralSet> &explanations) const;
+  void TheoryBoundsToExplanations(Violation violation, int theory_row, Explanations &explanations) const;
   /**
    * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
    * @param theory_col column of the theory solver the bounds are associated with
@@ -322,6 +325,14 @@ class TheorySolver {
    * @param explanation set conflicting clauses to be updated
    */
   virtual void UpdateExplanation(LiteralSet &explanation) = 0;
+  /**
+   * Use the result from the theory solver to update the explanations with the conflict that has been detected.
+   *
+   * A new explanations will be added to the current set of explanations.
+   * This will allow the SAT solver to find a new assignment without the conflict.
+   * @param explanations set of explanations the new conflicting clauses will be added to
+   */
+  void UpdateExplanations(Explanations &explanations);
 
   /**
    * Consolidate the solver.
@@ -361,6 +372,10 @@ class TheorySolver {
   TheorySolverBoundVectorVector theory_bounds_;    ///< Theory bounds.
                                                    ///< The bounds are the constraints on the values of the variables.
   ///< It also verifies that the bounds are consistent every time a new one is added.
+
+  TheorySolverBoundPreprocessor preprocessor_;  ///< Preprocessor for the bounds.
+  ///< Propagates the bounds through simple expressions to produce a precise explanation of the conflict
+  ///< without invoking the LP solver.
 
   Box model_;  ///< Model produced by the theory solver
 

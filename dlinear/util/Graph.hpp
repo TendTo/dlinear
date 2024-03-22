@@ -7,12 +7,16 @@
  *
  * Generic graph implementation that can be used to represent a graph with vertices of type @p T.
  */
+#pragma once
+
 #include <functional>
 #include <numeric>
 #include <queue>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace dlinear {
 

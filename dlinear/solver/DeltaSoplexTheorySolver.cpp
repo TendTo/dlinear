@@ -56,6 +56,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
 
   const int spx_row{spx_.numRowsRational()};
 
+  // TODO: add preprocessor
   soplex::DSVectorRational coeffs{IsSimpleBound(formula) ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
   if (IsSimpleBound(formula)) spx_rhs_.emplace_back(0);
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
@@ -71,7 +72,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, spx_row);
 }
 
-std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
+DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -118,7 +119,7 @@ std::vector<LiteralSet> DeltaSoplexTheorySolver::EnableLiteral(const Literal &li
   return {};
 }
 
-SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
+SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, Explanations &explanations) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -187,7 +188,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
         break;
       case SoplexStatus::INFEASIBLE:
         sat_status = SatResult::SAT_UNSATISFIABLE;
-        UpdateExplanation(explanation);
+        UpdateExplanations(explanations);
         break;
       default:
         DLINEAR_UNREACHABLE();

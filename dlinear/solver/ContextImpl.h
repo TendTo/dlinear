@@ -92,9 +92,9 @@ class Context::Impl {
    *
    * The explanations are returned to the SAT solver so that it can use them to learn a new clause and backtrack,
    * looking for a new, non-conflicting assignment.
-   * @param explanations vector of sets of literals that are responsible for the conflict
+   * @param explanations set of sets of literals that are responsible for the conflict
    */
-  void LearnExplanations(const std::vector<LiteralSet> &explanations);
+  void LearnExplanations(const TheorySolver::Explanations &explanations);
 
   /** Return the current box in the stack. */
   virtual SatResult CheckSatCore(mpq_class *actual_precision);

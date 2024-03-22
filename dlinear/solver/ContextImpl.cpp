@@ -289,6 +289,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     }
 #endif
 
+    DLINEAR_WARN("New iteration");
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
     const auto optional_model = sat_solver_->CheckSat();
@@ -320,16 +321,16 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
     theory_solver_->Reset(box());
-    std::vector<LiteralSet> explanation_bounds = theory_solver_->EnableLiterals(theory_model);
-    if (!explanation_bounds.empty()) {
+    TheorySolver::Explanations bound_explanations = theory_solver_->EnableLiterals(theory_model);
+    if (!bound_explanations.empty()) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      LearnExplanations(explanation_bounds);
+      LearnExplanations(bound_explanations);
       continue;
     }
 
-    LiteralSet explanation_theory;
+    TheorySolver::Explanations theory_explanations;
     // If the SAT solver found a model, we have to check if it is consistent with the theory
-    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, explanation_theory);
+    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, theory_explanations);
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
       // SAT from TheorySolver.
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
@@ -342,9 +343,9 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
         DLINEAR_ERROR("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
         have_unsolved = true;  // Will prevent return of UNSAT
-        explanation_theory = {theory_model.cbegin(), theory_model.cend()};
+        theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
       }
-      LearnExplanation(explanation_theory);
+      LearnExplanations(theory_explanations);
     }
   }
 }
@@ -377,13 +378,13 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
   }
 }
 void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
-  DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - size of explanation = {} - stack size = {}", explanation.size(),
+  DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
-  DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Explanation = {}", explanation);
+  DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
   sat_solver_->AddLearnedClause(explanation);
 }
 
-void Context::Impl::LearnExplanations(const std::vector<LiteralSet> &explanations) {
+void Context::Impl::LearnExplanations(const TheorySolver::Explanations &explanations) {
   for (const LiteralSet &explanation : explanations) LearnExplanation(explanation);
 }
 

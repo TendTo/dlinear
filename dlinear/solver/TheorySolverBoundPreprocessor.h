@@ -11,6 +11,11 @@
  */
 #pragma once
 
+#include <map>
+#include <set>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "dlinear/solver/TheorySolverBoundVector.h"
@@ -28,6 +33,7 @@ class TheorySolver;
 class TheorySolverBoundPreprocessor {
  public:
   using Edge = std::tuple<Variable, Variable, mpq_class>;
+  using Explanations = std::set<LiteralSet>;
   TheorySolverBoundPreprocessor(const Config& config, const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
@@ -43,9 +49,9 @@ class TheorySolverBoundPreprocessor {
    * @param theory_row The row index of the constraint to enable
    * @return ?
    */
-  std::vector<LiteralSet> EnableConstraint(int theory_row);
-  std::vector<LiteralSet> Process();
-  void Process(std::vector<LiteralSet>& explanations);
+  Explanations EnableConstraint(int theory_row);
+  Explanations Process();
+  void Process(Explanations& explanations);
 
   void Clear();
 
@@ -68,9 +74,9 @@ class TheorySolverBoundPreprocessor {
   bool ShouldEvaluate(const Formula& lit) const;
   bool ShouldEvaluate(const Expression& expr) const;
   void SetEnvironmentFromBounds();
-  void PropagateEnvironment(std::vector<LiteralSet>& explanations);
-  void EvaluateFormulas(std::vector<LiteralSet>& explanations);
-  void FormulaViolationExplanation(const Formula& formula, std::vector<LiteralSet>& explanations);
+  void PropagateEnvironment(Explanations& explanations);
+  void EvaluateFormulas(Explanations& explanations);
+  void FormulaViolationExplanation(const Formula& formula, Explanations& explanations);
 
   [[nodiscard]] inline Expression ExtractExpression(const Formula& formula) const {
     Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};

@@ -39,13 +39,13 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit CompleteSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
 
-  std::vector<LiteralSet> EnableLiteral(const Literal& lit) override;
+  Explanations EnableLiteral(const Literal& lit) override;
 
   void AddVariable(const Variable& var) override;
 
   void AddLiteral(const Literal& lit) override;
 
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision, LiteralSet& explanation) override;
+  SatResult CheckSat(const Box& box, mpq_class* actual_precision, Explanations& explanations) override;
 
   void Reset(const Box& box) override;
 
@@ -123,11 +123,16 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   std::vector<size_t> IteratorNqRowsInExplanation() const;
 
   /**
+   * Add a new explanation to @p explanations from @ref theory_rows_to_explanation_.
+   * @param[out] explanations the set of explanations to add the new explanation to
+   */
+  void GetExplanation(Explanations& explanations);
+  /**
    * Get the explanation from @ref theory_rows_to_explanation_.
-   * @param[out] explanation The explanation to be updated
+   * @param[out] explanation the explanation to be updated
    */
   void GetExplanation(LiteralSet& explanation);
-
+  
   std::vector<int> enabled_strict_theory_rows_;                          ///< Vector of enabled strict theory rows
   std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_rows_;  ///< variable id -> enabled theory row.
                                                                          ///< Does not include simple bounds
