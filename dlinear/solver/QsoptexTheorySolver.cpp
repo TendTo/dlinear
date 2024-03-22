@@ -21,10 +21,11 @@ QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstract
     : QsoptexTheorySolver{"QsoptexTheorySolver", predicate_abstractor, config} {}
 QsoptexTheorySolver::QsoptexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
                                          const Config &config)
-    : TheorySolver("QsoptexTheorySolver", predicate_abstractor, config),
+    : TheorySolver(class_name, predicate_abstractor, config),
       continuous_output_{config.continuous_output()},
       with_timings_{config.with_timings()},
-      qsx_{mpq_QScreate_prob(nullptr, QS_MIN)} {
+      qsx_{mpq_QScreate_prob(nullptr, QS_MIN)},
+      ray_{1} {
   DLINEAR_ASSERT(qsx_, "Failed to create QSopt_ex problem");
   if (config.verbose_simplex() > 3) {
     DLINEAR_RUNTIME_ERROR("With --lp-solver qsoptex, maximum value for --verbose-simplex is 3");
@@ -256,15 +257,11 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
 }
 
 void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explanation) {
-  DLINEAR_RUNTIME_ERROR("Use UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) instead");
-}
-
-void QsoptexTheorySolver::UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) const {
   // TODO: the ray is not minimal in the slightest. It should be possible to improve it
   explanation.clear();
   // For each row in the ray
-  for (int i = 0; i < static_cast<int>(ray.size()); ++i) {
-    if (mpq_sgn(ray[i]) == 0) continue;  // The row did not participate in the conflict, ignore it
+  for (int i = 0; i < static_cast<int>(ray_.size()); ++i) {
+    if (mpq_sgn(ray_[i]) == 0) continue;  // The row did not participate in the conflict, ignore it
     if (DLINEAR_TRACE_ENABLED) {
       mpq_t temp;
       mpq_init(temp);
@@ -273,7 +270,8 @@ void QsoptexTheorySolver::UpdateExplanation(const qsopt_ex::MpqArray &ray, Liter
       mpq_QSget_bound(qsx_, i, 'U', &temp);
       mpq_class u{temp};
       mpq_clear(temp);
-      DLINEAR_TRACE_FMT("QsoptexTheorySolver::UpdateExplanation: ray[{}] = {} <= {} <= {}", i, l, mpq_class{ray[i]}, u);
+      DLINEAR_TRACE_FMT("QsoptexTheorySolver::UpdateExplanation: ray[{}] = {} <= {} <= {}", i, l, mpq_class{ray_[i]},
+                        u);
     }
     const Literal &lit = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver

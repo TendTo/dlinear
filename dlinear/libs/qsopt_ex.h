@@ -94,6 +94,14 @@ class MpqArray {
 
   [[nodiscard]] size_t size() const { return array ? reinterpret_cast<size_t *>(array)[-1] : 0; }
 
+  /**
+   * Resize the array to have @p nElements elements.
+   *
+   * All the previous elements are lost.
+   * @param nElements new  number of elements in the array
+   */
+  void Resize(size_t nElements);
+
  private:
   mpq_t *array;  ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
 

@@ -95,7 +95,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
 }
 
-std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
+DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -131,6 +131,8 @@ std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &l
     return {};
   }
 
+  DLINEAR_RUNTIME_ERROR("Needs to be fixed properly. Look at DeltaSoplexTheorySolver::EnableLiteral for reference.");
+  int qsx_row = mpq_QSget_rowcount(qsx_);
   // A simple bound - set it directly
   DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", it->second);
   // bound = (variable, type, value), where:
@@ -145,15 +147,13 @@ std::vector<LiteralSet> DeltaQsoptexTheorySolver::EnableLiteral(const Literal &l
 
   // Add the active bound to the LP solver bounds
   const int theory_col = var_to_theory_col_.at(b_var.get_id());
-  const int bound_idx = lit_to_theory_bound_.at(var.get_id());
-  theory_bound_to_lit_[bound_idx].second = truth;
-  const auto violation{theory_bounds_[theory_col].AddBound(value, type, bound_idx)};
+  const TheorySolverBoundVector::BoundIterator violation{theory_bounds_[theory_col].AddBound(value, type, qsx_row)};
   // If the bound is invalid, return the explanation and update the SAT solver immediately
-  if (violation) return TheoryBoundsToExplanations(violation, bound_idx);
+  if (violation) return TheoryBoundsToExplanations(violation, qsx_row);
   return {};
 }
 
-SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, LiteralSet &explanation) {
+SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, Explanations &explanations) {
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
@@ -170,7 +170,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   // x: must be allocated/deallocated using QSopt_ex.
   // Should have room for the (rowcount) "logical" variables, which come after the (colcount) "structural" variables.
   qsopt_ex::MpqArray x{colcount + rowcount};
-  qsopt_ex::MpqArray y{rowcount};
+  ray_.Resize(rowcount);
 
   model_ = box;
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
@@ -193,10 +193,10 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
 
   if (1 == simplex_sat_phase_) {
     status =
-        QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(y), nullptr,
+        QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_), nullptr,
                        PRIMAL_SIMPLEX, &lp_status, continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
   } else {
-    status = QSexact_delta_solver(qsx_, static_cast<mpq_t *>(x), static_cast<mpq_t *>(y), nullptr, PRIMAL_SIMPLEX,
+    status = QSexact_delta_solver(qsx_, static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_), nullptr, PRIMAL_SIMPLEX,
                                   &lp_status, actual_precision->get_mpq_t(),
                                   continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
   }
@@ -215,7 +215,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
       break;
     case QS_LP_INFEASIBLE:
       sat_status = SatResult::SAT_UNSATISFIABLE;
-      UpdateExplanation(y, explanation);
+      UpdateExplanations(explanations);
       break;
     case QS_LP_UNSOLVED:
       sat_status = SatResult::SAT_UNSOLVED;

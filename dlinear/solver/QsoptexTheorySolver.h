@@ -44,7 +44,6 @@ class QsoptexTheorySolver : public TheorySolver {
 
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet &explanation) override;
-  void UpdateExplanation(const qsopt_ex::MpqArray &ray, LiteralSet &explanation) const;
 
   void SetQPXVarBound();
   void SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value);
@@ -59,6 +58,8 @@ class QsoptexTheorySolver : public TheorySolver {
 
   std::vector<mpq_class> qsx_rhs_;
   std::vector<LpRowSense> qsx_sense_;
+
+  qsopt_ex::MpqArray ray_; ///< Ray of the last infeasible solution
 
   friend void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x, const mpq_t infeas, const mpq_t delta,
                                              void *data);

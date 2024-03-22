@@ -59,6 +59,13 @@ MpqArray::MpqArray(size_t nElements) : array{nullptr} { AllocateMpqArray(nElemen
 
 MpqArray::~MpqArray() { FreeMpqArray(); }
 
+void MpqArray::Resize(size_t nElements) {
+  {
+    FreeMpqArray();
+    AllocateMpqArray(nElements);
+  }
+}
+
 void QSXStart() { QSexactStart(); }
 
 void QSXFinish() { QSexactClear(); }
