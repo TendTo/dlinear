@@ -13,13 +13,20 @@
 
 namespace dlinear {
 
+TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver)
+    : TheorySolverBoundPreprocessor{config,
+                                    theory_solver.predicate_abstractor(),
+                                    theory_solver.theory_col_to_var(),
+                                    theory_solver.var_to_theory_col(),
+                                    theory_solver.theory_row_to_lit(),
+                                    theory_solver.theory_bounds()} {}
 TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& config,
                                                              const PredicateAbstractor& predicate_abstractor,
                                                              const std::vector<Variable>& theory_col_to_var,
                                                              const std::map<Variable::Id, int>& var_to_theory_cols,
                                                              const std::vector<Literal>& theory_row_to_var,
                                                              const TheorySolverBoundVectorVector& theory_bounds)
-    : enabled{true},
+    : enabled_{!config.disable_theory_preprocessor()},
       needs_expansion_{config.format() == Config::Format::SMT2 || config.filename_extension() == "smt2"},
       predicate_abstractor_{predicate_abstractor},
       theory_cols_{theory_col_to_var},
@@ -27,20 +34,12 @@ TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& confi
       theory_rows_{theory_row_to_var},
       theory_bounds_{theory_bounds} {}
 
-TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver)
-    : enabled{true},
-      needs_expansion_{config.format() == Config::Format::SMT2 || config.filename_extension() == "smt2"},
-      predicate_abstractor_{theory_solver.predicate_abstractor()},
-      theory_cols_{theory_solver.theory_col_to_var()},
-      var_to_cols_{theory_solver.lit_to_theory_row()},
-      theory_rows_{theory_solver.theory_row_to_lit()},
-      theory_bounds_{theory_solver.theory_bounds()} {}
-
 bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Formula& formula) {
   return AddConstraint(theory_row, formula, ExtractExpression(formula));
 }
 bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Formula& formula,
                                                   const Expression& expr) {
+  if (!enabled_) return false;
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::AddConstraint({}, {}, {})", theory_row, formula, expr);
   if (!ShouldPropagate(formula) || !ShouldPropagate(expr)) return false;
   const auto [from, to, weight] = ExtractEdge(expr);
@@ -51,6 +50,7 @@ bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Fo
 }
 
 TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::EnableConstraint(const int theory_row) {
+  if (!enabled_) return {};
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::EnableConstraint({})", theory_row);
   // If the row was never added as an edge, skip
   const auto it = row_to_edges_.find(theory_row);
@@ -74,15 +74,21 @@ TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Proce
   return explanations;
 }
 void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
+  if (!enabled_) return;
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::Process()");
   SetEnvironmentFromBounds();
+  //  DLINEAR_WARN_FMT("Start: env_ = {}", env_);
   PropagateEnvironment(explanations);
-  DLINEAR_WARN_FMT("End: env_ = {}", env_);
-  DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
+  //  DLINEAR_WARN_FMT("End: env_ = {}", env_);
+  //  DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
   if (!explanations.empty()) {
-    DLINEAR_DEBUG("TheorySolverBoundPreprocessor::Process: found explanation");
+    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation");
     return;
   }
+  DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND!");
+  //  DLINEAR_WARN_FMT("End: env_ = {}", env_);
+  //  DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
+
   //  EvaluateFormulas(explanations);
 }
 
@@ -92,8 +98,8 @@ void TheorySolverBoundPreprocessor::Clear() {
 }
 
 void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
-  DLINEAR_ASSERT(theory_bounds_.size() == theory_cols_.size(), "The number of bounds must match the number of columns");
-  for (size_t theory_col = 0; theory_col < theory_bounds_.size(); theory_col++) {
+  DLINEAR_ASSERT(theory_bounds_.size() >= theory_cols_.size(), "The number of bounds must be >= the number of columns");
+  for (size_t theory_col = 0; theory_col < theory_cols_.size(); theory_col++) {
     const TheorySolverBoundVector& bound = theory_bounds_[theory_col];
     const mpq_class* active_bound = bound.GetActiveEqualityBound();
     if (active_bound == nullptr) continue;
@@ -104,13 +110,14 @@ void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
 
 void TheorySolverBoundPreprocessor::PropagateEnvironment(Explanations& explanations) {
   DLINEAR_ERROR("TheorySolverBoundPreprocessor::PropagateEnvironment: start propagation");
+  const std::vector<std::pair<Variable, mpq_class>> vars_in_env{env_.begin(), env_.end()};
   std::unordered_set<Variable> visited;
   visited.reserve(theory_cols_.size());
-  for (const auto& start_it : env_) {
+  for (const auto& start_it : vars_in_env) {
     const auto [start_var, start_value] = start_it;
     if (visited.count(start_var) > 0) continue;
     graph_.BFS(start_var, [&](const Variable& from, const Variable& to, const mpq_class& c) {
-      DLINEAR_ERROR_FMT("TheorySolverBoundPreprocessor::PropagateEnvironment: from = {}, to = {}, w = {}", from, to, c);
+      DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::PropagateEnvironment: from = {}, to = {}, w = {}", from, to, c);
       if (to.equal_to(from)) return VisitResult::CONTINUE;
       DLINEAR_ASSERT(env_.find(from) != env_.end(), "The variable must be in the environment");
       DLINEAR_ASSERT(c != 0, "The coefficient must be non-zero");
@@ -156,6 +163,7 @@ void TheorySolverBoundPreprocessor::EvaluateFormulas(Explanations& explanations)
   DLINEAR_ASSERT(explanations.empty(), "The explanations vector must be empty");
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::EvaluateFormulas()");
   for (const auto& lit : theory_rows_) {
+    // TODO: is it better to re-evaluate some formulas, do a strict check or let the LP solver handle it [current]?
     if (!ShouldEvaluate(lit)) continue;
     const Formula& formula = predicate_abstractor_.var_to_formula_map().at(lit.first);
     const bool satisfied = formula.Evaluate(env_);

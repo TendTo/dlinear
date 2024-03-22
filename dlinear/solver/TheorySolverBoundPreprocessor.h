@@ -34,12 +34,12 @@ class TheorySolverBoundPreprocessor {
  public:
   using Edge = std::tuple<Variable, Variable, mpq_class>;
   using Explanations = std::set<LiteralSet>;
+  TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver);
   TheorySolverBoundPreprocessor(const Config& config, const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
                                 const std::vector<Literal>& theory_rows,
                                 const TheorySolverBoundVectorVector& theory_bounds);
-  TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver);
 
   bool AddConstraint(int theory_row, const Formula& formula, const Expression& expr);
   bool AddConstraint(int theory_row, const Formula& formula);
@@ -89,7 +89,7 @@ class TheorySolverBoundPreprocessor {
   Edge ExtractEdge(const Expression& expr) const;
 
  private:
-  const bool enabled;
+  const bool enabled_;
   const bool needs_expansion_;
   const PredicateAbstractor& predicate_abstractor_;
   const std::vector<Variable>& theory_cols_;
