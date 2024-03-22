@@ -636,15 +636,10 @@ bool is_if_then_else(const Expression &e);
 /** Checks if @p e is an uninterpreted-function expression. */
 bool is_uninterpreted_function(const Expression &e);
 
-/** Returns a reference to the constant value of the rational constant expression @p e.
- *  @pre @p e is either a rational constant or real constant expression.
- *  @warning The reference will be invalidated if @p e is destructed.
- */
-const mpq_class& get_constant_value_ref(const Expression &e);
 /** Returns the constant value of the rational constant expression @p e.
  *  @pre @p e is either a rational constant or real constant expression.
  */
-mpq_class get_constant_value(const Expression &e);
+const mpq_class& get_constant_value(const Expression &e);
 /** Returns the embedded variable in the variable expression @p e.
  *  @pre @p e is a variable expression.
  */
@@ -665,7 +660,7 @@ const Expression &get_second_argument(const Expression &e);
  *  given 7 + 2 * x + 3 * y, it returns 7.
  *  @pre @p e is an addition expression.
  */
-mpq_class get_constant_in_addition(const Expression &e);
+const mpq_class& get_constant_in_addition(const Expression &e);
 /** Returns the map from an expression to its coefficient in the addition
  *  expression @p e. For instance, given 7 + 2 * x + 3 * y, the return value
  *  maps 'x' to 2 and 'y' to 3.
@@ -677,7 +672,7 @@ const std::map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(
  *  instance, given 7 * x^2 * y^3, it returns 7.
  *  @pre @p e is a multiplication expression.
  */
-mpq_class get_constant_in_multiplication(const Expression &e);
+const mpq_class& get_constant_in_multiplication(const Expression &e);
 /** Returns the map from a base expression to its exponent expression in the
  * multiplication expression @p e. For instance, given 7 * x^2 * y^3 * z^x, the
  * return value maps 'x' to 2, 'y' to 3, and 'z' to 'x'.

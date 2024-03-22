@@ -35,6 +35,7 @@ using drake::hash_value;
 using drake::symbolic::Environment;
 using drake::symbolic::Expression;
 using drake::symbolic::ExpressionAddFactory;
+using drake::symbolic::ExpressionKind;
 using drake::symbolic::Formula;
 using drake::symbolic::FormulaKind;
 using drake::symbolic::Variable;
@@ -192,5 +193,9 @@ enum class RelationalOperator {
 RelationalOperator operator!(RelationalOperator op);
 
 std::ostream &operator<<(std::ostream &os, RelationalOperator op);
+
+std::ostream &operator<<(std::ostream &os, const FormulaKind &kind);
+
+std::ostream &operator<<(std::ostream &os, const ExpressionKind &kind);
 
 }  // namespace dlinear

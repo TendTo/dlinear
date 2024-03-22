@@ -535,4 +535,96 @@ std::ostream &operator<<(std::ostream &os, const RelationalOperator op) {
   }
 }
 
+std::ostream &operator<<(std::ostream &os, const FormulaKind &kind) {
+  switch (kind) {
+    case FormulaKind::False:
+      return os << "False";
+    case FormulaKind::True:
+      return os << "True";
+    case FormulaKind::Var:
+      return os << "Var";
+    case FormulaKind::Eq:
+      return os << "Eq";
+    case FormulaKind::Neq:
+      return os << "Neq";
+    case FormulaKind::Gt:
+      return os << "Gt";
+    case FormulaKind::Geq:
+      return os << "Geq";
+    case FormulaKind::Lt:
+      return os << "Lt";
+    case FormulaKind::Leq:
+      return os << "Leq";
+    case FormulaKind::And:
+      return os << "And";
+    case FormulaKind::Or:
+      return os << "Or";
+    case FormulaKind::Not:
+      return os << "Not";
+    case FormulaKind::Forall:
+      return os << "Forall";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
+std::ostream &operator<<(std::ostream &os, const ExpressionKind &kind) {
+  switch (kind) {
+    case ExpressionKind::Var:
+      return os << "Var";
+    case ExpressionKind::Constant:
+      return os << "Constant";
+    case ExpressionKind::Infty:
+      return os << "Infty";
+    case ExpressionKind::NaN:
+      return os << "NaN";
+    case ExpressionKind::Add:
+      return os << "Addition";
+    case ExpressionKind::Mul:
+      return os << "Multiplication";
+    case ExpressionKind::Div:
+      return os << "Division";
+    case ExpressionKind::Log:
+      return os << "Log";
+    case ExpressionKind::Abs:
+      return os << "Abs";
+    case ExpressionKind::Exp:
+      return os << "Exp";
+    case ExpressionKind::Sqrt:
+      return os << "Sqrt";
+    case ExpressionKind::Pow:
+      return os << "Pow";
+    case ExpressionKind::Sin:
+      return os << "Sin";
+    case ExpressionKind::Cos:
+      return os << "Cos";
+    case ExpressionKind::Tan:
+      return os << "Tan";
+    case ExpressionKind::Asin:
+      return os << "Asin";
+    case ExpressionKind::Acos:
+      return os << "Acos";
+    case ExpressionKind::Atan:
+      return os << "Atan";
+    case ExpressionKind::Atan2:
+      return os << "Atan2";
+    case ExpressionKind::Sinh:
+      return os << "Sinh";
+    case ExpressionKind::Cosh:
+      return os << "Cosh";
+    case ExpressionKind::Tanh:
+      return os << "Tanh";
+    case ExpressionKind::Min:
+      return os << "Min";
+    case ExpressionKind::Max:
+      return os << "Max";
+    case ExpressionKind::IfThenElse:
+      return os << "IfThenElse";
+    case ExpressionKind::UninterpretedFunction:
+      return os << "UninterpretedFunction";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 }  // namespace dlinear

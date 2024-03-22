@@ -82,6 +82,16 @@ const Variables &Formula::GetFreeVariables() const {
   return ptr_->GetFreeVariables();
 }
 
+bool Formula::IsFlattened() const {
+  if (!is_relational(*this)) return false;
+  const Expression &lhs = get_lhs_expression(*this);
+  const Expression &rhs = get_rhs_expression(*this);
+  if (!is_constant(rhs)) return false;
+  if (!lhs.EqualTo(lhs.Expand())) return false;
+  const mpq_class &c = get_constant_value(rhs);
+  return (lhs - rhs + c).EqualTo(lhs);
+}
+
 bool Formula::EqualTo(const Formula &f) const {
   assert(ptr_ != nullptr);
   assert(f.ptr_ != nullptr);

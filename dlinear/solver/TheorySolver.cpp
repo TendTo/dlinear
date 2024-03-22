@@ -18,7 +18,7 @@ TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstrac
     : is_consolidated_{false},
       simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
-      needs_expansion_{config.filename_extension() == "smt2"},
+      needs_expansion_{config.needs_expansion()},
       predicate_abstractor_{predicate_abstractor},
       preprocessor_{config, *this},
       model_{},
@@ -99,28 +99,28 @@ TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool tr
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::B, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::B, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::B, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::B, get_constant_value(lhs)};
   }
   if (IsGreaterThan(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SL, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SU, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SL, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SU, get_constant_value(lhs)};
   }
   if (IsGreaterThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::L, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::L, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value(lhs)};
   }
   if (IsLessThan(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SU, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SL, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SU, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SL, get_constant_value(lhs)};
   }
   if (IsLessThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value(lhs)};
   }
   if (IsNotEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::D, get_constant_value_ref(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::D, get_constant_value_ref(lhs)};
+    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::D, get_constant_value(rhs)};
+    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::D, get_constant_value(lhs)};
   }
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }

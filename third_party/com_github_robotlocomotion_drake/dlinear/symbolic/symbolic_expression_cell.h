@@ -223,8 +223,7 @@ class ExpressionVar : public ExpressionCell {
 class ExpressionConstant : public ExpressionCell {
  public:
   explicit ExpressionConstant(const mpq_class &v);
-  mpq_class get_value() const { return v_; }
-  const mpq_class &get_value_ref() const { return v_; }
+  const mpq_class& get_value() const { return v_; }
   bool EqualTo(const ExpressionCell &e) const override;
   bool Less(const ExpressionCell &e) const override;
   mpq_class Evaluate(const Environment &env) const override;
@@ -293,7 +292,7 @@ class ExpressionAdd : public ExpressionCell {
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   /** Returns the constant. */
-  mpq_class get_constant() const { return constant_; }
+  const mpq_class& get_constant() const { return constant_; }
   /** Returns map from an expression to its coefficient. */
   const std::map<Expression, mpq_class> &get_expr_to_coeff_map() const { return expr_to_coeff_map_; }
 
@@ -404,7 +403,7 @@ class ExpressionMul : public ExpressionCell {
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   /** Returns constant term. */
-  mpq_class get_constant() const { return constant_; }
+  const mpq_class& get_constant() const { return constant_; }
   /** Returns map from a term to its exponent. */
   const std::map<Expression, Expression> &get_base_to_exponent_map() const { return base_to_exponent_map_; }
 

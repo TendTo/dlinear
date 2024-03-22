@@ -122,6 +122,8 @@ class Formula {
   /** Checks structural equality*/
   bool EqualTo(const Formula &f) const;
 
+  bool IsFlattened() const;
+
   /** Checks lexicographical ordering between this and @p e.
    *
    * If the two formulas f1 and f2 have different kinds k1 and k2 respectively,

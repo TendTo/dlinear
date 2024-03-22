@@ -966,10 +966,7 @@ bool is_if_then_else(const Expression &e) { return is_if_then_else(*e.ptr_); }
 bool is_uninterpreted_function(const Expression &e) {
   return is_uninterpreted_function(*e.ptr_);
 }
-const mpq_class &get_constant_value_ref(const Expression &e) {
-  return to_constant(e)->get_value_ref();
-}
-mpq_class get_constant_value(const Expression &e) {
+const mpq_class& get_constant_value(const Expression &e) {
   return to_constant(e)->get_value();
 }
 const Variable &get_variable(const Expression &e) {
@@ -984,14 +981,14 @@ const Expression &get_first_argument(const Expression &e) {
 const Expression &get_second_argument(const Expression &e) {
   return to_binary(e)->get_second_argument();
 }
-mpq_class get_constant_in_addition(const Expression &e) {
+const mpq_class& get_constant_in_addition(const Expression &e) {
   return to_addition(e)->get_constant();
 }
 const map<Expression, mpq_class> &get_expr_to_coeff_map_in_addition(
     const Expression &e) {
   return to_addition(e)->get_expr_to_coeff_map();
 }
-mpq_class get_constant_in_multiplication(const Expression &e) {
+const mpq_class& get_constant_in_multiplication(const Expression &e) {
   return to_multiplication(e)->get_constant();
 }
 const map<Expression, Expression> &get_base_to_exponent_map_in_multiplication(
