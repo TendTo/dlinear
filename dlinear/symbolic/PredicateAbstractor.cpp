@@ -7,6 +7,7 @@
 
 #include "PredicateAbstractor.h"
 
+#include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/logging.h"
@@ -47,10 +48,13 @@ Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
   // relation between `bvar` and `f`.
   std::stringstream ss;
   ss << "b(" << f << ")";
-  auto it = formula_to_var_map_.find(f);
+  // Flatten linear formulas to make sure they have the standard form (ax + by <=> c).
+  //  LinearFormulaFlattener::Flatten(f);
+  const Formula &flattened_f = flattener_.Flatten(f);
+  auto it = formula_to_var_map_.find(flattened_f);
   if (it == formula_to_var_map_.end()) {
     const Variable bvar{ss.str(), Variable::Type::BOOLEAN};
-    Add(bvar, f);
+    Add(bvar, flattened_f);
     return Formula{bvar};
   } else {
     return Formula{it->second};

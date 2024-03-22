@@ -67,9 +67,8 @@ class TheorySolverBoundPreprocessor {
   [[nodiscard]] const std::unordered_map<int, Edge>& edges() const { return row_to_edges_; }
 
  protected:
-  bool ShouldPropagate(const Literal& lit, bool check_expr = false) const;
-  bool ShouldPropagate(const Formula& lit, bool check_expr = false) const;
-  bool ShouldPropagate(const Expression& expr) const;
+  bool ShouldPropagate(const Literal& lit) const;
+  bool ShouldPropagate(const Formula& lit) const;
 
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& lit) const;
@@ -85,19 +84,10 @@ class TheorySolverBoundPreprocessor {
   void AddPathsToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                              const TheorySolverBoundVector& to_bounds, LiteralSet& explanation);
 
-  [[nodiscard]] inline Expression ExtractExpression(const Formula& formula) const {
-    Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
-    if (needs_expansion_) expr = expr.Expand();
-    DLINEAR_ASSERT(expr.EqualTo(expr.Expand()), "The expression must be expanded");
-    return expr;
-  }
-
   Edge ExtractEdge(const Formula& formula) const;
-  Edge ExtractEdge(const Expression& expr) const;
 
  private:
   const bool enabled_;
-  const bool needs_expansion_;
   const PredicateAbstractor& predicate_abstractor_;
   const std::vector<Variable>& theory_cols_;
   const std::map<Variable::Id, int>& var_to_cols_;

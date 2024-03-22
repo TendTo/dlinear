@@ -32,6 +32,16 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "linear_formula_flattener",
+    srcs = ["LinearFormulaFlattener.cpp"],
+    hdrs = ["LinearFormulaFlattener.h"],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:config",
+    ],
+)
+
+dlinear_cc_library(
     name = "literal",
     srcs = ["literal.cpp"],
     hdrs = ["literal.h"],
@@ -84,7 +94,9 @@ dlinear_cc_library(
     hdrs = ["PredicateAbstractor.h"],
     deps = [
         ":formula_visitor",
+        ":linear_formula_flattener",
         ":symbolic",
+        "//dlinear/util:config",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
         "//dlinear/util:timer",

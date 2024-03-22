@@ -16,12 +16,15 @@
 #include <vector>
 
 #include "dlinear/symbolic/FormulaVisitor.h"
+#include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
 class PredicateAbstractor : public FormulaVisitor {
  public:
+  explicit PredicateAbstractor(const Config &config = {}) : flattener_{config} {}
   /**
    * Convert a first-order logic formula @p f into a Boolean formula
    * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
@@ -72,6 +75,7 @@ class PredicateAbstractor : public FormulaVisitor {
 
   std::unordered_map<Variable, Formula, hash_value<Variable>> var_to_formula_map_;
   std::unordered_map<Formula, Variable> formula_to_var_map_;
+  LinearFormulaFlattener flattener_;
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.

@@ -17,6 +17,8 @@ Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
+bool Config::needs_expansion() const { return format() == Config::Format::SMT2 || filename_extension() == "smt2"; }
+
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
   switch (sat_default_phase) {
     case Config::SatDefaultPhase::False:

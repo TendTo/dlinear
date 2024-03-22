@@ -116,39 +116,35 @@ bool SoplexTheorySolver::IsRowActive(const int spx_row, const Rational &value) {
 }
 
 soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formula) {
-  Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
-  if (needs_expansion_) expr = expr.Expand();
-  DLINEAR_ASSERT(expr == expr.Expand(), "The expression must be expanded");
-
+  DLINEAR_ASSERT_FMT(formula.IsFlattened(), "The formula {} must be flattened", formula);
   // Add constraint to the preprocessor
-  preprocessor_.AddConstraint(static_cast<int>(spx_rhs_.size()), formula, expr);
+  preprocessor_.AddConstraint(static_cast<int>(spx_rhs_.size()), formula);
+
+  const Expression &lhs = get_lhs_expression(formula);
+  const Expression &rhs = get_rhs_expression(formula);
 
   soplex::DSVectorRational coeffs;
-  spx_rhs_.emplace_back(0);
+  spx_rhs_.emplace_back(get_constant_value(rhs));
 
-  if (is_constant(expr)) {
-    spx_rhs_.back() = -get_constant_value(expr);
-  } else if (is_variable(expr)) {
-    SetSPXVarCoeff(coeffs, get_variable(expr), 1);
-  } else if (is_multiplication(expr)) {
-    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
+  if (is_variable(lhs)) {
+    SetSPXVarCoeff(coeffs, get_variable(lhs), 1);
+  } else if (is_multiplication(lhs)) {
+    const std::map<Expression, Expression> &map = get_base_to_exponent_map_in_multiplication(lhs);
     if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
         get_constant_value(map.begin()->second) != 1) {
-      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", lhs);
     }
-    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
-  } else if (is_addition(expr)) {
-    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
+    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(lhs));
+  } else if (is_addition(lhs)) {
+    DLINEAR_ASSERT(get_constant_in_addition(rhs) == 0, "The addition constant must be 0");
+    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(lhs);
     coeffs.setMax(static_cast<int>(map.size()));
     for (const auto &[var, coeff] : map) {
-      if (!is_variable(var)) {
-        DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
-      }
+      if (!is_variable(var)) DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", lhs);
       SetSPXVarCoeff(coeffs, get_variable(var), coeff);
     }
-    spx_rhs_.back() = -get_constant_in_addition(expr);
   } else {
-    DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
+    DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
   if (spx_rhs_.back() <= -soplex::infinity || spx_rhs_.back() >= soplex::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", spx_rhs_.back());

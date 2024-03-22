@@ -350,9 +350,6 @@ class TheorySolver {
                                 ///< This method must be called after all the literals have been added to the solver.
   int simplex_sat_phase_;       ///< Phase of the simplex algorithm
   double precision_;            ///< Precision used to check the satisfiability of the theory
-  const bool needs_expansion_;  ///< Whether the formulas need to be expanded before building the LP constraints.
-                                ///< - SMT2 files: the expansion is needed.
-                                ///< - MPS files: the expansion is not needed.
 
   const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor used to create the theory solver
 

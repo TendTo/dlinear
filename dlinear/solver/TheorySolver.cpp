@@ -18,7 +18,6 @@ TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstrac
     : is_consolidated_{false},
       simplex_sat_phase_{config.simplex_sat_phase()},
       precision_{config.precision()},
-      needs_expansion_{config.needs_expansion()},
       predicate_abstractor_{predicate_abstractor},
       preprocessor_{config, *this},
       model_{},

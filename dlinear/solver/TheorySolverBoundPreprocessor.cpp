@@ -27,7 +27,6 @@ TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& confi
                                                              const std::vector<Literal>& theory_row_to_var,
                                                              const TheorySolverBoundVectorVector& theory_bounds)
     : enabled_{!config.disable_theory_preprocessor()},
-      needs_expansion_{config.format() == Config::Format::SMT2 || config.filename_extension() == "smt2"},
       predicate_abstractor_{predicate_abstractor},
       theory_cols_{theory_col_to_var},
       var_to_cols_{var_to_theory_cols},
@@ -190,62 +189,47 @@ void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Literal& l
 
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", lit);
-  const auto& [var, truth] = lit;
-  const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
-  // No need to evaluate if there are no free variables or only one free variable
-  if (formula.GetFreeVariables().size() <= 1) return false;
-  // All free variables must be in the environment
-  if (std::any_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
-                  [this](const Variable& v) { return env_.find(v) == env_.end(); })) {
-    return false;
-  }
   // We already have checked this kind of formula when propagating the environment
   // It's not a problem if we do it again, so just stick with the very inexpensive check
-  // TODO: is it better to re-evaluate some formulas [current], do a strict check or let the LP solver handle it?
-  return true;
-  return ShouldPropagate(lit);
+  if (ShouldPropagate(lit)) return false;
+
+  const auto& [var, truth] = lit;
+  const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
+  return ShouldEvaluate(formula);
 }
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", formula);
+  // We already have checked this kind of formula when propagating the environment
+  // It's not a problem if we do it again, so just stick with the very inexpensive check
+  if (ShouldPropagate(formula)) return false;
   // No need to evaluate if there are no free variables or only one free variable
   if (formula.GetFreeVariables().size() <= 1) return false;
   // All free variables must be in the environment
-  if (std::any_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
-                  [this](const Variable& v) { return env_.find(v) == env_.end(); })) {
-    return false;
-  }
-  // We already have checked this kind of formula when propagating the environment
-  // It's not a problem if we do it again, so just stick with the very inexpensive check
-  return ShouldPropagate(formula);
-}
-bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Expression& expr) const {
-  DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", expr);
-  return !ShouldPropagate(expr);
+  return std::all_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
+                     [this](const Variable& v) { return env_.find(v) != env_.end(); });
 }
 
-bool TheorySolverBoundPreprocessor::ShouldPropagate(const Literal& lit, const bool check_expr) const {
+bool TheorySolverBoundPreprocessor::ShouldPropagate(const Literal& lit) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldPropagate({})", lit);
   const auto& [var, truth] = lit;
   const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
   // There must be exactly two free variables and an equality relation between them
-  if (formula.GetFreeVariables().size() != 2) return false;
   if (truth && !is_equal_to(formula)) return false;
   if (!truth && !is_not_equal_to(formula)) return false;
-  return !check_expr || ShouldPropagate(ExtractExpression(formula));
+  return ShouldPropagate(formula);
 }
-bool TheorySolverBoundPreprocessor::ShouldPropagate(const Formula& formula, const bool check_expr) const {
+bool TheorySolverBoundPreprocessor::ShouldPropagate(const Formula& formula) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldPropagate({})", formula);
+  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   // There must be exactly two free variables and an equality relation between them
-  return formula.GetFreeVariables().size() == 2 && (is_equal_to(formula) || is_not_equal_to(formula)) &&
-         (!check_expr || ShouldPropagate(ExtractExpression(formula)));
-}
-bool TheorySolverBoundPreprocessor::ShouldPropagate(const Expression& expr) const {
-  DLINEAR_ASSERT(expr.EqualTo(expr.Expand()), "The expression must be expanded");
-  DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldPropagate({})", expr);
+  if (formula.GetFreeVariables().size() != 2) return false;
+  if (!is_equal_to(formula) && !is_not_equal_to(formula)) return false;
 
   // The formula must be of the form 'ax == by', with a,b != 0
-  if (!is_addition(expr) || get_constant_in_addition(expr) != 0) return false;
-  const auto& expr_to_coeff_map = to_addition(expr)->get_expr_to_coeff_map();
+  const Expression& lhs = get_lhs_expression(formula);
+  const Expression& rhs = get_rhs_expression(formula);
+  if (!is_addition(lhs) || get_constant_value(rhs) != 0) return false;
+  const auto& expr_to_coeff_map = to_addition(lhs)->get_expr_to_coeff_map();
   if (expr_to_coeff_map.size() != 2) return false;
   return is_variable(expr_to_coeff_map.cbegin()->first) && is_variable(std::next(expr_to_coeff_map.cbegin())->first) &&
          expr_to_coeff_map.cbegin()->second != 0 && std::next(expr_to_coeff_map.cbegin())->second != 0;
@@ -254,17 +238,13 @@ bool TheorySolverBoundPreprocessor::ShouldPropagate(const Expression& expr) cons
 TheorySolverBoundPreprocessor::Edge TheorySolverBoundPreprocessor::ExtractEdge(const Formula& formula) const {
   DLINEAR_ASSERT(is_equal_to(formula), "Formula should be an equality relation");
   DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
-  Expression expr{ExtractExpression(formula)};
-  return ExtractEdge(expr);
-}
-TheorySolverBoundPreprocessor::Edge TheorySolverBoundPreprocessor::ExtractEdge(const Expression& expr) const {
-  DLINEAR_ASSERT(ShouldPropagate(expr), "Expression must be propagable");
-  DLINEAR_ASSERT(get_constant_in_addition(expr) == 0, "No constants must be present");
+  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
+  const Expression& lhs = get_lhs_expression(formula);
 
-  const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(expr);
+  const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
   DLINEAR_ASSERT(map.size() == 2, "Expression should have exactly two variables");
-  // Create a tuple containing the two variables and the coefficient between them
-  // e.g. Expression{ax - by} -> std::tuple{x, y, -(-b)/a}
+  DLINEAR_ASSERT(get_constant_value(get_rhs_expression(formula)) == 0, "The right-hand side must be 0");
+
   return {get_variable(map.cbegin()->first), get_variable(std::next(map.cbegin())->first),
           -(std::next(map.cbegin())->second) / map.cbegin()->second};
 }

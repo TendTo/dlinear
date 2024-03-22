@@ -74,6 +74,7 @@ class Config {
   [[nodiscard]] std::string filename_extension() const;
   OptionValue<std::string> &m_filename() { return filename_; }
   static constexpr std::string_view help_filename{"Input file name"};
+  [[nodiscard]] bool needs_expansion() const;
 
  private:
   OptionValue<std::string> filename_{""};
