@@ -216,24 +216,13 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
   EXPECT_EQ(bound_preprocessor_.env()[x9_], val);
 }
 
-std::ostream &operator<<(std::ostream &os, const std::vector<LiteralSet> &explanations) {
-  for (const auto &explanation : explanations) {
-    os << "{";
-    for (const auto &literal : explanation) {
-      os << literal << ", ";
-    }
-    os << "}" << std::endl;
-  }
-  return os;
-}
-
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
   DLINEAR_LOG_INIT_VERBOSITY(5);
   const mpq_class val = 7;
   AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == mpq_class{val + 1}, x2_ == x3_, x3_ == x4_, x4_ == x5_,
                         x5_ == mpq_class{val + 2}, x6_ == x7_, x7_ == mpq_class{val + 3}, x7_ == x8_, x8_ == x9_,
                         x9_ == mpq_class{val + 4}, x9_ == x10_});
-  const std::vector<LiteralSet> explanations = bound_preprocessor_.Process();
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process();
 
   EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 8);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
@@ -243,7 +232,6 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
   EXPECT_EQ(bound_preprocessor_.env()[x9_], val + 4);
 
   EXPECT_EQ(explanations.size(), 3u);
-  std::cout << explanations << std::endl;
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
