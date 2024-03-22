@@ -369,6 +369,8 @@ class TheorySolver {
                                                    ///< The row is the constraint used by the theory solver.
                                                    ///< The literal is the one created by the PredicateAbstractor.
                                                    ///< It may not contain simple bounds
+  std::vector<int> enabled_theory_rows_;           ///< Enabled theory rows.
+                                                   ///< Rows that have been enabled in the current problem instance.
   TheorySolverBoundVectorVector theory_bounds_;    ///< Theory bounds.
                                                    ///< The bounds are the constraints on the values of the variables.
   ///< It also verifies that the bounds are consistent every time a new one is added.

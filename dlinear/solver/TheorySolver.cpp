@@ -55,11 +55,13 @@ void TheorySolver::Consolidate() {
   if (is_consolidated_) return;
   DLINEAR_DEBUG("TheorySolver::Consolidate()");
   is_consolidated_ = true;
+  enabled_theory_rows_.reserve(theory_row_to_lit_.size());
 }
 
 bool TheorySolver::IsSimpleBound(const Formula &formula) {
   // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
   if (!is_relational(formula)) return false;
+  // TODO: support more complex expressions such as `lhs + c1 <= rhs + c2`
 
   // one between lhs and rhs must be a constant and the other must be a variable.
   const Expression &lhs{get_lhs_expression(formula)};
@@ -93,7 +95,7 @@ bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, const bool truth)
 
 TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool truth) {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
-
+  // TODO: support more complex expressions such as `lhs + c1 <= rhs + c2`
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, truth)) {

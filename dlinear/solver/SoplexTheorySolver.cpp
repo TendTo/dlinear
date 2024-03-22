@@ -188,6 +188,8 @@ void SoplexTheorySolver::Reset(const Box &box) {
   spx_.clearBasis();
   // Clear the preprocessor
   preprocessor_.Clear();
+  // Clear enabled theory rows
+  enabled_theory_rows_.clear();
 
   // Clear constraint bounds
   for (auto &bound : theory_bounds_) bound.Clear();

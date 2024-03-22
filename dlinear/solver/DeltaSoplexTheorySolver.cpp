@@ -89,7 +89,9 @@ DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(con
   const int spx_row = it_row->second;
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_lit_[spx_row].second = truth;
-
+  // Add the row to the list of enabled theory rows
+  enabled_theory_rows_.push_back(spx_row);
+  
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);

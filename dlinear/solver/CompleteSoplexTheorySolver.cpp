@@ -112,6 +112,8 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   const int spx_row = it_row->second;
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_lit_[spx_row].second = truth;
+  // Add the row to the list of enabled theory rows
+  enabled_theory_rows_.push_back(spx_row);
 
   // Enable the row in the preprocessor
   preprocessor_.EnableConstraint(spx_row);
@@ -165,7 +167,9 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     return SatResult::SAT_SATISFIABLE;
   }
 
-  preprocessor_.Process();
+  // Preprocess the constraints
+  preprocessor_.Process(enabled_theory_rows_, explanations);
+  if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
 
   // Set the bounds for the variables
   EnableSPXVarBound();
