@@ -63,33 +63,39 @@ TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Enabl
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::EnableConstraint({}): adding {} --{}--> {} to graph", theory_row,
                     from, to, weight);
   const bool conflicting_edge = graph_.AddEdge(from, to, weight);
-  // TODO: handle this case
-  if (conflicting_edge) DLINEAR_RUNTIME_ERROR("Conflicting edge not yet implemented!");
+  // TODO: handle conflicting edges, such as x == y and x == 2y
+  if (conflicting_edge) DLINEAR_RUNTIME_ERROR("Conflicting edge not yet implemented! Disable the preprocessor!");
   return {};
 }
 
-TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Process() {
+TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Process(
+    const std::vector<int>& enabled_theory_rows) {
   Explanations explanations;
-  Process(explanations);
+  Process(enabled_theory_rows, explanations);
   return explanations;
 }
 void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
   if (!enabled_) return;
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::Process()");
   SetEnvironmentFromBounds();
-  //  DLINEAR_WARN_FMT("Start: env_ = {}", env_);
   PropagateEnvironment(explanations);
+  if (!explanations.empty())
+    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation during propagation");
+  else
+    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND (propagation)!");
+}
+void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations) {
+  if (!enabled_) return;
+  DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::Process({})", enabled_theory_rows);
+  Process(explanations);
+  if (!explanations.empty()) return;
+  EvaluateFormulas(enabled_theory_rows, explanations);
+  if (!explanations.empty())
+    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation during evaluation");
+  else
+    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND (evaluation)!");
   //  DLINEAR_WARN_FMT("End: env_ = {}", env_);
   //  DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
-  if (!explanations.empty()) {
-    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation");
-    return;
-  }
-  DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND!");
-  //  DLINEAR_WARN_FMT("End: env_ = {}", env_);
-  //  DLINEAR_WARN_FMT("End: graph_ = {}", graph_);
-
-  //  EvaluateFormulas(explanations);
 }
 
 void TheorySolverBoundPreprocessor::Clear() {
@@ -109,7 +115,7 @@ void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
 }
 
 void TheorySolverBoundPreprocessor::PropagateEnvironment(Explanations& explanations) {
-  DLINEAR_ERROR("TheorySolverBoundPreprocessor::PropagateEnvironment: start propagation");
+  DLINEAR_TRACE("TheorySolverBoundPreprocessor::PropagateEnvironment: start propagation");
   const std::vector<std::pair<Variable, mpq_class>> vars_in_env{env_.begin(), env_.end()};
   std::unordered_set<Variable> visited;
   visited.reserve(theory_cols_.size());
@@ -135,45 +141,51 @@ void TheorySolverBoundPreprocessor::PropagateEnvironment(Explanations& explanati
         DLINEAR_ASSERT(start_bounds.GetActiveEqualityBound() != nullptr, "The starting variable must have an eq bound");
         DLINEAR_ASSERT(to_bounds.GetActiveEqualityBound() != nullptr, "The conflicting variable must have an eq bound");
 
-        graph_.AllPaths(start_it.first, to, [&](std::vector<Variable>& path) {
-          LiteralSet explanation;
-          // Insert start and end bounds to the explanation
-          start_bounds.GetActiveExplanation(theory_rows_, explanation);
-          to_bounds.GetActiveExplanation(theory_rows_, explanation);
-          // Insert all rows from the edges in the path to the explanation
-          for (size_t i = 1; i < path.size(); i++) {
-            const auto forward_it = edges_to_row_.find({path[i - 1].get_id(), path[i].get_id()});
-            if (forward_it == edges_to_row_.end()) {
-              const int theory_row = edges_to_row_.at({path[i].get_id(), path[i - 1].get_id()});
-              explanation.insert(theory_rows_[theory_row]);
-            } else {
-              explanation.insert(theory_rows_[forward_it->second]);
-            }
-          }
-          explanations.insert(explanation);
-          return VisitResult::CONTINUE;
-        });
+        AddPathsToExplanations(start_it.first, to, start_bounds, to_bounds, explanations);
       }
       return VisitResult::CONTINUE;
     });
   }
 }
 
-void TheorySolverBoundPreprocessor::EvaluateFormulas(Explanations& explanations) {
+void TheorySolverBoundPreprocessor::EvaluateFormulas(const std::vector<int>& enabled_theory_rows,
+                                                     Explanations& explanations) {
   DLINEAR_ASSERT(explanations.empty(), "The explanations vector must be empty");
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::EvaluateFormulas()");
-  for (const auto& lit : theory_rows_) {
-    // TODO: is it better to re-evaluate some formulas, do a strict check or let the LP solver handle it [current]?
+  for (const auto& theory_row : enabled_theory_rows) {
+    const Literal& lit = theory_rows_.at(theory_row);
+    DLINEAR_WARN_FMT("TheorySolverBoundPreprocessor::EvaluateFormulas: evaluating {}", lit);
     if (!ShouldEvaluate(lit)) continue;
     const Formula& formula = predicate_abstractor_.var_to_formula_map().at(lit.first);
-    const bool satisfied = formula.Evaluate(env_);
-    if (!satisfied) FormulaViolationExplanation(formula, explanations);
+    const bool satisfied = formula.Evaluate(env_) == lit.second;
+    DLINEAR_WARN_FMT("TheorySolverBoundPreprocessor::EvaluateFormulas: {} => {}", lit, satisfied ? "V" : "X");
+    if (!satisfied) FormulaViolationExplanation(lit, formula, explanations);
   }
 }
 
-void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Formula& formula, Explanations&) {
+void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Literal& lit, const Formula& formula,
+                                                                Explanations& explanations) {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::FormulaViolationExplanation({})", formula);
-  // TODO: produce explanation out of the violation
+  // TODO: produce more than just one explanation! Produce as many as possible!
+  LiteralSet explanation;
+  explanation.insert(lit);
+  for (const auto& var : formula.GetFreeVariables()) {
+    DLINEAR_ASSERT(env_.find(var) != env_.end(), "All free variables must be in the environment");
+    const TheorySolverBoundVector& bounds = theory_bounds_.at(var_to_cols_.at(var.get_id()));
+    // If the variable has its bounds set directly by some literals, simply add them to the explanation
+    if (bounds.GetActiveEqualityBound() != nullptr) {
+      bounds.GetActiveExplanation(theory_rows_, explanation);
+    } else {  // Else we need to find the variable responsible for the bound propagation from the graph
+      graph_.BFS(var, [&](const Variable& from, const Variable& to, const mpq_class&) {
+        if (to.equal_to(from)) return VisitResult::CONTINUE;
+        const TheorySolverBoundVector& to_bounds = theory_bounds_.at(var_to_cols_.at(to.get_id()));
+        if (to_bounds.GetActiveEqualityBound() == nullptr) return VisitResult::CONTINUE;
+        AddPathsToExplanation(var, to, bounds, to_bounds, explanation);
+        return VisitResult::STOP;
+      });
+    }
+  }
+  explanations.insert(explanation);
 }
 
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
@@ -189,6 +201,8 @@ bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
   }
   // We already have checked this kind of formula when propagating the environment
   // It's not a problem if we do it again, so just stick with the very inexpensive check
+  // TODO: is it better to re-evaluate some formulas [current], do a strict check or let the LP solver handle it?
+  return true;
   return ShouldPropagate(lit);
 }
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
@@ -253,6 +267,63 @@ TheorySolverBoundPreprocessor::Edge TheorySolverBoundPreprocessor::ExtractEdge(c
   // e.g. Expression{ax - by} -> std::tuple{x, y, -(-b)/a}
   return {get_variable(map.cbegin()->first), get_variable(std::next(map.cbegin())->first),
           -(std::next(map.cbegin())->second) / map.cbegin()->second};
+}
+
+void TheorySolverBoundPreprocessor::AddPathsToExplanations(const Variable& from, const Variable& to,
+                                                           TheorySolverBoundPreprocessor::Explanations& explanations) {
+  const TheorySolverBoundVector& from_bounds = theory_bounds_.at(var_to_cols_.at(from.get_id()));
+  const TheorySolverBoundVector& to_bounds = theory_bounds_.at(var_to_cols_.at(to.get_id()));
+  AddPathsToExplanations(from, to, from_bounds, to_bounds, explanations);
+}
+void TheorySolverBoundPreprocessor::AddPathsToExplanations(const Variable& from, const Variable& to,
+                                                           const TheorySolverBoundVector& from_bounds,
+                                                           const TheorySolverBoundVector& to_bounds,
+                                                           TheorySolverBoundPreprocessor::Explanations& explanations) {
+  graph_.AllPaths(from, to, [&](std::vector<Variable>& path) {
+    LiteralSet explanation;
+    // Insert start and end bounds to the explanation
+    from_bounds.GetActiveExplanation(theory_rows_, explanation);
+    to_bounds.GetActiveExplanation(theory_rows_, explanation);
+    // Insert all rows from the edges in the path to the explanation
+    for (size_t i = 1; i < path.size(); i++) {
+      const auto forward_it = edges_to_row_.find({path[i - 1].get_id(), path[i].get_id()});
+      if (forward_it == edges_to_row_.end()) {
+        const int theory_row = edges_to_row_.at({path[i].get_id(), path[i - 1].get_id()});
+        explanation.insert(theory_rows_[theory_row]);
+      } else {
+        explanation.insert(theory_rows_[forward_it->second]);
+      }
+    }
+    explanations.insert(explanation);
+    return VisitResult::CONTINUE;
+  });
+}
+void TheorySolverBoundPreprocessor::AddPathsToExplanation(const Variable& from, const Variable& to,
+                                                          LiteralSet& explanation) {
+  const TheorySolverBoundVector& from_bounds = theory_bounds_.at(var_to_cols_.at(from.get_id()));
+  const TheorySolverBoundVector& to_bounds = theory_bounds_.at(var_to_cols_.at(to.get_id()));
+  AddPathsToExplanation(from, to, from_bounds, to_bounds, explanation);
+}
+void TheorySolverBoundPreprocessor::AddPathsToExplanation(const Variable& from, const Variable& to,
+                                                          const TheorySolverBoundVector& from_bounds,
+                                                          const TheorySolverBoundVector& to_bounds,
+                                                          LiteralSet& explanation) {
+  graph_.AllPaths(from, to, [&](std::vector<Variable>& path) {
+    // Insert start and end bounds to the explanation
+    from_bounds.GetActiveExplanation(theory_rows_, explanation);
+    to_bounds.GetActiveExplanation(theory_rows_, explanation);
+    // Insert all rows from the edges in the path to the explanation
+    for (size_t i = 1; i < path.size(); i++) {
+      const auto forward_it = edges_to_row_.find({path[i - 1].get_id(), path[i].get_id()});
+      if (forward_it == edges_to_row_.end()) {
+        const int theory_row = edges_to_row_.at({path[i].get_id(), path[i - 1].get_id()});
+        explanation.insert(theory_rows_[theory_row]);
+      } else {
+        explanation.insert(theory_rows_[forward_it->second]);
+      }
+    }
+    return VisitResult::STOP;
+  });
 }
 
 std::ostream& operator<<(std::ostream& os, const std::vector<const Literal*>& theory_bounds) {

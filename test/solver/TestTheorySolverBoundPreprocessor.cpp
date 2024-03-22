@@ -4,10 +4,12 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <include/gmock/gmock-matchers.h>
 
 #include <algorithm>
+#include <numeric>
+#include <vector>
 
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/solver/TheorySolverBoundPreprocessor.h"
@@ -217,7 +219,6 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
-  DLINEAR_LOG_INIT_VERBOSITY(5);
   const mpq_class val = 7;
   AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == mpq_class{val + 1}, x2_ == x3_, x3_ == x4_, x4_ == x5_,
                         x5_ == mpq_class{val + 2}, x6_ == x7_, x7_ == mpq_class{val + 3}, x7_ == x8_, x8_ == x9_,
@@ -256,6 +257,28 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
         FAIL();
     }
   }
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolation) {
+  DLINEAR_LOG_INIT_VERBOSITY(5);
+  const mpq_class val = 7;
+  AddEnableConstraints({x1_ == val, x2_ == x3_, x3_ == val, x4_ == (x1_ + x5_), x6_ == x2_, x5_ == x6_,
+                        x7_ == mpq_class{val + 1}, x7_ == x4_});
+  std::vector<int> enabled_rows(theory_rows_.size());
+  std::iota(enabled_rows.begin(), enabled_rows.end(), 0);
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(enabled_rows);
+
+  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 4);
+  EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x4_], val + 1);
+  EXPECT_EQ(bound_preprocessor_.env()[x5_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x6_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x7_], val + 1);
+
+  EXPECT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(theory_rows_));
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ShouldPropagateTrue) {

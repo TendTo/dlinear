@@ -50,8 +50,9 @@ class TheorySolverBoundPreprocessor {
    * @return ?
    */
   Explanations EnableConstraint(int theory_row);
-  Explanations Process();
+  Explanations Process(const std::vector<int>& enabled_theory_rows = {});
   void Process(Explanations& explanations);
+  void Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
 
   void Clear();
 
@@ -75,8 +76,14 @@ class TheorySolverBoundPreprocessor {
   bool ShouldEvaluate(const Expression& expr) const;
   void SetEnvironmentFromBounds();
   void PropagateEnvironment(Explanations& explanations);
-  void EvaluateFormulas(Explanations& explanations);
-  void FormulaViolationExplanation(const Formula& formula, Explanations& explanations);
+  void EvaluateFormulas(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
+  void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
+  void AddPathsToExplanations(const Variable& from, const Variable& to, Explanations& explanations);
+  void AddPathsToExplanations(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
+                              const TheorySolverBoundVector& to_bounds, Explanations& explanations);
+  void AddPathsToExplanation(const Variable& from, const Variable& to, LiteralSet& explanation);
+  void AddPathsToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
+                             const TheorySolverBoundVector& to_bounds, LiteralSet& explanation);
 
   [[nodiscard]] inline Expression ExtractExpression(const Formula& formula) const {
     Expression expr{(get_lhs_expression(formula) - get_rhs_expression(formula))};
