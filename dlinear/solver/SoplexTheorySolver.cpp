@@ -136,7 +136,7 @@ soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formul
     }
     SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(lhs));
   } else if (is_addition(lhs)) {
-    DLINEAR_ASSERT(get_constant_in_addition(rhs) == 0, "The addition constant must be 0");
+    DLINEAR_ASSERT(get_constant_in_addition(lhs) == 0, "The addition constant must be 0");
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(lhs);
     coeffs.setMax(static_cast<int>(map.size()));
     for (const auto &[var, coeff] : map) {

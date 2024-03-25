@@ -60,7 +60,8 @@ void TheorySolver::Consolidate() {
 bool TheorySolver::IsSimpleBound(const Formula &formula) {
   // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
   if (!is_relational(formula)) return false;
-  // TODO: support more complex expressions such as `lhs + c1 <= rhs + c2`
+  // The number of variables must be exactly one
+  if (formula.GetFreeVariables().size() != 1) return false;
 
   // one between lhs and rhs must be a constant and the other must be a variable.
   const Expression &lhs{get_lhs_expression(formula)};
