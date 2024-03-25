@@ -1,11 +1,18 @@
-# Use
+# Usage
 
 After compilation, the binary, called `dlinear` will be located in the `bazel-bin/dlinear` directory.
-To run it, just type `bazel-bin/dlinear/dlinear` in the terminal.
+There are several options to run it:
+
+- run `bazel-bin/dlinear/dlinear` in the terminal
+- add the absolute path of the directory `bazel-bin/dlinear` to the `PATH` environment variable
+- create a symbolic link to the executable
+- create an alias for the executable
+
+From now on, the snippets will assume that the `dlinear` binary is in the `PATH`.
 
 ```bash
 # Invoke dlinear help
-bazel-bin/dlinear/dlinear -h
+dlinear -h
 ```
 
 ## File mode
@@ -15,22 +22,23 @@ The file can be in the [SMT2](https://smtlib.cs.uiowa.edu/language.shtml) or [MP
 If left unspecified, the program will look at the file extension to determine the format.
 
 ```bash
-# Invoke dlinear with a problem in SMT2 format. --format smt is not necessary
-bazel-bin/dlinear/dlinear path/to/problem.smt2
-# Invoke dlinear with a problem in MPS format. --format mps is not necessary
-bazel-bin/dlinear/dlinear path/to/problem.mps
+# Invoke dlinear with a problem in SMT2 format
+dlinear path/to/problem.smt2
+# Invoke dlinear with a problem in MPS format
+dlinear path/to/problem.mps
+# Invoke dlinear with a problem enforcing the SMT2 format
+dlinear path/to/problem --format smt2
 ```
 
 ## Stdin mode
 
 _dlinear_ can be used in stdin mode, where the user can input is received from the standard input.
-By default, the program will expect a problem in the [SMT2](https://smtlib.cs.uiowa.edu/language.shtml) format.
 
 ```bash
 # Invoke dlinear in stdin mode (SMT2 format)
-bazel-bin/dlinear/dlinear --in
+dlinear --in --format smt2
 # Invoke dlinear in stdin mode (MPS format)
-bazel-bin/dlinear/dlinear --in --format mps
+dlinear --in --format mps
 ```
 
 When the stdin mode is used, the problem can be typed directly in the terminal.
