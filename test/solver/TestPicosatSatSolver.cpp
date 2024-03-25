@@ -25,18 +25,20 @@ using std::unique_ptr;
 class TestPicosatSatSolver : public ::testing::Test {
  protected:
   Config config_;
-  SolverGuard guard{config_};
+  SolverGuard guard;
   PredicateAbstractor pa_;
   const Variable x_{"x"}, y_{"y"};
   const Formula f_{x_ > 1};
   const Formula f2_{!(y_ > 2)};
   const Formula f3_{x_ + y_ <= 3};
   const Formula f4_{f_ || f2_ || f3_};
-  explicit TestPicosatSatSolver(Config::LPSolver lp_solver = dlinear::Config::LPSolver::QSOPTEX) : config_{} {
-    DLINEAR_LOG_INIT_VERBOSITY(2);
-    config_.m_lp_solver() = lp_solver;
-    config_.m_filename() = "test.smt2";
-    config_.m_format() = Config::Format::AUTO;
+  explicit TestPicosatSatSolver() : config_{get_config()}, guard{config_}, pa_{config_} {}
+
+  static Config get_config() {
+    Config config{};
+    config.m_filename() = "test.smt2";
+    config.m_format() = Config::Format::AUTO;
+    return config;
   }
 };
 

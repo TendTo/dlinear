@@ -45,9 +45,12 @@ class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
   Variable var_{"x"};
   Config config_;
   PredicateAbstractor abstractor_;
-  explicit TestSoplexTheorySolver() : config_{} {
-    config_.m_precision() = 0;
-    config_.m_lp_solver() = Config::LPSolver::SOPLEX;
+  explicit TestSoplexTheorySolver() : config_{GetConfig()}, abstractor_{config_} {}
+  static Config GetConfig() {
+    Config config;
+    config.m_precision() = 0;
+    config.m_lp_solver() = Config::LPSolver::SOPLEX;
+    return config;
   }
 };
 

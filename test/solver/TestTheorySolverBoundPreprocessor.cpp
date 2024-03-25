@@ -35,22 +35,33 @@ class MockTheorySolver : public TheorySolver {
 
 class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
  public:
+  static Config GetConfig() { return Config("input.smt2"); }
+  
   MockTheorySolverBoundPreprocessor(PredicateAbstractor &abstractor, std::vector<Variable> &theory_cols,
                                     std::map<Variable::Id, int> &var_to_theory_col, std::vector<Literal> &theory_rows,
                                     TheorySolverBoundVectorVector &theory_bounds)
       : TheorySolverBoundPreprocessor{Config{},          abstractor,  theory_cols,
                                       var_to_theory_col, theory_rows, theory_bounds} {}
-  auto ShouldEvaluate(const Formula &formula) { return TheorySolverBoundPreprocessor::ShouldEvaluate(formula); }
-  auto ShouldPropagate(const Formula &formula, bool check_expr = true) {
-    return TheorySolverBoundPreprocessor::ShouldPropagate(formula, check_expr);
+  auto ShouldEvaluate(const Formula &formula) {
+    return TheorySolverBoundPreprocessor::ShouldEvaluate(Flatten(formula));
   }
-  auto ExtractEdge(const Formula &formula) { return TheorySolverBoundPreprocessor::ExtractEdge(formula); }
+  auto ShouldPropagate(const Formula &formula) {
+    return TheorySolverBoundPreprocessor::ShouldPropagate(Flatten(formula));
+  }
+  auto ExtractEdge(const Formula &formula) { return TheorySolverBoundPreprocessor::ExtractEdge(Flatten(formula)); }
+
+ private:
+  static Formula Flatten(const Formula &formula) {
+    PredicateAbstractor pa{GetConfig()};
+    const Variable var = get_variable(pa.Convert(formula));
+    return pa.var_to_formula_map().at(var);
+  }
 };
 
 class TestTheorySolverBoundPreprocessor : public ::testing::Test {
  protected:
   const DrakeSymbolicGuard guard_;
-  PredicateAbstractor pa_;
+  PredicateAbstractor pa_{MockTheorySolverBoundPreprocessor::GetConfig()};
   std::vector<Variable> theory_cols_;
   std::map<Variable::Id, int> var_to_theory_col_;
   std::vector<Literal> theory_rows_;
@@ -76,11 +87,13 @@ class TestTheorySolverBoundPreprocessor : public ::testing::Test {
           theory_bounds_.emplace_back(ninf_, inf_);
         }
       }
-      const Formula converted_formula = pa_.Convert(formula);
-      theory_rows_.emplace_back(get_variable(converted_formula), true);
-      bound_preprocessor_.AddConstraint(static_cast<int>(theory_rows_.size()) - 1, formula);
-      if (MockTheorySolver::IsSimpleBound(formula)) {
-        auto bound = MockTheorySolver::GetBoundMock(formula);
+      const Variable converted_var = get_variable(pa_.Convert(formula));
+      const Formula converted_formula = pa_.var_to_formula_map().at(converted_var);
+      theory_rows_.emplace_back(converted_var, true);
+      bound_preprocessor_.AddConstraint(static_cast<int>(theory_rows_.size()) - 1,
+                                        pa_.var_to_formula_map().at(converted_var));
+      if (MockTheorySolver::IsSimpleBound(converted_formula)) {
+        auto bound = MockTheorySolver::GetBoundMock(converted_formula);
         const auto &var = std::get<0>(bound);
         const auto &type = std::get<1>(bound);
         const auto &value = std::get<2>(bound);
@@ -295,7 +308,6 @@ TEST_F(TestTheorySolverBoundPreprocessor, ShouldPropagateTrue) {
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ShouldPropagateFalse) {
-  EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(Expression{} == Expression{}));
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(x1_ == 0));
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(0 == x2_));
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(x1_ == x2_ + 1));

@@ -13,16 +13,10 @@ const Formula& LinearFormulaFlattener::Flatten(const Formula& formula) {
 
   if (is_addition(expr)) {
     const mpq_class& constant{get_constant_in_addition(expr)};
-    if (expr.EqualTo(lhs) && constant == 0) return formula;
+    if (!needs_expansion_ && expr.EqualTo(lhs) && constant == 0) return formula;
     BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
-  } else if (is_multiplication(expr)) {
-    if (expr.EqualTo(lhs)) return formula;
-    if (get_constant_in_multiplication(expr) == -1)
-      BuildFlatteredFormula(-expr, 0, formula.get_kind());
-    else
-      BuildFlatteredFormula(expr, 0, formula.get_kind());
-  } else if (is_variable(expr)) {
-    if (expr.EqualTo(lhs)) return formula;
+  } else {
+    if (!needs_expansion_ && expr.EqualTo(lhs)) return formula;
     BuildFlatteredFormula(expr, 0, formula.get_kind());
   }
 

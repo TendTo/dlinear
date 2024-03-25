@@ -4,10 +4,10 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "dlinear/symbolic/PredicateAbstractor.h"
-#include "TestSymbolicUtils.h"
-
 #include <gtest/gtest.h>
+
+#include "TestSymbolicUtils.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
 
 using std::set;
 
@@ -15,6 +15,7 @@ namespace dlinear {
 
 class TestPredicateAbstractor : public ::testing::Test {
   DrakeSymbolicGuard guard_;
+
  protected:
   const Variable x_{"x", Variable::Type::CONTINUOUS};
   const Variable y_{"y", Variable::Type::CONTINUOUS};
@@ -24,7 +25,7 @@ class TestPredicateAbstractor : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  PredicateAbstractor abstractor_;
+  PredicateAbstractor abstractor_{{}};
 };
 
 TEST_F(TestPredicateAbstractor, False) {
@@ -148,19 +149,18 @@ TEST_F(TestPredicateAbstractor, Conjunction) {
   EXPECT_EQ(operands_abstracted.size(), operands.size());
 
   for (const Formula &f : operands_abstracted) {
-    ASSERT_TRUE(is_variable(f) ||
-        (is_negation(f) && is_variable(get_operand(f))));
-// if (is_variable(f)) {
-//   // Case: f = v.
-//   const Variable& var{get_variable(f)};
-//   const Formula& corresponding_f{abstractor_[var]};
-//   EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
-// } else {
-//   // Case: f = !v.
-//   const Variable& var{get_variable(get_operand(f))};
-//   const Formula& corresponding_f{abstractor_[var]};
-//   EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
-// }
+    ASSERT_TRUE(is_variable(f) || (is_negation(f) && is_variable(get_operand(f))));
+    // if (is_variable(f)) {
+    //   // Case: f = v.
+    //   const Variable& var{get_variable(f)};
+    //   const Formula& corresponding_f{abstractor_[var]};
+    //   EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
+    // } else {
+    //   // Case: f = !v.
+    //   const Variable& var{get_variable(get_operand(f))};
+    //   const Formula& corresponding_f{abstractor_[var]};
+    //   EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
+    // }
   }
 }
 
@@ -179,12 +179,11 @@ TEST_F(TestPredicateAbstractor, Disjunction) {
   EXPECT_EQ(operands_abstracted.size(), operands.size());
 
   for (const Formula &f : operands_abstracted) {
-    ASSERT_TRUE(is_variable(f) ||
-        (is_negation(f) && is_variable(get_operand(f))));
-// ASSERT_TRUE(is_variable(f));
-// const Variable& var{get_variable(f)};
-// const Formula& corresponding_f{abstractor_[var]};
-// EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
+    ASSERT_TRUE(is_variable(f) || (is_negation(f) && is_variable(get_operand(f))));
+    // ASSERT_TRUE(is_variable(f));
+    // const Variable& var{get_variable(f)};
+    // const Formula& corresponding_f{abstractor_[var]};
+    // EXPECT_TRUE(operands.find(corresponding_f) != operands.end());
   }
 }
 
@@ -211,4 +210,4 @@ TEST_F(TestPredicateAbstractor, Forall) {
   EXPECT_PRED2(FormulaEqual, abstractor_[var], f);
   EXPECT_PRED2(VarEqual, abstractor_[f], var);
 }
-} // dlinear
+}  // namespace dlinear

@@ -44,16 +44,12 @@ Formula PredicateAbstractor::Visit(const Formula &f) {
 }
 
 Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
-  // Leaf case: create a new Boolean variable `bvar` and record the
-  // relation between `bvar` and `f`.
-  std::stringstream ss;
-  ss << "b(" << f << ")";
   // Flatten linear formulas to make sure they have the standard form (ax + by <=> c).
-  //  LinearFormulaFlattener::Flatten(f);
   const Formula &flattened_f = flattener_.Flatten(f);
   auto it = formula_to_var_map_.find(flattened_f);
+  // Leaf case: create a new Boolean variable `bvar` and record the relation between `bvar` and `f`.
   if (it == formula_to_var_map_.end()) {
-    const Variable bvar{ss.str(), Variable::Type::BOOLEAN};
+    const Variable bvar{(std::stringstream{} << "b(" << f << ")").str(), Variable::Type::BOOLEAN};
     Add(bvar, flattened_f);
     return Formula{bvar};
   } else {
