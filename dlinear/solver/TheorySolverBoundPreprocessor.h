@@ -68,11 +68,10 @@ class TheorySolverBoundPreprocessor {
 
  protected:
   bool ShouldPropagate(const Literal& lit) const;
-  bool ShouldPropagate(const Formula& lit) const;
+  bool ShouldPropagate(const Formula& formula) const;
 
   bool ShouldEvaluate(const Literal& lit) const;
-  bool ShouldEvaluate(const Formula& lit) const;
-  bool ShouldEvaluate(const Expression& expr) const;
+  bool ShouldEvaluate(const Formula& formula) const;
   void SetEnvironmentFromBounds();
   void PropagateEnvironment(Explanations& explanations);
   void EvaluateFormulas(const std::vector<int>& enabled_theory_rows, Explanations& explanations);

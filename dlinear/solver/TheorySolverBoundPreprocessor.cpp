@@ -34,14 +34,10 @@ TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& confi
       theory_bounds_{theory_bounds} {}
 
 bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Formula& formula) {
-  return AddConstraint(theory_row, formula, ExtractExpression(formula));
-}
-bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Formula& formula,
-                                                  const Expression& expr) {
   if (!enabled_) return false;
-  DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::AddConstraint({}, {}, {})", theory_row, formula, expr);
-  if (!ShouldPropagate(formula) || !ShouldPropagate(expr)) return false;
-  const auto [from, to, weight] = ExtractEdge(expr);
+  DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::AddConstraint({}, {})", theory_row, formula);
+  if (!ShouldPropagate(formula)) return false;
+  const auto [from, to, weight] = ExtractEdge(formula);
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::AddConstraint: from = {}, to = {}, weight = {}", from, to, weight);
   row_to_edges_.emplace(theory_row, std::make_tuple(from, to, weight));
   edges_to_row_.emplace(std::make_pair(from.get_id(), to.get_id()), theory_row);
@@ -60,10 +56,13 @@ TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Enabl
   // Add the edge to the graph
   const auto& [from, to, weight] = row_to_edges_.at(theory_row);
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::EnableConstraint({}): adding {} --{}--> {} to graph", theory_row,
-                    from, to, weight);
+                    from, weight, to);
   const bool conflicting_edge = graph_.AddEdge(from, to, weight);
   // TODO: handle conflicting edges, such as x == y and x == 2y
   if (conflicting_edge) DLINEAR_RUNTIME_ERROR("Conflicting edge not yet implemented! Disable the preprocessor!");
+  // Update the reverse map. Make sure the current active edge maps to the correct theory rows
+  // TODO: store the edge in a way that allows multiple edges between two var to be active at the same time?
+  edges_to_row_.insert_or_assign(std::make_pair(from.get_id(), to.get_id()), theory_row);
   return {};
 }
 
@@ -190,17 +189,20 @@ void TheorySolverBoundPreprocessor::FormulaViolationExplanation(const Literal& l
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", lit);
   // We already have checked this kind of formula when propagating the environment
-  // It's not a problem if we do it again, so just stick with the very inexpensive check
+  // While it wouldn't be an issue to do it again, it's more efficient to just do a quick check
   if (ShouldPropagate(lit)) return false;
-
   const auto& [var, truth] = lit;
   const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
-  return ShouldEvaluate(formula);
+  // No need to evaluate if there are no free variables or only one free variable
+  if (formula.GetFreeVariables().size() <= 1) return false;
+  // All free variables must be in the environment
+  return std::all_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
+                     [this](const Variable& v) { return env_.find(v) != env_.end(); });
 }
 bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", formula);
   // We already have checked this kind of formula when propagating the environment
-  // It's not a problem if we do it again, so just stick with the very inexpensive check
+  // While it wouldn't be an issue to do it again, it's more efficient to just do a quick check
   if (ShouldPropagate(formula)) return false;
   // No need to evaluate if there are no free variables or only one free variable
   if (formula.GetFreeVariables().size() <= 1) return false;
@@ -322,14 +324,12 @@ std::ostream& operator<<(std::ostream& os, const std::vector<Literal>& theory_bo
 }
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor) {
-  os << "TheorySolverBoundPreprocessor{";
-  os << "env_ = " << preprocessor.env() << ", ";
-  os << "theory_cols_ = " << preprocessor.theory_cols() << ", ";
-  os << "theory_rows_ = " << preprocessor.theory_rows() << ", ";
-  os << "theory_bounds_ = " << preprocessor.theory_bounds() << ", ";
-  os << "graph_ = " << preprocessor.graph();
-  os << "}";
-  return os;
+  return os << "TheorySolverBoundPreprocessor{"
+            << "env_ = " << preprocessor.env() << ", "
+            << "theory_cols_ = " << preprocessor.theory_cols() << ", "
+            << "theory_rows_ = " << preprocessor.theory_rows() << ", "
+            << "theory_bounds_ = " << preprocessor.theory_bounds() << ", "
+            << "graph_ = " << preprocessor.graph() << "}";
 }
 
 }  // namespace dlinear
