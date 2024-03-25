@@ -175,36 +175,12 @@ TEST_F(TestArgParser, Smt2Format) {
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::SMT2);
 }
 
-TEST_F(TestArgParser, WrongSmt2FormatErr) {
-  const int argc = 4;
-  const char *argv[argc] = {"dlinear", bad_filename_.c_str(), "--format", "smt2"};
-  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
-}
-
-TEST_F(TestArgParser, WrongSmt2FormatMps) {
-  const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_mps_.c_str(), "--format", "smt2"};
-  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
-}
-
 TEST_F(TestArgParser, MpsFormat) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", filename_mps_.c_str(), "--format", "mps"};
   parser_.parse(argc, argv);
   EXPECT_EQ(parser_.get<string>("file"), filename_mps_);
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::MPS);
-}
-
-TEST_F(TestArgParser, WrongMpsFormatErr) {
-  const int argc = 4;
-  const char *argv[argc] = {"dlinear", bad_filename_.c_str(), "--format", "mps"};
-  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
-}
-
-TEST_F(TestArgParser, WrongMpsFormatSmt2) {
-  const int argc = 4;
-  const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--format", "mps"};
-  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for file");
 }
 
 TEST_F(TestArgParser, WrongFormat) {
@@ -248,9 +224,21 @@ TEST_F(TestArgParser, WrongSilentWithVerbosity) {
 }
 
 TEST_F(TestArgParser, In) {
-  const int argc = 2;
-  const char *argv[argc] = {"dlinear", "--in"};
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", "--in", "--format", "mps"};
   parser_.parse(argc, argv);
   auto config = parser_.toConfig();
   EXPECT_TRUE(config.read_from_stdin());
+}
+
+TEST_F(TestArgParser, WrongInMissingFormat) {
+  const int argc = 2;
+  const char *argv[argc] = {"dlinear", "--in"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --in");
+}
+
+TEST_F(TestArgParser, WrongInAutoFormat) {
+  const int argc = 4;
+  const char *argv[argc] = {"dlinear", "--in", "--format", "auto"};
+  EXPECT_DEATH(parser_.parse(argc, argv), "Invalid argument for --in");
 }

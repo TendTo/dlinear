@@ -210,15 +210,14 @@ void ArgParser::validateOptions() {
     DLINEAR_INVALID_ARGUMENT("--in", "--in and file are mutually exclusive");
   if (!parser_.is_used("in") && !parser_.is_used("file"))
     DLINEAR_INVALID_ARGUMENT("file", "must be specified unless --in is used");
+  if (parser_.is_used("in") && (parser_.get<Config::Format>("format") == Config::Format::AUTO))
+    DLINEAR_INVALID_ARGUMENT("--in", "a format must be specified with --format");
   // Check file extension if a file is provided
   if (parser_.is_used("file")) {
     Config::Format format = parser_.get<Config::Format>("format");
     std::string extension{get_extension(parser_.get<std::string>("file"))};
     if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
       DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
-    } else if ((format == Config::Format::SMT2 && extension != "smt2") ||
-               (format == Config::Format::MPS && extension != "mps")) {
-      DLINEAR_INVALID_ARGUMENT("file", "the file extension does not match the format");
     }
   }
   // Check if the file exists
