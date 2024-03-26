@@ -158,6 +158,13 @@ class Graph {
   bool HasEdge(const T& u, const T& v) const {
     return adj_list_.find(u) != adj_list_.cend() && adj_list_.at(u).find({v, W{}}) != adj_list_.at(u).cend();
   }
+  /**
+   * Check if there are any positive number of vertexes starting from vertex @p u
+   * @param u from vertex
+   * @return true if there is at least a vertex starting from @p u
+   * @return false if there is no vertex starting from @p u
+   */
+  bool HasEdges(const T& u) const { return adj_list_.find(u) != adj_list_.cend() && !adj_list_.at(u).empty(); }
 
   /**
    * Get a pointer to the weight of the edge from vertex @p u to vertex @p v
@@ -275,7 +282,7 @@ class Graph {
       visited.insert(current);
       const VisitResult res = func(edges.at(current).first, current, *edges.at(current).second);
       if (res == VisitResult::STOP) return;
-      if (res == VisitResult::SKIP) continue;
+      if (res == VisitResult::SKIP || adj_list_.find(current) == adj_list_.end()) continue;
       for (auto adj_it = adj_list_.at(current).begin(); adj_it != adj_list_.at(current).end(); ++adj_it) {
         const auto& [adj_vertex, weight] = *adj_it;
         if (visited.find(adj_vertex) != visited.end()) continue;
@@ -332,7 +339,7 @@ class Graph {
     while (!queue.empty()) {
       const VisitResult res = func(edges.at(queue.front()).first, queue.front(), *edges.at(queue.front()).second);
       if (res == VisitResult::STOP) return;
-      if (res == VisitResult::SKIP) {
+      if (res == VisitResult::SKIP || adj_list_.find(queue.front()) == adj_list_.end()) {
         queue.pop();
         continue;
       }

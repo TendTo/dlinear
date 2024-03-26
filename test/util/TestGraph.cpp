@@ -182,13 +182,31 @@ TYPED_TEST(TestGraph, DFSVisitIsolatedVerticesOnce) {
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));
 }
 
-TYPED_TEST(TestGraph, DFSOnAbsentVertex) {
+TYPED_TEST(TestGraph, DFSOnAbsentVertexFrom) {
   int counter = 0;
   this->graph_.DFS(10, [&counter](const TypeParam&, const TypeParam&, const float&) {
     counter++;
     return VisitResult::CONTINUE;
   });
   EXPECT_EQ(counter, 0);
+}
+
+TYPED_TEST(TestGraph, DFSOnAbsentVertexTo) {
+  int counter = 0;
+  const TypeParam start = 20, end = 30;
+  this->graph_.AddEdge(start, end, false);
+  this->graph_.DFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      counter++;
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
+    return VisitResult::CONTINUE;
+  });
+  EXPECT_EQ(counter, 1);
 }
 
 TYPED_TEST(TestGraph, BFSVisitAllVerticesOnce) {
@@ -225,13 +243,31 @@ TYPED_TEST(TestGraph, BFSVisitIsolatedVerticesOnce) {
   EXPECT_THAT(visited, ::testing::UnorderedElementsAre(7, 8));
 }
 
-TYPED_TEST(TestGraph, BFSOnAbsentVertex) {
+TYPED_TEST(TestGraph, BFSOnAbsentVertexFrom) {
   int counter = 0;
   this->graph_.BFS(10, [&counter](const TypeParam&, const TypeParam&, const float&) {
     counter++;
     return VisitResult::CONTINUE;
   });
   EXPECT_EQ(counter, 0);
+}
+
+TYPED_TEST(TestGraph, BFSOnAbsentVertexTo) {
+  int counter = 0;
+  const TypeParam start = 20, end = 30;
+  this->graph_.AddEdge(start, end, false);
+  this->graph_.BFS(start, [&](const TypeParam& from, const TypeParam& to, const float& weight) {
+    if (to == start) {
+      EXPECT_EQ(from, to);
+      EXPECT_EQ(weight, 0);
+    } else {
+      counter++;
+      EXPECT_NE(from, to);
+      EXPECT_EQ(weight, *this->graph_.GetEdgeWeight(from, to));
+    }
+    return VisitResult::CONTINUE;
+  });
+  EXPECT_EQ(counter, 1);
 }
 
 TYPED_TEST(TestGraph, AllPathsIsolated) {
@@ -267,4 +303,4 @@ TYPED_TEST(TestGraph, AllPathsStop) {
   EXPECT_EQ(count, 1);
 }
 
-TYPED_TEST(TestGraph, Stdout) { EXPECT_NO_THROW(std::cout << this->graph_); }
+TYPED_TEST(TestGraph, Stdout) { EXPECT_NO_THROW(std::cout << this->graph_ << std::endl); }
