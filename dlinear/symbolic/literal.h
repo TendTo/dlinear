@@ -27,6 +27,7 @@ using LiteralSet = std::set<Literal>;
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
 
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
+std::ostream &operator<<(std::ostream &os, const LiteralSet &literals);
 std::ostream &operator<<(std::ostream &os, const Model &model);
 
 }  // namespace dlinear

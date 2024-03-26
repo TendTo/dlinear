@@ -24,6 +24,12 @@ namespace dlinear {
 
 std::ostream &operator<<(std::ostream &os, const Literal &literal) { return print_literal(os, literal); }
 
+std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set) {
+  os << "{ ";
+  for (const auto &lit : literal_set) os << lit << " ";
+  return os << "}";
+}
+
 std::ostream &operator<<(std::ostream &os, const Model &model) { return print_model(os, model); }
 }  // namespace dlinear
 
