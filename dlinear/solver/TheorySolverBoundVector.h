@@ -153,6 +153,28 @@ class TheorySolverBoundVector {
    */
   [[nodiscard]] LiteralSet GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit) const;
   /**
+   * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation, only if the
+   * variable presents an equality active bound.
+   *
+   * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
+   * @note Active equality bounds will hide non-paired inequality bounds.
+   * @param theory_bound_to_lit map between the bound id and the theory literal
+   * @param explanation set of literal corresponding to the explanation
+   * @see GetActiveExplanation
+   */
+  void GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit, LiteralSet& explanation) const;
+  /**
+   * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation, only if the
+   * variable presents an equality active bound.
+   *
+   * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
+   * @note Active equality bounds will hide non-paired inequality bounds.
+   * @param theory_bound_to_lit map between the bound id and the theory literal
+   * @return set of literal corresponding to the explanation
+   * @see GetActiveExplanation
+   */
+  [[nodiscard]] LiteralSet GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit) const;
+  /**
    * Return a pair containing the active lower and upper bound.
    * @return active lower and upper bound
    */

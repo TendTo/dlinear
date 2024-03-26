@@ -242,6 +242,17 @@ void TheorySolverBoundVector::GetActiveExplanation(const std::vector<Literal>& t
                                                    LiteralSet& explanation) const {
   for (BoundIterator it = GetActiveBounds(); it; ++it) explanation.emplace(theory_bound_to_lit.at(std::get<2>(*it)));
 }
+LiteralSet TheorySolverBoundVector::GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit) const {
+  LiteralSet explanation;
+  GetActiveEqExplanation(theory_bound_to_lit, explanation);
+  return explanation;
+}
+void TheorySolverBoundVector::GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit,
+                                                     LiteralSet& explanation) const {
+  if (GetActiveEqualityBound() == nullptr) return;
+  for (BoundIterator it = GetActiveBounds(); it; ++it) explanation.emplace(theory_bound_to_lit.at(std::get<2>(*it)));
+}
+
 
 std::pair<const mpq_class&, const mpq_class&> TheorySolverBoundVector::GetActiveBoundsValue() const {
   return {*active_lower_bound_, *active_upper_bound_};
