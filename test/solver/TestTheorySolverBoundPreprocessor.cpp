@@ -49,7 +49,7 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
     return TheorySolverBoundPreprocessor::ShouldPropagateBounds(Flatten(formula));
   }
   auto ExtractEdge(const Formula &formula) {
-    const auto [from, to, weight] = TheorySolverBoundPreprocessor::ExtractEdge(1, Flatten(formula));
+    const auto [from, to, weight] = TheorySolverBoundPreprocessor::ExtractBoundEdge(1, Flatten(formula));
     return std::make_tuple(from, to, weight.numeric);
   }
 
@@ -142,7 +142,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, AddConstraints) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
 
   EXPECT_EQ(bound_preprocessor_.edges().size(), 0u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 0u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 0u);
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, AddConstraintsPropagation) {
@@ -160,7 +160,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, AddConstraintsPropagation) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 
   EXPECT_EQ(bound_preprocessor_.edges().size(), 2u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 0u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 0u);
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, EnableConstraintsPropagation) {
@@ -177,7 +177,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, EnableConstraintsPropagation) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 
   EXPECT_EQ(bound_preprocessor_.edges().size(), 2u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 2);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 2);
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessSetEnvironment) {
@@ -195,7 +195,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPath) {
   bound_preprocessor_.Process();
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 3);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 3);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -208,7 +208,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   bound_preprocessor_.Process();
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 3);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 3);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -222,7 +222,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
   bound_preprocessor_.Process();
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 9);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 9);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -241,7 +241,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
                         x9_ == mpq_class{val + 4}, x9_ == x10_});
   const TheorySolver::Explanations explanations = bound_preprocessor_.Process();
 
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 8);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 8);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val + 1);
   EXPECT_EQ(bound_preprocessor_.env()[x5_], val + 2);
@@ -284,7 +284,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolation) {
   std::iota(enabled_rows.begin(), enabled_rows.end(), 0);
   const TheorySolver::Explanations explanations = bound_preprocessor_.Process(enabled_rows);
 
-  EXPECT_EQ(bound_preprocessor_.graph().Size(), 2u * 4);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 4);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
