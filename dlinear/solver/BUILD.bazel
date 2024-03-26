@@ -119,6 +119,7 @@ dlinear_cc_library(
         "//dlinear/util:box",
         "//dlinear/util:graph",
         "//dlinear/util:logging",
+        "//dlinear/util:numeric_data_container",
         "//dlinear/util:stats",
     ],
 )

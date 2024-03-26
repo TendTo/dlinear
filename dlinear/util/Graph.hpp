@@ -119,7 +119,7 @@ class Graph {
    * @return true if the edge was updated with a new weight
    * @return false if the edge was absent or if it was already present and the weight is the same
    */
-  bool AddEdge(const T& u, const T& v, W weight, bool bidirectional = true) {
+  bool AddEdge(const T& u, const T& v, const W& weight, bool bidirectional = true) {
     bool updated = false;
     const auto [it, inserted] = adj_list_[u].emplace(v, weight);
     if (!inserted && it->second != weight) {

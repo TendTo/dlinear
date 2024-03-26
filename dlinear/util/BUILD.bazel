@@ -169,4 +169,9 @@ dlinear_cc_library(
     hdrs = ["Graph.hpp"],
 )
 
+dlinear_cc_library(
+    name = "numeric_data_container",
+    hdrs = ["NumericDataContainer.hpp"],
+)
+
 cpplint()

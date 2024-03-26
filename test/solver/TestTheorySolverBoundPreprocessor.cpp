@@ -36,7 +36,7 @@ class MockTheorySolver : public TheorySolver {
 class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
  public:
   static Config GetConfig() { return Config("input.smt2"); }
-  
+
   MockTheorySolverBoundPreprocessor(PredicateAbstractor &abstractor, std::vector<Variable> &theory_cols,
                                     std::map<Variable::Id, int> &var_to_theory_col, std::vector<Literal> &theory_rows,
                                     TheorySolverBoundVectorVector &theory_bounds)
@@ -46,9 +46,12 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
     return TheorySolverBoundPreprocessor::ShouldEvaluate(Flatten(formula));
   }
   auto ShouldPropagate(const Formula &formula) {
-    return TheorySolverBoundPreprocessor::ShouldPropagate(Flatten(formula));
+    return TheorySolverBoundPreprocessor::ShouldPropagateBounds(Flatten(formula));
   }
-  auto ExtractEdge(const Formula &formula) { return TheorySolverBoundPreprocessor::ExtractEdge(Flatten(formula)); }
+  auto ExtractEdge(const Formula &formula) {
+    const auto [from, to, weight] = TheorySolverBoundPreprocessor::ExtractEdge(1, Flatten(formula));
+    return std::make_tuple(from, to, weight.numeric);
+  }
 
  private:
   static Formula Flatten(const Formula &formula) {

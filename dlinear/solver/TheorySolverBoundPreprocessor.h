@@ -24,6 +24,7 @@
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Graph.hpp"
+#include "dlinear/util/NumericDataContainer.hpp"
 
 namespace dlinear {
 
@@ -32,7 +33,8 @@ class TheorySolver;
 
 class TheorySolverBoundPreprocessor {
  public:
-  using Edge = std::tuple<Variable, Variable, mpq_class>;
+  using Weight = NumericDataContainer<mpq_class, int>;
+  using Edge = std::tuple<Variable, Variable, Weight>;
   using Explanations = std::set<LiteralSet>;
   TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver);
   TheorySolverBoundPreprocessor(const Config& config, const PredicateAbstractor& predicate_abstractor,
@@ -62,28 +64,31 @@ class TheorySolverBoundPreprocessor {
   [[nodiscard]] const std::map<Variable::Id, int>& var_to_cols() const { return var_to_cols_; }
   [[nodiscard]] const std::vector<Literal>& theory_rows() const { return theory_rows_; }
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
-  [[nodiscard]] const Graph<Variable, mpq_class>& graph() const { return graph_; }
+  [[nodiscard]] const Graph<Variable, Weight>& graph() const { return graph_; }
   [[nodiscard]] const Environment& env() const { return env_; }
   [[nodiscard]] const std::unordered_map<int, Edge>& edges() const { return row_to_edges_; }
 
  protected:
-  bool ShouldPropagate(const Literal& lit) const;
-  bool ShouldPropagate(const Formula& formula) const;
-
+  bool ShouldPropagateBounds(const Literal& lit) const;
+  bool ShouldPropagateBounds(const Formula& formula) const;
+  Variable ShouldPropagateRows(const Literal& lit) const;
+  Variable ShouldPropagateRows(const Formula& formula) const;
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
+
   void SetEnvironmentFromBounds();
   void PropagateEnvironment(Explanations& explanations);
+  void PropagateRows(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
   void EvaluateFormulas(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
   void AddPathsToExplanations(const Variable& from, const Variable& to, Explanations& explanations);
   void AddPathsToExplanations(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                               const TheorySolverBoundVector& to_bounds, Explanations& explanations);
-  void AddPathsToExplanation(const Variable& from, const Variable& to, LiteralSet& explanation);
-  void AddPathsToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
+  void AddPathToExplanation(const Variable& from, const Variable& to, LiteralSet& explanation);
+  void AddPathToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                              const TheorySolverBoundVector& to_bounds, LiteralSet& explanation);
 
-  Edge ExtractEdge(const Formula& formula) const;
+  Edge ExtractEdge(int theory_row, const Formula& formula) const;
 
  private:
   const bool enabled_;
@@ -93,9 +98,8 @@ class TheorySolverBoundPreprocessor {
   const std::vector<Literal>& theory_rows_;
   const TheorySolverBoundVectorVector& theory_bounds_;
   Environment env_;
-  Graph<Variable, mpq_class> graph_;
+  Graph<Variable, Weight> graph_;
   std::unordered_map<int, Edge> row_to_edges_;
-  std::map<std::pair<Variable::Id, Variable::Id>, int> edges_to_row_;
 };
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor);

@@ -71,7 +71,7 @@ mpz_class ceil(const mpq_class &val);
  * @param cla mpq_class to cast
  * @return mpq_t reference
  */
-const inline mpq_t &to_mpq_t(const mpq_class &cla) { return *reinterpret_cast<const mpq_t *>(cla.get_mpq_t()); }
+inline const mpq_t &to_mpq_t(const mpq_class &cla) { return *reinterpret_cast<const mpq_t *>(cla.get_mpq_t()); }
 
 inline mpq_t &to_mpq_t(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.get_mpq_t()); }  // NOLINT
 
@@ -84,7 +84,7 @@ inline mpq_t &to_mpq_t(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.g
  * @param mpq mpq_t to cast
  * @return mpq_class reference
  */
-const inline mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast<const mpq_class &>(mpq); }
+inline const mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast<const mpq_class &>(mpq); }
 
 /**
  * Cast a mpq_t to a mpq_class.
