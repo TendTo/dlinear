@@ -30,6 +30,18 @@ std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set) {
   return os << "}";
 }
 
+std::ostream &operator<<(std::ostream &os, const std::vector<Variable> &variables) {
+  os << "[ ";
+  for (const auto &var : variables) os << var << " ";
+  return os << "]";
+}
+
+std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literals) {
+  os << "[ ";
+  for (const auto &lit : literals) os << lit << " ";
+  return os << "]";
+}
+
 std::ostream &operator<<(std::ostream &os, const Model &model) { return print_model(os, model); }
 }  // namespace dlinear
 
