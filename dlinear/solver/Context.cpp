@@ -7,6 +7,7 @@
 #include "Context.h"
 
 #include <memory>
+#include <tuple>
 #include <utility>
 
 #include "dlinear/solver/ContextImpl.h"
@@ -97,5 +98,10 @@ bool Context::is_max() const { return impl_->is_max(); }
 const IterationStats &Context::sat_stats() const { return impl_->sat_stats(); }
 
 const IterationStats &Context::theory_stats() const { return impl_->theory_stats(); }
+
+std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> Context::formula_visitors_stats()
+    const {
+  return impl_->formula_visitors_stats();
+}
 
 }  // namespace dlinear

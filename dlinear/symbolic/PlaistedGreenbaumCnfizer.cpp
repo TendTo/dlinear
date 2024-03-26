@@ -14,10 +14,8 @@
 
 namespace dlinear {
 std::vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "PlaistedGreenbaum Cnfizer", "Total time spent in Converting",
-                             "Total # of Convert"};
-  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
-  stat.Increase();
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
   // Put the Formula into negation normal form
   const Formula &g{nnfizer_.Convert(f, true /* push_negation_into_relationals */)};
   aux_.clear();

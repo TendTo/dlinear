@@ -11,7 +11,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -21,11 +20,11 @@ namespace dlinear::mps {
 MpsDriver::MpsDriver(Context &context)
     : context_{context},
       debug_scanning_{context_.config().debug_scanning()},
-      debug_parsing_{context_.config().debug_parsing()} {}
+      debug_parsing_{context_.config().debug_parsing()},
+      stats_{context.config().with_timings(), "MpsDriver", "Total time spent in MPS parsing"} {}
 
 bool MpsDriver::parse_stream(std::istream &in, const std::string &sname) {
-  static Stats stat{DLINEAR_INFO_ENABLED, "MPS Driver", "Total time spent in MPS parsing"};
-  TimerGuard check_sat_timer_guard(&stat.m_timer(), stat.enabled(), true);
+  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true);
   stream_name_ = sname;
 
   MpsScanner scanner(&in);

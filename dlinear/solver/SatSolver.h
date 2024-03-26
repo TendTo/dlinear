@@ -16,7 +16,8 @@
 #include <map>
 #include <optional>
 #include <set>
-#include <vector>
+#include <tuple>
+#include <utility>
 
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
@@ -123,6 +124,11 @@ class SatSolver {
    * @return statistics of the SAT solver
    */
   const IterationStats &stats() const { return stats_; }
+  /**
+   * Get the statistics of the formula visitors used by the SAT solver.
+   * @return statistics of the predicate abstractor and the CNFizer
+   */
+  std::tuple<const IterationStats &, const IterationStats &> formula_visitors_stats() const;
 
  protected:
   /**

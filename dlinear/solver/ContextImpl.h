@@ -14,6 +14,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -64,6 +65,10 @@ class Context::Impl {
   bool is_max() const;
   const IterationStats &sat_stats() { return sat_solver_->stats(); }
   const IterationStats &theory_stats() { return theory_solver_->stats(); }
+  std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> formula_visitors_stats() const {
+    const auto [predicate_abstractor_stats, cnfizer_stats] = sat_solver_->formula_visitors_stats();
+    return {predicate_abstractor_stats, cnfizer_stats, ite_stats_};
+  }
 
  private:
   std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);
@@ -134,6 +139,7 @@ class Context::Impl {
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
   bool theory_loaded_;   ///< Whether the theory solver has been loaded with all the assertions parsed by the SAT
 
+  IterationStats ite_stats_;                  ///< Statistics about the if-then-else elimination
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.

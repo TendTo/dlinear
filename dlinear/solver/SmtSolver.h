@@ -43,8 +43,6 @@ class SmtSolver {
    */
   SmtSolverOutput CheckSat();
 
-  void Visualize();
-
 #ifdef DLINEAR_PYDLINEAR
   /**
    * Enter the solver.
@@ -64,14 +62,14 @@ class SmtSolver {
 #endif
 
  private:
-  const Config config_;  ///< Configuration of the solver.
-  SolverGuard guard_;    ///< Takes care of initializing and de-initializing the correct infinity values.
-  Context context_;      ///< Context obtained from the input file and passed to the SAT and SMT solvers.
+  const Config config_;     ///< Configuration of the solver.
+  SolverGuard guard_;       ///< Takes care of initializing and de-initializing the correct infinity values.
+  Context context_;         ///< Context obtained from the input file and passed to the SAT and SMT solvers.
   SmtSolverOutput output_;  ///< Output of the solver.
 
   bool ParseInput();
-  bool ParseSmt2();
-  bool ParseMps();
+  template <class T>
+  bool ParseInputCore();
   void CheckSatCore();
   void CheckObjCore();
 };

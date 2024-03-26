@@ -19,9 +19,8 @@
 namespace dlinear {
 
 Formula IfThenElseEliminator::Process(const Formula &f) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "ITE Elim", "Total time spent in Processing", "Total # of Process"};
-  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
-  stat.Increase();
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
 
   Formula new_f{Visit(f, Formula::True())};
   if (f.EqualTo(new_f) && added_formulas_.empty()) return f;
@@ -229,7 +228,7 @@ Formula IfThenElseEliminator::VisitForall(const Formula &f, const Formula &) {
   // variables). In this way, we can use the existing ITE-elim routine.
   Variables quantified_variables{get_quantified_variables(f)};
   const Formula &quantified_formula{get_quantified_formula(f)};
-  IfThenElseEliminator ite_eliminator_forall;
+  IfThenElseEliminator ite_eliminator_forall{false};
   const Formula eliminated{ite_eliminator_forall.Process(!quantified_formula)};
   quantified_variables.insert(ite_eliminator_forall.variables().begin(), ite_eliminator_forall.variables().end());
   return forall(quantified_variables, Nnfizer{}.Convert(!eliminated));

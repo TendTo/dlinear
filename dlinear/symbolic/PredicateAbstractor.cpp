@@ -20,10 +20,8 @@ void PredicateAbstractor::Add(const Variable &var, const Formula &f) {
 }
 
 Formula PredicateAbstractor::Convert(const Formula &f) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "Predicate Abstractor", "Total time spent in Converting",
-                             "Total # of Convert"};
-  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
-  stat.Increase();
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
   return Visit(f);
 }
 

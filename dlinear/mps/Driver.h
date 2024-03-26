@@ -23,6 +23,7 @@
 #include "dlinear/mps/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear::mps {
 
@@ -37,7 +38,6 @@ namespace dlinear::mps {
  */
 class MpsDriver {
  public:
-  MpsDriver() = default;
   explicit MpsDriver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
 
   /**
@@ -235,6 +235,7 @@ class MpsDriver {
   std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
   bool is_min() const { return is_min_; }
   const std::string &obj_row() const { return obj_row_; }
+  const Stats &stats() const { return stats_; }
 
   MpsScanner *scanner() { return scanner_; }
 
@@ -285,6 +286,8 @@ class MpsDriver {
 
   bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
   bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.
+
+  Stats stats_;  ///< Statistics for the driver.
 };
 
 }  // namespace dlinear::mps

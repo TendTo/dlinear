@@ -21,7 +21,7 @@ TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstrac
       predicate_abstractor_{predicate_abstractor},
       preprocessor_{config, *this},
       model_{},
-      stats_{DLINEAR_INFO_ENABLED, class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+      stats_{config.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
 const Box &TheorySolver::GetModel() const {
   DLINEAR_DEBUG_FMT("TheorySolver::GetModel():\n{}", model_);

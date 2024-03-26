@@ -29,10 +29,8 @@ void CnfizeDisjunction(const Variable &b, const Formula &f, std::vector<Formula>
 //    each subterm `f`, and keep the relation `b ⇔ f`.
 //  - Then it cnfizes each `b ⇔ f` and make a conjunction of them.
 std::vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
-  static IterationStats stat{DLINEAR_INFO_ENABLED, "Tseitin Cnfizer", "Total time spent in Converting",
-                             "Total # of Convert"};
-  TimerGuard timer_guard(&stat.m_timer(), stat.enabled());
-  stat.Increase();
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
   map_.clear();
   std::vector<Formula> ret;
   const Formula head{Visit(f)};

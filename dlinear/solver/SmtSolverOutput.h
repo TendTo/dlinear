@@ -45,10 +45,10 @@ struct SmtSolverOutput {
    * @param config configuration of the solver. Used to initialise a few static parameters
    */
   explicit SmtSolverOutput(const Config &config)
-      : precision{config.precision()},
-        actual_precision{config.precision()},
-        produce_models{config.produce_models()},
-        with_timings{config.with_timings()} {}
+      : produce_models{config.produce_models()},
+        with_timings{config.with_timings()},
+        precision{config.precision()},
+        actual_precision{config.precision()} {}
 
   /**
    * Return the precision upper bound.
@@ -80,20 +80,25 @@ struct SmtSolverOutput {
    */
   [[nodiscard]] std::string ToString() const;
 
-  IterationStats sat_stats{DLINEAR_INFO_ENABLED, ""};     ///< Statistics about the satisfiability check
-  IterationStats theory_stats{DLINEAR_INFO_ENABLED, ""};  ///< Statistics about the theory check
-  Timer total_timer{};                                    ///< Timer keeping track of the total time spent in the solver
-  Timer parser_timer{};                                   ///< Timer keeping track of the time spent parsing the input
-  Timer smt_solver_timer{};                               ///< Timer keeping track of the time spent in the SMT solver
-  uint n_assertions{0};                                   ///< Number of assertions in the input
-  SolverResult result{SolverResult::UNSOLVED};            ///< Result of the computation
-  mpq_class lower_bound{0};                               ///< Lower bound of the result
-  mpq_class upper_bound{0};                               ///< Upper bound of the result
-  Box model{};                                            ///< Model of the result
-  const mpq_class precision;                              ///< User-provided precision of the computation
-  mpq_class actual_precision;  ///< Actual precision of the computation. Always < than precision
-  const bool produce_models;   ///< Whether the solver should produce models
-  const bool with_timings;     ///< Whether the solver should show timings
+  const bool produce_models;  ///< Whether the solver should produce models
+  const bool with_timings;    ///< Whether the solver should show timings
+
+  Stats parser_stats{with_timings, ""};                         ///< Statistics about the solver
+  IterationStats ite_stats{with_timings, ""};                   ///< Statistics about the if-then-else simplifier
+  IterationStats cnfizer_stats{with_timings, ""};               ///< Statistics about the formula cnfizer
+  IterationStats predicate_abstractor_stats{with_timings, ""};  ///< Statistics about the predicate abstractor
+  IterationStats sat_stats{with_timings, ""};                   ///< Statistics about the satisfiability check
+  IterationStats theory_stats{with_timings, ""};                ///< Statistics about the theory check
+
+  Timer total_timer{};                          ///< Timer keeping track of the total time spent in the solver
+  Timer smt_solver_timer{};                     ///< Timer keeping track of the time spent in the SMT solver
+  uint n_assertions{0};                         ///< Number of assertions in the input
+  SolverResult result{SolverResult::UNSOLVED};  ///< Result of the computation
+  mpq_class lower_bound{0};                     ///< Lower bound of the result
+  mpq_class upper_bound{0};                     ///< Upper bound of the result
+  Box model{};                                  ///< Model of the result
+  const mpq_class precision;                    ///< User-provided precision of the computation
+  mpq_class actual_precision;                   ///< Actual precision of the computation. Always < than precision
 };
 
 std::ostream &operator<<(std::ostream &os, const SolverResult &result);

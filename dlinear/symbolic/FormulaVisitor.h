@@ -13,11 +13,19 @@
 #pragma once
 
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
 class FormulaVisitor {
+ public:
+  [[nodiscard]] const IterationStats &stats() const { return stats_; }
+  
  protected:
+  explicit FormulaVisitor(const Config &config) : stats_{config.with_timings(), "FormulaVisitor", "Converting"} {}
+  FormulaVisitor(const std::string &class_name, const Config &config)
+      : stats_{config.with_timings(), class_name, "Converting"} {}
   virtual ~FormulaVisitor() = default;
   virtual Formula Visit(const Formula &f) { return f; }
   virtual Formula VisitFalse(const Formula &f) { return f; }
@@ -33,6 +41,8 @@ class FormulaVisitor {
   virtual Formula VisitDisjunction(const Formula &f) { return f; }
   virtual Formula VisitNegation(const Formula &f) { return f; }
   virtual Formula VisitForall(const Formula &f) { return f; }
+
+  IterationStats stats_;
 };
 
 }  // namespace dlinear

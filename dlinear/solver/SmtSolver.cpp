@@ -51,49 +51,48 @@ SmtSolverOutput SmtSolver::CheckSat() {
     CheckSatCore();
 
   output_.model = context_.model();
-  output_.sat_stats = context_.sat_stats();
-  output_.theory_stats = context_.theory_stats();
+  // Store stats
+  if (config_.with_timings()) {
+    const auto [predicate_abstractor_stats, cnfizer_stats, ite_stats] = context_.formula_visitors_stats();
+    output_.predicate_abstractor_stats = predicate_abstractor_stats;
+    output_.cnfizer_stats = cnfizer_stats;
+    output_.ite_stats = ite_stats;
+    output_.sat_stats = context_.sat_stats();
+    output_.theory_stats = context_.theory_stats();
+  }
 
   return output_;
 }
 
-void SmtSolver::Visualize() {
-  DLINEAR_TRACE("SmtSolver::Visualize");
-  if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
-  for (const auto &a : context_.assertions()) std::cout << a << std::endl;
-}
-
 bool SmtSolver::ParseInput() {
   DLINEAR_TRACE("SmtSolver::ParseInput");
-  TimerGuard timer_guard{&output_.parser_timer, true};
   switch (config_.format()) {
     case Config::Format::AUTO:
-      if (config_.read_from_stdin()) return ParseSmt2();
-      if (config_.filename_extension() == "smt2") return ParseSmt2();
-      if (config_.filename_extension() == "mps") return ParseMps();
+      if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
+      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>();
+      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>();
       DLINEAR_UNREACHABLE();
     case Config::Format::SMT2:
-      return ParseSmt2();
+      return ParseInputCore<smt2::Smt2Driver>();
     case Config::Format::MPS:
-      return ParseMps();
+      return ParseInputCore<mps::MpsDriver>();
     default:
       DLINEAR_UNREACHABLE();
   }
 }
 
-bool SmtSolver::ParseSmt2() {
+template <class T>
+bool SmtSolver::ParseInputCore() {
+  static_assert(std::is_same_v<T, smt2::Smt2Driver> || std::is_same_v<T, mps::MpsDriver>);
   DLINEAR_DEBUG("SmtSolver::ParseSmt2");
-  smt2::Smt2Driver smt2_driver{context_};
-  if (config_.read_from_stdin()) return smt2_driver.parse_stream(std::cin, "(stdin)");
-  return smt2_driver.parse_file(config_.filename());
+  T driver{context_};
+  const bool res =
+      config_.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config_.filename());
+  if (config_.with_timings() && res) output_.parser_stats = driver.stats();
+  return res;
 }
-
-bool SmtSolver::ParseMps() {
-  DLINEAR_DEBUG("SmtSolver::ParseMps");
-  mps::MpsDriver mps_driver{context_};
-  if (config_.read_from_stdin()) return mps_driver.parse_stream(std::cin, "(stdin)");
-  return mps_driver.parse_file(config_.filename());
-}
+template bool SmtSolver::ParseInputCore<smt2::Smt2Driver>();
+template bool SmtSolver::ParseInputCore<mps::MpsDriver>();
 
 void SmtSolver::CheckObjCore() {
   DLINEAR_DEBUG("SmtSolver::CheckObjCore");

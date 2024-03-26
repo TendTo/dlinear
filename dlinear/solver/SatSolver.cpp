@@ -11,13 +11,17 @@
 
 namespace dlinear {
 
-SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, [[maybe_unused]] const Config &config)
+SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, const Config &config)
     : SatSolver{"SatSolver", predicate_abstractor, config} {}
-SatSolver::SatSolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
-                     [[maybe_unused]] const Config &config)
+SatSolver::SatSolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor, const Config &config)
     : cur_clause_start_{0},
+      cnfizer_{config},
       predicate_abstractor_{predicate_abstractor},
-      stats_{DLINEAR_INFO_ENABLED, class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+      stats_{config.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+
+std::tuple<const IterationStats &, const IterationStats &> SatSolver::formula_visitors_stats() const {
+  return {predicate_abstractor_.stats(), cnfizer_.stats()};
+}
 
 void SatSolver::AddFormula(const Formula &f) {
   DLINEAR_DEBUG_FMT("SatSolver::AddFormula({})", f);

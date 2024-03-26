@@ -14,6 +14,8 @@
 #include <vector>
 
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 /**
@@ -25,6 +27,9 @@ namespace dlinear {
  */
 class IfThenElseEliminator {
  public:
+  explicit IfThenElseEliminator(const Config &config)
+      : stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
+  explicit IfThenElseEliminator(const bool with_timings) : stats_{with_timings, "IfThenElseEliminator", "Process"} {}
   /**
    * Returns a equisatisfiable formula by eliminating
    * if-then-expressions in @p f by introducing new variables.
@@ -33,6 +38,7 @@ class IfThenElseEliminator {
    */
   Formula Process(const Formula &f);
   const std::unordered_set<Variable, hash_value<Variable>> &variables() const;
+  const IterationStats &stats() const { return stats_; }
 
  private:
   // Handle expressions.
@@ -85,6 +91,8 @@ class IfThenElseEliminator {
   std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process
   std::unordered_set<Variable, hash_value<Variable>>
       ite_variables_;  ///< The variables introduced by the elimination process.
+
+  IterationStats stats_;  ///< Statistics of the elimination process.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.

@@ -203,6 +203,12 @@ class Context {
    * @return statistics of the LP solver
    */
   [[nodiscard]] const IterationStats &theory_stats() const;
+  /**
+   * Returns the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
+   * @return statistics of the predicate abstractor and the CNFizer
+   */
+  [[nodiscard]] std::tuple<const IterationStats &, const IterationStats &, const IterationStats &>
+  formula_visitors_stats() const;
 
  private:
   // This header is exposed to external users as a part of API. We use

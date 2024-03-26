@@ -28,7 +28,10 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "formula_visitor",
     hdrs = ["FormulaVisitor.h"],
-    deps = [":symbolic"],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:stats",
+    ],
 )
 
 dlinear_cc_library(

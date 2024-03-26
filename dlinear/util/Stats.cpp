@@ -30,7 +30,7 @@ void IterationStats::Increase() {
 std::string IterationStats::ToSegmentString() const {
   return fmt::format(DLINEAR_ITERATION_STATS_FMT, iterations_name_, class_name_, iterations_.load());
 }
-std::string IterationStats::ToString() const { return IterationStats::ToSegmentString() + Stats::ToString(); }
+std::string IterationStats::ToString() const { return IterationStats::ToSegmentString() + "\n" + Stats::ToString(); }
 
 IterationStats::IterationStats(bool enabled, std::string class_name, std::string operations_name,
                                std::string iterations_name)

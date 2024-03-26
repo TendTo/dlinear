@@ -32,6 +32,8 @@ namespace dlinear {
  */
 class TseitinCnfizer : public FormulaVisitor {
  public:
+  explicit TseitinCnfizer(const Config &config) : FormulaVisitor{"TseitinCnfizer", config} {}
+
   /**
    * Convert @p f into an equi-satisfiable formula @c f' in CNF.
    * @param f formula to convert

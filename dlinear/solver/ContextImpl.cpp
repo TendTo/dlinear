@@ -40,6 +40,7 @@ Context::Impl::Impl(const Config &config)
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
+      ite_stats_{false, ""},
       predicate_abstractor_{config},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
       theory_solver_{GetTheorySolver(config)} {
@@ -51,6 +52,7 @@ Context::Impl::Impl(Config &&config)
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
+      ite_stats_{false, ""},
       predicate_abstractor_{config},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_, config)},
       theory_solver_{GetTheorySolver(config)} {
@@ -69,11 +71,12 @@ void Context::Impl::Assert(const Formula &f) {
   if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
 #endif
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
-  IfThenElseEliminator ite_eliminator;
+  IfThenElseEliminator ite_eliminator{config_};
   const Formula no_ite{ite_eliminator.Process(f)};
 
   // Note that the following does not mark `ite_var` as a model variable.
   for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
+  if (config_.with_timings()) ite_stats_ = ite_eliminator.stats();
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
 #if 0

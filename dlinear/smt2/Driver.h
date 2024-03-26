@@ -19,6 +19,7 @@
 #include "dlinear/smt2/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
+#include "dlinear/util/Stats.h"
 
 namespace dlinear::smt2 {
 
@@ -34,7 +35,6 @@ namespace dlinear::smt2 {
 class Smt2Driver {
  public:
   /// construct a new parser driver context
-  Smt2Driver() = default;
   explicit Smt2Driver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
 
   /**
@@ -162,6 +162,12 @@ class Smt2Driver {
    */
   Smt2Scanner *scanner() { return scanner_; }
 
+  /**
+   * Statistics for the driver.
+   * @return statistics for the driver
+   */
+  const Stats &stats() const { return stats_; }
+
  private:
   Smt2Scanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
 
@@ -177,6 +183,8 @@ class Smt2Driver {
   bool debug_scanning_{false};  ///< Enable debug output in the flex scanner.
 
   bool debug_parsing_{false};  ///< Enable debug output in the bison parser.
+
+  Stats stats_;  ///< Statistics for the driver.
 };
 
 }  // namespace dlinear::smt2

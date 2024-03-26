@@ -116,7 +116,13 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
       DLINEAR_UNREACHABLE();
   }
   if (s.with_timings) {
-    os << fmt::format(" after {} seconds", s.total_timer.seconds());
+    os << fmt::format(" after {} seconds", s.total_timer.seconds()) << "\n"
+       << s.parser_stats << "\n"
+       << s.ite_stats << "\n"
+       << s.cnfizer_stats << "\n"
+       << s.predicate_abstractor_stats << "\n"
+       << s.sat_stats << "\n"
+       << s.theory_stats;
   }
   if (!s.model.empty() && s.produce_models) {
     os << "\n";
