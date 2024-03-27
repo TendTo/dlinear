@@ -52,18 +52,21 @@ class TheorySolverBoundIterator {
   TheorySolverBoundIterator();
   /**
    * Construct an iterator from a pair of iterators, @p begin_bounds_it and @p end_bounds_it.
+   * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param begin_bounds_it begin iterator to the first bound
    * @param end_bounds_it end iterator of the bounds
    */
   TheorySolverBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
   /**
    * Construct an iterator from a pair of iterators, @p bounds.
+   * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param bounds pair of iterators to the bounds, begin and end
    */
   explicit TheorySolverBoundIterator(std::pair<internal_iterator, internal_iterator> bounds);
   /**
    * Construct an iterator from a pair of iterators to the standard bounds, @p begin_bounds_it and @p end_bounds_it,
    * and a pair of iterators to the non-equal bounds, @p begin_nq_bounds_it and @p end_nq_bounds_it.
+   * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param begin_bounds_it begin iterator to the first bound
    * @param end_bounds_it end iterator of the bounds
    * @param begin_nq_bounds_it begin iterator to the first non-equal bound
@@ -74,6 +77,7 @@ class TheorySolverBoundIterator {
   /**
    * Construct an iterator from a pair of iterators to the standard bounds, @p bounds,
    * and a pair of iterators to the non-equal bounds, @p nq_bounds.
+   * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param bounds begin and end iterators to the bounds
    * @param nq_bounds begin and end iterators to the non-equal bounds
    */
