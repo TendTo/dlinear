@@ -4,7 +4,7 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * @brief NumericDataContainer class.
- * 
+ *
  * Simple class that holds a numeric value and a data value.
  * It is used to take advantage of the strong ordering and equality operators of the numeric value,
  * as well as the arithmetic operators, while still being able to store additional data.
@@ -21,25 +21,27 @@ namespace dlinear {
 
 /**
  * NumericDataContainer class.
- * 
+ *
  * Simple class that holds a numeric value and a data value.
  * It is used to take advantage of the strong ordering and equality operators of the numeric value,
  * as well as the arithmetic operators, while still being able to store additional data.
  * @tparam N numeric type used for comparison and arithmetic operations
  * @tparam D generic data type
  */
-template <Numeric N, class D>
+template <Numeric N, std::default_initializable D>
 struct NumericDataContainer {
   using NumericType = N;
   using DataType = D;
 
-  NumericDataContainer() : numeric{0}, data{0} {}
-  explicit NumericDataContainer(N input_numeric) : numeric{input_numeric}, data{0} {}
+  NumericDataContainer() : numeric{0}, data{} {}
+  explicit NumericDataContainer(N input_numeric) : numeric{input_numeric}, data{} {}
   NumericDataContainer(N input_numeric, D input_data) : numeric{input_numeric}, data{input_data} {}
 
   template <std::convertible_to<N> T>
   std::strong_ordering operator<=>(const NumericDataContainer<T, D> &rhs) const {
-    return numeric <=> N{rhs.numeric};
+    return numeric < N{rhs.numeric}   ? std::strong_ordering::less
+           : numeric > N{rhs.numeric} ? std::strong_ordering::greater
+                                      : std::strong_ordering::equal;
   }
   template <std::convertible_to<N> T>
   bool operator==(const NumericDataContainer<T, D> &rhs) const {
@@ -48,7 +50,9 @@ struct NumericDataContainer {
 
   template <std::convertible_to<N> T>
   std::strong_ordering operator<=>(const T &rhs) const {
-    return numeric <=> N{rhs};
+    return numeric < N{rhs}   ? std::strong_ordering::less
+           : numeric > N{rhs} ? std::strong_ordering::greater
+                              : std::strong_ordering::equal;
   }
   template <std::convertible_to<N> T>
   bool operator==(const T &rhs) const {
@@ -176,8 +180,10 @@ NumericDataContainer<N, D> operator/(const T &lhs, const NumericDataContainer<N,
 }
 
 template <class N, class D, class T>
-std::strong_ordering operator<=>(const NumericDataContainer<N, D> &lhs, const T &rhs) {
-  return lhs.numeric <=> N{rhs};
+std::strong_ordering operator<=>(const T &lhs, const NumericDataContainer<N, D> &rhs) {
+  return N{lhs} < rhs.numeric   ? std::strong_ordering::less
+         : N{lhs} > rhs.numeric ? std::strong_ordering::greater
+                                : std::strong_ordering::equal;
 }
 
 template <class N, class D>

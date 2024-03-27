@@ -74,3 +74,12 @@ dlinear_cc_googletest(
     tags = ["util"],
     deps = ["//dlinear/util:graph"],
 )
+
+dlinear_cc_googletest(
+    name = "test_numeric_data_container",
+    tags = ["util"],
+    deps = [
+        "//dlinear/libs:gmp",
+        "//dlinear/util:numeric_data_container",
+    ],
+)
