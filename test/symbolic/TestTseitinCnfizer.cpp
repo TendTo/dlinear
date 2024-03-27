@@ -74,7 +74,7 @@ class TestTseitinCnfizer : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  TseitinCnfizer cnfizer_;
+  TseitinCnfizer cnfizer_{{}};
 };
 
 TEST_F(TestTseitinCnfizer, CnfChecker) {
