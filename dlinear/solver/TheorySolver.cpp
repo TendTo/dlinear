@@ -134,10 +134,10 @@ void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_ro
   const Literal row_lit{theory_row_to_lit_[theory_row]};
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryBoundsToExplanations: {} violates {}", row_lit, violation);
   if (violation.nq_bounds_empty() || violation.bounds_empty()) {
-    for (; violation; ++violation) explanations.insert({row_lit, theory_row_to_lit_[std::get<2>(*violation)]});
+    for (; violation; ++violation) explanations.insert({row_lit, theory_row_to_lit_[violation->idx]});
   } else {
     LiteralSet explanation{};
-    for (; violation; ++violation) explanation.insert(theory_row_to_lit_[std::get<2>(*violation)]);
+    for (; violation; ++violation) explanation.insert(theory_row_to_lit_[violation->idx]);
     explanations.insert(explanation);
   }
 }
@@ -146,19 +146,19 @@ void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool ac
     theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) {
-      explanation.insert(theory_row_to_lit_[std::get<2>(bound)]);
+      explanation.insert(theory_row_to_lit_[bound.idx]);
     }
   }
 }
 
 void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, std::set<int> &bound_idxs) {
-  for (; violation; ++violation) bound_idxs.insert(std::get<2>(*violation));
+  for (; violation; ++violation) bound_idxs.insert(violation->idx);
 }
 void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool active, std::set<int> &bound_idxs) const {
   if (active) {
-    for (auto it = theory_bounds_[theory_col].GetActiveBounds(); it; ++it) bound_idxs.insert(std::get<2>(*it));
+    for (auto it = theory_bounds_[theory_col].GetActiveBounds(); it; ++it) bound_idxs.insert(it->idx);
   } else {
-    for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(std::get<2>(bound));
+    for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.idx);
   }
 }
 

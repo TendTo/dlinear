@@ -23,11 +23,6 @@
 
 namespace dlinear {
 
-struct BoundComparator {
-  bool operator()(const std::tuple<const mpq_class*, LpColBound, int>& lhs,
-                  const std::tuple<const mpq_class*, LpColBound, int>& rhs) const;
-};
-
 /**
  * TheorySolverBoundVector class.
  *
@@ -55,8 +50,16 @@ struct BoundComparator {
  */
 class TheorySolverBoundVector {
  public:
-  using Bound = std::tuple<const mpq_class*, LpColBound, int>;  ///< Bound. It is a tuple of value, bound type and index
-  using BoundVector = SortedVector<Bound, BoundComparator>;     ///< Sorted vector of bounds
+  /** Bound. It is a tuple of value, bound type and index */
+  struct Bound {
+    const mpq_class* value;  ///< Value of the bound
+    LpColBound lp_bound;     ///< Type of the bound (e.g. L, SL, U, SU)
+    int idx;                 ///< Index of the bound. Refers to the literal associated with the bound
+
+    std::strong_ordering operator<=>(const Bound& other) const;
+    bool operator==(const Bound& other) const;
+  };
+  using BoundVector = SortedVector<Bound>;                       ///< Sorted vector of bounds
   using BoundIterator = TheorySolverBoundIterator<BoundVector>;  ///< BoundIterator iterator over the violated bounds
 
   /**
@@ -66,6 +69,19 @@ class TheorySolverBoundVector {
    */
   TheorySolverBoundVector(const mpq_class& inf_l, const mpq_class& inf_u);
 
+  /**
+   * Add a new bound to the vector.
+   *
+   * The bound will be sorted in the vector according to its value and type with the goal of identifying
+   * violating bounds as fast a possible.
+   * @note If a violation is detected, the bound will not be added. The vector will remain unchanged.
+   * @param bound bound to add
+   * @return empty @ref BoundIterator if the bound has been added successfully, otherwise a @ref BoundIterator
+   * containing
+   * @return @ref BoundIterator containing all the violated bounds in the vector
+   * @see AddBound(const mpq_class&, LpColBound, int)
+   */
+  BoundIterator AddBound(const Bound& bound);
   /**
    * Add a new bound to the vector.
    *
@@ -128,17 +144,23 @@ class TheorySolverBoundVector {
    */
   [[nodiscard]] int n_upper_bounds() const { return static_cast<int>(bounds_.size()) - n_lower_bounds_; }
   /**
-   * Return a @ref BoundIterator containing all the active bounds.
-   *
-   * @note Active equality bounds will hide non-paired inequality bounds.
+   * Return a @ref BoundIterator containing a minimal set of bounds
+   * enclosing the interval [@ref active_lower_bound_, @ref active_upper_bound_]
+   * as well as all the not-equal constraints in that interval.
    * @return iterator over the active bounds
    */
   [[nodiscard]] BoundIterator GetActiveBounds() const;
   /**
+   * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p value, @p value]
+   * as well as all the not-equal constraints in that interval.
+   * @param value value to check
+   * @return iterator over the active bounds
+   */
+  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& value) const;
+  /**
    * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
    *
    * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
-   * @note Active equality bounds will hide non-paired inequality bounds.
    * @param theory_bound_to_lit map between the bound id and the theory literal
    * @param explanation set of literal corresponding to the explanation
    */
@@ -147,7 +169,6 @@ class TheorySolverBoundVector {
    * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
    *
    * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
-   * @note Active equality bounds will hide non-paired inequality bounds.
    * @param theory_bound_to_lit map between the bound id and the theory literal
    * @return set of literal corresponding to the explanation
    */
@@ -157,7 +178,6 @@ class TheorySolverBoundVector {
    * variable presents an equality active bound.
    *
    * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
-   * @note Active equality bounds will hide non-paired inequality bounds.
    * @param theory_bound_to_lit map between the bound id and the theory literal
    * @param explanation set of literal corresponding to the explanation
    * @see GetActiveExplanation
@@ -168,7 +188,6 @@ class TheorySolverBoundVector {
    * variable presents an equality active bound.
    *
    * It uses @p theory_bound_to_lit to match the active bounds to the corresponding literal.
-   * @note Active equality bounds will hide non-paired inequality bounds.
    * @param theory_bound_to_lit map between the bound id and the theory literal
    * @return set of literal corresponding to the explanation
    * @see GetActiveExplanation
@@ -282,6 +301,15 @@ class TheorySolverBoundVector {
    * @return iterator after the last lower bound and to the first upper bound
    */
   [[nodiscard]] inline BoundVector::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
+  /**
+   * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p lb, @p ub]
+   * as well as all the not-equal constraints in that interval.
+   * @pre @code (lb == active_lower_bound_ && ub == active_upper_bound_) || lb == ub @endcode
+   * @param lb lower bound
+   * @param ub upper bound
+   * @return iterator over the active bounds
+   */
+  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const;
 
   int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
   BoundVector bounds_;                   ///< Equality and inequality bounds

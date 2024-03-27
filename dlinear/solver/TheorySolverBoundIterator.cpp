@@ -21,7 +21,11 @@ TheorySolverBoundIterator<T>::TheorySolverBoundIterator()
       end_bounds_it_(default_empty_vector_.cend()),
       begin_nq_bounds_it_(default_empty_vector_.cend()),
       nq_bounds_it_(default_empty_vector_.cend()),
-      end_nq_bounds_it_(default_empty_vector_.cend()) {}
+      end_nq_bounds_it_(default_empty_vector_.cend()) {
+  DLINEAR_ASSERT(begin_bounds_it_ <= bounds_it_ && bounds_it_ <= end_bounds_it_, "Bounds iterator is out of bounds.");
+  DLINEAR_ASSERT(begin_nq_bounds_it_ <= nq_bounds_it_ && nq_bounds_it_ <= end_nq_bounds_it_,
+                 "Non-equal bounds iterator is out of bounds.");
+}
 
 template <class T>
 TheorySolverBoundIterator<T>::TheorySolverBoundIterator(
@@ -31,10 +35,15 @@ TheorySolverBoundIterator<T>::TheorySolverBoundIterator(
     TheorySolverBoundIterator<T>::internal_iterator end_nq_bounds_it)
     : begin_bounds_it_(begin_bounds_it),
       bounds_it_(begin_bounds_it),
-      end_bounds_it_(end_bounds_it),
+      end_bounds_it_(std::max(end_bounds_it, begin_bounds_it)),
       begin_nq_bounds_it_(begin_nq_bounds_it),
       nq_bounds_it_(begin_nq_bounds_it),
-      end_nq_bounds_it_(end_nq_bounds_it) {}
+      end_nq_bounds_it_(std::max(end_nq_bounds_it, begin_nq_bounds_it)) {
+  DLINEAR_ASSERT(begin_bounds_it_ <= bounds_it_ && bounds_it_ <= end_bounds_it_, "Bounds iterator is out of bounds.");
+  DLINEAR_ASSERT(begin_nq_bounds_it_ <= nq_bounds_it_ && nq_bounds_it_ <= end_nq_bounds_it_,
+                 "Non-equal bounds iterator is out of bounds.");
+}
+
 template <class T>
 TheorySolverBoundIterator<T>::TheorySolverBoundIterator(
     std::pair<TheorySolverBoundIterator<T>::internal_iterator, TheorySolverBoundIterator<T>::internal_iterator> bounds,
@@ -42,28 +51,40 @@ TheorySolverBoundIterator<T>::TheorySolverBoundIterator(
         nq_bounds)
     : begin_bounds_it_(bounds.first),
       bounds_it_(bounds.first),
-      end_bounds_it_(bounds.second),
+      end_bounds_it_(std::max(bounds.second, bounds.first)),
       begin_nq_bounds_it_(nq_bounds.first),
       nq_bounds_it_(nq_bounds.first),
-      end_nq_bounds_it_(nq_bounds.second) {}
+      end_nq_bounds_it_(std::max(nq_bounds.second, nq_bounds.first)) {
+  DLINEAR_ASSERT(begin_bounds_it_ <= bounds_it_ && bounds_it_ <= end_bounds_it_, "Bounds iterator is out of bounds.");
+  DLINEAR_ASSERT(begin_nq_bounds_it_ <= nq_bounds_it_ && nq_bounds_it_ <= end_nq_bounds_it_,
+                 "Non-equal bounds iterator is out of bounds.");
+}
 template <class T>
 TheorySolverBoundIterator<T>::TheorySolverBoundIterator(TheorySolverBoundIterator<T>::internal_iterator begin_bounds_it,
                                                         TheorySolverBoundIterator<T>::internal_iterator end_bounds_it)
     : begin_bounds_it_(begin_bounds_it),
       bounds_it_(begin_bounds_it),
-      end_bounds_it_(end_bounds_it),
+      end_bounds_it_(std::max(end_bounds_it, begin_bounds_it)),
       begin_nq_bounds_it_(default_empty_vector_.cend()),
       nq_bounds_it_(default_empty_vector_.cend()),
-      end_nq_bounds_it_(default_empty_vector_.cend()) {}
+      end_nq_bounds_it_(default_empty_vector_.cend()) {
+  DLINEAR_ASSERT(begin_bounds_it_ <= bounds_it_ && bounds_it_ <= end_bounds_it_, "Bounds iterator is out of bounds.");
+  DLINEAR_ASSERT(begin_nq_bounds_it_ <= nq_bounds_it_ && nq_bounds_it_ <= end_nq_bounds_it_,
+                 "Non-equal bounds iterator is out of bounds.");
+}
 template <class T>
 TheorySolverBoundIterator<T>::TheorySolverBoundIterator(
     std::pair<TheorySolverBoundIterator<T>::internal_iterator, TheorySolverBoundIterator<T>::internal_iterator> bounds)
     : begin_bounds_it_(bounds.first),
       bounds_it_(bounds.first),
-      end_bounds_it_(bounds.second),
+      end_bounds_it_(std::max(bounds.second, bounds.first)),
       begin_nq_bounds_it_(default_empty_vector_.cend()),
       nq_bounds_it_(default_empty_vector_.cend()),
-      end_nq_bounds_it_(default_empty_vector_.cend()) {}
+      end_nq_bounds_it_(default_empty_vector_.cend()) {
+  DLINEAR_ASSERT(begin_bounds_it_ <= bounds_it_ && bounds_it_ <= end_bounds_it_, "Bounds iterator is out of bounds.");
+  DLINEAR_ASSERT(begin_nq_bounds_it_ <= nq_bounds_it_ && nq_bounds_it_ <= end_nq_bounds_it_,
+                 "Non-equal bounds iterator is out of bounds.");
+}
 
 template <class T>
 TheorySolverBoundIterator<T> &TheorySolverBoundIterator<T>::operator++() {
@@ -116,9 +137,8 @@ std::ostream &operator<<(std::ostream &os, const TheorySolverBoundIterator<T> &v
   return os << "}";
 }
 
-template class TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound, BoundComparator>>;
+template class TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound>>;
 template std::ostream &operator<<(
-    std::ostream &os,
-    const TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound, BoundComparator>> &violation);
+    std::ostream &os, const TheorySolverBoundIterator<SortedVector<TheorySolverBoundVector::Bound>> &violation);
 
 }  // namespace dlinear
