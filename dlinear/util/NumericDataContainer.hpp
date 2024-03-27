@@ -1,12 +1,21 @@
 #pragma once
 
+#include <concepts>
 #include <iostream>
 #include <type_traits>
 #include <utility>
 
+template <class T>
+concept Numeric = std::totally_ordered<T> && requires(T a, T b) {
+  { a + b } -> std::convertible_to<T>;
+  { a - b } -> std::convertible_to<T>;
+  { a * b } -> std::convertible_to<T>;
+  { a / b } -> std::convertible_to<T>;
+};
+
 namespace dlinear {
 
-template <class N, class D>
+template <Numeric N, class D>
 struct NumericDataContainer {
   using NumericType = N;
   using DataType = D;
@@ -15,96 +24,98 @@ struct NumericDataContainer {
   explicit NumericDataContainer(N input_numeric) : numeric{input_numeric}, data{0} {}
   NumericDataContainer(N input_numeric, D input_data) : numeric{input_numeric}, data{input_data} {}
 
-  bool operator<(const NumericDataContainer<N, D> &rhs) const { return numeric < rhs.numeric; }
-  bool operator<=(const NumericDataContainer<N, D> &rhs) const { return numeric <= rhs.numeric; }
-  bool operator>(const NumericDataContainer<N, D> &rhs) const { return numeric > rhs.numeric; }
-  bool operator>=(const NumericDataContainer<N, D> &rhs) const { return numeric >= rhs.numeric; }
-  bool operator==(const NumericDataContainer<N, D> &rhs) const { return numeric == rhs.numeric; }
-  bool operator!=(const NumericDataContainer<N, D> &rhs) const { return numeric != rhs.numeric; }
+  template <std::convertible_to<N> T>
+  std::strong_ordering operator<=>(const NumericDataContainer<T, D> &rhs) const {
+    return numeric <=> N{rhs.numeric};
+  }
+  template <std::convertible_to<N> T>
+  bool operator==(const NumericDataContainer<T, D> &rhs) const {
+    return numeric == N{rhs.numeric};
+  }
 
-  template <class T>
-  bool operator<(const T &rhs) const {
-    return numeric < N{rhs};
+  template <std::convertible_to<N> T>
+  std::strong_ordering operator<=>(const T &rhs) const {
+    return numeric <=> N{rhs};
   }
-  template <class T>
-  bool operator<=(const T &rhs) const {
-    return numeric <= N{rhs};
-  }
-  template <class T>
-  bool operator>(const T &rhs) const {
-    return numeric > N{rhs};
-  }
-  template <class T>
-  bool operator>=(const T &rhs) const {
-    return numeric >= N{rhs};
-  }
-  template <class T>
+  template <std::convertible_to<N> T>
   bool operator==(const T &rhs) const {
     return numeric == N{rhs};
-  }
-  template <class T>
-  bool operator!=(const T &rhs) const {
-    return numeric != N{rhs};
   }
 
   bool EqualTo(const NumericDataContainer<N, D> &rhs) const { return numeric == rhs.numeric && data == rhs.data; }
 
-  NumericDataContainer &operator+=(const NumericDataContainer<N, D> &rhs) {
-    numeric += rhs.numeric;
+  template <std::convertible_to<N> T>
+  NumericDataContainer &operator+=(const NumericDataContainer<T, D> &rhs) {
+    numeric += N{rhs.numeric};
     return *this;
   }
-  NumericDataContainer &operator-=(const NumericDataContainer<N, D> &rhs) {
-    numeric -= rhs.numeric;
+  template <std::convertible_to<N> T>
+  NumericDataContainer &operator-=(const NumericDataContainer<T, D> &rhs) {
+    numeric -= N{rhs.numeric};
     return *this;
   }
-  NumericDataContainer &operator*=(const NumericDataContainer<N, D> &rhs) {
-    numeric *= rhs.numeric;
+  template <std::convertible_to<N> T>
+  NumericDataContainer &operator*=(const NumericDataContainer<T, D> &rhs) {
+    numeric *= N{rhs.numeric};
     return *this;
   }
-  NumericDataContainer &operator/=(const NumericDataContainer<N, D> &rhs) {
-    numeric /= rhs.numeric;
+  template <std::convertible_to<N> T>
+  NumericDataContainer &operator/=(const NumericDataContainer<T, D> &rhs) {
+    numeric /= N{rhs.numeric};
     return *this;
   }
 
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer &operator+=(const T &rhs) {
     numeric += N{rhs};
     return *this;
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer &operator-=(const T &rhs) {
     numeric -= N{rhs};
     return *this;
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer &operator*=(const T &rhs) {
     numeric *= N{rhs};
     return *this;
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer &operator/=(const T &rhs) {
     numeric /= N{rhs};
     return *this;
   }
 
-  NumericDataContainer operator+(const NumericDataContainer<N, D> &rhs) const { return {numeric + rhs.numeric, data}; }
-  NumericDataContainer operator-(const NumericDataContainer<N, D> &rhs) const { return {numeric - rhs.numeric, data}; }
-  NumericDataContainer operator*(const NumericDataContainer<N, D> &rhs) const { return {numeric * rhs.numeric, data}; }
-  NumericDataContainer operator/(const NumericDataContainer<N, D> &rhs) const { return {numeric / rhs.numeric, data}; }
+  template <std::convertible_to<N> T>
+  NumericDataContainer operator+(const NumericDataContainer<T, D> &rhs) const {
+    return {numeric + N{rhs.numeric}, data};
+  }
+  template <std::convertible_to<N> T>
+  NumericDataContainer operator-(const NumericDataContainer<T, D> &rhs) const {
+    return {numeric - N{rhs.numeric}, data};
+  }
+  template <std::convertible_to<N> T>
+  NumericDataContainer operator*(const NumericDataContainer<T, D> &rhs) const {
+    return {numeric * N{rhs.numeric}, data};
+  }
+  template <std::convertible_to<N> T>
+  NumericDataContainer operator/(const NumericDataContainer<T, D> &rhs) const {
+    return {numeric / N{rhs.numeric}, data};
+  }
 
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer operator+(const T &rhs) const {
     return {numeric + N{rhs}, data};
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer operator-(const T &rhs) const {
     return {numeric - N{rhs}, data};
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer operator*(const T &rhs) const {
     return {numeric * N{rhs}, data};
   }
-  template <class T>
+  template <std::convertible_to<N> T>
   NumericDataContainer operator/(const T &rhs) const {
     return {numeric / N{rhs}, data};
   }
@@ -152,28 +163,8 @@ NumericDataContainer<N, D> operator/(const T &lhs, const NumericDataContainer<N,
 }
 
 template <class N, class D, class T>
-bool operator<(const T &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} < rhs.numeric;
-}
-template <class N, class D, class T>
-bool operator<=(const N &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} <= rhs.numeric;
-}
-template <class N, class D, class T>
-bool operator>(const N &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} > rhs.numeric;
-}
-template <class N, class D, class T>
-bool operator>=(const N &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} >= rhs.numeric;
-}
-template <class N, class D, class T>
-bool operator==(const N &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} == rhs.numeric;
-}
-template <class N, class D, class T>
-bool operator!=(const N &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} != rhs.numeric;
+std::strong_ordering operator<=>(const NumericDataContainer<N, D> &lhs, const T &rhs) {
+  return lhs.numeric <=> N{rhs};
 }
 
 template <class N, class D>
