@@ -172,6 +172,12 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "numeric_data_container",
     hdrs = ["NumericDataContainer.hpp"],
+    deps = [":concepts"],
+)
+
+dlinear_cc_library(
+    name = "concepts",
+    hdrs = ["concepts.h"],
 )
 
 cpplint()

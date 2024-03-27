@@ -68,8 +68,6 @@ class SmtSolver {
   SmtSolverOutput output_;  ///< Output of the solver.
 
   bool ParseInput();
-  template <class T>
-  bool ParseInputCore();
   void CheckSatCore();
   void CheckObjCore();
 };

@@ -252,6 +252,7 @@ dlinear_cc_library(
         "//dlinear/mps",
         "//dlinear/smt2",
         "//dlinear/util:box",
+        "//dlinear/util:concepts",
         "//dlinear/util:config",
         "//dlinear/util:exception",
         "//dlinear/util:timer",

@@ -1,20 +1,33 @@
+/**
+ * @file NumericDataContainer.hpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief NumericDataContainer class.
+ * 
+ * Simple class that holds a numeric value and a data value.
+ * It is used to take advantage of the strong ordering and equality operators of the numeric value,
+ * as well as the arithmetic operators, while still being able to store additional data.
+ */
 #pragma once
 
-#include <concepts>
 #include <iostream>
 #include <type_traits>
 #include <utility>
 
-template <class T>
-concept Numeric = std::totally_ordered<T> && requires(T a, T b) {
-  { a + b } -> std::convertible_to<T>;
-  { a - b } -> std::convertible_to<T>;
-  { a * b } -> std::convertible_to<T>;
-  { a / b } -> std::convertible_to<T>;
-};
+#include "dlinear/util/concepts.h"
 
 namespace dlinear {
 
+/**
+ * NumericDataContainer class.
+ * 
+ * Simple class that holds a numeric value and a data value.
+ * It is used to take advantage of the strong ordering and equality operators of the numeric value,
+ * as well as the arithmetic operators, while still being able to store additional data.
+ * @tparam N numeric type used for comparison and arithmetic operations
+ * @tparam D generic data type
+ */
 template <Numeric N, class D>
 struct NumericDataContainer {
   using NumericType = N;

@@ -62,10 +62,8 @@ struct EdgeEqual_ {
  * It implements basic graph operations such as adding and removing vertices and edges, as well as graph traversal
  * algorithms such as depth-first search @ref Graph::DFS and breadth-first search @ref Graph::BFS.
  */
-template <class T, class W, class EdgeHash = EdgeHash_<T, W>, class EdgeEqual = EdgeEqual_<T, W>>
+template <class T, std::default_initializable W, class EdgeHash = EdgeHash_<T, W>, class EdgeEqual = EdgeEqual_<T, W>>
 class Graph {
-  static_assert(std::is_default_constructible_v<W>, "W must be default constructable");
-
  public:
   using Edge = std::pair<T, W>;
   using AdjSet = std::unordered_set<Edge, EdgeHash, EdgeEqual>;

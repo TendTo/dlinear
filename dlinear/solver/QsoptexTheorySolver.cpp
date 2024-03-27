@@ -277,7 +277,7 @@ void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explana
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
     explanation.insert(lit);
     // For each free variable in the literal, add their bounds to the explanation
-    for (const auto &col_var : predicate_abstractor_[lit.first].GetFreeVariables()) {
+    for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
       TheoryBoundsToExplanation(theory_col, true, explanation);
     }

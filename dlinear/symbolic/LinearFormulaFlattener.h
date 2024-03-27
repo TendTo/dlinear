@@ -1,3 +1,14 @@
+/**
+ * @file LinearFormulaFlattener.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief LinearFormulaFlattener class
+ *
+ * Used by the @ref PredicateAbstractor to ensure that all the theory literals are
+ * in the flattened standard form.
+ * @see LinearFormulaFlattener::Flatten
+ */
 #pragma once
 
 #include "dlinear/symbolic/symbolic.h"
@@ -19,8 +30,8 @@ class LinearFormulaFlattener {
    * Flatten the given formula.
    *
    * A formula is considered flatten if:
-   * - is in the form @f$ a_1x_1 + a_2x_2 + \dots a_nx_n \lessgtr c @f$ where @f$ a_i, c_i \in \mathbb{R} @f$ are constants
-   * and @f$ x_i \in \mathbb{R} @f$ is an unknown variable @f$ \forall i \in \{1, 2, \dots, n\} @f$
+   * - is in the form @f$ a_1x_1 + a_2x_2 + \dots a_nx_n \lessgtr c @f$ where @f$ a_i, c_i \in \mathbb{R} @f$ are
+   * constants and @f$ x_i \in \mathbb{R} @f$ is an unknown variable @f$ \forall i \in \{1, 2, \dots, n\} @f$
    * - calling the method Expand on both of the formula's terms outputs the same expression as the
    * one used as the input
    * @warning The formula returned has a very limited lifetime, being a reference of either the input @p formula or

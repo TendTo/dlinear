@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#include <string>
+
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
@@ -21,7 +23,7 @@ namespace dlinear {
 class FormulaVisitor {
  public:
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
-  
+
  protected:
   explicit FormulaVisitor(const Config &config) : stats_{config.with_timings(), "FormulaVisitor", "Converting"} {}
   FormulaVisitor(const std::string &class_name, const Config &config)

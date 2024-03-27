@@ -117,7 +117,7 @@ DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(c
     }
     mpq_QSchange_sense(qsx_, qsx_row, sense);
     mpq_QSchange_rhscoef(qsx_, qsx_row, rhs.get_mpq_t());
-    theory_row_to_lit_[qsx_row].second = truth;
+    theory_row_to_lit_[qsx_row].truth = truth;
     DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", qsx_row);
     return {};
   }

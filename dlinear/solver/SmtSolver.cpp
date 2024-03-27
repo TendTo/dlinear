@@ -15,10 +15,23 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Timer.h"
+#include "dlinear/util/concepts.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
+
+namespace {
+template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver> T>
+inline bool ParseInputCore(const Config &config, Context &context, SmtSolverOutput &output) {
+  DLINEAR_DEBUG("SmtSolver::ParseSmt2");
+  T driver{context};
+  const bool res =
+      config.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config.filename());
+  if (config.with_timings() && res) output.parser_stats = driver.stats();
+  return res;
+}
+}  // namespace
 
 SmtSolver::SmtSolver() : SmtSolver{Config{true}} {}
 SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
@@ -69,30 +82,17 @@ bool SmtSolver::ParseInput() {
   switch (config_.format()) {
     case Config::Format::AUTO:
       if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
-      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>();
-      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>();
+      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
+      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
       DLINEAR_UNREACHABLE();
     case Config::Format::SMT2:
-      return ParseInputCore<smt2::Smt2Driver>();
+      return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
     case Config::Format::MPS:
-      return ParseInputCore<mps::MpsDriver>();
+      return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
     default:
       DLINEAR_UNREACHABLE();
   }
 }
-
-template <class T>
-bool SmtSolver::ParseInputCore() {
-  static_assert(std::is_same_v<T, smt2::Smt2Driver> || std::is_same_v<T, mps::MpsDriver>);
-  DLINEAR_DEBUG("SmtSolver::ParseSmt2");
-  T driver{context_};
-  const bool res =
-      config_.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config_.filename());
-  if (config_.with_timings() && res) output_.parser_stats = driver.stats();
-  return res;
-}
-template bool SmtSolver::ParseInputCore<smt2::Smt2Driver>();
-template bool SmtSolver::ParseInputCore<mps::MpsDriver>();
 
 void SmtSolver::CheckObjCore() {
   DLINEAR_DEBUG("SmtSolver::CheckObjCore");
