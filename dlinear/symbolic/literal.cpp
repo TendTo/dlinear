@@ -7,22 +7,29 @@
 
 #include "literal.h"
 
-namespace {
-inline std::ostream &print_literal(std::ostream &os, const dlinear::Literal &literal) {
-  return os << (literal.second ? "" : "¬") << literal.first;
-}
-inline std::ostream &print_model(std::ostream &os, const dlinear::Model &model) {
-  os << "Boolean model:\n";
-  for (const auto &lit : model.first) os << lit << " ";
-  os << "\nTheory model:\n";
-  for (const auto &lit : model.second) os << lit << " ";
-  return os;
-}
-}  // namespace
-
 namespace dlinear {
 
-std::ostream &operator<<(std::ostream &os, const Literal &literal) { return print_literal(os, literal); }
+bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs) {
+  return lhs.var.equal_to(rhs.var) && lhs.truth == rhs.truth;
+}
+std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Literal &rhs) {
+  if (lhs.var.get_id() < rhs.var.get_id()) return std::strong_ordering::less;
+  if (lhs.var.get_id() > rhs.var.get_id()) return std::strong_ordering::greater;
+  if (lhs.truth < rhs.truth) return std::strong_ordering::less;
+  if (lhs.truth > rhs.truth) return std::strong_ordering::greater;
+  return std::strong_ordering::equal;
+}
+
+bool operator==(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs) {
+  return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+std::strong_ordering operator<=>(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs) {
+  return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+std::ostream &operator<<(std::ostream &os, const Literal &literal) {
+  return os << (literal.truth ? "" : "¬") << literal.var;
+}
 
 std::ostream &operator<<(std::ostream &os, const LiteralSet &literal_set) {
   os << "{ ";
@@ -42,39 +49,11 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literals)
   return os << "]";
 }
 
-std::ostream &operator<<(std::ostream &os, const Model &model) { return print_model(os, model); }
+std::ostream &operator<<(std::ostream &os, const Model &model) {
+  os << "Boolean model:\n";
+  for (const auto &lit : model.first) os << lit << " ";
+  os << "\nTheory model:\n";
+  for (const auto &lit : model.second) os << lit << " ";
+  return os;
+}
 }  // namespace dlinear
-
-template <>
-bool std::operator==(const dlinear::Literal &x, const dlinear::Literal &y) {
-  return x.first.equal_to(y.first) && x.second == y.second;
-}
-template <>
-bool std::operator<(const dlinear::Literal &x, const dlinear::Literal &y) {
-  return x.first.get_id() < y.first.get_id() && x.second < y.second;
-}
-
-std::ostream &operator<<(std::ostream &os, const dlinear::Literal &literal) { return print_literal(os, literal); }
-
-std::ostream &operator<<(std::ostream &os, const dlinear::Model &model) { return print_model(os, model); }
-
-bool std::less<dlinear::Literal>::operator()(const dlinear::Literal &a, const dlinear::Literal &b) const {
-  return a.first.get_id() < b.first.get_id() || (a.first.equal_to(b.first) && a.second < b.second);
-}
-bool std::equal_to<dlinear::Literal>::operator()(const dlinear::Literal &a, const dlinear::Literal &b) const {
-  return a.first.equal_to(b.first) && a.second == b.second;
-}
-
-bool std::less<::dlinear::LiteralSet>::operator()(const dlinear::LiteralSet &a, const dlinear::LiteralSet &b) const {
-  return std::lexicographical_compare(
-      a.begin(), a.end(), b.begin(), b.end(), [](const dlinear::Literal &a_, const dlinear::Literal &b_) {
-        return a_.first.get_id() < b_.first.get_id() || (a_.first.equal_to(b_.first) && a_.second < b_.second);
-      });
-}
-bool std::equal_to<::dlinear::LiteralSet>::operator()(const dlinear::LiteralSet &a,
-                                                      const dlinear::LiteralSet &b) const {
-  return a.size() == b.size() &&
-         std::equal(a.begin(), a.end(), b.begin(), b.end(), [](const dlinear::Literal &a_, const dlinear::Literal &b_) {
-           return a_.first.equal_to(b_.first) && a_.second == b_.second;
-         });
-}

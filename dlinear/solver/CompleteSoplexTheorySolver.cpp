@@ -111,7 +111,7 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   // A non-trivial linear literal from the input problem
   const int spx_row = it_row->second;
   // Update the truth value for the current iteration with the last SAT solver assignment
-  theory_row_to_lit_[spx_row].second = truth;
+  theory_row_to_lit_[spx_row].truth = truth;
   // Add the row to the list of enabled theory rows
   enabled_theory_rows_.push_back(spx_row);
 
@@ -119,7 +119,7 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   preprocessor_.EnableConstraint(spx_row);
 
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
-  const Formula &formula = predicate_abstractor_.var_to_formula_map().at(var);
+  const Formula &formula = predicate_abstractor_[var];
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
 
   // If it is a simple bound, we add it to the theory_bounds.
@@ -368,7 +368,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
     theory_rows_to_explanation_.insert(i);
 
     // Add all the active bounds for the free variables in the row to the explanation
-    const auto &row_formula = predicate_abstractor_.var_to_formula_map().at(theory_row_to_lit_[i].first);
+    const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[i].var];
     for (const Variable &var : row_formula.GetFreeVariables()) {
       const int &theory_col = var_to_theory_col_.at(var.get_id());
       TheoryBoundsToBoundIdxs(theory_col, true, theory_rows_to_explanation_);
@@ -415,7 +415,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   std::set<Variable::Id> visited_variables;
   for (const auto &[spx_row, value] : GetActiveRows(enabled_strict_theory_rows_)) {
     // Find all the free variables in the row
-    const auto &row_formula = predicate_abstractor_.var_to_formula_map().at(theory_row_to_lit_[spx_row].first);
+    const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
     DLINEAR_ASSERT(!row_formula.GetFreeVariables().empty(), "row_formula.GetFreeVariables() must not be empty");
     for (const Variable &var : row_formula.GetFreeVariables()) {
       // Add all the free variables to the set of variables to check for active constraints
@@ -435,7 +435,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
     for (int spx_row : var_to_enabled_theory_rows_.at(var_id)) {
       candidate_rows.insert(spx_row);
       // Also add the free variables not yet visited in that row to the stack to check them later
-      const auto &row_formula = predicate_abstractor_.var_to_formula_map().at(theory_row_to_lit_[spx_row].first);
+      const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
       for (const Variable &var : row_formula.GetFreeVariables()) {
         if (visited_variables.count(var.get_id()) > 0) continue;
         stack.push_back(var.get_id());

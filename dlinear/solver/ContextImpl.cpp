@@ -318,8 +318,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     const std::vector<Literal> &theory_model{optional_model->second};
 
     // Update the Boolean variables in the model (not used by the LP solver).
-    for (const Literal &p : boolean_model) {
-      box()[p.first] = p.second ? 1 : 0;  // true -> 1 and false -> 0
+    for (const auto &[var, truth] : boolean_model) {
+      box()[var] = truth ? 1 : 0;  // true -> 1 and false -> 0
     }
 
     // If there is no theory to solve, the SAT solver output is enough to return SAT.

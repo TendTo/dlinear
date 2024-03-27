@@ -22,9 +22,18 @@ namespace dlinear {
 
 using drake::symbolic::Variable;
 
-using Literal = std::pair<Variable, bool>;
+struct Literal {
+  Variable var;
+  bool truth;
+};
 using LiteralSet = std::set<Literal>;
 using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
+
+bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
+std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
+
+bool operator==(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs);
+std::strong_ordering operator<=>(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs);
 
 std::ostream &operator<<(std::ostream &os, const std::vector<Variable> &variables);
 std::ostream &operator<<(std::ostream &os, const Literal &literal);
@@ -33,36 +42,3 @@ std::ostream &operator<<(std::ostream &os, const Model &model);
 std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &variables);
 
 }  // namespace dlinear
-
-// Needed for spdlog ranges.h. They share the same implementation of the operator<<.
-std::ostream &operator<<(std::ostream &os, const ::dlinear::Literal &literal);
-std::ostream &operator<<(std::ostream &os, const ::dlinear::Model &model);
-
-namespace std {
-
-template <>
-bool operator==(const dlinear::Literal &x, const dlinear::Literal &y);
-template <>
-bool operator<=(const dlinear::Literal &x, const dlinear::Literal &y);
-
-template <>
-struct less<::dlinear::Literal> {
-  bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;
-};
-
-template <>
-struct equal_to<::dlinear::Literal> {
-  bool operator()(const ::dlinear::Literal &a, const ::dlinear::Literal &b) const;
-};
-
-template <>
-struct less<::dlinear::LiteralSet> {
-  bool operator()(const ::dlinear::LiteralSet &a, const ::dlinear::LiteralSet &b) const;
-};
-
-template <>
-struct equal_to<::dlinear::LiteralSet> {
-  bool operator()(const ::dlinear::LiteralSet &a, const ::dlinear::LiteralSet &b) const;
-};
-
-}  // namespace std

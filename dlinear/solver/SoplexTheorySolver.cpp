@@ -270,10 +270,10 @@ void SoplexTheorySolver::EnableSpxRow(const int spx_row) {
   EnableSpxRow(spx_row, truth, predicate_abstractor_[var].GetFreeVariables());
 }
 void SoplexTheorySolver::EnableSpxRow(const int spx_row, const bool truth) {
-  EnableSpxRow(spx_row, truth, predicate_abstractor_[theory_row_to_lit_[spx_row].first].GetFreeVariables());
+  EnableSpxRow(spx_row, truth, predicate_abstractor_[theory_row_to_lit_.at(spx_row).var].GetFreeVariables());
 }
 void SoplexTheorySolver::EnableSpxRow(int spx_row, const Variables &free_vars) {
-  EnableSpxRow(spx_row, theory_row_to_lit_[spx_row].second, free_vars);
+  EnableSpxRow(spx_row, theory_row_to_lit_.at(spx_row).truth, free_vars);
 }
 
 }  // namespace dlinear

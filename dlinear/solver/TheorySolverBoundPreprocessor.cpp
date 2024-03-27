@@ -155,7 +155,7 @@ void TheorySolverBoundPreprocessor::PropagateRows(const std::vector<int>& enable
       const Literal& lit = theory_rows_.at(theory_row);
       if (!ShouldPropagateRows(lit)) continue;
       continue_propagating = true;
-      const Formula& formula = predicate_abstractor_.var_to_formula_map().at(lit.first);
+      const Formula& formula = predicate_abstractor_[lit.var];
       DLINEAR_ASSERT(is_addition(get_lhs_expression(formula)), "lhs expression must be an addition");
       std::vector<Variable> dependencies;
       mpq_class rhs{get_constant_value(get_rhs_expression(formula))};
@@ -193,8 +193,8 @@ void TheorySolverBoundPreprocessor::EvaluateFormulas(const std::vector<int>& ena
   for (const auto& theory_row : enabled_theory_rows) {
     const Literal& lit = theory_rows_.at(theory_row);
     if (!ShouldEvaluate(lit)) continue;
-    const Formula& formula = predicate_abstractor_.var_to_formula_map().at(lit.first);
-    const bool satisfied = formula.Evaluate(env_) == lit.second;
+    const Formula& formula = predicate_abstractor_[lit.var];
+    const bool satisfied = formula.Evaluate(env_) == lit.truth;
     if (!satisfied) {
       DLINEAR_ERROR_FMT("TheorySolverBoundPreprocessor::EvaluateFormulas: {} => FAIL", lit);
       FormulaViolationExplanation(lit, formula, explanations);
@@ -221,7 +221,7 @@ bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
   // While it wouldn't be an issue to do it again, it's more efficient to just do a quick check
   if (ShouldPropagateBounds(lit)) return false;
   const auto& [var, truth] = lit;
-  const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
+  const Formula& formula = predicate_abstractor_[var];
   // No need to evaluate if there are no free variables
   if (formula.GetFreeVariables().empty()) return false;
   // TODO: no need to evaluate rows that have an equality bound already expressed
@@ -245,7 +245,7 @@ bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Formula& formula) const
 bool TheorySolverBoundPreprocessor::ShouldPropagateBounds(const Literal& lit) const {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldPropagateBounds({})", lit);
   const auto& [var, truth] = lit;
-  const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
+  const Formula& formula = predicate_abstractor_[var];
   // There must be exactly two free variables and an equality relation between them
   if (truth && !is_equal_to(formula)) return false;
   if (!truth && !is_not_equal_to(formula)) return false;
@@ -271,7 +271,7 @@ bool TheorySolverBoundPreprocessor::ShouldPropagateBounds(const Formula& formula
 bool TheorySolverBoundPreprocessor::ShouldPropagateRows(const Literal& lit) {
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldPropagateRows({})", lit);
   const auto& [var, truth] = lit;
-  const Formula& formula = predicate_abstractor_.var_to_formula_map().at(var);
+  const Formula& formula = predicate_abstractor_[var];
   // There must be exactly two free variables and an equality relation between them
   if (truth && !is_equal_to(formula)) return false;
   if (!truth && !is_not_equal_to(formula)) return false;

@@ -38,7 +38,7 @@ void PicosatSatSolver::MakeSatVar(const Variable &var) {
 }
 
 void PicosatSatSolver::AddLearnedClause(const LiteralSet &literals) {
-  for (const Literal &l : literals) AddLiteral({l.first, !(l.second)}, true);
+  for (const auto &[var, truth] : literals) AddLiteral({var, !truth}, true);
   picosat_add(sat_, 0);
 }
 
@@ -50,7 +50,7 @@ void PicosatSatSolver::AddLiteral(const Literal &l, bool learned) {
   picosat_add(sat_, lit);
   UpdateLookup(lit, learned);
   // If the literal is from the original formula, add it to the theory solver.
-  if (!learned) theory_literals_.emplace_back(var, l.second);
+  if (!learned) theory_literals_.emplace_back(var, truth);
 }
 
 std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
