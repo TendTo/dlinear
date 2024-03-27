@@ -8,7 +8,7 @@ DLINEAR_VERSION = "0.0.1"
 # The CXX_FLAGS will be enabled for all C++ rules in the project
 # building with any compiler.
 CXX_FLAGS = [
-    "-std=c++17",
+    "-std=c++20",
     "-Wall",
     "-Wattributes",
     "-Wdeprecated",

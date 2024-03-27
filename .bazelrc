@@ -8,13 +8,13 @@ build --flag_alias=enable_dynamic_build=//tools:enable_dynamic_build
 build --flag_alias=static_boost=@boost//:use_linkstatic
 
 # Default build
-build --cxxopt=-std=c++17
+build --cxxopt=-std=c++20
 build --static_boost
 
 # Ignore env vars from shell. Avoids rebuilding when env vars change.
 build --incompatible_strict_action_env
 
-# Build with ccache
+# Build with cache
 build --disk_cache=~/.cache/dlinear_bazel
 
 # Debug build
@@ -25,6 +25,7 @@ build:debug --cxxopt=-ggdb3
 build:debug --compilation_mode=dbg
 
 # Optimized build
+build:opt --disk_cache=~/.cache/dlinear_bazel_opt
 build:opt --cxxopt=-O3
 build:opt --cxxopt=-DNDEBUG
 build:opt --cxxopt=-DNLOG
