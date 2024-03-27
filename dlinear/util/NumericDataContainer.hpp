@@ -39,9 +39,9 @@ struct NumericDataContainer {
 
   template <std::convertible_to<N> T>
   std::strong_ordering operator<=>(const NumericDataContainer<T, D> &rhs) const {
-    return numeric < N{rhs.numeric}   ? std::strong_ordering::less
-           : numeric > N{rhs.numeric} ? std::strong_ordering::greater
-                                      : std::strong_ordering::equal;
+    return numeric < static_cast<N>(rhs.numeric)   ? std::strong_ordering::less
+           : numeric > static_cast<N>(rhs.numeric) ? std::strong_ordering::greater
+                                                   : std::strong_ordering::equal;
   }
   template <std::convertible_to<N> T>
   bool operator==(const NumericDataContainer<T, D> &rhs) const {
@@ -50,9 +50,9 @@ struct NumericDataContainer {
 
   template <std::convertible_to<N> T>
   std::strong_ordering operator<=>(const T &rhs) const {
-    return numeric < N{rhs}   ? std::strong_ordering::less
-           : numeric > N{rhs} ? std::strong_ordering::greater
-                              : std::strong_ordering::equal;
+    return numeric < static_cast<N>(rhs)   ? std::strong_ordering::less
+           : numeric > static_cast<N>(rhs) ? std::strong_ordering::greater
+                                           : std::strong_ordering::equal;
   }
   template <std::convertible_to<N> T>
   bool operator==(const T &rhs) const {
@@ -181,9 +181,9 @@ NumericDataContainer<N, D> operator/(const T &lhs, const NumericDataContainer<N,
 
 template <class N, class D, class T>
 std::strong_ordering operator<=>(const T &lhs, const NumericDataContainer<N, D> &rhs) {
-  return N{lhs} < rhs.numeric   ? std::strong_ordering::less
-         : N{lhs} > rhs.numeric ? std::strong_ordering::greater
-                                : std::strong_ordering::equal;
+  return static_cast<N>(lhs) < rhs.numeric   ? std::strong_ordering::less
+         : static_cast<N>(lhs) > rhs.numeric ? std::strong_ordering::greater
+                                             : std::strong_ordering::equal;
 }
 
 template <class N, class D>
