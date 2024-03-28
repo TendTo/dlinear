@@ -31,6 +31,8 @@ cd dlinear
 bazel build //dlinear
 ```
 
+The binary will be located in the `bazel-bin/dlinear` directory.
+
 ### Installation (Debian based systems)
 
 ```bash

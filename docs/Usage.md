@@ -3,12 +3,13 @@
 After compilation, the binary, called `dlinear` will be located in the `bazel-bin/dlinear` directory.
 There are several options to run it:
 
-- run `bazel-bin/dlinear/dlinear` in the terminal
+- run `./bazel-bin/dlinear/dlinear` in the terminal
 - add the absolute path of the directory `bazel-bin/dlinear` to the `PATH` environment variable
+- move the binary from `./bazel-bin/dlinear/dlinear` to a directory already in the `PATH`, like `/usr/local/bin`
 - create a symbolic link to the executable
 - create an alias for the executable
 
-From now on, the snippets will assume that the `dlinear` binary is in the `PATH`.
+From now on, the snippets will assume that the `dlinear` binary has been added to the `PATH`.
 
 ```bash
 # Invoke dlinear help
@@ -41,5 +42,6 @@ dlinear --in --format smt2
 dlinear --in --format mps
 ```
 
-When the stdin mode is used, the problem can be typed directly in the terminal.
-When it is complete, press `Ctrl+D` two times to signal the end of the input.
+When the stdin mode is used, the problem must be typed directly in the terminal.
+To signal dlinear the end of the input, press `Ctrl+D` two times.
+This will start the solver.

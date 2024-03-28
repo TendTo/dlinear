@@ -1,0 +1,29 @@
+# TODO
+
+- [x] Fix qsoptex Farkas ray
+    - [x] Relegate qsoptex to compilation flag
+- [x] Make sure the solution match between the two test_solvers
+- [x] Try what happens by removing `Expand` from `Formula`
+    - It can be done only for mps files, since the structure of the formula is not always plain otherwise
+- [x] Add inequality support
+- [ ] Clean up benchmarking suite
+- [ ] Clean up `pydlinear`
+- [ ] Remove unused Config parameters
+- [ ] Improve nolog options
+- [x] Make the sat return type a struct
+- [x] Separate smt time between sat and theory
+- [x] Sort bounds by value so that it is possible to invalidate just the ones on one side
+    - [x] Sorted container for the bounds
+    - [x] Find the value of the violated bound for infeasible problems
+- [x] Store the value for each bit of the bit iterator and re-use it for next iterations
+- [ ] Optimise situations where multiple nq constraints are violated at the same time
+- [ ] Linked variables for bound checking
+- [x] Multiple explanations for invalid bounds
+- [x] Heuristics options
+- [x] In the presence of eq bounds, they should be the only one returned by the active_bounds() method
+- [ ] Optimal explanation when all nq constraints combination have been explored
+- [ ] Include a starting iterator when searching lower and upper bounds, so that the search can be resumed from the last point
+- [x] Reduce the number of copies of inf and ninf bounds in the bound vector
+- [ ] Use c++20 format instead of the external library
+    - [ ] Use Ubuntu 23.04+ for gcc 13+ support
+- [ ] Return multiple explanations instead of just one when dealing with active constraints 

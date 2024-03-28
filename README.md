@@ -30,7 +30,7 @@ dlinear --help
 dlinear will parse and solve problems in `smt2` or `mps` format.
 The default behavior is to parse the input and produce a satisfiability result, either `delta-sat` or `unsat`.
 
-> **Warning**  
+> [!warning]  
 > Some `smt` directives will be ignored, since their role is taken by the command line flags:
 >
 > - `(check-sat)` is assumed to be present by default. It can be disabled with `--no-check-sat`
