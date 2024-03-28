@@ -14,3 +14,9 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/version.h"
+
+/**
+ * @namespace dlinear
+ * Global namespace for the dlinear library.
+ */
+namespace dlinear {}  // namespace dlinear

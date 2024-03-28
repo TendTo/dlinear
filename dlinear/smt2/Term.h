@@ -14,7 +14,6 @@
 
 #include "dlinear/symbolic/symbolic.h"
 
-/// Sum type of symbolic::Expression and symbolic::Formula.
 namespace dlinear::smt2 {
 
 class Term {
