@@ -7,6 +7,7 @@
 #include "CompleteSoplexTheorySolver.h"
 
 #include <map>
+#include <stack>
 #include <utility>
 
 #include "dlinear/libs/soplex.h"
@@ -265,25 +266,20 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
   } else {
     // The feasibility LP should always be feasible & bounded
     DLINEAR_ASSERT(status == SoplexStatus::OPTIMAL, "status must be OPTIMAL");
-    soplex::VectorRational obj;
+    [[maybe_unused]] soplex::VectorRational obj;
     spx_.getObjRational(obj);
     DLINEAR_ASSERT(obj.dim() == colcount, "obj.dim() must be == colcount");
-    bool ok = true;
     soplex::VectorRational x{colcount};
-    [[maybe_unused]] bool has_sol = spx_.getPrimalRational(x);
+    [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(x);
     DLINEAR_ASSERT(has_sol, "has_sol must be true");
     DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
     if (x.dim() > colcount) {
       DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
     }
-    // ok = std::ranges::all_of(0, colcount, [&] (int i) { return obj[i] == 0 || x[i] == 0; });
-    for (int i = 0; i < colcount; ++i) {
-      if (!(ok = (obj[i].is_zero() || x[i].is_zero()))) {
-        break;
-      }
-    }
-    if (ok) return SatResult::SAT_SATISFIABLE;
-    return SatResult::SAT_UNSATISFIABLE;
+    // Check if the strict variable is positive (feasible) or 0 (infeasible)
+    DLINEAR_ASSERT(obj[colcount - 1] == 1, "The strict variable must have a coefficient of 1 in the objective");
+    if (x[colcount - 1].is_zero()) return SatResult::SAT_UNSATISFIABLE;
+    return SatResult::SAT_SATISFIABLE;
   }
 }
 
@@ -351,17 +347,14 @@ void CompleteSoplexTheorySolver::EnableNqLiterals(const std::vector<bool> &nq_st
   }
 }
 
-// TODO: maybe we can avoid to add non useful bounds to the explanation?
 void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
-  const int rowcount = spx_.numRowsRational();
-  soplex::VectorRational ray;
-  ray.reDim(rowcount);
-  // Get the Farkas ray to identify which rows are responsible for the conflict
-  [[maybe_unused]] bool res = spx_.getDualFarkasRational(ray);
-  DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
+  soplex::VectorRational ray{spx_.numRowsRational()};
+  std::vector<BoundViolationType> bounds_ray(spx_.numColsRational() - 1, BoundViolationType::NO_BOUND_VIOLATION);
+  GetSpxInfeasibilityRay(ray, bounds_ray);
+
   theory_rows_to_explanation_.clear();
   // For each row in the ray
-  for (int i = 0; i < rowcount; ++i) {
+  for (int i = 0; i < spx_.numRowsRational(); ++i) {
     if (ray[i].is_zero()) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexSatSolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
     // Insert the conflicting row literal to the explanation
@@ -371,7 +364,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
     const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[i].var];
     for (const Variable &var : row_formula.GetFreeVariables()) {
       const int &theory_col = var_to_theory_col_.at(var.get_id());
-      TheoryBoundsToBoundIdxs(theory_col, true, theory_rows_to_explanation_);
+      TheoryBoundsToBoundIdxs(theory_col, bounds_ray[theory_col], theory_rows_to_explanation_);
     }
   }
 
@@ -384,6 +377,16 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
 // TODO: make sure this includes bounds (it should)
 void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible({})", enabled_strict_theory_rows_);
+  DLINEAR_ASSERT(!enabled_strict_theory_rows_.empty(), "enabled_strict_theory_rows_ must not be empty");
+  DLINEAR_ASSERT(!GetActiveRows(enabled_strict_theory_rows_).empty(), "At least 1 strict row must have been violated");
+
+  // Clear previous explanation
+  theory_rows_to_explanation_.clear();
+
+  // Solution vector. Contains the value of all the variables
+  soplex::VectorRational x{spx_.numColsRational()};
+  [[maybe_unused]] bool has_sol = spx_.getPrimalRational(x);
+  DLINEAR_ASSERT(has_sol, "has_sol must be true");
 
   // TODO: REMOVE AFTER DEBUG
 #if 0
@@ -410,17 +413,17 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
 #endif
   // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
   // Find all strict theory row. The active ones indicate a violation in the strict bound.
-  std::set<int> candidate_rows;
-  std::vector<Variable::Id> stack;
+  std::stack<Variable::Id> stack;
   std::set<Variable::Id> visited_variables;
   for (const auto &[spx_row, value] : GetActiveRows(enabled_strict_theory_rows_)) {
+    theory_rows_to_explanation_.emplace(spx_row);
     // Find all the free variables in the row
     const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
     DLINEAR_ASSERT(!row_formula.GetFreeVariables().empty(), "row_formula.GetFreeVariables() must not be empty");
     for (const Variable &var : row_formula.GetFreeVariables()) {
       // Add all the free variables to the set of variables to check for active constraints
       if (visited_variables.count(var.get_id()) > 0) continue;
-      stack.push_back(var.get_id());
+      stack.emplace(var.get_id());
       visited_variables.insert(var.get_id());
     }
   }
@@ -429,29 +432,25 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
 
   // Run through the variables in the stack and add to the candidate violated rows all rows they appear in
   while (!stack.empty()) {
-    Variable::Id var_id = stack.back();
-    stack.pop_back();
+    Variable::Id var_id = stack.top();
+    stack.pop();
 
     for (int spx_row : var_to_enabled_theory_rows_.at(var_id)) {
-      candidate_rows.insert(spx_row);
+      // If the row is not active or already in the explanation, skip it
+      if (theory_rows_to_explanation_.count(spx_row) > 0 || !IsRowActive(spx_row)) continue;
+      theory_rows_to_explanation_.insert(spx_row);
       // Also add the free variables not yet visited in that row to the stack to check them later
       const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
       for (const Variable &var : row_formula.GetFreeVariables()) {
         if (visited_variables.count(var.get_id()) > 0) continue;
-        stack.push_back(var.get_id());
+        stack.emplace(var.get_id());
         visited_variables.insert(var.get_id());
       }
     }
 
     // Add all the bounds for the variable to the candidate rows
     const int theory_col = var_to_theory_col_.at(var_id);
-    TheoryBoundsToBoundIdxs(theory_col, true, candidate_rows);
-  }
-
-  // Add all active rows in the candidate rows to the explanation
-  theory_rows_to_explanation_.clear();
-  for (const auto &[spx_row, value] : GetActiveRows({candidate_rows.begin(), candidate_rows.end()})) {
-    theory_rows_to_explanation_.insert(spx_row);
+    TheoryBoundsToBoundIdxs(theory_col, mpq_class{x[theory_col].backend().data()}, theory_rows_to_explanation_);
   }
 
   DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");

@@ -99,7 +99,7 @@ std::optional<Rational> SoplexTheorySolver::IsRowActive(const int spx_row) {
   [[maybe_unused]] const bool res = spx_.getRowActivityRational(spx_row, row_value);
   DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
   spx_.getRowRational(spx_row, lp_row);
-  DLINEAR_WARN_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  DLINEAR_TRACE_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
   return lp_row.lhs() == row_value || lp_row.rhs() == row_value ? std::optional{std::move(row_value)}
                                                                 : std::optional<Rational>{};
 }
@@ -111,7 +111,7 @@ bool SoplexTheorySolver::IsRowActive(const int spx_row, const Rational &value) {
   DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
   if (row_value != value) return false;
   spx_.getRowRational(spx_row, lp_row);
-  DLINEAR_WARN_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  DLINEAR_TRACE_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
   return lp_row.lhs() == row_value || lp_row.rhs() == row_value;
 }
 
@@ -175,6 +175,38 @@ void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::CreateArtificials({} -> ({}, {}))", spx_row, spx_cols, spx_cols + 1);
 }
 
+void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_ray) {
+  DLINEAR_ASSERT(farkas_ray.dim() == spx_.numRowsRational(), "farkas_ray must have the same dimension as the rows");
+  // Get the Farkas ray to identify which rows are responsible for the conflict
+  [[maybe_unused]] bool res = spx_.getDualFarkasRational(farkas_ray);
+  DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
+}
+
+void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_ray,
+                                                std::vector<BoundViolationType> &bounds_ray) {
+  GetSpxInfeasibilityRay(farkas_ray);
+
+  DLINEAR_ASSERT(static_cast<int>(bounds_ray.size()) == spx_.numColsRational() - 1,
+                 "bounds_ray must have the same dimension as the cols");
+  DLINEAR_ASSERT(std::all_of(bounds_ray.cbegin(), bounds_ray.cend(),
+                             [](const BoundViolationType &it) { return it == BoundViolationType::NO_BOUND_VIOLATION; }),
+                 "bounds_ray must be initialized to NO_BOUND_VIOLATION");
+  //  Multiply the Farkas ray by the row coefficients to get the column violations: ray * A
+  //  If the result is non-zero, the sign indicates the bound that caused the violation.
+  Rational col_violation{0};
+  for (int i = 0; i < spx_.numColsRational() - 1; i++) {
+    col_violation = 0;
+    for (int j = 0; j < spx_.numRowsRational(); j++) {
+      col_violation += farkas_ray[j] * spx_.rowVectorRational(j)[i];
+    }
+    if (col_violation.is_zero()) continue;
+    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: {}[{}] = {}", theory_col_to_var_[i], i,
+                     col_violation);
+    bounds_ray[i] =
+        col_violation > 0 ? BoundViolationType::LOWER_BOUND_VIOLATION : BoundViolationType::UPPER_BOUND_VIOLATION;
+  }
+}
+
 void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_TRACE_FMT("SoplexTheorySolver::Reset(): Box =\n{}", box);
   Consolidate();
@@ -235,15 +267,12 @@ void SoplexTheorySolver::UpdateModelBounds() {
   }
 }
 void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
-  const int rowcount = spx_.numRowsRational();
-  soplex::VectorRational ray;
-  ray.reDim(rowcount);
-  // Get the Farkas ray to identify which rows are responsible for the conflict
-  [[maybe_unused]] bool res = spx_.getDualFarkasRational(ray);
-  DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");
+  soplex::VectorRational ray{spx_.numRowsRational()};
+  GetSpxInfeasibilityRay(ray);
+
   explanation.clear();
   // For each row in the ray
-  for (int i = 0; i < rowcount; ++i) {
+  for (int i = 0; i < spx_.numRowsRational(); ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexTheorySolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
     const auto &[var, truth] = theory_row_to_lit_[i];
@@ -252,7 +281,6 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
     // Add all the active bounds for the free variables in the row to the explanation
     for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
-      // TODO: get the value of the column from the ray for a smaller violation
       TheoryBoundsToExplanation(theory_col, true, explanation);
     }
   }

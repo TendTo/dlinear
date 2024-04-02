@@ -145,6 +145,29 @@ class SoplexTheorySolver : public TheorySolver {
   void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
   void CreateArtificials(int spx_row);
 
+  /**
+   * Get the infeasibility rays of the LP problem.
+   *
+   * This will return the Farkas ray, which can be used to find the infeasible core.
+   * @pre The LP problem must be infeasible
+   * @pre @code farkas_ray.size() == num_rows @endcode
+   * @param[out] farkas_ray Farkas ray
+   */
+  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray);
+  /**
+   * Get the infeasibility rays of the LP problem.
+   *
+   * This will return the Farkas ray and use it to compute the bounds ray.
+   * Combinind both it is possible to to find an even more precise infeasible core.
+   * @pre The LP problem must be infeasible
+   * @pre @code farkas_ray.size() == num_rows @endcode
+   * @pre @code bounds_ray.size() == num_cols - 1 @endcode
+   * @pre All the element in @p bounds_ray must be @ref BoundViolationType::NO_BOUND_VIOLATION
+   * @param[out] farkas_ray Farkas ray
+   * @param[out] bounds_ray information about the bounds that are violated
+   */
+  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray, std::vector<BoundViolationType>& bounds_ray);
+
   soplex::SoPlex spx_;  ///< SoPlex exact LP solver
 
   std::vector<mpq_class> spx_rhs_;     ///< Right-hand side of the rows
