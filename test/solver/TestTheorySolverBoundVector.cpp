@@ -142,7 +142,35 @@ TEST_F(TestTheorySolverBoundVector, AddDBound) {
   EXPECT_EQ(*empty_bounds_.nq_bounds().begin(), TheorySolverBoundVector::Bound(&value, LpColBound::D, bound_idx));
 }
 
-TEST_F(TestTheorySolverBoundVector, NoNqActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, EmptyActiveBound) {
+  auto it = empty_bounds_.GetActiveBound();
+  EXPECT_TRUE(it.empty());
+}
+TEST_F(TestTheorySolverBoundVector, EmptyActiveBounds) {
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_TRUE(it.empty());
+}
+TEST_F(TestTheorySolverBoundVector, OnlyNqActiveBound) {
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  auto it = empty_bounds_.GetActiveBound();
+  EXPECT_EQ(it.nq_bounds_size(), 3u);
+  EXPECT_TRUE(it.bounds_empty());
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().begin());
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, OnlyNqActiveBounds) {
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.nq_bounds_size(), 3u);
+  EXPECT_TRUE(it.bounds_empty());
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().begin());
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, NoNqActiveBound) {
   auto it = bounds_.GetActiveBound();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_EQ(it.bounds_size(), 2u);
@@ -150,7 +178,15 @@ TEST_F(TestTheorySolverBoundVector, NoNqActiveBounds) {
   EXPECT_EQ(it.bounds().first, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() - 1);
   EXPECT_EQ(it.bounds().second, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() + 1);
 }
-TEST_F(TestTheorySolverBoundVector, OnlyLowerBoundsActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, NoNqActiveBounds) {
+  auto it = bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() - 1);
+  EXPECT_EQ(it.bounds().second, bounds_.bounds().cbegin() + bounds_.n_lower_bounds() + 1);
+}
+TEST_F(TestTheorySolverBoundVector, OnlyLowerBoundsActiveBound) {
   const int eq_idx = idx();
   empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
@@ -165,7 +201,23 @@ TEST_F(TestTheorySolverBoundVector, OnlyLowerBoundsActiveBounds) {
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
   EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[3], LpColBound::SL, eq_idx));
 }
-TEST_F(TestTheorySolverBoundVector, OnlyUpperBoundsActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, OnlyLowerBoundsActiveBounds) {
+  const int eq_idx = idx(), eq_idx2 = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, eq_idx);
+  empty_bounds_.AddBound(val_[3], LpColBound::SL, eq_idx2);
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cend() - 2);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[3], LpColBound::L, eq_idx));
+  EXPECT_EQ(*(++it), TheorySolverBoundVector::Bound(&val_[3], LpColBound::SL, eq_idx2));
+}
+TEST_F(TestTheorySolverBoundVector, OnlyUpperBoundsActiveBound) {
   const int eq_idx = idx();
   empty_bounds_.AddBound(val_[1], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[1], LpColBound::SU, eq_idx);
@@ -180,8 +232,24 @@ TEST_F(TestTheorySolverBoundVector, OnlyUpperBoundsActiveBounds) {
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cbegin() + 1);
   EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[1], LpColBound::SU, eq_idx));
 }
+TEST_F(TestTheorySolverBoundVector, OnlyUpperBoundsActiveBounds) {
+  const int eq_idx = idx(), eq_idx2 = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_idx2);
+  empty_bounds_.AddBound(val_[1], LpColBound::SU, eq_idx);
+  empty_bounds_.AddBound(val_[2], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[1], LpColBound::SU, eq_idx));
+  EXPECT_EQ(*(++it), TheorySolverBoundVector::Bound(&val_[1], LpColBound::U, eq_idx2));
+}
 
-TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBound) {
   empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[0], LpColBound::SL, idx());
   empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
@@ -204,7 +272,30 @@ TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBounds) {
   EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 2);
   EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 2);
 }
-TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsLower) {
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBounds) {
+  empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 5u);
+  EXPECT_EQ(it.nq_bounds_size(), 1u);
+  EXPECT_EQ(it.bounds_size(), 4u);
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 2);
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 2);
+}
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundLower) {
   empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[0], LpColBound::SL, idx());
   empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
@@ -223,7 +314,26 @@ TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsLower) {
   EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 2);
   EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend());
 }
-TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsUpper) {
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsLower) {
+  empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::D, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 5u);
+  EXPECT_EQ(it.nq_bounds_size(), 3u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 2);
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundUpper) {
   empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
   empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
   empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
@@ -242,7 +352,41 @@ TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsUpper) {
   EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin());
   EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 2);
 }
+TEST_F(TestTheorySolverBoundVector, NqBoundsActiveBoundsUpper) {
+  empty_bounds_.AddBound(val_[0], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[4], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 5u);
+  EXPECT_EQ(it.nq_bounds_size(), 3u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin());
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 2);
+}
 
+TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundOverLower) {
+  const int eq_idx = idx();
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  auto it = empty_bounds_.GetActiveBound();
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_EQ(*it.bounds().first, TheorySolverBoundVector::Bound(&val_[3], LpColBound::L, eq_idx));
+  EXPECT_EQ(*(it.bounds().first + 1), TheorySolverBoundVector::Bound(&val_[3], LpColBound::U, eq_idx));
+}
 TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   const int eq_idx = idx();
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
@@ -251,6 +395,21 @@ TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_EQ(*it.bounds().first, TheorySolverBoundVector::Bound(&val_[3], LpColBound::L, eq_idx));
+  EXPECT_EQ(*(it.bounds().first + 1), TheorySolverBoundVector::Bound(&val_[3], LpColBound::U, eq_idx));
+}
+TEST_F(TestTheorySolverBoundVector, PriorityEqBoundActiveBoundsOverUpper) {
+  const int eq_idx = idx();
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   auto it = empty_bounds_.GetActiveBound();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -266,14 +425,14 @@ TEST_F(TestTheorySolverBoundVector, PriorityEqBoundsActiveBoundsOverUpper) {
   empty_bounds_.AddBound(val_[3], LpColBound::B, eq_idx);
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
-  auto it = empty_bounds_.GetActiveBound();
+  auto it = empty_bounds_.GetActiveBounds();
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
   EXPECT_EQ(*it.bounds().first, TheorySolverBoundVector::Bound(&val_[3], LpColBound::L, eq_idx));
   EXPECT_EQ(*(it.bounds().first + 1), TheorySolverBoundVector::Bound(&val_[3], LpColBound::U, eq_idx));
 }
-TEST_F(TestTheorySolverBoundVector, EqBoundsActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, EqBoundsActiveBound) {
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
@@ -287,7 +446,21 @@ TEST_F(TestTheorySolverBoundVector, EqBoundsActiveBounds) {
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 3);
 }
-TEST_F(TestTheorySolverBoundVector, LBBoundsActiveBounds) {
+TEST_F(TestTheorySolverBoundVector, EqBoundsActiveBounds) {
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::B, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 7u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds_size(), 7u);
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, LBBoundsActiveBound) {
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
@@ -300,7 +473,42 @@ TEST_F(TestTheorySolverBoundVector, LBBoundsActiveBounds) {
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 1);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
 }
+TEST_F(TestTheorySolverBoundVector, LBBoundsActiveBounds) {
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  auto it = empty_bounds_.GetActiveBounds();
+  EXPECT_EQ(it.size(), 5u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds_size(), 5u);
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+}
 
+TEST_F(TestTheorySolverBoundVector, AbsentGetActiveSingleBound) {
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBound(val_[2] + mpq_class{1, 2});
+  EXPECT_TRUE(it.empty());
+}
+TEST_F(TestTheorySolverBoundVector, AbsentGetActiveSingleBounds) {
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds(val_[2] + mpq_class{1, 2});
+  EXPECT_TRUE(it.empty());
+}
 TEST_F(TestTheorySolverBoundVector, NqGetActiveSingleBound) {
   empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
@@ -316,11 +524,37 @@ TEST_F(TestTheorySolverBoundVector, NqGetActiveSingleBound) {
   EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 1);
   EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 1);
 }
+TEST_F(TestTheorySolverBoundVector, NqGetActiveSingleBounds) {
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds(val_[2]);
+  EXPECT_EQ(it.size(), 1u);
+  EXPECT_EQ(it.nq_bounds_size(), 1u);
+  EXPECT_TRUE(it.bounds_empty());
+  EXPECT_EQ(it.nq_bounds().first, empty_bounds_.nq_bounds().cbegin() + 1);
+  EXPECT_EQ(it.nq_bounds().second, empty_bounds_.nq_bounds().cend() - 1);
+}
 TEST_F(TestTheorySolverBoundVector, EqGetActiveSingleBound) {
   empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
   empty_bounds_.AddBound(val_[2], LpColBound::B, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   auto it = empty_bounds_.GetActiveBound(val_[2]);
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 1);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 1);
+}
+TEST_F(TestTheorySolverBoundVector, EqGetActiveSingleBounds) {
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::B, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  auto it = empty_bounds_.GetActiveBounds(val_[2]);
   EXPECT_EQ(it.size(), 2u);
   EXPECT_EQ(it.bounds_size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -344,6 +578,24 @@ TEST_F(TestTheorySolverBoundVector, StrictLowerGetActiveSingleBound) {
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
   EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[1], LpColBound::SL, eq_idx));
 }
+TEST_F(TestTheorySolverBoundVector, StrictLowerGetActiveSingleBounds) {
+  const int eq_idx = idx(), eq_idx2 = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_idx);
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, eq_idx2);
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds(val_[1]);
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[1], LpColBound::L, eq_idx));
+  EXPECT_EQ(*(++it), TheorySolverBoundVector::Bound(&val_[1], LpColBound::SL, eq_idx2));
+}
 TEST_F(TestTheorySolverBoundVector, LowerGetActiveSingleBound) {
   const int eq_idx = idx();
   empty_bounds_.AddBound(val_[1], LpColBound::L, eq_idx);
@@ -352,6 +604,21 @@ TEST_F(TestTheorySolverBoundVector, LowerGetActiveSingleBound) {
   empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
   auto it = empty_bounds_.GetActiveBound(val_[1]);
+  EXPECT_EQ(it.size(), 1u);
+  EXPECT_EQ(it.bounds_size(), 1u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[1], LpColBound::L, eq_idx));
+}
+TEST_F(TestTheorySolverBoundVector, LowerGetActiveSingleBounds) {
+  const int eq_idx = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_idx);
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, idx());
+  auto it = empty_bounds_.GetActiveBounds(val_[1]);
   EXPECT_EQ(it.size(), 1u);
   EXPECT_EQ(it.bounds_size(), 1u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -376,6 +643,24 @@ TEST_F(TestTheorySolverBoundVector, StrictUpperGetActiveSingleBound) {
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 1);
   EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[3], LpColBound::SU, eq_idx));
 }
+TEST_F(TestTheorySolverBoundVector, StrictUpperGetActiveSingleBounds) {
+  const int eq_idx = idx(), eq_idx2 = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, eq_idx2);
+  empty_bounds_.AddBound(val_[3], LpColBound::SU, eq_idx);
+  auto it = empty_bounds_.GetActiveBounds(val_[3]);
+  EXPECT_EQ(it.size(), 2u);
+  EXPECT_EQ(it.bounds_size(), 2u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[3], LpColBound::SU, eq_idx));
+  EXPECT_EQ(*(++it), TheorySolverBoundVector::Bound(&val_[3], LpColBound::U, eq_idx2));
+}
 TEST_F(TestTheorySolverBoundVector, UpperGetActiveSingleBound) {
   const int eq_idx = idx();
   empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
@@ -384,6 +669,21 @@ TEST_F(TestTheorySolverBoundVector, UpperGetActiveSingleBound) {
   empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
   empty_bounds_.AddBound(val_[3], LpColBound::U, eq_idx);
   auto it = empty_bounds_.GetActiveBound(val_[3]);
+  EXPECT_EQ(it.size(), 1u);
+  EXPECT_EQ(it.bounds_size(), 1u);
+  EXPECT_TRUE(it.nq_bounds_empty());
+  EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
+  EXPECT_EQ(*it, TheorySolverBoundVector::Bound(&val_[3], LpColBound::U, eq_idx));
+}
+TEST_F(TestTheorySolverBoundVector, UpperGetActiveSingleBounds) {
+  const int eq_idx = idx();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::SL, idx());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[2], LpColBound::D, idx());
+  empty_bounds_.AddBound(val_[3], LpColBound::U, eq_idx);
+  auto it = empty_bounds_.GetActiveBounds(val_[3]);
   EXPECT_EQ(it.size(), 1u);
   EXPECT_EQ(it.bounds_size(), 1u);
   EXPECT_TRUE(it.nq_bounds_empty());
@@ -766,3 +1066,5 @@ TEST_F(TestTheorySolverBoundVector, ViolationLowerOverStrictUpperStandardNoViola
   auto violation = empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
   EXPECT_FALSE(violation);
 }
+
+TEST_F(TestTheorySolverBoundVector, Stdout) { EXPECT_NO_THROW(std::cout << bounds_ << std::endl); }

@@ -148,6 +148,7 @@ class TheorySolverBoundVector {
    * enclosing the interval [@ref active_lower_bound_, @ref active_upper_bound_]
    * as well as all the not-equal constraints in that interval.
    * @return iterator over the active bounds
+   * @see GetActiveBounds
    */
   [[nodiscard]] BoundIterator GetActiveBound() const;
   /**
@@ -155,8 +156,27 @@ class TheorySolverBoundVector {
    * as well as all the not-equal constraints in that interval.
    * @param value value to check
    * @return iterator over the active bounds
+   * @see GetActiveBounds
    */
   [[nodiscard]] BoundIterator GetActiveBound(const mpq_class& value) const;
+  /**
+   * Return a @ref BoundIterator containing a set of bounds
+   * enclosing the interval [@ref active_lower_bound_, @ref active_upper_bound_]
+   * as well as all the not-equal constraints in that interval.
+   * @note Equality bounds will hide not matching inequality bounds.
+   * @return iterator over the active bounds
+   * @see GetActiveBound
+   */
+  [[nodiscard]] BoundIterator GetActiveBounds() const;
+  /**
+   * Return a @ref BoundIterator containing a set of bounds enclosing the interval [@p value, @p value]
+   * as well as all the not-equal constraints in that interval.
+   * @param value value to check
+   * @note Equality bounds will hide not matching inequality bounds.
+   * @return iterator over the active bounds
+   * @see GetActiveBound
+   */
+  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& value) const;
   /**
    * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
    *
@@ -305,11 +325,23 @@ class TheorySolverBoundVector {
    * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p lb, @p ub]
    * as well as all the not-equal constraints in that interval.
    * @pre @code (lb == active_lower_bound_ && ub == active_upper_bound_) || lb == ub @endcode
+   * @pre @code lb <= ub @endcode
    * @param lb lower bound
    * @param ub upper bound
    * @return iterator over the active bounds
    */
   [[nodiscard]] BoundIterator GetActiveBound(const mpq_class& lb, const mpq_class& ub) const;
+  /**
+   * Return a @ref BoundIterator containing the set of bounds enclosing the interval [@p lb, @p ub]
+   * as well as all the not-equal constraints in that interval.
+   * @note Equality bounds will hide not matching inequality bounds.
+   * @pre @code (lb == active_lower_bound_ && ub == active_upper_bound_) || lb == ub @endcode
+   * @pre @code lb <= ub @endcode
+   * @param lb lower bound
+   * @param ub upper bound
+   * @return iterator over the active bounds
+   */
+  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const;
 
   int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
   BoundVector bounds_;                   ///< Equality and inequality bounds
