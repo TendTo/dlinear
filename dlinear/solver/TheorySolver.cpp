@@ -150,6 +150,21 @@ void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool ac
     }
   }
 }
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const mpq_class &value,
+                                             LiteralSet &explanation) const {
+  for (auto it = theory_bounds_[theory_col].GetActiveBound(value); it; ++it) {
+    explanation.insert(theory_row_to_lit_[it->idx]);
+  }
+}
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const TheorySolver::BoundViolationType type,
+                                             LiteralSet &explanation) const {
+  if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
+  const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
+  return TheoryBoundsToExplanation(
+      theory_col,
+      type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
+      explanation);
+}
 
 void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, std::set<int> &bound_idxs) {
   for (; violation; ++violation) bound_idxs.insert(violation->idx);
@@ -160,6 +175,19 @@ void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool acti
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.idx);
   }
+}
+void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const mpq_class &value,
+                                           std::set<int> &bound_idxs) const {
+  for (auto it = theory_bounds_[theory_col].GetActiveBound(value); it; ++it) bound_idxs.insert(it->idx);
+}
+void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const TheorySolver::BoundViolationType type,
+                                           std::set<int> &bound_idxs) const {
+  if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
+  const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
+  return TheoryBoundsToBoundIdxs(
+      theory_col,
+      type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
+      bound_idxs);
 }
 
 }  // namespace dlinear

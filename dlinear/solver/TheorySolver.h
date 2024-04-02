@@ -182,6 +182,13 @@ class TheorySolver {
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
 
  protected:
+  /** Enum used to describe how the bounds on a variable participate in the infeasibility result of an LP problem */
+  enum class BoundViolationType {
+    NO_BOUND_VIOLATION,           ///< The bounds of the variable have no role in the infeasibility
+    LOWER_BOUND_VIOLATION,  ///< The lower bound is involved in the infeasibility
+    UPPER_BOUND_VIOLATION,  //< The upper bound is involved in the infeasibility
+  };
+
   /**
    * Check whether the formula is a simple relational bound.
    *
@@ -275,6 +282,21 @@ class TheorySolver {
    * @param[out] explanation set of literals that correspond to the conflicting bounds
    */
   void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
+  /**
+   * Gather the bounds that enforced @p value on @p theory_col and produce an explanation for the SAT solver.
+   * @param theory_col theory column the bounds are associated with
+   * @param value value the bounds enforce on the @p theory_col
+   * @param[out] explanation set of literals that correspond to the conflicting bounds
+   */
+  void TheoryBoundsToExplanation(int theory_col, const mpq_class &value, LiteralSet &explanation) const;
+  /**
+   * Gather the bounds that caused the specified @p type of bound violation on the @p theory_col
+   * and produce an explanation for the SAT solver.
+   * @param theory_col theory column the bounds are associated with
+   * @param type type of violation the bound is associated with
+   * @param[out] explanation set of literals that correspond to the conflicting bounds
+   */
+  void TheoryBoundsToExplanation(int theory_col, const BoundViolationType type, LiteralSet &explanation) const;
 
   /**
    * Get the indexes of the violated bounds.
@@ -289,7 +311,20 @@ class TheorySolver {
    * @param[out] bound_idxs set of indexes of the bounds
    */
   void TheoryBoundsToBoundIdxs(int theory_col, bool active, std::set<int> &bound_idxs) const;
-
+  /**
+   * Get the indexes of the bounds that enforce the @p value on the @p theory_col.
+   * @param theory_col theory column the bounds are associated with
+   * @param value value the bounds enforce on the @p theory_col
+   * @param[out] bound_idxs set of indexes of the bounds
+   */
+  void TheoryBoundsToBoundIdxs(int theory_col, const mpq_class &value, std::set<int> &bound_idxs) const;
+  /**
+   * Get the indexes of the bounds that caused the specified @p type of bound violation on the @p theory_col.
+   * @param theory_col theory column the bounds are associated with
+   * @param type type of violation the bound is associated with
+   * @param[out] bound_idxs set of indexes of the bounds
+   */
+  void TheoryBoundsToBoundIdxs(int theory_col, const BoundViolationType type, std::set<int> &bound_idxs) const;
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
    *
@@ -346,10 +381,10 @@ class TheorySolver {
    */
   virtual void Consolidate();
 
-  bool is_consolidated_;        ///< Whether the solver has been consolidated.
-                                ///< This method must be called after all the literals have been added to the solver.
-  int simplex_sat_phase_;       ///< Phase of the simplex algorithm
-  double precision_;            ///< Precision used to check the satisfiability of the theory
+  bool is_consolidated_;   ///< Whether the solver has been consolidated.
+                           ///< This method must be called after all the literals have been added to the solver.
+  int simplex_sat_phase_;  ///< Phase of the simplex algorithm
+  double precision_;       ///< Precision used to check the satisfiability of the theory
 
   const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor used to create the theory solver
 
