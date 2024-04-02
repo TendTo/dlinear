@@ -156,7 +156,7 @@ void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, st
 }
 void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool active, std::set<int> &bound_idxs) const {
   if (active) {
-    for (auto it = theory_bounds_[theory_col].GetActiveBounds(); it; ++it) bound_idxs.insert(it->idx);
+    for (auto it = theory_bounds_[theory_col].GetActiveBound(); it; ++it) bound_idxs.insert(it->idx);
   } else {
     for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.idx);
   }

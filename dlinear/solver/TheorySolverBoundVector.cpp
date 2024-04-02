@@ -215,13 +215,13 @@ bool TheorySolverBoundVector::IsUpperBound(const mpq_class& value) const {
   return it != bounds_.cend();
 }
 
-TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds() const {
-  return GetActiveBounds(*active_lower_bound_, *active_upper_bound_);
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBound() const {
+  return GetActiveBound(*active_lower_bound_, *active_upper_bound_);
 }
-TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(const mpq_class& value) const {
-  return GetActiveBounds(value, value);
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBound(const mpq_class& value) const {
+  return GetActiveBound(value, value);
 }
-TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(const mpq_class& lb,
+TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBound(const mpq_class& lb,
                                                                                 const mpq_class& ub) const {
   DLINEAR_ASSERT(lb == ub || (lb == *active_lower_bound_ && ub == *active_upper_bound_), "Bounds must be == or active");
   auto lb_it = FindUpperBound(&lb, LpColBound::SL);
@@ -229,7 +229,7 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(
   // Adjust the iterators based on the state of the vector
   if (lb_it != bounds_.cbegin() && lb == *(lb_it - 1)->value) lb_it--;
   if (ub_it != bounds_.cend() && ub == *ub_it->value) ub_it++;
-  return BoundIterator{lb_it, ub_it,  // The non-equal bounds are inclusive if there is no normal bounds
+  return BoundIterator{lb_it, ub_it,  // The non-equal bounds become inclusive if there is no normal bounds
                        lb_it == ub_it ? FindLowerNqBoundValue(&lb) : FindUpperNqBoundValue(&lb),
                        lb_it == ub_it ? FindUpperNqBoundValue(&ub) : FindLowerNqBoundValue(&ub)};
 }
@@ -241,7 +241,7 @@ LiteralSet TheorySolverBoundVector::GetActiveExplanation(const std::vector<Liter
 }
 void TheorySolverBoundVector::GetActiveExplanation(const std::vector<Literal>& theory_bound_to_lit,
                                                    LiteralSet& explanation) const {
-  for (BoundIterator it = GetActiveBounds(); it; ++it) explanation.emplace(theory_bound_to_lit.at(it->idx));
+  for (BoundIterator it = GetActiveBound(); it; ++it) explanation.emplace(theory_bound_to_lit.at(it->idx));
 }
 LiteralSet TheorySolverBoundVector::GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit) const {
   LiteralSet explanation;
@@ -251,7 +251,7 @@ LiteralSet TheorySolverBoundVector::GetActiveEqExplanation(const std::vector<Lit
 void TheorySolverBoundVector::GetActiveEqExplanation(const std::vector<Literal>& theory_bound_to_lit,
                                                      LiteralSet& explanation) const {
   if (GetActiveEqualityBound() == nullptr) return;
-  for (BoundIterator it = GetActiveBounds(); it; ++it) explanation.emplace(theory_bound_to_lit.at(it->idx));
+  for (BoundIterator it = GetActiveBound(); it; ++it) explanation.emplace(theory_bound_to_lit.at(it->idx));
 }
 
 std::pair<const mpq_class&, const mpq_class&> TheorySolverBoundVector::GetActiveBoundsValue() const {

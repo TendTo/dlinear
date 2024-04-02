@@ -149,14 +149,14 @@ class TheorySolverBoundVector {
    * as well as all the not-equal constraints in that interval.
    * @return iterator over the active bounds
    */
-  [[nodiscard]] BoundIterator GetActiveBounds() const;
+  [[nodiscard]] BoundIterator GetActiveBound() const;
   /**
    * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p value, @p value]
    * as well as all the not-equal constraints in that interval.
    * @param value value to check
    * @return iterator over the active bounds
    */
-  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& value) const;
+  [[nodiscard]] BoundIterator GetActiveBound(const mpq_class& value) const;
   /**
    * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
    *
@@ -309,7 +309,7 @@ class TheorySolverBoundVector {
    * @param ub upper bound
    * @return iterator over the active bounds
    */
-  [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const;
+  [[nodiscard]] BoundIterator GetActiveBound(const mpq_class& lb, const mpq_class& ub) const;
 
   int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
   BoundVector bounds_;                   ///< Equality and inequality bounds
