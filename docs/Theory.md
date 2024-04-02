@@ -204,7 +204,7 @@ The standard form of a **LP** problem is the following:
 $$
 \begin{equation*}
     \begin{aligned}
-         & \text{maximize}   & c^T x      \newline
+         & \max              & c^T x      \newline
          & \text{subject to} & A x \leq b \newline
          &                   & x \geq 0
     \end{aligned}
@@ -213,8 +213,6 @@ $$
 
 where $x \in \mathbb{R}^d$ is the vector of variables to be determined, $c \in \mathbb{R}^d$ and $b \in \mathbb{R}^n$ are vectors of coefficients, and $A \in \mathbb{R}^{n \times d}$ is a matrix of coefficients.
 It is always possible to rewrite a **LP** problem in standard form following these steps:
-
-\begin{itemize}
 
 - If the problem is a minimization problem, it is sufficient to multiply the objective function by $-1$ to obtain the corresponding maximization problem.
 - If some variables have no lower bound, they can be substituted with the difference of two variables, both with a lower bound of $0$ (i.e. $x = x_1 - x_2$ and $x_1, x_2 \geq 0$).
@@ -283,6 +281,48 @@ To iterate the simplex method, the following steps are performed:
 
 The solution is obtained by reading the corresponding value from the tableau's last column, while the objective function's value can be found in the top right corner.
 
+### Farkas' lemma
+
+To prove that an **LP** problem is feasible, it is sufficient to find a vector $x$ and verify that $Ax \le b$.
+It is possible to find a similar proof for the infeasibility of a problem.
+
+The _Farkas' lemma_ states that only one of the following two statements is true for a given pair $(A, b)$:
+
+$$
+\begin{array}{l}
+    \exists x : Ax \le b \newline
+    \newline
+    \exists y : y^T A \le 0 \land y^T b > 0
+\end{array}
+$$
+
+For **LP** problems, the vector $y$ is obtained by solving the dual problem.
+Consider the following **LP** problem:
+
+$$
+\begin{equation*}
+    \begin{aligned}
+         & \max              & c^T x      \newline
+         & \text{subject to} & A x \geq b \newline
+         &                   & x \geq 0
+    \end{aligned}
+\end{equation*}
+$$
+
+The corresponding dual problem is:
+
+$$
+\begin{equation*}
+    \begin{aligned}
+         & \min              & b^T y      \newline
+         & \text{subject to} & A^T y \le c \newline
+         &                   & y \geq 0
+    \end{aligned}
+\end{equation*}
+$$
+
+By the _weak duality theorem_, it is possible to use the extreme ray from the unbounded dual problem to construct the vector $y$, called **Farkas' Ray**, that satisfies Farkas' lemma.
+
 ## SMT and Linear Programming
 
 Even when working within the same problem space, many differences exist between **LP** and **SMT** solvers.
@@ -307,6 +347,18 @@ Deciding the satisfiability of these components is usually done using a **LP** s
 ### The problem of feasibility
 
 Consider the following LP problem:
+
+$$
+\begin{equation*}
+    \begin{aligned}
+         & \max              & c^T x      \newline
+         & \text{subject to} & A x \leq b \newline
+         &                   & x \geq 0
+    \end{aligned}
+\end{equation*}
+$$
+
+or the equivalent expanded form:
 
 $$
 \begin{array}{lll}
@@ -339,6 +391,41 @@ $$
 Solving the problem with an LP solver will give us the feasibility of the problem.
 
 <!-- New section -->
+
+### Irreducible Infeasible Set (IIS)
+
+An _Irreducible Infeasible Set_ is a subset of the constraints and bounds that cause the **LP** problem to be infeasible.
+Removing any constraint from the set will make the problem feasible.
+
+Such a set can be computed by considering the **Farkas' ray**.
+If the bounds on the variable are not just $\ge 0$, some operations must take place to ensure they are properly considered in the set.
+
+Assume we have a problem in the form:
+
+$$
+\begin{align*}
+\max \quad & 0 \newline
+\text{s.t.} \quad & a_{11} x_1 + a_{12} x_2 + \dots + a_{1n} x_n \le b_1 \newline
+& \vdots \newline
+& a_{m1} x_1 + a_{m2} x_2 + \dots + a_{mn} x_n \le b_m \newline
+& x_i \ge l_i, \quad i = 1, 2, \dots, n \newline
+& x_i \le u_i, \quad i = 1, 2, \dots, n
+\end{align*}
+$$
+
+Let $y$ be the standard **Farkas' ray**, which corresponds to a dual problem's feasible solution.
+Set $q^T = y^TA$ and define a vector $z$ such that
+
+$$
+z = \begin{cases}
+l_j & \text{if } q_j < 0 \newline
+u_j & \text{if } q_j \ge 0 \newline
+\end{cases}
+$$
+
+The key property of such certificate is that it will satisfy $q^Tz = y^TAz < y^Tb$.
+
+# TODO: expand on the topic
 
 ### Strict inequalities
 
