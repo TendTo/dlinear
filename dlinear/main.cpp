@@ -14,7 +14,6 @@
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Timer.h"
 
 namespace {
 void HandleSigInt(const int) {
@@ -40,6 +39,10 @@ int main(int argc, const char* argv[]) {
   // Run the solver
   dlinear::SmtSolverOutput result = solver.CheckSat();
   if (!config.silent()) std::cout << result << std::endl;
+  if (!config.silent() && config.complete() && solver.GetExpected() != dlinear::SolverResult::UNKNOWN &&
+      result.result != solver.GetExpected()) {
+    std::cerr << "WARNING: Expected " << solver.GetExpected() << " but got " << result.result << std::endl;
+  }
 
   return result.exit_code();
 }
