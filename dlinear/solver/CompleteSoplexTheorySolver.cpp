@@ -105,7 +105,7 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
 
   // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
   if (it_row == lit_to_theory_row_.end()) {
-    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: ignoring ({}{})", truth ? "" : "¬", var);
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: ignoring ({})", lit);
     return {};
   }
 
@@ -372,13 +372,10 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: ↦ {}", theory_rows_to_explanation_);
 }
 
-// TODO: implement cache between first GetActiveRows call and the second one to keep track of rows in
-//  enabled_strict_theory_rows_
-// TODO: make sure this includes bounds (it should)
 void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible({})", enabled_strict_theory_rows_);
   DLINEAR_ASSERT(!enabled_strict_theory_rows_.empty(), "enabled_strict_theory_rows_ must not be empty");
-  DLINEAR_ASSERT(!GetActiveRows(enabled_strict_theory_rows_).empty(), "At least 1 strict row must have been violated");
+  DLINEAR_ASSERT(!GetActiveRows(enabled_strict_theory_rows_).empty(), "At least 1 strict row must have been  violated");
 
   // Clear previous explanation
   theory_rows_to_explanation_.clear();
@@ -387,68 +384,28 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   soplex::VectorRational x{spx_.numColsRational()};
   [[maybe_unused]] bool has_sol = spx_.getPrimalRational(x);
   DLINEAR_ASSERT(has_sol, "has_sol must be true");
+  soplex::VectorRational dual{spx_.numRowsRational()};
+  [[maybe_unused]] const bool has_dual = spx_.getDualRational(dual);
+  DLINEAR_ASSERT(has_dual, "has_dual must be true");
 
-  // TODO: REMOVE AFTER DEBUG
-#if 0
-  {
-    soplex::VectorRational x{spx_.numColsRational()};
-    spx_.getPrimalRational(x);
-    for (int i = 0; i < spx_.numRowsRational(); ++i) {
-      soplex::LPRowRational row;
-      spx_.getRowRational(i, row);
-      DLINEAR_DEBUG_FMT(std::find(enabled_strict_theory_rows_.begin(), enabled_strict_theory_rows_.end(), i) !=
-                                enabled_strict_theory_rows_.end()
-                            ? "ACTIVE {}{}: {} {} {}"
-                            : "INACTIVE {}{}: {} {} {}",
-                        theory_row_to_lit_[i].second ? "" : "!", theory_row_to_lit_[i].first, row.lhs(),
-                        row.rowVector(), row.rhs());
-      if (row.lhs() == -soplex::infinity && row.rhs() == soplex::infinity) {
-        DLINEAR_DEBUG_FMT("Inactive {}{}: {}", theory_row_to_lit_[i].second ? "" : "!", theory_row_to_lit_[i].first,
-                          row.rowVector());
-      } else
-        DLINEAR_DEBUG_FMT("Row {}{}: {} {} {}", theory_row_to_lit_[i].second ? "" : "!", theory_row_to_lit_[i].first,
-                          row.lhs(), row.rowVector(), row.rhs());
-    }
-  }
-#endif
   // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
   // Find all strict theory row. The active ones indicate a violation in the strict bound.
-  std::stack<Variable::Id> stack;
   std::set<Variable::Id> visited_variables;
-  for (const auto &[spx_row, value] : GetActiveRows(enabled_strict_theory_rows_)) {
-    theory_rows_to_explanation_.emplace(spx_row);
-    // Find all the free variables in the row
-    const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
-    DLINEAR_ASSERT(!row_formula.GetFreeVariables().empty(), "row_formula.GetFreeVariables() must not be empty");
-    for (const Variable &var : row_formula.GetFreeVariables()) {
-      // Add all the free variables to the set of variables to check for active constraints
-      if (visited_variables.count(var.get_id()) > 0) continue;
-      stack.emplace(var.get_id());
-      visited_variables.insert(var.get_id());
-    }
+  for (int i = 0; i < dual.dim(); ++i) {
+    // Skip inactive rows
+    if (dual[i].is_zero()) continue;
+
+    enabled_strict_theory_rows_.push_back(i);
+    theory_rows_to_explanation_.insert(i);
+    const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[i].var];
+    for (const Variable &var : row_formula.GetFreeVariables()) visited_variables.insert(var.get_id());
   }
 
-  DLINEAR_DEBUG_FMT("Strict active rows: {}", enabled_strict_theory_rows_);
+  DLINEAR_DEBUG_FMT("Strict active rows: {}", theory_rows_to_explanation_);
 
-  // Run through the variables in the stack and add to the candidate violated rows all rows they appear in
-  while (!stack.empty()) {
-    Variable::Id var_id = stack.top();
-    stack.pop();
-
-    for (int spx_row : var_to_enabled_theory_rows_.at(var_id)) {
-      // If the row is not active or already in the explanation, skip it
-      if (theory_rows_to_explanation_.count(spx_row) > 0 || !IsRowActive(spx_row)) continue;
-      theory_rows_to_explanation_.insert(spx_row);
-      // Also add the free variables not yet visited in that row to the stack to check them later
-      const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[spx_row].var];
-      for (const Variable &var : row_formula.GetFreeVariables()) {
-        if (visited_variables.count(var.get_id()) > 0) continue;
-        stack.emplace(var.get_id());
-        visited_variables.insert(var.get_id());
-      }
-    }
-
-    // Add all the bounds for the variable to the candidate rows
+  // Run through the variables found in the active rows
+  for (const Variable::Id &var_id : visited_variables) {
+    // Add all the bounds for the variable to explanation, if they are active
     const int theory_col = var_to_theory_col_.at(var_id);
     TheoryBoundsToBoundIdxs(theory_col, mpq_class{x[theory_col].backend().data()}, theory_rows_to_explanation_);
   }
@@ -487,17 +444,17 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
   if (theory_rows_to_explanation_.empty()) return true;
 
   std::vector<size_t> nq_in_explanation = IteratorNqRowsInExplanation();
-  DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
   // If no non-equal is violated, we can return immediately since the problem is UNSAT for other reasons
   if (nq_in_explanation.empty()) {
-    DLINEAR_WARN("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasibility detected");
+    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasibility detected");
     return false;
   }
   // If there is just a single non-equal row in the explanation...
   if (nq_in_explanation.size() == 1) {
-    DLINEAR_WARN("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
-    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::CheckSat: the row was{} fixed before",
-                     bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : " NOT");
+    DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
+    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: the row was{} fixed before",
+                      bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : " NOT");
     // ... if it is the first time this happens, skip to an iterator values that doesn't violate the row anymore
     // otherwise, it meas that this row cannot be satisfied by the current model, so we can return immediately
     return bit_iterator.Learn(nq_in_explanation.back());

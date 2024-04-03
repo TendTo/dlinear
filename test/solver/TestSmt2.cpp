@@ -56,31 +56,8 @@ TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
 }
 
-namespace {
-const char* non_terminating[]{
-    "test/solver/smt2/bad_echos_ascend.base.smt2",
-    "test/solver/smt2/bad_echos_ascend.induction.smt2",
-    "test/solver/smt2/frame_prop.base.smt2",
-    "test/solver/smt2/frame_prop.induction.smt2",
-    "test/solver/smt2/gasburner-prop3-10.smt2",
-    "test/solver/smt2/gasburner-prop3-8.smt2",
-    "test/solver/smt2/gasburner-prop3-9.smt2",
-    "test/solver/smt2/no_op_accs.base.smt2",
-    "test/solver/smt2/pd_finish.base.smt2",
-    "test/solver/smt2/pd_finish.induction.smt2",
-    "test/solver/smt2/pd_no_op_accs.base.smt2",
-    "test/solver/smt2/pursuit-safety-3.smt2",
-    "test/solver/smt2/sc_init_frame_gap.induction.smt2",
-};
-}  // namespace
-
 TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
   const auto& [lp_solver, filename] = GetParam();
-  std::cout << "Testing " << filename << std::endl;
-  if (std::find(std::begin(non_terminating), std::end(non_terminating), filename) != std::end(non_terminating)) {
-    std::cout << "Skipping non-terminating test: " << filename << std::endl;
-    return;
-  }
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
