@@ -142,13 +142,6 @@ void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
     }
   } else if (is_variable(expr)) {
     SetQSXVarObjCoef(get_variable(expr), 1);
-  } else if (is_multiplication(expr)) {
-    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
-        get_constant_value(map.begin()->second) != 1) {
-      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
-    }
-    SetQSXVarObjCoef(get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     if (0 != get_constant_in_addition(expr)) {

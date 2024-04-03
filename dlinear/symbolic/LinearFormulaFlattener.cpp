@@ -19,10 +19,10 @@ const Formula& LinearFormulaFlattener::Flatten(const Formula& formula) {
 
   if (is_addition(expr)) {
     const mpq_class& constant{get_constant_in_addition(expr)};
-    if (!needs_expansion_ && expr.EqualTo(lhs) && constant == 0) return formula;
+    if (!needs_expansion_ && constant == 0 && expr.EqualTo(lhs)) return formula;
     BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
   } else {
-    if (!needs_expansion_ && expr.EqualTo(lhs)) return formula;
+    if (!needs_expansion_ && is_variable(lhs) && expr.EqualTo(lhs)) return formula;
     BuildFlatteredFormula(expr, 0, formula.get_kind());
   }
 
@@ -30,6 +30,21 @@ const Formula& LinearFormulaFlattener::Flatten(const Formula& formula) {
 }
 
 void LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind) {
+  // Remove multiplication from the left-hand-side of the formula if they are of the form a*x <=> b
+  if (is_multiplication(lhs) && get_base_to_exponent_map_in_multiplication(lhs).size() == 1 &&
+      is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first)) {
+    const mpq_class& constant{get_constant_in_multiplication(lhs)};
+    // If the constant is 1, we can just return the formula as is, removing the multiplication.
+    if (constant == 1)
+      return BuildFlatteredFormula(get_base_to_exponent_map_in_multiplication(lhs).begin()->first, rhs, kind);
+    DLINEAR_ASSERT(constant != 0, "Multiplication constant must be non-zero");
+    const Expression coefficient{1 / constant};
+    return BuildFlatteredFormula(lhs * coefficient, rhs * coefficient, coefficient >= 0 ? kind : -kind);
+  }
+
+  DLINEAR_ASSERT_FMT(!is_multiplication(lhs) || get_base_to_exponent_map_in_multiplication(lhs).size() != 1 ||
+                         !is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
+                     "lhs {} should have been modified by a previous call", lhs);
   switch (kind) {
     case FormulaKind::Eq:
       flattered_formula_ = lhs == rhs;

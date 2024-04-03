@@ -43,6 +43,16 @@ using drake::symbolic::Variables;
 using drake::symbolic::VisitExpression;
 using drake::symbolic::VisitFormula;
 
+
+/**
+ * Change the kind of the formula by multiplying all the expressions by a negative number.
+ *
+ * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f $ \leq @f$ to @f$ \geq @f$ and vice versa.
+ * @param kind kind of the formula
+ * @return the negated kind
+ */
+FormulaKind operator-(FormulaKind kind);
+
 /** Return a formula @p f1 ⇒ @p f2. */
 Formula imply(const Formula &f1, const Formula &f2);
 /** Return a formula @p v ⇒ @p f. */

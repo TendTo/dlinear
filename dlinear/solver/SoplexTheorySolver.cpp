@@ -99,7 +99,7 @@ std::optional<Rational> SoplexTheorySolver::IsRowActive(const int spx_row) {
   [[maybe_unused]] const bool res = spx_.getRowActivityRational(spx_row, row_value);
   DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
   spx_.getRowRational(spx_row, lp_row);
-  DLINEAR_TRACE_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::IsRowActive: {} =? {} =? {}", lp_row.lhs(), row_value, lp_row.rhs());
   return lp_row.lhs() == row_value || lp_row.rhs() == row_value ? std::optional{std::move(row_value)}
                                                                 : std::optional<Rational>{};
 }
@@ -111,7 +111,7 @@ bool SoplexTheorySolver::IsRowActive(const int spx_row, const Rational &value) {
   DLINEAR_ASSERT(res, "The problem must have a solution and the row must be present");
   if (row_value != value) return false;
   spx_.getRowRational(spx_row, lp_row);
-  DLINEAR_TRACE_FMT("row: {}, row_value: {}, lhs: {}, rhs: {}", spx_row, row_value, lp_row.lhs(), lp_row.rhs());
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::IsRowActive: {} =? {} =? {}", lp_row.lhs(), row_value, lp_row.rhs());
   return lp_row.lhs() == row_value || lp_row.rhs() == row_value;
 }
 
@@ -128,13 +128,6 @@ soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formul
 
   if (is_variable(lhs)) {
     SetSPXVarCoeff(coeffs, get_variable(lhs), 1);
-  } else if (is_multiplication(lhs)) {
-    const std::map<Expression, Expression> &map = get_base_to_exponent_map_in_multiplication(lhs);
-    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
-        get_constant_value(map.begin()->second) != 1) {
-      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", lhs);
-    }
-    SetSPXVarCoeff(coeffs, get_variable(map.begin()->first), get_constant_in_multiplication(lhs));
   } else if (is_addition(lhs)) {
     DLINEAR_ASSERT(get_constant_in_addition(lhs) == 0, "The addition constant must be 0");
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(lhs);
@@ -200,8 +193,8 @@ void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_r
       col_violation += farkas_ray[j] * spx_.rowVectorRational(j)[i];
     }
     if (col_violation.is_zero()) continue;
-    DLINEAR_WARN_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: {}[{}] = {}", theory_col_to_var_[i], i,
-                     col_violation);
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: {}[{}] = {}", theory_col_to_var_[i], i,
+                      col_violation);
     bounds_ray[i] =
         col_violation > 0 ? BoundViolationType::LOWER_BOUND_VIOLATION : BoundViolationType::UPPER_BOUND_VIOLATION;
   }

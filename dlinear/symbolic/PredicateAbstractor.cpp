@@ -47,7 +47,7 @@ Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
   auto it = formula_to_var_map_.find(flattened_f);
   // Leaf case: create a new Boolean variable `bvar` and record the relation between `bvar` and `f`.
   if (it == formula_to_var_map_.end()) {
-    const Variable bvar{(std::stringstream{} << "b(" << f << ")").str(), Variable::Type::BOOLEAN};
+    const Variable bvar{(std::stringstream{} << "b(" << flattened_f << ")").str(), Variable::Type::BOOLEAN};
     Add(bvar, flattened_f);
     return Formula{bvar};
   } else {

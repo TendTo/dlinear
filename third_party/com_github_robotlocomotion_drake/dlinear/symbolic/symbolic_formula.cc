@@ -87,6 +87,7 @@ bool Formula::IsFlattened() const {
   const Expression &lhs = get_lhs_expression(*this);
   const Expression &rhs = get_rhs_expression(*this);
   if (!is_constant(rhs)) return false;
+  if (!is_addition(lhs) && !is_variable(lhs)) return false;
   if (!lhs.EqualTo(lhs.Expand())) return false;
   const mpq_class &c = get_constant_value(rhs);
   return (lhs - rhs + c).EqualTo(lhs);

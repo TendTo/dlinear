@@ -43,8 +43,11 @@ class LinearFormulaFlattener {
 
  private:
   /**
-   * Use the updated expressions to build a new formula.
+   * Use the updated expressions to build a new formula, also removing any mult expression from the left-hand-side.
    *
+   * If a formula is in the form @f$ a x \lessgtr b @f$ where @f$ a, b \in \mathbb{R}, a \ne 0 @f$ are constants
+   * and @f$ x \in \mathbb{R} @f$ is an unknown variable, this method will remove the multiplication
+   * from the left-hand-side of the formula by dividing both sides by @f$ a @f$.
    * @param lhs left-hand-side expression of the new formula
    * @param rhs right-hand-side expression of the new formula
    * @param kind kind of the formula (e.g. Eq, Lt, Geq, ...)

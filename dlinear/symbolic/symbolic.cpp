@@ -15,6 +15,21 @@
 
 namespace dlinear {
 
+FormulaKind operator-(const FormulaKind kind) {
+  switch (kind) {
+    case FormulaKind::Geq:
+      return FormulaKind::Leq;
+    case FormulaKind::Gt:
+      return FormulaKind::Lt;
+    case FormulaKind::Leq:
+      return FormulaKind::Geq;
+    case FormulaKind::Lt:
+      return FormulaKind::Gt;
+    default:
+      return kind;
+  }
+}
+
 Formula imply(const Formula &f1, const Formula &f2) { return !f1 || f2; }
 Formula imply(const Variable &v, const Formula &f) { return imply(Formula{v}, f); }
 Formula imply(const Formula &f, const Variable &v) { return imply(f, Formula{v}); }

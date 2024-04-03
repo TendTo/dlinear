@@ -65,13 +65,6 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
     qsx_rhs_.back() = -get_constant_value(expr);
   } else if (is_variable(expr)) {
     SetQSXVarCoef(qsx_row, get_variable(expr), 1);
-  } else if (is_multiplication(expr)) {
-    std::map<Expression, Expression> map = get_base_to_exponent_map_in_multiplication(expr);
-    if (map.size() != 1 || !is_variable(map.begin()->first) || !is_constant(map.begin()->second) ||
-        get_constant_value(map.begin()->second) != 1) {
-      DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
-    }
-    SetQSXVarCoef(qsx_row, get_variable(map.begin()->first), get_constant_in_multiplication(expr));
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     for (const auto &pair : map) {
@@ -192,9 +185,9 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})", simplex_sat_phase_);
 
   if (1 == simplex_sat_phase_) {
-    status =
-        QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_), nullptr,
-                       PRIMAL_SIMPLEX, &lp_status, continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
+    status = QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_),
+                            nullptr, PRIMAL_SIMPLEX, &lp_status,
+                            continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
   } else {
     status = QSexact_delta_solver(qsx_, static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_), nullptr, PRIMAL_SIMPLEX,
                                   &lp_status, actual_precision->get_mpq_t(),
