@@ -50,22 +50,13 @@ class TheorySolver {
    *
    * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
    * understanding of the literals.
-   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
-   * @param config configuration of the theory solver
-   */
-  explicit TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
-  /**
-   * Construct a new Theory Solver object.
-   *
-   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
-   * understanding of the literals.
    * The @p class_name is used to identify the theory solver in the logs.
+   * @note The @p predicate abstractor will share its configuration with the theory solver.
    * @param class_name name of the subclass of the theory solver used
-   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
-   * @param config  configuration of the theory solver
+   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals. It is shared between
+   * the theory solver and the SAT solver
    */
-  TheorySolver(const std::string &class_name, const PredicateAbstractor &predicate_abstractor,
-               const Config &config = Config{});
+  TheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name = "TheorySolver");
   virtual ~TheorySolver() = default;
 
   /**
@@ -117,6 +108,17 @@ class TheorySolver {
    * @return model that satisfies all the constraints of the theory
    */
   [[nodiscard]] const Box &GetModel() const;
+
+  /**
+   * Get the shared pointer to the configuration of the theory solver.
+   * @return shared pointer to the configuration of the theory solver
+   */
+  [[nodiscard]] const Config::ConstSharedConfig &config_ptr() const { return config_; }
+  /**
+   * Get the configuration of the theory solver.
+   * @return configuration of the theory solver
+   */
+  [[nodiscard]] const Config &config() const { return *config_; }
   /**
    * Get the predicate abstractor.
    * @return predicate abstractr
@@ -184,7 +186,7 @@ class TheorySolver {
  protected:
   /** Enum used to describe how the bounds on a variable participate in the infeasibility result of an LP problem */
   enum class BoundViolationType {
-    NO_BOUND_VIOLATION,           ///< The bounds of the variable have no role in the infeasibility
+    NO_BOUND_VIOLATION,     ///< The bounds of the variable have no role in the infeasibility
     LOWER_BOUND_VIOLATION,  ///< The lower bound is involved in the infeasibility
     UPPER_BOUND_VIOLATION,  //< The upper bound is involved in the infeasibility
   };
@@ -381,10 +383,10 @@ class TheorySolver {
    */
   virtual void Consolidate();
 
-  bool is_consolidated_;   ///< Whether the solver has been consolidated.
-                           ///< This method must be called after all the literals have been added to the solver.
-  int simplex_sat_phase_;  ///< Phase of the simplex algorithm
-  double precision_;       ///< Precision used to check the satisfiability of the theory
+  const Config::ConstSharedConfig config_;  ///< Configuration of the theory solver
+
+  bool is_consolidated_;  ///< Whether the solver has been consolidated.
+                          ///< This method must be called after all the literals have been added to the solver.
 
   const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor used to create the theory solver
 

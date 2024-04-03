@@ -12,7 +12,6 @@
 
 #include "dlinear/libs/soplex.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -25,14 +24,15 @@ using soplex::Rational;
 const mpq_class CompleteSoplexTheorySolver::strict_col_lb_{0};
 const mpq_class CompleteSoplexTheorySolver::strict_col_ub_{1};
 
-CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SoplexTheorySolver("CompleteSoplexTheorySolver", predicate_abstractor, config),
+CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &predicate_abstractor,
+                                                       const std::string &class_name)
+    : SoplexTheorySolver(predicate_abstractor, class_name),
       enabled_strict_theory_rows_{},
       var_to_enabled_theory_rows_{},
       nq_row_to_theory_rows_{},
       last_nq_status_{},
       theory_rows_to_explanation_{} {
-  DLINEAR_ASSERT(config.precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
+  DLINEAR_ASSERT(config_->precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
 }
 
 void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
@@ -82,7 +82,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Add an inactive constraint with the right coefficients for the decisional variables
   soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
-  if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
+  if (2 == config_->simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
@@ -176,7 +176,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   EnableSPXVarBound();
 
   // Now we call the solver
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_->simplex_sat_phase());
 
   SatResult sat_status;
   // Initialise the iterator with the last nq statuses
@@ -240,7 +240,7 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
   // If the simplex_sat_status is 2, we expect the status to be OPTIMAL
   // Otherwise, the status must be OPTIMAL, UNBOUNDED, or INFEASIBLE
   // Anything else is an error
-  if ((2 == simplex_sat_phase_ && status != SoplexStatus::OPTIMAL) ||
+  if ((2 == config_->simplex_sat_phase() && status != SoplexStatus::OPTIMAL) ||
       (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE)) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
@@ -251,7 +251,7 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
     DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
   }
 
-  if (1 == simplex_sat_phase_) {
+  if (1 == config_->simplex_sat_phase()) {
     switch (status) {
       case SoplexStatus::OPTIMAL:
         if (spx_.objValueRational() > 0) return SatResult::SAT_SATISFIABLE;

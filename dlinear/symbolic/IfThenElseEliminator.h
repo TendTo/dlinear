@@ -27,8 +27,8 @@ namespace dlinear {
  */
 class IfThenElseEliminator {
  public:
-  explicit IfThenElseEliminator(const Config &config)
-      : stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
+  explicit IfThenElseEliminator(const Config::ConstSharedConfig &config)
+      : stats_{config->with_timings(), "IfThenElseEliminator", "Process"} {}
   explicit IfThenElseEliminator(const bool with_timings) : stats_{with_timings, "IfThenElseEliminator", "Process"} {}
   /**
    * Returns a equisatisfiable formula by eliminating

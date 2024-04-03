@@ -74,10 +74,12 @@ class TestTseitinCnfizer : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  TseitinCnfizer cnfizer_{{}};
+  TseitinCnfizer cnfizer_{std::make_shared<Config>()};
 };
 
 TEST_F(TestTseitinCnfizer, CnfChecker) {
+  DLINEAR_LOG_INIT_VERBOSITY(1);
+  
   vector<Formula> formulas;
   formulas.emplace_back(b1_);
   formulas.push_back(!b1_);

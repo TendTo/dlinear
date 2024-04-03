@@ -28,8 +28,8 @@ using std::unique_ptr;
 
 class MockSoplexTheorySolver : public SoplexTheorySolver {
  public:
-  explicit MockSoplexTheorySolver(PredicateAbstractor &abstractor, const Config &config)
-      : SoplexTheorySolver{abstractor, config} {}
+  explicit MockSoplexTheorySolver(PredicateAbstractor &predicate_abstractor)
+      : SoplexTheorySolver{predicate_abstractor} {}
   MOCK_METHOD(void, AddLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(SoplexTheorySolver::Explanations, EnableLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(SatResult, CheckSat,
@@ -43,9 +43,9 @@ class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
 
  protected:
   Variable var_{"x"};
-  Config config_;
+  const Config::SharedConfig config_;
   PredicateAbstractor abstractor_;
-  explicit TestSoplexTheorySolver() : config_{GetConfig()}, abstractor_{config_} {}
+  explicit TestSoplexTheorySolver() : config_{std::make_shared<Config>(GetConfig())}, abstractor_{config_} {}
   static Config GetConfig() {
     Config config;
     config.m_precision() = 0;
@@ -58,8 +58,8 @@ INSTANTIATE_TEST_SUITE_P(TestSoplexTheorySolver, TestSoplexTheorySolver, ::testi
 
 TEST_P(TestSoplexTheorySolver, AddVariable) {
   const int theory_col = 0;
-  config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_, config_};
+  config_->m_precision() = GetParam();
+  MockSoplexTheorySolver s{abstractor_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
 
   s.AddVariable(var_);
@@ -72,8 +72,8 @@ TEST_P(TestSoplexTheorySolver, AddVariable) {
 }
 
 TEST_P(TestSoplexTheorySolver, EnableLiterals) {
-  config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_, config_};
+  config_->m_precision() = GetParam();
+  MockSoplexTheorySolver s{abstractor_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
 
   std::vector<Literal> literals{{var_, true}, {var_, false}, {var_, false}};
@@ -84,8 +84,8 @@ TEST_P(TestSoplexTheorySolver, EnableLiterals) {
 
 TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
   const int theory_col = 0;
-  config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_, config_};
+  config_->m_precision() = GetParam();
+  MockSoplexTheorySolver s{abstractor_};
   s.AddVariable(var_);
 
   EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
@@ -101,8 +101,8 @@ TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
   mpq_class lb = 5, ub = 10;
   Box box{};
   box.Add(var_, lb, ub);
-  config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_, config_};
+  config_->m_precision() = GetParam();
+  MockSoplexTheorySolver s{abstractor_};
   s.AddVariable(var_);
 
   EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);

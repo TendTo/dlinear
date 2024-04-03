@@ -13,15 +13,15 @@
 
 namespace dlinear {
 
-PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SatSolver{"PicosatSatSolver", predicate_abstractor, config}, sat_(picosat_init()), has_picosat_pop_used_{false} {
+PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
+    : SatSolver{predicate_abstractor, class_name}, sat_(picosat_init()), has_picosat_pop_used_{false} {
   picosat_save_original_clauses(sat_);
-  if (config.random_seed() != 0) {
-    picosat_set_seed(sat_, config.random_seed());
-    DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Random Seed {}", config.random_seed());
+  if (config_->random_seed() != 0) {
+    picosat_set_seed(sat_, config_->random_seed());
+    DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Random Seed {}", config_->random_seed());
   }
-  picosat_set_global_default_phase(sat_, static_cast<int>(config.sat_default_phase()));
-  DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Default Phase {}", config.sat_default_phase());
+  picosat_set_global_default_phase(sat_, static_cast<int>(config_->sat_default_phase()));
+  DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Default Phase {}", config_->sat_default_phase());
 }
 PicosatSatSolver::~PicosatSatSolver() { picosat_reset(sat_); }
 

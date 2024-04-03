@@ -22,20 +22,21 @@ class TestContext : public ::testing::TestWithParam<Config::LPSolver> {
  protected:
   const Variable x_{"x"};
   const Variable y_{"Y"};
-  Config config_;
+  const Config::SharedConfig config_;
   unique_ptr<Context> context_;
-  explicit TestContext() : guard_{GetParam()}, config_{}, context_{std::make_unique<Context>(config_)} {
-    config_.m_lp_solver() = GetParam();
+  explicit TestContext()
+      : guard_{GetParam()}, config_{std::make_shared<Config>()}, context_{std::make_unique<Context>(config_)} {
+    config_->m_lp_solver() = GetParam();
   }
   void SetUp() override { context_->DeclareVariable(x_); }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestContext, TestContext, enabled_test_solvers);
 
-TEST_P(TestContext, Constructor) { EXPECT_NO_THROW(Context ctx); }
+TEST_P(TestContext, Constructor) { EXPECT_NO_THROW(Context ctx{config_}); }
 
 TEST_P(TestContext, DeclareVariable) {
-  Context ctx;
+  Context ctx{config_};
   ctx.DeclareVariable(x_);
   EXPECT_EQ(ctx.box().size(), 1);
   ctx.DeclareVariable(x_);  // Should not add another variable
@@ -43,7 +44,7 @@ TEST_P(TestContext, DeclareVariable) {
 }
 
 TEST_P(TestContext, AddMultipleVariables) {
-  Context ctx;
+  Context ctx{config_};
   ctx.DeclareVariable(x_);
   EXPECT_EQ(ctx.box().size(), 1);
   ctx.DeclareVariable(y_);

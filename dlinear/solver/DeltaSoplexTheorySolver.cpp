@@ -20,8 +20,9 @@ namespace dlinear {
 using SoplexStatus = soplex::SPxSolver::Status;
 using soplex::Rational;
 
-DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : SoplexTheorySolver("DeltaSoplexTheorySolver", predicate_abstractor, config) {}
+DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_abstractor,
+                                                 const std::string &class_name)
+    : SoplexTheorySolver(predicate_abstractor, class_name) {}
 
 void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
@@ -59,7 +60,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   soplex::DSVectorRational coeffs{IsSimpleBound(formula) ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
   if (IsSimpleBound(formula)) spx_rhs_.emplace_back(0);
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
-  if (2 == simplex_sat_phase_) CreateArtificials(spx_row);
+  if (2 == config_->simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
@@ -151,7 +152,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   EnableSPXVarBound();
 
   // Now we call the solver
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", simplex_sat_phase_);
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_->simplex_sat_phase());
 
   Rational max_violation, sum_violation;
 
@@ -160,7 +161,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   // If the simplex_sat_status is 2, we expect the status to be OPTIMAL
   // Otherwise, the status must be OPTIMAL, UNBOUNDED, or INFEASIBLE
   // Anything else is an error
-  if ((2 == simplex_sat_phase_ && status != SoplexStatus::OPTIMAL) ||
+  if ((2 == config_->simplex_sat_phase() && status != SoplexStatus::OPTIMAL) ||
       (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE)) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
@@ -182,7 +183,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || has_sol,
                  "status must either be not OPTIMAL or a solution must be present");
 
-  if (1 == simplex_sat_phase_) {
+  if (1 == config_->simplex_sat_phase()) {
     switch (status) {
       case SoplexStatus::OPTIMAL:
         sat_status = SatResult::SAT_DELTA_SATISFIABLE;

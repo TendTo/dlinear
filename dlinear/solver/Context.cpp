@@ -12,40 +12,28 @@
 
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/util/logging.h"
-#include "dlinear/version.h"
 
 namespace dlinear {
-
-Context::Context() : Context{Config{}} {}
 
 Context::Context(Context &&context) noexcept : impl_{std::move(context.impl_)} {}
 
 Context::~Context() = default;
 
-Context::Context(const Config &config) : impl_{std::make_unique<Impl>(config)} {}
+Context::Context(const Config::SharedConfig &config) : impl_{std::make_unique<Impl>(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
-
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
-
 LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
-
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
   impl_->DeclareVariable(v, is_model_variable);
 }
-
 void Context::DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub,
                               const bool is_model_variable) {
   impl_->DeclareVariable(v, is_model_variable);
   impl_->SetDomain(v, lb, ub);
 }
-
 void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }
-
 void Context::Minimize(const Expression &f) { impl_->Minimize({f}); }
-
-void Context::Minimize(const std::vector<Expression> &functions) { impl_->Minimize(functions); }
-
 void Context::Maximize(const Expression &f) { impl_->Maximize({f}); }
 
 void Context::Pop(int n) {
@@ -61,42 +49,22 @@ void Context::Push(int n) {
 }
 
 void Context::SetInfo(const std::string &key, const double val) { impl_->SetInfo(key, val); }
-
 void Context::SetInfo(const std::string &key, const std::string &val) { impl_->SetInfo(key, val); }
-
 std::string Context::GetInfo(const std::string &key) const { return impl_->GetInfo(key); }
-
 void Context::SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   impl_->SetInterval(v, lb, ub);
 }
-
 void Context::SetLogic(const Logic &logic) { impl_->SetLogic(logic); }
-
 void Context::SetOption(const std::string &key, const double val) { impl_->SetOption(key, val); }
-
 void Context::SetOption(const std::string &key, const std::string &val) { impl_->SetOption(key, val); }
-
-std::string Context::GetOption(const std::string &key) const { return impl_->GetInfo(key); }
-
+std::string Context::GetOption(const std::string &key) const { return impl_->GetOption(key); }
 const Config &Context::config() const { return impl_->config(); }
-Config &Context::m_config() { return impl_->m_config(); }
-
-std::string Context::version() { return DLINEAR_VERSION_STRING; }
-
-std::string Context::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
-
 const Box &Context::box() const { return impl_->box(); }
-
 const Box &Context::model() const { return impl_->get_model(); }
-
 const ScopedVector<Formula> &Context::assertions() const { return impl_->assertions(); }
-
 bool Context::have_objective() const { return impl_->have_objective(); }
-
 bool Context::is_max() const { return impl_->is_max(); }
-
 const IterationStats &Context::sat_stats() const { return impl_->sat_stats(); }
-
 const IterationStats &Context::theory_stats() const { return impl_->theory_stats(); }
 
 std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> Context::formula_visitors_stats()

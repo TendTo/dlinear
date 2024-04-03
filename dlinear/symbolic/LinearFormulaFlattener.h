@@ -17,15 +17,17 @@
 namespace dlinear {
 
 /**
- * LinearFormulaFlattener class.
- *
  * Used by the @ref PredicateAbstractor to ensure that all the theory literals are
  * in the flattened standard form.
  * @see LinearFormulaFlattener::Flatten
  */
 class LinearFormulaFlattener {
  public:
-  explicit LinearFormulaFlattener(const Config& config) : needs_expansion_(config.needs_expansion()) {}
+  /**
+   *
+   * @param config
+   */
+  explicit LinearFormulaFlattener(const Config::ConstSharedConfig config) : config_{config} {}
   /**
    * Flatten the given formula.
    *
@@ -54,8 +56,8 @@ class LinearFormulaFlattener {
    */
   void BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind);
 
-  const bool needs_expansion_;  ///< Whether the expression may require expansion
-  Formula flattered_formula_;   ///< Temporary storage for the flattered formula
+  const Config::ConstSharedConfig config_;  ///< Configuration
+  Formula flattered_formula_;               ///< Temporary storage for the flattered formula
 };
 
 }  // namespace dlinear

@@ -36,14 +36,14 @@ class TheorySolverBoundPreprocessor {
   using Weight = NumericDataContainer<mpq_class, int>;
   using BoundEdge = std::tuple<Variable, Variable, Weight>;
   using Explanations = std::set<LiteralSet>;
-  TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver);
-  TheorySolverBoundPreprocessor(const Config& config, const PredicateAbstractor& predicate_abstractor,
+  TheorySolverBoundPreprocessor(const TheorySolver& theory_solver);
+  TheorySolverBoundPreprocessor(const Config::ConstSharedConfig& config,
+                                const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
                                 const std::vector<Literal>& theory_rows,
                                 const TheorySolverBoundVectorVector& theory_bounds);
 
-  bool AddConstraint(int theory_row, const Formula& formula, const Expression& expr);
   bool AddConstraint(int theory_row, const Formula& formula);
   /**
    * Enable a previously added constraint, adding an edge to the graph in order to propagate the bound.
@@ -58,7 +58,8 @@ class TheorySolverBoundPreprocessor {
 
   void Clear();
 
-  [[nodiscard]] const Environment& GetEnvironment() const { return env_; }
+  [[nodiscard]] const Config::ConstSharedConfig& config_ptr() const { return config_; }
+  [[nodiscard]] const Config& config() const { return *config_; }
   [[nodiscard]] const TheorySolverBoundVectorVector& theory_bounds() const { return theory_bounds_; }
   [[nodiscard]] const std::vector<Variable>& theory_cols() const { return theory_cols_; }
   [[nodiscard]] const std::map<Variable::Id, int>& var_to_cols() const { return var_to_cols_; }
@@ -94,7 +95,7 @@ class TheorySolverBoundPreprocessor {
   void GetExplanation(const Variable& var, LiteralSet& explanation);
 
  private:
-  const bool enabled_;
+  const Config::ConstSharedConfig config_;
   const PredicateAbstractor& predicate_abstractor_;
   const std::vector<Variable>& theory_cols_;
   const std::map<Variable::Id, int>& var_to_cols_;

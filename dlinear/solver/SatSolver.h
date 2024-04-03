@@ -49,23 +49,13 @@ class SatSolver {
    *
    * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
    * understanding of the literals.
-   * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
-   * @param config configuration of the SAT solver
-   * @see TheorySolver
-   */
-  explicit SatSolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
-  /**
-   * Construct a new SatSolver object.
-   *
-   * The @p predicate_abstractor is shared between the theory solver and the SAT solver, in order to have a common
-   * understanding of the literals.
    * The @p class_name is used to identify the theory solver in the logs.
+   * @note The @p predicate abstractor will share its configuration with the SAT solver.
    * @param class_name name of the subclass of the SAT solver used
    * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
-   * @param config configuration of the SAT solver
    * @see TheorySolver
    */
-  SatSolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  SatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "SatSolver");
   virtual ~SatSolver() = default;
 
   void Pop();
@@ -201,6 +191,8 @@ class SatSolver {
    * formula
    */
   void UpdateLookup(int lit, int learned);
+
+  const Config::ConstSharedConfig config_;  ///< Configuration of the SAT solver
 
   // Data to help with removing literals that are only required by learned clauses.
   std::vector<int> main_clauses_copy_;

@@ -7,7 +7,7 @@
  *
  * The context juggles between the SAT solver and the theory solver, in order to produce a model.
  * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
- * This follows the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
+ * This structure is based on the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
  */
 #pragma once
 
@@ -27,51 +27,187 @@
 
 namespace dlinear {
 
+/**
+ * The context juggles between the SAT solver and the theory solver, in order to produce a model.
+ * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
+ * This structure is based on the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
+ */
 class Context::Impl {
  public:
-  Impl();
-  explicit Impl(const Config &config);
-  explicit Impl(Config &&config);
+  /**
+   * Construct a context with @p config.
+   * @param config the configuration of the context
+   */
+  explicit Impl(const Config::SharedConfig &config);
   Impl(const Impl &) = delete;
   Impl(Impl &&) = delete;
   Impl &operator=(const Impl &) = delete;
   Impl &operator=(Impl &&) = delete;
-  virtual ~Impl() = default;
 
-  virtual void Assert(const Formula &f);
-  virtual void Pop();
-  virtual void Push();
+  /**
+   * Assert a formula @p f.
+   *
+   * The new formula is added to the box.
+   * @param f the formula to be asserted
+   */
+  void Assert(const Formula &f);
 
+  /** Pop the top of the stack of assertions. */
+  void Pop();
+  /** Push the current set of assertions to the stack. */
+  void Push();
+  /**
+   * Check the satisfiability of the asserted formulas, and sets
+   * @p actual_precision to the actual max infeasibility where appropriate.
+   * @param[in,out] actual_precision initialized with the desired precision, it will be
+   * set to the lowest possible precision below the given one that satisfies the
+   * constraints.
+   * @return the satisfiability result.
+   */
   SatResult CheckSat(mpq_class *precision);
+  /**
+   * Check the satisfiability of the asserted formulas, and (where possible) optimizes an objective function over them.
+   *
+   * If a solution is found, the @p obj_lo and @p obj_up store the lower and upper bounds of the objective function.
+   * @param[out] obj_lo the lower bound of the objective function
+   * @param[out] obj_up the upper bound of the objective function
+   */
   LpResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
+  /**
+   * Declare a variable @p v.
+   *
+   * By default @p v is considered as a model variable.
+   * If @p IsModelVariable is false, it is declared as a non-model variable and will not appear in the model.
+   * @param v the variable to be declared
+   * @param is_model_variable whether or not the variable is a model variable
+   */
   void DeclareVariable(const Variable &v, bool is_model_variable);
+  /**
+   * Set a domain for the variable @p v, restricting it to the interval @f$ [lb, ub] @f$.
+   * @param v the variable to be declared
+   * @param lb the lower bound of the variable
+   * @param ub the upper bound of the variable
+   */
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
+  /**
+   * Assert a formula minimizing a cost function @p f.
+   * @param f the cost function to be minimized
+   */
   void Minimize(const std::vector<Expression> &functions);
+  /**
+   * Assert a formula maximizing a cost function @p f.
+   * @param f the cost function to be maximized
+   */
   void Maximize(const std::vector<Expression> &functions);
+  /**
+   * Set an info @p key with a value @p val.
+   * @param key the key of the info
+   * @param val the value of the info
+   */
   void SetInfo(const std::string &key, double val);
+  /**
+   * Set an info @p key with a value @p val.
+   * @param key the key of the info
+   * @param val the value of the info
+   */
   void SetInfo(const std::string &key, const std::string &val);
+  /**
+   * Get the info @p key.
+   * @param key the key of the info
+   * @return value of the info
+   */
   [[nodiscard]] std::string GetInfo(const std::string &key) const;
+  /**
+   * Set the interval of @p v to @f$ [lb, ub] @f$ in the current box (top one in boxes_).
+   * @param v the variable to be set
+   * @param lb the lower bound of the variable
+   * @param ub the upper bound of the variable
+   */
   void SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub);
+  /**
+   * Set the current logic to @p logic.
+   * @param logic the logic to be set
+   */
   void SetLogic(const Logic &logic);
+  /**
+   * Set an option @p key with a value @p val.
+   * @param key the key of the option
+   * @param val the value of the option
+   */
   void SetOption(const std::string &key, double val);
+  /**
+   * Set an option @p key with a value @p val.
+   * @param key the key of the option
+   * @param val the value of the option
+   */
   void SetOption(const std::string &key, const std::string &val);
+  /**
+   * Get the option @p key.
+   * @param key the key of the option
+   * @return value of the option
+   */
   [[nodiscard]] std::string GetOption(const std::string &key) const;
-  const Config &config() const { return config_; }
-  Config &m_config() { return config_; }
+  /**
+   * Get the configuration of the context.
+   * @return configuration of the context
+   */
+  const Config &config() const { return *config_; }
+  /**
+   * Get the the asserted formulas.
+   * @note that the returned vector can be a proper subset of the asserted formulas.
+   * For example, when `x <= 5` is asserted, box() is updated to have this information and the formula is thrown away.
+   */
   const ScopedVector<Formula> &assertions() const;
+  /**
+   * Get the current active box from the top of the @ref stack of boxes.
+   * @return the active box of the context
+   */
   Box &box() { return boxes_.last(); }
+  /**
+   * Get a representation of a model computed by the solver in response to the last invocation of the check-sat.
+   * @return the model computed by the solver
+   */
   const Box &get_model() { return model_; }
+  /**
+   * Check whether or not there is an objective function (which may be zero) to optimize.
+   * @return true if there is an objective function to optimize. @ref CheckOpt() will be called
+   * @return false if there is no objective function. @ref CheckSat() will be called
+   */
   bool have_objective() const;
+  /**
+   * Check whether or not the objective function (if present) is a maximization.
+   * @return true if the original objective function is a maximization
+   * @return false if the original objective function is a minimization
+   */
   bool is_max() const;
+  /**
+   * Get the statistics up to the last call to CheckSat of the SAT solver.
+   * @return statistics of the SAT solver
+   */
   const IterationStats &sat_stats() { return sat_solver_->stats(); }
+  /**
+   * Get the statistics up to the last call to CheckSat or CheckOpt of the theory solver.
+   * @return statistics of the theory solver
+   */
   const IterationStats &theory_stats() { return theory_solver_->stats(); }
+  /**
+   * Get the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
+   * @return statistics of the predicate abstractor, the CNFizer and ITE visitor
+   */
   std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> formula_visitors_stats() const {
     const auto [predicate_abstractor_stats, cnfizer_stats] = sat_solver_->formula_visitors_stats();
     return {predicate_abstractor_stats, cnfizer_stats, ite_stats_};
   }
 
  private:
-  std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);
+  static const Config default_config_;  ///< Default configuration of the context if none is provided.
+
+  /**
+   * Get the correct theory solver subclass based on the configuration.
+   * @param config configuration of the context determining the theory solver to use
+   * @return theory solver subclass
+   */
+  std::unique_ptr<TheorySolver> GetTheorySolver(const Config::ConstSharedConfig &config);
 
   /**
    * Add the variable @p v to the current box. This is used to
@@ -101,33 +237,56 @@ class Context::Impl {
    */
   void LearnExplanations(const TheorySolver::Explanations &explanations);
 
-  /** Return the current box in the stack. */
-  virtual SatResult CheckSatCore(mpq_class *actual_precision);
-  virtual LpResult CheckOptCore(mpq_class *obj_lo, mpq_class *obj_up);
+  /**
+   * Check the satisfiability of the current set of assertions.
+   *
+   * This method is called internally by @ref CheckSat().
+   * @param[out] actual_precision the actual precision of the model
+   * @return the result of the check-sat
+   * @see CheckSat
+   */
+  SatResult CheckSatCore(mpq_class *actual_precision);
+  /**
+   * Check the satisfiability of the asserted formulas, and (where possible) optimizes an objective function over them.
+   *
+   * This method is called internally by @ref CheckOpt().
+   * @param[out] obj_lo objective function lower bound
+   * @param[out] obj_up objective function upper bound
+   * @return the result of the check-opt
+   * @see CheckOpt
+   */
+  LpResult CheckOptCore(mpq_class *obj_lo, mpq_class *obj_up);
 
-  virtual void MinimizeCore(const Expression &obj_expr);
+  void MinimizeCore(const Expression &obj_expr);
 
-  /** Mark the variable @p v as a model variable. */
+  /**
+   * Mark the variable @p v as a model variable.
+   * @param v the variable to be marked as a model variable
+   */
   void MarkModelVariable(const Variable &v);
 
-  /** Check if the variable @p v is a model variable or not. */
+  /**
+   * Check if the variable @p v is a model variable.
+   * @param v the variable to be checked
+   * @return true if the variable is a model variable
+   * @return false if the variable is not a model variable
+   */
   bool IsModelVariable(const Variable &v) const;
 
   /**
-   * Extract a model from the @p box. Note that @p box might include
-   * non-model variables (i.e. variables introduced by if-then-else
-   * elimination). This function creates a new box which is free of
-   * those non-model variables.
+   * Extract a model from the @p box.
    *
+   * Note that @p box might include non-model variables (i.e. variables introduced by if-then-else elimination).
+   * This function creates a new box which is free of those non-model variables.
    * @param box box to extract a model from.
    * @return box which is free of non-model variables.
    */
   Box ExtractModel(const Box &box) const;
 
-  Config config_;
-  std::optional<Logic> logic_{};
-  std::unordered_map<std::string, std::string> info_;
-  std::unordered_map<std::string, std::string> option_;
+  const Config::SharedConfig config_;  ///< Configuration of the context. It could be modified by the problem instance.
+  std::optional<Logic> logic_{};       ///< SMT Logic of the context. Must be among the supported logics.
+  std::unordered_map<std::string, std::string> info_;    ///< Key-value pairs of information.
+  std::unordered_map<std::string, std::string> option_;  ///< Key-value pairs of options.
 
   ScopedVector<Box> boxes_;                           ///< Stack of boxes. The top one is the current box.
   ScopedVector<Formula> stack_;                       ///< Stack of asserted formulas.

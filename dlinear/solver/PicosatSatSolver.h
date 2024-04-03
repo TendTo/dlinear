@@ -31,7 +31,7 @@ namespace dlinear {
 
 class PicosatSatSolver : public SatSolver {
  public:
-  explicit PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
+  PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "PicosatSatSolver");
   ~PicosatSatSolver() override;
 
   void AddLiteral(const Literal &l, bool learned) override;

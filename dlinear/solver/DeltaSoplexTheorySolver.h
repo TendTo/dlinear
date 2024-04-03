@@ -37,7 +37,8 @@ namespace dlinear {
  */
 class DeltaSoplexTheorySolver : public SoplexTheorySolver {
  public:
-  explicit DeltaSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
+  explicit DeltaSoplexTheorySolver(PredicateAbstractor& predicate_abstractor,
+                                   const std::string& class_name = "DeltaSoplexTheorySolver");
 
   Explanations EnableLiteral(const Literal& lit) override;
 

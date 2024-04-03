@@ -11,17 +11,13 @@
 
 namespace dlinear {
 
-TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const Config &config)
-    : TheorySolver{"TheorySolver", predicate_abstractor, config} {}
-TheorySolver::TheorySolver(const std::string &class_name, const PredicateAbstractor &predicate_abstractor,
-                           const Config &config)
-    : is_consolidated_{false},
-      simplex_sat_phase_{config.simplex_sat_phase()},
-      precision_{config.precision()},
+TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
+    : config_{predicate_abstractor.config_ptr()},
+      is_consolidated_{false},
       predicate_abstractor_{predicate_abstractor},
-      preprocessor_{config, *this},
+      preprocessor_{*this},
       model_{},
-      stats_{config.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+      stats_{config_->with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
 const Box &TheorySolver::GetModel() const {
   DLINEAR_DEBUG_FMT("TheorySolver::GetModel():\n{}", model_);

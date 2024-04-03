@@ -32,7 +32,7 @@ namespace dlinear {
  */
 class TseitinCnfizer : public FormulaVisitor {
  public:
-  explicit TseitinCnfizer(const Config &config) : FormulaVisitor{"TseitinCnfizer", config} {}
+  explicit TseitinCnfizer(const Config::ConstSharedConfig &config) : FormulaVisitor{config, "TseitinCnfizer"} {}
 
   /**
    * Convert @p f into an equi-satisfiable formula @c f' in CNF.
@@ -46,7 +46,7 @@ class TseitinCnfizer : public FormulaVisitor {
    * @note map_ is cleared at the beginning of `Convert` call.
    * @return const reference of `map_` member.n
    */
-  const std::map<Variable, Formula> &map() const { return map_; }
+  [[nodiscard]] const std::map<Variable, Formula> &map() const { return map_; }
 
  private:
   Formula Visit(const Formula &f) override;

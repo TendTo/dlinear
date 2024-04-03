@@ -14,20 +14,17 @@
 
 namespace dlinear {
 
-TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& config, const TheorySolver& theory_solver)
-    : TheorySolverBoundPreprocessor{config,
-                                    theory_solver.predicate_abstractor(),
-                                    theory_solver.theory_col_to_var(),
-                                    theory_solver.var_to_theory_col(),
-                                    theory_solver.theory_row_to_lit(),
-                                    theory_solver.theory_bounds()} {}
-TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& config,
+TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const TheorySolver& theory_solver)
+    : TheorySolverBoundPreprocessor{theory_solver.config_ptr(),        theory_solver.predicate_abstractor(),
+                                    theory_solver.theory_col_to_var(), theory_solver.var_to_theory_col(),
+                                    theory_solver.theory_row_to_lit(), theory_solver.theory_bounds()} {}
+TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config::ConstSharedConfig& config,
                                                              const PredicateAbstractor& predicate_abstractor,
                                                              const std::vector<Variable>& theory_col_to_var,
                                                              const std::map<Variable::Id, int>& var_to_theory_cols,
                                                              const std::vector<Literal>& theory_row_to_var,
                                                              const TheorySolverBoundVectorVector& theory_bounds)
-    : enabled_{!config.disable_theory_preprocessor()},
+    : config_{config},
       predicate_abstractor_{predicate_abstractor},
       theory_cols_{theory_col_to_var},
       var_to_cols_{var_to_theory_cols},
@@ -35,7 +32,7 @@ TheorySolverBoundPreprocessor::TheorySolverBoundPreprocessor(const Config& confi
       theory_bounds_{theory_bounds} {}
 
 bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Formula& formula) {
-  if (!enabled_) return false;
+  if (config_->disable_theory_preprocessor()) return false;
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::AddConstraint({}, {})", theory_row, formula);
   if (!ShouldPropagateBounds(formula)) return false;
   const BoundEdge edge = ExtractBoundEdge(theory_row, formula);
@@ -46,7 +43,7 @@ bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Fo
 }
 
 TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::EnableConstraint(const int theory_row) {
-  if (!enabled_) return {};
+  if (config_->disable_theory_preprocessor()) return {};
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::EnableConstraint({})", theory_row);
   // If the row was never added as an edge, skip
   const auto it = row_to_edges_.find(theory_row);
@@ -71,7 +68,7 @@ TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Proce
   return explanations;
 }
 void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
-  if (!enabled_) return;
+  if (config_->disable_theory_preprocessor()) return;
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::Process()");
   SetEnvironmentFromBounds();
   PropagateEnvironment(explanations);
@@ -79,7 +76,7 @@ void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
                     explanations.empty() ? " no" : "");
 }
 void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations) {
-  if (!enabled_) return;
+  if (config_->disable_theory_preprocessor()) return;
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::Process({})", enabled_theory_rows);
   Process(explanations);
   if (!explanations.empty()) return;
@@ -142,7 +139,7 @@ void TheorySolverBoundPreprocessor::PropagateEnvironment(Explanations& explanati
 
 void TheorySolverBoundPreprocessor::PropagateRows(const std::vector<int>& enabled_theory_rows) {
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::PropagateRows()");
-  bool continue_propagating = false;
+  bool continue_propagating;
   do {
     continue_propagating = false;
     for (const auto theory_row : enabled_theory_rows) {
@@ -321,7 +318,7 @@ void TheorySolverBoundPreprocessor::AddPathsToExplanations(const Variable& from,
     // Insert all rows from the edges in the path to the explanation
     for (size_t i = 1; i < path.size(); i++) {
       DLINEAR_ASSERT(bound_graph_.GetEdgeWeight(path[i - 1], path[i]) != nullptr, "Edge must exist");
-      const auto& [coefficient, theory_row] = *bound_graph_.GetEdgeWeight(path[i - 1], path[i]);
+      const int theory_row = bound_graph_.GetEdgeWeight(path[i - 1], path[i])->data;
       explanation.insert(theory_rows_[theory_row]);
     }
     explanations.insert(explanation);
@@ -345,7 +342,7 @@ void TheorySolverBoundPreprocessor::AddPathToExplanation(const Variable& from, c
     // Insert all rows from the edges in the path to the explanation
     for (size_t i = 1; i < path.size(); i++) {
       DLINEAR_ASSERT(bound_graph_.GetEdgeWeight(path[i - 1], path[i]) != nullptr, "Edge must exist");
-      const auto& [coefficient, theory_row] = *bound_graph_.GetEdgeWeight(path[i - 1], path[i]);
+      const int theory_row = bound_graph_.GetEdgeWeight(path[i - 1], path[i])->data;
       explanation.insert(theory_rows_[theory_row]);
     }
     return VisitResult::STOP;

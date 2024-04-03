@@ -37,7 +37,8 @@ namespace dlinear {
  */
 class CompleteSoplexTheorySolver : public SoplexTheorySolver {
  public:
-  explicit CompleteSoplexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
+  explicit CompleteSoplexTheorySolver(PredicateAbstractor& predicate_abstractor,
+                                      const std::string& class_name = "CompleteSoplexTheorySolver");
 
   Explanations EnableLiteral(const Literal& lit) override;
 
@@ -132,7 +133,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @param[out] explanation the explanation to be updated
    */
   void GetExplanation(LiteralSet& explanation);
-  
+
   std::vector<int> enabled_strict_theory_rows_;                          ///< Vector of enabled strict theory rows
   std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_rows_;  ///< variable id -> enabled theory row.
                                                                          ///< Does not include simple bounds

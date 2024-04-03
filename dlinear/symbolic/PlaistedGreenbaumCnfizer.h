@@ -21,7 +21,8 @@ namespace dlinear {
 
 class PlaistedGreenbaumCnfizer : public FormulaVisitor {
  public:
-  explicit PlaistedGreenbaumCnfizer(const Config &config) : FormulaVisitor{"PlaistedGreenbaumCnfizer", config} {}
+  explicit PlaistedGreenbaumCnfizer(const Config::ConstSharedConfig &config)
+      : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"} {}
 
   /**
    * Convert a @p f into an equi-satisfiable formula @c f' in CNF.

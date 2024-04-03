@@ -27,9 +27,10 @@ class SmtSolver {
  public:
   SmtSolver();
   explicit SmtSolver(const std::string &filename);
-  explicit SmtSolver(Config config);
+  explicit SmtSolver(const Config &config);
+  explicit SmtSolver(Config::SharedConfig config);
   SmtSolver(const SmtSolver &) = delete;
-  SmtSolver(SmtSolver &&) = delete;
+  SmtSolver(SmtSolver &&) noexcept = default;
   SmtSolver &operator=(const SmtSolver &) = delete;
   SmtSolver &operator=(SmtSolver &&) = delete;
 
@@ -62,10 +63,10 @@ class SmtSolver {
 #endif
 
  private:
-  const Config config_;     ///< Configuration of the solver.
-  SolverGuard guard_;       ///< Takes care of initializing and de-initializing the correct infinity values.
-  Context context_;         ///< Context obtained from the input file and passed to the SAT and SMT solvers.
-  SmtSolverOutput output_;  ///< Output of the solver.
+  const Config::SharedConfig config_;  ///< Configuration of the solver.
+  const SolverGuard guard_;            ///< Takes care of initializing and de-initializing the correct infinity values.
+  Context context_;                    ///< Context obtained from the input file and passed to the SAT and SMT solvers.
+  SmtSolverOutput output_;             ///< Output of the solver.
 
   bool ParseInput();
   void CheckSatCore();

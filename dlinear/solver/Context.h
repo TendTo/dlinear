@@ -32,74 +32,60 @@ namespace dlinear {
 /**
  * Context class that holds a set of constraints and provide
  * Assert/Push/Pop/CheckSat functionalities.
- *
  * @note The implementation details are in context_impl.h file.
  */
 class Context {
  public:
-  /** Constructs a context with an empty configuration. */
-  Context();
-
-  /** Deleted copy constructor. */
+  /**
+   * Construct a context with @p config.
+   * @param config the configuration of the context
+   */
+  explicit Context(const Config::SharedConfig &config);
   Context(const Context &context) = delete;
-
-  /** Move constructor. */
   Context(Context &&context) noexcept;
-
-  /** Destructor (Defaulted in source file. Needed here for compilation). */
+  Context &operator=(const Context &) = delete;
+  Context &operator=(Context &&) = delete;
   ~Context();
 
-  /** Deleted copy-assign. */
-  Context &operator=(const Context &) = delete;
-
-  /** Deleted move-assign. */
-  Context &operator=(Context &&) = delete;
-
-  /** Constructs a context with @p config. */
-  explicit Context(const Config &config);
-
   /**
-   * Asserts a formula @p f.
-   * The new formula is added to the box.
+   * Assert a formula @p f.
    *
+   * The new formula is added to the box.
    * @param f the formula to be asserted
    */
   void Assert(const Formula &f);
-
   /**
-   * Checks the satisfiability of the asserted formulas, and sets
-   * @p actual_precision to the actual max infeasibility where
-   * appropriate.
-   *
-   * @param[in,out] actual_precision initialized with the desired precision, it will be
+   * Check the satisfiability of the asserted formulas, and sets
+   * @p actual_precision to the actual max infeasibility where appropriate.
+   * @param[out] actual_precision initialized with the desired precision, it will be
    * set to the lowest possible precision below the given one that satisfies the
    * constraints.
    * @return the satisfiability result.
    */
   SatResult CheckSat(mpq_class *actual_precision);
-
   /**
-   * Checks the satisfiability of the asserted formulas, and (where
-   * possible) optimizes an objective function over them.
+   * Check the satisfiability of the asserted formulas, and (where possible) optimizes an objective function over them.
+   *
+   * If a solution is found, the @p obj_lo and @p obj_up store the lower and upper bounds of the objective function.
+   * @param[out] obj_lo the lower bound of the objective function
+   * @param[out] obj_up the upper bound of the objective function
    */
   LpResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
 
   /**
-   * Declare a variable @p v. By default @p v is considered as a
-   * model variable. If @p IsModelVariable is false, it is declared as
-   * a non-model variable and will not appear in the model.
+   * Declare a variable @p v.
    *
+   * By default @p v is considered as a model variable.
+   * If @p IsModelVariable is false, it is declared as a non-model variable and will not appear in the model.
    * @param v the variable to be declared
    * @param is_model_variable whether or not the variable is a model variable
    */
   void DeclareVariable(const Variable &v, bool is_model_variable = true);
-
   /**
-   * Declare a variable @p v which is bounded by an interval `[lb,
-   * ub]`. By default @p v is considered as a model variable. If @p
-   * IsModelVariable is false, it is declared as a non-model variable
-   * and will not appear in the model.
+   * Declare a variable @p v which is bounded by an interval @f$ [lb, ub] @f$.
    *
+   * By default @p v is considered as a model variable.
+   * If @p is_model_variable is false, it is declared as a non-model variable and will not appear in the model.
    * @param v the variable to be declared
    * @param lb the lower bound of the variable
    * @param ub the upper bound of the variable
@@ -107,117 +93,143 @@ class Context {
    */
   void DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub, bool is_model_variable = true);
 
+  /**
+   * Exit the context.
+   *
+   * Does nothing but prints a debug message.
+   */
   void Exit();
 
-  /** Asserts a formula minimizing a cost function @p f */
+  /**
+   * Assert a formula minimizing a cost function @p f.
+   * @param f the cost function to be minimized
+   */
   void Minimize(const Expression &f);
 
   /**
-   * Asserts a formula encoding Pareto optimality with a given set of
-   * objective functions.
+   * Assert a formula maximizing a cost function @p f.
+   * @param f the cost function to be maximized
    */
-  void Minimize(const std::vector<Expression> &functions);
-
-  /** Asserts a formula maximizing a cost function @p f. */
   void Maximize(const Expression &f);
 
-  /** Pops @p n stacks. */
+  /**
+   * Pop @p n stacks.
+   * @param n the number of stacks to be popped
+   */
   void Pop(int n);
-
-  /** Pushes @p n stacks. */
+  /**
+   * Push @p n stacks.
+   * @param n number of stacks to be pushed
+   */
   void Push(int n);
 
-  /** Sets an info @p key with a value @p val. */
+  /**
+   * Set an info @p key with a value @p val.
+   * @param key the key of the info
+   * @param val the value of the info
+   */
   void SetInfo(const std::string &key, double val);
-
-  /** Sets an info @p key with a value @p val. */
+  /**
+   * Set an info @p key with a value @p val.
+   * @param key the key of the info
+   * @param val the value of the info
+   */
   void SetInfo(const std::string &key, const std::string &val);
-
+  /**
+   * Get the info @p key.
+   * @param key the key of the info
+   * @return value of the info
+   */
   [[nodiscard]] std::string GetInfo(const std::string &key) const;
-
-  /** Sets the interval of @p v in the current box (top one in boxes_). */
+  /**
+   * Set the interval of @p v to @f$ [lb, ub] @f$ in the current box (top one in boxes_).
+   * @param v the variable to be set
+   * @param lb the lower bound of the variable
+   * @param ub the upper bound of the variable
+   */
   void SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub);
-
-  /** Sets the current logic to be @p logic. */
+  /**
+   * Set the current logic to @p logic.
+   * @param logic the logic to be set
+   */
   void SetLogic(const Logic &logic);
-
-  /** Sets an option @p key with a value @p val. */
+  /**
+   * Set an option @p key with a value @p val.
+   * @param key the key of the option
+   * @param val the value of the option
+   */
   void SetOption(const std::string &key, double val);
-
-  /** Sets an option @p key with a value @p val */
+  /**
+   * Set an option @p key with a value @p val.
+   * @param key the key of the option
+   * @param val the value of the option
+   */
   void SetOption(const std::string &key, const std::string &val);
-
+  /**
+   * Get the option @p key.
+   * @param key the key of the option
+   * @return value of the option
+   */
   [[nodiscard]] std::string GetOption(const std::string &key) const;
 
-  /** Returns a const reference of configuration */
-  [[nodiscard]] const Config &config() const;
-
-  /** Returns a mutable reference of configuration */
-  Config &m_config();
-
-  /** Returns the version string */
-  static std::string version();
-
-  /** Returns the repository status string */
-  static std::string repository_status();
-
   /**
-   * Returns the const reference to the asserted formulas.
-   *
-   * @note that the returned vector can be a proper subset of the
-   * asserted formulas. For example, when `x <= 5` is asserted, box()
-   * is updated to have this information (x <= 5) and this formula is
-   * thrown away.
+   * Get the configuration of the context.
+   * @return configuration of the context
+   */
+  [[nodiscard]] const Config &config() const;
+  /**
+   * Get the the asserted formulas.
+   * @note that the returned vector can be a proper subset of the asserted formulas.
+   * For example, when `x <= 5` is asserted, box() is updated to have this information and the formula is thrown away.
    */
   [[nodiscard]] const ScopedVector<Formula> &assertions() const;
-
-  /** Returns the const reference to the top box */
-  [[nodiscard]] const Box &box() const;
-
   /**
-   * Returns a representation of a model computed by the solver in
-   * response to an invocation of the check-sat.
+   * Get the current active box from the top of the @ref stack of boxes.
+   * @return the active box of the context
+   */
+  [[nodiscard]] const Box &box() const;
+  /**
+   * Get a representation of a model computed by the solver in response to the last invocation of the check-sat.
+   * @return the model computed by the solver
    */
   [[nodiscard]] const Box &model() const;
-
   /**
-   * Returns whether or not there is an objective function (which may be
-   * zero). If true, then CheckOpt() must be used, and not CheckSat(). If
-   * false, then CheckSat() must be used, and not CheckOpt().
+   * Check whether or not there is an objective function (which may be zero) to optimize.
+   * @return true if there is an objective function to optimize. @ref CheckOpt() will be called
+   * @return false if there is no objective function. @ref CheckSat() will be called
    */
   [[nodiscard]] bool have_objective() const;
-
   /**
-   * Returns whether or not the objective function (if present) is a
-   * maximization. If true, the original objective function has been negated
-   * to form a minimization problem.
+   * Check whether or not the objective function (if present) is a maximization.
+   * @return true if the original objective function is a maximization
+   * @return false if the original objective function is a minimization
    */
   [[nodiscard]] bool is_max() const;
-
   /**
-   * Returns the statistics up to the last call to CheckSat of the SAT solver.
+   * Get the statistics up to the last call to CheckSat of the SAT solver.
    * @return statistics of the SAT solver
    */
   [[nodiscard]] const IterationStats &sat_stats() const;
   /**
-   * Returns the statistics up to the last call to CheckSat or CheckOpt of the LP solver.
-   * @return statistics of the LP solver
+   * Get the statistics up to the last call to CheckSat or CheckOpt of the theory solver.
+   * @return statistics of the theory solver
    */
   [[nodiscard]] const IterationStats &theory_stats() const;
   /**
-   * Returns the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
-   * @return statistics of the predicate abstractor and the CNFizer
+   * Get the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
+   * @return statistics of the predicate abstractor, the CNFizer and ITE visitor
    */
   [[nodiscard]] std::tuple<const IterationStats &, const IterationStats &, const IterationStats &>
   formula_visitors_stats() const;
 
  private:
-  // This header is exposed to external users as a part of API. We use
-  // PIMPL idiom to hide internals and to reduce number of '#includes' in this
-  // file.
+  /**
+   * This header is exposed to external users as a part of API. We use
+   * PIMPL idiom to hide internals and to reduce number of '#includes' in this file.
+   */
   class Impl;
 
-  std::unique_ptr<Impl> impl_;
+  std::unique_ptr<Impl> impl_;  ///< Pointer to the implementation of the context
 };
 
 }  // namespace dlinear

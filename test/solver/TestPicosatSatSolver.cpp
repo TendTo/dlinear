@@ -24,7 +24,7 @@ using std::unique_ptr;
 
 class TestPicosatSatSolver : public ::testing::Test {
  protected:
-  Config config_;
+  const Config::SharedConfig config_;
   SolverGuard guard;
   PredicateAbstractor pa_;
   const Variable x_{"x"}, y_{"y"};
@@ -32,7 +32,7 @@ class TestPicosatSatSolver : public ::testing::Test {
   const Formula f2_{!(y_ > 2)};
   const Formula f3_{x_ + y_ <= 3};
   const Formula f4_{f_ || f2_ || f3_};
-  explicit TestPicosatSatSolver() : config_{get_config()}, guard{config_}, pa_{config_} {}
+  explicit TestPicosatSatSolver() : config_{std::make_shared<Config>(get_config())}, guard{*config_}, pa_{config_} {}
 
   static Config get_config() {
     Config config{};
@@ -42,12 +42,10 @@ class TestPicosatSatSolver : public ::testing::Test {
   }
 };
 
-TEST_F(TestPicosatSatSolver, ConstructorDefault) { PicosatSatSolver s{pa_}; }
-
-TEST_F(TestPicosatSatSolver, ConstructorConfig) { PicosatSatSolver s{pa_, config_}; }
+TEST_F(TestPicosatSatSolver, Constructor) { PicosatSatSolver s{pa_}; }
 
 TEST_F(TestPicosatSatSolver, AddFormula) {
-  PicosatSatSolver s{pa_, config_};
+  PicosatSatSolver s{pa_};
   s.AddFormula(f_);
 
   EXPECT_EQ(s.theory_literals().size(), 1u);
@@ -55,7 +53,7 @@ TEST_F(TestPicosatSatSolver, AddFormula) {
 }
 
 TEST_F(TestPicosatSatSolver, AddClauseLiteral) {
-  PicosatSatSolver s{pa_, config_};
+  PicosatSatSolver s{pa_};
   s.AddClause(Formula{Variable{"x_", Variable::Type::BOOLEAN}});
 
   EXPECT_EQ(s.theory_literals().size(), 1u);
@@ -63,7 +61,7 @@ TEST_F(TestPicosatSatSolver, AddClauseLiteral) {
 }
 
 TEST_F(TestPicosatSatSolver, AddClauseDisjunction) {
-  PicosatSatSolver s{pa_, config_};
+  PicosatSatSolver s{pa_};
   s.AddClause(Formula{Variable{"x_", Variable::Type::BOOLEAN}} || Formula{Variable{"y_", Variable::Type::BOOLEAN}});
 
   EXPECT_EQ(s.theory_literals().size(), 2u);

@@ -77,7 +77,7 @@ class PlaistedGreenbaumCnfizerTest : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  PlaistedGreenbaumCnfizer cnfizer_{{}};
+  PlaistedGreenbaumCnfizer cnfizer_{std::make_shared<Config>()};
 };
 
 TEST_F(PlaistedGreenbaumCnfizerTest, Test) {
