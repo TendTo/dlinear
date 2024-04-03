@@ -75,10 +75,8 @@ void TheorySolverBoundPreprocessor::Process(Explanations& explanations) {
   DLINEAR_TRACE("TheorySolverBoundPreprocessor::Process()");
   SetEnvironmentFromBounds();
   PropagateEnvironment(explanations);
-  if (!explanations.empty())
-    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation during propagation");
-  else
-    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND (propagation)!");
+  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process:{} conflict found during propagation",
+                    explanations.empty() ? " no" : "");
 }
 void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations) {
   if (!enabled_) return;
@@ -87,12 +85,8 @@ void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theo
   if (!explanations.empty()) return;
   PropagateRows(enabled_theory_rows);
   EvaluateFormulas(enabled_theory_rows, explanations);
-  if (!explanations.empty())
-    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: found explanation during evaluation");
-  else
-    DLINEAR_WARN("TheorySolverBoundPreprocessor::Process: NO CONFLICT FOUND (evaluation)!");
-  //  DLINEAR_WARN_FMT("End: env_ = {}", env_);
-  //  DLINEAR_WARN_FMT("End: bound_graph_ = {}", bound_graph_);
+  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process:{} conflict found during evaluation",
+                    explanations.empty() ? " no" : "");
 }
 
 void TheorySolverBoundPreprocessor::Clear() {
@@ -180,8 +174,8 @@ void TheorySolverBoundPreprocessor::PropagateRows(const std::vector<int>& enable
       // Add all the dependencies edges to the graph
       for (auto& to_var : dependencies) row_graph_.AddEdge(var_propagated, to_var, theory_row, false);
       env_[var_propagated] = rhs;
-      DLINEAR_WARN_FMT("TheorySolverBoundPreprocessor::PropagateRows: {} = {} thanks to row {} and {}", var_propagated,
-                       rhs, theory_row, dependencies);
+      DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::PropagateRows: {} = {} thanks to row {} and {}", var_propagated,
+                        rhs, theory_row, dependencies);
     }
   } while (continue_propagating);
 }
@@ -196,7 +190,7 @@ void TheorySolverBoundPreprocessor::EvaluateFormulas(const std::vector<int>& ena
     const Formula& formula = predicate_abstractor_[lit.var];
     const bool satisfied = formula.Evaluate(env_) == lit.truth;
     if (!satisfied) {
-      DLINEAR_ERROR_FMT("TheorySolverBoundPreprocessor::EvaluateFormulas: {} => FAIL", lit);
+      DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::EvaluateFormulas: {} => FAIL", lit);
       FormulaViolationExplanation(lit, formula, explanations);
     }
   }
