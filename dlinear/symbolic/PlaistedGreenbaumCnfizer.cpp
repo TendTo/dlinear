@@ -68,8 +68,6 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   return Formula{bvar};
 }
 
-// TODO: flatten nested conjunctions and disjunctions?
-
 Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
   static size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.

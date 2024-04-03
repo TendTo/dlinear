@@ -398,12 +398,10 @@ class IsDifferentiableVisitor {
     return Visit(get_lhs_expression(f)) && Visit(get_rhs_expression(f));
   }
   [[nodiscard]] bool VisitConjunction(const Formula &f) const {
-    // TODO: test this.
     std::set<Formula> formulae = get_operands(f);
     return std::all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
   }
   [[nodiscard]] bool VisitDisjunction(const Formula &f) const {
-    // TODO: test this.
     std::set<Formula> formulae = get_operands(f);
     return std::all_of(formulae.begin(), formulae.end(), [this](const Formula &formula) { return Visit(formula); });
   }

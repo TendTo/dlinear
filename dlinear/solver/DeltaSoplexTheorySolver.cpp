@@ -11,7 +11,6 @@
 
 #include "dlinear/libs/soplex.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"

@@ -5,7 +5,7 @@
  * @licence Apache-2.0 license
  * @brief LinearFormulaFlattener class
  *
- * Used by the @ref PredicateAbstractor to ensure that all the theory literals are
+ * Used by the @ref dlinear::PredicateAbstractor to ensure that all the theory literals are
  * in the flattened standard form.
  * @see LinearFormulaFlattener::Flatten
  */

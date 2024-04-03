@@ -95,7 +95,6 @@ bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, const bool truth)
 
 TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool truth) {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
-  // TODO: support more complex expressions such as `lhs + c1 <= rhs + c2`
   const Expression &lhs{get_lhs_expression(formula)};
   const Expression &rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, truth)) {
