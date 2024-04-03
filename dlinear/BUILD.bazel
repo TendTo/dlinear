@@ -22,7 +22,6 @@ dlinear_cc_library(
     hdrs = ["dlinear.h"],
     deps = [
         ":version",
-        "//dlinear/api",
         "//dlinear/solver:context",
         "//dlinear/solver:logic",
         "//dlinear/symbolic",

@@ -7,7 +7,6 @@
  */
 #pragma once
 
-#include "dlinear/api/api.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/symbolic/symbolic.h"
