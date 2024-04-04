@@ -102,29 +102,11 @@ class SoplexTheorySolver : public TheorySolver {
   void EnableSpxRow(int spx_row);
   /**
    * Enable the @p spx_row row for the LP solver.
-   *
-   * The free variables are collected from the state of the solver.
-   * @pre The row's coefficients must have been set correctly before calling this function
-   * @pre The row's truth value must have been updated correctly
-   * @param spx_row index of the row to enable
-   * @param truth truth value of the row
-   */
-  void EnableSpxRow(int spx_row, bool truth);
-  /**
-   * Enable the @p spx_row row for the LP solver.
-   * @pre The row's coefficients must have been set correctly before calling this function
-   * @param spx_row index of the row to enable
-   * @param free_vars free variables appearing in the row
-   */
-  void EnableSpxRow(int spx_row, const Variables& free_vars);
-  /**
-   * Enable the @p spx_row row for the LP solver.
    * @pre The row's coefficients must have been set correctly before calling this function
    * @param spx_row index of the row to enable
    * @param truth truth value of the row
-   * @param free_vars free variables appearing in the row
    */
-  virtual void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) = 0;
+  virtual void EnableSpxRow(int spx_row, bool truth) = 0;
 
   /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.

@@ -117,7 +117,7 @@ DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(con
     return {};
   }
 
-  EnableSpxRow(spx_row, truth, {});
+  EnableSpxRow(spx_row, truth);
   return {};
 }
 
@@ -235,7 +235,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   return sat_status;
 }
 
-void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth, [[maybe_unused]] const Variables &free_vars) {
+void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
   const LpRowSense sense = spx_sense_[spx_row];
   const mpq_class &rhs{spx_rhs_[spx_row]};
   if (truth) {

@@ -35,7 +35,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, SoplexTheorySolver::Explanations &explanation),
               (override));
-  MOCK_METHOD(void, EnableSpxRow, (int, bool, const dlinear::Variables &), (override));
+  MOCK_METHOD(void, EnableSpxRow, (int, bool), (override));
 };
 
 class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {

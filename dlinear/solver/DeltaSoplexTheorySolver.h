@@ -47,7 +47,7 @@ class DeltaSoplexTheorySolver : public SoplexTheorySolver {
   SatResult CheckSat(const Box& box, mpq_class* actual_precision, Explanations& explanations) override;
 
  private:
-  void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
+  void EnableSpxRow(int spx_row, bool truth) override;
 };
 
 }  // namespace dlinear

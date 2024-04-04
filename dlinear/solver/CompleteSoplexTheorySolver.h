@@ -55,7 +55,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   static const mpq_class strict_col_ub_;  ///< One. Used for the strict variable upper bound
 
   void EnableSPXVarBound() override;
-  void EnableSpxRow(int spx_row, bool truth, const Variables& free_vars) override;
+  void EnableSpxRow(int spx_row, bool truth) override;
 
   /**
    * Internal method to check the satisfiability of the current LP problem.
@@ -134,9 +134,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    */
   void GetExplanation(LiteralSet& explanation);
 
-  std::vector<int> enabled_strict_theory_rows_;                          ///< Vector of enabled strict theory rows
-  std::map<Variable::Id, std::vector<int>> var_to_enabled_theory_rows_;  ///< variable id -> enabled theory row.
-                                                                         ///< Does not include simple bounds
+  std::vector<int> enabled_strict_theory_rows_;  ///< Vector of enabled strict theory rows
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
                                             ///< mapped to the corresponding spx_row
   std::vector<bool> last_nq_status_;        ///< Last status of the non-equal constraints.

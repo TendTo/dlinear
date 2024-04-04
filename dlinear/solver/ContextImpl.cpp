@@ -336,6 +336,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         have_unsolved = true;  // Will prevent return of UNSAT
         theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
       }
+      DLINEAR_ASSERT(!theory_explanations.empty(), "theory_explanations must not be empty");
       LearnExplanations(theory_explanations);
     }
   }

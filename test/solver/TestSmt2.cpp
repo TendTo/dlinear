@@ -47,7 +47,6 @@ INSTANTIATE_TEST_SUITE_P(TestSmt2, TestCompleteSmt2,
 
 TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
   const auto& [lp_solver, filename, precision] = GetParam();
-  std::cout << "Testing " << filename << std::endl;
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   config_.m_precision() = precision;
@@ -58,6 +57,7 @@ TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
 
 TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
   const auto& [lp_solver, filename] = GetParam();
+  std::cout << "Testing " << filename << std::endl;
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
