@@ -33,7 +33,7 @@ class LinearFormulaFlattener {
    *
    * A formula is considered flatten if:
    * - is in the form @f$ a_1x_1 + a_2x_2 + \dots a_nx_n \lessgtr c @f$ where @f$ a_i, c_i \in \mathbb{R} @f$ are
-   * constants and @f$ x_i \in \mathbb{R} @f$ is an unknown variable @f$ \forall i \in \{1, 2, \dots, n\} @f$
+   * constants, @f$ a_1 > 0 @f$ and @f$ x_i \in \mathbb{R} @f$ is a variable @f$ \forall i \in \{1, 2, \dots, n\} @f$
    * - calling the method Expand on both of the formula's terms outputs the same expression as the
    * one used as the input
    * @warning The formula returned has a very limited lifetime, being a reference of either the input @p formula or
@@ -50,6 +50,10 @@ class LinearFormulaFlattener {
    * If a formula is in the form @f$ a x \lessgtr b @f$ where @f$ a, b \in \mathbb{R}, a \ne 0 @f$ are constants
    * and @f$ x \in \mathbb{R} @f$ is an unknown variable, this method will remove the multiplication
    * from the left-hand-side of the formula by dividing both sides by @f$ a @f$.
+   * If a formula is in the form @f$ a_1x_1 + a_2x_2 + \dots a_nx_n \lessgtr c @f$ where @f$ a_i, c_i \in \mathbb{R} @f$
+   * are constants and @f$ x_i \in \mathbb{R} @f$ is an unknown variable @f$ \forall i \in \{1, 2, \dots, n\} @f$,
+   * this method will ensure that the first term in the addition of the left-hand-side has a positive coefficient, by
+   * multiplying both sides by @f$ -1 @f$ if necessary.
    * @param lhs left-hand-side expression of the new formula
    * @param rhs right-hand-side expression of the new formula
    * @param kind kind of the formula (e.g. Eq, Lt, Geq, ...)

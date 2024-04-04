@@ -43,9 +43,21 @@ void LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const 
     return BuildFlatteredFormula(lhs * coefficient, rhs * coefficient, coefficient >= 0 ? kind : -kind);
   }
 
+  // Ensure the first term in the addition of the left-hand-side has a positive coefficient
+  if (is_addition(lhs) && !get_expr_to_coeff_map_in_addition(lhs).empty() &&
+      is_variable(get_expr_to_coeff_map_in_addition(lhs).begin()->first) &&
+      get_expr_to_coeff_map_in_addition(lhs).begin()->second < 0) {
+    return BuildFlatteredFormula(lhs * -1, rhs * -1, -kind);
+  }
+
   DLINEAR_ASSERT_FMT(!is_multiplication(lhs) || get_base_to_exponent_map_in_multiplication(lhs).size() != 1 ||
                          !is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
-                     "lhs {} should have been modified by a previous call", lhs);
+                     "lhs {} should have been modified by a previous call as a mult", lhs);
+  DLINEAR_ASSERT_FMT(!is_addition(lhs) || get_expr_to_coeff_map_in_addition(lhs).empty() ||
+                         !is_variable(get_expr_to_coeff_map_in_addition(lhs).begin()->first) ||
+                         get_expr_to_coeff_map_in_addition(lhs).begin()->second >= 0,
+                     "lhs {} should have been modified by a previous call as an addition", lhs);
+
   switch (kind) {
     case FormulaKind::Eq:
       flattered_formula_ = lhs == rhs;
