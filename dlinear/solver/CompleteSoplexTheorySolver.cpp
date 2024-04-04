@@ -28,10 +28,10 @@ CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &pred
                                                        const std::string &class_name)
     : SoplexTheorySolver(predicate_abstractor, class_name),
       enabled_strict_theory_rows_{},
-      var_to_enabled_theory_rows_{},
       nq_row_to_theory_rows_{},
       last_nq_status_{},
-      theory_rows_to_explanation_{} {
+      last_theory_rows_to_explanation_{},
+      final_theory_rows_to_explanation_{} {
   DLINEAR_ASSERT(config_.precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
 }
 
@@ -40,8 +40,6 @@ void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   // The variable is already present
   if (it != var_to_theory_col_.end()) return;
   SoplexTheorySolver::AddVariable(var);
-  // Add the set of differences for the new variable that will map to a column of the LP problem
-  var_to_enabled_theory_rows_.emplace(var.get_id(), std::vector<int>());
 }
 
 void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
@@ -142,7 +140,7 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
     return {};
   }
 
-  EnableSpxRow(spx_row, truth, formula.GetFreeVariables());
+  EnableSpxRow(spx_row, truth);
   return {};
 }
 
@@ -179,11 +177,18 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
 
   SatResult sat_status;
+  // Set the number of rows in the final explanation as the number of non-equal constraints + 1, so that it will surely
+  // be updated with the first explanation
+  num_nq_rows_in_final_explanation_ = nq_row_to_theory_rows_.size() + 1;
   // Initialise the iterator with the last nq statuses
   std::vector<bool> starting_iterator(nq_row_to_theory_rows_.size(), false);
-  std::transform(nq_row_to_theory_rows_.cbegin(), nq_row_to_theory_rows_.cend(), starting_iterator.begin(),
-                 [&](int i) { return last_nq_status_[i]; });
+  for (size_t i = 0; i < nq_row_to_theory_rows_.size(); i++) {
+    starting_iterator[i] = last_nq_status_[nq_row_to_theory_rows_[i]];
+  }
   BitIncrementIterator it(starting_iterator);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: nq starting iterator size = {}", starting_iterator.size());
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq starting iterator = {}", it);
+
   do {
     // Enable the non-equal constraints based on the current iterator value.
     // If the iterator is empty (there are no not-equal constraints), this will do nothing
@@ -285,10 +290,10 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat(mpq_class *actual_precision) {
 
 void CompleteSoplexTheorySolver::Reset(const Box &box) {
   SoplexTheorySolver::Reset(box);
-  for (auto &rows : var_to_enabled_theory_rows_) rows.second.clear();
   enabled_strict_theory_rows_.clear();
   nq_row_to_theory_rows_.clear();
-  theory_rows_to_explanation_.clear();
+  last_theory_rows_to_explanation_.clear();
+  final_theory_rows_to_explanation_.clear();
 }
 
 void CompleteSoplexTheorySolver::Consolidate() {
@@ -352,24 +357,24 @@ void CompleteSoplexTheorySolver::UpdateExplanationInfeasible() {
   std::vector<BoundViolationType> bounds_ray(spx_.numColsRational() - 1, BoundViolationType::NO_BOUND_VIOLATION);
   GetSpxInfeasibilityRay(ray, bounds_ray);
 
-  theory_rows_to_explanation_.clear();
+  last_theory_rows_to_explanation_.clear();
   // For each row in the ray
   for (int i = 0; i < spx_.numRowsRational(); ++i) {
     if (ray[i].is_zero()) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexSatSolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
     // Insert the conflicting row literal to the explanation
-    theory_rows_to_explanation_.insert(i);
+    last_theory_rows_to_explanation_.insert(i);
 
     // Add all the active bounds for the free variables in the row to the explanation
     const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[i].var];
     for (const Variable &var : row_formula.GetFreeVariables()) {
       const int &theory_col = var_to_theory_col_.at(var.get_id());
-      TheoryBoundsToBoundIdxs(theory_col, bounds_ray[theory_col], theory_rows_to_explanation_);
+      TheoryBoundsToBoundIdxs(theory_col, bounds_ray[theory_col], last_theory_rows_to_explanation_);
     }
   }
 
-  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: ↦ {}", theory_rows_to_explanation_);
+  DLINEAR_ASSERT(!last_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: ↦ {}", last_theory_rows_to_explanation_);
 }
 
 void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
@@ -479,39 +484,35 @@ void CompleteSoplexTheorySolver::EnableSPXVarBound() {
   }
 }
 
-void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth, const Variables &free_vars) {
-  for (const Variable &row_var : free_vars) {
-    var_to_enabled_theory_rows_.at(row_var.get_id()).push_back(spx_row);
-  }
-
+void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
   const LpRowSense sense = truth ? spx_sense_[spx_row] : !spx_sense_[spx_row];
   const mpq_class &rhs{spx_rhs_[spx_row]};
   soplex::LPRowRational lp_row;
   spx_.getRowRational(spx_row, lp_row);
   soplex::DSVectorRational row_vector{lp_row.rowVector()};
   // Remove the strict variable from the row and add it back with the right coefficient
-  int pos = row_vector.pos(strict_variable_idx());
-  if (pos < 0) {
+  int strict_variable_pos = row_vector.pos(strict_variable_idx());
+  if (strict_variable_pos < 0) {
     row_vector.add(strict_variable_idx(), 1);
-    pos = row_vector.pos(strict_variable_idx());
+    strict_variable_pos = row_vector.pos(strict_variable_idx());
   }
   switch (sense) {
     case LpRowSense::LT:
-      row_vector.value(pos) = 1;
+      row_vector.value(strict_variable_pos) = 1;
       enabled_strict_theory_rows_.push_back(spx_row);
       break;
     case LpRowSense::GT:
-      row_vector.value(pos) = -1;
+      row_vector.value(strict_variable_pos) = -1;
       enabled_strict_theory_rows_.push_back(spx_row);
       break;
     case LpRowSense::EQ:
     case LpRowSense::LE:
     case LpRowSense::GE:
-      row_vector.value(pos) = 0;
+      row_vector.value(strict_variable_pos) = 0;
       break;
     case LpRowSense::NQ:
       // Initialise the inequality based on the last status stored ( < or > )
-      row_vector.value(pos) = last_nq_status_[spx_row] ? -1 : 1;
+      row_vector.value(strict_variable_pos) = last_nq_status_[spx_row] ? -1 : 1;
       enabled_strict_theory_rows_.push_back(spx_row);
       nq_row_to_theory_rows_.push_back(spx_row);
       break;

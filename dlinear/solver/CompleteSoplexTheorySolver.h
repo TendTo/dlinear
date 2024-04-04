@@ -62,7 +62,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    *
    * It invokes the LP solver and returns the result, as well as the actual precision of the solution, if any.
    * If the LP problem is infeasible (or strictly infeasible), it will also update the explanation
-   * @ref theory_rows_to_explanation_.
+   * @ref final_theory_rows_to_explanation_.
    * @param actual_precision The actual precision of the solution, if any. Starts from the input, and is updated if the
    * LP solver returns a better precision
    * @return The result of the SAT check
@@ -121,15 +121,15 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * Find the non-equal rows in the current explanation.
    * @return vector of the non-equal rows in the current explanation
    */
-  std::vector<size_t> IteratorNqRowsInExplanation() const;
+  std::vector<size_t> IteratorNqRowsInLastExplanation() const;
 
   /**
-   * Add a new explanation to @p explanations from @ref theory_rows_to_explanation_.
+   * Add a new explanation to @p explanations from @ref final_theory_rows_to_explanation_.
    * @param[out] explanations the set of explanations to add the new explanation to
    */
   void GetExplanation(Explanations& explanations);
   /**
-   * Get the explanation from @ref theory_rows_to_explanation_.
+   * Get the explanation from @ref final_theory_rows_to_explanation_.
    * @param[out] explanation the explanation to be updated
    */
   void GetExplanation(LiteralSet& explanation);
@@ -141,7 +141,9 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
                                             ///< Keeps track last sense of the constraints:
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
-  std::set<int> theory_rows_to_explanation_;  ///< Set of theory rows that are part of the explanation
+  size_t num_nq_rows_in_final_explanation_;                   ///< Number of non-equal rows in the final explanation
+  std::set<int> last_theory_rows_to_explanation_;   ///< Last set of theory rows that are part of the explanation
+  std::set<int> final_theory_rows_to_explanation_;  ///< Final set of theory rows that are part of the explanation
 };
 
 }  // namespace dlinear
