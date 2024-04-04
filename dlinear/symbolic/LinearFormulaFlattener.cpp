@@ -10,7 +10,7 @@ namespace dlinear {
 
 const Formula& LinearFormulaFlattener::Flatten(const Formula& formula) {
   if (!is_relational(formula)) return formula;
-  const bool needs_expansion_{config_->needs_expansion()};
+  const bool needs_expansion_{config_.needs_expansion()};
   const Expression& lhs = get_lhs_expression(formula);
   const Expression& rhs = get_rhs_expression(formula);
   const Expression expr{needs_expansion_ ? (lhs - rhs).Expand() : lhs - rhs};

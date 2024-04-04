@@ -150,7 +150,7 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
-  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true /* start_timer */);
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
   DLINEAR_TRACE_FMT("DeltaQsoptexTheorySolver::CheckSat: Box = \n{}", box);

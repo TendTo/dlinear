@@ -22,13 +22,13 @@ class TestContext : public ::testing::TestWithParam<Config::LPSolver> {
  protected:
   const Variable x_{"x"};
   const Variable y_{"Y"};
-  const Config::SharedConfig config_;
-  unique_ptr<Context> context_;
-  explicit TestContext()
-      : guard_{GetParam()}, config_{std::make_shared<Config>()}, context_{std::make_unique<Context>(config_)} {
-    config_->m_lp_solver() = GetParam();
+  Config config_;
+  Context context_;
+  explicit TestContext() : guard_{GetParam()}, context_{config_} {
+    config_.m_lp_solver() = GetParam();
+    context_.DeclareVariable(x_);
+    context_.DeclareVariable(y_);
   }
-  void SetUp() override { context_->DeclareVariable(x_); }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestContext, TestContext, enabled_test_solvers);

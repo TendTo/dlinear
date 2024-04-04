@@ -26,7 +26,7 @@ Smt2Driver::Smt2Driver(Context &context)
       stats_{context.config().with_timings(), "Smt2Driver", "Total time spent in SMT2 parsing"} {}
 
 bool Smt2Driver::parse_stream(std::istream &in, const std::string &sname) {
-  TimerGuard check_sat_timer_guard(&stats_.m_timer(), stats_.enabled(), true);
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   streamname_ = sname;
 
   Smt2Scanner scanner(&in);

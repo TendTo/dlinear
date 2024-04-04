@@ -37,8 +37,7 @@ class TheorySolverBoundPreprocessor {
   using BoundEdge = std::tuple<Variable, Variable, Weight>;
   using Explanations = std::set<LiteralSet>;
   TheorySolverBoundPreprocessor(const TheorySolver& theory_solver);
-  TheorySolverBoundPreprocessor(const Config::ConstSharedConfig& config,
-                                const PredicateAbstractor& predicate_abstractor,
+  TheorySolverBoundPreprocessor(const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
                                 const std::vector<Literal>& theory_rows,
@@ -58,8 +57,7 @@ class TheorySolverBoundPreprocessor {
 
   void Clear();
 
-  [[nodiscard]] const Config::ConstSharedConfig& config_ptr() const { return config_; }
-  [[nodiscard]] const Config& config() const { return *config_; }
+  [[nodiscard]] const Config& config() const { return config_; }
   [[nodiscard]] const TheorySolverBoundVectorVector& theory_bounds() const { return theory_bounds_; }
   [[nodiscard]] const std::vector<Variable>& theory_cols() const { return theory_cols_; }
   [[nodiscard]] const std::map<Variable::Id, int>& var_to_cols() const { return var_to_cols_; }
@@ -95,7 +93,7 @@ class TheorySolverBoundPreprocessor {
   void GetExplanation(const Variable& var, LiteralSet& explanation);
 
  private:
-  const Config::ConstSharedConfig config_;
+  const Config& config_;
   const PredicateAbstractor& predicate_abstractor_;
   const std::vector<Variable>& theory_cols_;
   const std::map<Variable::Id, int>& var_to_cols_;

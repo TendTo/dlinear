@@ -25,27 +25,27 @@ SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor
   infinity_ = soplex::infinity;
   ninfinity_ = -soplex::infinity;
   // Default SoPlex parameters
-  spx_.setRealParam(soplex::SoPlex::FEASTOL, config_->precision());
+  spx_.setRealParam(soplex::SoPlex::FEASTOL, config_.precision());
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
   spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SOLVEMODE, soplex::SoPlex::SOLVEMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::CHECKMODE, soplex::SoPlex::CHECKMODE_RATIONAL);
   spx_.setIntParam(soplex::SoPlex::SYNCMODE, soplex::SoPlex::SYNCMODE_AUTO);
   spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
-  spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_->verbose_simplex());
+  spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
   // Default is maximize.
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MAXIMIZE);
   // Enable precision boosting
-  bool enable_precision_boosting = config_->lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  bool enable_precision_boosting = config_.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
   spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
   spx_.setBoolParam(soplex::SoPlex::PRECISION_BOOSTING, enable_precision_boosting);
   spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, enable_precision_boosting ? 0 : 2);
   // Enable iterative refinement
-  bool enable_iterative_refinement = config_->lp_mode() != Config::LPMode::PURE_PRECISION_BOOSTING;
+  bool enable_iterative_refinement = config_.lp_mode() != Config::LPMode::PURE_PRECISION_BOOSTING;
   spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
   DLINEAR_DEBUG_FMT(
       "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
-      config_->precision(), enable_precision_boosting, enable_iterative_refinement);
+      config_.precision(), enable_precision_boosting, enable_iterative_refinement);
 }
 
 void SoplexTheorySolver::AddVariable(const Variable &var) {
@@ -154,7 +154,7 @@ void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const 
 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
   throw std::runtime_error("Not implemented");
-  DLINEAR_ASSERT(2 == config_->simplex_sat_phase(), "must be phase 2");
+  DLINEAR_ASSERT(2 == config_.simplex_sat_phase(), "must be phase 2");
   [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   soplex::DSVectorRational coeffsPos;
   coeffsPos.add(spx_row, 1);

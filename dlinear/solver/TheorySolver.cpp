@@ -12,15 +12,15 @@
 namespace dlinear {
 
 TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : config_{predicate_abstractor.config_ptr()},
+    : config_{predicate_abstractor.config()},
       is_consolidated_{false},
       predicate_abstractor_{predicate_abstractor},
       preprocessor_{*this},
       model_{},
-      stats_{config_->with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+      stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
-const Box &TheorySolver::GetModel() const {
-  DLINEAR_DEBUG_FMT("TheorySolver::GetModel():\n{}", model_);
+const Box &TheorySolver::model() const {
+  DLINEAR_DEBUG_FMT("TheorySolver::model():\n{}", model_);
   return model_;
 }
 

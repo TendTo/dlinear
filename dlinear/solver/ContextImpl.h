@@ -38,7 +38,7 @@ class Context::Impl {
    * Construct a context with @p config.
    * @param config the configuration of the context
    */
-  explicit Impl(const Config::SharedConfig &config);
+  explicit Impl(Config &config);
   Impl(const Impl &) = delete;
   Impl(Impl &&) = delete;
   Impl &operator=(const Impl &) = delete;
@@ -151,7 +151,7 @@ class Context::Impl {
    * Get the configuration of the context.
    * @return configuration of the context
    */
-  const Config &config() const { return *config_; }
+  const Config &config() const { return config_; }
   /**
    * Get the the asserted formulas.
    * @note that the returned vector can be a proper subset of the asserted formulas.
@@ -207,7 +207,7 @@ class Context::Impl {
    * @param config configuration of the context determining the theory solver to use
    * @return theory solver subclass
    */
-  std::unique_ptr<TheorySolver> GetTheorySolver(const Config::ConstSharedConfig &config);
+  std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);
 
   /**
    * Add the variable @p v to the current box. This is used to
@@ -283,7 +283,7 @@ class Context::Impl {
    */
   Box ExtractModel(const Box &box) const;
 
-  const Config::SharedConfig config_;  ///< Configuration of the context. It could be modified by the problem instance.
+  Config &config_;  ///< Configuration of the context. It could be modified by the problem instance.
   std::optional<Logic> logic_{};       ///< SMT Logic of the context. Must be among the supported logics.
   std::unordered_map<std::string, std::string> info_;    ///< Key-value pairs of information.
   std::unordered_map<std::string, std::string> option_;  ///< Key-value pairs of options.

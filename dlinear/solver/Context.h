@@ -40,7 +40,7 @@ class Context {
    * Construct a context with @p config.
    * @param config the configuration of the context
    */
-  explicit Context(const Config::SharedConfig &config);
+  explicit Context(Config &config);
   Context(const Context &context) = delete;
   Context(Context &&context) noexcept;
   Context &operator=(const Context &) = delete;

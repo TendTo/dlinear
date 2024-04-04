@@ -55,7 +55,7 @@ class SatSolver {
    * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals
    * @see TheorySolver
    */
-  SatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "SatSolver");
+  explicit SatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "SatSolver");
   virtual ~SatSolver() = default;
 
   void Pop();
@@ -192,7 +192,7 @@ class SatSolver {
    */
   void UpdateLookup(int lit, int learned);
 
-  const Config::ConstSharedConfig config_;  ///< Configuration of the SAT solver
+  const Config &config_;  ///< Configuration of the SAT solver
 
   // Data to help with removing literals that are only required by learned clauses.
   std::vector<int> main_clauses_copy_;

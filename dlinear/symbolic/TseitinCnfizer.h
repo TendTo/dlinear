@@ -32,7 +32,7 @@ namespace dlinear {
  */
 class TseitinCnfizer : public FormulaVisitor {
  public:
-  explicit TseitinCnfizer(const Config::ConstSharedConfig &config) : FormulaVisitor{config, "TseitinCnfizer"} {}
+  explicit TseitinCnfizer(const Config &config) : FormulaVisitor{config, "TseitinCnfizer"} {}
 
   /**
    * Convert @p f into an equi-satisfiable formula @c f' in CNF.

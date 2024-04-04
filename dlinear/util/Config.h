@@ -31,8 +31,6 @@ namespace dlinear {
 
 class Config {
  public:
-  using ConstSharedConfig = std::shared_ptr<const Config>;
-  using SharedConfig = std::shared_ptr<Config>;
   /**
    * LP solver used by the theory solver.
    * @see Config::lp_solver

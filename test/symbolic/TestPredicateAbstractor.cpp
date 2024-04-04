@@ -15,6 +15,7 @@ namespace dlinear {
 
 class TestPredicateAbstractor : public ::testing::Test {
   DrakeSymbolicGuard guard_;
+  Config config_;
 
  protected:
   const Variable x_{"x", Variable::Type::CONTINUOUS};
@@ -25,7 +26,7 @@ class TestPredicateAbstractor : public ::testing::Test {
   const Variable b2_{"b2", Variable::Type::BOOLEAN};
   const Variable b3_{"b3", Variable::Type::BOOLEAN};
 
-  PredicateAbstractor abstractor_{std::make_shared<Config>()};
+  PredicateAbstractor abstractor_{config_};
 };
 
 TEST_F(TestPredicateAbstractor, False) {

@@ -23,12 +23,11 @@ namespace dlinear {
 class FormulaVisitor {
  public:
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
-  [[nodiscard]] const Config::ConstSharedConfig &config_ptr() const { return config_; }
-  [[nodiscard]] const Config &config() const { return *config_; }
+  [[nodiscard]] const Config &config() const { return config_; }
 
  protected:
-  explicit FormulaVisitor(const Config::ConstSharedConfig &config, const std::string &class_name = "FormulaVisitor")
-      : config_{config}, stats_{config->with_timings(), class_name, "Converting"} {}
+  explicit FormulaVisitor(const Config &config, const std::string &class_name = "FormulaVisitor")
+      : config_{config}, stats_{config.with_timings(), class_name, "Converting"} {}
   virtual ~FormulaVisitor() = default;
   virtual Formula Visit(const Formula &f) { return f; }
   virtual Formula VisitFalse(const Formula &f) { return f; }
@@ -45,7 +44,7 @@ class FormulaVisitor {
   virtual Formula VisitNegation(const Formula &f) { return f; }
   virtual Formula VisitForall(const Formula &f) { return f; }
 
-  const Config::ConstSharedConfig config_;
+  const Config &config_;
   IterationStats stats_;
 };
 

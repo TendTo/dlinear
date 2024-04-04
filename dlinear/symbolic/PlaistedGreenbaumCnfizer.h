@@ -21,7 +21,7 @@ namespace dlinear {
 
 class PlaistedGreenbaumCnfizer : public FormulaVisitor {
  public:
-  explicit PlaistedGreenbaumCnfizer(const Config::ConstSharedConfig &config)
+  explicit PlaistedGreenbaumCnfizer(const Config &config)
       : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"} {}
 
   /**

@@ -42,10 +42,10 @@ class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
   const DrakeSymbolicGuard guard_;
 
  protected:
-  Variable var_{"x"};
-  const Config::SharedConfig config_;
+  const Variable var_{"x"};
+  Config config_;
   PredicateAbstractor abstractor_;
-  explicit TestSoplexTheorySolver() : config_{std::make_shared<Config>(GetConfig())}, abstractor_{config_} {}
+  explicit TestSoplexTheorySolver() : config_{GetConfig()}, abstractor_{config_} {}
   static Config GetConfig() {
     Config config;
     config.m_precision() = 0;
@@ -58,7 +58,7 @@ INSTANTIATE_TEST_SUITE_P(TestSoplexTheorySolver, TestSoplexTheorySolver, ::testi
 
 TEST_P(TestSoplexTheorySolver, AddVariable) {
   const int theory_col = 0;
-  config_->m_precision() = GetParam();
+  config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
 
@@ -72,7 +72,7 @@ TEST_P(TestSoplexTheorySolver, AddVariable) {
 }
 
 TEST_P(TestSoplexTheorySolver, EnableLiterals) {
-  config_->m_precision() = GetParam();
+  config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_};
   EXPECT_EQ(s.theory_col_to_var().size(), 0u);
 
@@ -84,7 +84,7 @@ TEST_P(TestSoplexTheorySolver, EnableLiterals) {
 
 TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
   const int theory_col = 0;
-  config_->m_precision() = GetParam();
+  config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_};
   s.AddVariable(var_);
 
@@ -101,7 +101,7 @@ TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
   mpq_class lb = 5, ub = 10;
   Box box{};
   box.Add(var_, lb, ub);
-  config_->m_precision() = GetParam();
+  config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_};
   s.AddVariable(var_);
 

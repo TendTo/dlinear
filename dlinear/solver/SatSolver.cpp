@@ -12,11 +12,11 @@
 namespace dlinear {
 
 SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : config_{predicate_abstractor.config_ptr()},
+    : config_{predicate_abstractor.config()},
       cur_clause_start_{0},
-      cnfizer_{predicate_abstractor.config_ptr()},
+      cnfizer_{predicate_abstractor.config()},
       predicate_abstractor_{predicate_abstractor},
-      stats_{config_->with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
+      stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
 std::tuple<const IterationStats &, const IterationStats &> SatSolver::formula_visitors_stats() const {
   return {predicate_abstractor_.stats(), cnfizer_.stats()};
@@ -113,7 +113,6 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
 Model SatSolver::OnSatResult() {
   Model model;
 
-  const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
   for (int i : GetMainActiveLiterals()) {
     const auto it_var = sat_to_var_.find(abs(i));
     if (it_var == sat_to_var_.end()) {
@@ -122,6 +121,7 @@ Model SatSolver::OnSatResult() {
       continue;
     }
     const Variable &var{it_var->second};
+    const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
     const auto it = var_to_formula_map.find(var);
     if (it != var_to_formula_map.end()) {  // The variable is a theory literal
       DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);

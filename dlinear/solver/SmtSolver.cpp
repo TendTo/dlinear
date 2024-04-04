@@ -23,28 +23,25 @@ namespace dlinear {
 
 namespace {
 template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver> T>
-inline bool ParseInputCore(const Config::ConstSharedConfig &config, Context &context, SmtSolverOutput &output) {
+inline bool ParseInputCore(const Config &config, Context &context, SmtSolverOutput &output) {
   DLINEAR_DEBUG("SmtSolver::ParseSmt2");
   T driver{context};
   const bool res =
-      config->read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config->filename());
-  if (config->with_timings() && res) output.parser_stats = driver.stats();
+      config.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config.filename());
+  if (config.with_timings() && res) output.parser_stats = driver.stats();
   return res;
 }
 }  // namespace
 
-SmtSolver::SmtSolver() : SmtSolver{std::make_shared<Config>()} {}
-SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{std::make_shared<Config>(filename)} {}
-SmtSolver::SmtSolver(const Config &config) : SmtSolver{std::make_shared<Config>(config)} {}
-SmtSolver::SmtSolver(Config::SharedConfig config)
-    : config_{std::move(config)}, guard_{*config_}, context_{config_}, output_{*config_} {}
+SmtSolver::SmtSolver() : SmtSolver{Config{}} {}
+SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
+SmtSolver::SmtSolver(Config config)
+    : config_{std::move(config)}, guard_{config_}, context_{config_}, output_{config_} {}
 
 #ifdef DLINEAR_PYDLINEAR
-
 SmtSolver &SmtSolver::Enter() { return *this; }
 
 void SmtSolver::Exit() { guard_.DeInit(); }
-
 #endif
 
 SmtSolverOutput SmtSolver::CheckSat() {
@@ -52,12 +49,12 @@ SmtSolverOutput SmtSolver::CheckSat() {
   if (output_.result != SolverResult::UNSOLVED) return output_;
   TimerGuard timer_guard{&output_.total_timer, true};
   DLINEAR_DEBUG("SmtSolver::CheckSat: No cached result fond.");
-  DLINEAR_INFO_FMT("SmtSolver::CheckSat: Checking satisfiability of '{}'", config_->filename());
+  DLINEAR_INFO_FMT("SmtSolver::CheckSat: Checking satisfiability of '{}'", config_.filename());
   dlinear::main_timer.start();
-  if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_->filename());
+  if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
   output_.n_assertions = context_.assertions().size();
 
-  if (config_->skip_check_sat())
+  if (config_.skip_check_sat())
     output_.result = SolverResult::SKIP_SAT;
   else if (context_.have_objective())
     CheckObjCore();
@@ -66,7 +63,7 @@ SmtSolverOutput SmtSolver::CheckSat() {
 
   output_.model = context_.model();
   // Store stats
-  if (config_->with_timings()) {
+  if (config_.with_timings()) {
     const auto [predicate_abstractor_stats, cnfizer_stats, ite_stats] = context_.formula_visitors_stats();
     output_.predicate_abstractor_stats = predicate_abstractor_stats;
     output_.cnfizer_stats = cnfizer_stats;
@@ -80,11 +77,11 @@ SmtSolverOutput SmtSolver::CheckSat() {
 
 bool SmtSolver::ParseInput() {
   DLINEAR_TRACE("SmtSolver::ParseInput");
-  switch (config_->format()) {
+  switch (config_.format()) {
     case Config::Format::AUTO:
-      if (config_->read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
-      if (config_->filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
-      if (config_->filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
+      if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
+      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
+      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
       DLINEAR_UNREACHABLE();
     case Config::Format::SMT2:
       return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);

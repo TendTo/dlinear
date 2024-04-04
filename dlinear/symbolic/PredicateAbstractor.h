@@ -24,7 +24,7 @@ namespace dlinear {
 
 class PredicateAbstractor : public FormulaVisitor {
  public:
-  explicit PredicateAbstractor(const Config::ConstSharedConfig &config)
+  explicit PredicateAbstractor(const Config &config)
       : FormulaVisitor{config, "PredicateAbstractor"}, flattener_{config} {}
   /**
    * Convert a first-order logic formula @p f into a Boolean formula

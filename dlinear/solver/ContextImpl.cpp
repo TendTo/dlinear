@@ -33,7 +33,7 @@ bool ParseBooleanOption([[maybe_unused]] const std::string &key, const std::stri
 
 namespace dlinear {
 
-Context::Impl::Impl(const Config::SharedConfig &config)
+Context::Impl::Impl(Config &config)
     : config_{config},
       have_objective_{false},
       is_max_{false},
@@ -62,7 +62,7 @@ void Context::Impl::Assert(const Formula &f) {
 
   // Note that the following does not mark `ite_var` as a model variable.
   for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
-  if (config_->with_timings()) ite_stats_ = ite_eliminator.stats();
+  if (config_.with_timings()) ite_stats_ = ite_eliminator.stats();
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
 #if 0
@@ -193,20 +193,19 @@ void Context::Impl::SetOption(const std::string &key, const double val) {
 
   if (key == ":precision") {
     if (val <= 0.0) DLINEAR_RUNTIME_ERROR_FMT("Precision has to be positive (input = {}).", val);
-    return config_->m_precision().set_from_file(val);
+    return config_.m_precision().set_from_file(val);
   }
 }
 
 void Context::Impl::SetOption(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
-  if (key == ":polytope") return config_->m_use_polytope().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":forall-polytope") return config_->m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":forall-polytope") return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
   if (key == ":local-optimization")
-    return config_->m_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":worklist-fixpoint")
-    return config_->m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":produce-models") return config_->m_produce_models().set_from_file(ParseBooleanOption(key, val));
+    return config_.m_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":worklist-fixpoint") return config_.m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
 std::string Context::Impl::GetOption(const std::string &key) const {
@@ -326,7 +325,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
       // SAT from TheorySolver.
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
-      box() = theory_solver_->GetModel();
+      box() = theory_solver_->model();
       return theory_result;
     } else {
       if (theory_result == SatResult::SAT_UNSATISFIABLE) {  // UNSAT from TheorySolver.
@@ -349,8 +348,8 @@ LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe
 void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
   DLINEAR_RUNTIME_ERROR("Not implemented");
 }
-std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config::ConstSharedConfig &config) {
-  switch (config->lp_solver()) {
+std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
+  switch (config.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
       if (config.complete())  // TODO: add support for complete QSOPTEX
@@ -360,7 +359,7 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config::Const
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
-      if (config->complete())
+      if (config.complete())
         return std::make_unique<CompleteSoplexTheorySolver>(predicate_abstractor_);
       else
         return std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_);

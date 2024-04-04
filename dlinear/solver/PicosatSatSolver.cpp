@@ -16,12 +16,12 @@ namespace dlinear {
 PicosatSatSolver::PicosatSatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
     : SatSolver{predicate_abstractor, class_name}, sat_(picosat_init()), has_picosat_pop_used_{false} {
   picosat_save_original_clauses(sat_);
-  if (config_->random_seed() != 0) {
-    picosat_set_seed(sat_, config_->random_seed());
-    DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Random Seed {}", config_->random_seed());
+  if (config_.random_seed() != 0) {
+    picosat_set_seed(sat_, config_.random_seed());
+    DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Random Seed {}", config_.random_seed());
   }
-  picosat_set_global_default_phase(sat_, static_cast<int>(config_->sat_default_phase()));
-  DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Default Phase {}", config_->sat_default_phase());
+  picosat_set_global_default_phase(sat_, static_cast<int>(config_.sat_default_phase()));
+  DLINEAR_DEBUG_FMT("PicosatSatSolver::Set Default Phase {}", config_.sat_default_phase());
 }
 PicosatSatSolver::~PicosatSatSolver() { picosat_reset(sat_); }
 
@@ -67,7 +67,7 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
 }
 
 std::optional<Model> PicosatSatSolver::CheckSat() {
-  TimerGuard check_sat_timer_guard(&stats_.m_timer(), DLINEAR_INFO_ENABLED);
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
   DLINEAR_DEBUG_FMT("PicosatSatSolver::CheckSat(#vars = {}, #clauses = {})", picosat_variables(sat_),
@@ -75,7 +75,6 @@ std::optional<Model> PicosatSatSolver::CheckSat() {
 
   // Call SAT solver.
   const int ret{picosat_sat(sat_, -1)};
-  check_sat_timer_guard.pause();
 
   if (ret == PICOSAT_SATISFIABLE) {
     return OnSatResult();

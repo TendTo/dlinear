@@ -19,7 +19,7 @@ Context::Context(Context &&context) noexcept : impl_{std::move(context.impl_)} {
 
 Context::~Context() = default;
 
-Context::Context(const Config::SharedConfig &config) : impl_{std::make_unique<Impl>(config)} {}
+Context::Context(Config &config) : impl_{std::make_unique<Impl>(config)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }

@@ -107,18 +107,12 @@ class TheorySolver {
    * Get a model that satisfies all the constraints of the theory
    * @return model that satisfies all the constraints of the theory
    */
-  [[nodiscard]] const Box &GetModel() const;
-
-  /**
-   * Get the shared pointer to the configuration of the theory solver.
-   * @return shared pointer to the configuration of the theory solver
-   */
-  [[nodiscard]] const Config::ConstSharedConfig &config_ptr() const { return config_; }
+  [[nodiscard]] const Box &model() const;
   /**
    * Get the configuration of the theory solver.
    * @return configuration of the theory solver
    */
-  [[nodiscard]] const Config &config() const { return *config_; }
+  [[nodiscard]] const Config &config() const { return config_; }
   /**
    * Get the predicate abstractor.
    * @return predicate abstractr
@@ -383,7 +377,7 @@ class TheorySolver {
    */
   virtual void Consolidate();
 
-  const Config::ConstSharedConfig config_;  ///< Configuration of the theory solver
+  const Config &config_;  ///< Configuration of the theory solver
 
   bool is_consolidated_;  ///< Whether the solver has been consolidated.
                           ///< This method must be called after all the literals have been added to the solver.

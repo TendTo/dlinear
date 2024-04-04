@@ -38,8 +38,7 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
   MockTheorySolverBoundPreprocessor(PredicateAbstractor &abstractor, std::vector<Variable> &theory_cols,
                                     std::map<Variable::Id, int> &var_to_theory_col, std::vector<Literal> &theory_rows,
                                     TheorySolverBoundVectorVector &theory_bounds)
-      : TheorySolverBoundPreprocessor{abstractor.config_ptr(), abstractor,  theory_cols,
-                                      var_to_theory_col,       theory_rows, theory_bounds} {}
+      : TheorySolverBoundPreprocessor{abstractor, theory_cols, var_to_theory_col, theory_rows, theory_bounds} {}
   auto ShouldEvaluate(const Formula &formula) {
     return TheorySolverBoundPreprocessor::ShouldEvaluate(Flatten(formula));
   }
@@ -53,7 +52,7 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
 
  private:
   Formula Flatten(const Formula &formula) {
-    PredicateAbstractor pa{config_ptr()};
+    PredicateAbstractor pa{config()};
     const Variable var = get_variable(pa.Convert(formula));
     return pa.var_to_formula_map().at(var);
   }
@@ -62,7 +61,8 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
 class TestTheorySolverBoundPreprocessor : public ::testing::Test {
  protected:
   const DrakeSymbolicGuard guard_;
-  PredicateAbstractor pa_{std::make_shared<Config>("input.smt2")};
+  const Config config_{std::string{"input.smt2"}};
+  PredicateAbstractor pa_{config_};
   std::vector<Variable> theory_cols_;
   std::map<Variable::Id, int> var_to_theory_col_;
   std::vector<Literal> theory_rows_;
@@ -116,8 +116,7 @@ class TestTheorySolverBoundPreprocessor : public ::testing::Test {
 };
 
 TEST_F(TestTheorySolverBoundPreprocessor, Constructor) {
-  TheorySolverBoundPreprocessor bound_preprocessor{std::make_shared<Config>(), pa_,          theory_cols_,
-                                                   var_to_theory_col_,         theory_rows_, theory_bounds_};
+  TheorySolverBoundPreprocessor bound_preprocessor{pa_, theory_cols_, var_to_theory_col_, theory_rows_, theory_bounds_};
   EXPECT_EQ(&bound_preprocessor.predicate_abstractor(), &pa_);
   EXPECT_EQ(&bound_preprocessor.theory_cols(), &theory_cols_);
   EXPECT_EQ(&bound_preprocessor.var_to_cols(), &var_to_theory_col_);

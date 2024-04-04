@@ -27,7 +27,7 @@ class LinearFormulaFlattener {
    *
    * @param config
    */
-  explicit LinearFormulaFlattener(const Config::ConstSharedConfig config) : config_{config} {}
+  explicit LinearFormulaFlattener(const Config& config) : config_{config} {}
   /**
    * Flatten the given formula.
    *
@@ -56,8 +56,8 @@ class LinearFormulaFlattener {
    */
   void BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind);
 
-  const Config::ConstSharedConfig config_;  ///< Configuration
-  Formula flattered_formula_;               ///< Temporary storage for the flattered formula
+  const Config& config_;       ///< Configuration
+  Formula flattered_formula_;  ///< Temporary storage for the flattered formula
 };
 
 }  // namespace dlinear
