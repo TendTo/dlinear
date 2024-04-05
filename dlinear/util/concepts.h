@@ -15,11 +15,18 @@
 namespace dlinear {
 
 /**
+ * Check if the type T is an enum
+ * @tparam T type to check
+ */
+template <class T>
+concept IsEnum = std::is_enum_v<T>;
+
+/**
  * Check if the type T is any of the types U
  * @tparam T type to check
  * @tparam U any number of types to check against
  */
-template <typename T, typename... U>
+template <class T, class... U>
 concept IsAnyOf = (std::same_as<T, U> || ...);
 
 /**
@@ -27,7 +34,7 @@ concept IsAnyOf = (std::same_as<T, U> || ...);
  * @tparam T type to check
  * @tparam U any number of types to check against
  */
-template <typename T, typename... U>
+template <class T, class... U>
 concept IsNotAnyOf = !IsAnyOf<T, U...>;
 
 /**
@@ -48,5 +55,32 @@ concept Arithmetic = requires(T a, T b) {
  */
 template <class T>
 concept Numeric = std::totally_ordered<T> && Arithmetic<T>;
+
+/**
+ * Check if the type T supports the same operation one could expect a typical hash algorithm to support:
+ * - a `result_type` alias that defines the type of the hash value
+ * - @code void operator(const void*, size_t) noexcept @endcode
+ *   applies the hash function to the data and append the result to the hash
+ * - @code result_type operator() noexcept @endcode
+ *   returns the hash value
+ * @tparam T type to check
+ */
+template <class T>
+concept InvocableHashAlgorithm = requires(T t, const void* data, size_t length) {
+  typename T::result_type;
+  { t(data, length) } noexcept -> std::same_as<void>;
+  { size_t() } noexcept -> std::same_as<typename T::result_type>;
+};
+
+/**
+ * Check if the type T is hashable, meaning it is not a simple type
+ * and provides a `void hash(InvocableHashAlgorithm hasher) noexcept const` method.
+ * @tparam T type to check
+ * @tparam U return type of the hash value
+ */
+template <class T, class U>
+concept Hashable = requires(T t, U& hasher) {
+  { t.hash(hasher) } noexcept -> std::same_as<void>;
+} && InvocableHashAlgorithm<U>;
 
 }  // namespace dlinear

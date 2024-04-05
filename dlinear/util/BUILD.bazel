@@ -200,4 +200,13 @@ dlinear_cc_library(
     hdrs = ["concepts.h"],
 )
 
+dlinear_cc_library(
+    name = "hash",
+    hdrs = ["hash.hpp"],
+    deps = [
+        ":concepts",
+        ":exception",
+    ],
+)
+
 cpplint()

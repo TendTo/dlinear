@@ -84,3 +84,9 @@ dlinear_cc_googletest(
         "//dlinear/util:numeric_data_container",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_hash",
+    tags = ["util"],
+    deps = ["//dlinear/util:hash"],
+)
