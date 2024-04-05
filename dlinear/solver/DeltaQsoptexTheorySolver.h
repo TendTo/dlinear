@@ -28,7 +28,8 @@ namespace dlinear {
 
 class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
  public:
-  explicit DeltaQsoptexTheorySolver(PredicateAbstractor& predicate_abstractor, const Config& config = Config{});
+  explicit DeltaQsoptexTheorySolver(PredicateAbstractor& predicate_abstractor,
+                                    const std::string& class_name = "DeltaQsoptexTheorySolver");
 
   Explanations EnableLiteral(const Literal& lit) override;
 

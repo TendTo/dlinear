@@ -56,7 +56,8 @@ class TheorySolver {
    * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals. It is shared between
    * the theory solver and the SAT solver
    */
-  TheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name = "TheorySolver");
+  explicit TheorySolver(const PredicateAbstractor &predicate_abstractor,
+                        const std::string &class_name = "TheorySolver");
   virtual ~TheorySolver() = default;
 
   /**

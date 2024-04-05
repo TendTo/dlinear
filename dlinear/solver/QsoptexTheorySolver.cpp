@@ -17,21 +17,18 @@
 
 namespace dlinear {
 
-QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : QsoptexTheorySolver{"QsoptexTheorySolver", predicate_abstractor, config} {}
-QsoptexTheorySolver::QsoptexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
-                                         const Config &config)
-    : TheorySolver(class_name, predicate_abstractor, config),
-      continuous_output_{config.continuous_output()},
-      with_timings_{config.with_timings()},
+QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor , const std::string& class_name)
+    : TheorySolver(predicate_abstractor, class_name),
+      continuous_output_{config_.continuous_output()},
+      with_timings_{config_.with_timings()},
       qsx_{mpq_QScreate_prob(nullptr, QS_MIN)},
       ray_{1} {
   DLINEAR_ASSERT(qsx_, "Failed to create QSopt_ex problem");
-  if (config.verbose_simplex() > 3) {
+  if (config_.verbose_simplex() > 3) {
     DLINEAR_RUNTIME_ERROR("With --lp-solver qsoptex, maximum value for --verbose-simplex is 3");
   }
-  mpq_QSset_param(qsx_, QS_PARAM_SIMPLEX_DISPLAY, config.verbose_simplex());
-  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config.precision());
+  mpq_QSset_param(qsx_, QS_PARAM_SIMPLEX_DISPLAY, config_.verbose_simplex());
+  DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config_.precision());
 }
 
 QsoptexTheorySolver::~QsoptexTheorySolver() { mpq_QSfree_prob(qsx_); }

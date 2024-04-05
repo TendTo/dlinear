@@ -30,9 +30,7 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x,
 
 class QsoptexTheorySolver : public TheorySolver {
  public:
-  explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config = Config{});
-  QsoptexTheorySolver(const std::string &class_name, PredicateAbstractor &predicate_abstractor,
-                      const Config &config = Config{});
+  QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "QsoptexTheorySolver");
   ~QsoptexTheorySolver() override;
 
   void AddVariable(const Variable &var) override;
@@ -59,7 +57,7 @@ class QsoptexTheorySolver : public TheorySolver {
   std::vector<mpq_class> qsx_rhs_;
   std::vector<LpRowSense> qsx_sense_;
 
-  qsopt_ex::MpqArray ray_; ///< Ray of the last infeasible solution
+  qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
 
   friend void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x, const mpq_t infeas, const mpq_t delta,
                                              void *data);

@@ -36,7 +36,7 @@ class TheorySolverBoundPreprocessor {
   using Weight = NumericDataContainer<mpq_class, int>;
   using BoundEdge = std::tuple<Variable, Variable, Weight>;
   using Explanations = std::set<LiteralSet>;
-  TheorySolverBoundPreprocessor(const TheorySolver& theory_solver);
+  explicit TheorySolverBoundPreprocessor(const TheorySolver& theory_solver);
   TheorySolverBoundPreprocessor(const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,

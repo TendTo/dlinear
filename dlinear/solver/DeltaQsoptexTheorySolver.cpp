@@ -19,8 +19,9 @@
 
 namespace dlinear {
 
-DeltaQsoptexTheorySolver::DeltaQsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const Config &config)
-    : QsoptexTheorySolver("DeltaQsoptexTheorySolver", predicate_abstractor, config) {}
+DeltaQsoptexTheorySolver::DeltaQsoptexTheorySolver(PredicateAbstractor &predicate_abstractor,
+                                                   const std::string &class_name)
+    : QsoptexTheorySolver(predicate_abstractor, class_name) {}
 
 void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   const auto &[formulaVar, truth] = lit;
@@ -182,9 +183,9 @@ SatResult DeltaQsoptexTheorySolver::CheckSat(const Box &box, mpq_class *actual_p
 
   // Now we call the solver
   int lp_status = -1;
-  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})", simplex_sat_phase_);
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::CheckSat: calling QSopt_ex (phase {})", config_.simplex_sat_phase());
 
-  if (1 == simplex_sat_phase_) {
+  if (1 == config_.simplex_sat_phase()) {
     status = QSdelta_solver(qsx_, actual_precision->get_mpq_t(), static_cast<mpq_t *>(x), static_cast<mpq_t *>(ray_),
                             nullptr, PRIMAL_SIMPLEX, &lp_status,
                             continuous_output_ ? QsoptexCheckSatPartialSolution : nullptr, this);
