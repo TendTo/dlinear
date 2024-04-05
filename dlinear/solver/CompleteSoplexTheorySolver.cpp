@@ -383,7 +383,7 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   DLINEAR_ASSERT(!GetActiveRows(enabled_strict_theory_rows_).empty(), "At least 1 strict row must have been  violated");
 
   // Clear previous explanation
-  theory_rows_to_explanation_.clear();
+  last_theory_rows_to_explanation_.clear();
 
   // Solution vector. Contains the value of all the variables
   soplex::VectorRational x{spx_.numColsRational()};
@@ -393,51 +393,73 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   [[maybe_unused]] const bool has_dual = spx_.getDualRational(dual);
   DLINEAR_ASSERT(has_dual, "has_dual must be true");
 
+  // TODO: debug and remove
+  soplex::VectorRational slack{spx_.numRowsRational()};
+  [[maybe_unused]] const bool has_slack = spx_.getSlacksRational(slack);
+  DLINEAR_ASSERT(has_slack, "has_slack must be true");
+
   // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
   // Find all strict theory row. The active ones indicate a violation in the strict bound.
-  std::set<Variable::Id> visited_variables;
+  std::set<Variable> visited_variables;
+  for (const auto &[spx_row, value] : GetActiveRows()) {
+    DLINEAR_WARN_FMT("Row {} -> {} is active with value {}", spx_row, theory_row_to_lit_[spx_row], value);
+    if (dual[spx_row].is_zero())
+      DLINEAR_WARN_FMT("Row {} NO is dual", spx_row);
+    else
+      DLINEAR_WARN_FMT("Row {} YES is dual", spx_row);
+    if (slack[spx_row].is_zero())
+      DLINEAR_WARN_FMT("Row {} NO is slack", spx_row);
+    else
+      DLINEAR_WARN_FMT("Row {} YES is slack", spx_row);
+  }
+
   for (int i = 0; i < dual.dim(); ++i) {
     // Skip inactive rows
     if (dual[i].is_zero()) continue;
-
-    enabled_strict_theory_rows_.push_back(i);
-    theory_rows_to_explanation_.insert(i);
+    last_theory_rows_to_explanation_.insert(i);
     const auto &row_formula = predicate_abstractor_[theory_row_to_lit_[i].var];
-    for (const Variable &var : row_formula.GetFreeVariables()) visited_variables.insert(var.get_id());
+    for (const Variable &var : row_formula.GetFreeVariables()) visited_variables.insert(var);
   }
 
-  DLINEAR_DEBUG_FMT("Strict active rows: {}", theory_rows_to_explanation_);
+  DLINEAR_DEBUG_FMT("Strict active rows: {}", last_theory_rows_to_explanation_);
 
+  DLINEAR_CRITICAL_FMT("Visited variables: {}", visited_variables);
   // Run through the variables found in the active rows
-  for (const Variable::Id &var_id : visited_variables) {
+  for (const Variable &var_id : visited_variables) {
     // Add all the bounds for the variable to explanation, if they are active
-    const int theory_col = var_to_theory_col_.at(var_id);
-    TheoryBoundsToBoundIdxs(theory_col, mpq_class{x[theory_col].backend().data()}, theory_rows_to_explanation_);
+    const int theory_col = var_to_theory_col_.at(var_id.get_id());
+    TheoryBoundsToBoundIdxs(theory_col, mpq_class{x[theory_col].backend().data()}, last_theory_rows_to_explanation_);
+    soplex::LPColRational col;
+    spx_.getColRational(theory_col, col);
+    DLINEAR_WARN_FMT("Variable {} has bounds: [{} {}] -> [{}, {}]", var_id,
+                     theory_bounds_[theory_col].active_lower_bound(), theory_bounds_[theory_col].active_upper_bound(),
+                     col.lower(), col.upper());
   }
 
-  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible: ↦ {}", theory_rows_to_explanation_);
+  DLINEAR_ASSERT(!last_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible: ↦ {}",
+                    last_theory_rows_to_explanation_);
 }
 
 void CompleteSoplexTheorySolver::GetExplanation(Explanations &explanations) {
-  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
   LiteralSet explanation;
   GetExplanation(explanation);
   explanations.insert(explanation);
 }
 void CompleteSoplexTheorySolver::GetExplanation(LiteralSet &explanation) {
-  DLINEAR_ASSERT(!theory_rows_to_explanation_.empty(), "theory_rows_to_explanation_ must contain at least a violation");
+  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
   explanation.clear();
-  for (const auto &spx_row : theory_rows_to_explanation_) {
+  for (const auto &spx_row : final_theory_rows_to_explanation_) {
     explanation.insert(theory_row_to_lit_[spx_row]);
   }
 }
 
-std::vector<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInExplanation() const {
+std::vector<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInLastExplanation() const {
   std::vector<size_t> nq_row_to_iterator_index;
   for (size_t i = 0; i < nq_row_to_theory_rows_.size(); i++) {
     const int &spx_row = nq_row_to_theory_rows_[i];
-    if (theory_rows_to_explanation_.find(spx_row) != theory_rows_to_explanation_.end()) {
+    if (last_theory_rows_to_explanation_.find(spx_row) != last_theory_rows_to_explanation_.end()) {
       nq_row_to_iterator_index.push_back(i);
     }
   }
@@ -445,16 +467,31 @@ std::vector<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInExplanation() co
 }
 
 bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(BitIncrementIterator &bit_iterator) {
-  // No explanation yet
-  if (theory_rows_to_explanation_.empty()) return true;
+  // No explanation yet, don't update the iterator
+  if (last_theory_rows_to_explanation_.empty()) return true;
 
-  std::vector<size_t> nq_in_explanation = IteratorNqRowsInExplanation();
+  std::vector<size_t> nq_in_explanation = IteratorNqRowsInLastExplanation();
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
   // If no non-equal is violated, we can return immediately since the problem is UNSAT for other reasons
   if (nq_in_explanation.empty()) {
     DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasibility detected");
+    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
     return false;
   }
+
+  // If the number of non-equal rows in the explanation is smaller than the current one, update the final explanation
+  if (nq_in_explanation.size() < num_nq_rows_in_final_explanation_) {
+    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: update final explanation from {} nq rows to {} nq rows",
+                      num_nq_rows_in_final_explanation_, nq_in_explanation.size());
+    num_nq_rows_in_final_explanation_ = nq_in_explanation.size();
+    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
+  } else if (nq_in_explanation.size() == num_nq_rows_in_final_explanation_ &&
+             last_theory_rows_to_explanation_.size() < final_theory_rows_to_explanation_.size()) {
+    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: update final explanation from size {} to size {}",
+                      final_theory_rows_to_explanation_.size(), last_theory_rows_to_explanation_.size());
+    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
+  }
+
   // If there is just a single non-equal row in the explanation...
   if (nq_in_explanation.size() == 1) {
     DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
@@ -464,6 +501,8 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     // otherwise, it meas that this row cannot be satisfied by the current model, so we can return immediately
     return bit_iterator.Learn(nq_in_explanation.back());
   }
+  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "final explanation must contain at least a violation");
+
   // No heuristics to update the iterator based on the current explanation, so just increment the iterator
   ++bit_iterator;
   return true;
