@@ -8,29 +8,25 @@
 
 namespace dlinear {
 
-const Formula& LinearFormulaFlattener::Flatten(const Formula& formula) {
+Formula LinearFormulaFlattener::Flatten(const Formula& formula) const {
   if (!is_relational(formula)) return formula;
   const bool needs_expansion_{config_.needs_expansion()};
   const Expression& lhs = get_lhs_expression(formula);
   const Expression& rhs = get_rhs_expression(formula);
   const Expression expr{needs_expansion_ ? (lhs - rhs).Expand() : lhs - rhs};
-  DLINEAR_ASSERT(expr.EqualTo(expr.Expand()), "Expression must be expanded");
+  DLINEAR_ASSERT_FMT(expr.EqualTo(expr.Expand()), "Expression {} must be expanded", formula);
   DLINEAR_ASSERT_FMT(is_addition(expr) || is_multiplication(expr) || is_variable(expr),
                      "Expression must be an addition, multiplication or a variable. Instead found {}", expr);
 
   if (is_addition(expr)) {
     const mpq_class& constant{get_constant_in_addition(expr)};
-    if (!needs_expansion_ && constant == 0 && expr.EqualTo(lhs)) return formula;
-    BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
-  } else {
-    if (!needs_expansion_ && is_variable(lhs) && expr.EqualTo(lhs)) return formula;
-    BuildFlatteredFormula(expr, 0, formula.get_kind());
+    return BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
   }
-
-  return flattered_formula_;
+  return BuildFlatteredFormula(expr, 0, formula.get_kind());
 }
 
-void LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind) {
+Formula LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const Expression& rhs,
+                                                      FormulaKind kind) const {
   // Remove multiplication from the left-hand-side of the formula if they are of the form a*x <=> b
   if (is_multiplication(lhs) && get_base_to_exponent_map_in_multiplication(lhs).size() == 1 &&
       is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first)) {
@@ -60,23 +56,17 @@ void LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const 
 
   switch (kind) {
     case FormulaKind::Eq:
-      flattered_formula_ = lhs == rhs;
-      break;
+      return lhs == rhs;
     case FormulaKind::Neq:
-      flattered_formula_ = lhs != rhs;
-      break;
+      return !(lhs == rhs);
     case FormulaKind::Leq:
-      flattered_formula_ = lhs <= rhs;
-      break;
+      return lhs <= rhs;
     case FormulaKind::Lt:
-      flattered_formula_ = lhs < rhs;
-      break;
+      return lhs < rhs;
     case FormulaKind::Geq:
-      flattered_formula_ = lhs >= rhs;
-      break;
+      return !(lhs < rhs);
     case FormulaKind::Gt:
-      flattered_formula_ = lhs > rhs;
-      break;
+      return !(lhs <= rhs);
     default:
       DLINEAR_UNREACHABLE();
   }

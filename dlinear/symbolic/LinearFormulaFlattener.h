@@ -41,7 +41,7 @@ class LinearFormulaFlattener {
    * @param formula the formula to flatten.
    * @return a reference to the flattened formula.
    */
-  const Formula& Flatten(const Formula& formula);
+  [[nodiscard]] Formula Flatten(const Formula& formula) const;
 
  private:
   /**
@@ -58,10 +58,9 @@ class LinearFormulaFlattener {
    * @param rhs right-hand-side expression of the new formula
    * @param kind kind of the formula (e.g. Eq, Lt, Geq, ...)
    */
-  void BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind);
+  [[nodiscard]] Formula BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind) const;
 
   const Config& config_;       ///< Configuration
-  Formula flattered_formula_;  ///< Temporary storage for the flattered formula
 };
 
 }  // namespace dlinear
