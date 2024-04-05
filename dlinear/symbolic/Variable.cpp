@@ -30,8 +30,6 @@ Variable::Variable(const std::string& name, const Type type)
 
 std::string Variable::name() const { return name_ != nullptr ? *name_ : std::string{"d"}; }
 
-std::string Variable::ToString() const { return (std::ostringstream{} << *this).str(); }
-
 std::ostream& operator<<(std::ostream& os, const Variable& var) { return os << var.name(); }
 
 std::ostream& operator<<(std::ostream& os, Variable::Type type) {

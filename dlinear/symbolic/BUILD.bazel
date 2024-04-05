@@ -191,7 +191,10 @@ dlinear_cc_library(
     name = "variable",
     srcs = ["Variable.cpp"],
     hdrs = ["Variable.h"],
-    deps = ["//dlinear/util:exception"],
+    deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:hash",
+    ],
 )
 
 cpplint()

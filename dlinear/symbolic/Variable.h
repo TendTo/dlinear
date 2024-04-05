@@ -17,6 +17,8 @@
 #include <string>
 #include <utility>
 
+#include "dlinear/util/hash.hpp"
+
 namespace dlinear::symbolic {
 
 /**
@@ -80,14 +82,31 @@ class Variable {
    * @see GetNextId()
    */
   [[nodiscard]] Type type() const { return static_cast<Type>(Id{id_} >> (7 * 8)); }
+  /**
+   * Get the name of the variable.
+   * @return name of the variable
+   */
   [[nodiscard]] std::string name() const;
-  [[nodiscard]] std::string ToString() const;
 
-  /// Checks the equality of two variables based on their ID values.
-  [[nodiscard]] bool equal_to(const Variable& v) const { return id() == v.id(); }
-  /// Compares two variables based on their ID values.
-  [[nodiscard]] bool less(const Variable& v) const { return id() < v.id(); }
-  [[nodiscard]] size_t hash() const { return std::hash<Id>{}(id_); }
+  /**
+   * Check if two variables are equal based on their ID values.
+   * @param v variable to compare with
+   * @return true if the variables are equal
+   * @return false if the variables are not equal
+   */
+  [[nodiscard]] inline bool equal_to(const Variable& v) const noexcept { return id() == v.id(); }
+  /**
+   * Compare two variables based on their ID values.
+   * @param v variable to compare with
+   * @return true if this variable is less than the other
+   * @return false if this variable is not less than the other
+   */
+  [[nodiscard]] inline bool less(const Variable& v) const noexcept { return id() < v.id(); }
+  /**
+   * Produce a hash value for a variable.
+   * @param hasher hash algorithm to use
+   */
+  inline void hash(InvocableHashAlgorithm auto& hasher) const noexcept { hash_append(hasher, id_); }
 
  private:
   /**
@@ -129,8 +148,6 @@ struct equal_to<dlinear::symbolic::Variable> {
 };
 
 template <>
-struct hash<dlinear::symbolic::Variable> {
-  size_t operator()(const dlinear::symbolic::Variable& v) const { return v.hash(); }
-};
+struct hash<dlinear::symbolic::Variable> : public dlinear::DefaultHash {};
 
 }  // namespace std

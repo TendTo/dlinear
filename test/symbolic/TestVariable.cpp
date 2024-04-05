@@ -8,6 +8,7 @@
 
 #include "dlinear/symbolic/Variable.h"
 
+using dlinear::DefaultHashAlgorithm;
 using dlinear::symbolic::Variable;
 
 class TestVariable : public ::testing::Test {
@@ -95,7 +96,7 @@ TEST_F(TestVariable, MoveAssignment) {
   EXPECT_EQ(i.type(), Variable::Type::CONTINUOUS);
 }
 
-TEST_F(TestVariable, Equality) {
+TEST_F(TestVariable, EqualTo) {
   const Variable x1{"var"};
   const Variable y{"var"};
   const Variable b{"b", Variable::Type::BOOLEAN};
@@ -117,26 +118,20 @@ TEST_F(TestVariable, Less) {
   EXPECT_FALSE(b.less(x));
 }
 
-TEST_F(TestVariable, Hash) {
-  const Variable x{"var"};
-  const Variable y{"var"};
-  const Variable b{"b", Variable::Type::BOOLEAN};
-
-  EXPECT_EQ(x.hash(), x.hash());
-  EXPECT_EQ(x.hash(), std::hash<Variable::Id>{}(x.id()));
-  EXPECT_NE(x.hash(), y.hash());
-  EXPECT_NE(x.hash(), b.hash());
-  EXPECT_NE(y.hash(), b.hash());
-}
-
-TEST_F(TestVariable, ToString) {
-  const Variable x{"x"};
-  EXPECT_EQ(x.ToString(), "x");
-}
-
-TEST_F(TestVariable, ToStringDummy) {
-  const Variable x;
-  EXPECT_EQ(x.ToString(), "d");
-}
-
 TEST_F(TestVariable, Ostream) { EXPECT_NO_THROW(std::cout << x_ << std::endl); }
+
+TEST_F(TestVariable, StdHash) {
+  const Variable::Id id = x_.id();
+  DefaultHashAlgorithm id_hasher;
+  id_hasher(&id, sizeof(Variable::Id));
+
+  DefaultHashAlgorithm var_hasher;
+  x_.hash(var_hasher);
+
+  EXPECT_EQ(std::hash<Variable>{}(x_), size_t(id_hasher));
+  EXPECT_EQ(std::hash<Variable>{}(x_), size_t(var_hasher));
+}
+
+TEST_F(TestVariable, StdEqualTo) { EXPECT_EQ(std::equal_to<Variable>{}(x_, x_), x_.equal_to(x_)); }
+
+TEST_F(TestVariable, StdLess) { EXPECT_EQ(std::less<Variable>{}(x_, x_), x_.less(x_)); }
