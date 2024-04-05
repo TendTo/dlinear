@@ -80,3 +80,9 @@ dlinear_cc_googletest(
         "//dlinear/symbolic:tseitin_cnfizer",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_variable",
+    tags = ["symbolic"],
+    deps = ["//dlinear/symbolic:variable"],
+)
