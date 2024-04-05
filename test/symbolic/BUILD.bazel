@@ -86,3 +86,9 @@ dlinear_cc_googletest(
     tags = ["symbolic"],
     deps = ["//dlinear/symbolic:variable"],
 )
+
+dlinear_cc_googletest(
+    name = "test_variables",
+    tags = ["symbolic"],
+    deps = ["//dlinear/symbolic:variables"],
+)

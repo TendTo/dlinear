@@ -197,4 +197,15 @@ dlinear_cc_library(
     ],
 )
 
+dlinear_cc_library(
+    name = "variables",
+    srcs = ["Variables.cpp"],
+    hdrs = ["Variables.h"],
+    deps = [
+        ":variable",
+        "//dlinear/util:exception",
+        "//dlinear/util:hash",
+    ],
+)
+
 cpplint()
