@@ -22,8 +22,12 @@
 - [x] Heuristics options
 - [x] In the presence of eq bounds, they should be the only one returned by the active_bounds() method
 - [ ] Optimal explanation when all nq constraints combination have been explored
-- [ ] Include a starting iterator when searching lower and upper bounds, so that the search can be resumed from the last point
+- [ ] Include a starting iterator when searching lower and upper bounds, so that the search can be resumed from the last
+  point
 - [x] Reduce the number of copies of inf and ninf bounds in the bound vector
 - [ ] Use c++20 format instead of the external library
     - [ ] Use Ubuntu 23.04+ for gcc 13+ support
-- [ ] Return multiple explanations instead of just one when dealing with active constraints 
+- [ ] Return multiple explanations instead of just one when dealing with active constraints
+- [ ] Improve iterations over nq bounds
+- [ ] Add symbolic preprocessor for constraints in the form of $x \lessgtr y$
+- [ ] Remove completely free variables, especially from nq constraints

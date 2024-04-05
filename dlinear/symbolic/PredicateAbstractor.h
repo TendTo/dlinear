@@ -60,6 +60,15 @@ class PredicateAbstractor : public FormulaVisitor {
 
  private:
   Formula Visit(const Formula &f) override;
+  /**
+   * Visit an atomic formula.
+   *
+   * It flattens the formula and creates a new Boolean variable if the formula is not present in the map.
+   * Otherwise, it returns the corresponding Boolean variable.
+   * @param f atomic formula to visit
+   * @return newly created Boolean variable in the map @ref var_to_formula_map_ if the formula is not present
+   * @return existing Boolean variable in the map @ref var_to_formula_map_ if the formula was already present
+   */
   Formula VisitAtomic(const Formula &f);
   Formula VisitEqualTo(const Formula &f) override;
   Formula VisitNotEqualTo(const Formula &f) override;
@@ -72,11 +81,9 @@ class PredicateAbstractor : public FormulaVisitor {
   Formula VisitNegation(const Formula &f) override;
   Formula VisitForall(const Formula &f) override;
 
-  void Add(const Variable &var, const Formula &f);
-
   std::unordered_map<Variable, Formula, hash_value<Variable>> var_to_formula_map_;
   std::unordered_map<Formula, Variable> formula_to_var_map_;
-  LinearFormulaFlattener flattener_;
+  const LinearFormulaFlattener flattener_;
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
