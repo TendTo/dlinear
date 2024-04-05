@@ -4,16 +4,15 @@
  * @date 26 Aug 2023
  * @copyright 2023 dlinear
  */
+#ifndef DLINEAR_PYDLINEAR
+#error DLINEAR_PYDLINEAR must be defined
+#endif
+
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <spdlog/spdlog.h>
 
-#ifndef DLINEAR_PYDLINEAR
-#define DLINEAR_PYDLINEAR
-#endif
-
-#include "dlinear/api/api.h"
 #include "dlinear/libs/gmp.h"
 #include "dlinear/libs/qsopt_ex.h"
 #include "dlinear/solver/SmtSolver.h"
@@ -101,31 +100,31 @@ PYBIND11_MODULE(_pydlinear, m) {
   auto SatDefaultPhaseEnum = py::enum_<Config::SatDefaultPhase>(m, "SatDefaultPhase");
   auto FormatEnum = py::enum_<Config::Format>(m, "Format");
   auto ConfigClass = py::class_<Config>(m, "Config");
-  auto SolverClass = py::class_<Solver>(m, "Solver");
+  auto SmtSolverClass = py::class_<SmtSolver>(m, "SmtSolver");
   auto ContextClass = py::class_<Context>(m, "Context");
   auto SolverOutputClass = py::class_<SmtSolverOutput>(m, "SmtSolverOutput");
   auto BoxClass = py::class_<Box>(m, "Box");
   auto BoxIntervalClass = py::class_<Box::Interval>(m, "Interval");
 
-  SolverClass.def(py::init<>())
-      .def(py::init<const Config &>())
+  SmtSolverClass.def(py::init<>())
+      .def(py::init<Config>())
       .def(py::init<const std::string &>())
-      .def("__enter__", &Solver::Enter)
-      .def("__exit__", [](Solver &self, py::object, py::object, py::object) { self.Exit(); })
-      .def("CheckSat", &Solver::CheckSat);
+      .def("__enter__", &SmtSolver::Enter)
+      .def("__exit__", [](SmtSolver &self, py::object, py::object, py::object) { self.Exit(); })
+      .def("CheckSat", &SmtSolver::CheckSat);
 
-  SolverOutputClass.def_property_readonly("result", &SmtSolverOutput::m_result)
-      .def_property_readonly("actual_precision", &SmtSolverOutput::m_actual_precision)
-      .def_property_readonly("lower_bound", &SmtSolverOutput::m_lower_bound)
-      .def_property_readonly("upper_bound", &SmtSolverOutput::m_upper_bound)
-      .def_property_readonly("model", &SmtSolverOutput::m_model)
-      .def_property_readonly("with_timings", &SmtSolverOutput::with_timings)
-      .def_property_readonly("produce_models", &SmtSolverOutput::produce_models)
-      .def_property_readonly("n_assertions", &SmtSolverOutput::n_assertions)
+  SolverOutputClass.def_property_readonly("result", [](const SmtSolverOutput &self) { return self.result; })
+      .def_property_readonly("actual_precision", [](const SmtSolverOutput &self) { return self.actual_precision; })
+      .def_property_readonly("lower_bound", [](const SmtSolverOutput &self) { return self.lower_bound; })
+      .def_property_readonly("upper_bound", [](const SmtSolverOutput &self) { return self.upper_bound; })
+      .def_property_readonly("model", [](const SmtSolverOutput &self) { return self.model; })
+      .def_property_readonly("with_timings", [](const SmtSolverOutput &self) { return self.with_timings; })
+      .def_property_readonly("produce_models", [](const SmtSolverOutput &self) { return self.produce_models; })
+      .def_property_readonly("n_assertions", [](const SmtSolverOutput &self) { return self.n_assertions; })
       .def_property_readonly("is_sat", &SmtSolverOutput::is_sat)
       .def("__str__", [](const SmtSolverOutput &self) { return (std::stringstream() << self).str(); });
 
-  ContextClass.def(py::init<>()).def(py::init<const Config &>());
+  ContextClass.def(py::init<Config &>());
 
   MpqArrayClass.def(py::init<size_t>())
       .def("__len__", &qsopt_ex::MpqArray::size)
@@ -252,11 +251,11 @@ PYBIND11_MODULE(_pydlinear, m) {
   ExpressionClass.def(py::init<>())
       .def(py::init<>([](double b) {
         if (Infinity::IsInitialized()) return std::make_unique<Expression>(b);
-        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with Solver`"};
+        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with SmtSolver`"};
       }))
       .def(py::init<>([](const Variable &var) {
         if (Infinity::IsInitialized()) return std::make_unique<Expression>(var);
-        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with Solver`"};
+        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with SmtSolver`"};
       }))
       .def(py::init<const Variable &>())
       .def("__abs__", [](const Expression &self) { return abs(self); })
@@ -405,7 +404,7 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def("items",
            [](const Box &self) {
              const std::vector<Variable> &vars{self.variables()};
-             const Box::IntervalVector &iv{self.interval_vector()};
+             const std::vector<Box::Interval> &iv{self.interval_vector()};
              std::vector<std::pair<Variable, Box::Interval>> ret;
              ret.reserve(iv.size());
              for (std::size_t i = 0; i < iv.size(); ++i) ret.emplace_back(vars[i], iv[i]);
@@ -432,9 +431,8 @@ PYBIND11_MODULE(_pydlinear, m) {
                     argparser.parse(args.size(), argv);
                     return argparser.toConfig();
                   })
-      .def_property(
-          "continuous_output", &Config::continuous_output,
-          [](Config &self, const bool continuous_output) { self.m_continuous_output() = continuous_output; })
+      .def_property("continuous_output", &Config::continuous_output,
+                    [](Config &self, const bool continuous_output) { self.m_continuous_output() = continuous_output; })
       .def_property("debug_parsing", &Config::debug_parsing,
                     [](Config &self, const bool debug_parsing) { self.m_debug_parsing() = debug_parsing; })
       .def_property("debug_scanning", &Config::debug_scanning,
@@ -455,8 +453,7 @@ PYBIND11_MODULE(_pydlinear, m) {
                     [](Config &self, const bool nlopt_maxtime) { self.m_nlopt_maxtime() = nlopt_maxtime; })
       .def_property("number_of_jobs", &Config::number_of_jobs,
                     [](Config &self, const int number_of_jobs) { self.m_number_of_jobs() = number_of_jobs; })
-      .def_property("precision", &Config::precision,
-                    [](Config &self, const double prec) { self.m_precision() = prec; })
+      .def_property("precision", &Config::precision, [](Config &self, const double prec) { self.m_precision() = prec; })
       .def_property("produce_models", &Config::produce_models,
                     [](Config &self, const bool produce_models) { self.m_produce_models() = produce_models; })
       .def_property("random_seed", &Config::random_seed,
@@ -468,9 +465,8 @@ PYBIND11_MODULE(_pydlinear, m) {
                       self.m_sat_default_phase() = sat_default_phase;
                     })
       .def_property("silent", &Config::silent, [](Config &self, const bool silent) { self.m_silent() = silent; })
-      .def_property(
-          "simplex_sat_phase", &Config::simplex_sat_phase,
-          [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
+      .def_property("simplex_sat_phase", &Config::simplex_sat_phase,
+                    [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
       .def_property("skip_check_sat", &Config::skip_check_sat,
                     [](Config &self, const bool skip_check_sat) { self.m_skip_check_sat() = skip_check_sat; })
       .def_property("use_local_optimization", &Config::use_local_optimization,

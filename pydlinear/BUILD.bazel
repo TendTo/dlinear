@@ -9,7 +9,6 @@ pybind_extension(
     local_defines = ["DLINEAR_PYDLINEAR"],
     deps = [
         "//dlinear:version",
-        "//dlinear/api",
         "//dlinear/libs:gmp",
         "//dlinear/libs:qsopt_ex",
         "//dlinear/libs:soplex",
