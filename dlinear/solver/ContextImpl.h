@@ -157,7 +157,7 @@ class Context::Impl {
    */
   const ScopedVector<Formula> &assertions() const;
   /**
-   * Get the current active box from the top of the @ref stack of boxes.
+   * Get the current active box from the top of the @ref stack_ of boxes.
    * @return the active box of the context
    */
   Box &box() { return boxes_.last(); }

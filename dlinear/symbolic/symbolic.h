@@ -51,7 +51,7 @@ using drake::symbolic::VisitFormula;
 /**
  * Change the kind of the formula by multiplying all the expressions by a negative number.
  *
- * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f $ \leq @f$ to @f$ \geq @f$ and vice versa.
+ * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f$ \leq @f$ to @f$ \geq @f$ and vice versa.
  * @param kind kind of the formula
  * @return the negated kind
  */

@@ -40,12 +40,12 @@ class Variable {
 
   /**
    * Construct a dummy variable.
+   * 
    * All default-constructed variables are considered the same variable by the equality operator (==).
    * Similarly, a moved-from variable becomes a dummy variable.
    */
   Variable() : id_{0}, name_{nullptr} {};
   /** Constructs a variable with a string.
-   * If not specified, it has CONTINUOUS type by default.
    * @param name name of the variable.
    * @param type type of the variable.
    */
@@ -60,52 +60,24 @@ class Variable {
     return *this;
   }
 
-  /**
-   * Check if the variable is a dummy variable.
-   *
+  /** 
+   * @checker{a dummy variable, variable, 
    * A dummy variable is a variable with an ID of zero and represents an anonymous variable.
-   * It should not be used in any context other than as a placeholder.
-   * @return true if the variable is a dummy variable
-   * @return false if the variable is not a dummy variable
-   */
+   * It should not be used in any context other than as a placeholder.}
+  */
   [[nodiscard]] bool is_dummy() const { return id_ == 0; }
-  /**
-   * Get the unique identifier of the variable.
-   * @return unique identifier of the variable
-   */
+  /** @getter{unique identifier, variable}*/
   [[nodiscard]] Id id() const { return id_; }
-  /**
-   * Get the type of the variable.
-   *
-   * Type enum is stored in the upper byte of @ref id_.
-   * @return type of the variable
-   * @see GetNextId()
-   */
+  /** @getter{type, variable, The type is stored in the upper byte of @ref id_ ., GetNextId()}*/
   [[nodiscard]] Type type() const { return static_cast<Type>(Id{id_} >> (7 * 8)); }
-  /**
-   * Get the name of the variable.
-   * @return name of the variable
-   */
+  /** @getter{name, variable} */
   [[nodiscard]] std::string name() const;
 
-  /**
-   * Check if two variables are equal based on their ID values.
-   * @param v variable to compare with
-   * @return true if the variables are equal
-   * @return false if the variables are not equal
-   */
-  [[nodiscard]] inline bool equal_to(const Variable& v) const noexcept { return id() == v.id(); }
-  /**
-   * Compare two variables based on their ID values.
-   * @param v variable to compare with
-   * @return true if this variable is less than the other
-   * @return false if this variable is not less than the other
-   */
-  [[nodiscard]] inline bool less(const Variable& v) const noexcept { return id() < v.id(); }
-  /**
-   * Produce a hash value for a variable.
-   * @param hasher hash algorithm to use
-   */
+  /** @less{variables, Two variables are equal if they have the same @ref id_ .} */
+  [[nodiscard]] inline bool equal_to(const Variable& v) const noexcept { return id_ == v.id_; }
+  /** @less{variables, The ordering is based on the @ref id_ values of the two variables.} */
+  [[nodiscard]] inline bool less(const Variable& v) const noexcept { return id_ < v.id_; }
+  /** @hash{variable} */
   inline void hash(InvocableHashAlgorithm auto& hasher) const noexcept { hash_append(hasher, id_); }
 
  private:
@@ -116,14 +88,14 @@ class Variable {
    * - The first high-order byte stores the @ref Type of the variable
    * - The remaining low-order bytes store a counter that is incremented each time a new variable is created.
    * @note Id 0 is reserved for anonymous variable which is created by the default constructor, @ref Variable().
-   * As a result, we have an invariant `GetNextId() > 0`.
+   * As a result, the invariant `GetNextId() > 0` is guaranteed.
    * @param type type of the variable
    * @return next unique identifier for a variable
    */
   static Id GetNextId(Type type);
 
-  Id id_;  ///< Unique identifier for this Variable. The high-order byte stores the Type. @see GetNextId()
-  std::shared_ptr<const std::string> name_;  ///< Name of variable.
+  Id id_;  ///< Unique identifier for the variable. The high-order byte stores the Type. @see GetNextId()
+  std::shared_ptr<const std::string> name_;  ///< Name of the variable.
 };
 
 std::ostream& operator<<(std::ostream& os, const Variable& var);

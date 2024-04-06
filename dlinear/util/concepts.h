@@ -59,10 +59,10 @@ concept Numeric = std::totally_ordered<T> && Arithmetic<T>;
 /**
  * Check if the type T supports the same operation one could expect a typical hash algorithm to support:
  * - a `result_type` alias that defines the type of the hash value
- * - @code void operator(const void*, size_t) noexcept @endcode
+ * - @code void operator()(const void*, size_t) noexcept @endcode
  *   applies the hash function to the data and append the result to the hash
- * - @code result_type operator() noexcept @endcode
- *   returns the hash value
+ * - @code operator result_type () noexcept @endcode
+ *   returns the current hash value when casted to the result type
  * @tparam T type to check
  */
 template <class T>

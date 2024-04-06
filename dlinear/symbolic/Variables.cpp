@@ -17,7 +17,7 @@ Variables::size_type Variables::erase(const Variables& vars) {
 }
 
 bool Variables::IsSubsetOf(const Variables& vars) const {
-  return includes(vars.begin(), vars.end(), begin(), end(), std::less<Variable>{});
+  return std::includes(vars.begin(), vars.end(), begin(), end(), std::less<Variable>{});
 }
 
 bool Variables::IsSupersetOf(const Variables& vars) const { return vars.IsSubsetOf(*this); }
