@@ -65,28 +65,55 @@ class Variables {
   /** @getter{reverse const iterator to the end, set} */
   [[nodiscard]] const_reverse_iterator crend() const { return vars_.crend(); }
 
-  /** Inserts a variable @p var into a set. */
+  /**
+   * Inserts a variable @p var into a set.
+   * @param var variable to insert
+   */
   void insert(const Variable& var) { vars_.insert(var); }
-  /** Inserts variables in [@p first, @p last) into a set. */
+  /**
+   * Inserts variables in the range [first, last) into a set.
+   * @tparam InputIt type of the iterator
+   * @param first iterator to the beginning
+   */
   template <class InputIt>
   void insert(InputIt first, InputIt last) {
     vars_.insert(first, last);
   }
-  /** Inserts variables in @p vars into a set. */
+  /**
+   * Inserts variables in @p vars into a set.
+   * @param vars set of variables
+   */
   void insert(const Variables& vars) { vars_.insert(vars.begin(), vars.end()); }
 
-  /** Erases @p key from a set. Return number of erased elements (0 or 1). */
+  /**
+   * Erases @p key from a set.
+   * Return number of erased elements (0 or 1).
+   * @param key variable to erase
+   * @return number of erased elements
+   */
   size_type erase(const Variable& key) { return vars_.erase(key); }
 
-  /** Erases variables in @p vars from a set. Return number of erased
-      elements ([0, vars.size()]). */
+  /**
+   * Erases variables in @p vars from a set.
+   * Return number of erased elements ([0, vars.size()]).
+   * @param vars set of variables
+   * @return number of erased elements
+   */
   size_type erase(const Variables& vars);
 
-  /** Finds element with specific key. */
+  /**
+   * Finds element with specific key.
+   * @param key variable to find
+   * @return iterator to the element with key equivalent to @p key
+   */
   iterator find(const Variable& key) { return vars_.find(key); }
+  /**
+   * Finds element with specific key.
+   * @param key variable to find
+   * @return const_iterator to the element with key equivalent to @p key
+   */
   [[nodiscard]] const_iterator find(const Variable& key) const { return vars_.find(key); }
-
-  /** Return true if @p key is included in the Variables. */
+  /** @checker{contained in the set, variable @p key }*/
   [[nodiscard]] bool include(const Variable& key) const { return find(key) != end(); }
 
   /** Return true if @p vars is a subset of the Variables. */

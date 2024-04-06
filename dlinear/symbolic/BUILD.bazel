@@ -208,4 +208,15 @@ dlinear_cc_library(
     ],
 )
 
+dlinear_cc_library(
+    name = "environment",
+    srcs = ["Environment.cpp"],
+    hdrs = ["Environment.h"],
+    deps = [
+        ":variable",
+        ":variables",
+        "//dlinear/util:exception",
+    ],
+)
+
 cpplint()
