@@ -31,12 +31,15 @@
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
+
 // Forward declaration
 class TheorySolver;
-}  // namespace dlinear
 
-namespace dlinear {
-
+/**
+ * This class uses some basic algebraic operations to preprocess the constraints
+ * and identify violations before invoking the solver.
+ * Namely, the bounds are propagated through the constraints, checking for any violation.
+ */
 class TheorySolverBoundPreprocessor {
  public:
   using Weight = int;
@@ -58,14 +61,23 @@ class TheorySolverBoundPreprocessor {
 
   void Clear();
 
+  /** @getter{configuration, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const Config& config() const { return config_; }
+  /** @getter{bounds of the variables in the LP solver, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const TheorySolverBoundVectorVector& theory_bounds() const { return theory_bounds_; }
+  /** @getter{map between the theory columns and the variables, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const std::vector<Variable>& theory_cols() const { return theory_cols_; }
+  /** @getter{map between the theory columns and the variables, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const std::map<Variable::Id, int>& var_to_cols() const { return var_to_cols_; }
+  /** @getter{map between the theory rows and the literals, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const std::vector<Literal>& theory_rows() const { return theory_rows_; }
+  /** @getter{predicate abstractor, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
+  /** @getter{graph used for bound propagation, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const Graph<Variable, Weight>& bound_graph() const { return graph_; }
+  /** @getter{propagated environment containing the variable's values, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const Environment& env() const { return env_; }
+  /** @getter{map between the theory row and the edges of the graph, TheorySolverBoundPreprocessor} */
   [[nodiscard]] const RowToEqBinomialMap& edges() const { return row_to_eq_binomial_edge_coefficients_; }
 
  protected:

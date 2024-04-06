@@ -135,15 +135,9 @@ class TheorySolverBoundVector {
    */
   void Clear();
 
-  /**
-   * Return the number of lower bounds in the vector, both strict and non-strict.
-   * @return number of lower bounds
-   */
+  /** @getter{number of lower bounds, both strict and non-strict, bound vector} */
   [[nodiscard]] int n_lower_bounds() const { return n_lower_bounds_; }
-  /**
-   * Return the number of upper bounds in the vector, both strict and non-strict.
-   * @return number of upper bounds
-   */
+  /** @getter{number of upper bounds, both strict and non-strict, bound vector} */
   [[nodiscard]] int n_upper_bounds() const { return static_cast<int>(bounds_.size()) - n_lower_bounds_; }
   /**
    * Return a @ref BoundIterator containing a minimal set of bounds
@@ -234,25 +228,13 @@ class TheorySolverBoundVector {
    * @return non-equality bounds vector
    */
   [[nodiscard]] const BoundVector& nq_bounds() const { return nq_bounds_; }
-  /**
-   * Return the starting lower bound.
-   * @return starting lower bound
-   */
+  /** @getter{default lower bound, bound vector} */
   [[nodiscard]] const mpq_class& inf_l() const { return *inf_l_; }
-  /**
-   * Return the starting upper bound.
-   * @return starting upper bound
-   */
+  /** @getter{default upper bound, bound vector} */
   [[nodiscard]] const mpq_class& inf_u() const { return *inf_u_; }
-  /**
-   * Return the active lower bound.
-   * @return active lower bound
-   */
+  /** @getter{active lower bound, bound vector} */
   [[nodiscard]] const mpq_class& active_lower_bound() const { return *active_lower_bound_; }
-  /**
-   * Return the active upper bound.
-   * @return active upper bound
-   */
+  /** @getter{active upper bound, bound vector} */
   [[nodiscard]] const mpq_class& active_upper_bound() const { return *active_upper_bound_; }
 
   /**

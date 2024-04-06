@@ -3,8 +3,9 @@
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Base class for theory solvers.
+ * @brief TheorySolver class.
  *
+ * Base class for theory solvers.
  * Theory solvers are used to solve the theory of a given logic.
  * When given an assignment from the SAT solver, they will check whether the assignment is satisfiable.
  * If that is not the case, they will produce an explanation to guide the SAT solver and find a new assignment.
@@ -33,8 +34,6 @@
 namespace dlinear {
 
 /**
- * Theory solver class.
- *
  * Base class for theory solvers.
  * Theory solvers pick up the literals from the SAT solver and check whether the assignment is satisfiable within
  * the theory.
@@ -110,41 +109,22 @@ class TheorySolver {
    * @return model that satisfies all the constraints of the theory
    */
   [[nodiscard]] const Box &model() const;
-  /**
-   * Get the configuration of the theory solver.
-   * @return configuration of the theory solver
-   */
+  /** @getter{configuration, theory solver} */
   [[nodiscard]] const Config &config() const { return config_; }
-  /**
-   * Get the predicate abstractor.
-   * @return predicate abstractr
-   */
+  /** @getter{predicate abstractor, theory solver} */
   [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
-  /**
-   * Get the map of the variables to the theory columns.
-   * @return map of the variables to the theory columns
-   */
+  /** @getter{map of the variables to the theory columns, theory solver} */
   [[nodiscard]] const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
-  /**
-   * Get the map of theories columns to the variables.
-   * @return map of theories columns to the variables
-   */
+  /** @getter{map of theories columns to the variables, theory solver} */
   [[nodiscard]] const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
-  /**
-   * Get the map of literals to the theory rows.
-   * @return map of literals to the theory rows
-   */
+  /** @getter{map of literals to the theory rows, theory solver} */
   [[nodiscard]] const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
-  /**
-   * Get the map of theory rows to the literals.
-   * @return map of theory rows to the literals
-   */
+  /** @getter{map of theory rows to the literals, theory solver} */
   [[nodiscard]] const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
-  /**
-   * Get the theory bounds.
-   * @return theory bounds
-   */
+  /** @getter{bounds of the variables, theory solver} */
   [[nodiscard]] const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
+  /** @getter{statistics, theory solver} */
+  [[nodiscard]] const IterationStats &stats() const { return stats_; }
 
   /**
    * Check the satisfiability of the theory.
@@ -172,12 +152,6 @@ class TheorySolver {
    * @param box cox containing the bounds for the variables that will be applied to the theory solver
    */
   virtual void Reset(const Box &box) = 0;
-
-  /**
-   * Get the statistics of the theory solver.
-   * @return statistics of the theory solver
-   */
-  [[nodiscard]] const IterationStats &stats() const { return stats_; }
 
  protected:
   /** Enum used to describe how the bounds on a variable participate in the infeasibility result of an LP problem */

@@ -53,28 +53,18 @@ class TimerBase {
    */
   void resume();
 
-  /**
-   * Check if the timer is running.
-   * @return whether the timer is running
-   */
+  /** @checker{running, timer} */
   [[nodiscard]] bool is_running() const;
-
-  /**
-   * Return the elapsed time.
-   * @return the elapsed time as duration
-   */
+  /** @getter{duration of elapsed time, timer} */
   [[nodiscard]] duration elapsed() const;
-
-  /**
-   * Return the elapsed time.
-   * @return the elapsed time in seconds
-   */
+  /** @getter{number elapsed seconds, timer} */
   [[nodiscard]] std::chrono::duration<double>::rep seconds() const;
 
   TimerBase<T> &operator+=(const TimerBase<T> &other);
   TimerBase<T> operator+(const TimerBase<T> &other) const;
 
  protected:
+  /** @getter{current instant, timer} */
   [[nodiscard]] time_point now() const { return clock::now(); }
 
  private:

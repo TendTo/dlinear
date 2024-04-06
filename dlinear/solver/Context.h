@@ -159,10 +159,7 @@ class Context {
    */
   [[nodiscard]] std::string GetOption(const std::string &key) const;
 
-  /**
-   * Get the configuration of the context.
-   * @return configuration of the context
-   */
+  /** @getter{configuration, context}*/
   [[nodiscard]] const Config &config() const;
   /**
    * Get the the asserted formulas.

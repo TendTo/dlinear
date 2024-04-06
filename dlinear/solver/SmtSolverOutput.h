@@ -3,7 +3,10 @@
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Simple class that holds the output of the solver.
+ * @brief SmtSolverOutput struct.
+ *
+ * Simple struct that holds the output of the solver, 
+ * such as the result of the computation as well as some statistics.
  */
 #pragma once
 

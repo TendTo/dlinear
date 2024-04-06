@@ -3,8 +3,9 @@
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Theory solver using SoPlex.
+ * @brief SoplexTheorySolver class.
  *
+ * This class implements a theory solver that uses SoPlex.
  * SoPlex is an exact LP solver written in C++.
  * It uses a mixture of techniques, from iterative refinement to precision boosting, in order to efficiently solve LPs
  * exactly.
@@ -31,6 +32,12 @@
 
 namespace dlinear {
 
+/**
+ * This class implements a theory solver that uses SoPlex.
+ * SoPlex is an exact LP solver written in C++.
+ * It uses a mixture of techniques, from iterative refinement to precision boosting, in order to efficiently solve LPs
+ * exactly.
+ */
 class SoplexTheorySolver : public TheorySolver {
  public:
   explicit SoplexTheorySolver(PredicateAbstractor& predicate_abstractor,

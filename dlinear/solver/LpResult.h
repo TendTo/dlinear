@@ -21,9 +21,7 @@
 
 namespace dlinear {
 
-/**
- * Result of running the LP solver over the input problem.
- */
+/** Result of running the LP solver over the input problem. */
 enum class LpResult {
   LP_NO_RESULT,      ///< No result has been obtained yet.
   LP_UNSOLVED,       ///< The problem has not been solved. An error may have occurred.
@@ -33,6 +31,11 @@ enum class LpResult {
   LP_DELTA_OPTIMAL,  ///< The problem has been solved optimally, but with a delta.
 };
 
+/**
+ * Parse the result from the returned integer.
+ * @param res return code
+ * @return corresponding result
+ */
 LpResult parseLpResult(int res);
 std::ostream &operator<<(std::ostream &os, const LpResult &lp_result);
 
