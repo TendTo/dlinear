@@ -74,9 +74,9 @@ class Variable {
   [[nodiscard]] std::string name() const;
 
   /** @less{variables, Two variables are equal if they have the same @ref id_ .} */
-  [[nodiscard]] inline bool equal_to(const Variable& v) const noexcept { return id_ == v.id_; }
+  [[nodiscard]] inline bool equal_to(const Variable& o) const noexcept { return id_ == o.id_; }
   /** @less{variables, The ordering is based on the @ref id_ values of the two variables.} */
-  [[nodiscard]] inline bool less(const Variable& v) const noexcept { return id_ < v.id_; }
+  [[nodiscard]] inline bool less(const Variable& o) const noexcept { return id_ < o.id_; }
   /** @hash{variable} */
   inline void hash(InvocableHashAlgorithm auto& hasher) const noexcept { hash_append(hasher, id_); }
 

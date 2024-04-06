@@ -26,47 +26,43 @@ class Variables {
   using reverse_iterator = std::set<Variable>::reverse_iterator;
   using const_reverse_iterator = std::set<Variable>::const_reverse_iterator;
 
+  /** @constructor{Variables} */
   Variables() = default;
+  /**
+   * Construct a new Variables object initialized with a list of variables.
+   * @param init initializer list of variables
+   */
   Variables(std::initializer_list<Variable> init);
-  /**
-   * Get the number of variables in the set.
-   * @return number of variables in the set.
-   */
+
+  /** @getter{number of variables, set} */
   [[nodiscard]] size_type size() const { return vars_.size(); }
-
-  /**
-   * Check whether the set is empty.
-   * @return true if the set is empty
-   * @return false if the set is not empty
-   */
+  /** @checker{empty, set} */
   [[nodiscard]] bool empty() const { return vars_.empty(); }
-
-  /** Implements the @ref hash_append concept. */
+  /** @hash{variables} */
   void hash(InvocableHashAlgorithm auto& hasher) const noexcept { hash_append(hasher, vars_); }
-
-  /** Returns an iterator to the beginning. */
+  /** @getter{iterator to the beginning, set} */
   iterator begin() { return vars_.begin(); }
-  /** Returns an iterator to the end. */
+  /** @getter{iterator to the end, set} */
   iterator end() { return vars_.end(); }
-  /** Returns an iterator to the beginning. */
+  /** @getter{const iterator to the beginning, set} */
   [[nodiscard]] const_iterator begin() const { return vars_.cbegin(); }
-  /** Returns an iterator to the end. */
+  /** @getter{const iterator to the end, set} */
   [[nodiscard]] const_iterator end() const { return vars_.cend(); }
-  /** Returns a const iterator to the beginning. */
+  /** @getter{const iterator to the beginning, set} */
   [[nodiscard]] const_iterator cbegin() const { return vars_.cbegin(); }
-  /** Returns a const iterator to the end. */
+  /** @getter{const iterator to the end, set} */
   [[nodiscard]] const_iterator cend() const { return vars_.cend(); }
-  /** Returns a reverse iterator to the beginning. */
+  /** @getter{reverse iterator to the beginning, set} */
   reverse_iterator rbegin() { return vars_.rbegin(); }
-  /** Returns a reverse iterator to the end. */
+  /** @getter{reverse iterator to the end, set} */
   reverse_iterator rend() { return vars_.rend(); }
-  /** Returns a reverse iterator to the beginning. */
+  /** @getter{reverse const iterator to the beginning, set} */
   [[nodiscard]] const_reverse_iterator rbegin() const { return vars_.crbegin(); }
-  /** Returns a reverse iterator to the end. */
+  /** @getter{reverse const iterator to the end, set} */
   [[nodiscard]] const_reverse_iterator rend() const { return vars_.crend(); }
-  /** Returns a const reverse-iterator to the beginning. */
+  /** @getter{reverse const iterator to the beginning, set} */
   [[nodiscard]] const_reverse_iterator crbegin() const { return vars_.crbegin(); }
-  /** Returns a const reverse-iterator to the end. */
+  /** @getter{reverse const iterator to the end, set} */
   [[nodiscard]] const_reverse_iterator crend() const { return vars_.crend(); }
 
   /** Inserts a variable @p var into a set. */
@@ -120,6 +116,10 @@ class Variables {
   [[nodiscard]] Variables intersect(const Variables& vars) const;
 
  private:
+  /**
+   * Construct a new Variables object from a set of variables.
+   * @param vars set of variables
+   */
   explicit Variables(std::set<Variable> vars);
 
   std::set<Variable> vars_;  ///< Set of variables
