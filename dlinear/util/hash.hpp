@@ -275,7 +275,7 @@ namespace hash {
  * FNV-1a hash algorithm.
  *
  * This is a 64-bit implementation of the FNV-1a hash algorithm used by @ref hash_append.
- * See https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function for details.
+ * See [FNV-1a](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function) for details.
  */
 class FNV1a {
  public:
@@ -300,10 +300,7 @@ class FNV1a {
    */
   constexpr void add_byte(const uint8_t byte) noexcept { hash_ = (hash_ ^ byte) * k_fnv_prime; }
 
-  /**
-   * Get the hash value.
-   * @return the hash value
-   */
+  /** @getter{hash value, FNV1a algorithm} */
   explicit constexpr operator size_t() const noexcept { return hash_; }
 
  private:
@@ -316,25 +313,39 @@ class FNV1a {
 using DefaultHashAlgorithm = hash::FNV1a;                  ///< The default hashing algorithm. The return type is size_t
 using DefaultHash = dlinear::uhash<DefaultHashAlgorithm>;  ///< The default hashing functor. It behaves like std::hash
 
-///// An adapter that forwards the HashAlgorithm::operator(data, length) function
-///// concept into a runtime-provided std::function of the same signature.  This
-///// is useful for passing a concrete HashAlgorithm implementation through into
-///// non-templated code, such as with an Impl or Cell pattern.
-// struct DelegatingHasher {
-//    *  A std::function whose signature matches HashAlgorithm::operator().
-//   using Func = std::function<void(const void*, size_t)>;
-//
-//    *  Create a delegating hasher that calls the given @p func.
-//   explicit DelegatingHasher(Func func) : func_(std::move(func)) {
-//     // In order for operator() to be noexcept, it must have a non-empty func_.
-//     DRAKE_THROW_UNLESS(static_cast<bool>(func_));
-//   }
-//
-//    *  Append [data, data + length) bytes into the wrapped algorithm.
-//   void operator()(const void* data, size_t length) noexcept { func_(data, length); }
-//
-//  private:
-//   const Func func_;
-// };
+/**
+ * A simple struct that wraps a specific hash algorithm into a std::function.
+ * It is useful for passing a concrete HashAlgorithm implementation through into non-templated code.
+ * @see ExpressionCell::hash
+ */
+struct DelegatingHasher {
+  using Func = std::function<void(const void*, size_t)>;
+  using result_type = typename DefaultHashAlgorithm::result_type;  ///< Necessary to be accepted by hash_append
+
+  /**
+   * Construct a new DelegatingHasher object.
+   * @pre The function must be non-empty.
+   * @param func hash algorithm implementation
+   */
+  explicit DelegatingHasher(Func func) : func_(std::move(func)) {
+    if (!static_cast<bool>(func_)) DLINEAR_RUNTIME_ERROR("The function must be non-empty");
+  }
+  /**
+   * Delegation of the hash algorithm to @ref func_ .
+   * @param data data to hash
+   * @param length length of the data
+   */
+  void operator()(const void* data, size_t length) noexcept { func_(data, length); }
+  /**
+   * Placeholder for the return type.
+   *
+   * It is necessary for this struct to correctly implement the @ref Hashable concept.
+   * @warning This function should never be called.
+   */
+  operator result_type() noexcept { DLINEAR_UNREACHABLE(); }
+
+ private:
+  const Func func_;  ///< Concrete hash algorithm implementation
+};
 
 }  // namespace dlinear
