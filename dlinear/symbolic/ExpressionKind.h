@@ -24,35 +24,35 @@ namespace dlinear::symbolic {
  */
 enum class ExpressionKind : std::uint16_t {
   // clang-format off
-  CONSTANT = 0,           ///< constant (double)
-  VAR = 0x7FF1u,          ///< variable
-  ADD,                    ///< addition (+)
-  MUL,                    ///< multiplication (*)
-  DIV,                    ///< division (/)
-  LOG,                    ///< logarithms
-  ABS,                    ///< absolute value function
-  EXP,                    ///< exponentiation
-  SQRT,                   ///< square root
-  POW,                    ///< power function
-  SIN,                    ///< sine
-  COS,                    ///< cosine
-  TAN,                    ///< tangent
-  ASIN,                   ///< arcsine
-  ACOS,                   ///< arccosine
-  ATAN,                   ///< arctangent
+  Constant = 0,           ///< constant (double)
+  Var = 0x7FF1u,          ///< variable
+  Add,                    ///< addition (+)
+  Mul,                    ///< multiplication (*)
+  Div,                    ///< division (/)
+  Log,                    ///< logarithms
+  Abs,                    ///< absolute value function
+  Exp,                    ///< exponentiation
+  Sqrt,                   ///< square root
+  Pow,                    ///< power function
+  Sin,                    ///< sine
+  Cos,                    ///< cosine
+  Tan,                    ///< tangent
+  Asin,                   ///< arcsine
+  Acos,                   ///< arccosine
+  Atan,                   ///< arctangent
   // Here we have Atan = 0x7FFFu, but we can't overflow to 0x8000 for Atan2 so
   // restart numbering at the next available value (0xFFF1).
-  ATAN2 = 0xFFF1u,        ///< arctangent2 (atan2(y,x) = atan(y/x))
-  SINH,                   ///< hyperbolic sine
-  COSH,                   ///< hyperbolic cosine
-  TANH,                   ///< hyperbolic tangent
-  MIN,                    ///< min
-  MAX,                    ///< max
-  CEIL,                   ///< ceil
-  FLOOR,                  ///< floor
-  IF_THEN_ELSE,           ///< if then else
-  NAN,                    ///< NaN
-  UNINTERPRETED_FUNCTION, ///< Uninterpreted function
+  Atan2 = 0xFFF1u,        ///< arctangent2 (atan2(y,x) = atan(y/x))
+  Sinh,                   ///< hyperbolic sine
+  Cosh,                   ///< hyperbolic cosine
+  Tanh,                   ///< hyperbolic tangent
+  Min,                    ///< min
+  Max,                    ///< max
+  Ceil,                   ///< ceil
+  Floor,                  ///< floor
+  IfThenElse,             ///< if then else
+  NaN,                    ///< NaN
+  UninterpretedFunction,  ///< Uninterpreted function
   // TODO(soonho): add Integral
   // clang-format on
 };
