@@ -58,8 +58,8 @@ Expression NegateAddition(const ExpressionAdd *e) {
 // Negates an addition expression.
 // - (E_1 + ... + E_n) => (-E_1 + ... + -E_n)
 Expression NegateAddition(ExpressionAdd *e) {
-  return ExpressionAddFactory{e->get_constant(),
-                              std::move(e->get_mutable_expr_to_coeff_map())}
+  // TODO: maybe use the ref-count to move instead of copy
+  return ExpressionAddFactory{e->get_constant(), e->get_mutable_expr_to_coeff_map()}
       .Negate()
       .GetExpression();
 }
@@ -74,7 +74,7 @@ Expression NegateMultiplication(const ExpressionMul *e) {
 // - (c0 * E_1 * ... * E_n) => (-c0 * E_1 * ... * E_n)
 Expression NegateMultiplication(ExpressionMul *e) {
   return ExpressionMulFactory{e->get_constant(),
-                              std::move(e->get_mutable_base_to_exponent_map())}
+                              e->get_mutable_base_to_exponent_map()}
       .Negate()
       .GetExpression();
 }
@@ -364,8 +364,7 @@ Expression &operator+=(Expression &lhs, const Expression &rhs) {
       return lhs =
                  ExpressionAddFactory{
                      get_constant_in_addition(lhs),
-                     std::move(
-                         to_addition(lhs)->get_mutable_expr_to_coeff_map())}
+                     to_addition(lhs)->get_mutable_expr_to_coeff_map()}
                      .AddExpression(rhs)
                      .GetExpression();
     } else {
@@ -597,8 +596,7 @@ Expression &operator*=(Expression &lhs, const Expression &rhs) {
       return lhs =
                  ExpressionMulFactory{
                      get_constant_in_multiplication(lhs),
-                     std::move(to_multiplication(lhs)
-                                   ->get_mutable_base_to_exponent_map())}
+                     to_multiplication(lhs)->get_mutable_base_to_exponent_map()}
                      .AddExpression(rhs)
                      .GetExpression();
     } else {

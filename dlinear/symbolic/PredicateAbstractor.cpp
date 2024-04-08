@@ -25,10 +25,7 @@ Formula PredicateAbstractor::Convert(const std::vector<Formula> &formulas) {
 }
 
 Formula PredicateAbstractor::Visit(const Formula &f) {
-  DLINEAR_WARN_FMT("Flattening formula {}", f);
   const Formula flattened_f{flattener_.Flatten(f)};
-  std::cout << "flattened_f: " << flattened_f << std::endl;
-  std::cout << "f: " << f << std::endl;
   const bool is_negated = is_negation(flattened_f);
   const Formula &unary_f = is_negated ? get_operand(flattened_f) : flattened_f;
 
