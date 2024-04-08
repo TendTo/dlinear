@@ -23,17 +23,20 @@
 #include <string_view>
 
 #include "dlinear/util/exception.h"
+#include "dlinear/util/hash.hpp"
 #include "dlinear/util/logging.h"
 
-namespace std {
+namespace dlinear {
 
-template <>
-struct hash<mpq_class> {
-  size_t operator()(const mpq_class &val) const;
-};
-}  // namespace std
+/**
+ * Hash append implementation for an object that implements the @ref Hashable concept.
+ * @tparam InvocableHashAlgorithm HashAlgorithm type of the hash algorithm to use
+ * @param hasher hash algorithm
+ * @param hashable object to hash
+ */
+void hash_append(InvocableHashAlgorithm auto &hasher, const mpq_class &value) noexcept;
 
-namespace dlinear::gmp {
+namespace gmp {
 
 /**
  * Calculate the floor of a rational number.
@@ -239,6 +242,14 @@ inline mpq_class string_to_mpq(std::string_view str) {
   return is_exp_positive ? mpq_class{res * mult} : res / mult;
 }
 
-}  // namespace dlinear::gmp
+}  // namespace gmp
+
+}  // namespace dlinear
+
+namespace std {
+/* Provides std::hash<drake::symbolic::Variables>. */
+template <>
+struct hash<mpq_class> : public dlinear::DefaultHash {};
+}  // namespace std
 
 OSTREAM_FORMATTER(mpq_class)
