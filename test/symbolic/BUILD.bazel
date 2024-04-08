@@ -98,3 +98,9 @@ dlinear_cc_googletest(
     tags = ["symbolic"],
     deps = ["//dlinear/symbolic:environment"],
 )
+
+dlinear_cc_googletest(
+    name = "test_expression_cell",
+    tags = ["symbolic"],
+    deps = ["//dlinear/symbolic:expression_cell"],
+)
