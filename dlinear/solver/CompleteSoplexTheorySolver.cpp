@@ -294,6 +294,7 @@ void CompleteSoplexTheorySolver::Reset(const Box &box) {
   nq_row_to_theory_rows_.clear();
   last_theory_rows_to_explanation_.clear();
   final_theory_rows_to_explanation_.clear();
+  nq_explanations_.clear();
 }
 
 void CompleteSoplexTheorySolver::Consolidate() {
@@ -455,12 +456,12 @@ void CompleteSoplexTheorySolver::GetExplanation(LiteralSet &explanation) {
   }
 }
 
-std::vector<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInLastExplanation() const {
-  std::vector<size_t> nq_row_to_iterator_index;
+std::set<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInLastExplanation() const {
+  std::set<size_t> nq_row_to_iterator_index;
   for (size_t i = 0; i < nq_row_to_theory_rows_.size(); i++) {
     const int &spx_row = nq_row_to_theory_rows_[i];
     if (last_theory_rows_to_explanation_.find(spx_row) != last_theory_rows_to_explanation_.end()) {
-      nq_row_to_iterator_index.push_back(i);
+      nq_row_to_iterator_index.insert(i);
     }
   }
   return nq_row_to_iterator_index;
@@ -470,40 +471,39 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
   // No explanation yet, don't update the iterator
   if (last_theory_rows_to_explanation_.empty()) return true;
 
-  std::vector<size_t> nq_in_explanation = IteratorNqRowsInLastExplanation();
+  const std::set<size_t> nq_in_explanation{IteratorNqRowsInLastExplanation()};
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
   // If no non-equal is violated, we can return immediately since the problem is UNSAT for other reasons
   if (nq_in_explanation.empty()) {
-    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasibility detected");
+    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasible");
     final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
     return false;
   }
 
-  // If the number of non-equal rows in the explanation is smaller than the current one, update the final explanation
-  if (nq_in_explanation.size() < num_nq_rows_in_final_explanation_) {
-    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: update final explanation from {} nq rows to {} nq rows",
-                      num_nq_rows_in_final_explanation_, nq_in_explanation.size());
-    num_nq_rows_in_final_explanation_ = nq_in_explanation.size();
-    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
-  } else if (nq_in_explanation.size() == num_nq_rows_in_final_explanation_ &&
-             last_theory_rows_to_explanation_.size() < final_theory_rows_to_explanation_.size()) {
-    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: update final explanation from size {} to size {}",
-                      final_theory_rows_to_explanation_.size(), last_theory_rows_to_explanation_.size());
-    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
+  auto it = nq_explanations_.find(nq_in_explanation);
+  if (it == nq_explanations_.end()) {
+    DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: explanation not seen yet. Adding to the set");
+    it = nq_explanations_.insert({nq_in_explanation, {}}).first;
+  }
+  DLINEAR_ERROR_FMT("({} - {}) Before nq_explanation = {}",
+                    theory_row_to_lit_[nq_row_to_theory_rows_[*nq_in_explanation.begin()]], nq_in_explanation,
+                    it->second.explanation);
+
+  NqExplanation &nq_explanation = it->second;
+  nq_explanation.explanation.insert(last_theory_rows_to_explanation_.cbegin(), last_theory_rows_to_explanation_.cend());
+  nq_explanation.count++;
+  DLINEAR_ERROR_FMT("({} - {})  After nq_explanation = {}",
+                    theory_row_to_lit_[nq_row_to_theory_rows_[*nq_in_explanation.begin()]], nq_in_explanation,
+                    it->second.explanation);
+
+  // All combinations of this set of non-equal rows have been tried, so the problem is UNSAT
+  if (nq_explanation.count == (1ul << nq_in_explanation.size())) {
+    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: all combinations of nq_in_explanation tried. Infeasible");
+    final_theory_rows_to_explanation_ = nq_explanation.explanation;
+    return false;
   }
 
-  // If there is just a single non-equal row in the explanation...
-  if (nq_in_explanation.size() == 1) {
-    DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: only one non-equal row in explanation. Updating iterator");
-    DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: the row was{} fixed before",
-                      bit_iterator.IsFixed(nq_in_explanation.back()) ? "" : " NOT");
-    // ... if it is the first time this happens, skip to an iterator values that doesn't violate the row anymore
-    // otherwise, it meas that this row cannot be satisfied by the current model, so we can return immediately
-    return bit_iterator.Learn(nq_in_explanation.back());
-  }
-  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "final explanation must contain at least a violation");
-
-  // No heuristics to update the iterator based on the current explanation, so just increment the iterator
+  // Increment the iterator
   ++bit_iterator;
   return true;
 }

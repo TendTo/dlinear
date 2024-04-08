@@ -121,7 +121,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * Find the non-equal rows in the current explanation.
    * @return vector of the non-equal rows in the current explanation
    */
-  std::vector<size_t> IteratorNqRowsInLastExplanation() const;
+  std::set<size_t> IteratorNqRowsInLastExplanation() const;
 
   /**
    * Add a new explanation to @p explanations from @ref final_theory_rows_to_explanation_.
@@ -134,6 +134,11 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    */
   void GetExplanation(LiteralSet& explanation);
 
+  struct NqExplanation {
+    std::set<int> explanation{};
+    size_t count{0};
+  };
+
   std::vector<int> enabled_strict_theory_rows_;  ///< Vector of enabled strict theory rows
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
                                             ///< mapped to the corresponding spx_row
@@ -141,9 +146,11 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
                                             ///< Keeps track last sense of the constraints:
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
-  size_t num_nq_rows_in_final_explanation_;                   ///< Number of non-equal rows in the final explanation
+  size_t num_nq_rows_in_final_explanation_;         ///< Number of non-equal rows in the final explanation
   std::set<int> last_theory_rows_to_explanation_;   ///< Last set of theory rows that are part of the explanation
   std::set<int> final_theory_rows_to_explanation_;  ///< Final set of theory rows that are part of the explanation
+
+  std::map<std::set<size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
 };
 
 }  // namespace dlinear
