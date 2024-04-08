@@ -52,7 +52,7 @@ TEST_F(TestEnvironment, FindNonExistingKey) {
 }
 
 TEST_F(TestEnvironment, AccessNonExistingKey) {
-  [[maybe_unused]] double val;
+  [[maybe_unused]] mpq_class val;
   EXPECT_THROW(val = env_.at(x_), std::out_of_range);
 }
 

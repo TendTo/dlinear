@@ -1,10 +1,20 @@
+/**
+ * @file Environment.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @copyright 2019 Drake (https://drake.mit.edu)
+ * @licence Apache-2.0 license
+ * @brief Environment class
+ * 
+ * Represents a symbolic environment (mapping from a variable to a value).
+ */
 #pragma once
 
 #include <initializer_list>
 #include <ostream>
-#include <string>
 #include <unordered_map>
 
+#include "dlinear/libs/gmp.h"
 #include "dlinear/symbolic/Variable.h"
 #include "dlinear/symbolic/Variables.h"
 
@@ -25,15 +35,15 @@ namespace dlinear::symbolic {
  * // env maps var_x to 2.0 and var_y to 3.0
  * const Environment env{{var_x, 2.0}, {var_y, 3.0}};
  *
- * const double res1 = e1.Evaluate(env);  // x + y => 2.0 + 3.0 =>  5.0
- * const double res2 = e2.Evaluate(env);  // x - y => 2.0 - 3.0 => -1.0
+ * const mpq_class res1 = e1.Evaluate(env);  // x + y => 2.0 + 3.0 =>  5.0
+ * const mpq_class res2 = e2.Evaluate(env);  // x - y => 2.0 - 3.0 => -1.0
  * const bool res = f.Evaluate(env);  // x + y > x - y => 5.0 >= -1.0 => True
  * @endcode
  */
 class Environment {
  public:
   using key_type = Variable;
-  using mapped_type = double;
+  using mapped_type = mpq_class;
   using map = std::unordered_map<key_type, mapped_type>;
   /** std::pair<key_type, mapped_type> */
   using value_type = map::value_type;

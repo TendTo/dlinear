@@ -215,8 +215,15 @@ dlinear_cc_library(
     deps = [
         ":variable",
         ":variables",
+        "//dlinear/libs:gmp",
         "//dlinear/util:exception",
     ],
+)
+
+dlinear_cc_library(
+    name = "expression_kind",
+    srcs = ["ExpressionKind.cpp"],
+    hdrs = ["ExpressionKind.h"],
 )
 
 cpplint()

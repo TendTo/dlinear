@@ -1,10 +1,11 @@
+/**
+ * @file Environment.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "Environment.h"
 
-#include <cmath>
-#include <initializer_list>
-#include <ostream>
-#include <sstream>
-#include <stdexcept>
 #include <utility>
 
 #include "dlinear/util/exception.h"
@@ -32,17 +33,17 @@ Environment::Environment(const std::initializer_list<value_type> init) : Environ
 Environment::Environment(const std::initializer_list<key_type> vars) : Environment{BuildMap(vars)} {}
 
 Environment::Environment(map m) : map_{std::move(m)} {
-  if (std::any_of(map_.begin(), map_.end(), [](const auto& p) { return std::isnan(p.second); }))
-    DLINEAR_RUNTIME_ERROR("Cannot insert NaN value into Environment");
+  if (std::any_of(map_.begin(), map_.end(), [](const auto& p) { return p.first.is_dummy(); }))
+    DLINEAR_RUNTIME_ERROR("Cannot insert dummy variable into Environment");
 }
 
 void Environment::insert(const key_type& key, const mapped_type& elem) {
-  if (std::isnan(elem)) DLINEAR_RUNTIME_ERROR("Cannot insert NaN value into Environment");
+  if (key.is_dummy()) DLINEAR_RUNTIME_ERROR("Cannot insert dummy variable into Environment");
   map_.emplace(key, elem);
 }
 
 void Environment::insert_or_assign(const key_type& key, const mapped_type& elem) {
-  if (std::isnan(elem)) DLINEAR_RUNTIME_ERROR("Cannot insert NaN value into Environment");
+  if (key.is_dummy()) DLINEAR_RUNTIME_ERROR("Cannot insert dummy variable into Environment");
   map_.insert_or_assign(key, elem);
 }
 
