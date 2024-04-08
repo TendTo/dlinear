@@ -73,6 +73,15 @@ class BoxedCell {
    */
   [[nodiscard]] const ExpressionCell& cell() const { return *std::get<std::shared_ptr<const ExpressionCell>>(value_); }
 
+  /** @getter{reference count, value in the box}  */
+  [[nodiscard]] long use_count() const {
+    return kind_ == ExpressionKind::Constant ? std::get<std::shared_ptr<const numeric_type>>(value_).use_count()
+                                             : std::get<std::shared_ptr<const ExpressionCell>>(value_).use_count();
+  }
+
+  /** @hash{box} */
+  void hash(InvocableHashAlgorithm auto& hasher) const noexcept;
+
   /**
    * Sets this to a new Constant value.
    * @pre This expression is already a Constant.
@@ -84,13 +93,13 @@ class BoxedCell {
    * @pre This expression is already a Constant.
    * @param new_value the new value to set
    */
-  BoxedCell& operator=(const std::shared_ptr<numeric_type>& new_value);
+  BoxedCell& operator=(const std::shared_ptr<const numeric_type>& new_value);
   /**
    * Sets this to point at the given cell_to_share, incrementing its use_count.
    * @pre This is a Constant (i.e., does currently not own any cell).
    * @pre cell_to_share is not null.
    */
-  BoxedCell& operator=(const std::shared_ptr<ExpressionCell>& new_cell);
+  BoxedCell& operator=(const std::shared_ptr<const ExpressionCell>& new_cell);
 
  private:
   ExpressionKind kind_{};  ///< The kind of the expression.
