@@ -23,7 +23,6 @@ namespace dlinear {
 namespace {
 
 inline size_t bool_vector_to_int(const std::vector<bool> &v, const std::set<size_t> &positions) {
-  DLINEAR_WARN_FMT("bool_vector_to_int: v = {}, positions = {}", v, positions);
   size_t result = 0;
   for (const size_t &pos : positions) {
     result <<= 1;
@@ -194,6 +193,15 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 
   SatResult sat_status;
 
+  // First, check the sat result without taking into account nq constraints
+  sat_status = SpxCheckSat();
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: no nq constraints sat_status = {}", sat_status);
+  if (sat_status != SatResult::SAT_SATISFIABLE) {
+    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
+    GetExplanation(explanations);
+    return sat_status;
+  }
+
   // Initialise the iterator with the last nq statuses
   std::vector<bool> starting_iterator(nq_row_to_theory_rows_.size(), false);
   for (size_t i = 0; i < nq_row_to_theory_rows_.size(); i++) {
@@ -316,6 +324,8 @@ void CompleteSoplexTheorySolver::Reset(const Box &box) {
   final_theory_rows_to_explanation_.clear();
   nq_explanations_.clear();
   locked_solver_ = false;
+  last_theory_rows_to_explanation_.clear();
+  single_nq_rows_.clear();
 }
 
 void CompleteSoplexTheorySolver::Consolidate() {
@@ -376,8 +386,6 @@ void CompleteSoplexTheorySolver::DisableNqLiterals(const std::set<size_t> &nq_co
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::DisableNqLiterals: nq_constraints = {}", nq_constraints);
   for (const size_t i : nq_constraints) {
     const int &spx_row = nq_row_to_theory_rows_[i];
-    DLINEAR_WARN_FMT("Map {} -> {} | Disabling row {}({})", i, nq_row_to_theory_rows_.at(i),
-                     theory_row_to_lit_[spx_row], spx_row);
     spx_.changeRangeRational(spx_row, -soplex::infinity, soplex::infinity);
   }
 }
@@ -417,27 +425,6 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
   soplex::VectorRational dual{spx_.numRowsRational()};
   [[maybe_unused]] const bool has_dual = spx_.getDualRational(dual);
   DLINEAR_ASSERT(has_dual, "has_dual must be true");
-
-#if 0
-  // TODO: debug and remove
-  soplex::VectorRational slack{spx_.numRowsRational()};
-  [[maybe_unused]] const bool has_slack = spx_.getSlacksRational(slack);
-  DLINEAR_ASSERT(has_slack, "has_slack must be true");
-
-  // Active row: the difference between (solution vector X the row's coefficients) and (lhs/rhs) value is 0
-  // Find all strict theory row. The active ones indicate a violation in the strict bound.
-  for (const auto &[spx_row, value] : GetActiveRows()) {
-    DLINEAR_WARN_FMT("Row {} -> {} is active with value {}", spx_row, theory_row_to_lit_[spx_row], value);
-    if (dual[spx_row].is_zero())
-      DLINEAR_WARN_FMT("Row {} NO is dual", spx_row);
-    else
-      DLINEAR_WARN_FMT("Row {} YES is dual", spx_row);
-    if (slack[spx_row].is_zero())
-      DLINEAR_WARN_FMT("Row {} NO is slack", spx_row);
-    else
-      DLINEAR_WARN_FMT("Row {} YES is slack", spx_row);
-  }
-#endif
 
   std::set<Variable> visited_variables;
   for (int i = 0; i < dual.dim(); ++i) {
@@ -491,23 +478,21 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
   // The last iteration yielded a feasible solution, but there were some other constraints that were violated before
   // Unlock the solver and go to the next iteration
   if (last_theory_rows_to_explanation_.empty()) {
-    DLINEAR_CRITICAL("Unlocking the solver");
-    DLINEAR_ASSERT(locked_solver_, "The solver must be locked");
+    DLINEAR_ASSERT(locked_solver_, "The solver must have been locked before");
     locked_solver_ = false;
-    ++bit_iterator;
+    if (single_nq_rows_.empty()) {
+      ++bit_iterator;
+    } else {
+      for (const size_t &nq_row : single_nq_rows_) bit_iterator.Learn(nq_row);
+      single_nq_rows_.clear();
+    }
     EnableNqLiterals(*bit_iterator, true);
     return true;
   };
 
   const std::set<size_t> nq_in_explanation{IteratorNqRowsInLastExplanation()};
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
-
-  // If no non-equal is violated, we can return immediately since the problem violates some other constraints
-  if (nq_in_explanation.empty()) {
-    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no non-equal rows in explanation. Infeasible");
-    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
-    return false;
-  }
+  DLINEAR_ASSERT(!nq_in_explanation.empty(), "nq_in_explanation must not be empty");
 
   // Find and update the current explanation for this set of nq constraints
   auto it = nq_explanations_.find(nq_in_explanation);
@@ -515,9 +500,6 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     DLINEAR_TRACE("CompleteSoplexTheorySolver::CheckSat: explanation not seen yet. Adding to the set");
     it = nq_explanations_.emplace(nq_in_explanation, nq_in_explanation).first;
   }
-  DLINEAR_ERROR_FMT("({} - {}) Before nq_explanation = {}",
-                    theory_row_to_lit_[nq_row_to_theory_rows_[*nq_in_explanation.begin()]], nq_in_explanation,
-                    it->second.explanation);
 
   NqExplanation &nq_explanation = it->second;
   const size_t idx = bool_vector_to_int(*bit_iterator, nq_in_explanation);
@@ -527,9 +509,8 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     nq_explanation.visited[idx] = true;
     nq_explanation.explanation.insert(last_theory_rows_to_explanation_.cbegin(),
                                       last_theory_rows_to_explanation_.cend());
-    DLINEAR_ERROR_FMT("({} - {})  After nq_explanation = {}",
-                      theory_row_to_lit_[nq_row_to_theory_rows_[*nq_in_explanation.begin()]], nq_in_explanation,
-                      it->second.explanation);
+
+    if (nq_in_explanation.size() == 1) single_nq_rows_.insert(*nq_in_explanation.begin());
 
     // All boolean combinations of this set of non-equal rows have been tried, so the problem is UNSAT
     if (std::all_of(nq_explanation.visited.begin(), nq_explanation.visited.end(), [](bool b) { return b; })) {
@@ -586,22 +567,18 @@ void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
       row_vector.value(strict_variable_pos) = 0;
       break;
     case LpRowSense::NQ:
-      // Initialise the inequality based on the last status stored ( < or > )
-      row_vector.value(strict_variable_pos) = last_nq_status_[spx_row] ? -1 : 1;
+      // No need to initialise the strict variable here since it will be enabled with all the nq rows
       nq_row_to_theory_rows_.push_back(spx_row);
-      DLINEAR_CRITICAL_FMT("Map {} -> {} | Enabling row {}({})", nq_row_to_theory_rows_.size() - 1, spx_row,
-                       theory_row_to_lit_[spx_row], spx_row);
       break;
     default:
       DLINEAR_UNREACHABLE();
   }
+
   lp_row.setRowVector(row_vector);
-  lp_row.setLhs(sense == LpRowSense::GE || sense == LpRowSense::EQ || sense == LpRowSense::GT ||
-                        (sense == LpRowSense::NQ && last_nq_status_[spx_row])
+  lp_row.setLhs(sense == LpRowSense::GE || sense == LpRowSense::EQ || sense == LpRowSense::GT
                     ? Rational(gmp::to_mpq_t(rhs))
                     : Rational(-soplex::infinity));
-  lp_row.setRhs(sense == LpRowSense::LE || sense == LpRowSense::EQ || sense == LpRowSense::LT ||
-                        (sense == LpRowSense::NQ && !last_nq_status_[spx_row])
+  lp_row.setRhs(sense == LpRowSense::LE || sense == LpRowSense::EQ || sense == LpRowSense::LT
                     ? Rational(gmp::to_mpq_t(rhs))
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
