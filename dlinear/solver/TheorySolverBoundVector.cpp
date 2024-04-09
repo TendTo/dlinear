@@ -236,9 +236,11 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBound(c
   // Adjust the iterators based on the state of the vector
   if (lb_it != bounds_.cbegin() && lb == *(lb_it - 1)->value) lb_it--;
   if (ub_it != bounds_.cend() && ub == *ub_it->value) ub_it++;
-  return BoundIterator{lb_it, ub_it,  // The non-equal bounds become inclusive if there is no normal bounds
-                       lb_it == ub_it ? FindLowerNqBoundValue(&lb) : FindUpperNqBoundValue(&lb),
-                       lb_it == ub_it ? FindUpperNqBoundValue(&ub) : FindLowerNqBoundValue(&ub)};
+  return BoundIterator{
+      lb_it, ub_it,  // The non-equal bounds become inclusive if there is no normal bounds
+      lb_it == ub_it || lb_it->lp_bound != LpColBound::SL ? FindLowerNqBoundValue(&lb) : FindUpperNqBoundValue(&lb),
+      lb_it == ub_it || (ub_it - 1)->lp_bound != LpColBound::SU ? FindUpperNqBoundValue(&ub)
+                                                                : FindLowerNqBoundValue(&ub)};
 }
 TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(const mpq_class& lb,
                                                                                 const mpq_class& ub) const {
