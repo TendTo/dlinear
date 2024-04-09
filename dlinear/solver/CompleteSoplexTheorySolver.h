@@ -60,14 +60,13 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   /**
    * Internal method to check the satisfiability of the current LP problem.
    *
-   * It invokes the LP solver and returns the result, as well as the actual precision of the solution, if any.
-   * If the LP problem is infeasible (or strictly infeasible), it will also update the explanation
-   * @ref final_theory_rows_to_explanation_.
-   * @param actual_precision The actual precision of the solution, if any. Starts from the input, and is updated if the
-   * LP solver returns a better precision
+   * It invokes the LP solver and returns the result.
+   * If the LP problem is infeasible (or strictly infeasible), it will also update the explanation.
+   * @pre The expected precision must be 0.
    * @return The result of the SAT check
+   * @see final_theory_rows_to_explanation_.
    */
-  SatResult SpxCheckSat(mpq_class* actual_precision);
+  SatResult SpxCheckSat();
 
   /**
    * Update the explanation with the current LP solution.
@@ -83,20 +82,44 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void Consolidate() override;
 
   /**
-   * Get the index of the strict variable used to enforce the strict inequalities.
-   * @return index of the strict variable
+   * Enable the non-equal constraint at row @p spx_row based on the given @p truth.
+   *
+   * The boolean value of @p truth indicates if the corresponding non-equal should be converted to
+   * @f[
+   * \begin{cases}
+   * \text{lhs} < \text{rhs} & \text{if truth} = \text{false} \newline
+   * \text{lhs} > \text{rhs} & \text{if truth} = \text{true}
+   * \end{cases}
+   * @f]
+   * @param spx_row the row in the LP problem to be enabled
+   * @param truth the sense of the non-equal constraint
+   * @see EnableNqLiterals
    */
-  int strict_variable_idx() const;
-
+  void EnableNqLiteral(int spx_row, bool truth);
   /**
    * Enable the non-equal constraints based on the current iterator value @p nq_status.
    *
    * Each element of @p nq_status is a boolean that indicates if the corresponding non-equal should be converted to a
    * @f$ < @f$ (if false) or @f$ > @f$ (if true) constraint.
    * If @p nq_status is empty (there are no not-equal constraints), this will do nothing.
-   * @param nq_status The current state of the non-equal constraints
+   * @note The indexes in @p nq_constraints will be converted back to the theory_rows using @ref nq_row_to_theory_rows_.
+   * @warning Rows where the @ref last_nq_status_ is equal to the current @p nq_status will not be updated, unless
+   * @p force is set to true.
+   * @param nq_status the current state of the non-equal constraints
+   * @see DisableNqLiterals
    */
-  void EnableNqLiterals(const std::vector<bool>& nq_status);
+  void EnableNqLiterals(const std::vector<bool>& nq_status, bool force = false);
+  /**
+   * Disable the non-equal constraints in the given set.
+   *
+   * Each element of @p nq_constraints is the index of the non-equal constraint that should be disabled.
+   * The corresponding row in the LP problem will become a free row.
+   * The effect can be undone by calling @ref EnableNqLiterals with `force = true`.
+   * @note The indexes in @p nq_constraints will be converted back to the theory_rows using @ref nq_row_to_theory_rows_.
+   * @param nq_constraints indexes of the non-equal constraints to be disabled
+   * @see EnableNqLiterals
+   */
+  void DisableNqLiterals(const std::set<size_t>& nq_constraints);
 
   /**
    * Update the @ref BitIncrementIterator @p bit_iterator based on the current explanation.
@@ -111,7 +134,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * - If the same non-equal row appears alone again, we know that the current inequality is the one that is causing the
    * infeasibility, so we can stop and report the current explanation.
    * - If there are more than 1 non-equal row, we can't do anything, so we just leave the iterator as it is
-   * @param bit_iterator The iterator used to explore the sub-problems to be updated
+   * @param bit_iterator the iterator used to explore the sub-problems to be updated
    * @return true if the loop should continue to enumerate the sub-problems
    * @return false if there is no point in continuing the loop and it can be stopped with the current explanation
    */
@@ -135,22 +158,24 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void GetExplanation(LiteralSet& explanation);
 
   struct NqExplanation {
-    std::set<int> explanation{};
-    size_t count{0};
+    explicit NqExplanation(size_t size);
+    explicit NqExplanation(const std::set<size_t>& size);
+    std::set<int> explanation;
+    std::vector<bool> visited;
   };
 
-  std::vector<int> enabled_strict_theory_rows_;  ///< Vector of enabled strict theory rows
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
                                             ///< mapped to the corresponding spx_row
   std::vector<bool> last_nq_status_;        ///< Last status of the non-equal constraints.
                                             ///< Keeps track last sense of the constraints:
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
-  size_t num_nq_rows_in_final_explanation_;         ///< Number of non-equal rows in the final explanation
   std::set<int> last_theory_rows_to_explanation_;   ///< Last set of theory rows that are part of the explanation
   std::set<int> final_theory_rows_to_explanation_;  ///< Final set of theory rows that are part of the explanation
 
   std::map<std::set<size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
+
+  bool locked_solver_;  ///< Flag to indicate if the solver is locked. A locked solver will always return UNSAT.
 };
 
 }  // namespace dlinear
