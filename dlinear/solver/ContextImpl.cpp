@@ -373,6 +373,7 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
+  DLINEAR_ASSERT(!explanation.empty(), "explanation must not be empty");
   sat_solver_->AddLearnedClause(explanation);
 }
 
