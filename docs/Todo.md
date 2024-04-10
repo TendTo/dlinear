@@ -31,3 +31,7 @@
 - [ ] Improve iterations over nq bounds
 - [ ] Add symbolic preprocessor for constraints in the form of $x \lessgtr y$
 - [ ] Remove completely free variables, especially from nq constraints
+- [ ] Investigate out of memory
+- [ ] Handle conflicting constraints in preprocessor
+- [ ] Fix Invalidly reported constraints in bound processor
+- [ ] Add support for `max` and `min` functions redefinitions
