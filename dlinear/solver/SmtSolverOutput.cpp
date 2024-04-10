@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
     case SolverResult::ERROR:
       return os << "error";
     case SolverResult::SAT:
-      os << "sat with delta = 0";
+      os << "sat";
       break;
     case SolverResult::DELTA_SAT:
       os << fmt::format("delta-sat with delta = {} ( > {})", s.precision_upper_bound(), s.actual_precision);

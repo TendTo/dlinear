@@ -98,7 +98,7 @@ struct SmtSolverOutput {
   mpq_class upper_bound{0};                     ///< Upper bound of the result
   Box model{};                                  ///< Model of the result
   const mpq_class precision;                    ///< User-provided precision of the computation
-  mpq_class actual_precision;                   ///< Actual precision of the computation. Always < than precision
+  mpq_class actual_precision;                   ///< Actual precision of the computation. Always <= than precision
 };
 
 std::ostream &operator<<(std::ostream &os, const SolverResult &result);
