@@ -1,0 +1,145 @@
+"""Module for the dlinear repository"""
+
+module(name = "dlinear")
+
+# Apache License 2.0 | rules_cc for building C++ libraries with Bazel
+bazel_dep(name = "rules_cc", version = "0.0.9")
+
+# Apache License 2.0 | rules_foreign_cc for building C++ libraries with other build systems
+bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
+
+# Apache License 2.0 | rules_python for building python targets
+bazel_dep(name = "rules_python", version = "0.31.0")
+
+# https://github.com/madler/zlib/blob/develop/LICENSE | zlib compression library
+bazel_dep(name = "zlib", version = "1.3.1")
+
+# Apache License 2.0 | utility rules for Bazel
+bazel_dep(name = "bazel_skylib", version = "1.5.0")
+
+# https://github.com/pybind/pybind11_bazel/blob/master/LICENSE | pybind11 for binding C++ and Python
+bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+
+# https://github.com/libarchive/bzip2/blob/master/COPYING | Compression library
+bazel_dep(name = "bzip2", version = "1.0.8")
+
+# MIT | argparse implementation for modern C++
+bazel_dep(name = "argparse", version = "3.0.0")
+
+# MIT | C++ library for formatting text
+bazel_dep(name = "fmt", version = "10.2.1")
+
+# https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
+bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
+
+# BSD-3-Clause license | c++ test suite by Google
+bazel_dep(name = "googletest", version = "1.14.0", dev_dependency = True)
+
+# Apache License 2.0 | Integration of Boost into Bazel
+bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
+git_override(
+    module_name = "com_github_nelhage_rules_boost",
+    commit = "37043509947dc88627b45c283b974e05ad308bdc",
+    remote = "https://github.com/TendTo/rules_boost.git",
+)
+
+# Repository dependencies (see WORKSPACE for more details)
+
+## Github repositories
+
+github_archive = use_repo_rule("//tools:git_archive.bzl", "github_archive")
+
+# MIT | logging library
+github_archive(
+    name = "spdlog",
+    build_file = "//third_party:spdlog.BUILD.bazel",
+    commit = "v1.12.0",
+    repository = "gabime/spdlog",
+    sha256 = "4dccf2d10f410c1e2feaff89966bfc49a1abb29ef6f08246335b110e001e09a9",
+)
+
+# Apache License 2.0 | linear programming solver
+github_archive(
+    name = "soplex",
+    build_file = "//third_party:soplex.BUILD.bazel",
+    commit = "cda544e50693982450faf30e40fe8317c68a9abc",
+    repository = "TendTo/soplex",
+    sha256 = "5137b3b9d0b9f47843a2f87190bbe731df348aa28be3b3454e2352b7f7087f54",
+)
+
+# GNU General Public License v3.0 | delta-complete linear programming solver
+github_archive(
+    name = "qsopt_ex",
+    build_file = "//third_party:qsopt_ex.BUILD.bazel",
+    commit = "4646dc3bec76532827c479f7c51d8a71a35806de",
+    repository = "TendTo/qsopt-ex",
+    sha256 = "610222f0023213e17b395d23fdcaf918d6102b020e445902014e0518a30c900d",
+)
+
+# TODO: add proper compiled version ?
+# MIT | SAT solver
+github_archive(
+    name = "picosat",  # MIT
+    build_file = "//third_party:picosat.BUILD.bazel",
+    commit = "ee542566ca89717af1b4558b0b3f226eb3b6b42d",  # master
+    repository = "dreal-deps/picosat",
+    sha256 = "9a047b7ba3ac1075a2288d35045585e2e3c24961f078f30ad97a313b8e539eb2",
+)
+
+# TODO: use the proper version
+# BSD | Flex header for C++
+github_archive(
+    name = "flex_lexer",
+    build_file = "//third_party:flex_lexer.BUILD.bazel",
+    commit = "v2.6.4",
+    repository = "westes/flex",
+    sha256 = "4df278468142e457a9e5f6492a7d39fdb34bd7e7d42ec21b3c382889b34cfefe",
+)
+
+# TODO: check if we still need this
+#bazel_dep(
+#    name = "pybind11",  # https://github.com/pybind/pybind11/blob/master/LICENSE
+#    build_file = "@pybind11_bazel//:pybind11.BUILD",
+#    commit = "v2.11.1",
+#    repository = "pybind/pybind11",
+#    sha256 = "d475978da0cdc2d43b73f30910786759d593a9d8ee05b1b6846d1eb16c6d2e0c",
+#)
+
+## Gitlab repositories
+
+gitlab_archive = use_repo_rule("//tools:git_archive.bzl", "gitlab_archive")
+
+# MIT | c++ library for arbitrary precision arithmetic
+gitlab_archive(
+    name = "mpfr",
+    build_file = "//third_party:mpfr.BUILD.bazel",
+    commit = "4.2.1",
+    domain = "inria.fr",
+    repository = "mpfr/mpfr",
+    sha256 = "e34aab8b2cdcc3f37ef8bd1b33fcd9867b472412698c6a0ec60dbb4970f88a3d",
+)
+
+## HTTP repositories
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# GNU Lesser General Public License v3.0 | arbitrary precision arithmetic library
+http_archive(
+    name = "gmp",
+    build_file = "//third_party:gmp.BUILD.bazel",
+    sha256 = "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
+    strip_prefix = "gmp-6.3.0",
+    url = "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
+)
+
+# Extensions
+
+boost_modules = use_extension("@com_github_nelhage_rules_boost//:extensions.bzl", "boost_modules")
+
+# "boost_modules.version" can be used to specify a specific version of the boost modules. If omitted, the default version will be used.
+# See //:extensions.bzl for the default version.
+boost_modules.version(
+    sha256 = "4d27e9efed0f6f152dc28db6430b9d3dfb40c0345da7342eaa5a987dde57bd95",
+    version = "1.84.0",
+)
+use_repo(boost_modules, "boost")
