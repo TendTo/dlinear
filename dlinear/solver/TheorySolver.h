@@ -294,7 +294,7 @@ class TheorySolver {
    * @param type type of violation the bound is associated with
    * @param[out] explanation set of literals that correspond to the conflicting bounds
    */
-  void TheoryBoundsToExplanation(int theory_col, const BoundViolationType type, LiteralSet &explanation) const;
+  void TheoryBoundsToExplanation(int theory_col, BoundViolationType type, LiteralSet &explanation) const;
 
   /**
    * Get the indexes of the violated bounds.
@@ -322,7 +322,7 @@ class TheorySolver {
    * @param type type of violation the bound is associated with
    * @param[out] bound_idxs set of indexes of the bounds
    */
-  void TheoryBoundsToBoundIdxs(int theory_col, const BoundViolationType type, std::set<int> &bound_idxs) const;
+  void TheoryBoundsToBoundIdxs(int theory_col, BoundViolationType type, std::set<int> &bound_idxs) const;
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
    *
@@ -417,4 +417,3 @@ class TheorySolver {
 }  // namespace dlinear
 
 OSTREAM_FORMATTER(dlinear::TheorySolver::Bound)
-// OSTREAM_FORMATTER(dlinear::TheorySolver::BoundViolationType)

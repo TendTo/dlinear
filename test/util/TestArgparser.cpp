@@ -25,7 +25,6 @@ class TestArgParser : public ::testing::Test {
   const string bad_filename_{"TempFile.err"};
   const string non_existing_filename_{"NotExistingTempFile.smt2"};
   void SetUp() override {
-    parser_ = ArgParser{};
     ofstream f{filename_smt2_};
     ofstream m{filename_mps_};
     ofstream bf{bad_filename_};
@@ -103,7 +102,7 @@ TEST_F(TestArgParser, ParseJobs) {
 TEST_F(TestArgParser, ParseInvalidJobs) {
   const int argc = 4;
   const char *argv[argc] = {"dlinear", filename_smt2_.c_str(), "--jobs", "-1"};
-  EXPECT_DEATH(parser_.parse(argc, argv), "pattern not found");
+  EXPECT_DEATH(parser_.parse(argc, argv), "Failed to parse '-1' as decimal integer");
 }
 
 TEST_F(TestArgParser, ParseContinuousOutput) {

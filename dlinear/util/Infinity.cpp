@@ -10,7 +10,7 @@
 #include <utility>
 
 #ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/libsoplex.h"

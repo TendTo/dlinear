@@ -7,7 +7,7 @@
 #pragma once
 
 #ifdef DLINEAR_ENABLED_QSOPT_EX
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/libsoplex.h"

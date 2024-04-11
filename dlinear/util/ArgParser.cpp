@@ -9,7 +9,7 @@
 #include <utility>
 
 #ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/libsoplex.h"
@@ -34,6 +34,7 @@ namespace dlinear {
     parser.add_argument(__VA_ARGS__)                                      \
         .help(dlinear::Config::help_##name)                               \
         .default_value(dlinear::Config::default_##name)                   \
+        .nargs(1)                                                         \
         .scan<scan_char, scan_type>();                                    \
   } while (false)
 
@@ -100,6 +101,7 @@ void ArgParser::addOptions() {
 
   parser_.add_argument("--format")
       .help(Config::help_format)
+      .nargs(1)
       .default_value(Config::default_format)
       .action([](const std::string &value) {
         if (value == "auto") return Config::Format::AUTO;
@@ -109,6 +111,7 @@ void ArgParser::addOptions() {
       });
   parser_.add_argument("--lp-solver")
       .help(Config::help_lp_solver)
+      .nargs(1)
       .default_value(Config::default_lp_solver)
       .action([](const std::string &value) {
         if (value == "soplex" || value == "1") return Config::LPSolver::SOPLEX;
@@ -117,6 +120,7 @@ void ArgParser::addOptions() {
       });
   parser_.add_argument("--lp-mode")
       .help(Config::help_lp_mode)
+      .nargs(1)
       .default_value(Config::default_lp_mode)
       .action([](const std::string &value) {
         if (value == "auto" || value == "0") return Config::LPMode::AUTO;
@@ -127,6 +131,7 @@ void ArgParser::addOptions() {
       });
   parser_.add_argument("--sat-default-phase")
       .help(Config::help_sat_default_phase)
+      .nargs(1)
       .default_value(Config::default_sat_default_phase)
       .action([](const std::string &value) {
         int v = std::stoi(value);

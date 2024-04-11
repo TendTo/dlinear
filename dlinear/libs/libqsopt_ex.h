@@ -7,7 +7,7 @@
  *
  * This header includes the Qsopt_ex library and provides a various helpers.
  * Other files in the library should depend on this header instead of the Qsopt_ex library directly.
- * Instead of including <qsopt_ex/Qsopt_ex.h>, include "dlinear/libs/qsopt_ex.h".
+ * Instead of including <qsopt_ex/Qsopt_ex.h>, include "dlinear/libs/libqsopt_ex.h".
  * In the build files, instead of depending on "@qsopt_ex", depend on "//dlinear/libs:qsopt_ex".
  */
 #pragma once

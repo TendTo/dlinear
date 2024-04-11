@@ -14,7 +14,7 @@ configure_make(
     autogen_command = "bootstrap",
     configure_options = ["CFLAGS='-Dredacted=\"redacted\" -DEG_LPNUM_MEMSLAB=0'"],
     args = ["-j4"],
-    deps = ["@zlib", "@bzip2lib", "@gmp"],
+    deps = ["@zlib", "@bzip2", "@gmp"],
     postfix_script = select({
         "@dlinear//tools:enabled_patchelf": "patchelf --set-soname libqsopt_ex.so $INSTALLDIR/lib/libqsopt_ex.so",
         "//conditions:default": "echo 'No patchelf, skipping soname fixup.'",

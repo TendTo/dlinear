@@ -7,7 +7,7 @@
 #ifdef DLINEAR_ENABLED_QSOPT_EX
 #include <gtest/gtest.h>
 
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 
 using dlinear::qsopt_ex::MpqArray;
 using dlinear::qsopt_ex::QSXFinish;
