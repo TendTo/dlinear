@@ -13,7 +13,7 @@
 
 #include <string>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear {

@@ -1,5 +1,5 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library")
 
 package(default_visibility = [
     "//benchmark:__subpackages__",
@@ -11,17 +11,18 @@ package(default_visibility = [
 
 dlinear_cc_library(
     name = "gmp",
-    srcs = ["gmp.cpp"],
-    hdrs = ["gmp.h"],
+    srcs = ["libgmp.cpp"],
+    hdrs = ["libgmp.h"],
     deps = [
         "//dlinear/util:exception",
+        "//dlinear/util:logging",
         "@gmp//:gmpxx",
     ],
 )
 
 dlinear_cc_library(
     name = "soplex",
-    hdrs = ["soplex.h"],
+    hdrs = ["libsoplex.h"],
     deps = [
         "//dlinear/util:exception",
         "//dlinear/util:logging",
@@ -33,8 +34,8 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "qsopt_ex",
-    srcs = ["qsopt_ex.cpp"],
-    hdrs = ["qsopt_ex.h"],
+    srcs = ["libqsopt_ex.cpp"],
+    hdrs = ["libqsopt_ex.h"],
     deps = [
         "@gmp//:gmpxx",
     ] + select({

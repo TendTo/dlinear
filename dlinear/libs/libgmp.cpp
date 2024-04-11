@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "gmp.h"
+#include "libgmp.h"
 
 #include <functional>
 

@@ -9,7 +9,7 @@
 #include <map>
 #include <utility>
 
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"

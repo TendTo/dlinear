@@ -16,8 +16,8 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
-// This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.
-#include "dlinear/util/exception.h"
+
 #include "dlinear/util/logging.h"
+// This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.
 
 #include <soplex.h>  // NOLINT

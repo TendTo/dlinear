@@ -17,7 +17,7 @@
 #include <tuple>
 #include <vector>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"

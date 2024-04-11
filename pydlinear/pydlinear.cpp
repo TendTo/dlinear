@@ -13,8 +13,8 @@
 #include <pybind11/stl.h>
 #include <spdlog/spdlog.h>
 
-#include "dlinear/libs/gmp.h"
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #include "dlinear/solver/SmtSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"

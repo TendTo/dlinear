@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/mps/BoundType.h"
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/scanner.h"

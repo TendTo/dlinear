@@ -18,6 +18,7 @@
 #include <string>
 
 #include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 namespace std {
 
@@ -234,3 +235,5 @@ inline mpq_class string_to_mpq(std::string_view str) {
 }
 
 }  // namespace dlinear::gmp
+
+OSTREAM_FORMATTER(mpq_class)

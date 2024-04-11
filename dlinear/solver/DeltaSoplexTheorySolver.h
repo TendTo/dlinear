@@ -19,7 +19,7 @@
 #include <map>
 #include <optional>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"

@@ -25,6 +25,7 @@
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Graph.hpp"
 #include "dlinear/util/NumericDataContainer.hpp"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -108,3 +109,6 @@ class TheorySolverBoundPreprocessor {
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundPreprocessor::Weight)
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundPreprocessor)

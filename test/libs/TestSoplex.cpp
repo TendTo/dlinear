@@ -7,7 +7,7 @@
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include <gtest/gtest.h>
 
-#include "dlinear/libs/soplex.h"
+#include "dlinear/libs/libsoplex.h"
 
 TEST(TestSoplex, Soplex) {
   soplex::SoPlex soplex;

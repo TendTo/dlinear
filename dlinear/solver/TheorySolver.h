@@ -17,7 +17,7 @@
 #include <tuple>
 #include <vector>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/TheorySolverBoundPreprocessor.h"
@@ -28,6 +28,7 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -414,3 +415,6 @@ class TheorySolver {
 };
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::TheorySolver::Bound)
+// OSTREAM_FORMATTER(dlinear::TheorySolver::BoundViolationType)

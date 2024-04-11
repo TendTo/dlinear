@@ -10,7 +10,7 @@
 #include "dlinear/libs/qsopt_ex.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/libs/soplex.h"
+#include "dlinear/libs/libsoplex.h"
 #endif
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/symbolic/symbolic_expression.h"

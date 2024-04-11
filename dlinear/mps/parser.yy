@@ -8,7 +8,7 @@
 #include <tuple>
 #include <utility>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/mps/Sense.h"
 #include "dlinear/mps/BoundType.h"
 

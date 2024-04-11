@@ -9,7 +9,7 @@
 #include <map>
 #include <utility>
 
-#include "dlinear/libs/soplex.h"
+#include "dlinear/libs/libsoplex.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"

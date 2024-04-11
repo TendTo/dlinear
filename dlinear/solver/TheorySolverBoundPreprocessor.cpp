@@ -8,9 +8,8 @@
 
 #include <unordered_set>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/TheorySolver.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

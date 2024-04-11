@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/SolverGuard.h"

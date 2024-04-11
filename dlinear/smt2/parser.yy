@@ -14,7 +14,7 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/math.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 
 using dlinear::gmp::string_to_mpq;
 

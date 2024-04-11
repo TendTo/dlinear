@@ -16,7 +16,7 @@
 
 #include <vector>
 
-#include "dlinear/libs/qsopt_ex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #include "dlinear/solver/LpRowSense.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"

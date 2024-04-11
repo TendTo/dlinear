@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/util/NumericDataContainer.hpp"
 
 using dlinear::NumericDataContainer;

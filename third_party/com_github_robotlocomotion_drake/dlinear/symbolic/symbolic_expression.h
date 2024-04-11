@@ -12,13 +12,11 @@
 #include <utility>
 #include <vector>
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/hash.h"
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
-#include "dlinear/symbolic/symbolic_variables.h"
-
-#include "dlinear/libs/gmp.h"
 
 namespace dlinear::drake {
 namespace symbolic {

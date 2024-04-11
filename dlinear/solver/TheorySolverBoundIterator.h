@@ -5,8 +5,8 @@
  * @licence Apache-2.0 license
  * @brief TheorySolverBoundIterator class.
  *
- * It is used to iterate over the bounds of a theory solver without copying each @ref dlinear::TheorySolverBoundVector::Bound.
- * Usually the results of bound violation.
+ * It is used to iterate over the bounds of a theory solver without copying each @ref
+ * dlinear::TheorySolverBoundVector::Bound. Usually the results of bound violation.
  */
 #pragma once
 

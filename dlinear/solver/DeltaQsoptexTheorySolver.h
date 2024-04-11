@@ -16,7 +16,7 @@
 #error QSopt_ex is not enabled. Please enable it by adding "--//tools:enable_qsoptex" to the bazel command.
 #endif
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/QsoptexTheorySolver.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"

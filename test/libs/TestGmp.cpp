@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 
 using dlinear::gmp::ceil;
 using dlinear::gmp::floor;

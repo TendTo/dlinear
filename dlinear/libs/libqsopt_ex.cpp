@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "qsopt_ex.h"
+#include "libqsopt_ex.h"
 
 namespace dlinear::qsopt_ex {
 
