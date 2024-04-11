@@ -1,6 +1,6 @@
 """Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
 
-load("//tools:cc_import_foreign.bzl", "cc_import_foreign")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"
@@ -122,23 +122,6 @@ def _get_features(rule_features):
         "//conditions:default": [],
     })
 
-def dlinear_cc_import_foreign(name, deps, mode = None, **kwargs):
-    if mode == None:
-        mode = select({
-            "@dlinear//tools:dynamic_build": "dynamic",
-            "@dlinear//tools:static_build": "static",
-            "@dlinear//conditions:default": "auto",
-        })
-
-    return [
-        cc_import_foreign(
-            name = name,
-            deps = deps,
-            mode = mode,
-            **kwargs
-        ),
-    ]
-
 def dlinear_cc_library(
         name,
         hdrs = None,
@@ -158,9 +141,9 @@ def dlinear_cc_library(
         copts: A list of compiler options.
         linkstatic: Whether to link statically.
         defines: A list of defines to add to the library.
-        **kwargs: Additional arguments to pass to native.cc_library.
+        **kwargs: Additional arguments to pass to cc_library.
     """
-    native.cc_library(
+    cc_library(
         name = name,
         hdrs = hdrs,
         srcs = srcs,
@@ -190,9 +173,9 @@ def dlinear_cc_binary(
         linkstatic: Whether to link statically.
         defines: A list of defines to add to the binary.
         features: A list of features to add to the binary.
-        **kwargs: Additional arguments to pass to native.cc_binary.
+        **kwargs: Additional arguments to pass to cc_binary.
     """
-    native.cc_binary(
+    cc_binary(
         name = name,
         srcs = srcs,
         deps = deps,
@@ -224,11 +207,11 @@ def dlinear_cc_test(
         copts: A list of compiler options.
         tags: A list of tags to add to the test. Allows for test filtering.
         defines: A list of defines to add to the test.
-        **kwargs: Additional arguments to pass to native.cc_test.
+        **kwargs: Additional arguments to pass to cc_test.
     """
     if srcs == None:
         srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".cpp"]
-    native.cc_test(
+    cc_test(
         name = name,
         srcs = srcs,
         copts = _get_copts(copts, cc_test = True),
@@ -250,11 +233,11 @@ def dlinear_cc_googletest(
     """Creates a rule to declare a C++ unit test using googletest.
 
     Always adds a deps= entry for googletest main
-    (@com_google_googletest//:gtest_main).
+    (@googletest//:gtest_main).
 
     By default, sets size="small" because that indicates a unit test.
-    By default, sets use_default_main=True to use GTest's main, via @com_google_googletest//:gtest_main.
-    Otherwise, it will depend on @com_google_googlegtest//:gtest.
+    By default, sets use_default_main=True to use GTest's main, via @googletest//:gtest_main.
+    Otherwise, it will depend on @googletest//:gtest.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
     For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
 
@@ -272,13 +255,13 @@ def dlinear_cc_googletest(
         deps = []
     if type(deps) == "select":
         if use_default_main:
-            deps += select({"//conditions:default": ["@com_google_googletest//:gtest_main"]})
+            deps += select({"//conditions:default": ["@googletest//:gtest_main"]})
         else:
-            deps += select({"//conditions:default": ["@com_google_googletest//:gtest"]})
+            deps += select({"//conditions:default": ["@googletest//:gtest"]})
     elif use_default_main:
-        deps.append("@com_google_googletest//:gtest_main")
+        deps.append("@googletest//:gtest_main")
     else:
-        deps.append("@com_google_googletest//:gtest")
+        deps.append("@googletest//:gtest")
     dlinear_cc_test(
         name = name,
         srcs = srcs,

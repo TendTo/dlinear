@@ -26,7 +26,8 @@ cmake(
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
     visibility = ["//visibility:public"],
     defines = ["SOPLEX_WITH_GMP"],
-    postfix_script = "cp -L $INSTALLDIR/lib/libsoplexshared.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so" + select({
+    postfix_script = """find $INSTALLDIR -type l -exec sh -c 'for i in "$@"; do cp --preserve --remove-destination "$(readlink -f "$i")" "$i"; done' sh {} +
+                        cp -L $INSTALLDIR/lib/libsoplexshared.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
         "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
         "//conditions:default": "",
     }),

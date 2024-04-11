@@ -1,18 +1,35 @@
-"""A macro to be called in the WORKSPACE that adds an external from github using a workspace rule.
-Taken from https://github.com/RobotLocomotion/drake with BSD 3-Clause License.
-"""
+"""Repository rules for downloading archives from GitHub and GitLab"""
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth", "patch", "update_attrs", "workspace_and_buildfile")
 
-def github_archive(
-        name,
-        repository = None,
-        commit = None,
-        sha256 = None,
-        build_file = None,
-        local_repository_override = None,
-        **kwargs):
-    """A macro to be called in the WORKSPACE that adds an external from github using a workspace rule.
+def _update_integrity_attr(ctx, attrs, download_info):
+    # We don't need to override the integrity attribute if sha256 is already specified.
+    integrity_override = {} if ctx.attr.sha256 else {"integrity": download_info.integrity}
+    return update_attrs(ctx.attr, attrs.keys(), integrity_override)
+
+def _http_request(repository_ctx, urls, strip_prefix, attrs):
+    """Utility function to download a file from a URL and return its contents.
+
+    Args:
+        repository_ctx: The context object for the repository rule.
+        urls: A list of URLs to download from.
+        strip_prefix: The prefix to strip from the downloaded archive.
+        attrs: The attributes to update with the download information.
+    """
+    auth = get_auth(repository_ctx, urls)
+    download_info = repository_ctx.download_and_extract(
+        urls,
+        sha256 = repository_ctx.attr.sha256,
+        stripPrefix = strip_prefix,
+        auth = auth,
+    )
+    workspace_and_buildfile(repository_ctx)
+    patch(repository_ctx, auth = auth)
+
+    return _update_integrity_attr(repository_ctx, attrs, download_info)
+
+def _github_archive_impl(repository_ctx):
+    """A rule to be called in the WORKSPACE that adds an external from github using a workspace rule.
 
     The required name= is the rule name and so is used for @name//... labels when referring to this archive from BUILD files.
 
@@ -30,69 +47,30 @@ def github_archive(
     instead of retrieving the code from github, the code is retrieved from the local filesystem path given in the argument.
 
     Args:
-        name: The name of the external, used for @name//... labels.
-        repository: The github repository to download from.
-        commit: The git commit hash to download.
-        sha256: The sha256 checksum of the downloaded archive.
-        build_file: The BUILD file label to use for building this external.
-        local_repository_override: The local filesystem path to use instead of
-            downloading from github.
-        **kwargs: Additional arguments to pass to http_archive.
+        repository_ctx: The context object for the repository rule.
     """
-    if repository == None:
-        fail("Missing repository=")
-    if commit == None:
-        fail("Missing commit=")
-    if sha256 == None:
-        # This is mostly-required, but we fallback to a wrong-default value to
-        # allow the first attempt to fail and print the correct sha256.
-        sha256 = "0" * 64
+    if repository_ctx.attr.build_file and repository_ctx.attr.build_file_content:
+        fail("Only one of build_file and build_file_content can be provided.")
+    if repository_ctx.attr.workspace_file and repository_ctx.attr.workspace_file_content:
+        fail("Only one of workspace_file and workspace_file_content can be provided.")
 
-    urls = [
-        "https://github.com/%s/archive/%s.tar.gz" % (repository, commit),
-    ]
+    repository = repository_ctx.attr.repository
+    commit = repository_ctx.attr.commit
+
+    urls = ["https://github.com/%s/archive/%s.tar.gz" % (repository, commit)]
 
     repository_split = repository.split("/")
     if len(repository_split) != 2:
-        fail("The repository= must be formatted as 'organization/project'")
+        fail("The repository must be formatted as 'organization/project'. Got: %s" % repository)
     _, project = repository_split
 
     # Github archives omit the "v" in version tags, for some reason.
     strip_commit = commit.removeprefix("v")
     strip_prefix = project + "-" + strip_commit
 
-    if local_repository_override != None:
-        if build_file == None:
-            native.local_repository(
-                name = name,
-                path = local_repository_override,
-            )
-        else:
-            native.new_local_repository(
-                name = name,
-                build_file = build_file,
-                path = local_repository_override,
-            )
-        return
+    return _http_request(repository_ctx, urls, strip_prefix, _github_archive_attrs)
 
-    http_archive(
-        name = name,
-        urls = urls,
-        sha256 = sha256,
-        build_file = build_file,
-        strip_prefix = strip_prefix,
-        **kwargs
-    )
-
-def gitlab_archive(
-        name,
-        repository = None,
-        commit = None,
-        sha256 = None,
-        build_file = None,
-        local_repository_override = None,
-        domain = "com",
-        **kwargs):
+def _gitlab_archive_impl(repository_ctx):
     """A macro to be called in the WORKSPACE that adds an external from gitlab using a workspace rule.
 
     The required name= is the rule name and so is used for @name//... labels when referring to this archive from BUILD files.
@@ -111,56 +89,56 @@ def gitlab_archive(
     instead of retrieving the code from github, the code is retrieved from the local filesystem path given in the argument.
 
     Args:
-        name: The name of the external, used for @name//... labels.
-        repository: The github repository to download from.
-        commit: The git commit hash to download.
-        sha256: The sha256 checksum of the downloaded archive.
-        build_file: The BUILD file label to use for building this external.
-        local_repository_override: The local filesystem path to use instead of
-            downloading from github.
-        domain: The gitlab domain to use. Defaults to "com"
-        **kwargs: Additional arguments to pass to http_archive.
+        repository_ctx: The context object for the repository rule.
     """
-    if repository == None:
-        fail("Missing repository=")
-    if commit == None:
-        fail("Missing commit=")
-    if sha256 == None:
-        # This is mostly-required, but we fallback to a wrong-default value to
-        # allow the first attempt to fail and print the correct sha256.
-        sha256 = "0" * 64
+    if repository_ctx.attr.build_file and repository_ctx.attr.build_file_content:
+        fail("Only one of build_file and build_file_content can be provided.")
+    if repository_ctx.attr.workspace_file and repository_ctx.attr.workspace_file_content:
+        fail("Only one of workspace_file and workspace_file_content can be provided.")
+
+    repository = repository_ctx.attr.repository
+    commit = repository_ctx.attr.commit
+    domain = repository_ctx.attr.domain
 
     repository_split = repository.split("/")
     if len(repository_split) != 2:
-        fail("The repository= must be formatted as 'organization/project'")
+        fail("The repository must be formatted as 'organization/project'. Got: %s" % repository)
     _, project = repository_split
     folder_name = project + "-" + commit
 
-    urls = [
-        "https://gitlab.%s/%s/-/archive/%s/%s.tar.gz" % (domain, repository, commit, folder_name),
-    ]
+    urls = ["https://gitlab.%s/%s/-/archive/%s/%s.tar.gz" % (domain, repository, commit, folder_name)]
 
-    # Github archives omit the "v" in version tags, for some reason.
+    return _http_request(repository_ctx, urls, folder_name, _gitlab_archive_attrs)
 
-    if local_repository_override != None:
-        if build_file == None:
-            native.local_repository(
-                name = name,
-                path = local_repository_override,
-            )
-        else:
-            native.new_local_repository(
-                name = name,
-                build_file = build_file,
-                path = local_repository_override,
-            )
-        return
+_github_archive_attrs = {
+    "repository": attr.string(mandatory = True, doc = "The github repository to download from."),
+    "commit": attr.string(mandatory = True, doc = "The git commit hash to download."),
+    "sha256": attr.string(default = "0" * 64, doc = "The sha256 checksum of the downloaded archive."),
+    "build_file": attr.label(doc = "The BUILD file label to use for building this external."),
+    "build_file_content": attr.string(doc = "The content for the BUILD file for this repository."),
+    "workspace_file": attr.label(doc = "The file to use as the `WORKSPACE` file for this repository."),
+    "workspace_file_content": attr.string(doc = "The content for the WORKSPACE file for this repository."),
+}
 
-    http_archive(
-        name = name,
-        urls = urls,
-        sha256 = sha256,
-        build_file = build_file,
-        strip_prefix = folder_name,
-        **kwargs
-    )
+_gitlab_archive_attrs = {
+    "repository": attr.string(mandatory = True, doc = "The github repository to download from."),
+    "commit": attr.string(mandatory = True, doc = "The git commit hash to download."),
+    "sha256": attr.string(default = "0" * 64, doc = "The sha256 checksum of the downloaded archive."),
+    "build_file": attr.label(doc = "The BUILD file label to use for building this external."),
+    "build_file_content": attr.string(doc = "The content for the BUILD file for this repository."),
+    "workspace_file": attr.label(doc = "The file to use as the `WORKSPACE` file for this repository."),
+    "workspace_file_content": attr.string(doc = "The content for the WORKSPACE file for this repository."),
+    "domain": attr.string(default = "com", doc = "The domain of the gitlab server."),
+}
+
+github_archive = repository_rule(
+    implementation = _github_archive_impl,
+    local = True,
+    attrs = _github_archive_attrs,
+)
+
+gitlab_archive = repository_rule(
+    implementation = _gitlab_archive_impl,
+    local = True,
+    attrs = _gitlab_archive_attrs,
+)

@@ -9,7 +9,7 @@ dlinear_cc_library(
         "//dlinear/solver",
         "//dlinear/util:config",
         "//dlinear/util:filesystem",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 

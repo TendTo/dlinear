@@ -1,39 +1,34 @@
-"""Include the header only spdlog library in the project.
-It is used as the logging system in dlinear.
-"""
+"""spdlog library for Bazel"""
 
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 licenses(["notice"])  # MIT
 
-cmake(
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
     name = "spdlog",
-    lib_source = ":all_srcs",
-    targets = ["spdlog"],
-    lib_name = "libspdlog",
-    cache_entries = {
-        "CMAKE_BUILD_TYPE": "Release",
-    } | select({
-        "@dlinear//tools:dynamic_build": {"CMAKE_CXX_FLAGS": "-fPIC"},
-        "//conditions:default": {},
-    }),
-    visibility = ["//visibility:public"],
-    defines = ["SPDLOG_COMPILED_LIB"],
+    srcs = [
+        "src/async.cpp",
+        "src/cfg.cpp",
+        "src/color_sinks.cpp",
+        "src/file_sinks.cpp",
+        "src/spdlog.cpp",
+        "src/stdout_sinks.cpp",
+    ],
+    hdrs = glob(["include/**/*.h"]),
+    defines = [
+        "SPDLOG_FMT_EXTERNAL",
+        "SPDLOG_COMPILED_LIB",
+    ],
+    includes = ["include"],
+    deps = ["@fmt"],
 )
 
 cc_library(
-    name = "spdlog_header",
-    hdrs = glob([
-        "include/spdlog/*.h",
-        "include/spdlog/fmt/**/*.h",
-        "include/spdlog/details/*.h",
-        "include/spdlog/sinks/*.h",
-    ]),
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
+    name = "spdlog_hdrs",
+    hdrs = glob(["include/**/*.h"]),
+    defines = ["SPDLOG_FMT_EXTERNAL"],
+    includes = ["include"],
+    deps = ["@fmt"],
 )
