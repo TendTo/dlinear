@@ -26,8 +26,11 @@
 #include "dlinear/symbolic/symbolic_expression_visitor.h"
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_formula_visitor.h"
-#include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
+
+// From dlinear
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -38,11 +41,9 @@ using drake::symbolic::ExpressionAddFactory;
 using drake::symbolic::ExpressionKind;
 using drake::symbolic::Formula;
 using drake::symbolic::FormulaKind;
-using drake::symbolic::Variable;
 using drake::symbolic::Variables;
 using drake::symbolic::VisitExpression;
 using drake::symbolic::VisitFormula;
-
 
 /**
  * Change the kind of the formula by multiplying all the expressions by a negative number.
@@ -209,3 +210,10 @@ std::ostream &operator<<(std::ostream &os, const FormulaKind &kind);
 std::ostream &operator<<(std::ostream &os, const ExpressionKind &kind);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Expression)
+OSTREAM_FORMATTER(dlinear::Formula)
+OSTREAM_FORMATTER(dlinear::Variables)
+OSTREAM_FORMATTER(dlinear::RelationalOperator)
+OSTREAM_FORMATTER(dlinear::FormulaKind)
+OSTREAM_FORMATTER(dlinear::ExpressionKind)

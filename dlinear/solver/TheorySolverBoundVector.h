@@ -15,11 +15,12 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/TheorySolverBoundIterator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/SortedVector.hpp"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -361,3 +362,9 @@ std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVectorMap& bou
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundVectorVector& bounds_vector_vector);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundVector::Bound)
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundVector::BoundIterator)
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundVector)
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundVectorMap)
+OSTREAM_FORMATTER(dlinear::TheorySolverBoundVectorVector)

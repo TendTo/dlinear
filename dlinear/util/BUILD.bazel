@@ -1,5 +1,5 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library")
 
 package(default_visibility = [
     "//benchmark:__subpackages__",
@@ -46,6 +46,7 @@ dlinear_cc_library(
     hdrs = ["exception.h"],
     deps = [
         ":logging",
+        "@fmt",
         "@spdlog",
     ],
 )
@@ -161,7 +162,10 @@ dlinear_cc_library(
     name = "bit_increment_iterator",
     srcs = ["BitIncrementIterator.cpp"],
     hdrs = ["BitIncrementIterator.h"],
-    deps = [":exception"],
+    deps = [
+        ":exception",
+        ":logging",
+    ],
 )
 
 dlinear_cc_library(

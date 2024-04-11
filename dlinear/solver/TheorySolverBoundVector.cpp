@@ -10,11 +10,10 @@
 #include <utility>
 
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 #define TRACE_VIOLATED_BOUNDS(it)                                                                                  \
   DLINEAR_TRACE_FMT("TheorySolverBoundVector::ViolatedBounds: ({} {}) incompatible with ({} {})", value, lp_bound, \
-                    *it->value, it->lp_bound)
+                    *(it)->value, (it)->lp_bound)
 
 namespace dlinear {
 

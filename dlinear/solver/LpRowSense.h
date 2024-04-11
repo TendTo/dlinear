@@ -22,6 +22,8 @@
 
 #include <ostream>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -62,3 +64,5 @@ LpRowSense operator-(LpRowSense sense);
 std::ostream &operator<<(std::ostream &os, const LpRowSense &lp_result);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::LpRowSense)

@@ -1,5 +1,5 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools/lexyacc:lexyacc.bzl", "gen_lex", "gen_yacc")
 
 package(default_visibility = [
@@ -36,7 +36,10 @@ dlinear_cc_library(
         "BoundType.h",
         "Sense.h",
     ],
-    deps = ["//dlinear/util:exception"],
+    deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+    ],
 )
 
 dlinear_cc_library(

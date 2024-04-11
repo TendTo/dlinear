@@ -16,6 +16,7 @@
 #include <string>
 
 #include "dlinear/util/OptionValue.hpp"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -136,3 +137,9 @@ std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Config::SatDefaultPhase)
+OSTREAM_FORMATTER(dlinear::Config::LPSolver)
+OSTREAM_FORMATTER(dlinear::Config::Format)
+OSTREAM_FORMATTER(dlinear::Config::LPMode)
+OSTREAM_FORMATTER(dlinear::Config)

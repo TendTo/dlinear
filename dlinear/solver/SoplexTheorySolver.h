@@ -18,7 +18,7 @@
 #include <optional>
 #include <vector>
 
-#include "dlinear/libs/soplex.h"
+#include "dlinear/libs/libsoplex.h"
 #include "dlinear/solver/LpRowSense.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/symbolic/literal.h"

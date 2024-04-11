@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear::mps {
 
 /**
@@ -73,3 +75,5 @@ Sense ParseSense(char sense);
 std::ostream &operator<<(std::ostream &os, const Sense &sense);
 
 }  // namespace dlinear::mps
+
+OSTREAM_FORMATTER(dlinear::mps::Sense)

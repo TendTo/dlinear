@@ -18,8 +18,8 @@
 #include <spdlog/spdlog.h>
 // Enable formatting with the override of operator<< for user-defined types.
 // Must be included after spdlog.h.
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/fmt/ranges.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
 
 #include <memory>
 
@@ -31,16 +31,21 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 }  // namespace dlinear
 
-#define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity)                                                            \
-  (verbosity == 0                                                                                            \
-       ? spdlog::level::critical                                                                             \
-       : (verbosity == 1                                                                                     \
-              ? spdlog::level::err                                                                           \
-              : (verbosity == 2 ? spdlog::level::warn                                                        \
-                                : (verbosity == 3 ? spdlog::level::info                                      \
-                                                  : (verbosity == 4 ? spdlog::level::debug                   \
-                                                                    : (verbosity == 5 ? spdlog::level::trace \
-                                                                                      : spdlog::level::off))))))
+#define OSTREAM_FORMATTER(type) \
+  template <>                   \
+  struct fmt::formatter<type> : ostream_formatter {};
+
+#define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity)                      \
+  ((verbosity) == 0                                                    \
+       ? spdlog::level::critical                                       \
+       : ((verbosity) == 1                                             \
+              ? spdlog::level::err                                     \
+              : ((verbosity) == 2                                      \
+                     ? spdlog::level::warn                             \
+                     : ((verbosity) == 3                               \
+                            ? spdlog::level::info                      \
+                            : ((verbosity) == 4 ? spdlog::level::debug \
+                                                : ((verbosity) == 5 ? spdlog::level::trace : spdlog::level::off))))))
 #define DLINEAR_LOG_INIT_VERBOSITY(verbosity) DLINEAR_LOG_INIT_LEVEL(DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity))
 #define DLINEAR_LOG_INIT_LEVEL(level)                                    \
   do {                                                                   \
@@ -64,17 +69,10 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #else
 
-namespace dlinear {
-
-extern bool info_enabled;
-
-void init_verbosity(int verbosity);
-
-}  // namespace dlinear
-
+#define OSTREAM_FORMATTER(type) void(0)
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) 0
 #define DLINEAR_LOG_INIT_LEVEL(level) void(0)
-#define DLINEAR_LOG_INIT_VERBOSITY(verbosity) init_verbosity(verbosity)
+#define DLINEAR_LOG_INIT_VERBOSITY(verbosity) void(0)
 #define DLINEAR_TRACE(msg) void(0)
 #define DLINEAR_TRACE_FMT(msg, ...) void(0)
 #define DLINEAR_DEBUG(msg) void(0)
@@ -87,7 +85,7 @@ void init_verbosity(int verbosity);
 #define DLINEAR_ERROR_FMT(msg, ...) void(0)
 #define DLINEAR_CRITICAL(msg) void(0)
 #define DLINEAR_CRITICAL_FMT(msg, ...) void(0)
-#define DLINEAR_INFO_ENABLED info_enabled
+#define DLINEAR_INFO_ENABLED false
 #define DLINEAR_TRACE_ENABLED false
 
 #endif

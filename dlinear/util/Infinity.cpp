@@ -13,7 +13,7 @@
 #include "dlinear/libs/qsopt_ex.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/libs/soplex.h"
+#include "dlinear/libs/libsoplex.h"
 #endif
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"

@@ -18,6 +18,8 @@
 #include <ostream>
 #include <string>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -36,3 +38,5 @@ LpResult parseLpResult(int res);
 std::ostream &operator<<(std::ostream &os, const LpResult &lp_result);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::LpResult)

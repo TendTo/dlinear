@@ -13,6 +13,8 @@
 #include <iterator>
 #include <vector>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -202,3 +204,5 @@ std::vector<bool> &operator--(std::vector<bool> &vector);
 std::ostream &operator<<(std::ostream &os, const BitIncrementIterator &it);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::BitIncrementIterator)

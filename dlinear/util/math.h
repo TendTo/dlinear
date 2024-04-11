@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 
 namespace dlinear {
 

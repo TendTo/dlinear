@@ -17,6 +17,8 @@
 #include <ostream>
 #include <string>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -34,3 +36,5 @@ enum class SatResult {
 std::ostream &operator<<(std::ostream &os, const SatResult &sat_result);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::SatResult)

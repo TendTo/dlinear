@@ -14,8 +14,9 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/libs/gmp.h"
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -245,3 +246,6 @@ std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variabl
                           const std::vector<Box::Interval> &old_iv, const std::vector<Box::Interval> &new_iv);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Box)
+OSTREAM_FORMATTER(dlinear::Box::Interval)

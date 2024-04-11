@@ -12,6 +12,8 @@
 #include <ostream>
 #include <string>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -29,3 +31,5 @@ Logic parseLogic(const std::string &s);
 std::ostream &operator<<(std::ostream &os, const Logic &logic);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Logic)

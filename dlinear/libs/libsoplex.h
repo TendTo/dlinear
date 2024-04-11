@@ -16,8 +16,12 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
-
 #include "dlinear/util/logging.h"
 // This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.
 
 #include <soplex.h>  // NOLINT
+
+OSTREAM_FORMATTER(soplex::VectorRational)
+OSTREAM_FORMATTER(soplex::Rational)
+OSTREAM_FORMATTER(soplex::SPxSolver::Status)
+OSTREAM_FORMATTER(soplex::DSVectorRational)

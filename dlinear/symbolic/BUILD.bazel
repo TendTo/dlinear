@@ -1,5 +1,5 @@
-load("//tools:dlinear.bzl", "dlinear_cc_library")
 load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
@@ -19,6 +19,7 @@ dlinear_cc_library(
     srcs = ["symbolic.cpp"],
     hdrs = ["symbolic.h"],
     deps = [
+        ":literal",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
@@ -48,13 +49,19 @@ dlinear_cc_library(
     name = "literal",
     srcs = ["literal.cpp"],
     hdrs = ["literal.h"],
-    deps = ["//third_party/com_github_robotlocomotion_drake:drake_symbolic"],
+    deps = [
+        "//dlinear/util:logging",
+        "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
+    ],
 )
 
 dlinear_cc_library(
     name = "environment",
     hdrs = ["environment.h"],
-    deps = ["//third_party/com_github_robotlocomotion_drake:drake_symbolic"],
+    deps = [
+        "//dlinear/util:logging",
+        "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
+    ],
 )
 
 dlinear_cc_library(

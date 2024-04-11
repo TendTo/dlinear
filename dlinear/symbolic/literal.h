@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -42,3 +43,8 @@ std::ostream &operator<<(std::ostream &os, const Model &model);
 std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &variables);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Variable)
+OSTREAM_FORMATTER(dlinear::Literal)
+OSTREAM_FORMATTER(dlinear::LiteralSet)
+OSTREAM_FORMATTER(dlinear::Model)

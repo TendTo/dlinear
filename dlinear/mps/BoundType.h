@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear::mps {
 
 /**
@@ -79,3 +81,5 @@ BoundType ParseBoundType(const char bound_type[]);
 std::ostream &operator<<(std::ostream &os, const BoundType &bound);
 
 }  // namespace dlinear::mps
+
+OSTREAM_FORMATTER(dlinear::mps::BoundType)

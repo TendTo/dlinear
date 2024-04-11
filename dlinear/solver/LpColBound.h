@@ -23,6 +23,8 @@
 
 #include <ostream>
 
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 /**
@@ -96,3 +98,5 @@ inline LpColBound invert(LpColBound bound, bool delta) { return delta ? -bound :
 std::ostream &operator<<(std::ostream &os, const LpColBound &bound);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::LpColBound)
