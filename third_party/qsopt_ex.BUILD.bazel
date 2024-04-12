@@ -12,9 +12,10 @@ configure_make(
     configure_in_place = True,
     autogen = True,
     autogen_command = "bootstrap",
+    env = {"ac_cv_func_malloc_0_nonnull": "yes", "ac_cv_func_realloc_0_nonnull": "yes"},
     configure_options = ["CFLAGS='-Dredacted=\"redacted\" -DEG_LPNUM_MEMSLAB=0'"],
     args = ["-j4"],
-    deps = ["@zlib", "@bzip2", "@gmp"],
+    deps = ["@zlib", "@bzip2//:bz2", "@gmp"],
     postfix_script = select({
         "@dlinear//tools:enabled_patchelf": "patchelf --set-soname libqsopt_ex.so $INSTALLDIR/lib/libqsopt_ex.so",
         "//conditions:default": "echo 'No patchelf, skipping soname fixup.'",
