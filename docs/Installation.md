@@ -15,7 +15,6 @@ Tested toolchains:
 - [g++](https://gcc.gnu.org/) for the standard c++ toolchain
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/) and [mpfr](https://www.mpfr.org/)
 - [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/) and [mpfr](https://www.mpfr.org/)
-- [flex](https://github.com/westes/flex) and [bison](https://www.gnu.org/software/bison/) to produce the parser for `.smt2` and `.mps` files
 
 #### Optional requirements
 

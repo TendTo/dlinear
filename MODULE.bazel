@@ -29,6 +29,12 @@ bazel_dep(name = "argparse", version = "3.0.0")
 # MIT | C++ library for formatting text
 bazel_dep(name = "fmt", version = "10.2.1")
 
+# BSD | lexical analyser generator
+bazel_dep(name = "rules_flex", version = "0.2.1")
+
+# https://www.gnu.org/software/bison/manual/html_node/Conditions.html | Bison parser generator
+bazel_dep(name = "rules_bison", version = "0.2.2")
+
 # https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
 bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
 
@@ -135,11 +141,28 @@ http_archive(
 # Extensions
 
 boost_modules = use_extension("@com_github_nelhage_rules_boost//:extensions.bzl", "boost_modules")
-
-# "boost_modules.version" can be used to specify a specific version of the boost modules. If omitted, the default version will be used.
-# See //:extensions.bzl for the default version.
 boost_modules.version(
     sha256 = "4d27e9efed0f6f152dc28db6430b9d3dfb40c0345da7342eaa5a987dde57bd95",
     version = "1.84.0",
 )
 use_repo(boost_modules, "boost")
+
+flex = use_extension("@rules_flex//flex/extensions:flex_repository_ext.bzl", "flex_repository_ext")
+flex.repository(
+    name = "flex",
+    extra_copts = ["-O3"],
+    version = "2.6.4",
+)
+use_repo(flex, "flex")
+
+register_toolchains("@flex//:toolchain")
+
+bison = use_extension("@rules_bison//bison/extensions:bison_repository_ext.bzl", "bison_repository_ext")
+bison.repository(
+    name = "bison",
+    extra_copts = ["-O3"],
+    version = "3.3.2",
+)
+use_repo(bison, "bison")
+
+register_toolchains("@bison//:toolchain")

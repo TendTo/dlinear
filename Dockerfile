@@ -19,7 +19,7 @@ RUN curl -fSsL -o /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/re
     && chmod 0755 /usr/local/bin/bazel
 
 
-ARG APT_PACKAGES="git python3 build-essential automake libtool flex bison"
+ARG APT_PACKAGES="git python3 build-essential automake libtool"
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y --no-install-recommends ${APT_PACKAGES} && \
     apt-get autoremove -y && \
