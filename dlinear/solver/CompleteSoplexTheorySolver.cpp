@@ -45,7 +45,7 @@ CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &pred
       nq_row_to_theory_rows_{},
       last_nq_status_{},
       last_theory_rows_to_explanation_{},
-      final_theory_rows_to_explanation_{},
+      theory_rows_to_explanations_{},
       locked_solver_{false} {
   DLINEAR_ASSERT(config_.precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
 }
@@ -197,7 +197,8 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   sat_status = SpxCheckSat();
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: no nq constraints sat_status = {}", sat_status);
   if (sat_status != SatResult::SAT_SATISFIABLE) {
-    final_theory_rows_to_explanation_ = last_theory_rows_to_explanation_;
+    theory_rows_to_explanations_.insert(last_theory_rows_to_explanation_);
+    DLINEAR_ASSERT(theory_rows_to_explanations_.size() == 1, "theory_rows_to_explanations_ must have size 1");
     GetExplanation(explanations);
     return sat_status;
   }
@@ -226,7 +227,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: intermediate sat_status = {}", sat_status);
 
     // If the problem is SAT and not locked, we can return immediately
-    if (sat_status == SatResult::SAT_SATISFIABLE && !locked_solver_) break;
+    if (sat_status == SatResult::SAT_SATISFIABLE) break;
 
     // Use some heuristics to update the iterator based on the current explanation.
     // Otherwise, just increment the iterator with the next configuration and try again
@@ -289,7 +290,8 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
   if (1 == config_.simplex_sat_phase()) {
     switch (status) {
       case SoplexStatus::OPTIMAL:
-        if (spx_.objValueRational() > 0) return SatResult::SAT_SATISFIABLE;
+        if (spx_.objValueRational() > 0)
+          return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
         UpdateExplanationStrictInfeasible();
         return SatResult::SAT_UNSATISFIABLE;
       case SoplexStatus::INFEASIBLE:
@@ -314,14 +316,14 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
     // Check if the strict variable is positive (feasible) or 0 (infeasible)
     DLINEAR_ASSERT(obj[colcount - 1] == 1, "The strict variable must have a coefficient of 1 in the objective");
     if (x[colcount - 1].is_zero()) return SatResult::SAT_UNSATISFIABLE;
-    return SatResult::SAT_SATISFIABLE;
+    return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
   }
 }
 
 void CompleteSoplexTheorySolver::Reset(const Box &box) {
   SoplexTheorySolver::Reset(box);
   nq_row_to_theory_rows_.clear();
-  final_theory_rows_to_explanation_.clear();
+  theory_rows_to_explanations_.clear();
   nq_explanations_.clear();
   locked_solver_ = false;
   last_theory_rows_to_explanation_.clear();
@@ -450,17 +452,16 @@ void CompleteSoplexTheorySolver::UpdateExplanationStrictInfeasible() {
 }
 
 void CompleteSoplexTheorySolver::GetExplanation(Explanations &explanations) {
-  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
-  LiteralSet explanation;
-  GetExplanation(explanation);
-  explanations.insert(explanation);
-}
-void CompleteSoplexTheorySolver::GetExplanation(LiteralSet &explanation) {
-  DLINEAR_ASSERT(!final_theory_rows_to_explanation_.empty(), "explanation must contain at least a violation");
-  explanation.clear();
-  for (const auto &spx_row : final_theory_rows_to_explanation_) {
-    explanation.insert(theory_row_to_lit_[spx_row]);
+  DLINEAR_ASSERT(!theory_rows_to_explanations_.empty(), "there must be at least one explanation");
+  DLINEAR_ASSERT(std::all_of(theory_rows_to_explanations_.begin(), theory_rows_to_explanations_.end(),
+                             [](const std::set<int> &explanation) { return !explanation.empty(); }),
+                 "no explanation can be empty");
+  for (const std::set<int> &theory_rows_to_explanation : theory_rows_to_explanations_) {
+    LiteralSet explanation;
+    for (const int &theory_row : theory_rows_to_explanation) explanation.insert(theory_row_to_lit_[theory_row]);
+    explanations.insert(explanation);
   }
+  DLINEAR_ASSERT(explanations.size() == theory_rows_to_explanations_.size(), "explanations must have the same size");
 }
 
 std::set<size_t> CompleteSoplexTheorySolver::IteratorNqRowsInLastExplanation() const {
@@ -487,8 +488,9 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
       single_nq_rows_.clear();
     }
     EnableNqLiterals(*bit_iterator, true);
-    return true;
-  };
+    // If we have an explanation to return, we can stop and return UNSAT
+    return theory_rows_to_explanations_.empty();
+  }
 
   const std::set<size_t> nq_in_explanation{IteratorNqRowsInLastExplanation()};
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: nq_in_explanation = {}", nq_in_explanation);
@@ -515,8 +517,7 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     // All boolean combinations of this set of non-equal rows have been tried, so the problem is UNSAT
     if (std::all_of(nq_explanation.visited.begin(), nq_explanation.visited.end(), [](bool b) { return b; })) {
       DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: all combinations of nq_in_explanation tried. Infeasible");
-      final_theory_rows_to_explanation_ = nq_explanation.explanation;
-      return false;
+      theory_rows_to_explanations_.insert(nq_explanation.explanation);
     }
   }
 

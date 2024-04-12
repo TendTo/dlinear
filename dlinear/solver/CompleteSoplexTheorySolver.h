@@ -151,11 +151,6 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @param[out] explanations the set of explanations to add the new explanation to
    */
   void GetExplanation(Explanations& explanations);
-  /**
-   * Get the explanation from @ref final_theory_rows_to_explanation_.
-   * @param[out] explanation the explanation to be updated
-   */
-  void GetExplanation(LiteralSet& explanation);
 
   struct NqExplanation {
     explicit NqExplanation(size_t size);
@@ -170,13 +165,13 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
                                             ///< Keeps track last sense of the constraints:
                                             ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
-  std::set<int> last_theory_rows_to_explanation_;   ///< Last set of theory rows that are part of the explanation
-  std::set<int> final_theory_rows_to_explanation_;  ///< Final set of theory rows that are part of the explanation
+  std::set<int> last_theory_rows_to_explanation_;        ///< Last set of theory rows that are part of the explanation
+  std::set<std::set<int>> theory_rows_to_explanations_;  ///< Set that contains all the explanation the solver produced
 
   std::map<std::set<size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
 
   bool locked_solver_;  ///< Flag to indicate if the solver is locked. A locked solver will always return UNSAT.
-  std::set<size_t> single_nq_rows_; ///< Set of non-equal rows that appear alone in the explanation. Can be inverted
+  std::set<size_t> single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be inverted
 };
 
 }  // namespace dlinear
