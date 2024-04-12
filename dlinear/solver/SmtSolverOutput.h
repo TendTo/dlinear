@@ -74,12 +74,6 @@ struct SmtSolverOutput {
    */
   [[nodiscard]] int exit_code() const;
 
-  /**
-   * Return a string representation of the output.
-   * @return string representation
-   */
-  [[nodiscard]] std::string ToString() const;
-
   const bool produce_models;  ///< Whether the solver should produce models
   const bool with_timings;    ///< Whether the solver should show timings
 

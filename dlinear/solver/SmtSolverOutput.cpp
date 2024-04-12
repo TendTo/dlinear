@@ -6,25 +6,15 @@
  */
 #include "SmtSolverOutput.h"
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/fmt/ostr.h>
-
 #include <limits>
 #include <sstream>
 
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
 double SmtSolverOutput::precision_upper_bound() const {
-  return nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
-}
-
-std::string SmtSolverOutput::ToString() const {
-  std::ostringstream oss;
-  oss << *this;
-  return oss.str();
+  return std::nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
 }
 
 int SmtSolverOutput::exit_code() const {
@@ -88,18 +78,18 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
       os << "sat";
       break;
     case SolverResult::DELTA_SAT:
-      os << fmt::format("delta-sat with delta = {} ( > {})", s.precision_upper_bound(), s.actual_precision);
+      os << "delta-sat with delta = " << s.precision_upper_bound() << " ( > " << s.actual_precision << " )";
       break;
     case SolverResult::UNSAT:
       os << "unsat";
       break;
     case SolverResult::OPTIMAL:
-      os << fmt::format("optimal with delta = 0, range = [{}, {}]", s.lower_bound, s.upper_bound);
+      os << "optimal with delta = 0, range = [" << s.lower_bound << ", " << s.upper_bound << "]";
       break;
     case SolverResult::DELTA_OPTIMAL: {
       mpq_class diff = s.upper_bound - s.lower_bound;
-      os << fmt::format("delta-optimal with delta = {} ( = {}), range = [{}, {}]", diff.get_d(), diff, s.lower_bound,
-                        s.upper_bound);
+      os << "delta-optimal with delta = " << diff.get_d() << " ( = " << diff << "), range = [" << s.lower_bound << ", "
+         << s.upper_bound << "]";
     } break;
     case SolverResult::UNBOUNDED:
       os << "unbounded";
@@ -116,7 +106,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
       DLINEAR_UNREACHABLE();
   }
   if (s.with_timings) {
-    os << fmt::format(" after {} seconds", s.total_timer.seconds()) << "\n"
+    os << " after " << s.total_timer.seconds() << " seconds\n"
        << s.parser_stats << "\n"
        << s.ite_stats << "\n"
        << s.cnfizer_stats << "\n"
@@ -125,8 +115,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
        << s.theory_stats;
   }
   if (!s.model.empty() && s.produce_models) {
-    os << "\n";
-    os << fmt::format("{}", s.model);
+    os << "\n" << s.model;
   }
   return os;
 }
