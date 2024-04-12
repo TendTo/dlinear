@@ -61,7 +61,6 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//dlinear/util:timer",
-        "@flex_lexer",
     ] + select({
         "//tools:dynamic_build": [
             "//dlinear/util:interrupt",

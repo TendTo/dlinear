@@ -92,16 +92,6 @@ github_archive(
     sha256 = "9a047b7ba3ac1075a2288d35045585e2e3c24961f078f30ad97a313b8e539eb2",
 )
 
-# TODO: use the proper version
-# BSD | Flex header for C++
-github_archive(
-    name = "flex_lexer",
-    build_file = "//third_party:flex_lexer.BUILD.bazel",
-    commit = "v2.6.4",
-    repository = "westes/flex",
-    sha256 = "4df278468142e457a9e5f6492a7d39fdb34bd7e7d42ec21b3c382889b34cfefe",
-)
-
 # TODO: check if we still need this
 #bazel_dep(
 #    name = "pybind11",  # https://github.com/pybind/pybind11/blob/master/LICENSE

@@ -69,7 +69,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #else
 
-#define OSTREAM_FORMATTER(type) void(0)
+#define OSTREAM_FORMATTER(type)
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) 0
 #define DLINEAR_LOG_INIT_LEVEL(level) void(0)
 #define DLINEAR_LOG_INIT_VERBOSITY(verbosity) void(0)
