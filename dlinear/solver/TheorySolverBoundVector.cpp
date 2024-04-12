@@ -152,14 +152,14 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::ViolatedBounds(c
       it = bounds_.upper_bound({&value, LpColBound::L, 0});
       if ((it != bounds_.cend() && *it->value == value && it->lp_bound == LpColBound::SU)) {
         TRACE_VIOLATED_BOUNDS(it);
-        DLINEAR_ASSERT(LowerBoundEnd() < FindUpperBoundValue(&value), "Bounds must not be inverted");
-        return {LowerBoundEnd(), FindUpperBoundValue(&value)};
+        DLINEAR_ASSERT(LowerBoundEnd() < FindUpperBound(&value, LpColBound::SU), "Bounds must not be inverted");
+        return {LowerBoundEnd(), FindUpperBound(&value, LpColBound::SU)};
       }
       it = bounds_.lower_bound({&value, LpColBound::U, 0});
       if ((it != bounds_.cbegin() && *(it - 1)->value == value && (it - 1)->lp_bound == LpColBound::SL)) {
         TRACE_VIOLATED_BOUNDS((it - 1));
-        DLINEAR_ASSERT(FindLowerBoundValue(&value) < LowerBoundEnd(), "Bounds must not be inverted");
-        return {FindLowerBoundValue(&value), LowerBoundEnd()};
+        DLINEAR_ASSERT(FindLowerBound(&value, LpColBound::SL) < LowerBoundEnd(), "Bounds must not be inverted");
+        return {FindLowerBound(&value, LpColBound::SL), LowerBoundEnd()};
       }
       return {};
     default:

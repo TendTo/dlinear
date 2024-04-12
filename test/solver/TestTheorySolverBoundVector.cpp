@@ -1029,6 +1029,32 @@ TEST_F(TestTheorySolverBoundVector, ViolationLowerOverStrictUpperStandardViolati
   EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 2);
 }
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictLowerStandardViolationAdditionalElement) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::L, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::L, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SL, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::L, idx()));
+  auto violation = empty_bounds_.AddBound(val_[1], LpColBound::B, idx());
+  EXPECT_TRUE(violation);
+  EXPECT_EQ(violation.bounds_size(), 4u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictUpperStandardViolationAdditionalElement) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::U, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::U, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::U, idx()));
+  auto violation = empty_bounds_.AddBound(val_[2], LpColBound::B, idx());
+  EXPECT_TRUE(violation);
+  EXPECT_EQ(violation.bounds_size(), 4u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 2);
+}
 
 TEST_F(TestTheorySolverBoundVector, ViolationUpperOverStrictLowerStandardViolation) {
   EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::L, idx()));
@@ -1052,6 +1078,28 @@ TEST_F(TestTheorySolverBoundVector, ViolationLowerOverStrictUpperStandardViolati
   EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 2);
 }
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictLowerStandardViolation) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::L, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::L, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
+  auto violation = empty_bounds_.AddBound(val_[1], LpColBound::B, idx());
+  EXPECT_TRUE(violation);
+  EXPECT_EQ(violation.bounds_size(), 2u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin() + 2);
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend());
+}
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictUpperStandardViolation) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::U, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::U, idx()));
+  auto violation = empty_bounds_.AddBound(val_[2], LpColBound::B, idx());
+  EXPECT_TRUE(violation);
+  EXPECT_EQ(violation.bounds_size(), 2u);
+  EXPECT_EQ(violation.bounds().first, empty_bounds_.bounds().cbegin());
+  EXPECT_EQ(violation.bounds().second, empty_bounds_.bounds().cend() - 2);
+}
 
 TEST_F(TestTheorySolverBoundVector, ViolationUpperOverStrictLowerStandardNoViolation) {
   EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
@@ -1066,5 +1114,19 @@ TEST_F(TestTheorySolverBoundVector, ViolationLowerOverStrictUpperStandardNoViola
   auto violation = empty_bounds_.AddBound(val_[0], LpColBound::L, idx());
   EXPECT_FALSE(violation);
 }
+
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictLowerStandardNoViolation) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SL, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SL, idx()));
+  auto violation = empty_bounds_.AddBound(val_[3], LpColBound::B, idx());
+  EXPECT_FALSE(violation);
+}
+TEST_F(TestTheorySolverBoundVector, ViolationEqualOverStrictUpperStandardNoViolation) {
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[1], LpColBound::SU, idx()));
+  EXPECT_FALSE(empty_bounds_.AddBound(val_[2], LpColBound::SU, idx()));
+  auto violation = empty_bounds_.AddBound(val_[0], LpColBound::B, idx());
+  EXPECT_FALSE(violation);
+}
+
 
 TEST_F(TestTheorySolverBoundVector, Stdout) { EXPECT_NO_THROW(std::cout << bounds_ << std::endl); }
