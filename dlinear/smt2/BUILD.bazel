@@ -86,6 +86,7 @@ dlinear_cc_library(
         "//dlinear/util:logging",
         "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
+        "@rules_flex//flex:current_flex_toolchain",
     ] + select({
         "//tools:dynamic_build": [
             "//dlinear/util:interrupt",
