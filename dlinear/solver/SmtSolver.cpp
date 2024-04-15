@@ -49,9 +49,8 @@ SmtSolverOutput SmtSolver::CheckSat() {
   if (output_.result != SolverResult::UNSOLVED) return output_;
   TimerGuard timer_guard{&output_.total_timer, true};
   DLINEAR_DEBUG("SmtSolver::CheckSat: No cached result fond.");
-  DLINEAR_INFO_FMT("SmtSolver::CheckSat: Checking satisfiability of '{}'", config_.filename());
   dlinear::main_timer.start();
-  if (!ParseInput()) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse input file: {}", config_.filename());
+  if (!ParseInput()) DLINEAR_RUNTIME_ERROR("Failed to parse input file");
   output_.n_assertions = context_.assertions().size();
 
   if (config_.skip_check_sat())
@@ -77,6 +76,15 @@ SmtSolverOutput SmtSolver::CheckSat() {
 
 bool SmtSolver::ParseInput() {
   DLINEAR_TRACE("SmtSolver::ParseInput");
+  if (!config_.read_from_stdin() && config_.filename().empty()) {
+    DLINEAR_INFO("SmtSolver::ParseInput: No input file provided");
+    return true;
+  } else if (config_.read_from_stdin() && config_.filename().empty()) {
+    DLINEAR_INFO("SmtSolver::ParseInput: Reading from stdin");
+  } else {
+    DLINEAR_INFO_FMT("SmtSolver::ParseInput: Reading from file: {}", config_.filename());
+  }
+
   switch (config_.format()) {
     case Config::Format::AUTO:
       if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
@@ -136,6 +144,12 @@ SolverResult SmtSolver::GetExpected() const {
   if (status == "sat") return SolverResult::SAT;
   if (status == "unsat") return SolverResult::UNSAT;
   return SolverResult::UNKNOWN;
+}
+
+void SmtSolver::Assert(const Formula &f) {
+  DLINEAR_TRACE_FMT("SmtSolver::Assert: {}", f);
+  output_.result = SolverResult::UNSOLVED;
+  context_.Assert(f);
 }
 
 }  // namespace dlinear

@@ -37,6 +37,8 @@ class SmtSolver {
   [[nodiscard]] std::string GetOption(const std::string &key) const;
   [[nodiscard]] SolverResult GetExpected() const;
 
+  void Assert(const Formula &f);
+
   /**
    * Check the satisfiability of the current context.
    * @return SmtSolverOutput
