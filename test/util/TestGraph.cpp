@@ -89,7 +89,7 @@ TYPED_TEST(TestGraph, AddEdgeDirected) {
   EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
   EXPECT_FALSE(this->empty_graph_.HasEdge(other_vertex, vertex));
   EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
-  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 0u);
+  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 1u);
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 1.0f);
   EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
 }
@@ -127,7 +127,7 @@ TYPED_TEST(TestGraph, AddEdgeDirectedWeighted) {
   EXPECT_TRUE(this->empty_graph_.HasEdge(vertex, other_vertex));
   EXPECT_FALSE(this->empty_graph_.HasEdge(other_vertex, vertex));
   EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
-  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 0u);
+  EXPECT_EQ(this->empty_graph_.adj_list().count(other_vertex), 1u);
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
   EXPECT_EQ(this->empty_graph_.GetEdgeWeight(other_vertex, vertex), nullptr);
 }
@@ -295,6 +295,19 @@ TYPED_TEST(TestGraph, AllPaths) {
 TYPED_TEST(TestGraph, AllPathsStop) {
   int count = 0;
   this->graph_.AllPaths(0, 6, [&count](std::vector<TypeParam>& path) {
+    count++;
+    EXPECT_THAT(path, ::testing::Contains(0));
+    EXPECT_THAT(path, ::testing::Contains(6));
+    return VisitResult::STOP;
+  });
+  EXPECT_EQ(count, 1);
+}
+
+TYPED_TEST(TestGraph, AllPathsSingle) {
+  int count = 0;
+  this->empty_graph_.AddEdge(0, 6, false);
+  std::cout << this->empty_graph_ << std::endl;
+  this->empty_graph_.AllPaths(0, 6, [&count](std::vector<TypeParam>& path) {
     count++;
     EXPECT_THAT(path, ::testing::Contains(0));
     EXPECT_THAT(path, ::testing::Contains(6));

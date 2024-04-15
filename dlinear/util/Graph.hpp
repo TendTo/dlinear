@@ -104,6 +104,7 @@ class Graph {
    */
   void AddEdge(const T& u, const T& v, bool bidirectional = true) {
     adj_list_[u].emplace(v, 1);
+    adj_list_[v];  // Ensure the ending vertex exists
     if (bidirectional) adj_list_[v].emplace(u, 1);
   }
 
@@ -121,6 +122,7 @@ class Graph {
   bool AddEdge(const T& u, const T& v, const W& weight, bool bidirectional = true) {
     bool updated = false;
     const auto [it, inserted] = adj_list_[u].emplace(v, weight);
+    adj_list_[v];  // Ensure the ending vertex exists
     if (!inserted && it->second != weight) {
       adj_list_.at(u).erase(it);
       adj_list_.at(u).emplace(v, weight);
@@ -144,7 +146,7 @@ class Graph {
    * @param v vertex to add
    */
   void AddVertex(const T& v) {
-    if (adj_list_.find(v) == adj_list_.end()) adj_list_.emplace(v, AdjSet{});
+    if (adj_list_.find(v) == adj_list_.end()) adj_list_.try_emplace(v);
   }
 
   /**
@@ -393,7 +395,9 @@ class Graph {
    * @see VisitResult
    */
   void AllPaths(const T& start, const T& end, const PathsFunc& func, std::unordered_set<T>& visited) {
-    if (adj_list_.find(start) == adj_list_.end() || adj_list_.find(end) == adj_list_.end()) return;
+    if (adj_list_.find(start) == adj_list_.end() || adj_list_.find(end) == adj_list_.end() ||
+        adj_list_.find(start) == adj_list_.find(end))
+      return;
     std::stack<T> stack;
     std::unordered_map<T, typename std::unordered_set<Edge>::iterator> iterators;
     std::vector<T> path;
@@ -446,9 +450,10 @@ template <class T, class E>
 std::ostream& operator<<(std::ostream& os, const Graph<T, E>& s) {
   os << "Graph{";
   for (const auto& [vertex, edges] : s.adj_list()) {
-    os << vertex << " -> ";
+    os << "| " << vertex << " | -> ";
     for (const auto& [adj_vertex, weight] : edges) os << adj_vertex << "(" << weight << "), ";
-  }
+    os << " - ";
+  } 
   return os << "}";
 }
 
