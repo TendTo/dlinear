@@ -96,7 +96,7 @@ class Environment {
   const_iterator cend() const { return map_.cend(); }
 
   /** Inserts a pair (@p key, @p elem). */
-  void insert(const key_type &key, const mapped_type &elem);
+  std::pair<Environment::iterator, bool> insert(const key_type &key, const mapped_type &elem);
   /** Checks whether the container is empty.  */
   bool empty() const { return map_.empty(); }
   /** Returns the number of elements. */

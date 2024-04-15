@@ -54,9 +54,9 @@ Environment::Environment(const Environment::double_map &m) : map_{m.size()} {
   }
 }
 
-void Environment::insert(const key_type &key, const mapped_type &elem) {
+std::pair<Environment::iterator, bool> Environment::insert(const key_type &key, const mapped_type &elem) {
   throw_if_dummy(key);
-  map_.emplace(key, elem);
+  return map_.emplace(key, elem);
 }
 
 Variables Environment::domain() const {
