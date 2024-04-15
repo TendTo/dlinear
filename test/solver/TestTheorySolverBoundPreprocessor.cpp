@@ -43,11 +43,14 @@ class MockTheorySolverBoundPreprocessor : public TheorySolverBoundPreprocessor {
     return TheorySolverBoundPreprocessor::ShouldEvaluate(Flatten(formula));
   }
   auto ShouldPropagate(const Formula &formula) {
-    return TheorySolverBoundPreprocessor::ShouldPropagateBounds(Flatten(formula));
+    return TheorySolverBoundPreprocessor::ShouldPropagateEqBinomial(Flatten(formula));
   }
   auto ExtractEdge(const Formula &formula) {
-    const auto [from, to, weight] = TheorySolverBoundPreprocessor::ExtractBoundEdge(1, Flatten(formula));
-    return std::make_tuple(from, to, weight.numeric);
+    const auto [from, to] = TheorySolverBoundPreprocessor::ExtractBoundEdge(Flatten(formula));
+    return std::make_pair(from, to);
+  }
+  auto ExtractCoefficient(const Formula &formula) {
+    return TheorySolverBoundPreprocessor::ExtractEqBoundCoefficient(Flatten(formula));
   }
 
  private:
@@ -106,12 +109,12 @@ class TestTheorySolverBoundPreprocessor : public ::testing::Test {
       }
     }
   }
-  void EnableConstraints(std::initializer_list<Formula> formulas) {
-    for (int i = 0; i < static_cast<int>(formulas.size()); i++) bound_preprocessor_.EnableConstraint(i);
-  }
-  void AddEnableConstraints(std::initializer_list<Formula> formulas) {
-    AddConstraints(formulas);
-    EnableConstraints(formulas);
+
+  std::vector<int> GetEnabledConstraints() {
+    std::vector<int> enabled_constraints;
+    enabled_constraints.resize(theory_rows_.size());
+    std::iota(enabled_constraints.begin(), enabled_constraints.end(), 0);
+    return enabled_constraints;
   }
 };
 
@@ -161,7 +164,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, AddConstraintsPropagation) {
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, EnableConstraintsPropagation) {
-  AddEnableConstraints({x1_ == 0, x1_ == x2_, x2_ == x3_, x3_ == 0});
+  AddConstraints({x1_ == 0, x1_ == x2_, x2_ == x3_, x3_ == 0});
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
   EXPECT_EQ(&bound_preprocessor_.theory_cols(), &theory_cols_);
   EXPECT_EQ(&bound_preprocessor_.theory_rows(), &theory_rows_);
@@ -174,12 +177,12 @@ TEST_F(TestTheorySolverBoundPreprocessor, EnableConstraintsPropagation) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 
   EXPECT_EQ(bound_preprocessor_.edges().size(), 2u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 2);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 0u);
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessSetEnvironment) {
-  AddEnableConstraints({x1_ == 0, x4_ == 0});
-  bound_preprocessor_.Process();
+  AddConstraints({x1_ == 0, x4_ == 0});
+  bound_preprocessor_.Process(GetEnabledConstraints());
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], 0);
@@ -188,11 +191,11 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessSetEnvironment) {
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPath) {
   const mpq_class val = 7;
-  AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_});
-  bound_preprocessor_.Process();
+  AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_});
+  bound_preprocessor_.Process(GetEnabledConstraints());
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 3);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -201,11 +204,11 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPath) {
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   const mpq_class val = 7;
-  AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x4_ == val});
-  bound_preprocessor_.Process();
+  AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x4_ == val});
+  bound_preprocessor_.Process(GetEnabledConstraints());
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 3);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -214,12 +217,12 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
   const mpq_class val = 7;
-  AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x2_ == x5_, x5_ == x6_, x3_ == x7_, x1_ == x8_,
-                        x8_ == x9_, x9_ == x2_});
-  bound_preprocessor_.Process();
+  AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x2_ == x5_, x5_ == x6_, x3_ == x7_, x1_ == x8_,
+                  x8_ == x9_, x9_ == x2_});
+  bound_preprocessor_.Process(GetEnabledConstraints());
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 9);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 9u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -233,12 +236,12 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
   const mpq_class val = 7;
-  AddEnableConstraints({x1_ == val, x1_ == x2_, x2_ == mpq_class{val + 1}, x2_ == x3_, x3_ == x4_, x4_ == x5_,
-                        x5_ == mpq_class{val + 2}, x6_ == x7_, x7_ == mpq_class{val + 3}, x7_ == x8_, x8_ == x9_,
-                        x9_ == mpq_class{val + 4}, x9_ == x10_});
-  const TheorySolver::Explanations explanations = bound_preprocessor_.Process();
+  AddConstraints({x1_ == val, x1_ == x2_, x2_ == mpq_class{val + 1}, x2_ == x3_, x3_ == x4_, x4_ == x5_,
+                  x5_ == mpq_class{val + 2}, x6_ == x7_, x7_ == mpq_class{val + 3}, x7_ == x8_, x8_ == x9_,
+                  x9_ == mpq_class{val + 4}, x9_ == x10_});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
 
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 8);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 8u - explanations.size());
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val + 1);
   EXPECT_EQ(bound_preprocessor_.env()[x5_], val + 2);
@@ -272,16 +275,92 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
   }
 }
 
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateCompatibleDifferentEqBounds) {
+  AddConstraints({x1_ == 0, x1_ == 2 * x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 5 * x3_, x3_ == 0});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.env()[x1_], 0);
+  EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
+  EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
+  EXPECT_TRUE(explanations.empty());
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBounds) {
+  const mpq_class val = 7;
+  AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == val});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
+  EXPECT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(),
+              ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEnds) {
+  const mpq_class val = 7;
+  AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == mpq_class{val + 1}});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 1u);
+  EXPECT_EQ(explanations.size(), 2u);
+
+  for (const auto &explanation : explanations) {
+    switch (explanation.size()) {
+      case 3:
+        EXPECT_THAT(explanation,
+                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+        break;
+      case 4:
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAreArray(
+                                     {theory_rows_[0], theory_rows_[1], theory_rows_[3], theory_rows_[4]}));
+        break;
+      default:
+        FAIL();
+    }
+  }
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEndsAdvanced) {
+  const mpq_class val = 7;
+  AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 4 * x4_, x3_ == 13 * x4_,
+                  x4_ == mpq_class{val + 1}});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
+  EXPECT_EQ(explanations.size(), 3u);
+
+  for (const auto &explanation : explanations) {
+    switch (explanation.size()) {
+      case 3:
+        EXPECT_THAT(explanation,
+                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+        break;
+      case 4:
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAreArray(
+                                     {theory_rows_[0], theory_rows_[1], theory_rows_[4], theory_rows_[6]}));
+        break;
+      case 5:
+        EXPECT_THAT(explanation,
+                    ::testing::UnorderedElementsAreArray(
+                        {theory_rows_[0], theory_rows_[1], theory_rows_[3], theory_rows_[5], theory_rows_[6]}));
+        break;
+      default:
+        FAIL();
+    }
+  }
+}
+
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolation) {
   DLINEAR_LOG_INIT_VERBOSITY(5);
   const mpq_class val = 7;
-  AddEnableConstraints({x1_ == val, x2_ == x3_, x3_ == val, x4_ == (x1_ + x5_), x6_ == x2_, x5_ == x6_,
-                        x7_ == mpq_class{val + 1}, x7_ == x4_});
+  AddConstraints({x1_ == val, x2_ == x3_, x3_ == val, x4_ == (x1_ + x5_), x6_ == x2_, x5_ == x6_,
+                  x7_ == mpq_class{val + 1}, x7_ == x4_});
   std::vector<int> enabled_rows(theory_rows_.size());
   std::iota(enabled_rows.begin(), enabled_rows.end(), 0);
   const TheorySolver::Explanations explanations = bound_preprocessor_.Process(enabled_rows);
 
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u * 4);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -322,17 +401,17 @@ TEST_F(TestTheorySolverBoundPreprocessor, ShouldPropagateFalse) {
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(2 * x1_ + 3 * x2_ == 3 * x2_));
 }
 
-TEST_F(TestTheorySolverBoundPreprocessor, ExtractEdge) {
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x1_ == x2_), std::tuple(x1_, x2_, 1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x1_ + x2_ == 0), std::tuple(x1_, x2_, -1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(2 * x1_ == 3 * x2_), std::tuple(x1_, x2_, mpq_class(3, 2)));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x1_ - x2_ == 0), std::tuple(x1_, x2_, 1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(-x1_ == x2_), std::tuple(x1_, x2_, -1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x1_ + x2_ == 0), std::tuple(x1_, x2_, -1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(0 == x1_ + x2_), std::tuple(x1_, x2_, -1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x2_ + x1_ == x2_ + x2_), std::tuple(x1_, x2_, 1));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(x2_ + x1_ == x2_ + x2_ - x1_), std::tuple(x1_, x2_, mpq_class(1, 2)));
-  EXPECT_EQ(bound_preprocessor_.ExtractEdge(2 * x1_ + 2 * x2_ == 3 * x2_), std::tuple(x1_, x2_, mpq_class(1, 2)));
+TEST_F(TestTheorySolverBoundPreprocessor, ExtractCoefficient) {
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ == x2_), 1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ + x2_ == 0), -1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(2 * x1_ == 3 * x2_), mpq_class(3, 2));
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ - x2_ == 0), 1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(-x1_ == x2_), -1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ + x2_ == 0), -1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(0 == x1_ + x2_), -1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x2_ + x1_ == x2_ + x2_), 1);
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x2_ + x1_ == x2_ + x2_ - x1_), mpq_class(1, 2));
+  EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(2 * x1_ + 2 * x2_ == 3 * x2_), mpq_class(1, 2));
 }
 
 // EXPECT_ANY_THROW(std::cout << bound_preprocessor_ << std::endl);

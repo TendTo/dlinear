@@ -129,9 +129,6 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   // Add the row to the list of enabled theory rows
   enabled_theory_rows_.push_back(spx_row);
 
-  // Enable the row in the preprocessor
-  preprocessor_.EnableConstraint(spx_row);
-
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_[var];
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);

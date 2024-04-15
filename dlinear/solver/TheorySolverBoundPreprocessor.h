@@ -34,26 +34,22 @@ class TheorySolver;
 
 class TheorySolverBoundPreprocessor {
  public:
-  using Weight = NumericDataContainer<mpq_class, int>;
+  using Weight = int;
   using BoundEdge = std::tuple<Variable, Variable, Weight>;
   using Explanations = std::set<LiteralSet>;
+  using RowToEqBinomialMap = std::unordered_map<int, mpq_class>;
+
   explicit TheorySolverBoundPreprocessor(const TheorySolver& theory_solver);
   TheorySolverBoundPreprocessor(const PredicateAbstractor& predicate_abstractor,
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
                                 const std::vector<Literal>& theory_rows,
+                                const std::map<Variable::Id, int>& lit_to_rows,
                                 const TheorySolverBoundVectorVector& theory_bounds);
 
   bool AddConstraint(int theory_row, const Formula& formula);
-  /**
-   * Enable a previously added constraint, adding an edge to the graph in order to propagate the bound.
-   * @pre The literal in @ref theory_rows_ must have been updated with the correct truth value.
-   * @param theory_row The row index of the constraint to enable
-   * @return ?
-   */
-  Explanations EnableConstraint(int theory_row);
+
   Explanations Process(const std::vector<int>& enabled_theory_rows = {});
-  void Process(Explanations& explanations);
   void Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
 
   void Clear();
@@ -64,34 +60,61 @@ class TheorySolverBoundPreprocessor {
   [[nodiscard]] const std::map<Variable::Id, int>& var_to_cols() const { return var_to_cols_; }
   [[nodiscard]] const std::vector<Literal>& theory_rows() const { return theory_rows_; }
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
-  [[nodiscard]] const Graph<Variable, Weight>& bound_graph() const { return bound_graph_; }
-  [[nodiscard]] const Graph<Variable, int>& row_graph() const { return row_graph_; }
+  [[nodiscard]] const Graph<Variable, Weight>& bound_graph() const { return graph_; }
   [[nodiscard]] const Environment& env() const { return env_; }
-  [[nodiscard]] const std::unordered_map<int, BoundEdge>& edges() const { return row_to_edges_; }
-
+  [[nodiscard]] const RowToEqBinomialMap& edges() const { return row_to_eq_binomial_edge_coefficients_; }
+#if 1
+  const std::map<Variable::Id, int>& lit_to_rows() const { return lit_to_rows_; }
+#endif
  protected:
-  bool ShouldPropagateBounds(const Literal& lit) const;
-  bool ShouldPropagateBounds(const Formula& formula) const;
+  bool ShouldPropagateEqBinomial(const Literal& lit) const;
+  bool ShouldPropagateEqBinomial(const Formula& formula) const;
   bool ShouldPropagateRows(const Literal& lit);
   bool ShouldPropagateRows(const Formula& formula);
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
 
   void SetEnvironmentFromBounds();
-  void PropagateEnvironment(Explanations& explanations);
-  void PropagateRows(const std::vector<int>& enabled_theory_rows);
+  /**
+   * Propagate the bounds of the variables in the given formula.
+   *
+   * It only works for formulas of the form @f$ ax = by @f$.
+   * At least one of the two variables in the formula must have a value assigned in the @ref env_ .
+   * Its value will be used to assign the value to the other variable, and a dependency edge will be added to the graph.
+   * If the new assignment is incompatible with the current one, a conflict is found.
+   * @pre the formula is of the form @f$ ax = by @f$.
+   * @pre the formula has been added to @ref row_to_eq_binomial_edge_coefficients_ .
+   * @param theory_row index of the theory row of the formula being propagated
+   * @param explanations the explanations to be updated if a conflict is found
+   * @return true if the propagation took place or a conflict has been found
+   * @return false if no propagation took place. Both variables had no value assigned in the @ref env_ .
+   */
+  bool PropagateEqBinomial(int theory_row, Explanations& explanations);
+  void PropagateConstraints(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
   void EvaluateFormulas(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
-  void AddPathsToExplanations(const Variable& from, const Variable& to, Explanations& explanations);
+  void AddPathsToExplanations(const Variable& from, const Variable& to, const Literal& conflicting_literal,
+                              Explanations& explanations);
   void AddPathsToExplanations(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                               const TheorySolverBoundVector& to_bounds, Explanations& explanations);
   void AddPathToExplanation(const Variable& from, const Variable& to, LiteralSet& explanation);
   void AddPathToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                             const TheorySolverBoundVector& to_bounds, LiteralSet& explanation);
 
-  BoundEdge ExtractBoundEdge(int theory_row, const Formula& formula) const;
+  std::pair<Variable, Variable> ExtractBoundEdge(const Formula& formula) const;
+  /**
+   * Given a formula of the form @f$ ax = by @f$, with @f$ a, b \in \mathbb{R} @f$ being constants,
+   * extract the coefficient @f$ c \coloneqq cx = y @f$.
+   *
+   * Variables enjoy total ordering between them.
+   * The leftmost variable is always the smallest.
+   * @param formula the formula to extract the coefficient from
+   * @return the coefficient @f$ c @f$
+   */
+  mpq_class ExtractEqBoundCoefficient(const Formula& formula) const;
 
   void GetExplanation(const Variable& var, LiteralSet& explanation);
+  std::vector<Variable> GetExplanationOrigins(const Variable& var);
 
  private:
   const Config& config_;
@@ -99,16 +122,17 @@ class TheorySolverBoundPreprocessor {
   const std::vector<Variable>& theory_cols_;
   const std::map<Variable::Id, int>& var_to_cols_;
   const std::vector<Literal>& theory_rows_;
+#if 1
+  const std::map<Variable::Id, int>& lit_to_rows_;
+#endif
   const TheorySolverBoundVectorVector& theory_bounds_;
   Environment env_;
-  Graph<Variable, Weight> bound_graph_;
-  Graph<Variable, int> row_graph_;
-  std::unordered_map<int, BoundEdge> row_to_edges_;
+  Graph<Variable, Weight> graph_;
+  RowToEqBinomialMap row_to_eq_binomial_edge_coefficients_;
 };
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor);
 
 }  // namespace dlinear
 
-OSTREAM_FORMATTER(dlinear::TheorySolverBoundPreprocessor::Weight)
 OSTREAM_FORMATTER(dlinear::TheorySolverBoundPreprocessor)
