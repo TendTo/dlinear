@@ -6,13 +6,13 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/smt2/Sort.h"
+#include "dlinear/smt2/sort.h"
 
+using dlinear::Variable;
 using dlinear::smt2::ParseSort;
 using dlinear::smt2::Sort;
-using std::runtime_error;
-using dlinear::Variable;
 using dlinear::smt2::SortToType;
+using std::runtime_error;
 
 TEST(TestSort, ParseSort) {
   EXPECT_EQ(ParseSort("Real"), Sort::Real);
