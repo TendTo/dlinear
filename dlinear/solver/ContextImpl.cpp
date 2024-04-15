@@ -373,7 +373,7 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
-  DLINEAR_ASSERT(!explanation.empty(), "explanation must not be empty");
+  if (explanation.empty()) DLINEAR_RUNTIME_ERROR_FMT("No explanation is provided. Infinite loop detected.");
   sat_solver_->AddLearnedClause(explanation);
 }
 
