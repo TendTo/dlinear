@@ -222,6 +222,9 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     // If the iterator is empty (there are no not-equal constraints), this will do nothing
     EnableNqLiterals(*it);
 
+    // Omitting to do this seems to cause problems in soplex
+    spx_.clearBasis();
+
     // Solve the sub-problem
     sat_status = SpxCheckSat();
     DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: intermediate sat_status = {}", sat_status);
@@ -267,9 +270,6 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 }
 
 SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
-  // Omitting to do this seems to cause problems in soplex
-  spx_.clearBasis();
-
   int colcount = spx_.numColsRational();
   SoplexStatus status = spx_.optimize();
   Rational max_violation, sum_violation;
