@@ -37,3 +37,4 @@
 - [ ] Update `smt2` parser
 - [ ] Use lazy cache for Formula's GetFreeVariables
 - [ ] Custom symbolic implementation
+- [ ] Report need for basis reset in Soplex (a bug in the solver?)
