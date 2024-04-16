@@ -18,6 +18,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#ifndef NDEBUG
+#include <set>
+#endif
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/LpResult.h"

@@ -13,6 +13,8 @@
 #include "dlinear/solver/TheorySolver.h"
 
 #if DEBUGGING_PREPROCESSOR
+#include <string>
+
 #include "dlinear/solver/Context.h"
 #endif
 
@@ -126,7 +128,7 @@ void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theo
   });
 
   PropagateConstraints(mutable_enabled_theory_rows, explanations);
-  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process: {} conflict found during propagation", explanations.size());
+  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process: {} conflict found in propagation", explanations.size());
   if (!explanations.empty()) return;
 
   // Add back all rows that have only one free variable and were not active equality bounds before propagation
@@ -140,7 +142,7 @@ void TheorySolverBoundPreprocessor::Process(const std::vector<int>& enabled_theo
   }
 
   EvaluateFormulas(mutable_enabled_theory_rows, explanations);
-  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process: {} conflict found during evaluation", explanations.size());
+  DLINEAR_DEBUG_FMT("TheorySolverBoundPreprocessor::Process: {} conflict found in evaluation", explanations.size());
 }
 
 void TheorySolverBoundPreprocessor::Clear() {
@@ -235,7 +237,7 @@ void TheorySolverBoundPreprocessor::PropagateConstraints(std::list<int>& enabled
       if (!ShouldPropagateRows(lit)) {
         ++it;
         continue;
-      };
+      }
       continue_propagating = true;
       const Formula& formula = predicate_abstractor_[lit.var];
       DLINEAR_ASSERT(is_addition(get_lhs_expression(formula)), "lhs expression must be an addition");

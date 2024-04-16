@@ -453,7 +453,7 @@ std::ostream& operator<<(std::ostream& os, const Graph<T, E>& s) {
     os << "| " << vertex << " | -> ";
     for (const auto& [adj_vertex, weight] : edges) os << adj_vertex << "(" << weight << "), ";
     os << " - ";
-  } 
+  }
   return os << "}";
 }
 
