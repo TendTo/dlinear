@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <list>
 #include <map>
 #include <set>
 #include <tuple>
@@ -44,7 +45,6 @@ class TheorySolverBoundPreprocessor {
                                 const std::vector<Variable>& theory_cols,
                                 const std::map<Variable::Id, int>& var_to_theory_cols,
                                 const std::vector<Literal>& theory_rows,
-                                const std::map<Variable::Id, int>& lit_to_rows,
                                 const TheorySolverBoundVectorVector& theory_bounds);
 
   bool AddConstraint(int theory_row, const Formula& formula);
@@ -63,10 +63,10 @@ class TheorySolverBoundPreprocessor {
   [[nodiscard]] const Graph<Variable, Weight>& bound_graph() const { return graph_; }
   [[nodiscard]] const Environment& env() const { return env_; }
   [[nodiscard]] const RowToEqBinomialMap& edges() const { return row_to_eq_binomial_edge_coefficients_; }
-#if 1
-  const std::map<Variable::Id, int>& lit_to_rows() const { return lit_to_rows_; }
-#endif
+
  protected:
+  enum class PropagateEqBinomialResult { NO_PROPAGATION, UNCHANGED, PROPAGATED, CONFLICT };
+
   bool ShouldPropagateEqBinomial(const Literal& lit) const;
   bool ShouldPropagateEqBinomial(const Formula& formula) const;
   bool ShouldPropagateRows(const Literal& lit);
@@ -89,9 +89,9 @@ class TheorySolverBoundPreprocessor {
    * @return true if the propagation took place or a conflict has been found
    * @return false if no propagation took place. Both variables had no value assigned in the @ref env_ .
    */
-  bool PropagateEqBinomial(int theory_row, Explanations& explanations);
-  void PropagateConstraints(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
-  void EvaluateFormulas(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
+  PropagateEqBinomialResult PropagateEqBinomial(int theory_row, Explanations& explanations);
+  void PropagateConstraints(std::list<int>& enabled_theory_rows, Explanations& explanations);
+  void EvaluateFormulas(std::list<int>& enabled_theory_rows, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
   void AddPathsToExplanations(const Variable& from, const Variable& to, const Literal& conflicting_literal,
                               Explanations& explanations);
@@ -122,9 +122,6 @@ class TheorySolverBoundPreprocessor {
   const std::vector<Variable>& theory_cols_;
   const std::map<Variable::Id, int>& var_to_cols_;
   const std::vector<Literal>& theory_rows_;
-#if 1
-  const std::map<Variable::Id, int>& lit_to_rows_;
-#endif
   const TheorySolverBoundVectorVector& theory_bounds_;
   Environment env_;
   Graph<Variable, Weight> graph_;
