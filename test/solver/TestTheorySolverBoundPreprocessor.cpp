@@ -91,9 +91,11 @@ class TestTheorySolverBoundPreprocessor : public ::testing::Test {
           theory_bounds_.emplace_back(ninf_, inf_);
         }
       }
-      const Variable converted_var = get_variable(pa_.Convert(formula));
+      const Formula flattened = pa_.Convert(formula);
+      const bool is_negated = is_negation(flattened);
+      const Variable converted_var = is_negated ? get_variable(get_operand(flattened)) : get_variable(flattened);
       const Formula converted_formula = pa_.var_to_formula_map().at(converted_var);
-      theory_rows_.emplace_back(converted_var, true);
+      theory_rows_.emplace_back(converted_var, !is_negated);
       bound_preprocessor_.AddConstraint(static_cast<int>(theory_rows_.size()) - 1,
                                         pa_.var_to_formula_map().at(converted_var));
       if (MockTheorySolver::IsSimpleBound(converted_formula)) {
@@ -194,8 +196,8 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPath) {
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_});
   bound_preprocessor_.Process(GetEnabledConstraints());
 
-  EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
+  EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -207,8 +209,8 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x4_ == val});
   bound_preprocessor_.Process(GetEnabledConstraints());
 
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -221,8 +223,8 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateSpread) {
                   x8_ == x9_, x9_ == x2_});
   bound_preprocessor_.Process(GetEnabledConstraints());
 
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 8u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 9u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -252,22 +254,19 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleViolation) {
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAreArray(
-                                     {theory_rows_[8], theory_rows_[9], theory_rows_[10], theory_rows_[11]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[8], theory_rows_[9], theory_rows_[10],
+                                                                 theory_rows_[11]));
         break;
       case 5:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray(
-                        {theory_rows_[2], theory_rows_[3], theory_rows_[4], theory_rows_[5], theory_rows_[6]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[2], theory_rows_[3], theory_rows_[4],
+                                                                 theory_rows_[5], theory_rows_[6]));
         break;
       case 6:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[3],
-                                                          theory_rows_[4], theory_rows_[5], theory_rows_[6]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[3],
+                                                                 theory_rows_[4], theory_rows_[5], theory_rows_[6]));
         break;
       default:
         FAIL();
@@ -279,7 +278,7 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateCompatibleDifferentEqB
   AddConstraints({x1_ == 0, x1_ == 2 * x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 5 * x3_, x3_ == 0});
   const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
 
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 1u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], 0);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
@@ -291,10 +290,10 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentE
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == val});
   const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
 
-  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 1u);
   EXPECT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(),
-              ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+              ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2]));
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEnds) {
@@ -308,12 +307,11 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentE
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAreArray(
-                                     {theory_rows_[0], theory_rows_[1], theory_rows_[3], theory_rows_[4]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[3],
+                                                                 theory_rows_[4]));
         break;
       default:
         FAIL();
@@ -333,17 +331,15 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentE
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray({theory_rows_[0], theory_rows_[1], theory_rows_[2]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAreArray(
-                                     {theory_rows_[0], theory_rows_[1], theory_rows_[4], theory_rows_[6]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[4],
+                                                                 theory_rows_[6]));
         break;
       case 5:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAreArray(
-                        {theory_rows_[0], theory_rows_[1], theory_rows_[3], theory_rows_[5], theory_rows_[6]}));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[3],
+                                                                 theory_rows_[5], theory_rows_[6]));
         break;
       default:
         FAIL();
@@ -351,14 +347,55 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateIncompatibleDifferentE
   }
 }
 
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleOrigins) {
+  const mpq_class val = 7;
+  const mpq_class val2 = val + 1;
+  /**
+   *  x1 - x2 - x3 - V
+   *   |
+   *  x4 - x6 - V2
+   *   |
+   *  x5 - x7 - V2
+   *   |
+   *  x8 - V2
+   */
+  AddConstraints({x1_ == x2_, x2_ == x3_, x3_ == val, x1_ == x4_, x4_ + x5_ + x6_ == mpq_class(2 * val2),
+                  x5_ + x7_ + x8_ == mpq_class(3 * val2), x6_ == val2, x7_ == val2, x8_ == val2});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.env().size(), 8u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 5u);
+  EXPECT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(theory_rows_));
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
+  const mpq_class val = 7;
+  const mpq_class val2 = val + 1;
+  /**
+   *  x1 - x2 - x3 - V
+   *   |
+   *  x4 - x6 - V2
+   *   |
+   *  x5 - x7
+   *   |    |
+   *  x8 - x9 - V2
+   */
+  AddConstraints({x1_ == x2_, x2_ == x3_, x3_ == val, x1_ == x4_, x4_ + x5_ + x6_ == mpq_class(2 * val2),
+                  x5_ + x7_ + x8_ == mpq_class(3 * val2), x6_ == val2, x7_ == x9_, x8_ == x9_, x9_ == val2});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 7u);
+  EXPECT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(theory_rows_));
+}
+
 TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolation) {
-  DLINEAR_LOG_INIT_VERBOSITY(5);
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x2_ == x3_, x3_ == val, x4_ == (x1_ + x5_), x6_ == x2_, x5_ == x6_,
                   x7_ == mpq_class{val + 1}, x7_ == x4_});
-  std::vector<int> enabled_rows(theory_rows_.size());
-  std::iota(enabled_rows.begin(), enabled_rows.end(), 0);
-  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(enabled_rows);
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
 
   EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
@@ -371,6 +408,52 @@ TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolation) {
 
   EXPECT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(theory_rows_));
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
+  const mpq_class val = 7;
+  AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ > val, x2_ == x4_});
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
+  EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
+
+  EXPECT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(),
+              ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2], theory_rows_[3]));
+}
+
+TEST_F(TestTheorySolverBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) {
+  const mpq_class val = 7;
+  AddConstraints({
+      x1_ == val,
+      x1_ == x2_,
+      x2_ == x3_,
+      x3_ + x2_ != mpq_class(2 * val),
+      x3_ + x2_<mpq_class(2 * val), x3_ + x2_> mpq_class(2 * val),
+      x3_ + x2_ >= mpq_class(2 * val),
+      x3_ + x2_ <= mpq_class(2 * val),
+      x3_ + x2_ == mpq_class(2 * val),
+      x2_ == x4_,
+  });
+  const TheorySolver::Explanations explanations = bound_preprocessor_.Process(GetEnabledConstraints());
+
+  EXPECT_EQ(bound_preprocessor_.bound_graph().Size(), 3u);
+  EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
+  EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
+
+  EXPECT_EQ(explanations.size(), 3u);
+  EXPECT_THAT(*explanations.cbegin(),
+              ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2], theory_rows_[3]));
+  EXPECT_THAT(*std::next(explanations.begin()),
+              ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2], theory_rows_[4]));
+  EXPECT_THAT(*std::next(std::next(explanations.begin())),
+              ::testing::UnorderedElementsAre(theory_rows_[0], theory_rows_[1], theory_rows_[2], theory_rows_[5]));
 }
 
 TEST_F(TestTheorySolverBoundPreprocessor, ShouldPropagateTrue) {
