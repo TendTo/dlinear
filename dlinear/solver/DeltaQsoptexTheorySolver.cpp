@@ -86,7 +86,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
   theory_row_to_lit_.push_back(lit);
-  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({}{} ↦ {})", truth ? "" : "¬", it->second, qsx_row);
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({} ↦ {})", lit, qsx_row);
 }
 
 DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {
