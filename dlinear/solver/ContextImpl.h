@@ -283,8 +283,8 @@ class Context::Impl {
    */
   Box ExtractModel(const Box &box) const;
 
-  Config &config_;  ///< Configuration of the context. It could be modified by the problem instance.
-  std::optional<Logic> logic_{};       ///< SMT Logic of the context. Must be among the supported logics.
+  Config &config_;                ///< Configuration of the context. It could be modified by the problem instance.
+  std::optional<Logic> logic_{};  ///< SMT Logic of the context. Must be among the supported logics.
   std::unordered_map<std::string, std::string> info_;    ///< Key-value pairs of information.
   std::unordered_map<std::string, std::string> option_;  ///< Key-value pairs of options.
 
@@ -303,6 +303,10 @@ class Context::Impl {
   // TODO: these could become templated classes for added efficiency
   std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
+
+#ifndef NDEBUG
+  std::set<LiteralSet> explanations_so_far;
+#endif
 };
 
 }  // namespace dlinear

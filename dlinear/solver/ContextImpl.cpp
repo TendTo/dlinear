@@ -327,18 +327,18 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
       box() = theory_solver_->model();
       return theory_result;
-    } else {
-      if (theory_result == SatResult::SAT_UNSATISFIABLE) {  // UNSAT from TheorySolver.
-        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
-      } else {
-        DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
-        DLINEAR_ERROR("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
-        have_unsolved = true;  // Will prevent return of UNSAT
-        theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
-      }
-      DLINEAR_ASSERT(!theory_explanations.empty(), "theory_explanations must not be empty");
-      LearnExplanations(theory_explanations);
     }
+
+    if (theory_result == SatResult::SAT_UNSATISFIABLE) {  // UNSAT from TheorySolver.
+      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
+    } else {
+      DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
+      DLINEAR_ERROR("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
+      have_unsolved = true;  // Will prevent return of UNSAT
+      theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
+    }
+    DLINEAR_ASSERT(!theory_explanations.empty(), "theory_explanations must not be empty");
+    LearnExplanations(theory_explanations);
   }
 }
 
@@ -373,11 +373,16 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
+  DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
+#ifndef NDEBUG
+  explanations_so_far.insert(explanation);
+#endif
   if (explanation.empty()) DLINEAR_RUNTIME_ERROR_FMT("No explanation is provided. Infinite loop detected.");
   sat_solver_->AddLearnedClause(explanation);
 }
 
 void Context::Impl::LearnExplanations(const TheorySolver::Explanations &explanations) {
+  DLINEAR_ASSERT(!explanations.empty(), "Explanations cannot be empty");
   for (const LiteralSet &explanation : explanations) LearnExplanation(explanation);
 }
 
