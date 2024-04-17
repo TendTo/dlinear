@@ -16,6 +16,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/definitions.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
@@ -34,8 +35,6 @@ class Box {
      */
     static Interval fromString(const std::string &s);
     Interval();
-    Interval(Interval &&other) noexcept;
-    Interval(const Interval &other) : lb_(other.lb_), ub_(other.ub_) {}
     explicit Interval(const mpq_class &val) : lb_(val), ub_(val) {}
     Interval(const mpq_class &lb, const mpq_class &ub);
     [[nodiscard]] bool is_empty() const { return lb_ == 1 && ub_ == 0; }
@@ -47,7 +46,6 @@ class Box {
     [[nodiscard]] mpq_class diam() const { return is_empty() ? mpq_class(0) : mpq_class(ub_ - lb_); }
     [[nodiscard]] std::pair<Interval, Interval> bisect(const mpq_class &p) const;
     bool operator==(const Interval &other) const { return lb_ == other.lb_ && ub_ == other.ub_; }
-    bool operator!=(const Interval &other) const { return lb_ != other.lb_ || ub_ != other.ub_; }
     Interval &operator=(const mpq_t &val) {
       mpq_set(lb_.get_mpq_t(), val);
       mpq_set(ub_.get_mpq_t(), val);
@@ -57,12 +55,15 @@ class Box {
       lb_ = ub_ = val;
       return *this;
     }
-    Interval &operator=(const Interval &other) = default;
     // Mutators
     void set_empty() {
       lb_ = 1;
       ub_ = 0;
     }
+
+    ARITHMETIC_OPERATORS(Interval)
+    GENERIC_ARITHMETIC_OPERATORS(Interval, mpq_class &)
+
     friend std::ostream &operator<<(std::ostream &os, const Interval &iv);
 
    private:

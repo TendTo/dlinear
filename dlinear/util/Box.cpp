@@ -7,6 +7,8 @@
 
 #include "Box.h"
 
+#include <algorithm>
+
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
@@ -24,20 +26,66 @@ Box::Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_
   DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
 }
 
-Box::Interval::Interval(Interval &&other) noexcept try {
-  try {
-    lb_.swap(other.lb_);
-    ub_.swap(other.ub_);
-  } catch (...) {
-    DLINEAR_UNREACHABLE();
-  }
-} catch (...) {
-  DLINEAR_UNREACHABLE();
-}
-
 std::pair<Box::Interval, Box::Interval> Box::Interval::bisect(const mpq_class &p) const {
   mpq_class midpoint{lb_ + p * (ub_ - lb_)};
   return std::make_pair(Interval(lb_, midpoint), Interval(midpoint, ub_));
+}
+
+Box::Interval &Box::Interval::operator+=(const Box::Interval &o) {
+  lb_ += o.lb_;
+  ub_ += o.ub_;
+  return *this;
+}
+Box::Interval &Box::Interval::operator-=(const Box::Interval &o) {
+  lb_ -= o.ub_;
+  ub_ -= o.lb_;
+  return *this;
+}
+Box::Interval &Box::Interval::operator*=(const Box::Interval &o) {
+  const std::initializer_list<mpq_class> products{lb_ * o.lb_, lb_ * o.ub_, ub_ * o.lb_, ub_ * o.ub_};
+  const mpq_class lb{std::min(products)};
+  const mpq_class ub{std::max(products)};
+  lb_ = lb;
+  ub_ = ub;
+  return *this;
+}
+Box::Interval &Box::Interval::operator/=(const Box::Interval &o) {
+  if (o.is_degenerated() && o.lb() == 0) DLINEAR_RUNTIME_ERROR("Division by zero");
+
+  const std::initializer_list<mpq_class> quotients{lb_ / o.lb_, lb_ / o.ub_, ub_ / o.lb_, ub_ / o.ub_};
+  const mpq_class lb{std::min(quotients)};
+  const mpq_class ub{std::max(quotients)};
+  lb_ = lb;
+  ub_ = ub;
+  return *this;
+}
+Box::Interval &Box::Interval::operator+=(const mpq_class &o) {
+  lb_ += o;
+  ub_ += o;
+  return *this;
+}
+Box::Interval &Box::Interval::operator-=(const mpq_class &o) {
+  lb_ -= o;
+  ub_ -= o;
+  return *this;
+}
+Box::Interval &Box::Interval::operator*=(const mpq_class &o) {
+  const std::initializer_list<mpq_class> products{lb_ * o, lb_ * o, ub_ * o, ub_ * o};
+  const mpq_class lb{std::min(products)};
+  const mpq_class ub{std::max(products)};
+  lb_ = lb;
+  ub_ = ub;
+  return *this;
+}
+Box::Interval &Box::Interval::operator/=(const mpq_class &o) {
+  if (o == 0) DLINEAR_RUNTIME_ERROR("Division by zero");
+
+  const std::initializer_list<mpq_class> quotients{lb_ / o, lb_ / o, ub_ / o, ub_ / o};
+  const mpq_class lb{std::min(quotients)};
+  const mpq_class ub{std::max(quotients)};
+  lb_ = lb;
+  ub_ = ub;
+  return *this;
 }
 
 std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
