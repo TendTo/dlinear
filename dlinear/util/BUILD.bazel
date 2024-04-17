@@ -100,6 +100,7 @@ dlinear_cc_library(
         "RoundingModeGuard.hpp",
     ],
     deps = [
+        ":definitions",
         ":logging",
         ":math",
         "//dlinear/symbolic",
@@ -145,6 +146,11 @@ dlinear_cc_library(
     name = "interrupt",
     srcs = ["interrupt.cpp"],
     hdrs = ["interrupt.h"],
+)
+
+dlinear_cc_library(
+    name = "definitions",
+    hdrs = ["definitions.h"],
 )
 
 dlinear_cc_library(
