@@ -28,8 +28,8 @@ gen_yacc(
 
 dlinear_cc_library(
     name = "sort",
-    srcs = ["sort.cpp"],
-    hdrs = ["sort.h"],
+    srcs = ["Sort.cpp"],
+    hdrs = ["Sort.h"],
     deps = [
         "//dlinear/symbolic",
         "//dlinear/util:exception",

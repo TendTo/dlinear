@@ -13,6 +13,7 @@
 #include <string>
 
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear::smt2 {
 
@@ -31,3 +32,5 @@ std::ostream &operator<<(std::ostream &os, const Sort &sort);
 Variable::Type SortToType(Sort sort);
 
 }  // namespace dlinear::smt2
+
+OSTREAM_FORMATTER(dlinear::smt2::Sort)

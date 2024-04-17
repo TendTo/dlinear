@@ -4,7 +4,7 @@
  * @date 22 Aug 2023
  * @copyright 2023 dlinear
  */
-#include "sort.h"
+#include "Sort.h"
 
 #include "dlinear/util/exception.h"
 
