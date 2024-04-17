@@ -11,7 +11,6 @@
 using dlinear::Formula;
 using dlinear::Expression;
 using dlinear::smt2::Term;
-using std::runtime_error;
 
 class TestTerm : public ::testing::Test {
  protected:
@@ -23,13 +22,13 @@ TEST_F(TestTerm, FormulaConstructor) {
   Term term{f_};
   EXPECT_EQ(term.type(), Term::Type::FORMULA);
   EXPECT_TRUE(term.formula().EqualTo(f_));
-  EXPECT_THROW(term.expression(), runtime_error);
+  EXPECT_THROW(Expression a = term.expression(), std::bad_variant_access);
 }
 
 TEST_F(TestTerm, ExpressionConstructor) {
   Term term{e_};
   EXPECT_EQ(term.type(), Term::Type::EXPRESSION);
   EXPECT_TRUE(term.expression().EqualTo(e_));
-  EXPECT_THROW(term.formula(), runtime_error);
+  EXPECT_THROW(Formula f = term.formula(), std::bad_variant_access);
 }
 

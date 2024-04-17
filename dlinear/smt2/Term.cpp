@@ -14,32 +14,90 @@
 
 namespace dlinear::smt2 {
 
-Term::Term(Expression e) : type_{Term::Type::EXPRESSION}, e_{std::move(e)} {
-  DLINEAR_TRACE_FMT("Term::Term({}) - Expression", e_);
+Term::Term() : term_{} {}
+Term::Term(Expression e) : term_{e} { DLINEAR_TRACE_FMT("Term::Term({}) - Expression", e); }
+Term::Term(Formula f) : term_{f} { DLINEAR_TRACE_FMT("Term::Term({}) - Formula", f); }
+Term &Term::operator=(const Formula &f) {
+  term_.emplace<Formula>(f);
+  return *this;
 }
-Term::Term(Formula f) : type_{Term::Type::FORMULA}, f_{std::move(f)} {
-  DLINEAR_TRACE_FMT("Term::Term({}) - Formula", f_);
+Term &Term::operator=(const Expression &e) {
+  term_.emplace<Expression>(e);
+  return *this;
+}
+Term &Term::operator=(Formula &&f) {
+  term_.emplace<Formula>(f);
+  return *this;
+}
+Term &Term::operator=(Expression &&e) {
+  term_.emplace<Expression>(e);
+  return *this;
 }
 
-Term::Type Term::type() const { return type_; }
+Term::Type Term::type() const { return std::holds_alternative<Expression>(term_) ? Type::EXPRESSION : Type::FORMULA; }
+const Expression &Term::expression() const { return std::get<Expression>(term_); }
+Expression &Term::m_expression() { return std::get<Expression>(term_); }
+const Formula &Term::formula() const { return std::get<Formula>(term_); }
+Formula &Term::m_formula() { return std::get<Formula>(term_); }
 
-const Expression &Term::expression() const {
-  if (type() != Term::Type::EXPRESSION) {
-    throw std::runtime_error("This term is not an expression.");
+Term Term::Substitute(const Variable &v, const Term &t) {
+  switch (type()) {
+    case Type::FORMULA: {
+      switch (v.get_type()) {
+        case Variable::Type::CONTINUOUS:
+        case Variable::Type::INTEGER:
+        case Variable::Type::BINARY:
+          return Term{formula().Substitute(v, t.expression())};
+        case Variable::Type::BOOLEAN:
+          return Term{formula().Substitute(v, t.formula())};
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    }
+    case Type::EXPRESSION: {
+      switch (v.get_type()) {
+        case Variable::Type::CONTINUOUS:
+        case Variable::Type::INTEGER:
+        case Variable::Type::BINARY:
+          return Term{expression().Substitute(v, t.expression())};
+        case Variable::Type::BOOLEAN:
+          return Term{expression().Substitute({}, {{v, t.formula()}})};
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    }
+    default:
+      DLINEAR_UNREACHABLE();
   }
-  return e_;
 }
 
-Expression &Term::m_expression() { return const_cast<Expression &>(expression()); }
-
-const Formula &Term::formula() const {
-  if (type() != Term::Type::FORMULA) {
-    throw std::runtime_error("This term is not a formula.");
+void Term::Check(Sort s) const {
+  switch (type()) {
+    case Term::Type::EXPRESSION:
+      if (s == Sort::Int || s == Sort::Real || s == Sort::Binary) return;  // OK
+      break;
+    case Term::Type::FORMULA:
+      if (s == Sort::Bool) return;  // OK
+      break;
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("Term {} does not match against sort {}", *this, s);
   }
-  return f_;
 }
 
-Formula &Term::m_formula() { return const_cast<Formula &>(formula()); }
+void Term::Check(Variable::Type t) const {
+  switch (t) {
+    case Variable::Type::BOOLEAN:
+      if (type() == Type::FORMULA) return;  // OK
+      break;
+    case Variable::Type::BINARY:
+    case Variable::Type::INTEGER:
+    case Variable::Type::CONTINUOUS:
+      if (type() == Type::EXPRESSION) return;  // OK
+      break;
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("Term {} does not match against type {}", *this, t);
+  }
+}
 
 std::ostream &operator<<(std::ostream &os, const Term &t) {
   switch (t.type()) {
@@ -47,8 +105,9 @@ std::ostream &operator<<(std::ostream &os, const Term &t) {
       return os << t.expression();
     case Term::Type::FORMULA:
       return os << t.formula();
+    default:
+      DLINEAR_UNREACHABLE();
   }
-  DLINEAR_UNREACHABLE();
 }
 
 }  // namespace dlinear::smt2
