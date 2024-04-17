@@ -65,6 +65,18 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "expression_evaluator",
+    srcs = ["ExpressionEvaluator.cpp"],
+    hdrs = ["ExpressionEvaluator.h"],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
     name = "nnfizier",
     srcs = ["Nnfizer.cpp"],
     hdrs = ["Nnfizer.h"],
