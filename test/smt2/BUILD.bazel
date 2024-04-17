@@ -26,3 +26,12 @@ dlinear_cc_googletest(
         "//test/symbolic:test_symbolic_utils",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_smt2_driver",
+    tags = ["smt2"],
+    deps = [
+        "//dlinear/smt2",
+        "//test/symbolic:test_symbolic_utils",
+    ],
+)

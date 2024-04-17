@@ -13,6 +13,8 @@
 #include <sstream>
 #include <utility>
 
+#include "dlinear/symbolic/ExpressionEvaluator.h"
+#include "dlinear/symbolic/PrefixPrinter.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -59,6 +61,16 @@ void Smt2Driver::CheckSat() {}
 
 void Smt2Driver::GetModel() {}
 
+Formula Smt2Driver::EliminateBooleanVariables(const Variables &vars, const Formula &f) {
+  Formula ret{f};
+  for (const Variable &b : vars) {
+    if (b.get_type() == Variable::Type::BOOLEAN) {
+      ret = ret.Substitute(b, Formula::True()) && ret.Substitute(b, Formula::False());
+    }
+  }
+  return ret;
+}
+
 void Smt2Driver::Maximize(const Expression &f) {
   if (context_.config().produce_models()) context_.Maximize(f);
 }
@@ -66,9 +78,15 @@ void Smt2Driver::Minimize(const Expression &f) {
   if (context_.config().produce_models()) context_.Minimize(f);
 }
 
+void Smt2Driver::DefineFun(const std::string &name, const std::vector<Variable> &parameters, Sort return_type,
+                           const Term &body) {
+  FunctionDefinition func{parameters, return_type, body};
+  scope_functions_.insert(name, func);
+}
+
 Variable Smt2Driver::RegisterVariable(const std::string &name, const Sort sort) {
-  const Variable v{ParseVariableSort(name, sort)};
-  scope_.insert(v.get_name(), VariableOrConstant(v));
+  const Variable v{name, SortToType(sort)};
+  scope_variables_.insert(v.get_name(), v);
   return v;
 }
 
@@ -91,25 +109,82 @@ std::string Smt2Driver::MakeUniqueName(const std::string &name) {
 }
 
 Variable Smt2Driver::DeclareLocalVariable(const std::string &name, const Sort sort) {
-  const Variable v{ParseVariableSort(MakeUniqueName(name), sort)};
-  scope_.insert(name, VariableOrConstant(v));  // v is not inserted under its own name.
+  const Variable v{MakeUniqueName(name), SortToType(sort)};
+  scope_variables_.insert(name, v);  // v is not inserted under its own name.
   context_.DeclareVariable(v, false /* This local variable is not a model variable. */);
   return v;
 }
 
-const Smt2Driver::VariableOrConstant &Smt2Driver::lookup_variable(const std::string &name) {
-  const auto it = scope_.find(name);
-  if (it == scope_.cend()) {
-    DLINEAR_RUNTIME_ERROR_FMT("{} is an undeclared variable.", name);
+void Smt2Driver::GetValue(const std::vector<Term> &term_list) const {
+  const Box &box{context_.model()};
+  if (!context_.config().silent()) std::cout << "(\n" << std::endl;
+  for (const auto &term : term_list) {
+    std::string term_str;
+    std::string value_str;
+    std::stringstream ss;
+    PrefixPrinter pp{ss};
+
+    switch (term.type()) {
+      case Term::Type::EXPRESSION: {
+        const Expression &e{term.expression()};
+        const ExpressionEvaluator evaluator{e};
+        pp.Print(e);
+        term_str = ss.str();
+        const Box::Interval iv{ExpressionEvaluator(term.expression())(box)};
+        value_str = (std::stringstream{} << iv).str();
+        break;
+      }
+      case Term::Type::FORMULA: {
+        const Formula &f{term.formula()};
+        pp.Print(f);
+        term_str = ss.str();
+        if (is_variable(f)) {
+          value_str = box[get_variable(f)].ub() == 1 ? "true" : "false";
+        } else {
+          DLINEAR_RUNTIME_ERROR_FMT("get-value does not handle a compound formula {}.", term_str);
+        }
+        break;
+      }
+    }
+    if (!context_.config().silent()) std::cout << "\t(" << term_str << " " << value_str << " )\n";
   }
+  if (!context_.config().silent()) std::cout << ")" << std::endl;
+}
+
+void Smt2Driver::GetOption(const std::string &key) const {
+  if (context_.config().silent()) return;
+  std::cout << "get-option ( " << key << " ): " << context_.GetOption(key) << std::endl;
+}
+
+std::variant<const Expression *, const Variable *> Smt2Driver::LookupDefinedName(const std::string &name) const {
+  const auto it = scope_variables_.find(name);
+  if (it != scope_variables_.cend()) return {&it->second};
+  const auto it2 = scope_constants_.find(name);
+  if (it2 != scope_constants_.cend()) return {&it2->second};
+  DLINEAR_OUT_OF_RANGE_FMT("{} is an undeclared name.", name);
+}
+
+const Expression &Smt2Driver::LookupConstant(const std::string &name) const {
+  const auto it = scope_constants_.find(name);
+  if (it == scope_constants_.cend()) DLINEAR_OUT_OF_RANGE_FMT("{} is an undeclared constant.", name);
   return it->second;
 }
 
-Variable Smt2Driver::ParseVariableSort(const std::string &name, const Sort s) { return Variable{name, SortToType(s)}; }
+const Variable &Smt2Driver::LookupVariable(const std::string &name) const {
+  const auto it = scope_variables_.find(name);
+  if (it == scope_variables_.cend()) DLINEAR_OUT_OF_RANGE_FMT("{} is an undeclared variable.", name);
+  return it->second;
+}
+
+Term Smt2Driver::LookupFunction(const std::string &name, const std::vector<Term> &arguments) const {
+  const auto it = scope_functions_.find(name);
+  if (it == scope_functions_.end()) DLINEAR_OUT_OF_RANGE_FMT("Function {} is not defined.", name);
+  return it->second(arguments);
+}
 
 void Smt2Driver::DefineLocalConstant(const std::string &name, const Expression &value) {
   DLINEAR_ASSERT(is_constant(value), "Value must be a constant expression.");
-  scope_.insert(name, VariableOrConstant(value));
+  scope_constants_.insert(name, value);
 }
 
 }  // namespace dlinear::smt2
