@@ -85,14 +85,12 @@ void Term::Check(Sort s) const {
 }
 
 void Term::Check(Variable::Type t) const {
-  switch (t) {
-    case Variable::Type::BOOLEAN:
-      if (type() == Type::FORMULA) return;  // OK
+  switch (type()) {
+    case Type::FORMULA:
+      if (t == Variable::Type::BOOLEAN) return;  // OK
       break;
-    case Variable::Type::BINARY:
-    case Variable::Type::INTEGER:
-    case Variable::Type::CONTINUOUS:
-      if (type() == Type::EXPRESSION) return;  // OK
+    case Type::EXPRESSION:
+      if (t == Variable::Type::BINARY || t == Variable::Type::INTEGER || t == Variable::Type::CONTINUOUS) return;  // OK
       break;
     default:
       DLINEAR_RUNTIME_ERROR_FMT("Term {} does not match against type {}", *this, t);
