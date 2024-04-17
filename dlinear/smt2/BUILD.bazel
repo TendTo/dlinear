@@ -41,7 +41,21 @@ dlinear_cc_library(
     srcs = ["Term.cpp"],
     hdrs = ["Term.h"],
     deps = [
-        "//dlinear/symbolic",
+        ":sort",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "function_definition",
+    srcs = ["FunctionDefinition.cpp"],
+    hdrs = ["FunctionDefinition.h"],
+    deps = [
+        ":sort",
+        ":term",
+        "//dlinear/symbolic:literal",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
     ],
@@ -76,11 +90,14 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     deps = [
+        ":function_definition",
         ":sort",
         ":term",
         "//dlinear/solver:context",
         "//dlinear/solver:logic",
         "//dlinear/symbolic",
+        "//dlinear/symbolic:expression_evaluator",
+        "//dlinear/symbolic:prefix_printer",
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:logging",

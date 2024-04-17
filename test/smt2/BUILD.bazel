@@ -17,3 +17,12 @@ dlinear_cc_googletest(
     tags = ["smt2"],
     deps = ["//dlinear/smt2:command"],
 )
+
+dlinear_cc_googletest(
+    name = "test_function_definition",
+    tags = ["smt2"],
+    deps = [
+        "//dlinear/smt2:function_definition",
+        "//test/symbolic:test_symbolic_utils",
+    ],
+)
