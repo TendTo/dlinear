@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "dlinear/solver/Logic.h"
-#include "dlinear/smt2/sort.h"
+#include "dlinear/smt2/Sort.h"
 #include "dlinear/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/math.h"
@@ -66,21 +66,7 @@ using dlinear::gmp::string_to_mpq;
 /* verbose error messages */
 %define parse.error verbose
 
-
-%union
-{
-    dlinear::smt2::Sort             sortVal;
-    std::int64_t              int64Val;
-    std::string*              rationalVal;
-    double                    hexfloatVal;
-    std::string*              stringVal;
-    Term*                     termVal;
-    std::vector<Term>*        termListVal;
-    std::tuple<Variable, Expression, Expression>* forallVariableVal;
-    std::pair<Variables, Formula>*        forallVariablesVal;
-    std::pair<std::string, Term>*              letBindVal;
-    std::vector<std::pair<std::string, Term>>* letBindsVal;
-}
+%define api.value.type variant
 
 %token TK_EXCLAMATION TK_BINARY TK_DECIMAL TK_HEXADECIMAL TK_NUMERAL TK_STRING
 %token TK_UNDERSCORE TK_AS TK_EXISTS TK_FORALL TK_LET TK_PAR
@@ -100,25 +86,25 @@ using dlinear::gmp::string_to_mpq;
 
 %token TK_MAXIMIZE TK_MINIMIZE
 
-%token                 END          0        "end of file"
-%token <rationalVal>   RATIONAL              "rational"
-%token <hexfloatVal>   HEXFLOAT              "hexfloat"
-%token <int64Val>      INT                   "int64"
-%token <stringVal>     SYMBOL                "symbol"
-%token <stringVal>     KEYWORD               "keyword"
-%token <stringVal>     STRING                "string"
+%token                   END          0        "end of file"
+%token <std::string>     RATIONAL              "rational"
+%token <double>          HEXFLOAT              "hexfloat"
+%token <std::int64_t>    INT                   "int64"
+%token <std::string>     SYMBOL                "symbol"
+%token <std::string>     KEYWORD               "keyword"
+%token <std::string>     STRING                "string"
 
-%type <sortVal>        sort
-%type <termVal>        term
-%type <termListVal>    term_list
+%type <dlinear::smt2::Sort>       sort
+%type <Term>                      term
+%type <std::vector<Term>>         term_list
 
-%type <forallVariablesVal>   variable_sort_list
-%type <forallVariableVal>    variable_sort
-%type <letBindsVal>   var_binding_list
-%type <letBindVal>    var_binding
+%type <std::tuple<Variable, Expression, Expression>>    variable_sort
+%type <std::pair<Variables, Formula>>                   variable_sort_list
+%type <std::vector<std::pair<std::string, Term>>>       var_binding_list
+%type <std::pair<std::string, Term>>                    var_binding
 
-%destructor { delete $$; } RATIONAL SYMBOL KEYWORD STRING
-%destructor { delete $$; } term term_list variable_sort_list variable_sort var_binding_list var_binding
+%type <Variable>              name_sort
+%type <std::vector<Variable>> name_sort_list
 
 %{
 
@@ -148,6 +134,7 @@ command:        command_assert
         |       command_define_fun
         |       command_exit
         |       command_get_model
+        |       command_get_value
         |       command_maximize
         |       command_minimize
         |       command_pop
@@ -155,11 +142,11 @@ command:        command_assert
         |       command_set_info
         |       command_set_logic
         |       command_set_option
+        |       command_get_option
         ;
 
 command_assert: '('TK_ASSERT term ')' {
-                    driver.m_context().Assert($3->formula());
-                    delete $3;
+                    driver.m_context().Assert($3.formula());
                 }
                 ;
 command_check_sat: '('TK_CHECK_SAT ')' {
@@ -167,45 +154,48 @@ command_check_sat: '('TK_CHECK_SAT ')' {
                 }
                 ;
 command_declare_fun: '(' TK_DECLARE_FUN SYMBOL '(' ')' sort ')' {
-                    driver.DeclareVariable(*$3, $6);
-                    delete $3;
+                    driver.DeclareVariable($3, $6);
                 }
         |
                 '(' TK_DECLARE_FUN SYMBOL '(' ')' sort '[' term ',' term ']' ')' {
-                    driver.DeclareVariable(*$3, $6, *$8, *$10);
-                    delete $3;
-                    delete $8;
-                    delete $10;
+                    driver.DeclareVariable($3, $6, $8, $10);
                 }
         |
                 '(' TK_DECLARE_CONST SYMBOL sort ')' {
-                    driver.DeclareVariable(*$3, $4);
-                    delete $3;
+                    driver.DeclareVariable($3, $4);
                 }
         |
                 '(' TK_DECLARE_CONST SYMBOL sort '[' term ',' term ']' ')' {
-                    driver.DeclareVariable(*$3, $4, *$6, *$8);
-                    delete $3;
-                    delete $6;
-                    delete $8;
+                    driver.DeclareVariable($3, $4, $6, $8);
                 }
-                ;
+        ;
 
-command_define_fun:
-                '(' TK_DEFINE_FUN SYMBOL '(' ')' sort term ')' {
-                    const Variable v{driver.DeclareVariable(*$3, $6)};
-                    if ($7->type() == Term::Type::FORMULA) {
-                        driver.m_context().Assert(v == $7->formula());
+command_define_fun: '(' TK_DEFINE_FUN SYMBOL enter_scope '(' name_sort_list ')' sort term exit_scope ')' {
+                    if ($6.empty()) {
+                        // No parameters - treat as variable, just like declare-fun.
+                        const Variable v{driver.DeclareVariable($3, $8)};
+                        if ($9.type() == Term::Type::FORMULA) {
+                            driver.m_context().Assert(v == $9.formula());
+                        } else {
+                            driver.m_context().Assert(v == $9.expression());
+                        }
                     } else {
-                        driver.m_context().Assert(v == $7->expression());
+                        driver.DefineFun($3, $6, $8, $9);
                     }
-                    delete $3;
-                    delete $7;
                 }
-                ;
+        |
+                '(' TK_DEFINE_FUN TK_MAX enter_scope '(' name_sort_list ')' sort term exit_scope ')' {
+                    DLINEAR_WARN_FMT("Redefinition of function `max` is ignored");
+                }
+        |
+                '(' TK_DEFINE_FUN TK_MIN enter_scope '(' name_sort_list ')' sort term exit_scope ')' {
+                    DLINEAR_WARN_FMT("Redefinition of function `min` is ignored");
+                }
+        ;
 
 command_exit:   '('TK_EXIT ')' {
                     driver.m_context().Exit();
+		    YYACCEPT;
                 }
                 ;
 
@@ -215,75 +205,57 @@ command_get_model:
                 }
                 ;
 
+command_get_value:
+                '(' TK_GET_VALUE '(' term_list ')' ')' {
+                    driver.GetValue($4);
+                }
+                ;
+
 command_maximize: '(' TK_MAXIMIZE term ')' {
-                      driver.Maximize($3->expression());
-                      delete $3;
+                      driver.m_context().Maximize($3.expression());
                 }
                 ;
 
 command_minimize: '(' TK_MINIMIZE term ')' {
-                      driver.Minimize($3->expression());
-                      delete $3;
+                      driver.m_context().Minimize($3.expression());
                 }
                 ;
 
 command_set_info:
                 '(' TK_SET_INFO KEYWORD SYMBOL ')' {
-                    driver
-                        .m_context()
-                        .SetInfo(*$3, *$4);
-                    delete $3;
-                    delete $4;
+                    driver.m_context().SetInfo($3, $4);
                 }
         |       '(' TK_SET_INFO KEYWORD STRING ')' {
-                    driver
-                        .m_context()
-                        .SetInfo(*$3, *$4);
-                    delete $3;
-                    delete $4;
+                    driver.m_context().SetInfo($3, $4);
                 }
         |       '(' TK_SET_INFO KEYWORD RATIONAL ')' {
-                    driver
-                        .m_context()
-                        .SetInfo(*$3, std::stod(*$4));
-                    delete $3; delete $4;
+                    driver.m_context().SetInfo($3, std::stod($4));
                 }
                 ;
 command_set_logic:
                 '(' TK_SET_LOGIC SYMBOL ')' {
-                    driver
-                        .m_context()
-                        .SetLogic(parseLogic(*$3));
-                    delete $3;
+                    driver.m_context().SetLogic(parseLogic($3));
                 }
                 ;
 command_set_option:
                 '(' TK_SET_OPTION KEYWORD SYMBOL ')' {
-                    driver
-                        .m_context()
-                        .SetOption(*$3, *$4);
-                    delete $3;
-                    delete $4;
+                    driver.m_context().SetOption($3, $4);
                 }
         |       '('TK_SET_OPTION KEYWORD RATIONAL ')' {
-                    driver
-                        .m_context()
-                        .SetOption(*$3, std::stod(*$4));
-                    delete $3; delete $4;
+                    driver.m_context().SetOption($3, std::stod($4));
                 }
         |       '('TK_SET_OPTION KEYWORD TK_TRUE ')' {
-                    driver
-                        .m_context()
-                        .SetOption(*$3, "true");
-                    delete $3;
+                    driver.m_context().SetOption($3, "true");
                 }
         |       '('TK_SET_OPTION KEYWORD TK_FALSE ')' {
-                    driver
-                        .m_context()
-                        .SetOption(*$3, "false");
-                    delete $3;
+                    driver.m_context().SetOption($3, "false");
                 }
+                ;
 
+command_get_option:
+                '(' TK_GET_OPTION KEYWORD ')' {
+                    driver.GetOption($3);
+                }
                 ;
 
 command_push:   '(' TK_PUSH INT ')' {
@@ -296,79 +268,71 @@ command_pop:    '(' TK_POP INT ')' {
                 }
                 ;
 
-term_list:      term { $$ = new std::vector<Term>(1, *$1); delete $1; }
-        |       term_list term { $1->push_back(*$2); $$ = $1; delete $2; }
+term_list:      term { $$ = std::vector<Term>(1, $1); }
+        |       term_list term { $1.push_back($2); $$ = $1;  }
         ;
 
-term:           TK_TRUE { $$ = new Term(Formula::True()); }
-        |       TK_FALSE { $$ = new Term(Formula::False()); }
+term:           TK_TRUE { $$ = Formula::True(); }
+        |       TK_FALSE { $$ = Formula::False(); }
         |       '('TK_EQ term term ')' {
-            const Term& t1 = *$3;
-            const Term& t2 = *$4;
+            const Term& t1 = $3;
+            const Term& t2 = $4;
             if (t1.type() == Term::Type::EXPRESSION &&
                 t2.type() == Term::Type::EXPRESSION) {
-                $$ = new Term(t1.expression() == t2.expression());
+                $$ = t1.expression() == t2.expression();
             } else if (t1.type() == Term::Type::FORMULA &&
                        t2.type() == Term::Type::FORMULA) {
                 //    (f1 = f2)
                 // -> (f1 ⇔ f2)
                 // -> (f1 ∧ f2) ∨ (¬f1 ∧ ¬f2)
-                $$ = new Term(t1.formula() == t2.formula());
+                $$ = t1.formula() == t2.formula();
             } else {
                 std::cerr << @1 << " : Type mismatch in `t1 == t2`:" << std::endl
                           << "    t1 = " << t1 << std::endl
                           << "    t2 = " << t2 << std::endl;
-                delete $3; delete $4;
                 YYABORT;
             }
-            delete $3; delete $4;
         }
-        |       '('TK_LT term term ')' { $$ = new Term($3->expression() < $4->expression()); delete $3; delete $4; }
-        |       '('TK_LTE term term ')' { $$ = new Term($3->expression() <= $4->expression()); delete $3; delete $4; }
-        |       '('TK_GT term term ')' { $$ = new Term($3->expression() > $4->expression()); delete $3; delete $4; }
-        |       '('TK_GTE term term ')' { $$ = new Term($3->expression() >= $4->expression()); delete $3; delete $4; }
+        |       '('TK_LT term term ')'  { $$ = $3.expression() <  $4.expression(); }
+        |       '('TK_LTE term term ')' { $$ = $3.expression() <= $4.expression(); }
+        |       '('TK_GT term term ')'  { $$ = $3.expression() >  $4.expression(); }
+        |       '('TK_GTE term term ')' { $$ = $3.expression() >= $4.expression(); }
         |       '('TK_AND term_list ')' {
             Formula f = Formula::True();
-            for (const Term& t : *$3) {
+            for (const Term& t : $3) {
                 f = f && t.formula();
             }
-            $$ = new Term(f);
-            delete $3;
+            $$ = f;
         }
         |       '('TK_OR term_list ')' {
             Formula f = Formula::False();
-            for (const Term& t : *$3) {
+            for (const Term& t : $3) {
                 f = f || t.formula();
             }
-            $$ = new Term(f);
-            delete $3;
+            $$ = f;
         }
         |       '('TK_XOR term_list ')' {
             Formula f = Formula::False();
-            for (const Term& t : *$3) {
+            for (const Term& t : $3) {
                 f = (f && !t.formula()) || (!f && t.formula());
             }
-            $$ = new Term(f);
-            delete $3;
+            $$ = f;
         }
         |       '('TK_NOT term ')' {
-            $$ = new Term(!($3->formula()));
-            delete $3;
+            $$ = !($3.formula());
         }
         |       '('TK_IMPLIES term term')' {
-            $$ = new Term(!($3->formula()) || $4->formula());
-            delete $3;
-            delete $4;
+            $$ = !($3.formula()) || $4.formula();
         }
         |       '('TK_ITE term term term ')' {
-            const Formula& cond = $3->formula();
-            const Term& then_term = *$4;
-            const Term& else_term = *$5;
+            const Formula& cond = $3.formula();
+            const Term& then_term = $4;
+            const Term& else_term = $5;
             if (then_term.type() == Term::Type::EXPRESSION &&
                 else_term.type() == Term::Type::EXPRESSION) {
                 const Expression& e1 = then_term.expression();
                 const Expression& e2 = else_term.expression();
-                $$ = new Term{if_then_else(cond, e1, e2)};
+                $$ = if_then_else(cond, e1, e2);
             } else if (then_term.type() == Term::Type::FORMULA &&
                        else_term.type() == Term::Type::FORMULA) {
                 //    if(cond) then f1 else f2
@@ -376,166 +340,142 @@ term:           TK_TRUE { $$ = new Term(Formula::True()); }
                 // -> (¬cond ∨ f1) ∧ (cond ∨ f2)
                 const Formula& f1 = then_term.formula();
                 const Formula& f2 = else_term.formula();
-                $$ = new Term((!cond || f1) && (cond || f2));
+                $$ = (!cond || f1) && (cond || f2);
             } else {
                 std::cerr << @1 << " : Type mismatch in `if (c) then t1 else t2`:" << std::endl
                           << "    t1 = " << then_term << std::endl
                           << "    t2 = " << else_term << std::endl;
-                delete $3; delete $4; delete $5;
                 YYABORT;
             }
-            delete $3; delete $4; delete $5;
         }
         |       '(' TK_FORALL enter_scope '(' variable_sort_list ')' term exit_scope ')' {
-            const Variables& vars = $5->first;
-            const Formula& domain = $5->second;
-            $$ = new Term(forall(vars, imply(domain, $7->formula())));
-            delete $5; delete $7;
+	        const Variables& vars = $5.first;
+            const Formula& domain = $5.second;
+            // TODO: check this EliminateBooleanVariables
+	        const Formula body = Smt2Driver::EliminateBooleanVariables(vars, $7.formula());
+	        const Variables quantified_variables = intersect(vars, body.GetFreeVariables());
+	        if (quantified_variables.empty()) {
+	            $$ = body;
+	        } else {
+                $$ = forall(quantified_variables, imply(domain, body));
+	        }
         }
         |       '(' TK_LET enter_scope let_binding_list term exit_scope ')' {
             $$ = $5;
         }
         |       RATIONAL {
-            const mpq_class& rational{string_to_mpq(*$1)};
-            delete $1;
-            $$ = new Term{rational};
+            $$ = string_to_mpq($1);
         }
-        |       HEXFLOAT { $$ = new Term{$1}; }
-        |       INT { $$ = new Term{convert_int64_to_rational($1)}; }
+        |       HEXFLOAT { $$ = $1; }
+        |       INT { $$ = convert_int64_to_rational($1); }
         |       SYMBOL {
             try {
-                const Smt2Driver::VariableOrConstant& voc = driver.lookup_variable(*$1);
-                if (voc.is_variable()) {
-                  const Variable& var = voc.variable();
-                  if (var.get_type() == Variable::Type::BOOLEAN) {
-                      $$ = new Term(Formula(var));
-                  } else {
-                      $$ = new Term(Expression(var));
-                  }
-                } else {
-                  const Expression& expr = voc.expression();
-                  DLINEAR_ASSERT(is_constant(expr), "Must be a constant");
-                  $$ = new Term(expr);
+                const std::variant<const Expression *, const Variable *> const_or_var = driver.LookupDefinedName($1);
+                // If the name is associated with a variable, check whether it is a boolean variable.
+                if (std::holds_alternative<const Variable *>(const_or_var)) {
+                    const Variable& var = *std::get<const Variable *>(const_or_var);
+                    if (var.get_type() == Variable::Type::BOOLEAN) {
+                        $$ = Formula(var);
+                    } else {
+                        $$ = Expression(var);
+                    }
+                } else { // Otherwise, it must be a constant
+                    $$ = *std::get<const Expression *>(const_or_var);
                 }
             } catch (std::runtime_error& e) {
                 std::cerr << @1 << " : " << e.what() << std::endl;
-                delete $1;              
                 YYABORT;
             }
-            delete $1;          
         }
         |       '(' TK_PLUS term ')' {
             $$ = $3;
         }
         |       '(' TK_PLUS term term_list ')' {
-            for (const Term& term : *$4) {
-                $3->m_expression() += term.expression();
+            for (const Term& term : $4) {
+                $3.m_expression() += term.expression();
             }
             $$ = $3;
-            delete $4;
         }
         |       '(' TK_MINUS term ')' {
-            $$ = new Term{- $3->expression()};
-            delete $3;
+            $$ = - $3.expression();
         }
         |       '(' TK_MINUS term term_list ')' {
-            for (const Term& term : *$4) {
-                $3->m_expression() -= term.expression();
+            for (const Term& term : $4) {
+                $3.m_expression() -= term.expression();
             }
             $$ = $3;
-            delete $4;
         }
         |       '(' TK_TIMES term term_list ')' {
-            for (const Term& term : *$4) {
-                $3->m_expression() *= term.expression();
+            for (const Term& term : $4) {
+                $3.m_expression() *= term.expression();
             }
             $$ = $3;
-            delete $4;
         }
         |       '(' TK_DIV term term_list ')' {
-            for (const Term& term : *$4) {
-                $3->m_expression() /= term.expression();
+            for (const Term& term : $4) {
+                $3.m_expression() /= term.expression();
             }
             $$ = $3;
-            delete $4;
         }
         |       '('TK_EXP term ')' {
-            $$ = new Term{exp($3->expression())};
-            delete $3;
+            $$ = exp($3.expression());
         }
         |       '('TK_LOG term ')' {
-            $$ = new Term{log($3->expression())};
-            delete $3;
+            $$ = log($3.expression());
         }
         |       '('TK_ABS term ')' {
-            $$ = new Term{abs($3->expression())};
-            delete $3;
+            $$ = abs($3.expression());
         }
         |       '('TK_SIN term ')' {
-            $$ = new Term{sin($3->expression())};
-            delete $3;
+            $$ = sin($3.expression());
             }
         |       '('TK_COS term ')' {
-            $$ = new Term{cos($3->expression())};
-            delete $3;
+            $$ = cos($3.expression());
             }
         |       '('TK_TAN term ')' {
-            $$ = new Term{tan($3->expression())};
-            delete $3;
+            $$ = tan($3.expression());
             }
         |       '('TK_ASIN term ')' {
-            $$ = new Term{asin($3->expression())};
-            delete $3;
+            $$ = asin($3.expression());
             }
         |       '('TK_ACOS term ')' {
-            $$ = new Term{acos($3->expression())};
-            delete $3;
+            $$ = acos($3.expression());
             }
         |       '('TK_ATAN term ')' {
-            $$ = new Term{atan($3->expression())};
-            delete $3;
+            $$ = atan($3.expression());
             }
         |       '('TK_ATAN2 term term ')' {
-            $$ = new Term{atan2($3->expression(), $4->expression())};
-            delete $3;
-            delete $4;
+            $$ = atan2($3.expression(), $4.expression());
             }
         |       '('TK_SINH term ')' {
-            $$ = new Term{sinh($3->expression())};
-            delete $3;
+            $$ = sinh($3.expression());
             }
         |       '('TK_COSH term ')' {
-            $$ = new Term{cosh($3->expression())};
-            delete $3;
+            $$ = cosh($3.expression());
             }
         |       '('TK_TANH term ')' {
-            $$ = new Term{tanh($3->expression())};
-            delete $3;
+            $$ = tanh($3.expression());
             }
         |       '('TK_MIN term term ')' {
-            $$ = new Term{min($3->expression(), $4->expression())};
-            delete $3;
-            delete $4;
+            $$ = min($3.expression(), $4.expression());
             }
         |       '('TK_MAX term term ')' {
-            $$ = new Term{max($3->expression(), $4->expression())};
-            delete $3;
-            delete $4;
+            $$ = max($3.expression(), $4.expression());
             }
         |       '('TK_SQRT term ')' {
-            $$ = new Term{sqrt($3->expression())};
-            delete $3;
+            $$ = sqrt($3.expression());
             }
         |       '('TK_POW term term ')' {
-            $$ = new Term{pow($3->expression(), $4->expression())};
-            delete $3;
-            delete $4;
+            $$ = pow($3.expression(), $4.expression());
             }
-        ;
+       |       '(' SYMBOL term_list ')' {
+            $$ = driver.LookupFunction($2, $3);
+            }
+       ;
 
 let_binding_list: '(' var_binding_list ')' {
             // Locals must be bound simultaneously.
-            for (auto& binding : *$2) {
+            for (auto& binding : $2) {
                 const std::string& name{ binding.first };
                 const Term& term{ binding.second };
                 const bool is_formula = term.type() == Term::Type::FORMULA;
@@ -552,71 +492,76 @@ let_binding_list: '(' var_binding_list ')' {
                     driver.m_context().Assert(Expression{v} == term.expression());
                 }
             }
-            delete $2;
         }
         ;
 
-enter_scope: /* */ {
+enter_scope: %empty {
             driver.PushScope();
         }
         ;
 
-exit_scope: /* */ {
+exit_scope: %empty {
             driver.PopScope();
         }
         ;
 
-variable_sort_list: /* empty list */ { $$ = new std::pair<Variables, Formula>(Variables{}, Formula::True()); }
+name_sort: '(' SYMBOL sort ')' {
+            $$ = Variable{driver.DeclareLocalVariable($2, $3)};
+        }
+        ;
+
+name_sort_list: %empty { $$ = std::vector<Variable>{}; }
+        |       name_sort_list name_sort {
+            const Variable& v = $2;
+	        $1.push_back(v);
+	        $$ = $1;
+        }
+        ;
+
+
+variable_sort_list: %empty { $$ = std::pair<Variables, Formula>(Variables{}, Formula::True()); }
         |       variable_sort variable_sort_list {
-            const Variable& v = std::get<0>(*$1);
-            const Expression& lb = std::get<1>(*$1);
-            const Expression& ub = std::get<2>(*$1);
+            const Variable& v = std::get<0>($1);
+            const Expression& lb = std::get<1>($1);
+            const Expression& ub = std::get<2>($1);
             DLINEAR_ASSERT((is_negative_infinity(lb) || is_constant(lb)) && (is_infinity(ub) || is_constant(ub)), "Bounds must be constants");
-            $2->first.insert(v);
+            $2.first.insert(v);
             if (!is_infinite(lb)) {
-                $2->second = $2->second && (get_constant_value(lb) <= v);
+                $2.second = $2.second && (get_constant_value(lb) <= v);
             }
             if (!is_infinite(ub)) {
-                $2->second = $2->second && (v <= get_constant_value(ub));
+                $2.second = $2.second && (v <= get_constant_value(ub));
             }
-            delete $1; $$ = $2;
+            $$ = $2;
         }
         ;
 
 variable_sort: '(' SYMBOL sort ')' {
-            const Variable v = driver.RegisterVariable(*$2, $3);
-            $$ = new std::tuple<Variable, Expression, Expression>(
-                         v, Expression::NInfty(), Expression::Infty());
-            delete $2;
+            const Variable v = driver.RegisterVariable($2, $3);
+            $$ = std::tuple<Variable, Expression, Expression>(v, Expression::NInfty(), Expression::Infty());
         }
         |       '(' SYMBOL sort '[' term ',' term ']' ')' {
-            const Variable v = driver.RegisterVariable(*$2, $3);
-            const mpq_class& lb = $5->expression().Evaluate();
-            const mpq_class& ub = $7->expression().Evaluate();
-            $$ = new std::tuple<Variable, Expression, Expression>(v, lb, ub);
-            delete $2;
-            delete $5;
-            delete $7;
+            const Variable v = driver.RegisterVariable($2, $3);
+            const mpq_class& lb = $5.expression().Evaluate();
+            const mpq_class& ub = $7.expression().Evaluate();
+            $$ = std::tuple<Variable, Expression, Expression>(v, lb, ub);
         }
         ;
 
-sort:           SYMBOL { $$ = ParseSort(*$1); delete $1; }
-                ;
+sort:   SYMBOL { $$ = ParseSort($1); }
+        ;
 
-var_binding_list: /* empty list */ {
-            $$ = new std::vector<std::pair<std::string, Term>>;
+var_binding_list: %empty {
+            $$ = std::vector<std::pair<std::string, Term>>{};
         }
         | var_binding var_binding_list {
-            $2->push_back(*$1);
+            $2.push_back($1);
             $$ = $2;
-            delete $1;
         }
         ;
 
 var_binding: '(' SYMBOL term ')' {
-            $$ = new std::pair<std::string, Term>(*$2, *$3);
-            delete $2;
-            delete $3;
+            $$ = std::pair<std::string, Term>($2, $3);
         }
         ;
 
