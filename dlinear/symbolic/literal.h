@@ -45,6 +45,7 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &variables
 }  // namespace dlinear
 
 OSTREAM_FORMATTER(dlinear::Variable)
+OSTREAM_FORMATTER(dlinear::Variable::Type)
 OSTREAM_FORMATTER(dlinear::Literal)
 OSTREAM_FORMATTER(dlinear::LiteralSet)
 OSTREAM_FORMATTER(dlinear::Model)
