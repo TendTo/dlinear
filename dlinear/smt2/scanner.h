@@ -22,8 +22,8 @@
 #include "dlinear/util/interrupt.h"
 #endif
 
+#include "dlinear/smt2/Sort.h"
 #include "dlinear/smt2/Term.h"
-#include "dlinear/smt2/sort.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 // The following include should come after all the previous ones.
