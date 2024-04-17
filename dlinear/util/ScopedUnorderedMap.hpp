@@ -102,6 +102,14 @@ class ScopedUnorderedMap {
     return it->second;
   }
 
+  /**
+   * Lookup the value for the given key.
+   * @param key key to use for the lookup
+   * @throw runtime_error if the key does not exist
+   * @return element with the given key, if it exists
+   */
+  const T &at(const Key &key) const { return map_.at(key); }
+
   size_type count(const Key &key) const { return map_.count(key); }
   // @note It returns 'const' iterator.
   const_iterator find(const Key &key) const { return map_.find(key); }
