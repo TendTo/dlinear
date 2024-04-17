@@ -24,6 +24,12 @@
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/Stats.h"
 
+#define COMMAND_DOCSTRING(cmd_name, docstring)                    \
+  /** Method invoked by the `cmd_name` command in the SMT-2 file. \
+   *                                                              \
+   * docstring                                                    \
+   */
+
 namespace dlinear::smt2 {
 
 /**
@@ -135,10 +141,22 @@ class Smt2Driver {
   void GetModel();
 
   /**
-   * Get the value of an option @p key.
-   * @param key key of the option
+   * @smtcommand{get-assertions, Print all the assertions currently in the context.
+   * If the mode is set to silent\, it does not print anything.}
+   */
+  void GetAssertions() const;
+
+  /**
+   * @smtcommand{get-option, Print the value of and option or an empty string if the option is not set
+   * @param key key of the option}
    */
   void GetOption(const std::string &key) const;
+
+  /**
+   * @smtcommand{get-info, Print information about the solver or the current context.
+   * @param key key of the information to print}
+   */
+  void GetInfo(const std::string &key) const;
 
   /**
    * Maximize the objective function @p f. The objective function is

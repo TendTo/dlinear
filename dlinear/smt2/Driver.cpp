@@ -61,6 +61,18 @@ void Smt2Driver::CheckSat() {}
 
 void Smt2Driver::GetModel() {}
 
+void Smt2Driver::GetAssertions() const {
+  if (context_.config().silent()) return;
+  std::cout << "(assertions\n";
+  for (const Formula &f : context_.assertions()) {
+    std::stringstream ss;
+    PrefixPrinter pp{ss};
+    pp.Print(f);
+    std::cout << "\t" << ss.str() << "\n";
+  }
+  std::cout << ")" << std::endl;
+}
+
 Formula Smt2Driver::EliminateBooleanVariables(const Variables &vars, const Formula &f) {
   Formula ret{f};
   for (const Variable &b : vars) {
@@ -154,6 +166,11 @@ void Smt2Driver::GetValue(const std::vector<Term> &term_list) const {
 void Smt2Driver::GetOption(const std::string &key) const {
   if (context_.config().silent()) return;
   std::cout << "get-option ( " << key << " ): " << context_.GetOption(key) << std::endl;
+}
+
+void Smt2Driver::GetInfo(const std::string &key) const {
+  if (context_.config().silent()) return;
+  std::cout << "get-info ( " << key << " ): " << context_.GetInfo(key) << std::endl;
 }
 
 std::variant<const Expression *, const Variable *> Smt2Driver::LookupDefinedName(const std::string &name) const {

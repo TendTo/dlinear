@@ -48,14 +48,12 @@ void Context::Push(int n) {
   while (n-- > 0) impl_->Push();
 }
 
-void Context::SetInfo(const std::string &key, const double val) { impl_->SetInfo(key, val); }
 void Context::SetInfo(const std::string &key, const std::string &val) { impl_->SetInfo(key, val); }
 std::string Context::GetInfo(const std::string &key) const { return impl_->GetInfo(key); }
 void Context::SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   impl_->SetInterval(v, lb, ub);
 }
 void Context::SetLogic(const Logic &logic) { impl_->SetLogic(logic); }
-void Context::SetOption(const std::string &key, const double val) { impl_->SetOption(key, val); }
 void Context::SetOption(const std::string &key, const std::string &val) { impl_->SetOption(key, val); }
 std::string Context::GetOption(const std::string &key) const { return impl_->GetOption(key); }
 const Config &Context::config() const { return impl_->config(); }

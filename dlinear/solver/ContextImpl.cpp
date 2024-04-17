@@ -26,7 +26,16 @@ namespace {
 bool ParseBooleanOption([[maybe_unused]] const std::string &key, const std::string &val) {
   if (val == "true") return true;
   if (val == "false") return false;
-  DLINEAR_RUNTIME_ERROR_FMT("Unknown value {} is provided for option {}", val, key);
+  DLINEAR_RUNTIME_ERROR_FMT("Invalid value {} is provided for option {}. Expected bool [true, false]", val, key);
+}
+double ParseDoubleOption([[maybe_unused]] const std::string &key, const std::string &val) {
+  try {
+    return std::stod(val);
+  } catch (const std::invalid_argument &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid value {} is provided for option {}. Expected double", val, key);
+  } catch (const std::out_of_range &e) {
+    DLINEAR_RUNTIME_ERROR_FMT("Out of range value {} is provided for option {}. Expected double", val, key);
+  }
 }
 
 }  // namespace
@@ -90,6 +99,7 @@ void Context::Impl::Push() {
 }
 
 SatResult Context::Impl::CheckSat(mpq_class *precision) {
+  if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
   SatResult result = CheckSatCore(precision);
   switch (result) {
     case SatResult::SAT_DELTA_SATISFIABLE:
@@ -112,6 +122,7 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
 }
 
 LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
+  if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
   LpResult result = CheckOptCore(obj_lo, obj_up);
   if (LpResult::LP_DELTA_OPTIMAL == result || LpResult::LP_OPTIMAL == result) {
     model_ = ExtractModel(box());
@@ -160,11 +171,6 @@ void Context::Impl::Maximize(const std::vector<Expression> &functions) {
   MinimizeCore(obj_expr);
 }
 
-void Context::Impl::SetInfo(const std::string &key, const double val) {
-  DLINEAR_DEBUG_FMT("ContextImpl::SetInfo({} ↦ {})", key, val);
-  info_[key] = fmt::format("{}", val);
-}
-
 void Context::Impl::SetInfo(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInfo({} ↦ {})", key, val);
   info_[key] = val;
@@ -184,22 +190,19 @@ void Context::Impl::SetInterval(const Variable &v, const mpq_class &lb, const mp
 
 void Context::Impl::SetLogic(const Logic &logic) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetLogic({})", logic);
-  logic_ = logic;
-}
-
-void Context::Impl::SetOption(const std::string &key, const double val) {
-  DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
-  option_[key] = fmt::format("{}", val);
-
-  if (key == ":precision") {
-    if (val <= 0.0) DLINEAR_RUNTIME_ERROR_FMT("Precision has to be positive (input = {}).", val);
-    return config_.m_precision().set_from_file(val);
+  switch (logic) {
+    case Logic::QF_LRA:
+      logic_ = logic;
+      break;
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("Unsupported logic: {}", logic);
   }
 }
 
 void Context::Impl::SetOption(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
+  if (key == ":precision") config_.m_precision().set_from_file(ParseDoubleOption(key, val));
   if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
   if (key == ":forall-polytope") return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
   if (key == ":local-optimization")
@@ -209,6 +212,12 @@ void Context::Impl::SetOption(const std::string &key, const std::string &val) {
 }
 
 std::string Context::Impl::GetOption(const std::string &key) const {
+  if (key == ":polytope") return fmt::format("{}", config_.use_polytope());
+  if (key == ":forall-polytope") return fmt::format("{}", config_.use_polytope_in_forall());
+  if (key == ":local-optimization") return fmt::format("{}", config_.use_local_optimization());
+  if (key == ":worklist-fixpoint") return fmt::format("{}", config_.use_worklist_fixpoint());
+  if (key == ":produce-models") return fmt::format("{}", config_.produce_models());
+  if (key == ":precision") return fmt::format("{}", config_.precision());
   const auto it = option_.find(key);
   if (it == option_.end()) return "";
   return it->second;

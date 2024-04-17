@@ -107,12 +107,6 @@ class Context::Impl {
    * @param key the key of the info
    * @param val the value of the info
    */
-  void SetInfo(const std::string &key, double val);
-  /**
-   * Set an info @p key with a value @p val.
-   * @param key the key of the info
-   * @param val the value of the info
-   */
   void SetInfo(const std::string &key, const std::string &val);
   /**
    * Get the info @p key.
@@ -132,12 +126,6 @@ class Context::Impl {
    * @param logic the logic to be set
    */
   void SetLogic(const Logic &logic);
-  /**
-   * Set an option @p key with a value @p val.
-   * @param key the key of the option
-   * @param val the value of the option
-   */
-  void SetOption(const std::string &key, double val);
   /**
    * Set an option @p key with a value @p val.
    * @param key the key of the option

@@ -94,7 +94,8 @@ using dlinear::gmp::string_to_mpq;
 %token <std::string>     KEYWORD               "keyword"
 %token <std::string>     STRING                "string"
 
-%type <dlinear::smt2::Sort>       sort
+%type <Sort>                      sort
+%type <std::vector<Sort>>         sort_list
 %type <Term>                      term
 %type <std::vector<Term>>         term_list
 
@@ -105,6 +106,8 @@ using dlinear::gmp::string_to_mpq;
 
 %type <Variable>              name_sort
 %type <std::vector<Variable>> name_sort_list
+
+%type <std::string> generic_string
 
 %{
 
@@ -132,7 +135,10 @@ command:        command_assert
         |       command_check_sat
         |       command_declare_fun
         |       command_define_fun
+        |       command_declare_sort
+        |       command_define_sort
         |       command_exit
+        |       command_get_assertions
         |       command_get_model
         |       command_get_value
         |       command_maximize
@@ -143,16 +149,32 @@ command:        command_assert
         |       command_set_logic
         |       command_set_option
         |       command_get_option
+        |       command_get_info
         ;
 
-command_assert: '('TK_ASSERT term ')' {
+generic_string: SYMBOL
+        | STRING
+        | RATIONAL
+        | HEXFLOAT { $$ = std::to_string($1); }
+        | INT { $$ = std::to_string($1); }
+        | KEYWORD
+        ;
+
+command_assert: '(' TK_ASSERT term ')' {
                     driver.m_context().Assert($3.formula());
                 }
                 ;
-command_check_sat: '('TK_CHECK_SAT ')' {
+command_check_sat: '(' TK_CHECK_SAT ')' {
                     driver.CheckSat();
                 }
                 ;
+command_declare_sort : '(' TK_DECLARE_SORT sort INT ')' {
+                    DLINEAR_RUNTIME_ERROR("`declare-sort` command is not supported");
+                }
+                ;
+command_define_sort : '(' TK_DEFINE_SORT sort '(' sort_list ')' sort_list ')' {
+                    DLINEAR_RUNTIME_ERROR("`define-sort` command is not supported");
+                }
 command_declare_fun: '(' TK_DECLARE_FUN SYMBOL '(' ')' sort ')' {
                     driver.DeclareVariable($3, $6);
                 }
@@ -193,14 +215,19 @@ command_define_fun: '(' TK_DEFINE_FUN SYMBOL enter_scope '(' name_sort_list ')' 
                 }
         ;
 
-command_exit:   '('TK_EXIT ')' {
+command_exit:   '(' TK_EXIT ')' {
                     driver.m_context().Exit();
 		    YYACCEPT;
                 }
                 ;
 
+command_get_assertions:
+                '(' TK_GET_ASSERTIONS ')' {
+                    driver.GetAssertions();
+                }
+                ;
 command_get_model:
-                '('TK_GET_MODEL ')' {
+                '(' TK_GET_MODEL ')' {
                     driver.GetModel();
                 }
                 ;
@@ -222,39 +249,45 @@ command_minimize: '(' TK_MINIMIZE term ')' {
                 ;
 
 command_set_info:
-                '(' TK_SET_INFO KEYWORD SYMBOL ')' {
+                '(' TK_SET_INFO KEYWORD generic_string ')' {
                     driver.m_context().SetInfo($3, $4);
                 }
-        |       '(' TK_SET_INFO KEYWORD STRING ')' {
-                    driver.m_context().SetInfo($3, $4);
+        |       
+                '(' TK_SET_INFO KEYWORD TK_TRUE ')' {
+                    driver.m_context().SetInfo($3, "true");
                 }
-        |       '(' TK_SET_INFO KEYWORD RATIONAL ')' {
-                    driver.m_context().SetInfo($3, std::stod($4));
+        |       
+                '(' TK_SET_INFO KEYWORD TK_FALSE ')' {
+                    driver.m_context().SetInfo($3, "false");
                 }
-                ;
+        ;
 command_set_logic:
                 '(' TK_SET_LOGIC SYMBOL ')' {
                     driver.m_context().SetLogic(parseLogic($3));
                 }
-                ;
+        ;
 command_set_option:
-                '(' TK_SET_OPTION KEYWORD SYMBOL ')' {
+                '(' TK_SET_OPTION KEYWORD generic_string ')' {
                     driver.m_context().SetOption($3, $4);
                 }
-        |       '('TK_SET_OPTION KEYWORD RATIONAL ')' {
-                    driver.m_context().SetOption($3, std::stod($4));
-                }
-        |       '('TK_SET_OPTION KEYWORD TK_TRUE ')' {
+        |       
+                '('TK_SET_OPTION KEYWORD TK_TRUE ')' {
                     driver.m_context().SetOption($3, "true");
                 }
-        |       '('TK_SET_OPTION KEYWORD TK_FALSE ')' {
+        |       
+                '('TK_SET_OPTION KEYWORD TK_FALSE ')' {
                     driver.m_context().SetOption($3, "false");
                 }
-                ;
+        ;
 
 command_get_option:
                 '(' TK_GET_OPTION KEYWORD ')' {
                     driver.GetOption($3);
+                }
+                ;
+command_get_info:
+                '(' TK_GET_INFO KEYWORD ')' {
+                    driver.GetInfo($3);
                 }
                 ;
 
@@ -550,10 +583,14 @@ variable_sort: '(' SYMBOL sort ')' {
 
 sort:   SYMBOL { $$ = ParseSort($1); }
         ;
-
-var_binding_list: %empty {
-            $$ = std::vector<std::pair<std::string, Term>>{};
+sort_list: %empty { $$ = std::vector<Sort>{}; }
+        | sort_list sort {
+            $1.push_back($2);
+            $$ = $1;
         }
+        ;
+
+var_binding_list: %empty { $$ = std::vector<std::pair<std::string, Term>>{}; }
         | var_binding var_binding_list {
             $2.push_back($1);
             $$ = $2;

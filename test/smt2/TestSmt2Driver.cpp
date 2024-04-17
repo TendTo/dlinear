@@ -24,6 +24,61 @@ class TestSmt2Driver : public ::testing::Test {
   Context context_{config_};
 };
 
+TEST_F(TestSmt2Driver, ValidSetLogic) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(driver.parse_string("(set-logic QF_LRA)"));
+}
+
+TEST_F(TestSmt2Driver, InvalidSetLogic) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(set-logic QF_LIA)"), std::runtime_error);
+  EXPECT_THROW(driver.parse_string("(set-logic LRA)"), std::runtime_error);
+  EXPECT_THROW(driver.parse_string("(set-logic LIA)"), std::runtime_error);
+  EXPECT_THROW(driver.parse_string("(set-logic QF_BV)"), std::runtime_error);
+  EXPECT_THROW(driver.parse_string("(set-logic QF_UF)"), std::runtime_error);
+  EXPECT_THROW(driver.parse_string("(set-logic QF_UFBV)"), std::runtime_error);
+}
+
+TEST_F(TestSmt2Driver, DeclareVariables) {
+  Smt2Driver driver{context_};
+  driver.parse_string(
+      "(declare-fun r () Real)\n"
+      "; (declare-fun i () Int)\n"  // Int is not supported
+      "(declare-fun b () Bool)\n"
+      "; (declare-fun bin () Binary)");  // Binary is not supported
+
+  const Variable& r = driver.LookupVariable("r");
+  //  const Variable& i = driver.LookupVariable("i");
+  const Variable& b = driver.LookupVariable("b");
+  //  const Variable& bin = driver.LookupVariable("bin");
+
+  EXPECT_EQ(r.get_name(), "r");
+  EXPECT_EQ(r.get_type(), Variable::Type::CONTINUOUS);
+  //  EXPECT_EQ(i.get_name(), "i");
+  //  EXPECT_EQ(i.get_type(), Variable::Type::INTEGER);
+  EXPECT_EQ(b.get_name(), "b");
+  EXPECT_EQ(b.get_type(), Variable::Type::BOOLEAN);
+  //  EXPECT_EQ(bin.get_name(), "bin");
+  //  EXPECT_EQ(bin.get_type(), Variable::Type::BINARY);
+
+  EXPECT_EQ(driver.context().box().size(), 2);
+}
+
+TEST_F(TestSmt2Driver, DeclareSort) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(declare-sort A 0)"), std::runtime_error);
+}
+
+TEST_F(TestSmt2Driver, DefineSortAlias) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(define-sort I () Int)"), std::runtime_error);
+}
+
+TEST_F(TestSmt2Driver, DefineSortParameters) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(define-sort P (X) (Pair X X))"), std::runtime_error);
+}
+
 TEST_F(TestSmt2Driver, SimpleRealAssertion) {
   Smt2Driver driver{context_};
   driver.parse_string(
@@ -209,4 +264,60 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMinFunction) {
   EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x <= 0));
   EXPECT_TRUE(driver.context().assertions()[1].EqualTo(y <= 1));
   EXPECT_TRUE(driver.context().assertions()[2].EqualTo(min(x, y) == 1));
+}
+
+TEST_F(TestSmt2Driver, EmptyGetAssertions) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(driver.parse_string("(get-assertions)"));
+}
+
+TEST_F(TestSmt2Driver, GetAssertions) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(declare-fun x () Real)\n"
+                          "(declare-fun y () Real)\n"
+                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                          "(assert (let ((lhs y) (rhs x) (c 12)) (= (+ lhs rhs) 12)))\n"
+                          "(get-assertions)"));
+}
+
+TEST_F(TestSmt2Driver, SetConfigOptions) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(set-option :precision 1)\n"
+                          "(set-option :produce-models true)\n"
+                          "(set-option :polytope true)\n"
+                          "(set-option :forall-polytope true)\n"
+                          "(set-option :local-optimization true)\n"
+                          "(set-option :worklist-fixpoint true)"));
+  EXPECT_EQ(driver.context().config().precision(), 1);
+  EXPECT_TRUE(driver.context().config().produce_models());
+  EXPECT_TRUE(driver.context().config().use_polytope());
+  EXPECT_TRUE(driver.context().config().use_polytope_in_forall());
+  EXPECT_TRUE(driver.context().config().use_local_optimization());
+  EXPECT_TRUE(driver.context().config().use_worklist_fixpoint());
+}
+
+TEST_F(TestSmt2Driver, EmptyGetOption) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(driver.parse_string("(get-option :produce-models)"));
+}
+
+TEST_F(TestSmt2Driver, GetOption) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(set-option :produce-models true)\n"
+                          "(get-option :produce-models)"));
+}
+
+TEST_F(TestSmt2Driver, EmptyInfo) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(driver.parse_string("(get-info :status)"));
+}
+
+TEST_F(TestSmt2Driver, GetInfo) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(set-info :status sat)\n"
+                          "(get-info :status)"));
 }
