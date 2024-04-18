@@ -28,23 +28,31 @@ Smt2Driver::Smt2Driver(Context &context)
       stats_{context.config().with_timings(), "Smt2Driver", "Total time spent in SMT2 parsing"} {}
 
 bool Smt2Driver::parse_stream(std::istream &in, const std::string &sname) {
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  streamname_ = sname;
+  SmtSolverOutput *const output = context_.m_solver_output();
+  if (output != nullptr) {
+    output->parser_stats = stats_;
+    timer_ = &output->parser_stats.m_timer();
+  } else {
+    timer_ = &stats_.m_timer();
+  }
+  DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
+  TimerGuard timer_guard(timer_, stats_.enabled());
+  stream_name_ = sname;
 
   Smt2Scanner scanner(&in);
   scanner.set_debug(debug_scanning_);
-  this->scanner_ = &scanner;
+  scanner_ = &scanner;
 
   Smt2Parser parser(*this);
   parser.set_debug_level(debug_parsing_);
-  return parser.parse() == 0;
+  const bool res = parser.parse() == 0;
+  if (output != nullptr) stats_ = output->parser_stats;
+  return res;
 }
 
 bool Smt2Driver::parse_file(const std::string &filename) {
   std::ifstream in(filename.c_str());
-  if (!in.good()) {
-    return false;
-  }
+  if (!in.good()) return false;
   return parse_stream(in, filename);
 }
 
@@ -57,9 +65,16 @@ void Smt2Driver::error(const location &l, const std::string &m) { std::cerr << l
 
 void Smt2Driver::error(const std::string &m) { std::cerr << m << std::endl; }
 
-void Smt2Driver::CheckSat() {}
+void Smt2Driver::CheckSat() {
+  DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
+  // Don't consider the time spent checking sat in the time spent parsing.
+  timer_->pause();
+  mpq_class precision = context_.config().precision();
+  context_.CheckSat(&precision);
+  timer_->resume();
+}
 
-void Smt2Driver::GetModel() {}
+void Smt2Driver::GetModel() { std::cout << "(model\n" << context_.model() << "\n)" << std::endl; }
 
 void Smt2Driver::GetAssertions() const {
   if (context_.config().silent()) return;

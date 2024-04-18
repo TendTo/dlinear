@@ -25,6 +25,7 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatSolver.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/TheorySolver.h"
 #include "dlinear/util/ScopedVector.hpp"
 
@@ -41,7 +42,7 @@ class Context::Impl {
    * Construct a context with @p config.
    * @param config the configuration of the context
    */
-  explicit Impl(Config &config);
+  explicit Impl(Config &config, SmtSolverOutput *output = nullptr);
   Impl(const Impl &) = delete;
   Impl(Impl &&) = delete;
   Impl &operator=(const Impl &) = delete;
@@ -159,6 +160,9 @@ class Context::Impl {
    * @return the model computed by the solver
    */
   const Box &get_model() { return model_; }
+
+  [[nodiscard]] const SmtSolverOutput *solver_output() const { return output_; }
+  SmtSolverOutput *m_solver_output() { return output_; }
   /**
    * Check whether or not there is an objective function (which may be zero) to optimize.
    * @return true if there is an objective function to optimize. @ref CheckOpt() will be called
@@ -171,24 +175,6 @@ class Context::Impl {
    * @return false if the original objective function is a minimization
    */
   bool is_max() const;
-  /**
-   * Get the statistics up to the last call to CheckSat of the SAT solver.
-   * @return statistics of the SAT solver
-   */
-  const IterationStats &sat_stats() { return sat_solver_->stats(); }
-  /**
-   * Get the statistics up to the last call to CheckSat or CheckOpt of the theory solver.
-   * @return statistics of the theory solver
-   */
-  const IterationStats &theory_stats() { return theory_solver_->stats(); }
-  /**
-   * Get the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
-   * @return statistics of the predicate abstractor, the CNFizer and ITE visitor
-   */
-  std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> formula_visitors_stats() const {
-    const auto [predicate_abstractor_stats, cnfizer_stats] = sat_solver_->formula_visitors_stats();
-    return {predicate_abstractor_stats, cnfizer_stats, ite_stats_};
-  }
 
  private:
   static const Config default_config_;  ///< Default configuration of the context if none is provided.
@@ -274,8 +260,20 @@ class Context::Impl {
    */
   Box ExtractModel(const Box &box) const;
 
-  Config &config_;                ///< Configuration of the context. It could be modified by the problem instance.
-  std::optional<Logic> logic_{};  ///< SMT Logic of the context. Must be among the supported logics.
+  /**
+   * Update the @ref output_ with the last @p smt_result .
+   *
+   * Depending on the configuration, the model could be stored in the output, assertion and statistics could be updated.
+   * Finally, the result will be printed to the standard output, if the configuration allows it.
+   * @warning Precision and bounds are not updated.
+   * @param smt_result smt result to present the user
+   */
+  void UpdateAndPrintOutput(SmtResult smt_result) const;
+
+  Config &config_;                 ///< Configuration of the context. It could be modified by the problem instance.
+  SmtSolverOutput *const output_;  ///< Output of the SMT solver. Stores the result of the checksat and some statistics.
+
+  std::optional<Logic> logic_;  ///< SMT Logic of the context. Must be among the supported logics.
   std::unordered_map<std::string, std::string> info_;    ///< Key-value pairs of information.
   std::unordered_map<std::string, std::string> option_;  ///< Key-value pairs of options.
 
@@ -289,14 +287,13 @@ class Context::Impl {
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
   bool theory_loaded_;   ///< Whether the theory solver has been loaded with all the assertions parsed by the SAT
 
-  IterationStats ite_stats_;                  ///< Statistics about the if-then-else elimination
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   // TODO: these could become templated classes for added efficiency
-  std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
-  std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
+  const std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
+  const std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
 
 #ifndef NDEBUG
-  std::set<LiteralSet> explanations_so_far;
+  std::set<LiteralSet> explanations_so_far;  ///< Set of explanations that have been learned so far.
 #endif
 };
 

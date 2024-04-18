@@ -18,9 +18,7 @@ SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, const std::strin
       predicate_abstractor_{predicate_abstractor},
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
-std::tuple<const IterationStats &, const IterationStats &> SatSolver::formula_visitors_stats() const {
-  return {predicate_abstractor_.stats(), cnfizer_.stats()};
-}
+const IterationStats &SatSolver::cnfizer_stats() const { return cnfizer_.stats(); }
 
 void SatSolver::AddFormula(const Formula &f) {
   DLINEAR_DEBUG_FMT("SatSolver::AddFormula({})", f);

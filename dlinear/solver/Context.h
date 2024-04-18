@@ -21,6 +21,7 @@
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
@@ -38,9 +39,11 @@ class Context {
  public:
   /**
    * Construct a context with @p config.
+   * If @p smt_solver_output is not null, it will be used to store the output of the SMT solver
+   * as well as some statistics.
    * @param config the configuration of the context
    */
-  explicit Context(Config &config);
+  explicit Context(Config &config, SmtSolverOutput * = nullptr);
   Context(const Context &context) = delete;
   Context(Context &&context) noexcept;
   Context &operator=(const Context &) = delete;
@@ -186,28 +189,14 @@ class Context {
    * @return false if there is no objective function. @ref CheckSat() will be called
    */
   [[nodiscard]] bool have_objective() const;
+  [[nodiscard]] const SmtSolverOutput *solver_output() const;
+  SmtSolverOutput *m_solver_output();
   /**
    * Check whether or not the objective function (if present) is a maximization.
    * @return true if the original objective function is a maximization
    * @return false if the original objective function is a minimization
    */
   [[nodiscard]] bool is_max() const;
-  /**
-   * Get the statistics up to the last call to CheckSat of the SAT solver.
-   * @return statistics of the SAT solver
-   */
-  [[nodiscard]] const IterationStats &sat_stats() const;
-  /**
-   * Get the statistics up to the last call to CheckSat or CheckOpt of the theory solver.
-   * @return statistics of the theory solver
-   */
-  [[nodiscard]] const IterationStats &theory_stats() const;
-  /**
-   * Get the statistics up to the last call to CheckSat or CheckOpt of the formula visitors used by the SAT solver.
-   * @return statistics of the predicate abstractor, the CNFizer and ITE visitor
-   */
-  [[nodiscard]] std::tuple<const IterationStats &, const IterationStats &, const IterationStats &>
-  formula_visitors_stats() const;
 
  private:
   /**

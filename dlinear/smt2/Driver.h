@@ -24,12 +24,6 @@
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/Stats.h"
 
-#define COMMAND_DOCSTRING(cmd_name, docstring)                    \
-  /** Method invoked by the `cmd_name` command in the SMT-2 file. \
-   *                                                              \
-   * docstring                                                    \
-   */
-
 namespace dlinear::smt2 {
 
 /**
@@ -218,7 +212,7 @@ class Smt2Driver {
   Context &m_context() { return context_; }
   const Context &context() const { return context_; }
 
-  std::string &m_streamname() { return streamname_; }
+  std::string &m_streamname() { return stream_name_; }
 
   /**
    * Pointer to the current scanner instance, this is used to connect the
@@ -241,7 +235,7 @@ class Smt2Driver {
 
   int64_t nextUniqueId_{};  ///< Sequential value concatenated to names to make them unique.
 
-  std::string streamname_;  ///< The name of the stream being parsed.
+  std::string stream_name_;  ///< The name of the stream being parsed.
 
   Context &context_;  ///< The context filled during parsing of the expressions.
 
@@ -249,7 +243,8 @@ class Smt2Driver {
 
   bool debug_parsing_{false};  ///< Enable debug output in the bison parser.
 
-  Stats stats_;  ///< Statistics for the driver.
+  Stats stats_;   ///< Statistics for the driver.
+  Timer *timer_;  ///< Pointer to the timer for the driver. Used to pause the timer when checking sat.
 };
 
 }  // namespace dlinear::smt2

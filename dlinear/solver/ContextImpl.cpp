@@ -42,12 +42,13 @@ double ParseDoubleOption([[maybe_unused]] const std::string &key, const std::str
 
 namespace dlinear {
 
-Context::Impl::Impl(Config &config)
+Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
     : config_{config},
+      output_{output},
+      logic_{},
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
-      ite_stats_{false, ""},
       predicate_abstractor_{config},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_)},
       theory_solver_{GetTheorySolver(config)} {
@@ -62,25 +63,15 @@ void Context::Impl::Assert(const Formula &f) {
     return;
   }
 
-#if 0
-  if (FilterAssertion(f, &box()) == FilterAssertionResult::NotFiltered) {
-#endif
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
   IfThenElseEliminator ite_eliminator{config_};
   const Formula no_ite{ite_eliminator.Process(f)};
 
   // Note that the following does not mark `ite_var` as a model variable.
   for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
-  if (config_.with_timings()) ite_stats_ = ite_eliminator.stats();
+  if (config_.with_timings() && output_ != nullptr) output_->ite_stats += ite_eliminator.stats();
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
-#if 0
-  } else {
-    DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is not added.", f);
-    DLINEAR_DEBUG_FMT("Box=\n{}", box());
-    return;
-  }
-#endif
 }
 
 void Context::Impl::Pop() {
@@ -100,7 +91,13 @@ void Context::Impl::Push() {
 
 SatResult Context::Impl::CheckSat(mpq_class *precision) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
-  SatResult result = CheckSatCore(precision);
+  if (config_.skip_check_sat()) {
+    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Skipping SAT check");
+    UpdateAndPrintOutput(SmtResult::SKIP_SAT);
+    return SatResult::SAT_NO_RESULT;
+  }
+
+  const SatResult result = CheckSatCore(precision);
   switch (result) {
     case SatResult::SAT_DELTA_SATISFIABLE:
     case SatResult::SAT_SATISFIABLE:
@@ -118,12 +115,22 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
     default:
       DLINEAR_UNREACHABLE();
   }
+
+  if (output_ == nullptr) return result;
+  DLINEAR_DEBUG("ContextImpl::CheckSat() - Setting output");
+  output_->actual_precision = *precision;
+  UpdateAndPrintOutput(parse_smt_result(result));
   return result;
 }
 
 LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
-  LpResult result = CheckOptCore(obj_lo, obj_up);
+  if (config_.skip_check_sat()) {
+    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Skipping SAT check");
+    UpdateAndPrintOutput(SmtResult::SKIP_SAT);
+    return LpResult::LP_NO_RESULT;
+  }
+  const LpResult result = CheckOptCore(obj_lo, obj_up);
   if (LpResult::LP_DELTA_OPTIMAL == result || LpResult::LP_OPTIMAL == result) {
     model_ = ExtractModel(box());
     DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", model_);
@@ -131,6 +138,12 @@ LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
     DLINEAR_DEBUG("ContextImpl::CheckOpt() - Model not found");
     model_.set_empty();
   }
+
+  if (output_ == nullptr) return result;
+  DLINEAR_DEBUG("ContextImpl::CheckSat() - Setting output");
+  output_->lower_bound = *obj_lo;
+  output_->upper_bound = *obj_up;
+  UpdateAndPrintOutput(parse_smt_result(result));
   return result;
 }
 
@@ -393,6 +406,22 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
 void Context::Impl::LearnExplanations(const TheorySolver::Explanations &explanations) {
   DLINEAR_ASSERT(!explanations.empty(), "Explanations cannot be empty");
   for (const LiteralSet &explanation : explanations) LearnExplanation(explanation);
+}
+
+void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
+  if (output_ == nullptr) return;
+  DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting output");
+  output_->result = smt_result;
+  output_->n_assertions = assertions().size();
+  if (config_.produce_models()) output_->model = model_;
+  if (config_.with_timings()) {
+    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting timings");
+    output_->sat_stats = sat_solver_->stats();
+    output_->theory_stats = theory_solver_->stats();
+    output_->predicate_abstractor_stats = predicate_abstractor_.stats();
+    output_->cnfizer_stats = sat_solver_->cnfizer_stats();
+  }
+  if (!config_.silent()) std::cout << *output_ << std::endl;
 }
 
 }  // namespace dlinear

@@ -24,23 +24,25 @@ MpsDriver::MpsDriver(Context &context)
       stats_{context.config().with_timings(), "MpsDriver", "Total time spent in MPS parsing"} {}
 
 bool MpsDriver::parse_stream(std::istream &in, const std::string &sname) {
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  SmtSolverOutput *const output = context_.m_solver_output();
+  if (output != nullptr) output->parser_stats = stats_;
+  TimerGuard timer_guard(output == nullptr ? &stats_.m_timer() : &output->parser_stats.m_timer(), stats_.enabled());
   stream_name_ = sname;
 
   MpsScanner scanner(&in);
   scanner.set_debug(debug_scanning_);
-  this->scanner_ = &scanner;
+  scanner_ = &scanner;
 
   MpsParser parser(*this);
   parser.set_debug_level(debug_parsing_);
-  return parser.parse() == 0;
+  const bool res = parser.parse() == 0;
+  if (output != nullptr) stats_ = output->parser_stats;
+  return res;
 }
 
 bool MpsDriver::parse_file(const std::string &filename) {
   std::ifstream in(filename.c_str());
-  if (!in.good()) {
-    return false;
-  }
+  if (!in.good()) return false;
   return parse_stream(in, filename);
 }
 

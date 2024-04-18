@@ -241,7 +241,7 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
   // fmt::print uses shortest round-trip format for doubles, by default
   fmt::print("PARTIAL: delta-sat with delta = {} ( > {})", infeas_gt, mpq_class(infeas));
   if (theory_solver->with_timings_) {
-    fmt::print(" after {} seconds", main_timer.seconds());
+    fmt::print(" after {} seconds", theory_solver->stats_.timer().seconds());
   }
   fmt::print("\n");
 }

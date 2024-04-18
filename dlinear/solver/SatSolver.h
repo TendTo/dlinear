@@ -115,10 +115,10 @@ class SatSolver {
    */
   const IterationStats &stats() const { return stats_; }
   /**
-   * Get the statistics of the formula visitors used by the SAT solver.
-   * @return statistics of the predicate abstractor and the CNFizer
+   * Get the statistics of the CNFizer used by the SAT solver.
+   * @return statistics of the CNFizer
    */
-  std::tuple<const IterationStats &, const IterationStats &> formula_visitors_stats() const;
+  const IterationStats &cnfizer_stats() const;
 
  protected:
   /**

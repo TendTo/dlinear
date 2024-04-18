@@ -19,7 +19,7 @@ Context::Context(Context &&context) noexcept : impl_{std::move(context.impl_)} {
 
 Context::~Context() = default;
 
-Context::Context(Config &config) : impl_{std::make_unique<Impl>(config)} {}
+Context::Context(Config &config, SmtSolverOutput *const output) : impl_{std::make_unique<Impl>(config, output)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
@@ -59,15 +59,10 @@ std::string Context::GetOption(const std::string &key) const { return impl_->Get
 const Config &Context::config() const { return impl_->config(); }
 const Box &Context::box() const { return impl_->box(); }
 const Box &Context::model() const { return impl_->get_model(); }
+const SmtSolverOutput *Context::solver_output() const { return impl_->solver_output(); }
+SmtSolverOutput *Context::m_solver_output() { return impl_->m_solver_output(); }
 const ScopedVector<Formula> &Context::assertions() const { return impl_->assertions(); }
 bool Context::have_objective() const { return impl_->have_objective(); }
 bool Context::is_max() const { return impl_->is_max(); }
-const IterationStats &Context::sat_stats() const { return impl_->sat_stats(); }
-const IterationStats &Context::theory_stats() const { return impl_->theory_stats(); }
-
-std::tuple<const IterationStats &, const IterationStats &, const IterationStats &> Context::formula_visitors_stats()
-    const {
-  return impl_->formula_visitors_stats();
-}
 
 }  // namespace dlinear
