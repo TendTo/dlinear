@@ -79,6 +79,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "debug_parsing = " << config.debug_parsing_.get() << ",\n"
             << "debug_scanning = " << config.debug_scanning_.get() << ",\n"
             << "disable_theory_preprocessor = " << config.disable_theory_preprocessor_.get() << ",\n"
+            << "enforce_check_sat = " << config.enforce_check_sat_.get() << ",\n"
             << "filename = '" << config.filename_.get() << "',\n"
             << "format = '" << config.format_.get() << "',\n"
             << "lp_mode = '" << config.lp_mode_.get() << "',\n"

@@ -81,14 +81,15 @@ class Config {
  private:
   OptionValue<std::string> filename_{""};
 
-  DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO, "Input file format")
+  DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
+                    "Input file format\n"
+                    "\t\tOne of: auto (1), smt2 (2), mps (3)")
   DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
-  DLINEAR_PARAMETER(
-      precision, double, 9.999999999999996e-4,
-      "Delta precision used by the LP solver solver.\n"
-      "\t\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
-      "\t\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
-      "\t\t\tUse the --complete flag if you are looking for a complete solution")
+  DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4,
+                    "Delta precision used by the LP solver solver.\n"
+                    "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
+                    "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
+                    "\t\tUse the --complete flag if you are looking for a complete solution")
   DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
   DLINEAR_PARAMETER(use_polytope, bool, false, "Use polytope contractor")
   DLINEAR_PARAMETER(use_polytope_in_forall, bool, false, "Use polytope contractor in forall contractor")
@@ -98,18 +99,16 @@ class Config {
   DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(lp_mode, LPMode, dlinear::Config::LPMode::AUTO,
                     "LP mode used by the LP solver.\n"
-                    "\t\t\tOne of: auto (0), pure-precision-boosting (1), pure-iterative-refinement (2), hybrid (3)")
+                    "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")
   DLINEAR_PARAMETER(lp_solver, LPSolver, dlinear::Config::LPSolver::SOPLEX,
                     "LP solver used by the LP solver.\n"
-                    "\t\t\tOne of: soplex (1), qsoptex (2)")
+                    "\t\tOne of: soplex (1), qsoptex (2)")
   DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
-  DLINEAR_PARAMETER(
-      verbose_dlinear, int, 2,
-      "Verbosity level for dlinear. In the range [0, 5]. 0 or any other value outside the range disables logging")
+  DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
   DLINEAR_PARAMETER(complete, bool, false,
-                    "Complete mode.\n"
-                    "\t\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
+                    "Run the solver in complete mode.\n"
+                    "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
   DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
   DLINEAR_PARAMETER(number_of_jobs, uint, 1u, "Number of jobs")
   DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
@@ -119,14 +118,14 @@ class Config {
   DLINEAR_PARAMETER(nlopt_maxtime, double, 0.01, "Set the maximum optimization time (in second)")
   DLINEAR_PARAMETER(sat_default_phase, SatDefaultPhase, dlinear::Config::SatDefaultPhase::JeroslowWang,
                     "set default initial phase for SAT solver.\n"
-                    "\t\t\t0 = false\n"
-                    "\t\t\t1 = true\n"
-                    "\t\t\t2 = Jeroslow-Wang\n"
-                    "\t\t\t3 = random initial phase\n\t\t\t")
+                    "\t\tOne of: false (0), true (1), Jeroslow-Wang (2), random initial phase (3)")
   DLINEAR_PARAMETER(random_seed, uint, 0u, "Set the random seed. 0 means that the seed will be generated on the fly")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(skip_check_sat, bool, false, "Parse the input, but does not run the solver")
+  DLINEAR_PARAMETER(
+      enforce_check_sat, bool, false,
+      "Perform a satisfiability check at the end of the parsing if the input does not contain a (check-sat) directive")
 
   friend std::ostream &operator<<(std::ostream &os, const Config &config);
 };

@@ -77,7 +77,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
   DLINEAR_PARSE_PARAM_BOOL(parser_, disable_theory_preprocessor, "--disable-theory-preprocessor");
-  DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce_check_sat");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope, "--polytope");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_worklist_fixpoint, "--worklist-fixpoint");
@@ -86,6 +86,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, with_timings, "-t", "--timings");
   DLINEAR_PARSE_PARAM_BOOL(parser_, read_from_stdin, "--in");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_local_optimization, "--local-optimization");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
 
   DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', uint, "-j", "--jobs");
   DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_ftol_abs, 'g', double, "--nlopt-ftol-abs");
@@ -211,6 +212,8 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("silent")) config.m_silent().set_from_command_line(parser_.get<bool>("silent"));
   if (parser_.is_used("skip-check-sat"))
     config.m_skip_check_sat().set_from_command_line(parser_.get<bool>("skip-check-sat"));
+  if (parser_.is_used("enforce-check-sat"))
+    config.m_enforce_check_sat().set_from_command_line(parser_.get<bool>("enforce-check-sat"));
   if (parser_.is_used("timings")) config.m_with_timings().set_from_command_line(parser_.get<bool>("timings"));
   if (parser_.is_used("verbose") || parser_.is_used("quiet"))
     config.m_verbose_dlinear().set_from_command_line(verbosity_);
@@ -255,6 +258,8 @@ void ArgParser::validateOptions() {
     if (parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::AUTO &&
         parser_.get<Config::LPMode>("lp-mode") != Config::LPMode::PURE_PRECISION_BOOSTING)
       DLINEAR_INVALID_ARGUMENT("--lp-solver", "QSopt_ex only supports 'auto' and 'pure-precision-boosting' modes");
+  if (parser_.is_used("enforce-check-sat") && parser_.is_used("skip-check-sat"))
+    DLINEAR_INVALID_ARGUMENT("--enforce-check-sat", "--enforce-check-sat and --skip-check-sat are mutually exclusive");
 }
 
 std::string ArgParser::version() { return DLINEAR_VERSION_STRING; }
