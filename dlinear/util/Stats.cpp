@@ -23,6 +23,18 @@ std::string Stats::ToSegmentString() const {
 }
 std::string Stats::ToString() const { return Stats::ToSegmentString(); }
 
+Stats &Stats::operator+=(const Stats &other) {
+  if (class_name_.empty() && !other.class_name_.empty()) class_name_ = other.class_name_;
+  if (operations_name_.empty() && !other.operations_name_.empty()) operations_name_ = other.operations_name_;
+  timer_ += other.timer_;
+  return *this;
+}
+Stats Stats::operator+(const Stats &other) const {
+  Stats result{*this};
+  result += other;
+  return result;
+}
+
 void IterationStats::Increase() {
   if (enabled_) atomic_fetch_add_explicit(&iterations_, 1, std::memory_order_relaxed);
 }
@@ -49,6 +61,17 @@ IterationStats &IterationStats::operator=(const IterationStats &other) {
     iterations_name_ = other.iterations_name_;
   }
   return *this;
+}
+IterationStats &IterationStats::operator+=(const IterationStats &other) {
+  Stats::operator+=(other);
+  if (iterations_name_.empty() && !other.iterations_name_.empty()) iterations_name_ = other.iterations_name_;
+  atomic_fetch_add_explicit(&iterations_, other.iterations_.load(), std::memory_order_relaxed);
+  return *this;
+}
+IterationStats IterationStats::operator+(const IterationStats &other) const {
+  IterationStats result{*this};
+  result += other;
+  return result;
 }
 
 std::ostream &operator<<(std::ostream &os, const Stats &stats) { return os << stats.ToString(); }

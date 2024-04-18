@@ -33,6 +33,9 @@ class Stats {
   Stats &operator=(const Stats &other) = default;
   virtual ~Stats() = default;
 
+  Stats &operator+=(const Stats &other);
+  Stats operator+(const Stats &other) const;
+
   /**
    * Return whether the stats is enabled.
    * @return whether the stats is enabled.
@@ -72,6 +75,9 @@ class IterationStats : public Stats {
   IterationStats(const IterationStats &other);
   IterationStats &operator=(const IterationStats &other);
 
+  IterationStats &operator+=(const IterationStats &other);
+  IterationStats operator+(const IterationStats &other) const;
+
   [[nodiscard]] std::string ToSegmentString() const override;
 
   [[nodiscard]] std::string ToString() const override;
@@ -81,6 +87,8 @@ class IterationStats : public Stats {
    * @note The iteration counter is atomic.
    */
   void Increase();
+
+  [[nodiscard]] unsigned int iterations() const { return iterations_.load(); }
 
   void operator++();
   void operator++(int);
