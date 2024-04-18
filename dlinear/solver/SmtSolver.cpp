@@ -23,20 +23,16 @@ namespace dlinear {
 
 namespace {
 template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver> T>
-inline bool ParseInputCore(const Config &config, Context &context, SmtSolverOutput &output) {
+inline bool ParseInputCore(const Config &config, Context &context) {
   DLINEAR_DEBUG("SmtSolver::ParseSmt2");
   T driver{context};
-  const bool res =
-      config.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config.filename());
-  if (config.with_timings() && res) output.parser_stats = driver.stats();
-  return res;
+  return config.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config.filename());
 }
 }  // namespace
 
-SmtSolver::SmtSolver() : SmtSolver{Config{}} {}
 SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
 SmtSolver::SmtSolver(Config config)
-    : config_{std::move(config)}, guard_{config_}, context_{config_}, output_{config_} {}
+    : config_{std::move(config)}, guard_{config_}, output_{config_}, context_{config_, &output_} {}
 
 #ifdef DLINEAR_PYDLINEAR
 SmtSolver &SmtSolver::Enter() { return *this; }
@@ -44,36 +40,49 @@ SmtSolver &SmtSolver::Enter() { return *this; }
 void SmtSolver::Exit() { guard_.DeInit(); }
 #endif
 
-SmtSolverOutput SmtSolver::CheckSat() {
+const SmtSolverOutput &SmtSolver::CheckSat() {
   DLINEAR_TRACE("SmtSolver::CheckSat");
-  if (output_.result != SolverResult::UNSOLVED) return output_;
   TimerGuard timer_guard{&output_.total_timer, true};
-  DLINEAR_DEBUG("SmtSolver::CheckSat: No cached result fond.");
-  dlinear::main_timer.start();
-  if (!ParseInput()) DLINEAR_RUNTIME_ERROR("Failed to parse input file");
-  output_.n_assertions = context_.assertions().size();
 
-  if (config_.skip_check_sat())
-    output_.result = SolverResult::SKIP_SAT;
-  else if (context_.have_objective())
-    CheckObjCore();
-  else
-    CheckSatCore();
-
-  output_.model = context_.model();
-  // Store stats
-  if (config_.with_timings()) {
-    const auto [predicate_abstractor_stats, cnfizer_stats, ite_stats] = context_.formula_visitors_stats();
-    output_.predicate_abstractor_stats = predicate_abstractor_stats;
-    output_.cnfizer_stats = cnfizer_stats;
-    output_.ite_stats = ite_stats;
-    output_.sat_stats = context_.sat_stats();
-    output_.theory_stats = context_.theory_stats();
+  if (config_.skip_check_sat()) {
+    output_.result = SmtResult::SKIP_SAT;
+    return output_;
   }
+
+  if (context_.have_objective())
+    context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
+  else
+    context_.CheckSat(&output_.actual_precision);
 
   return output_;
 }
 
+const SmtSolverOutput &SmtSolver::Parse(const std::string &filename) {
+  config_.m_filename() = filename;
+  config_.m_read_from_stdin() = filename.empty();
+  return Parse();
+}
+const SmtSolverOutput &SmtSolver::Parse() {
+  DLINEAR_TRACE("SmtSolver::Parse");
+
+  if (!ParseInput()) DLINEAR_RUNTIME_ERROR("Error parsing the input");
+  return output_;
+}
+
+std::string SmtSolver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
+std::string SmtSolver::GetOption(const std::string &key) const { return context_.GetOption(key); }
+SmtResult SmtSolver::GetExpected() const {
+  std::string status = context_.GetInfo(":status");
+  if (status == "sat") return SmtResult::SAT;
+  if (status == "unsat") return SmtResult::UNSAT;
+  return SmtResult::UNKNOWN;
+}
+
+void SmtSolver::Assert(const Formula &f) {
+  DLINEAR_TRACE_FMT("SmtSolver::Assert: {}", f);
+  output_.result = SmtResult::UNSOLVED;
+  context_.Assert(f);
+}
 bool SmtSolver::ParseInput() {
   DLINEAR_TRACE("SmtSolver::ParseInput");
   if (!config_.read_from_stdin() && config_.filename().empty()) {
@@ -84,72 +93,21 @@ bool SmtSolver::ParseInput() {
   } else {
     DLINEAR_INFO_FMT("SmtSolver::ParseInput: Reading from file: {}", config_.filename());
   }
+  TimerGuard timer_guard{&output_.total_timer, true};
 
   switch (config_.format()) {
     case Config::Format::AUTO:
       if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
-      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
-      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
+      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_);
+      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_);
       DLINEAR_UNREACHABLE();
     case Config::Format::SMT2:
-      return ParseInputCore<smt2::Smt2Driver>(config_, context_, output_);
+      return ParseInputCore<smt2::Smt2Driver>(config_, context_);
     case Config::Format::MPS:
-      return ParseInputCore<mps::MpsDriver>(config_, context_, output_);
+      return ParseInputCore<mps::MpsDriver>(config_, context_);
     default:
       DLINEAR_UNREACHABLE();
   }
-}
-
-void SmtSolver::CheckObjCore() {
-  DLINEAR_DEBUG("SmtSolver::CheckObjCore");
-  TimerGuard timer_guard{&output_.smt_solver_timer, true};
-  const LpResult res = context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
-  switch (res) {
-    case LpResult::LP_DELTA_OPTIMAL:
-      output_.result = SolverResult::DELTA_OPTIMAL;
-      break;
-    case LpResult::LP_UNBOUNDED:
-      output_.result = SolverResult::UNBOUNDED;
-      break;
-    case LpResult::LP_INFEASIBLE:
-      output_.result = SolverResult::INFEASIBLE;
-      break;
-    default:
-      output_.result = SolverResult::UNKNOWN;
-  }
-}
-
-void SmtSolver::CheckSatCore() {
-  DLINEAR_DEBUG("SmtSolver::CheckSatCore");
-  TimerGuard timer_guard{&output_.smt_solver_timer, true};
-  const SatResult res = context_.CheckSat(&output_.actual_precision);
-  switch (res) {
-    case SatResult::SAT_SATISFIABLE:
-      output_.result = SolverResult::SAT;
-      break;
-    case SatResult::SAT_DELTA_SATISFIABLE:
-      output_.result = SolverResult::DELTA_SAT;
-      break;
-    case SatResult::SAT_UNSATISFIABLE:
-      output_.result = SolverResult::UNSAT;
-      break;
-    default:
-      output_.result = SolverResult::UNKNOWN;
-  }
-}
-std::string SmtSolver::GetInfo(const std::string &key) const { return context_.GetInfo(key); }
-std::string SmtSolver::GetOption(const std::string &key) const { return context_.GetOption(key); }
-SolverResult SmtSolver::GetExpected() const {
-  std::string status = context_.GetInfo(":status");
-  if (status == "sat") return SolverResult::SAT;
-  if (status == "unsat") return SolverResult::UNSAT;
-  return SolverResult::UNKNOWN;
-}
-
-void SmtSolver::Assert(const Formula &f) {
-  DLINEAR_TRACE_FMT("SmtSolver::Assert: {}", f);
-  output_.result = SolverResult::UNSOLVED;
-  context_.Assert(f);
 }
 
 }  // namespace dlinear
