@@ -111,8 +111,8 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 {comment_start}{whitespace}*"@set-info"{whitespace}   { BEGIN(COMMAND); return token::SET_INFO; }
 {comment_start}{whitespace}*"@set-option"{whitespace} { BEGIN(COMMAND); return token::SET_OPTION; }
 
-<COMMAND>{rational}             { yylval->stringVal = new std::string(yytext, yyleng); return token::RATIONAL; }
-<COMMAND>{symbol}               { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
+<COMMAND>{rational}             { yylval->emplace<std::string>(yytext, yyleng); return token::RATIONAL; }
+<COMMAND>{symbol}               { yylval->emplace<std::string>(yytext, yyleng); return token::SYMBOL; }
 <COMMAND>{whitespace}+          {  }
 <COMMAND>[\n]                   { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
 
@@ -128,24 +128,28 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 
 {whitespace}+(?i:MAX)                { return token::MAX; }
 {whitespace}+(?i:MIN)                { return token::MIN; }
-{whitespace}+[NELGnelg]              { yylval->senseVal = ParseSense(yytext); return token::SENSE; }
-{whitespace}+(?i:BV|MI|PL|FR)        { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE_SINGLE; }
-{whitespace}+(?i:LO|UP|FX|LI|UI|SC)  { yylval->boundTypeVal = ParseBoundType(yytext); return token::BOUND_TYPE; }
+{whitespace}+[NELGnelg]              { yylval->emplace<Sense>(ParseSense(yytext)); return token::SENSE; }
+{whitespace}+(?i:BV|MI|PL|FR)        { yylval->emplace<BoundType>(ParseBoundType(yytext)); return token::BOUND_TYPE_SINGLE; }
+{whitespace}+(?i:LO|UP|FX|LI|UI|SC)  { yylval->emplace<BoundType>(ParseBoundType(yytext)); return token::BOUND_TYPE; }
 
 {whitespace}+{symbol}           {
                                     const char* symbol = yytext;
-                                    while (*symbol == ' ') ++symbol; // skip leading spaces
-                                    yylval->stringVal = new std::string(symbol);
+                                    size_t len = yyleng;
+                                    while (*symbol == ' ') { // skip leading spaces
+                                        ++symbol; 
+                                        --len;
+                                    }
+                                    yylval->emplace<std::string>(symbol, len);
                                     return token::SYMBOL;
                                 }
 
 ['"]{symbol}['"]                { 
-                                    yylval->stringVal = new std::string(yytext+1, yyleng-2);
+                                    yylval->emplace<std::string>(yytext+1, yyleng-2);
                                     return token::QUOTED_SYMBOL;
                                 }
 
-<NAME_SECTION>[^ \r\t\n]+             { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
-<NAME_SECTION>[^ \r\t\n].+[^ \r\t\n]  { yylval->stringVal = new std::string(yytext, yyleng); return token::SYMBOL; }
+<NAME_SECTION>[^ \r\t\n]+             { yylval->emplace<std::string>(yytext, yyleng); return token::SYMBOL; }
+<NAME_SECTION>[^ \r\t\n].+[^ \r\t\n]  { yylval->emplace<std::string>(yytext, yyleng); return token::SYMBOL; }
 <NAME_SECTION>{whitespace}+           {  }
 <NAME_SECTION>[\n]                    { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
 

@@ -26,15 +26,15 @@ namespace {
 bool ParseBooleanOption([[maybe_unused]] const std::string &key, const std::string &val) {
   if (val == "true") return true;
   if (val == "false") return false;
-  DLINEAR_RUNTIME_ERROR_FMT("Invalid value {} is provided for option {}. Expected bool [true, false]", val, key);
+  DLINEAR_INVALID_ARGUMENT_EXPECTED(key, val, "bool [true, false]");
 }
 double ParseDoubleOption([[maybe_unused]] const std::string &key, const std::string &val) {
   try {
     return std::stod(val);
   } catch (const std::invalid_argument &e) {
-    DLINEAR_RUNTIME_ERROR_FMT("Invalid value {} is provided for option {}. Expected double", val, key);
+    DLINEAR_INVALID_ARGUMENT_EXPECTED(key, val, "double");
   } catch (const std::out_of_range &e) {
-    DLINEAR_RUNTIME_ERROR_FMT("Out of range value {} is provided for option {}. Expected double", val, key);
+    DLINEAR_OUT_OF_RANGE_FMT("Out of range value {} is provided for option {}. Expected double", val, key);
   }
 }
 

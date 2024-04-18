@@ -253,8 +253,6 @@ void MpsDriver::End() {
 }
 
 void MpsDriver::SetOption(const std::string &option, const std::string &value) { context_.SetOption(option, value); }
-void MpsDriver::SetOption(const std::string &option, double value) { context_.SetOption(option, value); }
 void MpsDriver::SetInfo(const std::string &info, const std::string &value) { context_.SetInfo(info, value); }
-void MpsDriver::SetInfo(const std::string &info, double value) { context_.SetInfo(info, value); }
 
 }  // namespace dlinear::mps

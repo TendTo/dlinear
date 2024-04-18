@@ -58,27 +58,22 @@ using dlinear::gmp::string_to_mpq;
 /* verbose error messages */
 %define parse.error verbose
 
-
-%union
-{
-    std::string* stringVal;
-    Sense        senseVal;
-    BoundType    boundTypeVal;
-}
+/* use the built-in variant type for semantic values instead of the old %union */
+%define api.value.type variant
 
 %token NAME_DECLARATION ROWS_DECLARATION COLUMNS_DECLARATION RHS_DECLARATION RANGES_DECLARATION BOUNDS_DECLARATION OBJSENSE_DECLARATION OBJNAME_DECLARATION ENDATA
 %token MIN MAX
 %token SET_INFO SET_OPTION
 
 %token                 END          0        "end of file"
-%token <stringVal>     RATIONAL              "rational used in comments"
-%token <stringVal>     SYMBOL                "symbol"
-%token <stringVal>     QUOTED_SYMBOL         "symbol in quotes"
-%token <senseVal>      SENSE                 "sense. Acceptable values are: E, L, G, N"
-%token <boundTypeVal>  BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
-%token <boundTypeVal>  BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
+%token <std::string>   RATIONAL              "rational used in comments"
+%token <std::string>   SYMBOL                "symbol"
+%token <std::string>   QUOTED_SYMBOL         "symbol in quotes"
+%token <Sense>         SENSE                 "sense. Acceptable values are: E, L, G, N"
+%token <BoundType>     BOUND_TYPE            "type of bound. Acceptable values are: LO, UP, FX"
+%token <BoundType>     BOUND_TYPE_SINGLE     "type of bound. Can only be BV, MI, PL, FR"
 
-%destructor { delete $$; } SYMBOL QUOTED_SYMBOL
+%type <std::string> generic_string
 
 %{
 
@@ -94,6 +89,11 @@ using dlinear::gmp::string_to_mpq;
 %}
 
 %% /*** Grammar Rules ***/
+
+generic_string: SYMBOL
+        | QUOTED_SYMBOL
+        | RATIONAL
+        ;
 
 script: sections END
     ;
@@ -115,8 +115,7 @@ section: name_section
     ;
 
 name_section: NAME_DECLARATION SYMBOL '\n' { 
-        driver.m_problem_name() = *$2;
-        delete $2;
+        driver.m_problem_name() = $2;
     }
     | NAME_DECLARATION '\n' { driver.m_problem_name() = "unnamed"; }
     ;
@@ -125,7 +124,7 @@ objsense_section: OBJSENSE_DECLARATION '\n' MAX '\n' { driver.ObjectiveSense(fal
     | OBJSENSE_DECLARATION '\n' MIN '\n' { driver.ObjectiveSense(true); }
     ;
 
-objname_section: OBJNAME_DECLARATION '\n' SYMBOL '\n' { driver.ObjectiveName(*$3); delete $3; }
+objname_section: OBJNAME_DECLARATION '\n' SYMBOL '\n' { driver.ObjectiveName($3); }
     ;
 
 rows_section: ROWS_DECLARATION '\n'
@@ -136,7 +135,7 @@ rows: rows row
     |  row
     ;
 
-row: SENSE SYMBOL '\n' { driver.AddRow($1, *$2); delete $2; }
+row: SENSE SYMBOL '\n' { driver.AddRow($1, $2); }
     | command
     | '\n'
     ;
@@ -157,21 +156,13 @@ columns: columns column
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
 column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
-        driver.AddColumn(*$1, *$4, mpq_class{string_to_mpq(*$5)});
-        delete $1;
-        delete $2;
-        delete $3;
-        delete $4;
-        delete $5;
+        driver.AddColumn($1, $2, mpq_class{string_to_mpq($3)}); 
+        driver.AddColumn($1, $4, mpq_class{string_to_mpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
-        delete $1;
-        delete $2;
-        delete $3;
+        driver.AddColumn($1, $2, mpq_class{string_to_mpq($3)}); 
     }
-    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { delete $1; delete $2; delete $3;}
+    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { }
     | command
     | '\n'
     ;
@@ -192,32 +183,18 @@ rhs: rhs rhs_row
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
 rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs(*$1, *$2, mpq_class{string_to_mpq(*$3)});
-        driver.AddRhs(*$1, *$4, mpq_class{string_to_mpq(*$5)});
-        delete $1;
-        delete $2;
-        delete $3;
-        delete $4;
-        delete $5;
+        driver.AddRhs($1, $2, mpq_class{string_to_mpq($3)});
+        driver.AddRhs($1, $4, mpq_class{string_to_mpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", *$1, mpq_class{string_to_mpq(*$2)});
-        driver.AddRhs("", *$3, mpq_class{string_to_mpq(*$4)});
-        delete $1;
-        delete $2;
-        delete $3;
-        delete $4;
+        driver.AddRhs("", $1, mpq_class{string_to_mpq($2)});
+        driver.AddRhs("", $3, mpq_class{string_to_mpq($4)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs(*$1, *$2, mpq_class{string_to_mpq(*$3)});
-        delete $1;
-        delete $2;
-        delete $3;
+        driver.AddRhs($1, $2, mpq_class{string_to_mpq($3)});
     }
     | SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", *$1, mpq_class{string_to_mpq(*$2)});
-        delete $1;
-        delete $2;
+        driver.AddRhs("", $1, mpq_class{string_to_mpq($2)});
     }
     | command
     | '\n'
@@ -239,19 +216,11 @@ ranges: ranges range
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
 range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange(*$1, *$2, mpq_class{string_to_mpq(*$3)});
-        driver.AddRange(*$1, *$4, mpq_class{string_to_mpq(*$5)});
-        delete $1;
-        delete $2;
-        delete $3;
-        delete $4;
-        delete $5;
+        driver.AddRange($1, $2, mpq_class{string_to_mpq($3)});
+        driver.AddRange($1, $4, mpq_class{string_to_mpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange(*$1, *$2, mpq_class{string_to_mpq(*$3)}); 
-        delete $1;
-        delete $2;
-        delete $3;
+        driver.AddRange($1, $2, mpq_class{string_to_mpq($3)}); 
     }
     | command
     | '\n'
@@ -278,26 +247,16 @@ bounds: bounds bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
 bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, *$2, *$3, mpq_class{string_to_mpq(*$4)});
-        delete $2;
-        delete $3;
-        delete $4;
+        driver.AddBound($1, $2, $3, mpq_class{string_to_mpq($4)});
     }
     | BOUND_TYPE SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, "", *$2, mpq_class{string_to_mpq(*$3)});
-        delete $2;
-        delete $3;
+        driver.AddBound($1, "", $2, mpq_class{string_to_mpq($3)});
     }
     | BOUND_TYPE_SINGLE SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, *$2, *$3);
-        delete $2;
-        delete $3;
-        delete $4;
+        driver.AddBound($1, $2, $3);
     }
     | BOUND_TYPE_SINGLE SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, *$2, *$3);
-        delete $2;
-        delete $3;
+        driver.AddBound($1, $2, $3);
     }
     | command
     | '\n'
@@ -310,25 +269,11 @@ end_section: ENDATA '\n'
  * Extension to the standarm MPS format to support smt2 like commands
  * to set info (e.g. expected result) and options for the LP solver
  */
-command: SET_INFO SYMBOL SYMBOL '\n' {
-        driver.SetInfo(*$2, *$3);
-        delete $2;
-        delete $3;
+command: SET_INFO SYMBOL generic_string '\n' {
+        driver.SetInfo($2, $3);
     }
-    | SET_INFO SYMBOL RATIONAL '\n' {
-        driver.SetInfo(*$2, std::stod(*$3));
-        delete $2;
-        delete $3;
-    } 
-    | SET_OPTION SYMBOL SYMBOL '\n'{
-        driver.SetOption(*$2, *$3);
-        delete $2;
-        delete $3;
-    }
-    | SET_OPTION SYMBOL RATIONAL '\n' {
-        driver.SetOption(*$2, std::stod(*$3));
-        delete $2;
-        delete $3;
+    | SET_OPTION SYMBOL generic_string '\n'{
+        driver.SetOption($2, $3);
     }
     ;
 

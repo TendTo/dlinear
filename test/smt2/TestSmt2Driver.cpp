@@ -281,7 +281,7 @@ TEST_F(TestSmt2Driver, GetAssertions) {
                           "(get-assertions)"));
 }
 
-TEST_F(TestSmt2Driver, SetConfigOptions) {
+TEST_F(TestSmt2Driver, SetConfigOptions1) {
   Smt2Driver driver{context_};
   EXPECT_TRUE(
       driver.parse_string("(set-option :precision 1)\n"
@@ -296,6 +296,23 @@ TEST_F(TestSmt2Driver, SetConfigOptions) {
   EXPECT_TRUE(driver.context().config().use_polytope_in_forall());
   EXPECT_TRUE(driver.context().config().use_local_optimization());
   EXPECT_TRUE(driver.context().config().use_worklist_fixpoint());
+}
+
+TEST_F(TestSmt2Driver, SetConfigOptions2) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(set-option :precision 0.505)\n"
+                          "(set-option :produce-models false)\n"
+                          "(set-option :polytope false)\n"
+                          "(set-option :forall-polytope false)\n"
+                          "(set-option :local-optimization false)\n"
+                          "(set-option :worklist-fixpoint false)"));
+  EXPECT_EQ(driver.context().config().precision(), 0.505);
+  EXPECT_FALSE(driver.context().config().produce_models());
+  EXPECT_FALSE(driver.context().config().use_polytope());
+  EXPECT_FALSE(driver.context().config().use_polytope_in_forall());
+  EXPECT_FALSE(driver.context().config().use_local_optimization());
+  EXPECT_FALSE(driver.context().config().use_worklist_fixpoint());
 }
 
 TEST_F(TestSmt2Driver, EmptyGetOption) {

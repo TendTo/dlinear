@@ -218,9 +218,7 @@ class MpsDriver {
   void End();
 
   void SetOption(const std::string &option, const std::string &value);
-  void SetOption(const std::string &info, double value);
   void SetInfo(const std::string &info, const std::string &value);
-  void SetInfo(const std::string &info, double value);
 
   const std::string &stream_name() const { return stream_name_; }
   std::string &m_stream_name() { return stream_name_; }
