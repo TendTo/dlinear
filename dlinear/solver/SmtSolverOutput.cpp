@@ -73,6 +73,32 @@ int SmtSolverOutput::exit_code() const {
   }
 }
 
+bool SmtSolverOutput::matches_expectation(SmtResult expectation) const {
+  if (expectation == SmtResult::UNKNOWN) return true;
+  if (expectation != SmtResult::SAT && expectation != SmtResult::UNSAT) DLINEAR_RUNTIME_ERROR("Invalid expectation");
+  switch (result) {
+    case SmtResult::SAT:
+    case SmtResult::UNSAT:
+      return result == expectation;
+    case SmtResult::OPTIMAL:
+    case SmtResult::UNBOUNDED:
+      return expectation == SmtResult::SAT;
+    case SmtResult::DELTA_SAT:
+    case SmtResult::DELTA_OPTIMAL:
+      return expectation == SmtResult::SAT || expectation == SmtResult::UNSAT;
+    case SmtResult::INFEASIBLE:
+      return expectation == SmtResult::UNSAT;
+    case SmtResult::SKIP_SAT:
+    case SmtResult::UNSOLVED:
+      return true;
+    case SmtResult::ERROR:
+    case SmtResult::UNKNOWN:
+      return false;
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 std::ostream& operator<<(std::ostream& os, const SmtResult& bound) {
   switch (bound) {
     case SmtResult::UNSAT:

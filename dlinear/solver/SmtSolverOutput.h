@@ -79,6 +79,17 @@ struct SmtSolverOutput {
    */
   [[nodiscard]] int exit_code() const;
 
+  /**
+   * Check if the result of the computation matches the expectation.
+   *
+   * If the solver is running in complete mode, the results are expected to be the same.
+   * Otherwise, a relaxation of the result is allowed.
+   * @param expectation expected result
+   * @return true if the result matches the expectation
+   * @return false if the result does not match the expectation
+   */
+  [[nodiscard]] bool matches_expectation(SmtResult expectation) const;
+
   bool produce_models;  ///< Whether the solver should produce models
   bool with_timings;    ///< Whether the solver should show timings
 
