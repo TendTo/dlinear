@@ -22,6 +22,7 @@
 #define DLINEAR_RUNTIME_ERROR_FMT(msg, ...) throw std::runtime_error(msg)
 #define DLINEAR_OUT_OF_RANGE_FMT(msg, ...) throw std::out_of_range(msg)
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::runtime_error(argument)
+#define DLINEAR_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) throw std::runtime_error(argument)
 
 #else
 
@@ -71,6 +72,10 @@
   } while (false)
 
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) \
-  throw std::invalid_argument(fmt::format("Invalid argument for {}: {}\n", argument, actual))
+  throw std::invalid_argument(fmt::format("Invalid argument for {}: {}", argument, actual))
+
+#define DLINEAR_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) \
+  throw std::invalid_argument(                                        \
+      fmt::format("Invalid argument for {}: received '{}', expected '{}'", argument, actual, expected))
 
 #endif  // NDEBUG
