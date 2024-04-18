@@ -66,6 +66,7 @@ using dlinear::gmp::string_to_mpq;
 /* verbose error messages */
 %define parse.error verbose
 
+/* use the built-in variant type for semantic values instead of the old %union */
 %define api.value.type variant
 
 %token TK_EXCLAMATION TK_BINARY TK_DECIMAL TK_HEXADECIMAL TK_NUMERAL TK_STRING
@@ -124,6 +125,14 @@ using dlinear::gmp::string_to_mpq;
 
 %% /*** Grammar Rules ***/
 
+generic_string: SYMBOL
+        | STRING
+        | RATIONAL
+        | HEXFLOAT { $$ = std::to_string($1); }
+        | INT { $$ = std::to_string($1); }
+        | KEYWORD
+        ;
+
 script:         command_list END
         ;
 
@@ -150,14 +159,6 @@ command:        command_assert
         |       command_set_option
         |       command_get_option
         |       command_get_info
-        ;
-
-generic_string: SYMBOL
-        | STRING
-        | RATIONAL
-        | HEXFLOAT { $$ = std::to_string($1); }
-        | INT { $$ = std::to_string($1); }
-        | KEYWORD
         ;
 
 command_assert: '(' TK_ASSERT term ')' {
