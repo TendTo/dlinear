@@ -71,6 +71,9 @@ class TimerBase {
    */
   [[nodiscard]] std::chrono::duration<double>::rep seconds() const;
 
+  TimerBase<T> &operator+=(const TimerBase<T> &other);
+  TimerBase<T> operator+(const TimerBase<T> &other) const;
+
  protected:
   [[nodiscard]] time_point now() const { return clock::now(); }
 
@@ -79,6 +82,19 @@ class TimerBase {
   time_point last_start_{};  ///< Last time_point when the timer is started or resumed.
   duration elapsed_{};       ///< Elapsed time so far. This doesn't include the current fragment if it is running.
 };
+
+template <typename T>
+TimerBase<T> &TimerBase<T>::operator+=(const TimerBase<T> &other) {
+  elapsed_ += other.elapsed();
+  return *this;
+}
+
+template <typename T>
+TimerBase<T> TimerBase<T>::operator+(const TimerBase<T> &other) const {
+  TimerBase<T> result = *this;
+  result += other;
+  return result;
+}
 
 // Use high_resolution clock if it's steady, otherwise use steady_clock.
 using chosen_steady_clock = std::conditional<std::chrono::high_resolution_clock::is_steady,
@@ -109,7 +125,7 @@ class TimerGuard {
   /**
    * TimerGuard constructor.
    *
-   * If @p enabled is false, this class does not do anything.
+   * If @p enabled is false or @p timer is a nullptr, this class does not do anything.
    * If @p start_timer is true, starts the @p timer in the constructor.
    * Otherwise, it does not start it and a user has to call `resume()` to start it.
    * @param timer the timer to be guarded
@@ -139,7 +155,5 @@ class TimerGuard {
   Timer *const timer_;         ///< The timer to be guarded.
   const bool enabled_{false};  ///< Whether the timer is enabled.
 };
-
-extern UserTimer main_timer;
 
 }  // namespace dlinear

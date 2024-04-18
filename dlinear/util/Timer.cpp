@@ -67,7 +67,7 @@ template class TimerBase<chosen_steady_clock>;
 template class TimerBase<user_clock>;
 
 TimerGuard::TimerGuard(Timer *const timer, const bool enabled, const bool start_timer)
-    : timer_{timer}, enabled_{enabled} {
+    : timer_{timer}, enabled_{enabled && timer_ != nullptr} {
   if (enabled_ && start_timer) timer_->resume();
 }
 
@@ -82,7 +82,5 @@ void TimerGuard::pause() {
 void TimerGuard::resume() {
   if (enabled_) timer_->resume();
 }
-
-UserTimer main_timer;
 
 }  // namespace dlinear
