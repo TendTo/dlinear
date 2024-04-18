@@ -13,53 +13,89 @@
 
 namespace dlinear {
 
+SmtResult parse_smt_result(const SatResult sat_result) {
+  switch (sat_result) {
+    case SatResult::SAT_SATISFIABLE:
+      return SmtResult::SAT;
+    case SatResult::SAT_DELTA_SATISFIABLE:
+      return SmtResult::DELTA_SAT;
+    case SatResult::SAT_UNSATISFIABLE:
+      return SmtResult::UNSAT;
+    case SatResult::SAT_UNSOLVED:
+      return SmtResult::UNKNOWN;
+    case SatResult::SAT_NO_RESULT:
+      return SmtResult::UNSOLVED;
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
+SmtResult parse_smt_result(const LpResult lp_result) {
+  switch (lp_result) {
+    case LpResult::LP_OPTIMAL:
+      return SmtResult::OPTIMAL;
+    case LpResult::LP_DELTA_OPTIMAL:
+      return SmtResult::DELTA_OPTIMAL;
+    case LpResult::LP_UNBOUNDED:
+      return SmtResult::UNBOUNDED;
+    case LpResult::LP_INFEASIBLE:
+      return SmtResult::INFEASIBLE;
+    case LpResult::LP_UNSOLVED:
+      return SmtResult::UNKNOWN;
+    case LpResult::LP_NO_RESULT:
+      return SmtResult::UNSOLVED;
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 double SmtSolverOutput::precision_upper_bound() const {
   return std::nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
 }
 
 int SmtSolverOutput::exit_code() const {
   switch (result) {
-    case SolverResult::SAT:
-    case SolverResult::DELTA_SAT:
-    case SolverResult::OPTIMAL:
-    case SolverResult::DELTA_OPTIMAL:
-    case SolverResult::UNBOUNDED:
+    case SmtResult::SAT:
+    case SmtResult::DELTA_SAT:
+    case SmtResult::OPTIMAL:
+    case SmtResult::DELTA_OPTIMAL:
+    case SmtResult::UNBOUNDED:
       return EXIT_SUCCESS;
-    case SolverResult::UNSAT:
-    case SolverResult::INFEASIBLE:
+    case SmtResult::UNSAT:
+    case SmtResult::INFEASIBLE:
       return 1;
-    case SolverResult::UNKNOWN:
+    case SmtResult::UNKNOWN:
       return 2;
-    case SolverResult::ERROR:
+    case SmtResult::ERROR:
       return 3;
     default:
       return 4;
   }
 }
 
-std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
+std::ostream& operator<<(std::ostream& os, const SmtResult& bound) {
   switch (bound) {
-    case SolverResult::UNSAT:
+    case SmtResult::UNSAT:
       return os << "unsat";
-    case SolverResult::SKIP_SAT:
+    case SmtResult::SKIP_SAT:
       return os << "skip-sat";
-    case SolverResult::UNSOLVED:
+    case SmtResult::UNSOLVED:
       return os << "unsolved";
-    case SolverResult::SAT:
+    case SmtResult::SAT:
       return os << "sat";
-    case SolverResult::DELTA_SAT:
+    case SmtResult::DELTA_SAT:
       return os << "delta-sat";
-    case SolverResult::UNKNOWN:
+    case SmtResult::UNKNOWN:
       return os << "unknown";
-    case SolverResult::ERROR:
+    case SmtResult::ERROR:
       return os << "error";
-    case SolverResult::OPTIMAL:
+    case SmtResult::OPTIMAL:
       return os << "optimal";
-    case SolverResult::DELTA_OPTIMAL:
+    case SmtResult::DELTA_OPTIMAL:
       return os << "delta-optimal";
-    case SolverResult::UNBOUNDED:
+    case SmtResult::UNBOUNDED:
       return os << "unbounded";
-    case SolverResult::INFEASIBLE:
+    case SmtResult::INFEASIBLE:
       return os << "infeasible";
     default:
       DLINEAR_UNREACHABLE();
@@ -68,39 +104,39 @@ std::ostream& operator<<(std::ostream& os, const SolverResult& bound) {
 
 std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
   switch (s.result) {
-    case SolverResult::UNSOLVED:
+    case SmtResult::UNSOLVED:
       return os << "unsolved";
-    case SolverResult::UNKNOWN:
+    case SmtResult::UNKNOWN:
       return os << "unknown";
-    case SolverResult::ERROR:
+    case SmtResult::ERROR:
       return os << "error";
-    case SolverResult::SAT:
+    case SmtResult::SAT:
       os << "sat";
       break;
-    case SolverResult::DELTA_SAT:
+    case SmtResult::DELTA_SAT:
       os << "delta-sat with delta = " << s.precision_upper_bound() << " ( > " << s.actual_precision << " )";
       break;
-    case SolverResult::UNSAT:
+    case SmtResult::UNSAT:
       os << "unsat";
       break;
-    case SolverResult::OPTIMAL:
+    case SmtResult::OPTIMAL:
       os << "optimal with delta = 0, range = [" << s.lower_bound << ", " << s.upper_bound << "]";
       break;
-    case SolverResult::DELTA_OPTIMAL: {
+    case SmtResult::DELTA_OPTIMAL: {
       mpq_class diff = s.upper_bound - s.lower_bound;
       os << "delta-optimal with delta = " << diff.get_d() << " ( = " << diff << "), range = [" << s.lower_bound << ", "
          << s.upper_bound << "]";
     } break;
-    case SolverResult::UNBOUNDED:
+    case SmtResult::UNBOUNDED:
       os << "unbounded";
       break;
-    case SolverResult::INFEASIBLE:
+    case SmtResult::INFEASIBLE:
       os << "infeasible";
       break;
-    case SolverResult::SKIP_SAT:
-      os << "skip-sat\n"
-            "No satisfiability check was performed\n"
-            "To use the SAT solver, remove the option --skip-check-sat";
+    case SmtResult::SKIP_SAT:
+      os << "No satisfiability check was performed\n"
+            "To use the SAT solver, remove the option --skip-check-sat\n"
+            "skip-sat";
       break;
     default:
       DLINEAR_UNREACHABLE();

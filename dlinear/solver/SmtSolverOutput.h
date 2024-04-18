@@ -11,6 +11,8 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/SatResult.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
@@ -19,7 +21,7 @@
 namespace dlinear {
 
 /** SmtSolver Result based on the result of the solver. */
-enum class SolverResult {
+enum class SmtResult {
   UNSOLVED,       ///< The solver has not yet been run.
   SKIP_SAT,       ///< The user asked to skip the satisfiability check.
   SAT,            ///< The problem is satisfiable.
@@ -32,6 +34,9 @@ enum class SolverResult {
   UNKNOWN,        ///< Could not determine satisfiability.
   ERROR,          ///< An error occurred.
 };
+
+SmtResult parse_smt_result(SatResult sat_result);
+SmtResult parse_smt_result(LpResult lp_result);
 
 /**
  * SmtSolverOutput struct.
@@ -61,8 +66,8 @@ struct SmtSolverOutput {
    * @return false if the problem is not satisfiable
    */
   [[nodiscard]] bool is_sat() const {
-    return result == SolverResult::SAT || result == SolverResult::DELTA_SAT || result == SolverResult::OPTIMAL ||
-           result == SolverResult::DELTA_OPTIMAL;
+    return result == SmtResult::SAT || result == SmtResult::DELTA_SAT || result == SmtResult::OPTIMAL ||
+           result == SmtResult::DELTA_OPTIMAL;
   }
   /**
    * Exit code of the solver to return to the user.
@@ -74,8 +79,8 @@ struct SmtSolverOutput {
    */
   [[nodiscard]] int exit_code() const;
 
-  const bool produce_models;  ///< Whether the solver should produce models
-  const bool with_timings;    ///< Whether the solver should show timings
+  bool produce_models;  ///< Whether the solver should produce models
+  bool with_timings;    ///< Whether the solver should show timings
 
   Stats parser_stats{with_timings, ""};                         ///< Statistics about the solver
   IterationStats ite_stats{with_timings, ""};                   ///< Statistics about the if-then-else simplifier
@@ -84,18 +89,18 @@ struct SmtSolverOutput {
   IterationStats sat_stats{with_timings, ""};                   ///< Statistics about the satisfiability check
   IterationStats theory_stats{with_timings, ""};                ///< Statistics about the theory check
 
-  Timer total_timer{};                          ///< Timer keeping track of the total time spent in the solver
-  Timer smt_solver_timer{};                     ///< Timer keeping track of the time spent in the SMT solver
-  uint n_assertions{0};                         ///< Number of assertions in the input
-  SolverResult result{SolverResult::UNSOLVED};  ///< Result of the computation
-  mpq_class lower_bound{0};                     ///< Lower bound of the result
-  mpq_class upper_bound{0};                     ///< Upper bound of the result
-  Box model{};                                  ///< Model of the result
-  const mpq_class precision;                    ///< User-provided precision of the computation
-  mpq_class actual_precision;                   ///< Actual precision of the computation. Always <= than precision
+  Timer total_timer{};                    ///< Timer keeping track of the total time spent in the solver
+  Timer smt_solver_timer{};               ///< Timer keeping track of the time spent in the SMT solver
+  uint n_assertions{0};                   ///< Number of assertions in the input
+  SmtResult result{SmtResult::UNSOLVED};  ///< Result of the computation
+  mpq_class lower_bound{0};               ///< Lower bound of the result
+  mpq_class upper_bound{0};               ///< Upper bound of the result
+  Box model{};                            ///< Model of the result
+  mpq_class precision;                    ///< User-provided precision of the computation
+  mpq_class actual_precision;             ///< Actual precision of the computation. Always <= than precision
 };
 
-std::ostream &operator<<(std::ostream &os, const SolverResult &result);
+std::ostream &operator<<(std::ostream &os, const SmtResult &result);
 std::ostream &operator<<(std::ostream &os, const SmtSolverOutput &output);
 
 }  // namespace dlinear

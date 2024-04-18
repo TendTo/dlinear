@@ -219,6 +219,7 @@ dlinear_cc_library(
         ":lp_result",
         ":sat_result",
         ":sat_solver",
+        ":solver_output",
         ":theory_solver",
         "//dlinear:version",
         "//dlinear/libs:gmp",
@@ -241,15 +242,26 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "solver_output",
+    srcs = ["SmtSolverOutput.cpp"],
+    hdrs = ["SmtSolverOutput.h"],
+    deps = [
+        ":lp_result",
+        ":sat_result",
+        "//dlinear/libs:gmp",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
+)
+
+dlinear_cc_library(
     name = "solver",
-    srcs = [
-        "SmtSolver.cpp",
-        "SmtSolverOutput.cpp",
-    ],
-    hdrs = [
-        "SmtSolver.h",
-        "SmtSolverOutput.h",
-    ],
+    srcs = ["SmtSolver.cpp"],
+    hdrs = ["SmtSolver.h"],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
@@ -263,6 +275,7 @@ dlinear_cc_library(
     deps = [
         ":context",
         ":solver_guard",
+        ":solver_output",
         "//dlinear/libs:gmp",
         "//dlinear/mps",
         "//dlinear/smt2",
