@@ -21,17 +21,17 @@ const auto enabled_test_solvers = ::testing::Values(
 #endif
 );
 
-std::vector<dlinear::SolverResult> expected_results(dlinear::SolverResult res) {
+std::vector<dlinear::SmtResult> expected_results(dlinear::SmtResult res) {
   switch (res) {
-    case dlinear::SolverResult::SAT:
-      return std::vector{dlinear::SolverResult::SAT, dlinear::SolverResult::DELTA_SAT};
-    case dlinear::SolverResult::DELTA_SAT:
-      return std::vector{dlinear::SolverResult::DELTA_SAT};
-    case dlinear::SolverResult::UNSAT:
-      // return std::vector{dlinear::SolverResult::UNSAT, dlinear::SolverResult::DELTA_SAT};
-      return std::vector{dlinear::SolverResult::UNSAT, dlinear::SolverResult::DELTA_SAT};
-    case dlinear::SolverResult::UNKNOWN:
-      return std::vector{dlinear::SolverResult::UNKNOWN};
+    case dlinear::SmtResult::SAT:
+      return std::vector{dlinear::SmtResult::SAT, dlinear::SmtResult::DELTA_SAT};
+    case dlinear::SmtResult::DELTA_SAT:
+      return std::vector{dlinear::SmtResult::DELTA_SAT};
+    case dlinear::SmtResult::UNSAT:
+      // return std::vector{dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
+      return std::vector{dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
+    case dlinear::SmtResult::UNKNOWN:
+      return std::vector{dlinear::SmtResult::UNKNOWN};
     default:
       DLINEAR_UNREACHABLE();
   }

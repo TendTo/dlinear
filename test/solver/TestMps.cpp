@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
-#include <memory>
 #include <string_view>
 
 #include "dlinear/solver/SmtSolver.h"
@@ -16,9 +15,8 @@
 
 using dlinear::Config;
 using dlinear::get_files;
+using dlinear::SmtResult;
 using dlinear::SmtSolver;
-using dlinear::SmtSolver;
-using dlinear::SolverResult;
 using std::unique_ptr;
 
 class TestMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
@@ -36,6 +34,7 @@ TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   config_.m_lp_solver() = lp_solver;
   config_.m_precision() = precision;
   SmtSolver s{config_};
-  const SolverResult result = s.CheckSat().result;
+  s.Parse();
+  const SmtResult result = s.CheckSat().result;
   EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
 }

@@ -147,7 +147,10 @@ command:        command_assert
         |       command_declare_sort
         |       command_define_sort
         |       command_exit
+        |       command_get_proof
+        |       command_get_unsat_core
         |       command_get_assertions
+        |       command_get_assignment
         |       command_get_model
         |       command_get_value
         |       command_maximize
@@ -222,6 +225,19 @@ command_exit:   '(' TK_EXIT ')' {
                 }
                 ;
 
+command_get_proof : '('  TK_GET_PROOF ')' {
+                    DLINEAR_RUNTIME_ERROR("`get-proof` command is not supported");
+                }
+                ;
+
+command_get_unsat_core : '('  TK_GET_UNSAT_CORE ')' {
+                    DLINEAR_RUNTIME_ERROR("`get-unsat-core` command is not supported");
+                }
+                ;
+command_get_assignment : '('  TK_GET_ASSIGNMENT ')' {
+                    driver.GetModel();
+                }
+                ;
 command_get_assertions:
                 '(' TK_GET_ASSERTIONS ')' {
                     driver.GetAssertions();

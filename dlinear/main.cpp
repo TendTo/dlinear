@@ -37,10 +37,9 @@ int main(int argc, const char* argv[]) {
   dlinear::SmtSolver solver{config};
 
   // Run the solver
-  dlinear::SmtSolverOutput result = solver.CheckSat();
-  if (!config.silent()) std::cout << result << std::endl;
-  if (!config.silent() && config.complete() && solver.GetExpected() != dlinear::SolverResult::UNKNOWN &&
-      result.result != solver.GetExpected()) {
+  dlinear::SmtSolverOutput result = solver.Parse();
+  if (result.result == dlinear::SmtResult::UNSOLVED && config.enforce_check_sat()) result = solver.CheckSat();
+  if (!config.silent() && !result.matches_expectation(solver.GetExpected())) {
     std::cerr << "WARNING: Expected " << solver.GetExpected() << " but got " << result.result << std::endl;
   }
 

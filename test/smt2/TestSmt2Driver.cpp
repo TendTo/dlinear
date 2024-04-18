@@ -79,6 +79,16 @@ TEST_F(TestSmt2Driver, DefineSortParameters) {
   EXPECT_THROW(driver.parse_string("(define-sort P (X) (Pair X X))"), std::runtime_error);
 }
 
+TEST_F(TestSmt2Driver, GetProof) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(get-proof)"), std::runtime_error);
+}
+
+TEST_F(TestSmt2Driver, GetUnsatCore) {
+  Smt2Driver driver{context_};
+  EXPECT_THROW(driver.parse_string("(get-unsat-core)"), std::runtime_error);
+}
+
 TEST_F(TestSmt2Driver, SimpleRealAssertion) {
   Smt2Driver driver{context_};
   driver.parse_string(
@@ -269,6 +279,7 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMinFunction) {
 TEST_F(TestSmt2Driver, EmptyGetAssertions) {
   Smt2Driver driver{context_};
   EXPECT_TRUE(driver.parse_string("(get-assertions)"));
+  EXPECT_TRUE(driver.context().assertions().empty());
 }
 
 TEST_F(TestSmt2Driver, GetAssertions) {
@@ -277,8 +288,49 @@ TEST_F(TestSmt2Driver, GetAssertions) {
       driver.parse_string("(declare-fun x () Real)\n"
                           "(declare-fun y () Real)\n"
                           "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
-                          "(assert (let ((lhs y) (rhs x) (c 12)) (= (+ lhs rhs) 12)))\n"
                           "(get-assertions)"));
+  EXPECT_FALSE(driver.context().assertions().empty());
+}
+
+TEST_F(TestSmt2Driver, EmptyGetModel) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(assert (= 1 2))\n"
+                          "(check-sat)\n"
+                          "(get-model)"));
+  std::cout << driver.context().model() << std::endl;
+  EXPECT_TRUE(driver.context().model().empty());
+}
+
+TEST_F(TestSmt2Driver, GetModel) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(declare-fun x () Real)\n"
+                          "(declare-fun y () Real)\n"
+                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                          "(check-sat)"
+                          "(get-assertions)"));
+  EXPECT_FALSE(driver.context().model().empty());
+}
+
+TEST_F(TestSmt2Driver, EmptyGetAssignment) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(assert (= 1 2))\n"
+                          "(check-sat)\n"
+                          "(get-assignment)"));
+  EXPECT_TRUE(driver.context().model().empty());
+}
+
+TEST_F(TestSmt2Driver, GetAssignment) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(declare-fun x () Real)\n"
+                          "(declare-fun y () Real)\n"
+                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                          "(check-sat)"
+                          "(get-assignment)"));
+  EXPECT_FALSE(driver.context().model().empty());
 }
 
 TEST_F(TestSmt2Driver, SetConfigOptions1) {
@@ -337,4 +389,15 @@ TEST_F(TestSmt2Driver, GetInfo) {
   EXPECT_TRUE(
       driver.parse_string("(set-info :status sat)\n"
                           "(get-info :status)"));
+}
+
+TEST_F(TestSmt2Driver, Exit) {
+  Smt2Driver driver{context_};
+  EXPECT_TRUE(
+      driver.parse_string("(declare-fun x () Real)\n"
+                          "(exit)\n"
+                          "(declare-fun y () Real)"));
+  const Variable& x = driver.LookupVariable("x");
+  EXPECT_EQ(x.get_name(), "x");
+  EXPECT_THROW(driver.LookupVariable("y"), std::out_of_range);
 }

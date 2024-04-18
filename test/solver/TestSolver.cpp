@@ -55,5 +55,5 @@ TEST_P(TestSolver, ConstructorConfig) {
 
 TEST_P(TestSolver, CheckSatWrongFilename) {
   SmtSolver s{"test.err"};
-  EXPECT_DEATH(s.CheckSat(), "");
+  EXPECT_DEATH(s.Parse(), "");
 }

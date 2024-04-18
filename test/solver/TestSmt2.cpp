@@ -15,7 +15,7 @@
 using dlinear::Config;
 using dlinear::get_files;
 using dlinear::SmtSolver;
-using dlinear::SolverResult;
+using dlinear::SmtResult;
 
 class TestDeltaSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
  protected:
@@ -74,7 +74,7 @@ TEST_P(TestCompleteSmt2NoPreprocessor, Smt2InputAgainstExpectedOutput) {
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
-  const SolverResult result = s.CheckSat().result;
+  const SmtResult result = s.Parse().result;
   EXPECT_EQ(s.GetExpected(), result);
 }
 
@@ -84,6 +84,6 @@ TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
   config_.m_filename() = filename;
   config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
-  const SolverResult result = s.CheckSat().result;
+  const SmtResult result = s.Parse().result;
   EXPECT_EQ(s.GetExpected(), result);
 }

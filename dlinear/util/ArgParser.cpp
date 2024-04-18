@@ -77,7 +77,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
   DLINEAR_PARSE_PARAM_BOOL(parser_, disable_theory_preprocessor, "--disable-theory-preprocessor");
-  DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce_check_sat");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce-check-sat");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope, "--polytope");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_worklist_fixpoint, "--worklist-fixpoint");
