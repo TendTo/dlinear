@@ -37,6 +37,10 @@ class Box {
     Interval();
     explicit Interval(const mpq_class &val) : lb_(val), ub_(val) {}
     Interval(const mpq_class &lb, const mpq_class &ub);
+    Interval(const Interval &other) = default;
+    Interval(Interval &&other) noexcept = default;
+    Interval &operator=(const Interval &other) = default;
+    Interval &operator=(Interval &&other) noexcept = default;
     [[nodiscard]] bool is_empty() const { return lb_ == 1 && ub_ == 0; }
     [[nodiscard]] bool is_degenerated() const { return lb_ == ub_; }
     [[nodiscard]] bool is_bisectable() const { return lb_ < ub_; }
