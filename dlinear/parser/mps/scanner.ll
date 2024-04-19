@@ -7,11 +7,11 @@
 #include <string>
 
 #define __DLINEAR_MPS_SCANNER_H__ // prevent inclusion of the flex header two times
-#include "dlinear/mps/scanner.h"
+#include "dlinear/parser/mps/scanner.h"
 #undef __DLINEAR_MPS_SCANNER_H__
 
-#include "dlinear/mps/Sense.h"
-#include "dlinear/mps/BoundType.h"
+#include "dlinear/parser/mps/Sense.h"
+#include "dlinear/parser/mps/BoundType.h"
 
 /* import the parser's token type into a local typedef */
 typedef dlinear::mps::MpsParser::token token;

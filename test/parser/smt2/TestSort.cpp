@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/smt2/Sort.h"
+#include "dlinear/parser/smt2/Sort.h"
 
 using dlinear::Variable;
 using dlinear::smt2::ParseSort;

@@ -9,7 +9,7 @@
 
 #include <memory>
 
-#include "dlinear/smt2/CommandCell.h"
+#include "dlinear/parser/smt2/CommandCell.h"
 
 namespace dlinear::smt2 {
 

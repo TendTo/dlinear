@@ -15,7 +15,7 @@
 #include <string>
 
 #define __DLINEAR_SMT2_SCANNER_H__ // prevent inclusion of the flex header file two times
-#include "dlinear/smt2/scanner.h"
+#include "dlinear/parser/smt2/scanner.h"
 #undef __DLINEAR_SMT2_SCANNER_H__
 
 /* import the parser's token type into a local typedef */

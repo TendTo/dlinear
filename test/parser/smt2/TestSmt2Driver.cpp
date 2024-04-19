@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/smt2/Driver.h"
+#include "dlinear/parser/smt2/Driver.h"
 #include "test/symbolic/TestSymbolicUtils.h"
 
 using dlinear::Config;

@@ -4,7 +4,7 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "dlinear/smt2/Term.h"
+#include "dlinear/parser/smt2/Term.h"
 
 #include <gtest/gtest.h>
 

@@ -9,8 +9,8 @@
 #include <optional>
 #include <utility>
 
-#include "dlinear/mps/Driver.h"
-#include "dlinear/smt2/Driver.h"
+#include "dlinear/parser/mps/Driver.h"
+#include "dlinear/parser/smt2/Driver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Infinity.h"

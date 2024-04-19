@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/mps/BoundType.h"
+#include "dlinear/parser/mps/BoundType.h"
 
 using dlinear::mps::BoundType;
 using dlinear::mps::ParseBoundType;

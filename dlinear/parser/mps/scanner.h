@@ -22,12 +22,12 @@
 #include "dlinear/util/interrupt.h"
 #endif
 
-#include "dlinear/mps/BoundType.h"
-#include "dlinear/mps/Sense.h"
+#include "dlinear/parser/mps/BoundType.h"
+#include "dlinear/parser/mps/Sense.h"
 #include "dlinear/util/exception.h"
 // All the types needed for the scanner to work must be imported before parser.yy.hh.
 // Needs to be included after the above headers.
-#include "dlinear/mps/parser.yy.hpp"
+#include "dlinear/parser/mps/parser.yy.hpp"
 
 namespace dlinear::mps {
 

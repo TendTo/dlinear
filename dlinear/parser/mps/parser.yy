@@ -9,8 +9,8 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/mps/Sense.h"
-#include "dlinear/mps/BoundType.h"
+#include "dlinear/parser/mps/Sense.h"
+#include "dlinear/parser/mps/BoundType.h"
 
 using dlinear::gmp::string_to_mpq;
 
@@ -77,8 +77,8 @@ using dlinear::gmp::string_to_mpq;
 
 %{
 
-#include "dlinear/mps/Driver.h"
-#include "dlinear/mps/scanner.h"
+#include "dlinear/parser/mps/Driver.h"
+#include "dlinear/parser/mps/scanner.h"
 
 /* this "connects" the bison parser in the driver to the flex scanner class
  * object. it defines the yylex() function call to pull the next token from the

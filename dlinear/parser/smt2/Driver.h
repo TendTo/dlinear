@@ -17,9 +17,9 @@
 #include <variant>
 #include <vector>
 
-#include "dlinear/smt2/FunctionDefinition.h"
-#include "dlinear/smt2/Term.h"
-#include "dlinear/smt2/scanner.h"
+#include "dlinear/parser/smt2/FunctionDefinition.h"
+#include "dlinear/parser/smt2/Term.h"
+#include "dlinear/parser/smt2/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/Stats.h"

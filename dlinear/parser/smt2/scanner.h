@@ -22,13 +22,13 @@
 #include "dlinear/util/interrupt.h"
 #endif
 
-#include "dlinear/smt2/Sort.h"
-#include "dlinear/smt2/Term.h"
+#include "dlinear/parser/smt2/Sort.h"
+#include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 // The following include should come after all the previous ones.
 // Do not alpha-sort them.
-#include "dlinear/smt2/parser.yy.hpp"
+#include "dlinear/parser/smt2/parser.yy.hpp"
 
 namespace dlinear::smt2 {
 

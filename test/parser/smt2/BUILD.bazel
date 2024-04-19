@@ -3,26 +3,26 @@ load("//tools:dlinear.bzl", "dlinear_cc_googletest")
 dlinear_cc_googletest(
     name = "test_sort",
     tags = ["smt2"],
-    deps = ["//dlinear/smt2:sort"],
+    deps = ["//dlinear/parser/smt2:sort"],
 )
 
 dlinear_cc_googletest(
     name = "test_term",
     tags = ["smt2"],
-    deps = ["//dlinear/smt2:term"],
+    deps = ["//dlinear/parser/smt2:term"],
 )
 
 dlinear_cc_googletest(
     name = "test_command",
     tags = ["smt2"],
-    deps = ["//dlinear/smt2:command"],
+    deps = ["//dlinear/parser/smt2:command"],
 )
 
 dlinear_cc_googletest(
     name = "test_function_definition",
     tags = ["smt2"],
     deps = [
-        "//dlinear/smt2:function_definition",
+        "//dlinear/parser/smt2:function_definition",
         "//test/symbolic:test_symbolic_utils",
     ],
 )
@@ -31,7 +31,7 @@ dlinear_cc_googletest(
     name = "test_smt2_driver",
     tags = ["smt2"],
     deps = [
-        "//dlinear/smt2",
+        "//dlinear/parser/smt2",
         "//test/symbolic:test_symbolic_utils",
     ],
 )

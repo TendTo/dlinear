@@ -4,7 +4,7 @@
  * @date 16 Sep 2023
  * @copyright 2023 dlinear
  */
-#include "Sense.h"
+#include "dlinear/parser/mps/Sense.h"
 
 #include <cstring>
 #include <iostream>

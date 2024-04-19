@@ -1,0 +1,22 @@
+load("//tools:dlinear.bzl", "dlinear_cc_googletest")
+
+dlinear_cc_googletest(
+    name = "test_bound_type",
+    tags = ["mps"],
+    deps = ["//dlinear/parser/mps:mps_data"],
+)
+
+dlinear_cc_googletest(
+    name = "test_sense",
+    tags = ["mps"],
+    deps = ["//dlinear/parser/mps:mps_data"],
+)
+
+dlinear_cc_googletest(
+    name = "test_mps_driver",
+    tags = ["mps"],
+    deps = [
+        "//dlinear/parser/mps",
+        "//test/symbolic:test_symbolic_utils",
+    ],
+)

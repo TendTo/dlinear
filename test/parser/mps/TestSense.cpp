@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/mps/Sense.h"
+#include "dlinear/parser/mps/Sense.h"
 
 using dlinear::mps::Sense;
 using dlinear::mps::ParseSense;

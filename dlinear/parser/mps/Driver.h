@@ -18,9 +18,9 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/mps/BoundType.h"
-#include "dlinear/mps/Sense.h"
-#include "dlinear/mps/scanner.h"
+#include "dlinear/parser/mps/BoundType.h"
+#include "dlinear/parser/mps/Sense.h"
+#include "dlinear/parser/mps/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Stats.h"
@@ -234,6 +234,7 @@ class MpsDriver {
   bool is_min() const { return is_min_; }
   const std::string &obj_row() const { return obj_row_; }
   const Stats &stats() const { return stats_; }
+  const Context &context() const { return context_; }
 
   MpsScanner *scanner() { return scanner_; }
 

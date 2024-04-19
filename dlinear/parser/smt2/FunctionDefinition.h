@@ -13,8 +13,8 @@
 #include <concepts>
 #include <vector>
 
-#include "dlinear/smt2/Sort.h"
-#include "dlinear/smt2/Term.h"
+#include "dlinear/parser/smt2/Sort.h"
+#include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/literal.h"
 
 namespace dlinear::smt2 {

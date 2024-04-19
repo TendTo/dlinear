@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/smt2/FunctionDefinition.h"
+#include "dlinear/parser/smt2/FunctionDefinition.h"
 #include "test/symbolic/TestSymbolicUtils.h"
 
 using dlinear::Expression;

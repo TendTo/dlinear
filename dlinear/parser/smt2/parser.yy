@@ -9,8 +9,8 @@
 #include <utility>
 
 #include "dlinear/solver/Logic.h"
-#include "dlinear/smt2/Sort.h"
-#include "dlinear/smt2/Term.h"
+#include "dlinear/parser/smt2/Sort.h"
+#include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/math.h"
 #include "dlinear/util/exception.h"
@@ -112,8 +112,8 @@ using dlinear::gmp::string_to_mpq;
 
 %{
 
-#include "dlinear/smt2/Driver.h"
-#include "dlinear/smt2/scanner.h"
+#include "dlinear/parser/smt2/Driver.h"
+#include "dlinear/parser/smt2/scanner.h"
 
 /* this "connects" the bison parser in the driver to the flex scanner class
  * object. it defines the yylex() function call to pull the next token from the
