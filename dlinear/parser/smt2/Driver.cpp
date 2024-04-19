@@ -7,38 +7,19 @@
 
 #include "Driver.h"
 
-#include <fstream>
 #include <iostream>
-#include <limits>
 #include <sstream>
-#include <utility>
 
 #include "dlinear/symbolic/ExpressionEvaluator.h"
 #include "dlinear/symbolic/PrefixPrinter.h"
-#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear::smt2 {
 
-Smt2Driver::Smt2Driver(Context &context)
-    : context_{context},
-      debug_scanning_{context_.config().debug_scanning()},
-      debug_parsing_{context_.config().debug_parsing()},
-      stats_{context.config().with_timings(), "Smt2Driver", "Total time spent in SMT2 parsing"} {}
+Smt2Driver::Smt2Driver(Context &context) : Driver{context, "Smt2Driver"} {}
 
-bool Smt2Driver::parse_stream(std::istream &in, const std::string &sname) {
-  SmtSolverOutput *const output = context_.m_solver_output();
-  if (output != nullptr) {
-    output->parser_stats = stats_;
-    timer_ = &output->parser_stats.m_timer();
-  } else {
-    timer_ = &stats_.m_timer();
-  }
-  DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
-  TimerGuard timer_guard(timer_, stats_.enabled());
-  stream_name_ = sname;
-
+bool Smt2Driver::ParseStreamCore(std::istream &in) {
   Smt2Scanner scanner(&in);
   scanner.set_debug(debug_scanning_);
   scanner_ = &scanner;
@@ -46,47 +27,11 @@ bool Smt2Driver::parse_stream(std::istream &in, const std::string &sname) {
   Smt2Parser parser(*this);
   parser.set_debug_level(debug_parsing_);
   const bool res = parser.parse() == 0;
-  if (output != nullptr) stats_ = output->parser_stats;
+  scanner_ = nullptr;
   return res;
 }
 
-bool Smt2Driver::parse_file(const std::string &filename) {
-  std::ifstream in(filename.c_str());
-  if (!in.good()) return false;
-  return parse_stream(in, filename);
-}
-
-bool Smt2Driver::parse_string(const std::string &input, const std::string &sname) {
-  std::istringstream iss(input);
-  return parse_stream(iss, sname);
-}
-
 void Smt2Driver::error(const location &l, const std::string &m) { std::cerr << l << " : " << m << std::endl; }
-
-void Smt2Driver::error(const std::string &m) { std::cerr << m << std::endl; }
-
-void Smt2Driver::CheckSat() {
-  DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
-  // Don't consider the time spent checking sat in the time spent parsing.
-  timer_->pause();
-  mpq_class precision = context_.config().precision();
-  context_.CheckSat(&precision);
-  timer_->resume();
-}
-
-void Smt2Driver::GetModel() { std::cout << "(model\n" << context_.model() << "\n)" << std::endl; }
-
-void Smt2Driver::GetAssertions() const {
-  if (context_.config().silent()) return;
-  std::cout << "(assertions\n";
-  for (const Formula &f : context_.assertions()) {
-    std::stringstream ss;
-    PrefixPrinter pp{ss};
-    pp.Print(f);
-    std::cout << "\t" << ss.str() << "\n";
-  }
-  std::cout << ")" << std::endl;
-}
 
 Formula Smt2Driver::EliminateBooleanVariables(const Variables &vars, const Formula &f) {
   Formula ret{f};
@@ -96,13 +41,6 @@ Formula Smt2Driver::EliminateBooleanVariables(const Variables &vars, const Formu
     }
   }
   return ret;
-}
-
-void Smt2Driver::Maximize(const Expression &f) {
-  if (context_.config().produce_models()) context_.Maximize(f);
-}
-void Smt2Driver::Minimize(const Expression &f) {
-  if (context_.config().produce_models()) context_.Minimize(f);
 }
 
 void Smt2Driver::DefineFun(const std::string &name, const std::vector<Variable> &parameters, Sort return_type,
@@ -176,16 +114,6 @@ void Smt2Driver::GetValue(const std::vector<Term> &term_list) const {
     if (!context_.config().silent()) std::cout << "\t(" << term_str << " " << value_str << " )\n";
   }
   if (!context_.config().silent()) std::cout << ")" << std::endl;
-}
-
-void Smt2Driver::GetOption(const std::string &key) const {
-  if (context_.config().silent()) return;
-  std::cout << "get-option ( " << key << " ): " << context_.GetOption(key) << std::endl;
-}
-
-void Smt2Driver::GetInfo(const std::string &key) const {
-  if (context_.config().silent()) return;
-  std::cout << "get-info ( " << key << " ): " << context_.GetInfo(key) << std::endl;
 }
 
 std::variant<const Expression *, const Variable *> Smt2Driver::LookupDefinedName(const std::string &name) const {

@@ -17,18 +17,9 @@
 
 namespace dlinear::mps {
 
-MpsDriver::MpsDriver(Context &context)
-    : context_{context},
-      debug_scanning_{context_.config().debug_scanning()},
-      debug_parsing_{context_.config().debug_parsing()},
-      stats_{context.config().with_timings(), "MpsDriver", "Total time spent in MPS parsing"} {}
+MpsDriver::MpsDriver(Context &context) : Driver{context, "MpsDriver"} {}
 
-bool MpsDriver::parse_stream(std::istream &in, const std::string &sname) {
-  SmtSolverOutput *const output = context_.m_solver_output();
-  if (output != nullptr) output->parser_stats = stats_;
-  TimerGuard timer_guard(output == nullptr ? &stats_.m_timer() : &output->parser_stats.m_timer(), stats_.enabled());
-  stream_name_ = sname;
-
+bool MpsDriver::ParseStreamCore(std::istream &in) {
   MpsScanner scanner(&in);
   scanner.set_debug(debug_scanning_);
   scanner_ = &scanner;
@@ -36,19 +27,8 @@ bool MpsDriver::parse_stream(std::istream &in, const std::string &sname) {
   MpsParser parser(*this);
   parser.set_debug_level(debug_parsing_);
   const bool res = parser.parse() == 0;
-  if (output != nullptr) stats_ = output->parser_stats;
+  scanner_ = nullptr;
   return res;
-}
-
-bool MpsDriver::parse_file(const std::string &filename) {
-  std::ifstream in(filename.c_str());
-  if (!in.good()) return false;
-  return parse_stream(in, filename);
-}
-
-bool MpsDriver::parse_string(const std::string &input, const std::string &sname) {
-  std::istringstream iss(input);
-  return parse_stream(iss, sname);
 }
 
 bool MpsDriver::VerifyStrictBound(const std::string &bound) {
@@ -76,7 +56,6 @@ bool MpsDriver::VerifyStrictRhs(const std::string &rhs) {
 }
 
 void MpsDriver::error(const location &l, const std::string &m) { std::cerr << l << " : " << m << std::endl; }
-void MpsDriver::error(const std::string &m) { std::cerr << m << std::endl; }
 
 void MpsDriver::ObjectiveSense(bool is_min) {
   DLINEAR_TRACE_FMT("Driver::ObjectiveSense {}", is_min);
@@ -253,8 +232,5 @@ void MpsDriver::End() {
     }
   }
 }
-
-void MpsDriver::SetOption(const std::string &option, const std::string &value) { context_.SetOption(option, value); }
-void MpsDriver::SetInfo(const std::string &info, const std::string &value) { context_.SetInfo(info, value); }
 
 }  // namespace dlinear::mps

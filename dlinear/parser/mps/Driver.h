@@ -18,12 +18,12 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/parser/Driver.h"
 #include "dlinear/parser/mps/BoundType.h"
 #include "dlinear/parser/mps/Sense.h"
 #include "dlinear/parser/mps/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Stats.h"
 
 namespace dlinear::mps {
 
@@ -36,45 +36,17 @@ namespace dlinear::mps {
  * contains a reference to the structure into which the parsed data is
  * saved.
  */
-class MpsDriver {
+class MpsDriver : public Driver {
  public:
-  explicit MpsDriver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
+  explicit MpsDriver(Context &context);
 
-  /**
-   * Invoke the scanner and parser for a stream.
-   * @param in	input stream
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
-   */
-  bool parse_stream(std::istream &in, const std::string &sname = "stream input");
-
-  /**
-   * Invoke the scanner and parser on an input string.
-   * @param input	input string
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
-   */
-  bool parse_string(const std::string &input, const std::string &sname = "string stream");
-
-  /**
-   * Invoke the scanner and parser on a file. Use parse_stream with a
-   * std::ifstream if detection of file reading errors is required.
-   * @param filename	input file name
-   * @return		true if successfully parsed
-   */
-  bool parse_file(const std::string &filename);
+  bool ParseStreamCore(std::istream &in) override;
 
   /**
    * Error handling with associated line number. This can be modified to
    * output the error e.g. to a dialog box.
    */
   static void error(const location &l, const std::string &m);
-
-  /**
-   * General error handling. This can be modified to output the error
-   * e.g. to a dialog box.
-   */
-  static void error(const std::string &m);
 
   /**
    * Set the objective sense of the problem after having encountered the
@@ -217,24 +189,13 @@ class MpsDriver {
    */
   void End();
 
-  void SetOption(const std::string &option, const std::string &value);
-  void SetInfo(const std::string &info, const std::string &value);
-
-  const std::string &stream_name() const { return stream_name_; }
-  std::string &m_stream_name() { return stream_name_; }
   const std::string &problem_name() const { return problem_name_; }
   std::string &m_problem_name() { return problem_name_; }
-  bool debug_scanning() const { return debug_scanning_; }
-  void set_debug_scanning(bool b) { debug_scanning_ = b; }
-  bool debug_parsing() const { return debug_parsing_; }
-  void set_debug_parsing(bool b) { debug_parsing_ = b; }
   bool strict_mps() const { return strict_mps_; }
   void set_strict_mps(bool b) { strict_mps_ = b; }
   std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
   bool is_min() const { return is_min_; }
   const std::string &obj_row() const { return obj_row_; }
-  const Stats &stats() const { return stats_; }
-  const Context &context() const { return context_; }
 
   MpsScanner *scanner() { return scanner_; }
 
@@ -255,7 +216,6 @@ class MpsDriver {
    */
   inline bool VerifyStrictBound(const std::string &bound);
 
-  std::string stream_name_;       ///< The name of the stream. It is either the name of the file or "stream input".
   std::string problem_name_;      ///< The name of the problem. Used to name the context.
   bool is_min_{true};             ///< True if the problem is a minimization problem.
   std::string obj_row_;           ///< The name of the objective row.
@@ -280,13 +240,6 @@ class MpsDriver {
 
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
-
-  Context &context_;  ///< The context filled during parsing of the expressions.
-
-  bool debug_scanning_{false};  ///< If true, the scanner will print the scanning process.
-  bool debug_parsing_{false};   ///< If true, the parser will print the parsing process.
-
-  Stats stats_;  ///< Statistics for the driver.
 };
 
 }  // namespace dlinear::mps

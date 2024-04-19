@@ -93,6 +93,7 @@ dlinear_cc_library(
         ":function_definition",
         ":sort",
         ":term",
+        "//dlinear/parser:driver",
         "//dlinear/solver:context",
         "//dlinear/solver:logic",
         "//dlinear/symbolic",
@@ -104,13 +105,7 @@ dlinear_cc_library(
         "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
         "@rules_flex//flex:current_flex_toolchain",
-    ] + select({
-        "//tools:dynamic_build": [
-            "//dlinear/util:interrupt",
-            "//dlinear/util:signal_handler_guard",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cpplint()

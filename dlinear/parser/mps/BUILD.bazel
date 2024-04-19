@@ -56,19 +56,13 @@ dlinear_cc_library(
     }),
     deps = [
         ":mps_data",
+        "//dlinear/parser:driver",
         "//dlinear/solver:context",
         "//dlinear/symbolic",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
-        "//dlinear/util:timer",
         "@rules_flex//flex:current_flex_toolchain",
-    ] + select({
-        "//tools:dynamic_build": [
-            "//dlinear/util:interrupt",
-            "//dlinear/util:signal_handler_guard",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cpplint()

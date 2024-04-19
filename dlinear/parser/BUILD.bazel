@@ -1,0 +1,25 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+
+package(default_visibility = [
+    "//benchmark:__subpackages__",
+    "//dlinear:__subpackages__",
+    "//pydlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_cc_library(
+    name = "driver",
+    srcs = ["Driver.cpp"],
+    hdrs = ["Driver.h"],
+    local_defines = select({
+        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//dlinear/solver:context",
+        "//dlinear/symbolic:prefix_printer",
+    ],
+)
+
+cpplint()

@@ -17,12 +17,12 @@
 #include <variant>
 #include <vector>
 
+#include "dlinear/parser/Driver.h"
 #include "dlinear/parser/smt2/FunctionDefinition.h"
 #include "dlinear/parser/smt2/Term.h"
 #include "dlinear/parser/smt2/scanner.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/util/ScopedUnorderedMap.hpp"
-#include "dlinear/util/Stats.h"
 
 namespace dlinear::smt2 {
 
@@ -35,38 +35,10 @@ namespace dlinear::smt2 {
  * contains a reference to the structure into which the parsed data is
  * saved.
  */
-class Smt2Driver {
+class Smt2Driver : public Driver {
  public:
   /// construct a new parser driver context
   explicit Smt2Driver(Context &context);  // NOLINT(runtime/references): Reference context filled during parsing.
-
-  /**
-   * Invoke the scanner and parser for a stream.
-   * @param in	input stream
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
-   */
-  bool parse_stream(std::istream &in, const std::string &sname = "stream input");
-
-  /**
-   * Invoke the scanner and parser on an input string.
-   * @param input	input string
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
-   */
-  bool parse_string(const std::string &input, const std::string &sname = "string stream");
-
-  /**
-   * Invoke the scanner and parser on a file. Use parse_stream with a
-   * std::ifstream if detection of file reading errors is required.
-   * @param filename	input file name
-   * @return		true if successfully parsed
-   */
-  bool parse_file(const std::string &filename);
-
-  // To demonstrate pure handling of parse errors, instead of
-  // simply dumping them on the standard error output, we will pass
-  // them to the driver using the following two member functions.
 
   /**
    * Error handling with associated line number. This can be modified to
@@ -74,14 +46,7 @@ class Smt2Driver {
    */
   static void error(const location &l, const std::string &m);
 
-  /**
-   * General error handling. This can be modified to output the error
-   * e.g. to a dialog box.
-   */
-  static void error(const std::string &m);
-
-  /** Call context_.CheckSat() and print proper output messages to cout. */
-  void CheckSat();
+  bool ParseStreamCore(std::istream &in) override;
 
   /**
    * Eliminate Boolean variables @f$ [b_1, …, b_n] \in @f$ @p vars from @p f.
@@ -131,41 +96,6 @@ class Smt2Driver {
    */
   void GetValue(const std::vector<Term> &term_list) const;
 
-  /** Return a model computed by the solver in response to an invocation of the check-sat. */
-  void GetModel();
-
-  /**
-   * @smtcommand{get-assertions, Print all the assertions currently in the context.
-   * If the mode is set to silent\, it does not print anything.}
-   */
-  void GetAssertions() const;
-
-  /**
-   * @smtcommand{get-option, Print the value of and option or an empty string if the option is not set
-   * @param key key of the option}
-   */
-  void GetOption(const std::string &key) const;
-
-  /**
-   * @smtcommand{get-info, Print information about the solver or the current context.
-   * @param key key of the information to print}
-   */
-  void GetInfo(const std::string &key) const;
-
-  /**
-   * Maximize the objective function @p f. The objective function is
-   * added to the context as a constraint.
-   * @param f expression to maximize
-   */
-  void Maximize(const Expression &f);
-
-  /**
-   * Minimize the objective function @p f. The objective function is
-   * added to the context as a constraint.
-   * @param f expression to minimize
-   */
-  void Minimize(const Expression &f);
-
   /**
    * Lookup a variable or constant expression associated with a name @p name.
    * @param name name of the variable or constant expression
@@ -203,28 +133,11 @@ class Smt2Driver {
 
   std::string MakeUniqueName(const std::string &name);
 
-  bool trace_scanning() const { return debug_scanning_; }
-  void set_trace_scanning(bool b) { debug_scanning_ = b; }
-
-  bool trace_parsing() const { return debug_parsing_; }
-  void set_trace_parsing(bool b) { debug_parsing_ = b; }
-
-  Context &m_context() { return context_; }
-  const Context &context() const { return context_; }
-
-  std::string &m_streamname() { return stream_name_; }
-
   /**
    * Pointer to the current scanner instance, this is used to connect the
    * parser to the scanner. It is used in the yylex macro.
    */
   Smt2Scanner *scanner() { return scanner_; }
-
-  /**
-   * Statistics for the driver.
-   * @return statistics for the driver
-   */
-  const Stats &stats() const { return stats_; }
 
  private:
   Smt2Scanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
@@ -234,17 +147,6 @@ class Smt2Driver {
   ScopedUnorderedMap<std::string, FunctionDefinition> scope_functions_;  ///< Scoped map from a name to a Function
 
   int64_t nextUniqueId_{};  ///< Sequential value concatenated to names to make them unique.
-
-  std::string stream_name_;  ///< The name of the stream being parsed.
-
-  Context &context_;  ///< The context filled during parsing of the expressions.
-
-  bool debug_scanning_{false};  ///< Enable debug output in the flex scanner.
-
-  bool debug_parsing_{false};  ///< Enable debug output in the bison parser.
-
-  Stats stats_;   ///< Statistics for the driver.
-  Timer *timer_;  ///< Pointer to the timer for the driver. Used to pause the timer when checking sat.
 };
 
 }  // namespace dlinear::smt2
