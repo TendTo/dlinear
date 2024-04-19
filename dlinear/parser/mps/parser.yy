@@ -277,11 +277,9 @@ end_section: ENDATA {
  * to set info (e.g. expected result) and options for the LP solver
  */
 command: SET_INFO SYMBOL generic_string '\n' {
-        std::cout << "Set option: " << $2 << " = " << $3 << std::endl;
         driver.SetInfo($2, $3);
     }
     | SET_OPTION SYMBOL generic_string '\n'{
-        std::cout << "Set option: " << $2 << " = " << $3 << std::endl;
         driver.SetOption($2, $3);
     }
     ;
