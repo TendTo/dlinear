@@ -26,7 +26,7 @@ template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver> T>
 inline bool ParseInputCore(const Config &config, Context &context) {
   DLINEAR_DEBUG("SmtSolver::ParseSmt2");
   T driver{context};
-  return config.read_from_stdin() ? driver.parse_stream(std::cin, "(stdin)") : driver.parse_file(config.filename());
+  return config.read_from_stdin() ? driver.ParseStream(std::cin, "(stdin)") : driver.ParseFile(config.filename());
 }
 }  // namespace
 

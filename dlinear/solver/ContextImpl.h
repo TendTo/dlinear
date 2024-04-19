@@ -126,7 +126,7 @@ class Context::Impl {
    * Set the current logic to @p logic.
    * @param logic the logic to be set
    */
-  void SetLogic(const Logic &logic);
+  void SetLogic(Logic logic);
   /**
    * Set an option @p key with a value @p val.
    * @param key the key of the option

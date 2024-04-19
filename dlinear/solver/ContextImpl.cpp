@@ -201,7 +201,7 @@ void Context::Impl::SetInterval(const Variable &v, const mpq_class &lb, const mp
   box()[v] = Box::Interval{lb, ub};
 }
 
-void Context::Impl::SetLogic(const Logic &logic) {
+void Context::Impl::SetLogic(const Logic logic) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetLogic({})", logic);
   switch (logic) {
     case Logic::QF_LRA:
