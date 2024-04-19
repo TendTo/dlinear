@@ -112,7 +112,7 @@ simple_symbol   {sym_begin}{sym_continue}*
 
  /*** BEGIN - lexer rules ***/
 
-";".*[\n\r]+ {
+";".* {
     smt2_yycolumn=1;
 }
 

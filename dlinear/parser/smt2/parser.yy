@@ -55,7 +55,7 @@ using dlinear::gmp::string_to_mpq;
 %initial-action
 {
     // initialize the initial location object
-    @$.begin.filename = @$.end.filename = &driver.m_streamname();
+    @$.begin.filename = @$.end.filename = &driver.m_stream_name();
 };
 
 /* The driver is passed by reference to the parser and to the scanner. This
@@ -165,7 +165,7 @@ command:        command_assert
         ;
 
 command_assert: '(' TK_ASSERT term ')' {
-                    driver.m_context().Assert($3.formula());
+                    driver.Assert($3.formula());
                 }
                 ;
 command_check_sat: '(' TK_CHECK_SAT ')' {
@@ -201,9 +201,9 @@ command_define_fun: '(' TK_DEFINE_FUN SYMBOL enter_scope '(' name_sort_list ')' 
                         // No parameters - treat as variable, just like declare-fun.
                         const Variable v{driver.DeclareVariable($3, $8)};
                         if ($9.type() == Term::Type::FORMULA) {
-                            driver.m_context().Assert(v == $9.formula());
+                            driver.Assert(v == $9.formula());
                         } else {
-                            driver.m_context().Assert(v == $9.expression());
+                            driver.Assert(v == $9.expression());
                         }
                     } else {
                         driver.DefineFun($3, $6, $8, $9);
@@ -220,7 +220,7 @@ command_define_fun: '(' TK_DEFINE_FUN SYMBOL enter_scope '(' name_sort_list ')' 
         ;
 
 command_exit:   '(' TK_EXIT ')' {
-                    driver.m_context().Exit();
+                    driver.Exit();
 		    YYACCEPT;
                 }
                 ;
@@ -256,44 +256,44 @@ command_get_value:
                 ;
 
 command_maximize: '(' TK_MAXIMIZE term ')' {
-                      driver.m_context().Maximize($3.expression());
+                      driver.Maximize($3.expression());
                 }
                 ;
 
 command_minimize: '(' TK_MINIMIZE term ')' {
-                      driver.m_context().Minimize($3.expression());
+                      driver.Minimize($3.expression());
                 }
                 ;
 
 command_set_info:
                 '(' TK_SET_INFO KEYWORD generic_string ')' {
-                    driver.m_context().SetInfo($3, $4);
+                    driver.SetInfo($3, $4);
                 }
         |       
                 '(' TK_SET_INFO KEYWORD TK_TRUE ')' {
-                    driver.m_context().SetInfo($3, "true");
+                    driver.SetInfo($3, "true");
                 }
         |       
                 '(' TK_SET_INFO KEYWORD TK_FALSE ')' {
-                    driver.m_context().SetInfo($3, "false");
+                    driver.SetInfo($3, "false");
                 }
         ;
 command_set_logic:
                 '(' TK_SET_LOGIC SYMBOL ')' {
-                    driver.m_context().SetLogic(parseLogic($3));
+                    driver.SetLogic(parseLogic($3));
                 }
         ;
 command_set_option:
                 '(' TK_SET_OPTION KEYWORD generic_string ')' {
-                    driver.m_context().SetOption($3, $4);
+                    driver.SetOption($3, $4);
                 }
         |       
                 '('TK_SET_OPTION KEYWORD TK_TRUE ')' {
-                    driver.m_context().SetOption($3, "true");
+                    driver.SetOption($3, "true");
                 }
         |       
                 '('TK_SET_OPTION KEYWORD TK_FALSE ')' {
-                    driver.m_context().SetOption($3, "false");
+                    driver.SetOption($3, "false");
                 }
         ;
 
@@ -309,12 +309,12 @@ command_get_info:
                 ;
 
 command_push:   '(' TK_PUSH INT ')' {
-                    driver.m_context().Push(convert_int64_to_int($3));
+                    driver.Push(convert_int64_to_int($3));
                 }
                 ;
 
 command_pop:    '(' TK_POP INT ')' {
-                    driver.m_context().Pop(convert_int64_to_int($3));
+                    driver.Pop(convert_int64_to_int($3));
                 }
                 ;
 
@@ -534,12 +534,12 @@ let_binding_list: '(' var_binding_list ')' {
                     const Variable v{ driver.DeclareLocalVariable(name, sort) };
                     const Formula fv{v};
                     const Formula& ft{ term.formula() };
-                    driver.m_context().Assert((fv && ft) || (!fv && !ft));
+                    driver.Assert((fv && ft) || (!fv && !ft));
                 } else if (is_constant(term.expression())) {
                     driver.DefineLocalConstant(name, term.expression());
                 } else {
                     const Variable v{ driver.DeclareLocalVariable(name, sort) };
-                    driver.m_context().Assert(Expression{v} == term.expression());
+                    driver.Assert(Expression{v} == term.expression());
                 }
             }
         }
