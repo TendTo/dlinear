@@ -497,4 +497,4 @@ TEST_F(TestTheorySolverBoundPreprocessor, ExtractCoefficient) {
   EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(2 * x1_ + 2 * x2_ == 3 * x2_), mpq_class(1, 2));
 }
 
-// EXPECT_ANY_THROW(std::cout << bound_preprocessor_ << std::endl);
+EXPECT_ANY_THROW(std::cout << bound_preprocessor_ << std::endl);

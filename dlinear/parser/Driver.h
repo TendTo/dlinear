@@ -1,4 +1,17 @@
+/**
+ * @file Driver.h
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * @brief Driver class
+ *
+ * The Driver is the base class for all the parsers.
+ * It contains the common logic to allow the parsed data to be saved in the context.
+ * It coordinates the communication between the parser (bison) and the scanner (flex).
+ */
 #pragma once
+
+#include <string>
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/Logic.h"
@@ -6,13 +19,10 @@
 namespace dlinear {
 
 /**
- * The Smt2Driver class brings together all components. It creates an
- * instance of the Parser and Scanner classes and connects them. Then
- * the input stream is fed into the scanner object and the parser gets
- * it's token sequence. Furthermore the driver object is available in
- * the grammar rules as a parameter. Therefore the driver class
- * contains a reference to the structure into which the parsed data is
- * saved.
+ * The Driver is the base class for all the parsers.
+ *
+ * It contains the common logic to allow the parsed data to be saved in the context.
+ * It coordinates the communication between the parser (bison) and the scanner (flex).
  */
 class Driver {
  public:
@@ -22,25 +32,29 @@ class Driver {
 
   /**
    * Invoke the scanner and parser for a stream.
-   * @param in	input stream
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
+   * @param in input stream
+   * @param sname stream name for error messages
+   * @return true if successfully parsed
+   * @return false if an error occurred
    */
   bool ParseStream(std::istream &in, const std::string &sname = "stream input");
 
   /**
    * Invoke the scanner and parser on an input string.
-   * @param input	input string
-   * @param sname	stream name for error messages
-   * @return		true if successfully parsed
+   * @param input input string
+   * @param sname stream name for error messages
+   * @return true if successfully parsed
+   * @return false if an error occurred
    */
   bool ParseString(const std::string &input, const std::string &sname = "string stream");
 
   /**
-   * Invoke the scanner and parser on a file. Use parse_stream with a
-   * std::ifstream if detection of file reading errors is required.
-   * @param filename	input file name
-   * @return		true if successfully parsed
+   * Invoke the scanner and parser on a file.
+   *
+   * Use parse_stream with a std::ifstream if detection of file reading errors is required.
+   * @param filename input file name
+   * @return true if successfully parsed
+   * @return false if an error occurred
    */
   bool ParseFile(const std::string &filename);
 
@@ -122,4 +136,5 @@ class Driver {
   Stats stats_;   ///< Statistics for the driver.
   Timer *timer_;  ///< Pointer to the timer for the driver. Used to pause the timer when checking sat.
 };
+
 }  // namespace dlinear

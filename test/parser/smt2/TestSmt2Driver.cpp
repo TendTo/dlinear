@@ -298,7 +298,6 @@ TEST_F(TestSmt2Driver, EmptyGetModel) {
       driver.ParseString("(assert (= 1 2))\n"
                          "(check-sat)\n"
                          "(get-model)"));
-  std::cout << driver.context().model() << std::endl;
   EXPECT_TRUE(driver.context().model().empty());
 }
 

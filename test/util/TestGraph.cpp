@@ -306,7 +306,6 @@ TYPED_TEST(TestGraph, AllPathsStop) {
 TYPED_TEST(TestGraph, AllPathsSingle) {
   int count = 0;
   this->empty_graph_.AddEdge(0, 6, false);
-  std::cout << this->empty_graph_ << std::endl;
   this->empty_graph_.AllPaths(0, 6, [&count](std::vector<TypeParam>& path) {
     count++;
     EXPECT_THAT(path, ::testing::Contains(0));

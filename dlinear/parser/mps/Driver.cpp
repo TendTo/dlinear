@@ -7,11 +7,8 @@
 
 #include "Driver.h"
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 
-#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
