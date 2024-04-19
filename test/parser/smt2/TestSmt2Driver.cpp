@@ -26,26 +26,26 @@ class TestSmt2Driver : public ::testing::Test {
 
 TEST_F(TestSmt2Driver, ValidSetLogic) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(driver.parse_string("(set-logic QF_LRA)"));
+  EXPECT_TRUE(driver.ParseString("(set-logic QF_LRA)"));
 }
 
 TEST_F(TestSmt2Driver, InvalidSetLogic) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(set-logic QF_LIA)"), std::runtime_error);
-  EXPECT_THROW(driver.parse_string("(set-logic LRA)"), std::runtime_error);
-  EXPECT_THROW(driver.parse_string("(set-logic LIA)"), std::runtime_error);
-  EXPECT_THROW(driver.parse_string("(set-logic QF_BV)"), std::runtime_error);
-  EXPECT_THROW(driver.parse_string("(set-logic QF_UF)"), std::runtime_error);
-  EXPECT_THROW(driver.parse_string("(set-logic QF_UFBV)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic QF_LIA)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic LRA)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic LIA)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic QF_BV)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic QF_UF)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic QF_UFBV)"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, DeclareVariables) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun r () Real)\n"
-      "; (declare-fun i () Int)\n"  // Int is not supported
-      "(declare-fun b () Bool)\n"
-      "; (declare-fun bin () Binary)");  // Binary is not supported
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun r () Real)\n"
+                         "; (declare-fun i () Int)\n"  // Integer is not supported
+                         "(declare-fun b () Bool)\n"
+                         "; (declare-fun bin () Binary)"));  // Binary is not supported
 
   const Variable& r = driver.LookupVariable("r");
   //  const Variable& i = driver.LookupVariable("i");
@@ -66,35 +66,35 @@ TEST_F(TestSmt2Driver, DeclareVariables) {
 
 TEST_F(TestSmt2Driver, DeclareSort) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(declare-sort A 0)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(declare-sort A 0)"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, DefineSortAlias) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(define-sort I () Int)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(define-sort I () Int)"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, DefineSortParameters) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(define-sort P (X) (Pair X X))"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(define-sort P (X) (Pair X X))"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, GetProof) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(get-proof)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(get-proof)"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, GetUnsatCore) {
   Smt2Driver driver{context_};
-  EXPECT_THROW(driver.parse_string("(get-unsat-core)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(get-unsat-core)"), std::runtime_error);
 }
 
 TEST_F(TestSmt2Driver, SimpleRealAssertion) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun lhs () Real)\n"
-      "(declare-fun rhs () Real)\n"
-      "(assert (>= lhs rhs))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun lhs () Real)\n"
+                         "(declare-fun rhs () Real)\n"
+                         "(assert (>= lhs rhs))"));
 
   const Variable& lhs = driver.LookupVariable("lhs");
   const Variable& rhs = driver.LookupVariable("rhs");
@@ -110,10 +110,10 @@ TEST_F(TestSmt2Driver, SimpleRealAssertion) {
 
 TEST_F(TestSmt2Driver, NegatedRealAssertion) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun lhs () Real)\n"
-      "(declare-fun rhs () Real)\n"
-      "(assert (not (>= lhs rhs)))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun lhs () Real)\n"
+                         "(declare-fun rhs () Real)\n"
+                         "(assert (not (>= lhs rhs)))"));
 
   const Variable& lhs = driver.LookupVariable("lhs");
   const Variable& rhs = driver.LookupVariable("rhs");
@@ -129,10 +129,10 @@ TEST_F(TestSmt2Driver, NegatedRealAssertion) {
 
 TEST_F(TestSmt2Driver, SimpleBoolAssertion) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun lhs () Bool)\n"
-      "(declare-fun rhs () Bool)\n"
-      "(assert (= lhs rhs))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun lhs () Bool)\n"
+                         "(declare-fun rhs () Bool)\n"
+                         "(assert (= lhs rhs))"));
 
   const Variable& lhs = driver.LookupVariable("lhs");
   const Variable& rhs = driver.LookupVariable("rhs");
@@ -148,10 +148,10 @@ TEST_F(TestSmt2Driver, SimpleBoolAssertion) {
 
 TEST_F(TestSmt2Driver, NegatedBoolAssertion) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun lhs () Bool)\n"
-      "(declare-fun rhs () Bool)\n"
-      "(assert (not (= lhs rhs)))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun lhs () Bool)\n"
+                         "(declare-fun rhs () Bool)\n"
+                         "(assert (not (= lhs rhs)))"));
 
   const Variable& lhs = driver.LookupVariable("lhs");
   const Variable& rhs = driver.LookupVariable("rhs");
@@ -167,10 +167,10 @@ TEST_F(TestSmt2Driver, NegatedBoolAssertion) {
 
 TEST_F(TestSmt2Driver, LetCommand) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun x () Real)\n"
-      "(declare-fun y () Real)\n"
-      "(assert (let ((lhs x) (rhs y)) (= lhs rhs)))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(assert (let ((lhs x) (rhs y)) (= lhs rhs)))"));
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
@@ -189,11 +189,11 @@ TEST_F(TestSmt2Driver, LetCommand) {
 
 TEST_F(TestSmt2Driver, LetConstantCommand) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun x () Real)\n"
-      "(declare-fun y () Real)\n"
-      "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
-      "(assert (let ((lhs y) (rhs x) (c 12)) (= (+ lhs rhs) 12)))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                         "(assert (let ((lhs y) (rhs x) (c 12)) (= (+ lhs rhs) 12)))"));
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
@@ -217,11 +217,11 @@ TEST_F(TestSmt2Driver, LetConstantCommand) {
 
 TEST_F(TestSmt2Driver, CustomSumFunction) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun x () Real)\n"
-      "(declare-fun y () Real)\n"
-      "(define-fun sum ((a Real) (b Real)) Real (+ a b))\n"
-      "(assert (= (sum x y) (* x 2)))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(define-fun sum ((a Real) (b Real)) Real (+ a b))\n"
+                         "(assert (= (sum x y) (* x 2)))"));
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
@@ -236,13 +236,13 @@ TEST_F(TestSmt2Driver, CustomSumFunction) {
 
 TEST_F(TestSmt2Driver, IgnoreRedefinedMaxFunction) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun x () Real)\n"
-      "(declare-fun y () Real)\n"
-      "(define-fun max ((a Real) (b Real)) Real (+ a b))\n"
-      "(assert (<= x 0))\n"
-      "(assert (<= y 1))\n"
-      "(assert (= (max x y) 1))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(define-fun max ((a Real) (b Real)) Real (+ a b))\n"
+                         "(assert (<= x 0))\n"
+                         "(assert (<= y 1))\n"
+                         "(assert (= (max x y) 1))"));
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
@@ -257,13 +257,13 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMaxFunction) {
 
 TEST_F(TestSmt2Driver, IgnoreRedefinedMinFunction) {
   Smt2Driver driver{context_};
-  driver.parse_string(
-      "(declare-fun x () Real)\n"
-      "(declare-fun y () Real)\n"
-      "(define-fun min ((a Real) (b Real)) Real (+ a b))\n"
-      "(assert (<= x 0))\n"
-      "(assert (<= y 1))\n"
-      "(assert (= (min x y) 1))");
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(define-fun min ((a Real) (b Real)) Real (+ a b))\n"
+                         "(assert (<= x 0))\n"
+                         "(assert (<= y 1))\n"
+                         "(assert (= (min x y) 1))"));
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
@@ -278,70 +278,70 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMinFunction) {
 
 TEST_F(TestSmt2Driver, EmptyGetAssertions) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(driver.parse_string("(get-assertions)"));
+  EXPECT_TRUE(driver.ParseString("(get-assertions)"));
   EXPECT_TRUE(driver.context().assertions().empty());
 }
 
 TEST_F(TestSmt2Driver, GetAssertions) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(declare-fun x () Real)\n"
-                          "(declare-fun y () Real)\n"
-                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
-                          "(get-assertions)"));
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                         "(get-assertions)"));
   EXPECT_FALSE(driver.context().assertions().empty());
 }
 
 TEST_F(TestSmt2Driver, EmptyGetModel) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(assert (= 1 2))\n"
-                          "(check-sat)\n"
-                          "(get-model)"));
+  ASSERT_TRUE(
+      driver.ParseString("(assert (= 1 2))\n"
+                         "(check-sat)\n"
+                         "(get-model)"));
   std::cout << driver.context().model() << std::endl;
   EXPECT_TRUE(driver.context().model().empty());
 }
 
 TEST_F(TestSmt2Driver, GetModel) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(declare-fun x () Real)\n"
-                          "(declare-fun y () Real)\n"
-                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
-                          "(check-sat)"
-                          "(get-assertions)"));
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                         "(check-sat)"
+                         "(get-assertions)"));
   EXPECT_FALSE(driver.context().model().empty());
 }
 
 TEST_F(TestSmt2Driver, EmptyGetAssignment) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(assert (= 1 2))\n"
-                          "(check-sat)\n"
-                          "(get-assignment)"));
+  ASSERT_TRUE(
+      driver.ParseString("(assert (= 1 2))\n"
+                         "(check-sat)\n"
+                         "(get-assignment)"));
   EXPECT_TRUE(driver.context().model().empty());
 }
 
 TEST_F(TestSmt2Driver, GetAssignment) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(declare-fun x () Real)\n"
-                          "(declare-fun y () Real)\n"
-                          "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
-                          "(check-sat)"
-                          "(get-assignment)"));
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(declare-fun y () Real)\n"
+                         "(assert (let ((lhs x) (rhs y) (c 42)) (= (+ lhs rhs) c)))\n"
+                         "(check-sat)"
+                         "(get-assignment)"));
   EXPECT_FALSE(driver.context().model().empty());
 }
 
 TEST_F(TestSmt2Driver, SetConfigOptions1) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(set-option :precision 1)\n"
-                          "(set-option :produce-models true)\n"
-                          "(set-option :polytope true)\n"
-                          "(set-option :forall-polytope true)\n"
-                          "(set-option :local-optimization true)\n"
-                          "(set-option :worklist-fixpoint true)"));
+  ASSERT_TRUE(
+      driver.ParseString("(set-option :precision 1)\n"
+                         "(set-option :produce-models true)\n"
+                         "(set-option :polytope true)\n"
+                         "(set-option :forall-polytope true)\n"
+                         "(set-option :local-optimization true)\n"
+                         "(set-option :worklist-fixpoint true)"));
   EXPECT_EQ(driver.context().config().precision(), 1);
   EXPECT_TRUE(driver.context().config().produce_models());
   EXPECT_TRUE(driver.context().config().use_polytope());
@@ -352,13 +352,13 @@ TEST_F(TestSmt2Driver, SetConfigOptions1) {
 
 TEST_F(TestSmt2Driver, SetConfigOptions2) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(set-option :precision 0.505)\n"
-                          "(set-option :produce-models false)\n"
-                          "(set-option :polytope false)\n"
-                          "(set-option :forall-polytope false)\n"
-                          "(set-option :local-optimization false)\n"
-                          "(set-option :worklist-fixpoint false)"));
+  ASSERT_TRUE(
+      driver.ParseString("(set-option :precision 0.505)\n"
+                         "(set-option :produce-models false)\n"
+                         "(set-option :polytope false)\n"
+                         "(set-option :forall-polytope false)\n"
+                         "(set-option :local-optimization false)\n"
+                         "(set-option :worklist-fixpoint false)"));
   EXPECT_EQ(driver.context().config().precision(), 0.505);
   EXPECT_FALSE(driver.context().config().produce_models());
   EXPECT_FALSE(driver.context().config().use_polytope());
@@ -369,34 +369,34 @@ TEST_F(TestSmt2Driver, SetConfigOptions2) {
 
 TEST_F(TestSmt2Driver, EmptyGetOption) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(driver.parse_string("(get-option :produce-models)"));
+  EXPECT_TRUE(driver.ParseString("(get-option :produce-models)"));
 }
 
 TEST_F(TestSmt2Driver, GetOption) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(set-option :produce-models true)\n"
-                          "(get-option :produce-models)"));
+  ASSERT_TRUE(
+      driver.ParseString("(set-option :produce-models true)\n"
+                         "(get-option :produce-models)"));
 }
 
 TEST_F(TestSmt2Driver, EmptyInfo) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(driver.parse_string("(get-info :status)"));
+  EXPECT_TRUE(driver.ParseString("(get-info :status)"));
 }
 
 TEST_F(TestSmt2Driver, GetInfo) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(set-info :status sat)\n"
-                          "(get-info :status)"));
+  ASSERT_TRUE(
+      driver.ParseString("(set-info :status sat)\n"
+                         "(get-info :status)"));
 }
 
 TEST_F(TestSmt2Driver, Exit) {
   Smt2Driver driver{context_};
-  EXPECT_TRUE(
-      driver.parse_string("(declare-fun x () Real)\n"
-                          "(exit)\n"
-                          "(declare-fun y () Real)"));
+  ASSERT_TRUE(
+      driver.ParseString("(declare-fun x () Real)\n"
+                         "(exit)\n"
+                         "(declare-fun y () Real)"));
   const Variable& x = driver.LookupVariable("x");
   EXPECT_EQ(x.get_name(), "x");
   EXPECT_THROW(driver.LookupVariable("y"), std::out_of_range);
