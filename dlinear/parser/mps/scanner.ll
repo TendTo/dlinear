@@ -89,7 +89,6 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 /*** End of Declarations ***/
 
 %x NAME_SECTION
-%x END_SECTION
 %x COMMENT
 %x COMMAND
 
@@ -102,12 +101,6 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 
  /*** BEGIN - lexer rules ***/
 
-
-
-{comment_start}                 { BEGIN(COMMENT); }
-<COMMENT>[^\n\r]*               { }
-<COMMENT>[\n]                   { BEGIN(INITIAL); }
-
 {comment_start}{whitespace}*"@set-info"{whitespace}   { BEGIN(COMMAND); return token::SET_INFO; }
 {comment_start}{whitespace}*"@set-option"{whitespace} { BEGIN(COMMAND); return token::SET_OPTION; }
 
@@ -115,6 +108,10 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 <COMMAND>{symbol}               { yylval->emplace<std::string>(yytext, yyleng); return token::SYMBOL; }
 <COMMAND>{whitespace}+          {  }
 <COMMAND>[\n]                   { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
+
+{comment_start}                 { BEGIN(COMMENT); }
+<COMMENT>[^\n\r]*               { }
+<COMMENT>[\n]                   { BEGIN(INITIAL); }
 
 (?i:NAME)                       { BEGIN(NAME_SECTION); return token::NAME_DECLARATION; }
 (?i:ROWS)                       { return token::ROWS_DECLARATION; }
@@ -124,7 +121,7 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 (?i:BOUNDS)                     { return token::BOUNDS_DECLARATION; }
 (?i:OBJSENSE)                   { return token::OBJSENSE_DECLARATION; }
 (?i:OBJNAME)                    { return token::OBJNAME_DECLARATION; }
-(?i:ENDATA)                     { BEGIN(END_SECTION); return token::ENDATA; }
+(?i:ENDATA)                     { return token::ENDATA; }
 
 {whitespace}+(?i:MAX)                { return token::MAX; }
 {whitespace}+(?i:MIN)                { return token::MIN; }
@@ -152,8 +149,6 @@ rational        [-+]?((([0-9]+)|([0-9]*\.?[0-9]+))([eE][-+]?[0-9]+)?)
 <NAME_SECTION>[^ \r\t\n].+[^ \r\t\n]  { yylval->emplace<std::string>(yytext, yyleng); return token::SYMBOL; }
 <NAME_SECTION>{whitespace}+           {  }
 <NAME_SECTION>[\n]                    { BEGIN(INITIAL); return static_cast<token_type>(*yytext); }
-
-<END_SECTION>[ \n\t\r]+|.+      {  }
 
  /* gobble up white-spaces */
 {whitespace}+ {

@@ -100,6 +100,10 @@ script: sections END
 
 sections: sections section
     | section
+    | commands
+    ;
+
+commands: commands command
     | command
     ;
 
@@ -260,9 +264,12 @@ bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
     }
     | command
     | '\n'
+    ;
 
-end_section: ENDATA '\n'
-    | ENDATA { driver.End(); }
+end_section: ENDATA {
+        driver.End(); 
+        YYACCEPT;
+    }
     ;
 
 /**
@@ -270,9 +277,11 @@ end_section: ENDATA '\n'
  * to set info (e.g. expected result) and options for the LP solver
  */
 command: SET_INFO SYMBOL generic_string '\n' {
+        std::cout << "Set option: " << $2 << " = " << $3 << std::endl;
         driver.SetInfo($2, $3);
     }
     | SET_OPTION SYMBOL generic_string '\n'{
+        std::cout << "Set option: " << $2 << " = " << $3 << std::endl;
         driver.SetOption($2, $3);
     }
     ;
