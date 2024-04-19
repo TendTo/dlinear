@@ -33,8 +33,8 @@ void Context::DeclareVariable(const Variable &v, const Expression &lb, const Exp
   impl_->SetDomain(v, lb, ub);
 }
 void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }
-void Context::Minimize(const Expression &f) { impl_->Minimize({f}); }
-void Context::Maximize(const Expression &f) { impl_->Maximize({f}); }
+void Context::Minimize(const Expression &f) { impl_->Minimize(f); }
+void Context::Maximize(const Expression &f) { impl_->Maximize(f); }
 
 void Context::Pop(int n) {
   DLINEAR_DEBUG_FMT("Context::Pop({})", n);

@@ -89,6 +89,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "nlopt_maxeval = " << config.nlopt_maxeval_.get() << ",\n"
             << "nlopt_maxtime = " << config.nlopt_maxtime_.get() << ",\n"
             << "number_of_jobs = " << config.number_of_jobs_.get() << ",\n"
+            << "optimize = '" << config.optimize_.get() << "',\n"
             << "precision = " << config.precision_.get() << ",\n"
             << "produce_model = " << config.produce_models_.get() << ",\n"
             << "random_seed = " << config.random_seed_.get() << ",\n"

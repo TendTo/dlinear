@@ -91,6 +91,7 @@ class Config {
                     "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
                     "\t\tUse the --complete flag if you are looking for a complete solution")
   DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
+  DLINEAR_PARAMETER(optimize, bool, false, "Whether to optimize the objective function. Only affects the MPS format")
   DLINEAR_PARAMETER(use_polytope, bool, false, "Use polytope contractor")
   DLINEAR_PARAMETER(use_polytope_in_forall, bool, false, "Use polytope contractor in forall contractor")
   DLINEAR_PARAMETER(use_worklist_fixpoint, bool, false, "Use worklist fixpoint algorithm in ICP")

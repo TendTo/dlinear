@@ -84,7 +84,7 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     columns_[column] = var;  // If not already in the map, add the variable
     context_.DeclareVariable(var);
   }
-  if (!context_.config().produce_models() && row == obj_row_) return;
+  if (!context_.config().optimize() && row == obj_row_) return;
   rows_[row].emplace(columns_[column], value);
   DLINEAR_TRACE_FMT("Updated row {}", row);
 }
@@ -223,7 +223,7 @@ void MpsDriver::End() {
     if (row.EqualTo(Formula::True())) continue;
     context_.Assert(row);
   }
-  if (context_.config().produce_models() && !obj_row_.empty()) {
+  if (context_.config().optimize() && !obj_row_.empty()) {
     Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
     if (is_min_) {
       context_.Minimize(obj_expression);

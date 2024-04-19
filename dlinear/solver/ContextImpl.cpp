@@ -165,23 +165,14 @@ void Context::Impl::SetDomain(const Variable &v, const Expression &lb, const Exp
   SetInterval(v, lb_fp, ub_fp);
 }
 
-void Context::Impl::Minimize(const std::vector<Expression> &functions) {
-  DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
-
-  const Expression &obj_expr{functions[0].Expand()};
-
+void Context::Impl::Minimize(const Expression &obj_function) {
   is_max_ = false;
-  MinimizeCore(obj_expr);
+  MinimizeCore(obj_function);
 }
 
-void Context::Impl::Maximize(const std::vector<Expression> &functions) {
-  DLINEAR_ASSERT(functions.size() == 1, "Must have exactly one objective function");
-
-  // Negate objective function
-  const Expression &obj_expr{(-functions[0]).Expand()};
-
+void Context::Impl::Maximize(const Expression &obj_function) {
   is_max_ = true;
-  MinimizeCore(obj_expr);
+  MinimizeCore((-obj_function).Expand());
 }
 
 void Context::Impl::SetInfo(const std::string &key, const std::string &val) {
@@ -365,11 +356,10 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 }
 
 LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
-  DLINEAR_RUNTIME_ERROR("Not implemented");
-  return LpResult::LP_INFEASIBLE;
+  DLINEAR_RUNTIME_ERROR("CheckOptCore() Not implemented");
 }
 void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
-  DLINEAR_RUNTIME_ERROR("Not implemented");
+  DLINEAR_RUNTIME_ERROR("MinimizeCore() Not implemented");
 }
 std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
   switch (config.lp_solver()) {

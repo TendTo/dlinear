@@ -97,12 +97,12 @@ class Context::Impl {
    * Assert a formula minimizing a cost function @p f.
    * @param f the cost function to be minimized
    */
-  void Minimize(const std::vector<Expression> &functions);
+  void Minimize(const Expression &obj_function);
   /**
    * Assert a formula maximizing a cost function @p f.
    * @param f the cost function to be maximized
    */
-  void Maximize(const std::vector<Expression> &functions);
+  void Maximize(const Expression &obj_function);
   /**
    * Set an info @p key with a value @p val.
    * @param key the key of the info

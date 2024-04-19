@@ -78,6 +78,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
   DLINEAR_PARSE_PARAM_BOOL(parser_, disable_theory_preprocessor, "--disable-theory-preprocessor");
   DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce-check-sat");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, optimize, "-o", "--optimize");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope, "--polytope");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_worklist_fixpoint, "--worklist-fixpoint");
@@ -200,6 +201,7 @@ Config ArgParser::toConfig() const {
     config.m_nlopt_maxeval().set_from_command_line(parser_.get<uint>("nlopt-maxeval"));
   if (parser_.is_used("nlopt-maxtime"))
     config.m_nlopt_maxtime().set_from_command_line(parser_.get<double>("nlopt-maxtime"));
+  if (parser_.is_used("optimize")) config.m_optimize().set_from_command_line(parser_.get<bool>("optimize"));
   if (parser_.is_used("polytope")) config.m_use_polytope().set_from_command_line(parser_.get<bool>("polytope"));
   if (parser_.is_used("precision")) config.m_precision().set_from_command_line(parser_.get<double>("precision"));
   if (parser_.is_used("produce-models"))
