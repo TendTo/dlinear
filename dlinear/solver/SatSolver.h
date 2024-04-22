@@ -13,11 +13,12 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <map>
 #include <optional>
 #include <set>
-#include <tuple>
-#include <utility>
+#include <string>
+#include <vector>
 
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
@@ -196,8 +197,8 @@ class SatSolver {
 
   // Data to help with removing literals that are only required by learned clauses.
   std::vector<int> main_clauses_copy_;
-  std::map<int, std::set<size_t>> main_clause_lookup_;
-  size_t cur_clause_start_;
+  std::map<int, std::set<std::size_t>> main_clause_lookup_;
+  std::size_t cur_clause_start_;
   std::vector<Literal> theory_literals_;
 
   ScopedUnorderedMap<Variable::Id, int> var_to_sat_;  ///< Map symbolic::Variable → int (Variable type in PicoSat).

@@ -19,7 +19,7 @@
 #include "dlinear/util/logging.h"
 // This import is unfortunately necessary to avoid a fmt clashes between spdlog and soplex.
 
-#include <soplex.h>  // NOLINT
+#include <soplex.h>  // IWYU pragma: export
 
 OSTREAM_FORMATTER(soplex::VectorRational)
 OSTREAM_FORMATTER(soplex::Rational)

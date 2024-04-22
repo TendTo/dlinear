@@ -8,24 +8,14 @@
  *
  * Use the @verbatim-h @endverbatim flag to show the help tooltip.
  */
-#include <csignal>
+#include <iostream>
 
 #include "dlinear/solver/SmtSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Config.h"
 
-namespace {
-void HandleSigInt(const int) {
-  // Properly exit so that we can see stat information produced by destructors
-  // even if a user press C-c.
-  std::exit(EXIT_FAILURE);
-}
-}  // namespace
-
 int main(int argc, const char* argv[]) {
-  // Handle C-c.
-  std::signal(SIGINT, HandleSigInt);
   // Initialize the command line parser.
   dlinear::ArgParser parser{};
   // Parse the command line arguments.

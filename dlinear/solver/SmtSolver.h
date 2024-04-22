@@ -12,13 +12,12 @@
  */
 #pragma once
 
-#include <iostream>
 #include <string>
 
-#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/SolverGuard.h"
+#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear {

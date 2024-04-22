@@ -6,7 +6,10 @@
  */
 #include "ContextImpl.h"
 
+#include <iostream>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 #ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/solver/DeltaQsoptexTheorySolver.h"
@@ -19,6 +22,9 @@
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
+#include "dlinear/util/OptionValue.hpp"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace {
@@ -389,7 +395,7 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
 #ifndef NDEBUG
   explanations_so_far.insert(explanation);
 #endif
-  if (explanation.empty()) DLINEAR_RUNTIME_ERROR_FMT("No explanation is provided. Infinite loop detected.");
+  if (explanation.empty()) DLINEAR_RUNTIME_ERROR("No explanation is provided. Infinite loop detected.");
   sat_solver_->AddLearnedClause(explanation);
 }
 

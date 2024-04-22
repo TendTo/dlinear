@@ -7,8 +7,9 @@
  */
 #pragma once
 
+#include <chrono>
+#include <iosfwd>
 #include <string>
-#include <utility>
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/LpResult.h"
@@ -102,7 +103,7 @@ struct SmtSolverOutput {
 
   Timer total_timer{};                    ///< Timer keeping track of the total time spent in the solver
   Timer smt_solver_timer{};               ///< Timer keeping track of the time spent in the SMT solver
-  uint n_assertions{0};                   ///< Number of assertions in the input
+  unsigned int n_assertions{0};           ///< Number of assertions in the input
   SmtResult result{SmtResult::UNSOLVED};  ///< Result of the computation
   mpq_class lower_bound{0};               ///< Lower bound of the result
   mpq_class upper_bound{0};               ///< Upper bound of the result

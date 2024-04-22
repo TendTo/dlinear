@@ -9,20 +9,20 @@
  */
 #pragma once
 
-#include <set>
-#include <string>
 #include <vector>
 
 #include "dlinear/symbolic/FormulaVisitor.h"
 #include "dlinear/symbolic/NaiveCnfizer.h"
+#include "dlinear/symbolic/Nnfizer.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
 class PlaistedGreenbaumCnfizer : public FormulaVisitor {
  public:
-  explicit PlaistedGreenbaumCnfizer(const Config &config)
-      : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"} {}
+  explicit PlaistedGreenbaumCnfizer(const Config &config) : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"} {}
 
   /**
    * Convert a @p f into an equi-satisfiable formula @c f' in CNF.

@@ -17,6 +17,7 @@
 #include <variant>
 
 #include "dlinear/parser/smt2/Sort.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/logging.h"
 

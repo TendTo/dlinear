@@ -11,6 +11,7 @@ dlinear_cc_library(
     name = "prefix_printer",
     srcs = ["PrefixPrinter.cpp"],
     hdrs = ["PrefixPrinter.h"],
+    tags = ["iwyu"],
     deps = [":symbolic"],
 )
 
@@ -18,6 +19,7 @@ dlinear_cc_library(
     name = "symbolic",
     srcs = ["symbolic.cpp"],
     hdrs = ["symbolic.h"],
+    tags = ["iwyu"],
     deps = [
         ":literal",
         "//dlinear/util:exception",
@@ -29,6 +31,7 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "formula_visitor",
     hdrs = ["FormulaVisitor.h"],
+    tags = ["iwyu"],
     deps = [
         ":symbolic",
         "//dlinear/util:stats",
@@ -39,6 +42,7 @@ dlinear_cc_library(
     name = "linear_formula_flattener",
     srcs = ["LinearFormulaFlattener.cpp"],
     hdrs = ["LinearFormulaFlattener.h"],
+    tags = ["iwyu"],
     deps = [
         ":symbolic",
         "//dlinear/util:config",
@@ -49,6 +53,7 @@ dlinear_cc_library(
     name = "literal",
     srcs = ["literal.cpp"],
     hdrs = ["literal.h"],
+    tags = ["iwyu"],
     deps = [
         "//dlinear/util:logging",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
@@ -58,6 +63,7 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "environment",
     hdrs = ["environment.h"],
+    tags = ["iwyu"],
     deps = [
         "//dlinear/util:logging",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
@@ -68,6 +74,7 @@ dlinear_cc_library(
     name = "expression_evaluator",
     srcs = ["ExpressionEvaluator.cpp"],
     hdrs = ["ExpressionEvaluator.h"],
+    tags = ["iwyu"],
     deps = [
         ":symbolic",
         "//dlinear/util:box",
@@ -80,6 +87,7 @@ dlinear_cc_library(
     name = "nnfizier",
     srcs = ["Nnfizer.cpp"],
     hdrs = ["Nnfizer.h"],
+    tags = ["iwyu"],
     deps = [
         ":symbolic",
         "//dlinear/util:logging",
@@ -90,6 +98,7 @@ dlinear_cc_library(
     name = "cnfizer",
     srcs = ["NaiveCnfizer.cpp"],
     hdrs = ["NaiveCnfizer.h"],
+    tags = ["iwyu"],
     deps = [
         ":nnfizier",
         ":symbolic",
@@ -101,6 +110,7 @@ dlinear_cc_library(
     name = "if_then_else_eliminator",
     srcs = ["IfThenElseEliminator.cpp"],
     hdrs = ["IfThenElseEliminator.h"],
+    tags = ["iwyu"],
     deps = [
         ":nnfizier",
         ":symbolic",
@@ -114,6 +124,7 @@ dlinear_cc_library(
     name = "predicate_abstractor",
     srcs = ["PredicateAbstractor.cpp"],
     hdrs = ["PredicateAbstractor.h"],
+    tags = ["iwyu"],
     deps = [
         ":formula_visitor",
         ":linear_formula_flattener",
@@ -129,6 +140,7 @@ dlinear_cc_library(
     name = "plaisted_greenbaum_cnfizer",
     srcs = ["PlaistedGreenbaumCnfizer.cpp"],
     hdrs = ["PlaistedGreenbaumCnfizer.h"],
+    tags = ["iwyu"],
     deps = [
         ":cnfizer",
         ":formula_visitor",
@@ -145,6 +157,7 @@ dlinear_cc_library(
     name = "tseitin_cnfizer",
     srcs = ["TseitinCnfizer.cpp"],
     hdrs = ["TseitinCnfizer.h"],
+    tags = ["iwyu"],
     deps = [
         ":cnfizer",
         ":formula_visitor",

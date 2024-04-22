@@ -7,7 +7,6 @@
 
 #include "BoundType.h"
 
-#include <cstring>
 #include <iostream>
 
 #include "dlinear/util/exception.h"
@@ -18,16 +17,35 @@ BoundType ParseBoundType(const std::string& bound_type) { return ParseBoundType(
 
 BoundType ParseBoundType(const char bound_type[]) {
   while (*bound_type == ' ') ++bound_type;
-  if (!strncasecmp(bound_type, "LO", 2)) return BoundType::LO;
-  if (!strncasecmp(bound_type, "LI", 2)) return BoundType::LI;
-  if (!strncasecmp(bound_type, "UP", 2)) return BoundType::UP;
-  if (!strncasecmp(bound_type, "UI", 2)) return BoundType::UI;
-  if (!strncasecmp(bound_type, "FX", 2)) return BoundType::FX;
-  if (!strncasecmp(bound_type, "FR", 2)) return BoundType::FR;
-  if (!strncasecmp(bound_type, "MI", 2)) return BoundType::MI;
-  if (!strncasecmp(bound_type, "PL", 2)) return BoundType::PL;
-  if (!strncasecmp(bound_type, "BV", 2)) return BoundType::BV;
-  DLINEAR_UNREACHABLE();
+  if (bound_type[2] != '\0' && bound_type[2] != ' ') DLINEAR_RUNTIME_ERROR_FMT("Invalid bound type: '{}'", bound_type);
+  if ((bound_type[0] == 'l' || bound_type[0] == 'L') && (bound_type[1] == 'o' || bound_type[1] == 'O')) {
+    return BoundType::LO;
+  }
+  if ((bound_type[0] == 'l' || bound_type[0] == 'L') && (bound_type[1] == 'i' || bound_type[1] == 'I')) {
+    return BoundType::LI;
+  }
+  if ((bound_type[0] == 'u' || bound_type[0] == 'U') && (bound_type[1] == 'p' || bound_type[1] == 'P')) {
+    return BoundType::UP;
+  }
+  if ((bound_type[0] == 'u' || bound_type[0] == 'U') && (bound_type[1] == 'i' || bound_type[1] == 'I')) {
+    return BoundType::UI;
+  }
+  if ((bound_type[0] == 'f' || bound_type[0] == 'F') && (bound_type[1] == 'x' || bound_type[1] == 'X')) {
+    return BoundType::FX;
+  }
+  if ((bound_type[0] == 'f' || bound_type[0] == 'F') && (bound_type[1] == 'r' || bound_type[1] == 'R')) {
+    return BoundType::FR;
+  }
+  if ((bound_type[0] == 'm' || bound_type[0] == 'M') && (bound_type[1] == 'i' || bound_type[1] == 'I')) {
+    return BoundType::MI;
+  }
+  if ((bound_type[0] == 'p' || bound_type[0] == 'P') && (bound_type[1] == 'l' || bound_type[1] == 'L')) {
+    return BoundType::PL;
+  }
+  if ((bound_type[0] == 'b' || bound_type[0] == 'B') && (bound_type[1] == 'v' || bound_type[1] == 'V')) {
+    return BoundType::BV;
+  }
+  DLINEAR_RUNTIME_ERROR_FMT("Invalid bound type: '{}'", bound_type);
 }
 
 std::ostream& operator<<(std::ostream& os, const BoundType& bound) {

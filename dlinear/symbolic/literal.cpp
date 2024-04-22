@@ -7,6 +7,8 @@
 
 #include "literal.h"
 
+#include <algorithm>
+
 namespace dlinear {
 
 bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs) {

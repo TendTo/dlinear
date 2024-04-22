@@ -8,7 +8,6 @@
 #include "dlinear/util/math.h"
 
 #include <cmath>
-#include <iostream>
 #include <limits>
 
 #include "dlinear/util/exception.h"

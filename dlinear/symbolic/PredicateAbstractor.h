@@ -9,14 +9,12 @@
  */
 #pragma once
 
-#include <memory>
-#include <set>
-#include <sstream>
 #include <unordered_map>
 #include <vector>
 
 #include "dlinear/symbolic/FormulaVisitor.h"
 #include "dlinear/symbolic/LinearFormulaFlattener.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 

@@ -22,7 +22,7 @@ Term FunctionDefinition::operator()(const std::vector<Term>& arguments) const {
   }
   Term t = body_;
 
-  for (size_t i = 0; i < parameters_.size(); ++i) {
+  for (std::size_t i = 0; i < parameters_.size(); ++i) {
     const Variable& param_i{parameters_[i]};
     const Term& arg_i{arguments[i]};
     arg_i.Check(param_i.get_type());

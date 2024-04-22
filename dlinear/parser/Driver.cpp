@@ -6,9 +6,17 @@
  */
 #include "Driver.h"
 
-#include <sstream>
+#include <iostream>
+#include <sstream>  // IWYU pragma: keep for std::stringstream
+#include <vector>
 
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/PrefixPrinter.h"
+#include "dlinear/util/Box.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/ScopedVector.hpp"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 

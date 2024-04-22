@@ -7,8 +7,6 @@
 
 #include "libgmp.h"
 
-#include <functional>
-
 namespace std {
 
 // https://en.cppreference.com/w/cpp/utility/hash/operator()

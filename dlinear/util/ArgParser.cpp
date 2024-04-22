@@ -4,9 +4,12 @@
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
  */
+// IWYU pragma: no_include "argparse/argparse.hpp" // Already included in the header
 #include "ArgParser.h"
 
-#include <utility>
+#include <cstdlib>
+#include <filesystem>
+#include <stdexcept>
 
 #ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/libs/libqsopt_ex.h"
@@ -14,6 +17,8 @@
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/libs/libsoplex.h"
 #endif
+
+#include "dlinear/util/OptionValue.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/filesystem.h"
 #include "dlinear/util/logging.h"
@@ -60,10 +65,10 @@ void ArgParser::parse(int argc, const char **argv) {
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   } catch (const std::runtime_error &err) {
     std::cerr << err.what() << "\n" << parser_ << std::endl;
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   } catch (const std::invalid_argument &err) {
     std::cerr << err.what() << "\n\n" << parser_.usage() << std::endl;
-    exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE);
   }
 }
 
@@ -89,13 +94,13 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_local_optimization, "--local-optimization");
   DLINEAR_PARSE_PARAM_BOOL(parser_, use_polytope_in_forall, "--forall-polytope");
 
-  DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', uint, "-j", "--jobs");
+  DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', unsigned int, "-j", "--jobs");
   DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_ftol_abs, 'g', double, "--nlopt-ftol-abs");
   DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_ftol_rel, 'g', double, "--nlopt-ftol-rel");
-  DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_maxeval, 'i', uint, "--nlopt-maxeval");
+  DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_maxeval, 'i', unsigned int, "--nlopt-maxeval");
   DLINEAR_PARSE_PARAM_SCAN(parser_, nlopt_maxtime, 'g', double, "--nlopt-maxtime");
   DLINEAR_PARSE_PARAM_SCAN(parser_, precision, 'g', double, "-p", "--precision");
-  DLINEAR_PARSE_PARAM_SCAN(parser_, random_seed, 'i', uint, "-r", "--random-seed");
+  DLINEAR_PARSE_PARAM_SCAN(parser_, random_seed, 'i', unsigned int, "-r", "--random-seed");
   DLINEAR_PARSE_PARAM_SCAN(parser_, simplex_sat_phase, 'i', int, "--simplex-sat-phase");
   DLINEAR_PARSE_PARAM_SCAN(parser_, verbose_simplex, 'i', int, "--verbose-simplex");
 
@@ -198,7 +203,7 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("nlopt-ftol-rel"))
     config.m_nlopt_ftol_rel().set_from_command_line(parser_.get<double>("nlopt-ftol-rel"));
   if (parser_.is_used("nlopt-maxeval"))
-    config.m_nlopt_maxeval().set_from_command_line(parser_.get<uint>("nlopt-maxeval"));
+    config.m_nlopt_maxeval().set_from_command_line(parser_.get<unsigned int>("nlopt-maxeval"));
   if (parser_.is_used("nlopt-maxtime"))
     config.m_nlopt_maxtime().set_from_command_line(parser_.get<double>("nlopt-maxtime"));
   if (parser_.is_used("optimize")) config.m_optimize().set_from_command_line(parser_.get<bool>("optimize"));
@@ -206,7 +211,8 @@ Config ArgParser::toConfig() const {
   if (parser_.is_used("precision")) config.m_precision().set_from_command_line(parser_.get<double>("precision"));
   if (parser_.is_used("produce-models"))
     config.m_produce_models().set_from_command_line(parser_.get<bool>("produce-models"));
-  if (parser_.is_used("random-seed")) config.m_random_seed().set_from_command_line(parser_.get<uint>("random-seed"));
+  if (parser_.is_used("random-seed"))
+    config.m_random_seed().set_from_command_line(parser_.get<unsigned int>("random-seed"));
   if (parser_.is_used("sat-default-phase"))
     config.m_sat_default_phase().set_from_command_line(parser_.get<Config::SatDefaultPhase>("sat-default-phase"));
   if (parser_.is_used("simplex-sat-phase"))
@@ -245,8 +251,8 @@ void ArgParser::validateOptions() {
     }
   }
   // Check if the file exists
-  if (!parser_.is_used("in") && !file_exists(parser_.get<std::string>("file")))
-    DLINEAR_INVALID_ARGUMENT("file", "cannot find file");
+  if (!parser_.is_used("in") && !std::filesystem::is_regular_file(parser_.get<std::string>("file")))
+    DLINEAR_INVALID_ARGUMENT("file", "cannot find file or the file is not a regular file");
   if (parser_.is_used("precision") && parser_.is_used("complete"))
     DLINEAR_INVALID_ARGUMENT("--complete", "--complete and --precision are mutually exclusive");
   if (parser_.get<double>("precision") < 0) DLINEAR_INVALID_ARGUMENT("--precision", "cannot be negative");

@@ -9,14 +9,13 @@
  */
 #pragma once
 
-#include <functional>
+#include <compare>
 #include <ostream>
 #include <set>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/symbolic_variable.h"  // IWYU pragma: export
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

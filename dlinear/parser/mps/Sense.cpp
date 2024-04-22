@@ -6,7 +6,8 @@
  */
 #include "dlinear/parser/mps/Sense.h"
 
-#include <cstring>
+#include <cctype>
+#include <cstddef>
 #include <iostream>
 
 #include "dlinear/util/exception.h"
@@ -14,7 +15,7 @@
 namespace dlinear::mps {
 
 Sense ParseSense(const std::string &sense) {
-  size_t pos = sense.find_first_not_of(' ');
+  std::size_t pos = sense.find_first_not_of(' ');
   return ParseSense(sense[pos]);
 }
 Sense ParseSense(const char sense[]) {
@@ -22,7 +23,7 @@ Sense ParseSense(const char sense[]) {
   return ParseSense(*sense);
 }
 Sense ParseSense(char sense) {
-  sense = tolower(sense);
+  sense = std::tolower(sense);
   switch (sense) {
     case 'l':
       return Sense::L;

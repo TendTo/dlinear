@@ -6,6 +6,15 @@
  */
 #include "PrefixPrinter.h"
 
+#include <map>
+#include <set>
+#include <sstream>  // IWYU pragma: keep for std::stringstream
+#include <stdexcept>
+#include <utility>
+
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/symbolic/literal.h"
+
 namespace dlinear {
 
 PrefixPrinter::PrefixPrinter(std::ostream &os) : os_{os}, old_precision_{os.precision()} {}

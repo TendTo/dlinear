@@ -10,8 +10,6 @@
  */
 #pragma once
 
-#include <set>
-
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {

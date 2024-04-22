@@ -6,6 +6,10 @@
  */
 #include "SatSolver.h"
 
+#include <cstdlib>
+#include <unordered_map>
+#include <utility>
+
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 

@@ -4,13 +4,15 @@
  * @date 18 Aug 2023
  * @copyright 2023 dlinear
  */
-
 #include "PlaistedGreenbaumCnfizer.h"
+
+#include <cstddef>
+#include <set>
+#include <string>
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 std::vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
@@ -33,7 +35,7 @@ Formula PlaistedGreenbaumCnfizer::Visit(const Formula &f) {
 
 Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   // We always need a variable
-  static size_t id{0};
+  static std::size_t id{0};
   const Variable bvar{std::string("forall") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
 
@@ -69,7 +71,7 @@ Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
 }
 
 Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
-  static size_t id{0};
+  static std::size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
   const Variable bvar{std::string("conj") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);
@@ -80,7 +82,7 @@ Formula PlaistedGreenbaumCnfizer::VisitConjunction(const Formula &f) {
 }
 
 Formula PlaistedGreenbaumCnfizer::VisitDisjunction(const Formula &f) {
-  static size_t id{0};
+  static std::size_t id{0};
   // Introduce a new Boolean variable, `bvar` for `f`.
   const Variable bvar{std::string("disj") + std::to_string(id++), Variable::Type::BOOLEAN};
   vars_.push_back(bvar);

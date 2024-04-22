@@ -17,15 +17,12 @@
 
 #include <optional>
 #include <set>
+#include <string>
 
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Box.h"
-#include "dlinear/util/Config.h"
-#include "dlinear/util/ScopedUnorderedMap.hpp"
-#include "dlinear/util/ScopedUnorderedSet.hpp"
 
 namespace dlinear {
 

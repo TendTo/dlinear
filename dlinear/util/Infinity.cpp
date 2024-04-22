@@ -7,8 +7,6 @@
 
 #include "Infinity.h"
 
-#include <utility>
-
 #ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/libs/libqsopt_ex.h"
 #endif

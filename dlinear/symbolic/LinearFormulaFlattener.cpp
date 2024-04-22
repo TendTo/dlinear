@@ -6,6 +6,12 @@
  */
 #include "LinearFormulaFlattener.h"
 
+#include <map>
+#include <utility>
+
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/util/exception.h"
+
 namespace dlinear {
 
 Formula LinearFormulaFlattener::Flatten(const Formula& formula) const {

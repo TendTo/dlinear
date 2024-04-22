@@ -6,11 +6,20 @@
  */
 #include "DeltaSoplexTheorySolver.h"
 
+#include <algorithm>
+#include <cstddef>
 #include <map>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "dlinear/libs/libsoplex.h"
+#include "dlinear/solver/LpColBound.h"
+#include "dlinear/solver/LpRowSense.h"
+#include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -66,9 +75,10 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
   theory_row_to_lit_.emplace_back(formulaVar, true);
 
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == theory_row_to_lit_.size() - 1, "incorrect theory_row_to_lit_.size()");
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
-  DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
+  DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == theory_row_to_lit_.size() - 1,
+                 "incorrect theory_row_to_lit_.size()");
+  DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
+  DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({} ↦ {})", lit, spx_row);
 }
 

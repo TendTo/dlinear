@@ -6,11 +6,15 @@
  */
 #include "TheorySolverBoundPreprocessor.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <list>
-#include <unordered_set>
+#include <ostream>
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/TheorySolver.h"
+#include "dlinear/util/exception.h"
 
 #if DEBUGGING_PREPROCESSOR
 #include <string>
@@ -74,8 +78,8 @@ bool check_explanation(const TheorySolverBoundPreprocessor& preprocessor, const 
   }
   return true;
 }
-[[maybe_unused]]
-bool check_explanation(const TheorySolverBoundPreprocessor& preprocessor, const std::set<LiteralSet>& explanations) {
+[[maybe_unused]] bool check_explanation(const TheorySolverBoundPreprocessor& preprocessor,
+                                        const std::set<LiteralSet>& explanations) {
   for (const auto& explanation : explanations) {
     return check_explanation(preprocessor, explanation);
   }
@@ -152,7 +156,7 @@ void TheorySolverBoundPreprocessor::Clear() {
 
 void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
   DLINEAR_ASSERT(theory_bounds_.size() >= theory_cols_.size(), "The number of bounds must be >= the number of columns");
-  for (size_t theory_col = 0; theory_col < theory_cols_.size(); theory_col++) {
+  for (std::size_t theory_col = 0; theory_col < theory_cols_.size(); theory_col++) {
     const TheorySolverBoundVector& bound = theory_bounds_[theory_col];
     const mpq_class* const active_bound = bound.GetActiveEqualityBound();
     if (active_bound == nullptr) continue;
@@ -373,7 +377,7 @@ bool TheorySolverBoundPreprocessor::ShouldPropagateRows(const Formula& formula) 
   if (formula.GetFreeVariables().size() < 2) return false;
   DLINEAR_ASSERT(is_addition(get_lhs_expression(formula)), "lhs expression must be an addition");
 
-  size_t missing_var_count{0};
+  std::size_t missing_var_count{0};
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     if (env_.find(get_variable(expr)) != env_.cend()) continue;
@@ -422,7 +426,7 @@ void TheorySolverBoundPreprocessor::AddPathsToExplanations(const Variable& from,
 
   // Insert the first path between the two nodes to the explanation
   graph_.AllPaths(from, to, [&](std::vector<Variable>& path) {
-    for (size_t i = 1; i < path.size(); i++) {
+    for (std::size_t i = 1; i < path.size(); i++) {
       DLINEAR_ASSERT(graph_.GetEdgeWeight(path[i - 1], path[i]) != nullptr, "Edge must exist");
       const int theory_row = *graph_.GetEdgeWeight(path[i - 1], path[i]);
       explanation.insert(theory_rows_[theory_row]);
@@ -458,7 +462,7 @@ void TheorySolverBoundPreprocessor::AddPathToExplanation(const Variable& from, c
     if (from_bounds.GetActiveEqualityBound() != nullptr) from_bounds.GetActiveEqExplanation(theory_rows_, explanation);
     to_bounds.GetActiveEqExplanation(theory_rows_, explanation);
     // Insert all rows from the edges in the path to the explanation
-    for (size_t i = 1; i < path.size(); i++) {
+    for (std::size_t i = 1; i < path.size(); i++) {
       DLINEAR_ASSERT(graph_.GetEdgeWeight(path[i - 1], path[i]) != nullptr, "Edge must exist");
       const int theory_row = *graph_.GetEdgeWeight(path[i - 1], path[i]);
       explanation.insert(theory_rows_[theory_row]);
@@ -503,11 +507,12 @@ std::vector<Variable> TheorySolverBoundPreprocessor::GetExplanationOrigins(const
 }
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor) {
-  return os << "TheorySolverBoundPreprocessor{" << "env_ = " << preprocessor.env() << ", "
+  return os << "TheorySolverBoundPreprocessor{"
+            << "env_ = " << preprocessor.env() << ", "
             << "theory_cols_ = " << preprocessor.theory_cols() << ", "
             << "theory_rows_ = " << preprocessor.theory_rows() << ", "
-            << "theory_bounds_ = " << preprocessor.theory_bounds() << ", " << "graph_ = " << preprocessor.bound_graph()
-            << "}";
+            << "theory_bounds_ = " << preprocessor.theory_bounds() << ", "
+            << "graph_ = " << preprocessor.bound_graph() << "}";
 }
 
 }  // namespace dlinear

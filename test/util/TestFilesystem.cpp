@@ -4,15 +4,16 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "dlinear/util/filesystem.h"
-
 #include <gtest/gtest.h>
+
+#include <filesystem>
 #include <fstream>
 
-using std::string;
-using std::ofstream;
+#include "dlinear/util/filesystem.h"
+
 using dlinear::get_extension;
-using dlinear::file_exists;
+using std::ofstream;
+using std::string;
 
 TEST(TestFilesystem, GetExtension1) {
   const string f{"01.smt2"};
@@ -42,13 +43,11 @@ TEST(TestFilesystem, GetExtension5) {
 TEST(TestFilesystem, FileExists) {
   string filename{"TempFile.test.cpp"};
   ofstream f{filename};
-  EXPECT_TRUE(file_exists(filename));
+  EXPECT_TRUE(std::filesystem::is_regular_file(filename));
   remove(filename.c_str());
 }
 
 TEST(TestFilesystem, FileNotExists) {
   const string f{"TestFilesystem.cpp.not.exists"};
-  EXPECT_FALSE(file_exists(f));
+  EXPECT_FALSE(std::filesystem::is_regular_file(f));
 }
-
-

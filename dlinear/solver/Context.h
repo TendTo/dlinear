@@ -12,21 +12,18 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SmtSolverOutput.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
-#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 

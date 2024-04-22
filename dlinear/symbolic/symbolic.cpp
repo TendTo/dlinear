@@ -8,8 +8,10 @@
 
 #include <algorithm>
 #include <iterator>
+#include <map>
 #include <utility>
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 

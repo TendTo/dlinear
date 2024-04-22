@@ -7,7 +7,9 @@
 #include "BenchArgParser.h"
 
 #include <dirent.h>
-#include <spdlog/fmt/fmt.h>
+#include <fmt/fmt.h>
+
+#include <filesystem>
 
 namespace dlinear::benchmark {
 
@@ -95,11 +97,11 @@ BenchConfig BenchArgParser::toConfig() const {
 void BenchArgParser::validateOptions() {
   if (parser_.is_used("file") && parser_.is_used("path"))
     DLINEAR_INVALID_ARGUMENT("--path", "cannot be set if file is specified");
-  if (parser_.is_used("file") && !file_exists(parser_.get<std::string>("file")))
+  if (parser_.is_used("file") && !std::filesystem::is_regular_file(parser_.get<std::string>("file")))
     DLINEAR_INVALID_ARGUMENT("--file", fmt::format("file {} does not exist", parser_.get<std::string>("file")));
-  if (!parser_.is_used("file") && !dir_exists(parser_.get<std::string>("path")))
+  if (!parser_.is_used("file") && !std::filesystem::is_directory(parser_.get<std::string>("path")))
     DLINEAR_INVALID_ARGUMENT("--path", fmt::format("directory {} does not exist", parser_.get<std::string>("path")));
-  if (!file_exists(parser_.get<std::string>("config")))
+  if (!std::filesystem::is_regular_file(parser_.get<std::string>("config")))
     DLINEAR_INVALID_ARGUMENT("--config", fmt::format("file {} does not exist", parser_.get<std::string>("config")));
   if (parser_.get<int>("simplex-sat-phase") != 1 && parser_.get<int>("simplex-sat-phase") != 2)
     DLINEAR_INVALID_ARGUMENT("--simplex-sat-phase", fmt::format("value must be either 1 or 2, received '{}'",

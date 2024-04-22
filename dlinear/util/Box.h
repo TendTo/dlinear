@@ -6,8 +6,7 @@
  */
 #pragma once
 
-#include <functional>
-#include <limits>
+#include <iosfwd>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -15,7 +14,8 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"  // IWYU pragma: keep for hash_value
 #include "dlinear/util/definitions.h"
 #include "dlinear/util/logging.h"
 

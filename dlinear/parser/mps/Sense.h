@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include <iosfwd>
 #include <string>
 
 #include "dlinear/util/logging.h"

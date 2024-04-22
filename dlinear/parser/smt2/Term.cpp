@@ -6,9 +6,6 @@
  */
 #include "Term.h"
 
-#include <stdexcept>
-#include <utility>
-
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 

@@ -11,11 +11,13 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <vector>
 
 #include "dlinear/parser/smt2/Sort.h"
 #include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/literal.h"
+#include "dlinear/util/exception.h"
 
 namespace dlinear::smt2 {
 
@@ -66,7 +68,7 @@ class FunctionDefinition {
     }
     Term t = body_;
 
-    size_t i = 0;
+    std::size_t i = 0;
     for (const Term& arg_i : {arguments...}) {
       const Variable& param_i{parameters_[i]};
       arg_i.Check(param_i.get_type());

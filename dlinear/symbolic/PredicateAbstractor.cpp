@@ -4,13 +4,15 @@
  * @date 17 Aug 2023
  * @copyright 2023 dlinear
  */
-
 #include "PredicateAbstractor.h"
+
+#include <set>
+#include <sstream>
+#include <utility>
 
 #include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

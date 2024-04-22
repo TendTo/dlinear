@@ -9,14 +9,14 @@
  */
 #pragma once
 
-#include <sys/resource.h>
-
 #include <chrono>
 #include <cstdint>
-#include <iostream>
+#include <ratio>
 #include <type_traits>
 
 namespace dlinear {
+
+struct user_clock;
 
 /**
  * Timer class.

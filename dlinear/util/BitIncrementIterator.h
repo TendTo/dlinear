@@ -10,6 +10,8 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
+#include <iosfwd>
 #include <iterator>
 #include <vector>
 
@@ -71,7 +73,7 @@ class BitIncrementIterator {
    * If @p n is 0, the vector is empty and is considered done immediately.
    * @param n number of bits in the vector
    */
-  explicit BitIncrementIterator(size_t n)
+  explicit BitIncrementIterator(std::size_t n)
       : vector_(n, false), fixed_(n, false), starting_vector_(n, false), ending_vector_(n, true) {}
   /**
    * Construct a new BitIncrementIterator object.
@@ -96,7 +98,7 @@ class BitIncrementIterator {
   BitIncrementIterator &operator--();
   const BitIncrementIterator operator--(int);
 
-  bool operator[](size_t i) const;
+  bool operator[](std::size_t i) const;
 
   /**
    * Check if the bit at position @p i is fixed.
@@ -108,7 +110,7 @@ class BitIncrementIterator {
    * @return false if the bit is not fixed
    * @throw std::out_of_range if @p i is out of range
    */
-  [[nodiscard]] bool IsFixed(size_t i) const { return fixed_[i]; }
+  [[nodiscard]] bool IsFixed(std::size_t i) const { return fixed_[i]; }
 
   /**
    * Set the @p i 't bit of the vector to @p value.
@@ -119,7 +121,7 @@ class BitIncrementIterator {
    * @param value new value of the bit
    * @param force whether to ignore if the bit is fixed. This will not change it's fixed status
    */
-  void Set(size_t i, bool value, bool force = false) { vector_[i] = force || !fixed_[i] ? value : vector_[i]; }
+  void Set(std::size_t i, bool value, bool force = false) { vector_[i] = force || !fixed_[i] ? value : vector_[i]; }
 
   /**
    * Set whether the @p i 'th bit of the vector is fixed.
@@ -128,7 +130,7 @@ class BitIncrementIterator {
    * @param i index of the bit to make fixed or un-fixed
    * @param fixed whether the bit should be fixed or not
    */
-  void SetFixed(size_t i, bool fixed) { fixed_[i] = fixed; }
+  void SetFixed(std::size_t i, bool fixed) { fixed_[i] = fixed; }
 
   /**
    * Learn the value of the bit at position @p i by inverting the bit.
@@ -143,7 +145,7 @@ class BitIncrementIterator {
    * @return false if the bit was already fixed
    * @throw std::out_of_range if @p i is out of range
    */
-  bool Learn(size_t i);
+  bool Learn(std::size_t i);
   /**
    * Learn the value of the bit at position @p i by setting the bit to @p value.
    *
@@ -158,19 +160,19 @@ class BitIncrementIterator {
    * @return false if the bit was already fixed and therefore not changed
    * @throw std::out_of_range if @p i is out of range
    */
-  bool Learn(size_t i, bool value);
+  bool Learn(std::size_t i, bool value);
 
  private:
   /**
    * Reset all the non-fixed bits to the right of @p start_pos to their starting value.
    * @param start_pos starting position. The index must be in the range [0, n), big endian order.
    */
-  void ResetNonFixedRight(size_t start_pos = 0);
+  void ResetNonFixedRight(std::size_t start_pos = 0);
   /**
    * Reset all the non-fixed bits to the left of @p start_pos to their starting value.
    * @param start_pos starting position. The index must be in the range [0, n), big endian order.
    */
-  void ResetNonFixedLeft(size_t start_pos);
+  void ResetNonFixedLeft(std::size_t start_pos);
   /**
    * Reset all the non-fixed bits in the vector to their starting value.
    */
@@ -191,7 +193,7 @@ class BitIncrementIterator {
    * @param i index of the bit to set
    * @param value new value of the bit
    */
-  void UpdateVector(size_t i, bool value);
+  void UpdateVector(std::size_t i, bool value);
 
   std::vector<bool> vector_;           ///< The bit vector that will assume all the possible values.
   std::vector<bool> fixed_;            ///< Vector to indicate the fixed bits.

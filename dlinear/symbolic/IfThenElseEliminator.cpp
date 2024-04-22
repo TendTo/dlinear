@@ -7,14 +7,15 @@
 
 #include "IfThenElseEliminator.h"
 
-#include <algorithm>
+#include <map>
 #include <set>
 #include <string>
+#include <utility>
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/Nnfizer.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

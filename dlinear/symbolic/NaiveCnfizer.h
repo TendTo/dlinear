@@ -9,9 +9,6 @@
  */
 #pragma once
 
-#include <numeric>
-#include <set>
-
 #include "dlinear/symbolic/Nnfizer.h"
 #include "dlinear/symbolic/symbolic.h"
 

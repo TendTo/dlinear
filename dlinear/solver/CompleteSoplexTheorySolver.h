@@ -14,16 +14,19 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
+#include <cstddef>
 #include <map>
-#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/BitIncrementIterator.h"
 #include "dlinear/util/Box.h"
-#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
@@ -119,7 +122,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @param nq_constraints indexes of the non-equal constraints to be disabled
    * @see EnableNqLiterals
    */
-  void DisableNqLiterals(const std::set<size_t>& nq_constraints);
+  void DisableNqLiterals(const std::set<std::size_t>& nq_constraints);
 
   /**
    * Update the @ref BitIncrementIterator @p bit_iterator based on the current explanation.
@@ -144,7 +147,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * Find the non-equal rows in the current explanation.
    * @return vector of the non-equal rows in the current explanation
    */
-  std::set<size_t> IteratorNqRowsInLastExplanation() const;
+  std::set<std::size_t> IteratorNqRowsInLastExplanation() const;
 
   /**
    * Add a new explanation to @p explanations from @ref final_theory_rows_to_explanation_.
@@ -153,8 +156,8 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   void GetExplanation(Explanations& explanations);
 
   struct NqExplanation {
-    explicit NqExplanation(size_t size);
-    explicit NqExplanation(const std::set<size_t>& size);
+    explicit NqExplanation(std::size_t size);
+    explicit NqExplanation(const std::set<std::size_t>& size);
     std::set<int> explanation;
     std::vector<bool> visited;
   };
@@ -168,10 +171,11 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   std::set<int> last_theory_rows_to_explanation_;        ///< Last set of theory rows that are part of the explanation
   std::set<std::set<int>> theory_rows_to_explanations_;  ///< Set that contains all the explanation the solver produced
 
-  std::map<std::set<size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
+  std::map<std::set<std::size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
 
   bool locked_solver_;  ///< Flag to indicate if the solver is locked. A locked solver will always return UNSAT.
-  std::set<size_t> single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be inverted
+  std::set<std::size_t>
+      single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be inverted
 };
 
 }  // namespace dlinear

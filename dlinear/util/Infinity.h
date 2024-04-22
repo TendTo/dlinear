@@ -11,8 +11,6 @@
  */
 #pragma once
 
-#include <string>
-
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/util/Config.h"
 

@@ -211,11 +211,11 @@ command_define_fun: '(' TK_DEFINE_FUN SYMBOL enter_scope '(' name_sort_list ')' 
                 }
         |
                 '(' TK_DEFINE_FUN TK_MAX enter_scope '(' name_sort_list ')' sort term exit_scope ')' {
-                    DLINEAR_WARN_FMT("Redefinition of function `max` is ignored");
+                    DLINEAR_WARN("Redefinition of function `max` is ignored");
                 }
         |
                 '(' TK_DEFINE_FUN TK_MIN enter_scope '(' name_sort_list ')' sort term exit_scope ')' {
-                    DLINEAR_WARN_FMT("Redefinition of function `min` is ignored");
+                    DLINEAR_WARN("Redefinition of function `min` is ignored");
                 }
         ;
 

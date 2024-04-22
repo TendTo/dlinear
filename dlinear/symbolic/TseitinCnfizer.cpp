@@ -7,10 +7,16 @@
 
 #include "TseitinCnfizer.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <set>
+#include <string>
+#include <utility>
+
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -80,7 +86,7 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
   if (new_clauses.size() == 1) {
     return *(new_clauses.begin());
   } else {
-    static size_t id{0};
+    static std::size_t id{0};
     const Variable bvar{std::string("forall") + std::to_string(id++), Variable::Type::BOOLEAN};
     map_.emplace(bvar, make_conjunction(new_clauses));
     return Formula{bvar};
@@ -90,7 +96,7 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
 Formula TseitinCnfizer::VisitConjunction(const Formula &f) {
   // Introduce a new Boolean variable, `bvar` for `f` and record the
   // relation `bvar ⇔ f`.
-  static size_t id{0};
+  static std::size_t id{0};
   const std::set<Formula> transformed_operands{
       ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   const Variable bvar{std::string("conj") + std::to_string(id++), Variable::Type::BOOLEAN};
@@ -99,7 +105,7 @@ Formula TseitinCnfizer::VisitConjunction(const Formula &f) {
 }
 
 Formula TseitinCnfizer::VisitDisjunction(const Formula &f) {
-  static size_t id{0};
+  static std::size_t id{0};
   const std::set<Formula> &transformed_operands{
       ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
   const Variable bvar{std::string("disj") + std::to_string(id++), Variable::Type::BOOLEAN};

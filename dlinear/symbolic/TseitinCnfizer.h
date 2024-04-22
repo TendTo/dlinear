@@ -9,19 +9,14 @@
  */
 #pragma once
 
-#include <algorithm>
-#include <atomic>
-#include <iostream>
-#include <iterator>
 #include <map>
-#include <set>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "dlinear/symbolic/FormulaVisitor.h"
 #include "dlinear/symbolic/NaiveCnfizer.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 

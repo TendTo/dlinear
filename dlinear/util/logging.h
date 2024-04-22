@@ -15,11 +15,10 @@
 
 #ifndef NLOG
 
-#include <spdlog/spdlog.h>
-// Enable formatting with the override of operator<< for user-defined types.
-// Must be included after spdlog.h.
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
+#include <fmt/core.h>     // IWYU pragma: export
+#include <fmt/ostream.h>  // IWYU pragma: export
+#include <fmt/ranges.h>   // IWYU pragma: export
+#include <spdlog/logger.h>
 
 #include <memory>
 
@@ -53,17 +52,17 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
     ::dlinear::get_logger(::dlinear::LoggerType::ERR)->set_level(level); \
   } while (0)
 #define DLINEAR_TRACE(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg)
-#define DLINEAR_TRACE_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg, ##__VA_ARGS__)
+#define DLINEAR_TRACE_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg, __VA_ARGS__)
 #define DLINEAR_DEBUG(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg)
-#define DLINEAR_DEBUG_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg, ##__VA_ARGS__)
+#define DLINEAR_DEBUG_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg, __VA_ARGS__)
 #define DLINEAR_INFO(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->info(msg)
-#define DLINEAR_INFO_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->info(msg, ##__VA_ARGS__)
+#define DLINEAR_INFO_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->info(msg, __VA_ARGS__)
 #define DLINEAR_WARN(msg) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->warn(msg)
-#define DLINEAR_WARN_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->warn(msg, ##__VA_ARGS__)
+#define DLINEAR_WARN_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->warn(msg, __VA_ARGS__)
 #define DLINEAR_ERROR(msg) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->error(msg)
-#define DLINEAR_ERROR_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->error(msg, ##__VA_ARGS__)
+#define DLINEAR_ERROR_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->error(msg, __VA_ARGS__)
 #define DLINEAR_CRITICAL(msg) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->critical(msg)
-#define DLINEAR_CRITICAL_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->critical(msg, ##__VA_ARGS__)
+#define DLINEAR_CRITICAL_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->critical(msg, __VA_ARGS__)
 #define DLINEAR_INFO_ENABLED (::dlinear::get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::info))
 #define DLINEAR_TRACE_ENABLED (::dlinear::get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::trace))
 

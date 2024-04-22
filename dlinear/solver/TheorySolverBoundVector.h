@@ -9,9 +9,10 @@
  */
 #pragma once
 
+#include <compare>
+#include <cstddef>
+#include <iosfwd>
 #include <map>
-#include <set>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -266,7 +267,7 @@ class TheorySolverBoundVector {
     return IsActiveEquality(*active_lower_bound_) ? active_lower_bound_ : nullptr;
   }
 
-  [[nodiscard]] const Bound& operator[](size_t idx) const { return bounds_[idx]; }
+  [[nodiscard]] const Bound& operator[](std::size_t idx) const { return bounds_[idx]; }
 
   /**
    * Check if the combination of @p value and @p lp_bound violates any of the existing bounds.

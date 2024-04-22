@@ -10,7 +10,8 @@
  */
 #pragma once
 
-#include <algorithm>
+#include <cstddef>
+#include <iosfwd>
 #include <iterator>
 #include <utility>
 
@@ -46,7 +47,7 @@ class TheorySolverBoundIterator {
   using value_type = typename vector_type::value_type;
   using reference = value_type const &;
   using pointer = value_type const *;
-  using difference_type = ptrdiff_t;
+  using difference_type = std::ptrdiff_t;
 
   /** Construct an empty iterator. */
   TheorySolverBoundIterator();
@@ -111,12 +112,12 @@ class TheorySolverBoundIterator {
    * Number of bounds included between the begin and end iterators.
    * @return number of bounds
    */
-  [[nodiscard]] inline size_t bounds_size() const { return std::distance(bounds_it_, end_bounds_it_); }
+  [[nodiscard]] inline std::size_t bounds_size() const { return std::distance(bounds_it_, end_bounds_it_); }
   /**
    * Number of non-equal bounds included between the begin and end iterators.
    * @return number of non-equal bounds
    */
-  [[nodiscard]] inline size_t nq_bounds_size() const { return std::distance(nq_bounds_it_, end_nq_bounds_it_); }
+  [[nodiscard]] inline std::size_t nq_bounds_size() const { return std::distance(nq_bounds_it_, end_nq_bounds_it_); }
   /**
    * Check if the iterator does not point to any bound.
    * @note Equivalent to bounds_size() == 0
@@ -143,7 +144,7 @@ class TheorySolverBoundIterator {
    * @note Equivalent to bounds_size() + nq_bounds_size()
    * @return number of bounds of any kind
    */
-  [[nodiscard]] inline size_t size() const { return bounds_size() + nq_bounds_size(); }
+  [[nodiscard]] inline std::size_t size() const { return bounds_size() + nq_bounds_size(); }
 
  private:
   static const vector_type default_empty_vector_;  ///< Default empty vector. Used for default construction.

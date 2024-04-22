@@ -6,8 +6,14 @@
  */
 #include "TheorySolverBoundIterator.h"
 
+#include <algorithm>
+#include <compare>
+#include <ostream>
+#include <vector>
+
 #include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/util/SortedVector.hpp"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 

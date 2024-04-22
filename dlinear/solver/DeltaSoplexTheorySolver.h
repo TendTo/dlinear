@@ -12,19 +12,18 @@
  */
 #pragma once
 
+#include <string>
+
 #ifndef DLINEAR_ENABLED_SOPLEX
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
-#include <map>
-#include <optional>
-
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/Box.h"
-#include "dlinear/util/Config.h"
 
 namespace dlinear {
 

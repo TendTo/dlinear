@@ -4,14 +4,23 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
+// IWYU pragma: no_include <new>
 #include "CompleteSoplexTheorySolver.h"
 
+#include <algorithm>
 #include <map>
-#include <stack>
+#include <unordered_map>
 #include <utility>
 
 #include "dlinear/libs/libsoplex.h"
+#include "dlinear/solver/LpColBound.h"
+#include "dlinear/solver/LpRowSense.h"
+#include "dlinear/solver/TheorySolverBoundIterator.h"
+#include "dlinear/solver/TheorySolverBoundPreprocessor.h"
+#include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
+#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"

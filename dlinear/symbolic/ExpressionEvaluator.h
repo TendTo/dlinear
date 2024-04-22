@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include <iosfwd>
+
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
 

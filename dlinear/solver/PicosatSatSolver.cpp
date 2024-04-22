@@ -4,8 +4,14 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
+// IWYU pragma: no_include "picosat/picosat.h" // Already included in the header
 #include "PicosatSatSolver.h"
 
+#include <unordered_map>
+#include <vector>
+
+#include "dlinear/util/Config.h"
+#include "dlinear/util/ScopedUnorderedMap.hpp"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"

@@ -8,11 +8,15 @@
 #include "Box.h"
 
 #include <algorithm>
+#include <cfenv>
+#include <cstddef>
+#include <initializer_list>
+#include <limits>
+#include <ostream>
 
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
 #include "dlinear/util/math.h"
 
 namespace dlinear {
@@ -222,7 +226,7 @@ std::vector<Box::Interval> &Box::m_interval_vector() { return values_; }
 std::pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};
   int idx{-1};
-  for (size_t i{0}; i < variables_->size(); ++i) {
+  for (std::size_t i{0}; i < variables_->size(); ++i) {
     const mpq_class &diam_i{values_[i].diam()};
     if (diam_i > max_diam && values_[i].is_bisectable()) {
       max_diam = diam_i;
@@ -358,7 +362,7 @@ bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables,
                           const std::vector<Box::Interval> &old_iv, const std::vector<Box::Interval> &new_iv) {
   IosFmtFlagSaver saver{os};
-  for (size_t i = 0; i < variables.size(); ++i) {
+  for (std::size_t i = 0; i < variables.size(); ++i) {
     const Box::Interval &old_i{old_iv[i]};
     const Box::Interval &new_i{new_iv[i]};
     if (old_i != new_i) os << variables[i] << " : " << old_i << " -> " << new_i << "\n";

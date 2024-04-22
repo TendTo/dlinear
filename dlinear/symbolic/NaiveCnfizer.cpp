@@ -7,6 +7,9 @@
 
 #include "NaiveCnfizer.h"
 
+#include <numeric>
+#include <set>
+
 #include "dlinear/util/exception.h"
 
 namespace dlinear {

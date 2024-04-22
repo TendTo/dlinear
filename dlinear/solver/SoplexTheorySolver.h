@@ -16,11 +16,15 @@
 #endif
 
 #include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libsoplex.h"
 #include "dlinear/solver/LpRowSense.h"
 #include "dlinear/solver/TheorySolver.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"

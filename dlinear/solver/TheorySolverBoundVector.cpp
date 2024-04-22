@@ -7,6 +7,7 @@
 #include "TheorySolverBoundVector.h"
 
 #include <algorithm>
+#include <ostream>
 #include <utility>
 
 #include "dlinear/util/exception.h"

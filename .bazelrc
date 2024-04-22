@@ -33,3 +33,9 @@ build:opt --cxxopt=-DNLOG
 # Building python bindings
 build:pydlinear --disk_cache=~/.cache/dlinear_bazel_pybind
 build:pydlinear --//tools:enable_dynamic_build=True
+
+# IWYU
+build:iwyu --@bazel_iwyu//:iwyu_mappings=@dlinear//tools:iwyu_mappings
+build:iwyu --aspects @bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
+build:iwyu --output_groups=report
+build:iwyu --build_tag_filters=-no-iwyu

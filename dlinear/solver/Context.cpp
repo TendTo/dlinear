@@ -7,10 +7,10 @@
 #include "Context.h"
 
 #include <memory>
-#include <tuple>
 #include <utility>
 
 #include "dlinear/solver/ContextImpl.h"
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

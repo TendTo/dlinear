@@ -6,6 +6,7 @@
  */
 #include "TheorySolver.h"
 
+#include "dlinear/solver/TheorySolverBoundIterator.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 

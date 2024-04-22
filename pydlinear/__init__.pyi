@@ -613,7 +613,7 @@ class SolverOutput():
     @property
     def result(self) -> dlinear::SolverResult:
         """
-        :type: dlinear::SolverResult
+        :type: dlinear::SmtResult
         """
     @property
     def upper_bound(self) -> mpq_class:

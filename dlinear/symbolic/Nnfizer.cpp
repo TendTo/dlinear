@@ -7,6 +7,8 @@
 
 #include "Nnfizer.h"
 
+#include <set>
+
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

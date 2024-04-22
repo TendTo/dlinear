@@ -20,6 +20,7 @@
 #include <vector>
 
 // From drake
+// IWYU pragma: begin_exports
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_expression_cell.h"
@@ -27,8 +28,10 @@
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_formula_visitor.h"
 #include "dlinear/symbolic/symbolic_variables.h"
+// IWYU pragma: end_exports
 
 // From dlinear
+#include "dlinear/symbolic/hash.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
 

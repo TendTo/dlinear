@@ -7,6 +7,10 @@
 
 #include "Timer.h"
 
+#include <sys/resource.h>
+
+#include <stdexcept>
+
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

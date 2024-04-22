@@ -6,8 +6,9 @@
  */
 #include "Stats.h"
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/core.h>
 
+#include <chrono>
 #include <utility>
 
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
@@ -36,7 +37,7 @@ Stats Stats::operator+(const Stats &other) const {
 }
 
 void IterationStats::Increase() {
-  if (enabled_) atomic_fetch_add_explicit(&iterations_, 1, std::memory_order_relaxed);
+  if (enabled_) std::atomic_fetch_add_explicit(&iterations_, 1, std::memory_order_relaxed);
 }
 
 std::string IterationStats::ToSegmentString() const {
@@ -65,7 +66,7 @@ IterationStats &IterationStats::operator=(const IterationStats &other) {
 IterationStats &IterationStats::operator+=(const IterationStats &other) {
   Stats::operator+=(other);
   if (iterations_name_.empty() && !other.iterations_name_.empty()) iterations_name_ = other.iterations_name_;
-  atomic_fetch_add_explicit(&iterations_, other.iterations_.load(), std::memory_order_relaxed);
+  std::atomic_fetch_add_explicit(&iterations_, other.iterations_.load(), std::memory_order_relaxed);
   return *this;
 }
 IterationStats IterationStats::operator+(const IterationStats &other) const {

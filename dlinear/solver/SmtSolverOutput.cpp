@@ -6,6 +6,7 @@
  */
 #include "SmtSolverOutput.h"
 
+#include <cmath>
 #include <limits>
 #include <sstream>
 
@@ -60,7 +61,7 @@ int SmtSolverOutput::exit_code() const {
     case SmtResult::OPTIMAL:
     case SmtResult::DELTA_OPTIMAL:
     case SmtResult::UNBOUNDED:
-      return EXIT_SUCCESS;
+      return 0;
     case SmtResult::UNSAT:
     case SmtResult::INFEASIBLE:
       return 1;

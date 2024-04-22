@@ -19,7 +19,7 @@
 #include <gmpxx.h>
 
 extern "C" {
-#include <qsopt_ex/QSopt_ex.h>
+#include <qsopt_ex/QSopt_ex.h>  // IWYU pragma: export
 }
 
 #include <string>

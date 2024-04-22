@@ -12,7 +12,7 @@
 #include <ostream>
 #include <string>
 
-#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear::smt2 {

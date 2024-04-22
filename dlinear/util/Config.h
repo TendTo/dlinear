@@ -12,8 +12,8 @@
 #pragma once
 
 #include <iostream>
-#include <memory>
 #include <string>
+#include <string_view>
 
 #include "dlinear/util/OptionValue.hpp"
 #include "dlinear/util/logging.h"
@@ -111,16 +111,17 @@ class Config {
                     "Run the solver in complete mode.\n"
                     "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
   DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
-  DLINEAR_PARAMETER(number_of_jobs, uint, 1u, "Number of jobs")
+  DLINEAR_PARAMETER(number_of_jobs, unsigned int, 1u, "Number of jobs")
   DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
   DLINEAR_PARAMETER(nlopt_ftol_rel, double, 1e-6, "Set the relative tolerance on function value")
   DLINEAR_PARAMETER(nlopt_ftol_abs, double, 1e-6, "Set the absolute tolerance on function value")
-  DLINEAR_PARAMETER(nlopt_maxeval, uint, 100u, "Set the maximum number of function evaluations")
+  DLINEAR_PARAMETER(nlopt_maxeval, unsigned int, 100u, "Set the maximum number of function evaluations")
   DLINEAR_PARAMETER(nlopt_maxtime, double, 0.01, "Set the maximum optimization time (in second)")
   DLINEAR_PARAMETER(sat_default_phase, SatDefaultPhase, dlinear::Config::SatDefaultPhase::JeroslowWang,
                     "set default initial phase for SAT solver.\n"
                     "\t\tOne of: false (0), true (1), Jeroslow-Wang (2), random initial phase (3)")
-  DLINEAR_PARAMETER(random_seed, uint, 0u, "Set the random seed. 0 means that the seed will be generated on the fly")
+  DLINEAR_PARAMETER(random_seed, unsigned int, 0u,
+                    "Set the random seed. 0 means that the seed will be generated on the fly")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(skip_check_sat, bool, false, "Parse the input, but does not run the solver")

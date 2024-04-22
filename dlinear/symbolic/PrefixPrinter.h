@@ -7,9 +7,7 @@
 #pragma once
 
 #include <ios>
-#include <ostream>
 #include <string>
-#include <sstream>
 
 #include "dlinear/symbolic/symbolic.h"
 
@@ -83,10 +81,8 @@ class PrefixPrinter {
   std::ostream &VisitNegation(const Formula &f);
   static std::ostream &VisitForall(const Formula &f);
 
-  std::ostream &VisitUnaryFunction(const std::string &name,
-                                   const Expression &e);
-  std::ostream &VisitBinaryFunction(const std::string &name,
-                                    const Expression &e);
+  std::ostream &VisitUnaryFunction(const std::string &name, const Expression &e);
+  std::ostream &VisitBinaryFunction(const std::string &name, const Expression &e);
 
   // Makes VisitExpression a friend of this class so that it can use private
   // operator()s.

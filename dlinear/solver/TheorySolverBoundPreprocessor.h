@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <iosfwd>
 #include <list>
 #include <map>
 #include <set>
@@ -19,19 +20,22 @@
 #include <utility>
 #include <vector>
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/environment.h"
 #include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Graph.hpp"
-#include "dlinear/util/NumericDataContainer.hpp"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
-
 // Forward declaration
 class TheorySolver;
+}  // namespace dlinear
+
+namespace dlinear {
 
 class TheorySolverBoundPreprocessor {
  public:

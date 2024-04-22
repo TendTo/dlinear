@@ -6,14 +6,14 @@
  */
 #include "SmtSolver.h"
 
-#include <optional>
+#include <iostream>
 #include <utility>
 
 #include "dlinear/parser/mps/Driver.h"
 #include "dlinear/parser/smt2/Driver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Infinity.h"
+#include "dlinear/util/OptionValue.hpp"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/concepts.h"
 #include "dlinear/util/exception.h"

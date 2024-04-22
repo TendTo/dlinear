@@ -14,19 +14,25 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 #ifndef NDEBUG
 #include <set>
 #endif
 
+#include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/TheorySolver.h"
+#include "dlinear/symbolic/PredicateAbstractor.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
+#include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
 
 namespace dlinear {

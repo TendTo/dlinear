@@ -36,6 +36,7 @@ dlinear_cc_library(
     name = "qsopt_ex",
     srcs = ["libqsopt_ex.cpp"],
     hdrs = ["libqsopt_ex.h"],
+    tags = ["no-iwyu"],
     deps = [
         "@gmp//:gmpxx",
     ] + select({

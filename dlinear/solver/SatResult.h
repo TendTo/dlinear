@@ -15,7 +15,6 @@
 #pragma once
 
 #include <ostream>
-#include <string>
 
 #include "dlinear/util/logging.h"
 

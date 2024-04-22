@@ -12,10 +12,15 @@
  */
 #pragma once
 
-#include <gmpxx.h>
+#include <gmp.h>    // IWYU pragma: export
+#include <gmpxx.h>  // IWYU pragma: export
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstring>
 #include <string>
+#include <string_view>
 
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -104,7 +109,7 @@ inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &
  * @return True if the char is a digit or a plus/minus sign.
  * @return False otherwise.
  */
-inline bool is_digit_or_sign(char c) { return ::isdigit(c) || c == '+' || c == '-'; }
+inline bool is_digit_or_sign(char c) { return std::isdigit(c) || c == '+' || c == '-'; }
 
 /**
  * Convert a string to a mpq_class.

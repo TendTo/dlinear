@@ -6,10 +6,16 @@
  */
 #include "SoplexTheorySolver.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <map>
 #include <utility>
 
-#include "dlinear/util/Timer.h"
+#include "dlinear/solver/TheorySolverBoundPreprocessor.h"
+#include "dlinear/solver/TheorySolverBoundVector.h"
+#include "dlinear/util/Config.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -152,7 +158,7 @@ void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const 
 }
 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
-  throw std::runtime_error("Not implemented");
+  DLINEAR_RUNTIME_ERROR("Not implemented");
   DLINEAR_ASSERT(2 == config_.simplex_sat_phase(), "must be phase 2");
   [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   soplex::DSVectorRational coeffsPos;
@@ -211,7 +217,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   // Clear constraint bounds
   for (auto &bound : theory_bounds_) bound.Clear();
   const int spx_rows = spx_.numRowsRational();
-  DLINEAR_ASSERT(static_cast<size_t>(spx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
+  DLINEAR_ASSERT(static_cast<std::size_t>(spx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
   for (int i = 0; i < spx_rows; i++) spx_.changeRangeRational(i, -soplex::infinity, soplex::infinity);
 
   // Clear variable bounds

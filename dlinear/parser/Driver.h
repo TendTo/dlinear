@@ -11,10 +11,14 @@
  */
 #pragma once
 
+#include <iosfwd>
 #include <string>
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/Logic.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Stats.h"
+#include "dlinear/util/Timer.h"
 
 namespace dlinear {
 

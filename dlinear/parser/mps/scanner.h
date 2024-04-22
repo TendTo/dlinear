@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <iosfwd>
+
 #ifndef __DLINEAR_MPS_SCANNER_H__
 #define yyFlexLexer MpsFlexLexer
 #include <FlexLexer.h>

@@ -6,13 +6,14 @@
  */
 #include "ExpressionEvaluator.h"
 
-#include <algorithm>
+#include <map>
 #include <numeric>
+#include <ostream>
 #include <utility>
 
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
-#include "dlinear/util/math.h"
 
 namespace dlinear {
 

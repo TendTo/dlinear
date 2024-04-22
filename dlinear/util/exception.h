@@ -42,7 +42,7 @@
   do {                                                                                        \
     if (!(condition)) {                                                                       \
       DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}", #condition, __FILE__, __LINE__); \
-      DLINEAR_CRITICAL_FMT(message, ##__VA_ARGS__);                                           \
+      DLINEAR_CRITICAL_FMT(message, __VA_ARGS__);                                             \
       std::terminate();                                                                       \
     }                                                                                         \
   } while (false)
@@ -59,16 +59,16 @@
     throw std::runtime_error(msg); \
   } while (false)
 
-#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)                    \
-  do {                                                         \
-    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);                  \
-    throw std::runtime_error(fmt::format(msg, ##__VA_ARGS__)); \
+#define DLINEAR_RUNTIME_ERROR_FMT(msg, ...)                  \
+  do {                                                       \
+    DLINEAR_CRITICAL_FMT(msg, __VA_ARGS__);                  \
+    throw std::runtime_error(fmt::format(msg, __VA_ARGS__)); \
   } while (false)
 
-#define DLINEAR_OUT_OF_RANGE_FMT(msg, ...)                    \
-  do {                                                        \
-    DLINEAR_CRITICAL_FMT(msg, ##__VA_ARGS__);                 \
-    throw std::out_of_range(fmt::format(msg, ##__VA_ARGS__)); \
+#define DLINEAR_OUT_OF_RANGE_FMT(msg, ...)                  \
+  do {                                                      \
+    DLINEAR_CRITICAL_FMT(msg, __VA_ARGS__);                 \
+    throw std::out_of_range(fmt::format(msg, __VA_ARGS__)); \
   } while (false)
 
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) \

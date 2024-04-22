@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include <cstdint>
+
 #include "dlinear/libs/libgmp.h"
 
 namespace dlinear {
@@ -31,7 +33,7 @@ bool is_integer(const mpq_class &v);
  * @param v value to convert
  * @return converted value
  */
-int convert_int64_to_int(int64_t v);
+int convert_int64_to_int(std::int64_t v);
 
 /**
  * Convert @p v of int64_t to double.
@@ -39,13 +41,13 @@ int convert_int64_to_int(int64_t v);
  * @param v value to convert
  * @return converted value
  */
-double convert_int64_to_double(int64_t v);
+double convert_int64_to_double(std::int64_t v);
 
 /**
  * Convert @p v of int64_t to rational.
  * @param v value to convert
  * @return converted value
  */
-mpq_class convert_int64_to_rational(int64_t v);
+mpq_class convert_int64_to_rational(std::int64_t v);
 
 }  // namespace dlinear
