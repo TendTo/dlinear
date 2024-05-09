@@ -26,7 +26,7 @@
 
 #else
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/fmt.h>
 
 #include "dlinear/util/logging.h"
 
