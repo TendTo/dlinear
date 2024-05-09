@@ -35,20 +35,17 @@ dlinear_cc_library(
         "Config.h",
         "OptionValue.hpp",
     ],
-    deps = [
+    implementation_deps = [
         ":exception",
         ":filesystem",
     ],
+    deps = [":logging"],
 )
 
 dlinear_cc_library(
     name = "exception",
     hdrs = ["exception.h"],
-    deps = [
-        ":logging",
-        "@fmt",
-        "@spdlog",
-    ],
+    deps = [":logging"],
 )
 
 dlinear_cc_library(
@@ -62,10 +59,8 @@ dlinear_cc_library(
     name = "stats",
     srcs = ["Stats.cpp"],
     hdrs = ["Stats.h"],
-    deps = [
-        ":timer",
-        "@spdlog",
-    ],
+    implementation_deps = ["@fmt"],
+    deps = [":timer"],
 )
 
 dlinear_cc_library(
@@ -132,14 +127,14 @@ dlinear_cc_library(
     name = "filesystem",
     srcs = ["filesystem.cpp"],
     hdrs = ["filesystem.h"],
-    deps = [":logging"],
+    implementation_deps = [":logging"],
 )
 
 dlinear_cc_library(
     name = "timer",
     srcs = ["Timer.cpp"],
     hdrs = ["Timer.h"],
-    deps = [":logging"],
+    implementation_deps = [":logging"],
 )
 
 dlinear_cc_library(

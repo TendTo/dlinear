@@ -10,50 +10,40 @@ dlinear_cc_library(
     name = "logic",
     srcs = ["Logic.cpp"],
     hdrs = ["Logic.h"],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
     name = "lp_result",
     srcs = ["LpResult.cpp"],
     hdrs = ["LpResult.h"],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
     name = "lp_sense",
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
     name = "lp_bound",
     srcs = ["LpColBound.cpp"],
     hdrs = ["LpColBound.h"],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
     name = "sat_result",
     srcs = ["SatResult.cpp"],
     hdrs = ["SatResult.h"],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
