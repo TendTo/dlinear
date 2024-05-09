@@ -45,16 +45,24 @@ bazel_dep(name = "googletest", version = "1.14.0", dev_dependency = True)
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
 git_override(
     module_name = "com_github_nelhage_rules_boost",
-    remote = "https://github.com/TendTo/rules_boost.git",
     commit = "37043509947dc88627b45c283b974e05ad308bdc",
+    remote = "https://github.com/TendTo/rules_boost.git",
 )
 
 # Apache License 2.0 | Implementation of IWYU for Bazel
 bazel_dep(name = "bazel_iwyu", version = "0.0.1")
 git_override(
     module_name = "bazel_iwyu",
-    remote = "https://github.com/TendTo/bazel_iwyu",
     commit = "85cbd99369a3ed3f8c31234d2d887026f3e66bbc",
+    remote = "https://github.com/TendTo/bazel_iwyu",
+)
+
+# MIT | rules for dealing with target dependencies
+bazel_dep(name = "depend_on_what_you_use", version = "0.0.0")
+git_override(
+    module_name = "depend_on_what_you_use",
+    commit = "b817c225d79c492c25b28872445e34be4a36d5aa",
+    remote = "https://github.com/martis42/depend_on_what_you_use",
 )
 
 # Repository dependencies (see WORKSPACE for more details)

@@ -39,3 +39,6 @@ build:iwyu --@bazel_iwyu//:iwyu_mappings=@dlinear//tools:iwyu_mappings
 build:iwyu --aspects @bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
 build:iwyu --output_groups=report
 build:iwyu --build_tag_filters=-no-iwyu
+
+# Dependency clean
+build:dwyu --aspects=//tools:dwyu.bzl%dwyu --output_groups=dwyu
