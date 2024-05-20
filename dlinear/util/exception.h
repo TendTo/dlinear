@@ -26,7 +26,7 @@
 
 #else
 
-#include <fmt/fmt.h>
+#include <fmt/core.h>
 
 #include "dlinear/util/logging.h"
 
