@@ -10,15 +10,31 @@ Tested toolchains:
 
 ### Requirements
 
-- [Bazel](https://bazel.build/).  
-  The version used for development is 6.4.0. It is suggested to use [bazelisk](https://github.com/bazelbuild/bazelisk) to manage Bazel's version.
-- [g++](https://gcc.gnu.org/) for the standard c++ toolchain
-- [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/) and [mpfr](https://www.mpfr.org/)
-- [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/) and [mpfr](https://www.mpfr.org/)
+- [Bazel](https://bazel.build/)
+    - The version used for development is 7.1.1. It is suggested to
+      use [bazelisk](https://github.com/bazelbuild/bazelisk) to manage Bazel's version.
+- [gcc](https://gcc.gnu.org/) for the standard c++ toolchain
+- [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
+  and [mpfr](https://www.mpfr.org/)
+- [libtool](https://www.gnu.org/software/libtool/) to compile [qsopt_ex](https://gmplib.org/)
+  and [mpfr](https://www.mpfr.org/)
+
+#### apt
+
+```bash
+sudo apt install g++ libtool
+```
+
+#### pacman
+
+```bash
+sudo pacman -S gcc libtool
+```
 
 #### Optional requirements
 
-- [patchelf](https://github.com/NixOS/patchelf) allows to create a fully self-contained shared library. Enabled by `--//tools:enable_patchelf=True` during compilation
+- [patchelf](https://github.com/NixOS/patchelf) allows to create a fully self-contained shared library. Enabled
+  by `--//tools:enable_patchelf=True` during compilation
 
 ### Compilation
 
