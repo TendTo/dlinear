@@ -10,11 +10,9 @@
 
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SolverGuard.h"
-#include "dlinear/util/Infinity.h"
 
 using dlinear::Config;
 using dlinear::Formula;
-using dlinear::Infinity;
 using dlinear::PicosatSatSolver;
 using dlinear::PredicateAbstractor;
 using dlinear::SatSolver;
