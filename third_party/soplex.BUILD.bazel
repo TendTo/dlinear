@@ -11,6 +11,7 @@ cmake(
     cache_entries = {
         "GMP": "on",
         "BOOST": "on",
+        "EXTERNAL_FMT": "on",
         "CMAKE_BUILD_TYPE": "Release",
         "GMP_DIR": "$EXT_BUILD_DEPS/libgmpxx",
         "MPFR_INCLUDE_DIRS": "$EXT_BUILD_DEPS/libmpfr/include",  # Hack to force boost to find mpfr
@@ -23,11 +24,11 @@ cmake(
     out_binaries = ["soplex"],
     out_static_libs = ["libsoplex.a"],
     out_shared_libs = ["libsoplex.so"],
-    deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr"],
+    deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr", "@fmt"],
     visibility = ["//visibility:public"],
-    defines = ["SOPLEX_WITH_GMP"],
+    defines = ["SOPLEX_WITH_GMP", "SOPLEX_EXTERNAL_FMT"],
     postfix_script = """find $INSTALLDIR -type l -exec sh -c 'for i in "$@"; do cp --preserve --remove-destination "$(readlink -f "$i")" "$i"; done' sh {} +
-                        cp -L $INSTALLDIR/lib/libsoplexshared.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
+                        cp -L $INSTALLDIR/lib/libsoplexshared.so.7.1.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
         "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
         "//conditions:default": "",
     }),

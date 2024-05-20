@@ -84,9 +84,9 @@ github_archive(
 github_archive(
     name = "soplex",
     build_file = "//third_party:soplex.BUILD.bazel",
-    commit = "cda544e50693982450faf30e40fe8317c68a9abc",
+    commit = "cb7693ad618ead60bfe8d07c21f7e55665d83b6c",
     repository = "TendTo/soplex",
-    sha256 = "5137b3b9d0b9f47843a2f87190bbe731df348aa28be3b3454e2352b7f7087f54",
+    sha256 = "0e0b596fc517abccdc1924b05d128759803e6eba8af38276c0d9ea4d23e8920f",
 )
 
 # GNU General Public License v3.0 | delta-complete linear programming solver
