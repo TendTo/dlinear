@@ -50,7 +50,7 @@ git_override(
 )
 
 # Apache License 2.0 | Implementation of IWYU for Bazel
-bazel_dep(name = "bazel_iwyu", version = "0.0.1")
+bazel_dep(name = "bazel_iwyu", version = "0.0.1", dev_dependency = True)
 git_override(
     module_name = "bazel_iwyu",
     commit = "85cbd99369a3ed3f8c31234d2d887026f3e66bbc",
@@ -58,7 +58,7 @@ git_override(
 )
 
 # MIT | rules for dealing with target dependencies
-bazel_dep(name = "depend_on_what_you_use", version = "0.0.0")
+bazel_dep(name = "depend_on_what_you_use", version = "0.0.0", dev_dependency = True)
 git_override(
     module_name = "depend_on_what_you_use",
     commit = "b817c225d79c492c25b28872445e34be4a36d5aa",
