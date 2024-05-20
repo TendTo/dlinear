@@ -51,6 +51,7 @@ dlinear_cc_googletest(
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
+        "//dlinear/util:infinity",
     ],
 )
 
@@ -68,7 +69,7 @@ dlinear_cc_googletest(
     tags = ["solver"],
     deps = [
         ":test_solver_utils",
-        "//dlinear/solver",
+        "//dlinear/solver:theory_solver",
         "//test/symbolic:test_symbolic_utils",
     ],
 )
