@@ -18,6 +18,8 @@
 
 #include <soplex.h>  // IWYU pragma: export
 
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(soplex::VectorRational)
 OSTREAM_FORMATTER(soplex::Rational)
 OSTREAM_FORMATTER(soplex::SPxSolver::Status)
