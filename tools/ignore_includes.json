@@ -1,5 +1,10 @@
 {
-  "ignore_include_patterns": [
-    "sys/*.h"
+  "extra_ignore_include_paths": [
+    "gmp.h",
+    "gmpxx.h",
+    "soplex.h",
+    "sys/resource.h",
+    "dlinear/symbolic/symbolic_expression_cell.h",
+    "FlexLexer.h"
   ]
 }

@@ -30,9 +30,10 @@ dlinear_cc_library(
     name = "sort",
     srcs = ["Sort.cpp"],
     hdrs = ["Sort.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
-        "//dlinear/symbolic",
-        "//dlinear/util:exception",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
     ],
 )
 
@@ -40,10 +41,11 @@ dlinear_cc_library(
     name = "term",
     srcs = ["Term.cpp"],
     hdrs = ["Term.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":sort",
+        "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
-        "//dlinear/util:exception",
         "//dlinear/util:logging",
     ],
 )
@@ -57,7 +59,6 @@ dlinear_cc_library(
         ":term",
         "//dlinear/symbolic:literal",
         "//dlinear/util:exception",
-        "//dlinear/util:logging",
     ],
 )
 
@@ -85,6 +86,18 @@ dlinear_cc_library(
         ":scanner",
     ],
     hdrs = ["Driver.h"],
+    implementation_deps = [
+        ":sort",
+        "//dlinear/libs:gmp",
+        "//dlinear/solver:logic",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:expression_evaluator",
+        "//dlinear/symbolic:prefix_printer",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:math",
+    ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
@@ -92,18 +105,9 @@ dlinear_cc_library(
     tags = ["no-iwyu"],
     deps = [
         ":function_definition",
-        ":sort",
         ":term",
         "//dlinear/parser:driver",
         "//dlinear/solver:context",
-        "//dlinear/solver:logic",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:expression_evaluator",
-        "//dlinear/symbolic:prefix_printer",
-        "//dlinear/util:box",
-        "//dlinear/util:config",
-        "//dlinear/util:logging",
-        "//dlinear/util:math",
         "//dlinear/util:scoped_structures",
         "@rules_flex//flex:current_flex_toolchain",
     ],

@@ -33,6 +33,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #define OSTREAM_FORMATTER(type) \
   template <>                   \
   struct fmt::formatter<type> : ostream_formatter {};
+#define DLINEAR_FORMAT(message, ...) fmt::format(message, __VA_ARGS__)
 
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity)                      \
   ((verbosity) == 0                                                    \
@@ -68,7 +69,10 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #else
 
+#include <fmt/core.h>  // IWYU pragma: export
+
 #define OSTREAM_FORMATTER(type)
+#define DLINEAR_FORMAT(message, ...) fmt::format(message, __VA_ARGS__)
 #define DLINEAR_VERBOSITY_TO_LOG_LEVEL(verbosity) 0
 #define DLINEAR_LOG_INIT_LEVEL(level) void(0)
 #define DLINEAR_LOG_INIT_VERBOSITY(verbosity) void(0)

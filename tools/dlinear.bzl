@@ -130,6 +130,7 @@ def dlinear_cc_library(
         copts = [],
         linkstatic = None,
         defines = [],
+        implementation_deps = [],
         **kwargs):
     """Creates a rule to declare a C++ library.
 
@@ -138,6 +139,7 @@ def dlinear_cc_library(
         hdrs: A list of header files to compile.
         srcs: A list of source files to compile.
         deps: A list of dependencies.
+        implementation_deps: A list of dependencies that are only needed for the implementation.
         copts: A list of compiler options.
         linkstatic: Whether to link statically.
         defines: A list of defines to add to the library.
@@ -148,6 +150,7 @@ def dlinear_cc_library(
         hdrs = hdrs,
         srcs = srcs,
         deps = deps,
+        implementation_deps = implementation_deps,
         copts = _get_copts(copts),
         linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),

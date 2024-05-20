@@ -12,13 +12,11 @@ dlinear_cc_library(
     name = "argparser",
     srcs = ["ArgParser.cpp"],
     hdrs = ["ArgParser.h"],
-    deps = [
-        ":config",
+    implementation_deps = [
         ":exception",
         ":filesystem",
         ":logging",
         "//dlinear:version",
-        "@argparse",
     ] + select({
         "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
         "//conditions:default": [],
@@ -26,6 +24,10 @@ dlinear_cc_library(
         "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
         "//conditions:default": [],
     }),
+    deps = [
+        ":config",
+        "@argparse",
+    ],
 )
 
 dlinear_cc_library(
@@ -45,21 +47,27 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "exception",
     hdrs = ["exception.h"],
-    deps = [":logging"],
+    deps = [
+        ":logging",
+        "@fmt",
+    ],
 )
 
 dlinear_cc_library(
     name = "logging",
     srcs = ["logging.cpp"],
     hdrs = ["logging.h"],
-    deps = ["@spdlog"],
+    deps = [
+        "@fmt",
+        "@spdlog",
+    ],
 )
 
 dlinear_cc_library(
     name = "stats",
     srcs = ["Stats.cpp"],
     hdrs = ["Stats.h"],
-    implementation_deps = ["@fmt"],
+    implementation_deps = [":logging"],
     deps = [":timer"],
 )
 
@@ -67,6 +75,16 @@ dlinear_cc_library(
     name = "infinity",
     srcs = ["Infinity.cpp"],
     hdrs = ["Infinity.h"],
+    implementation_deps = [
+        ":exception",
+        ":logging",
+    ] + select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//benchmark:__subpackages__",
         "//dlinear:__subpackages__",
@@ -75,16 +93,8 @@ dlinear_cc_library(
     ],
     deps = [
         ":config",
-        ":exception",
-        ":logging",
         "//dlinear/libs:gmp",
-    ] + select({
-        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 dlinear_cc_library(
@@ -94,11 +104,17 @@ dlinear_cc_library(
         "Box.h",
         "RoundingModeGuard.hpp",
     ],
+    implementation_deps = [
+        ":exception",
+        ":infinity",
+        ":math",
+    ],
     deps = [
         ":definitions",
         ":logging",
-        ":math",
+        "//dlinear/libs:gmp",
         "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
     ],
 )
 
@@ -106,11 +122,11 @@ dlinear_cc_library(
     name = "math",
     srcs = ["math.cpp"],
     hdrs = ["math.h"],
-    deps = [
+    implementation_deps = [
         ":exception",
         ":logging",
-        "//dlinear/libs:gmp",
     ],
+    deps = ["//dlinear/libs:gmp"],
 )
 
 dlinear_cc_library(
@@ -163,10 +179,7 @@ dlinear_cc_library(
     name = "bit_increment_iterator",
     srcs = ["BitIncrementIterator.cpp"],
     hdrs = ["BitIncrementIterator.h"],
-    deps = [
-        ":exception",
-        ":logging",
-    ],
+    deps = [":logging"],
 )
 
 dlinear_cc_library(

@@ -50,10 +50,8 @@ dlinear_cc_library(
     name = "solver_guard",
     srcs = ["SolverGuard.cpp"],
     hdrs = ["SolverGuard.h"],
-    deps = [
-        "//dlinear/util:config",
-        "//dlinear/util:infinity",
-    ],
+    implementation_deps = ["//dlinear/util:infinity"],
+    deps = ["//dlinear/util:config"],
 )
 
 dlinear_cc_library(
@@ -70,17 +68,19 @@ dlinear_cc_library(
         "//tools:enabled_picosat": ["PicosatSatSolver.h"],
         "//conditions:default": [],
     }),
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:timer",
+    ],
     deps = [
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:plaisted_greenbaum_cnfizer",
         "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:box",
         "//dlinear/util:config",
-        "//dlinear/util:exception",
-        "//dlinear/util:infinity",
-        "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
+        "//dlinear/util:stats",
     ] + select({
         "//tools:enabled_picosat": ["@picosat"],
         "//conditions:default": [],
@@ -97,6 +97,7 @@ dlinear_cc_library(
         "TheorySolverBoundIterator.h",
         "TheorySolverBoundVector.h",
     ],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":lp_bound",
         "//dlinear/libs:gmp",
@@ -113,19 +114,23 @@ dlinear_cc_library(
         "TheorySolverBoundPreprocessor.cpp",
     ],
     hdrs = ["TheorySolverBoundPreprocessor.h"],
-    deps = [
+    implementation_deps = [
         ":lp_bound",
         ":sat_result",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:stats",
+    ],
+    deps = [
         ":theory_solver_bounds",
         "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
         "//dlinear/symbolic:environment",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:box",
+        "//dlinear/util:config",
         "//dlinear/util:graph",
         "//dlinear/util:logging",
-        "//dlinear/util:numeric_data_container",
-        "//dlinear/util:stats",
     ],
 )
 
@@ -200,6 +205,15 @@ dlinear_cc_library(
     hdrs = [
         "Context.h",
     ],
+    implementation_deps = [
+        ":sat_solver",
+        ":theory_solver",
+        "//dlinear/symbolic:if_then_else_eliminator",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+    ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
@@ -208,20 +222,13 @@ dlinear_cc_library(
         ":logic",
         ":lp_result",
         ":sat_result",
-        ":sat_solver",
         ":solver_output",
-        ":theory_solver",
-        "//dlinear:version",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
-        "//dlinear/symbolic:if_then_else_eliminator",
-        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/symbolic:literal",
         "//dlinear/util:box",
         "//dlinear/util:config",
-        "//dlinear/util:infinity",
-        "//dlinear/util:logging",
         "//dlinear/util:scoped_structures",
-        "//dlinear/util:stats",
     ] + select({
         "//tools:dynamic_build": [
             "//dlinear/util:interrupt",
@@ -235,14 +242,13 @@ dlinear_cc_library(
     name = "solver_output",
     srcs = ["SmtSolverOutput.cpp"],
     hdrs = ["SmtSolverOutput.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":lp_result",
         ":sat_result",
         "//dlinear/libs:gmp",
         "//dlinear/util:box",
         "//dlinear/util:config",
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
         "//dlinear/util:stats",
         "//dlinear/util:timer",
     ],
@@ -252,6 +258,14 @@ dlinear_cc_library(
     name = "solver",
     srcs = ["SmtSolver.cpp"],
     hdrs = ["SmtSolver.h"],
+    implementation_deps = [
+        "//dlinear/parser/mps",
+        "//dlinear/parser/smt2",
+        "//dlinear/util:concepts",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:timer",
+    ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
@@ -266,15 +280,8 @@ dlinear_cc_library(
         ":context",
         ":solver_guard",
         ":solver_output",
-        "//dlinear/libs:gmp",
-        "//dlinear/parser/mps",
-        "//dlinear/parser/smt2",
-        "//dlinear/util:box",
-        "//dlinear/util:concepts",
+        "//dlinear/symbolic",
         "//dlinear/util:config",
-        "//dlinear/util:exception",
-        "//dlinear/util:timer",
-        "@spdlog",
     ],
 )
 

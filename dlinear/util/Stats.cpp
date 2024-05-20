@@ -6,10 +6,10 @@
  */
 #include "Stats.h"
 
-#include <fmt/core.h>
-
 #include <chrono>
 #include <utility>
+
+#include "dlinear/util/logging.h"
 
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
 #define DLINEAR_ITERATION_STATS_FMT "{:<35} @ {:<26} = {:>15}"
@@ -20,7 +20,7 @@ Stats::Stats(const bool enabled, std::string class_name, std::string operations_
     : timer_{}, enabled_{enabled}, class_name_{std::move(class_name)}, operations_name_{std::move(operations_name)} {}
 
 std::string Stats::ToSegmentString() const {
-  return fmt::format(DLINEAR_STATS_FMT, operations_name_, class_name_, timer_.seconds());
+  return DLINEAR_FORMAT(DLINEAR_STATS_FMT, operations_name_, class_name_, timer_.seconds());
 }
 std::string Stats::ToString() const { return Stats::ToSegmentString(); }
 
@@ -41,7 +41,7 @@ void IterationStats::Increase() {
 }
 
 std::string IterationStats::ToSegmentString() const {
-  return fmt::format(DLINEAR_ITERATION_STATS_FMT, iterations_name_, class_name_, iterations_.load());
+  return DLINEAR_FORMAT(DLINEAR_ITERATION_STATS_FMT, iterations_name_, class_name_, iterations_.load());
 }
 std::string IterationStats::ToString() const { return IterationStats::ToSegmentString() + "\n" + Stats::ToString(); }
 

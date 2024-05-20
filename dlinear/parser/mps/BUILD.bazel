@@ -36,10 +36,8 @@ dlinear_cc_library(
         "BoundType.h",
         "Sense.h",
     ],
-    deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
@@ -50,6 +48,10 @@ dlinear_cc_library(
         ":scanner",
     ],
     hdrs = ["Driver.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+    ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
@@ -57,11 +59,10 @@ dlinear_cc_library(
     tags = ["no-iwyu"],
     deps = [
         ":mps_data",
+        "//dlinear/libs:gmp",
         "//dlinear/parser:driver",
         "//dlinear/solver:context",
         "//dlinear/symbolic",
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
         "@rules_flex//flex:current_flex_toolchain",
     ],
 )

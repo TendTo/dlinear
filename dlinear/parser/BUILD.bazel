@@ -12,13 +12,25 @@ dlinear_cc_library(
     name = "driver",
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],
+    implementation_deps = [
+        "//dlinear/libs:gmp",
+        "//dlinear/solver:solver_output",
+        "//dlinear/symbolic:prefix_printer",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+        "//dlinear/util:scoped_structures",
+    ],
     local_defines = select({
         "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
     deps = [
         "//dlinear/solver:context",
-        "//dlinear/symbolic:prefix_printer",
+        "//dlinear/solver:logic",
+        "//dlinear/symbolic",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
     ],
 )
 

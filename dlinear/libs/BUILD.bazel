@@ -24,7 +24,6 @@ dlinear_cc_library(
     name = "soplex",
     hdrs = ["libsoplex.h"],
     deps = [
-        "//dlinear/util:exception",
         "//dlinear/util:logging",
     ] + select({
         "//tools:enabled_soplex": ["@soplex"],
