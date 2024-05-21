@@ -39,7 +39,7 @@
     while still guaranteeing an exact solution.
     Furthermore it allows for delta-complete reasoning, which relaxes the constraints by an arbitrary factor to produce the output faster.
 
-    \keywords{SMT \and delta-complete \and floating point arithmetic}
+    \keywords{SMT \and Delta-complete \and Floating point arithmetic}
 \end{abstract}
 
 % ---- Introduction ----
@@ -49,12 +49,24 @@ SAT and SMT solvers are used to check the satisfiability of logical formulas and
 The tool presented in this paper will focus on the theory of linear real arithmetic (QF\_LRA)\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
 The area of application we are interested in is the verification of big Neural Networks (NNs) and other machine learning models.
 The input space of these models is often very large, and the constraints that need to be verified are often piecewise linear.
+
 State-of-the-art SMT solvers such as Z3~\cite{ref:z3} and CVC5~\cite{ref:cvc5} already fully support the (QF\_LRA) theory.
 Their approach uses a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities, usually ignored by LP solvers.
 Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
 Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used \cite{ref:fft-mult}, hence it can slow down the calculation significantly.
 
-% ---- Introduction ----
+While in the LP community a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
+Some alternative techniques have been developed during the years.
+The \textit{QSoptex} solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting} \cite{ref:precision-boosting}.
+Working with floating-point numbers with variable precision, the algorithm increments the number of bits used in their representation until the solution is found and checking it using a rational number representation only to confirm its correctness.
+A approach is to utilise an \textbf{iterative refinement algorithm} \cite{ref:iterative-refinement} such as the one implemented in \textit{SoPlex} \footnote{SoPlex: \url{https://soplex.zib.de/}}.
+This variation starts by solving the original problem with a fixed precision before considering a sequence of related LP instances that only differ in the variables' bounds, the constraints' sides and the objective function coefficients.
+These subtasks translate in a shift/zoom of the original LP instance, increasing the initial output's precision.
+The process is iterated until the desired resolution is reached.
+Some subroutines are in place to check for unsoundness and infeasibility in the presence of approximations derived from the floating-point arithmetic.
+
+%
+
 \begin{credits}
     \subsubsection{\ackname} This study was funded by EPSRC
 \end{credits}

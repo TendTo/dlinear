@@ -42,3 +42,5 @@
 - [ ] Remove Infinity singleton
 - [ ] Support string problem input
 - [ ] Avoid resetting all constraints in the theory solver at each iteration. Instead, reset only the ones that have been removed and add or update the new ones
+- [ ] NN verification benchmarks
+- [ ] Add support for integer variables
