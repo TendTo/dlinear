@@ -1,0 +1,66 @@
+\documentclass[runningheads]{llncs}
+
+\input{setup}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ---- Begin document ----
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+% ---- Metadata ----
+\title{\dlinear: an SMT QF\_LRA Solver Supporting Floating Point Arithmetic and Delta-Completeness}
+\titlerunning{\dlinear}
+
+\author{Ernesto Casablanca\inst{1}\orcidID{0009-0009-3741-1624} \and
+    Martin Jonathan O'Connor Sidaway\inst{1}\orcidID{0000-0001-6481-1169} \and
+    Sadegh Soudjani\inst{2}\orcidID{0000-0003-1922-6678} \and
+    Paolo Zuliani\inst{3}\orcidID{0000-0001-6481-1169}}
+
+\authorrunning{E. Casablanca et al.}
+
+\institute{Newcastle University, Newcastle upon Tyne, United Kindgom\\
+    \email{\{e.casablanca2,?martin?\}@newcastle.ac.uk} \and % TODO: add martin's email and ensure orcidID
+    Max Planck Institute for Software Systems, Kaiserslautern, Germany\\
+    \email{sadegh@mpi-sws.org} \and
+    La Sapienza University, Rome, Italy\\
+    \email{zuliani@di.uniroma1.it}}
+
+%%%%%%%%%%%%%%%%%%%%%
+% ---- Sections ----
+%%%%%%%%%%%%%%%%%%%%%
+
+% ---- Title page ----
+\maketitle
+
+% ---- Abstract ----
+\begin{abstract}
+    \dlinear is an SMT solver for the theory of linear real arithmetic (QF\_LRA).
+    It uses floating point arithmetic to verify the feasibility of the linear constraints instead of the traditional fully rational approach utilised by other state of the art SMT solvers,
+    while still guaranteeing an exact solution.
+    Furthermore it allows for delta-complete reasoning, which relaxes the constraints by an arbitrary factor to produce the output faster.
+
+    \keywords{SMT \and delta-complete \and floating point arithmetic}
+\end{abstract}
+
+% ---- Introduction ----
+\section{Introduction}
+
+SAT and SMT solvers are used to check the satisfiability of logical formulas and to solve constraints over a variety of theories.
+The tool presented in this paper will focus on the theory of linear real arithmetic (QF\_LRA)\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+The area of application we are interested in is the verification of big Neural Networks (NNs) and other machine learning models.
+The input space of these models is often very large, and the constraints that need to be verified are often piecewise linear.
+State-of-the-art SMT solvers such as Z3~\cite{ref:z3} and CVC5~\cite{ref:cvc5} already fully support the (QF\_LRA) theory.
+Their approach uses a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities, usually ignored by LP solvers.
+Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
+Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used \cite{ref:fft-mult}, hence it can slow down the calculation significantly.
+
+% ---- Introduction ----
+\begin{credits}
+    \subsubsection{\ackname} This study was funded by EPSRC
+\end{credits}
+
+% ---- Bibliography ----
+\bibliographystyle{splncs04}
+\bibliography{resources}
+
+\end{document}
