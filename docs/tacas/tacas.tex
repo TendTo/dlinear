@@ -53,19 +53,107 @@ The input space of these models is often very large, and the constraints that ne
 State-of-the-art SMT solvers such as Z3~\cite{ref:z3} and CVC5~\cite{ref:cvc5} already fully support the (QF\_LRA) theory.
 Their approach uses a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities, usually ignored by LP solvers.
 Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
-Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used \cite{ref:fft-mult}, hence it can slow down the calculation significantly.
+Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used~\cite{ref:fft-mult}, hence it can slow down the calculation significantly.
 
 While in the LP community a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
-Some alternative techniques have been developed during the years.
-The \textit{QSoptex} solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting} \cite{ref:precision-boosting}.
+Some alternative methods have been developed during the years.
+The \textit{QSoptex} solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
 Working with floating-point numbers with variable precision, the algorithm increments the number of bits used in their representation until the solution is found and checking it using a rational number representation only to confirm its correctness.
-A approach is to utilise an \textbf{iterative refinement algorithm} \cite{ref:iterative-refinement} such as the one implemented in \textit{SoPlex} \footnote{SoPlex: \url{https://soplex.zib.de/}}.
+A approach is to utilise an \textbf{iterative refinement algorithm}~\cite{ref:iterative-refinement} such as the one implemented in \soplex \footnote{SoPlex: \url{https://soplex.zib.de/}}.
 This variation starts by solving the original problem with a fixed precision before considering a sequence of related LP instances that only differ in the variables' bounds, the constraints' sides and the objective function coefficients.
 These subtasks translate in a shift/zoom of the original LP instance, increasing the initial output's precision.
 The process is iterated until the desired resolution is reached.
 Some subroutines are in place to check for unsoundness and infeasibility in the presence of approximations derived from the floating-point arithmetic.
 
-%
+% ---- Architecture ----
+\section{Architecture}
+
+\wrapplantuml[0.5]{r}{diagrams/dpll}{DPLL(T)-based SMT solver}{dpll}
+\dlinear implements the standard DPLL(T)-based~\cite{ref:dpll-t} SMT solver structure utilised in most other state-of-the-art solvers~\cite{ref:z3-dpll-t}.
+DPLL(T)-based solvers are comprised of two main components (see Figure~\ref{dg:dpll}):
+A SAT solver which aims to satisfy the initial formula by assigning a $true$ or $false$ value to each theory-literal.
+The consistency of the theory literals that have been assigned a value is then evaluated by the theory solver.
+If no conflicts are found, a model is returned, terminating the process.
+Otherwise, it is the theory solver's responsibility to generate an explanation, which takes the form of one or more learned clauses to add to the formula, to force the SAT solver to backtrack and try a different assignment.
+If the SAT solver is unable to find a satisfying assignment, the formula is declared unsatisfiable.
+
+In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of a Linear Programming (LP) problem fed to \soplex.
+\dlinear offers the option to utilise a elementary theory preprocessor able to cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without the need to call the LP solver.
+Furthermore, \dlinear is able to parse MPS files, a standard format for LP problems, by implicitly creating a single assertion the LP solver will try to satisfy.
+
+% ---- Linear Real Arithmetic theory ----
+\section{Linear Real Arithmetic theory solver}
+
+To use out-of-the-box LP solvers as theory solvers, some adjustments in the formulation of the input may be required.
+A common optimisation technique is to drop the objective function, setting it to $0$.
+Strict inequalities are common place in SMT formulas, but they are usually not supported by LP solvers, for they would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
+Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one, while getting rid of the strict inequalities at the cost of losing the original objective function.
+To do so, introduce a new variable called \textbf{strict variable}, $t$.
+To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$, since they can always be converted to $<$ by multiplying both sides by $-1$.
+Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbr$ the \textbf{decision variables}, $c_1, c_2, \ldots, c_n, b_{1}, b_{2}, \ldots, b_{m}, a_{11}, a_{12}, \ldots, a_{mn} \in \bbbr$, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
+Start by replacing each strict inequality
+\begin{align*}
+    \sum_{i=1}^{n} a_{ji}x_{i} < b_j, \quad \forall j \in J
+\end{align*}
+with equivalent non strict inequalities using the strict variable $t$:
+\begin{align*}
+    \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
+    t > 0
+\end{align*}
+This change would only move the strict inequality problem to the bound on $t$.
+However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to maximise to $t$.
+The original problem we want to verify the feasibility of
+\begin{equation}
+    \label{eq:lp-original}
+    \begin{split}
+        \text{Maximise }   \quad & 0                                                          \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j,   \quad \forall j \in J  \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k,  \quad \forall k \in K \\
+        & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\},
+    \end{split}
+\end{equation}
+can be relaxed to
+\begin{equation}
+    \label{eq:lp-relaxed}
+    \begin{split}
+        \text{Maximise }   \quad & t                                                             \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k, \quad \forall k \in K     \\
+        & x_i \ge 0 , \quad i \in \{1, 2, \ldots, n\}                   \\
+        & t \ge 0
+    \end{split}
+\end{equation}
+
+\begin{theorem}
+    \label{thm:lp-relaxed}
+    The original problem \eqref{eq:lp-original} is feasible if and only if the relaxed problem \eqref{eq:lp-relaxed} is feasible and there exists a solution where the objective value is greater than $0$.
+\end{theorem}
+
+A bigger challenge is represented by \textit{not equal to} ($\ne$) constraints.
+Two strict inequalities are needed to check whether the constraint is satisfied, one for each direction.
+Since checking both at the same time with an OR conjunction is not possible, the original problem must be split into two.
+If the number of not equal constraints is $m$, then $2^m$ problems must be solved.
+If any of them is feasible, then it is possible to conclude that the original problem is feasible.
+Some smarter heuristics can improve the average performance of the solver.
+For instance, there is no need to continue solving subproblems if none of the \textit{not equal to} constraints appear in the explanation for last infeasibility, and if only exactly one of them appears, we can discard all other subproblems where it appears with with the same sense.
+
+% ---- Delta-completeness ----
+\section{delta-completeness}
+
+\dlinear offer the option to use delta-completeness.
+When chosen, the LP solver will stop refining the solution as soon as the arbitrary precision indicated by the user is reached.
+
+% ---- Benchmarks ----
+\section{Benchmarks}
+
+\subsection*{Specifications}
+
+We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2).
+The benchmarking suite has been run on a machine running CentOs with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache with a memory limit of 2.9GB (DDR4 RDIMMs).
+The timeout was set to 6 hours.
+
+\subsection*{Result}
+
 
 \begin{credits}
     \subsubsection{\ackname} This study was funded by EPSRC
@@ -74,5 +162,49 @@ Some subroutines are in place to check for unsoundness and infeasibility in the 
 % ---- Bibliography ----
 \bibliographystyle{splncs04}
 \bibliography{resources}
+
+% ---- Appendices ----
+% \begin{appendices}
+%     Proof of~\autoref{thm:lp-relaxed}.
+%     \chapter{Proof}
+%     \begin{proof}
+%         Without loss of generality, assume that both linear programming problems are in standard form.
+%         Let $J$ be the set of indexes of strict inequality constraints, and $K$ be the set of indexes for all other constraints.
+%         \\
+%         \framedtext{\eqref{eq:lp-original} feasible $\implies$ \eqref{eq:lp-relaxed} feasible $\land$  \eqref{eq:lp-relaxed} objective value $> 0$} \\
+
+%         If the original problem is feasible, then there exists a solution, a set of values to be assigned to the decision variables $x_1, x_2, \ldots, x_n$, that satisfies all the constraints.
+%         For the strict inequality constraints to be satisfied, it means that there exists a value $\delta_j > 0, \quad j \in J$ such that
+%         \begin{align*}
+%             \sum_{i=1}^{n} a_{ji}x_{i} + \delta_j = b_j, \quad \forall j \in J
+%         \end{align*}
+%         Let $\bar{t} = \min(\delta_j), \quad j \in J$.
+%         The expression becomes
+%         \begin{align*}
+%             \sum_{i=1}^{n} a_{ji}x_{i} + \bar{t} \le b_j, \quad \forall j \in J \\
+%             \bar{t} > 0
+%         \end{align*}
+%         which is the formulation of the previously strict constraints used in the relaxed problem.
+%         All other constraints have been left unchanged, therefore the solution to the original problem can be used to satisfy the constraints of the relaxed problem by also setting $t = \bar{t}$ which is greater than $0$.
+%         Hence, the objective value of the relaxed problem is $> 0$.
+%         \\
+%         \framedtext{\eqref{eq:lp-relaxed} feasible $\land$  \eqref{eq:lp-relaxed} objective value $> 0$ $\implies$ \eqref{eq:lp-original} feasible} \\
+
+%         The solution to the relaxed problem already satisfies all the non-strict constraints of the original problem.
+%         The objective value is greater than $0$; therefore, $t > 0$.
+%         Since all relaxed constraints in the form
+%         \begin{align*}
+%             \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
+%             t > 0
+%         \end{align*}
+%         are satisfied the original strict inequality constraints
+%         \begin{align*}
+%             \sum_{i=1}^{n} a_{ji}x_{i} < b_j, \quad \forall j \in J
+%         \end{align*}
+%         are also satisfied.
+%         Hence, the original problem is feasible.
+%     \end{proof}
+
+% \end{appendices}
 
 \end{document}

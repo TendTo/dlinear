@@ -18,6 +18,8 @@
 \usepackage{adjustbox}
 \usepackage{tikz}
 \usepackage{xspace}
+\usepackage{wrapfig}
+\usepackage{amsmath}
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Settings
@@ -31,7 +33,6 @@
 %     \renewcommand*{\sectionautorefname}{Sec.}
 %     \renewcommand*{\subsectionautorefname}{Sub-sez.}
 % }
-\graphicspath{ {./img/} } % Base image path
 \renewcommand\UrlFont{\color{blue}\rmfamily} % Change URL font
 \urlstyle{rm} % Change URL style
 
@@ -52,6 +53,16 @@
 % \setminted[solidity]{tabsize=2,breaklines,fontsize=\footnotesize}
 % \setminted[typescript]{tabsize=2,breaklines,fontsize=\footnotesize}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Geometry
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\framedtext}[1]{%
+\par%
+\noindent\fbox{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}%
+}%
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Listings
@@ -213,6 +224,16 @@
     \end{figure}
 }
 
+\newcommand{\wrapplantuml}[5][1]{
+    \begin{wrapfigure}{#2}{#1\textwidth} %this figure will be at the right
+        \centering
+        \begin{adjustbox}{width=#1\textwidth,center}
+            \input{#3}
+        \end{adjustbox}
+        \caption{#4}\label{dg:#5}
+    \end{wrapfigure}
+}
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Common definitions
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -222,3 +243,4 @@
 \def\dlinearfour{\textit{dLinear4}\xspace}
 \def\bazel{\textit{Bazel}\xspace}
 \def\dreal{\textit{dReal4}\xspace}
+\def\soplex{\textit{SoPlex}\xspace}
