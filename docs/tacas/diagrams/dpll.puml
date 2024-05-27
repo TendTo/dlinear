@@ -1,0 +1,29 @@
+@startuml DPLL
+
+skinparam Shadowing false
+hide footbox
+
+participant SmtSolver
+participant SatSolver
+participant TheorySolver
+
+[-> SmtSolver ++: CheckSat() 
+loop until SAT or UNSAT returned to the User
+    SmtSolver -> SatSolver ++: CheckSat()
+    return model
+
+    alt model == null
+       [<-- SmtSolver: UNSAT
+    else model != null
+        SmtSolver -> TheorySolver ++: CheckSat(model)
+        return expl
+
+        alt expl != null
+            SmtSolver -> SatSolver: Learn(expl)
+        else expl == null
+            return SAT
+        end
+    end
+end
+
+@enduml
