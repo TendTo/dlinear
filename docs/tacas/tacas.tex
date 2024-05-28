@@ -56,6 +56,8 @@ Unfortunately, rational arithmetic operations do not offer a constant time compl
 Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used~\cite{ref:fft-mult}, hence it can slow down the calculation significantly.
 
 While in the LP community a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
+Inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
+
 Some alternative methods have been developed during the years.
 The \textit{QSoptex} solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
 Working with floating-point numbers with variable precision, the algorithm increments the number of bits used in their representation until the solution is found and checking it using a rational number representation only to confirm its correctness.
@@ -70,12 +72,26 @@ Some subroutines are in place to check for unsoundness and infeasibility in the 
 
 \wrapplantuml[0.5]{r}{diagrams/dpll}{DPLL(T)-based SMT solver}{dpll}
 \dlinear implements the standard DPLL(T)-based~\cite{ref:dpll-t} SMT solver structure utilised in most other state-of-the-art solvers~\cite{ref:z3-dpll-t}.
-DPLL(T)-based solvers are comprised of two main components (see Figure~\ref{dg:dpll}):
-A SAT solver which aims to satisfy the initial formula by assigning a $true$ or $false$ value to each theory-literal.
-The consistency of the theory literals that have been assigned a value is then evaluated by the theory solver.
+DPLL(T)-based solvers the lazy approach to SMT solving, being comprised of two main components interacting with each other (see Figure~\ref{dg:dpll}).
+A boolean \textbf{SAT solver} which aims to satisfy the initial formula by assigning a $true$ or $false$ value to each theory-literal, and a \textbf{theory solver} which checks the consistency of the literals that have been assigned a value.
 If no conflicts are found, a model is returned, terminating the process.
 Otherwise, it is the theory solver's responsibility to generate an explanation, which takes the form of one or more learned clauses to add to the formula, to force the SAT solver to backtrack and try a different assignment.
 If the SAT solver is unable to find a satisfying assignment, the formula is declared unsatisfiable.
+
+More formally, given an input boolean formula, usually in CNF~\footnote{\href{https://en.wikipedia.org/wiki/Conjunctive_normal_form}{Conjunctive normal form}}, the SAT solver is prompted to produce an assignment
+\begin{equation} % Taken from Martin's thesis
+    \label{eq:smt-formula}
+    \phi = t_1(x) \le 0 \wedge \ldots \wedge t_m (x) \le 0
+\end{equation}
+where
+\begin{equation*}
+    t_i(x) = A_{i1}x_1 + \ldots + A_{in}x_n - b_i, \quad 1 \le i \le m
+\end{equation*}
+and $x \in \bbbq^n, A \in \bbbq^{m \times n}, b \in \bbbq^m$, satisfying $\phi$ means verifying that
+\begin{equation*}
+    \exists x \in \bbbq^n : t_1(x) \le 0 \wedge \ldots \wedge t_m(x) \le 0
+\end{equation*}
+which is a formulation for a LP problem without an objective function.
 
 In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of a Linear Programming (LP) problem fed to \soplex.
 \dlinear offers the option to utilise a elementary theory preprocessor able to cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without the need to call the LP solver.
@@ -87,10 +103,11 @@ Furthermore, \dlinear is able to parse MPS files, a standard format for LP probl
 To use out-of-the-box LP solvers as theory solvers, some adjustments in the formulation of the input may be required.
 A common optimisation technique is to drop the objective function, setting it to $0$.
 Strict inequalities are common place in SMT formulas, but they are usually not supported by LP solvers, for they would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
+Other state-of-the-art SMT solver employing rational arithmetic withing the theory solver~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}}, use a symbolic variable representing an infinitesimal parameter $\delta$ witch enforces the inequality~\cite{ref:lra-dpll-t}.
 Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one, while getting rid of the strict inequalities at the cost of losing the original objective function.
 To do so, introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$, since they can always be converted to $<$ by multiplying both sides by $-1$.
-Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbr$ the \textbf{decision variables}, $c_1, c_2, \ldots, c_n, b_{1}, b_{2}, \ldots, b_{m}, a_{11}, a_{12}, \ldots, a_{mn} \in \bbbr$, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
+Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbq$ the \textbf{decision variables}, $a_{11}, a_{12}, \ldots, a_{mn}, b_{2}, \ldots, b_{m}\in \bbbq$ some constants, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
 Start by replacing each strict inequality
 \begin{align*}
     \sum_{i=1}^{n} a_{ji}x_{i} < b_j, \quad \forall j \in J
@@ -101,7 +118,7 @@ with equivalent non strict inequalities using the strict variable $t$:
     t > 0
 \end{align*}
 This change would only move the strict inequality problem to the bound on $t$.
-However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to maximise to $t$.
+However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to maximise $t$.
 The original problem we want to verify the feasibility of
 \begin{equation}
     \label{eq:lp-original}
@@ -141,7 +158,31 @@ For instance, there is no need to continue solving subproblems if none of the \t
 \section{delta-completeness}
 
 \dlinear offer the option to use delta-completeness.
-When chosen, the LP solver will stop refining the solution as soon as the arbitrary precision indicated by the user is reached.
+
+% Taken from Martin's thesis
+\begin{definition}
+    If $\phi$ is a Boolean formula in which every atomic formula is of one the forms $t = 0$ or $t \le 0$ where $t$ is an arbitrary term, then the $\delta$-weakening of $\phi$, denoted $\phi^{-\delta}$, is, for any $\delta > 0$, the formula obtained by replacing every atomic formula $t = 0$ with $|t| \le \delta$, and every atomic formula $t \le 0$ with $t \le \delta$ (or, equivalently, $t - \delta \le 0$).
+\end{definition}
+If $\phi$ is defined as in (Eq.~\ref{eq:smt-formula}), then $\phi^{-\delta}$ can be written as
+\begin{equation*}
+    \phi^{-\delta} = t_1(x) \le \delta \land \ldots \land t_m(x) \le \delta
+\end{equation*}
+and its satisfiability problem can be written in linear algebra notation as
+\begin{equation}
+    \label{eq:delta-sat}
+    \exists x \in \bbbq^n : |Ax - b| \le \delta 1^m
+\end{equation}
+where $1^\sigma = [1, \ldots, 1]$ denotes a vector of ones of size $\sigma$.
+\begin{definition}
+    A $\delta$-complete decision procedure for satisfiability over a class of formulas $F$ is an algorithm that, if provided as input any formula $\phi \in F$, terminates and outputs (non-deterministically) exactly one of the following symbols:
+    \begin{enumerate}
+        \item unsat only if $\phi$ is unsatisfiable
+        \item $\delta$-sat only if $\phi^{-\delta}$ (the $\delta$-weakening of $\phi$) is satisfiable
+    \end{enumerate}
+\end{definition}
+Note that this is non-deterministic, because both conditions can simultaneously be true.
+Furthermore, any complete method is, by definition, trivially $\delta$-complete.
+The advantage of this approach is given by the fact that the LP solver can stop refining the solution as soon as the arbitrary precision $\delta$, indicated by the user, is reached, possibly saving computation time, especially for numerically challenging instances.
 
 % ---- Benchmarks ----
 \section{Benchmarks}
