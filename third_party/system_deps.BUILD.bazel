@@ -3,6 +3,8 @@ load("@rules_cc//cc:defs.bzl", "cc_import")
 SYSTEM_HEADERS_DIR = "include/"
 SYSTEM_LIB_DIR = "lib/x86_64-linux-gnu/"
 
+package(default_visibility = ["//visibility:public"])
+
 cc_import(
     name = "zlib",
     hdrs = [
@@ -11,7 +13,56 @@ cc_import(
     includes = [SYSTEM_HEADERS_DIR],
     interface_library = SYSTEM_LIB_DIR + "libz.so",
     system_provided = True,
-    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "zlib_deps",
+    deps = ["@system_deps//:zlib"],
+)
+
+cc_import(
+    name = "gmp",
+    hdrs = [
+        SYSTEM_HEADERS_DIR + "gmp.h",
+    ],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libgmp.so",
+    system_provided = True,
+)
+
+cc_library(
+    name = "gmp_deps",
+    deps = ["@system_deps//:gmp"],
+)
+
+cc_import(
+    name = "gmpxx",
+    hdrs = [
+        SYSTEM_HEADERS_DIR + "gmpxx.h",
+    ],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libgmpxx.so",
+    system_provided = True,
+)
+
+cc_library(
+    name = "gmpxx_deps",
+    deps = ["@system_deps//:gmpxx"],
+)
+
+cc_import(
+    name = "mpfr",
+    hdrs = [
+        SYSTEM_HEADERS_DIR + "mpfr.h",
+    ],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libmpfr.so",
+    system_provided = True,
+)
+
+cc_library(
+    name = "mpfr_deps",
+    deps = ["@system_deps//:mpfr"],
 )
 
 cc_import(
@@ -25,7 +76,11 @@ cc_import(
     includes = [SYSTEM_HEADERS_DIR],
     interface_library = SYSTEM_LIB_DIR + "libfmt.so",
     system_provided = True,
-    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "fmt_deps",
+    deps = ["@system_deps//:fmt"],
 )
 
 cc_import(
@@ -34,5 +89,9 @@ cc_import(
     includes = [SYSTEM_HEADERS_DIR],
     interface_library = SYSTEM_LIB_DIR + "libspdlog.so",
     system_provided = True,
-    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "spdlog_deps",
+    deps = ["@system_deps//:spdlog"],
 )
