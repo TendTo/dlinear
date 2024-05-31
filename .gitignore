@@ -96,4 +96,7 @@ tests/
 # Checks
 valgrind-out.txt
 
+# Archive
+*.tar.xz
+
 !.gitkeep

@@ -1,21 +1,8 @@
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "dlinear_cc_binary", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "all_files", "dlinear_cc_binary", "dlinear_cc_library")
 
 package(default_visibility = ["//visibility:public"])
-
-filegroup(
-    name = "all_files",
-    srcs =
-        [
-            "//dlinear/libs:all_files",
-            "//dlinear/solver:all_files",
-            "//dlinear/symbolic:all_files",
-            "//dlinear/util:all_files",
-        ] + glob([
-            "**",
-        ]),
-)
 
 genrule(
     name = "generate_version_header",
@@ -58,42 +45,43 @@ dlinear_cc_binary(
 # ----------------------
 # Distribution
 # ----------------------
-#cc_shared_library(
-#    name = "libdlinear.so",
-#    shared_lib_name = "libdlinear.so",
-#    deps = ["//dlinear/solver"],
-#)
-
-cc_binary(
+cc_shared_library(
     name = "libdlinear.so",
-    linkopts = [
-        "-lpicosat",
+    shared_lib_name = "libdlinear.so",
+    deps = [
+        "//dlinear/solver",
+        "@system_deps//:gmpxx_deps",
+        "@system_deps//:mpfr_deps",
     ],
-    linkshared = True,
-    linkstatic = select({
-        "//tools:dynamic_build": True,
-        "//conditions:default": False,
-    }),
-    deps = ["//dlinear/solver"],
 )
 
-filegroup(
-    name = "headers",
-    srcs = [
-        "dlinear.h",
-        "version.h",
+all_files(
+    name = "all",
+    additional_hdrs = ["version.h"],
+    deps = [
+        "//dlinear/libs:all_headers_tar",
+        "//dlinear/parser:all_headers_tar",
+        "//dlinear/solver:all_headers_tar",
+        "//dlinear/symbolic:all_headers_tar",
+        "//dlinear/util:all_headers_tar",
     ],
-    visibility = ["//visibility:public"],
 )
 
 pkg_tar(
     name = "package_headers",
     srcs = [
-        ":headers",
+        ":all_headers",
     ],
     extension = "tar.gz",
     package_dir = "include/dlinear",
     tags = ["manual"],
+    deps = [
+        "//dlinear/libs:all_headers_tar",
+        "//dlinear/parser:all_headers_tar",
+        "//dlinear/solver:all_headers_tar",
+        "//dlinear/symbolic:all_headers_tar",
+        "//dlinear/util:all_headers_tar",
+    ],
 )
 
 pkg_tar(

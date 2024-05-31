@@ -1,0 +1,10 @@
+Source: dlinear
+Maintainer: TendTo <casablancaernesto@gmail.com>
+Standards-Version: 4.5.0
+Priority: optional
+Section: utils
+Build-Depends: wget, libgmp10, libgmpxx4ldbl, libmpfr6
+
+Package: dlinear
+Architecture: amd64
+Description: Delta-complete SMT solver for linear programming

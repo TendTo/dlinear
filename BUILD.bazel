@@ -36,6 +36,7 @@ pkg_deb(
     architecture = "amd64",
     built_using = "bazel (3.4.1)",
     data = ":archive",
+    changelog = "//package:debian/changelog",
     depends = select({
         "//tools:dynamic_build": [
             "libstdc++6",
@@ -64,8 +65,7 @@ pkg_deb(
     }),
     description = "SMT solver for linear rational theories",
     homepage = "http://tendto.github.io/dlinear",
-    maintainer = "Ernesto Casablanca <casablanca.ernesto@gmail.com>",
+    maintainer = "TendTo <casablanca.ernesto@gmail.com>",
     package = DLINEAR_NAME,
-    tags = ["manual"],
     version = DLINEAR_VERSION,
 )
