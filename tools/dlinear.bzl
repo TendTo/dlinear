@@ -1,6 +1,7 @@
 """Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"
@@ -273,4 +274,36 @@ def dlinear_cc_googletest(
         tags = tags + ["googletest"],
         defines = _get_defines(defines),
         **kwargs
+    )
+
+def all_files(name, subfolder = "", additional_files = [], additional_hdrs = [], deps = []):
+    """A filegroup that includes all header files in the directory.
+
+    Args:
+        name: The name of the filegroup. It will produce three targets: name_files, name_headers, and name_headers_tar.
+        subfolder: The subfolder to package the headers in. Can be empty.
+        additional_files: Additional files to include in the filegroup.
+        additional_hdrs: Additional headers to include in the filegroup.
+        deps: A list of other tar packages to add to the one produced by this rule.
+    """
+
+    native.filegroup(
+        name = "%s_files" % name,
+        srcs = native.glob(["**"]) + additional_files,
+    )
+
+    native.filegroup(
+        name = "%s_headers" % name,
+        srcs = native.glob([
+            "**/*.h",
+            "**/*.hpp",
+        ]) + additional_hdrs,
+    )
+
+    pkg_tar(
+        name = "%s_headers_tar" % name,
+        srcs = [":%s_headers" % name],
+        extension = "tar.gz",
+        package_dir = subfolder,
+        deps = deps,
     )

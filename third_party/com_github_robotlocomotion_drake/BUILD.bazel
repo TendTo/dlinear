@@ -9,6 +9,7 @@ filegroup(
         "dlinear/symbolic/hash.h",
         "dlinear/symbolic/symbolic_environment.h",
         "dlinear/symbolic/symbolic_expression.h",
+        "dlinear/symbolic/symbolic_expression_cell.h",
         "dlinear/symbolic/symbolic_expression_visitor.h",
         "dlinear/symbolic/symbolic_formula.h",
         "dlinear/symbolic/symbolic_formula_visitor.h",

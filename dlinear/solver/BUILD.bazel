@@ -1,14 +1,14 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "all_files", "dlinear_cc_library")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
     "//test:__subpackages__",
 ])
 
-filegroup(
-    name = "all_files",
-    srcs = glob(["**"]),
+all_files(
+    name = "all",
+    subfolder = "solver",
 )
 
 dlinear_cc_library(

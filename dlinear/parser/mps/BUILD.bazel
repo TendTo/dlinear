@@ -1,5 +1,5 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "all_files", "dlinear_cc_library")
 load("//tools:lexyacc.bzl", "gen_lex", "gen_yacc")
 
 package(default_visibility = [
@@ -9,9 +9,9 @@ package(default_visibility = [
     "//test:__subpackages__",
 ])
 
-filegroup(
-    name = "all_files",
-    srcs = glob(["**"]),
+all_files(
+    name = "all",
+    subfolder = "mps",
 )
 
 gen_lex(
