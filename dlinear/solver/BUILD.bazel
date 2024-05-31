@@ -220,7 +220,7 @@ dlinear_cc_library(
         "//dlinear/util:stats",
     ],
     local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
+        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
     deps = [
@@ -235,7 +235,7 @@ dlinear_cc_library(
         "//dlinear/util:config",
         "//dlinear/util:scoped_structures",
     ] + select({
-        "//tools:dynamic_build": [
+        "//tools:pydlinear_build": [
             "//dlinear/util:interrupt",
             "//dlinear/util:signal_handler_guard",
         ],

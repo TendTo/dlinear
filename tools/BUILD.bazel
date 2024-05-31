@@ -48,6 +48,11 @@ bool_flag(
 )
 
 bool_flag(
+    name = "enable_pydlinear_build",
+    build_setting_default = False,
+)
+
+bool_flag(
     name = "enable_picosat",
     build_setting_default = True,
 )
@@ -69,6 +74,11 @@ config_setting(
 config_setting(
     name = "static_build",
     flag_values = {":enable_static_build": "True"},
+)
+
+config_setting(
+    name = "pydlinear_build",
+    flag_values = {":enable_pydlinear_build": "True"},
 )
 
 config_setting(

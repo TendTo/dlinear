@@ -33,7 +33,7 @@ dlinear_cc_library(
         "//dlinear/util:scoped_structures",
     ],
     local_defines = select({
-        "//tools:dynamic_build": ["DLINEAR_PYDLINEAR"],
+        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
     deps = [
