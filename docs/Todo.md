@@ -28,13 +28,17 @@
   - [ ] Use Ubuntu 23.04+ for gcc 13+ support
 - [ ] Return multiple explanations instead of just one when dealing with active constraints
 - [ ] Improve iterations over nq bounds
-- [ ] Add symbolic preprocessor for constraints in the form of $x \lessgtr y$
+- [x] Add symbolic preprocessor for constraints in the form of $x \lessgtr y$
 - [ ] Remove completely free variables, especially from nq constraints
 - [ ] Investigate out of memory
-- [ ] Handle conflicting constraints in preprocessor
-- [ ] Fix Invalidly reported constraints in bound processor
+- [x] Handle conflicting constraints in preprocessor
+- [x] Fix Invalidly reported constraints in bound processor
 - [ ] Add support for `max` and `min` functions redefinitions
 - [ ] Update `smt2` parser
 - [ ] Use lazy cache for Formula's GetFreeVariables
 - [ ] Custom symbolic implementation
 - [ ] Report need for basis reset in Soplex (a bug in the solver?)
+- [ ] Use the information from the preprocessor to guide the theory solver. Make sure the graph or causality is respected
+- [ ] Remove Infinity singleton
+- [ ] Support string problem input
+- [ ] Avoid resetting all constraints in the theory solver at each iteration. Instead, reset only the ones that have been removed and add or update the new ones
