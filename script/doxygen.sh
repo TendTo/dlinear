@@ -1,4 +1,4 @@
-#/bim/bash
+#/bin/bash
 
 readonly script_path="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 
