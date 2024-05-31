@@ -1,0 +1,38 @@
+load("@rules_cc//cc:defs.bzl", "cc_import")
+
+SYSTEM_HEADERS_DIR = "include/"
+SYSTEM_LIB_DIR = "lib/x86_64-linux-gnu/"
+
+cc_import(
+    name = "zlib",
+    hdrs = [
+        SYSTEM_HEADERS_DIR + "zlib.h",
+    ],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libz.so",
+    system_provided = True,
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "fmt",
+    hdrs = [
+        SYSTEM_HEADERS_DIR + "fmt/format.h",
+        SYSTEM_HEADERS_DIR + "fmt/ostream.h",
+        SYSTEM_HEADERS_DIR + "fmt/printf.h",
+        SYSTEM_HEADERS_DIR + "fmt/ranges.h",
+    ],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libfmt.so",
+    system_provided = True,
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "spdlog",
+    hdrs = [SYSTEM_HEADERS_DIR + "spdlog/spdlog.h"],
+    includes = [SYSTEM_HEADERS_DIR],
+    interface_library = SYSTEM_LIB_DIR + "libspdlog.so",
+    system_provided = True,
+    visibility = ["//visibility:public"],
+)

@@ -184,3 +184,10 @@ bison.repository(
 use_repo(bison, "bison")
 
 register_toolchains("@bison//:toolchain")
+
+new_local_repository = use_repo_rule("//tools:local.bzl", "new_local_repository")
+new_local_repository(
+    name = "system_deps",
+    build_file = "//third_party:system_deps.BUILD.bazel",
+    path = "/usr",
+)
