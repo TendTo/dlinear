@@ -9,6 +9,11 @@ package(default_visibility = [
     "//third_party:__subpackages__",
 ])
 
+filegroup(
+    name = "all_files",
+    srcs = glob(["**"]),
+)
+
 dlinear_cc_library(
     name = "gmp",
     srcs = ["libgmp.cpp"],

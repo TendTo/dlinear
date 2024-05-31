@@ -1,0 +1,14 @@
+filegroup(
+    name = "ubuntu_package",
+    srcs = glob(["debian/*"]),
+)
+
+genrule(
+    name = "ubuntu_ppa",
+    srcs = [
+        ":ubuntu_package",
+        "//:all_files",
+    ],
+    outs = ["dlinear/changelog", "gen.out"],
+    cmd = "cp $(locations :ubuntu_package) .. && ls > $(location gen.out)",
+)

@@ -6,6 +6,11 @@ package(default_visibility = [
     "//test:__subpackages__",
 ])
 
+filegroup(
+    name = "all_files",
+    srcs = glob(["**"]),
+)
+
 dlinear_cc_library(
     name = "logic",
     srcs = ["Logic.cpp"],

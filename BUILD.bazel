@@ -5,6 +5,21 @@ licenses(["notice"])  # Apache v2
 
 exports_files(["CPPLINT.cfg"])
 
+filegroup(
+    name = "all_files",
+    srcs = [
+        ".bazelrc",
+        ".bazelversion",
+        "BUILD.bazel",
+        "MODULE.bazel",
+        "README.md",
+        "//dlinear:all_files",
+        "//third_party:all_files",
+        "//tools:all_files",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 pkg_tar(
     name = "archive",
     extension = "tar.gz",

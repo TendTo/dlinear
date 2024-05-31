@@ -1,8 +1,21 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//tools:cpplint.bzl", "cpplint")
 load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "dlinear_cc_binary", "dlinear_cc_library")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "all_files",
+    srcs =
+        [
+            "//dlinear/libs:all_files",
+            "//dlinear/solver:all_files",
+            "//dlinear/symbolic:all_files",
+            "//dlinear/util:all_files",
+        ] + glob([
+            "**",
+        ]),
+)
 
 genrule(
     name = "generate_version_header",
