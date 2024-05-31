@@ -22,7 +22,12 @@ cmake(
     },
     targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
     out_binaries = ["soplex"],
-    out_static_libs = ["libsoplex.a"],
+    out_static_libs = select(
+        {
+            "@dlinear//tools:fpic_build": ["libsoplex-pic.a"],
+            "//conditions:default": ["libsoplex.a"],
+        },
+    ),
     out_shared_libs = ["libsoplex.so"],
     deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr", "@fmt"],
     visibility = ["//visibility:public"],

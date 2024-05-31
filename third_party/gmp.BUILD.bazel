@@ -10,6 +10,10 @@ licenses(["notice"])
 
 configure_make(
     name = "gmp",
+    configure_options = select({
+        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "//conditions:default": [],
+    }),
     lib_name = "libgmp",
     out_static_libs = ["libgmp.a"],
     out_shared_libs = ["libgmp.so"],
@@ -23,7 +27,10 @@ configure_make(
 
 configure_make(
     name = "gmpxx",
-    configure_options = ["--enable-cxx"],
+    configure_options = ["--enable-cxx"] + select({
+        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "//conditions:default": [],
+    }),
     lib_name = "libgmpxx",
     out_static_libs = ["libgmpxx.a"],
     out_shared_libs = ["libgmpxx.so"],

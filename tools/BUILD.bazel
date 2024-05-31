@@ -53,6 +53,11 @@ bool_flag(
 )
 
 bool_flag(
+    name = "enable_fpic_build",
+    build_setting_default = False,
+)
+
+bool_flag(
     name = "enable_picosat",
     build_setting_default = True,
 )
@@ -79,6 +84,11 @@ config_setting(
 config_setting(
     name = "pydlinear_build",
     flag_values = {":enable_pydlinear_build": "True"},
+)
+
+config_setting(
+    name = "fpic_build",
+    flag_values = {":enable_fpic_build": "True"},
 )
 
 config_setting(

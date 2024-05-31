@@ -7,6 +7,10 @@ licenses(["notice"])
 
 configure_make(
     name = "mpfr",
+    configure_options = select({
+        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "//conditions:default": [],
+    }),
     lib_name = "libmpfr",
     out_static_libs = ["libmpfr.a"],
     out_shared_libs = ["libmpfr.so"],
