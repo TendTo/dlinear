@@ -58,10 +58,10 @@
 % Geometry
 %%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\framedtext}[1]{%
-\par%
-\noindent\fbox{%
-    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}%
-}%
+    \par%
+    \noindent\fbox{%
+        \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}%
+    }%
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,6 +232,23 @@
         \end{adjustbox}
         \caption{#4}\label{dg:#5}
     \end{wrapfigure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Equation caption
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{eqcounter}
+\newcommand{\eqcaption}[1]{
+    {
+            \medskip
+            \centering
+            \setcounter{eqcounter}{\theequation}
+            Equation \theeqcounter: #1
+            \addtocounter{eqcounter}{1}
+
+            \vskip-0.5\baselineskip
+            \noindent
+        }
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%

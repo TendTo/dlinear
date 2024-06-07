@@ -11,11 +11,18 @@
 \title{\dlinear: an SMT QF\_LRA Solver Supporting Floating Point Arithmetic and Delta-Completeness}
 \titlerunning{\dlinear}
 
-\author{Ernesto Casablanca\inst{1}\orcidID{0009-0009-3741-1624} \and
-    Martin Jonathan O'Connor Sidaway\inst{1}\orcidID{0000-0001-6481-1169} \and
-    Sadegh Soudjani\inst{2}\orcidID{0000-0003-1922-6678} \and
-    Paolo Zuliani\inst{3}\orcidID{0000-0001-6481-1169}}
-
+\author{Ernesto Casablanca\inst{1}
+    %\orcidID{0009-0009-3741-1624}
+    \and
+    Martin Jonathan O'Connor Sidaway\inst{1}
+    %\orcidID{0000-0001-6481-1169}
+    \and
+    Sadegh Soudjani\inst{2}
+    %\orcidID{0000-0003-1922-6678}
+    \and
+    Paolo Zuliani\inst{3}
+    %\orcidID{0000-0001-6481-1169}
+}
 \authorrunning{E. Casablanca et al.}
 
 \institute{Newcastle University, Newcastle upon Tyne, United Kindgom\\
@@ -45,15 +52,42 @@
 % ---- Introduction ----
 \section{Introduction}
 
-SAT and SMT solvers are used to check the satisfiability of logical formulas and to solve constraints over a variety of theories.
-The tool presented in this paper will focus on the theory of linear real arithmetic (QF\_LRA)\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+A propositional formula is a construct that uses \textit{variables} (or \textit{unknowns}), which are assigned a semantic value \textbf{True} or \textbf{False}, and \textit{logical connectives}, such as $\lor$ (or), $\land$ (and) and $\neg$ (not).
+A literal is a variable $x$ or its negation $\neg x$.
+Propositional formulae are usually expressed in the Conjunctive normal form (CNF), which is to say as a conjunction of clauses, where a clause is a disjunction of literals (see Eq.~\ref{eq:cnf-notations}).
+A generic propositional formula can be converted into and equisatisfiable CNF formulation through the Tseitin encoding~\cite{ref:handbook-sat}.
+\begin{equation}
+    \label{eq:cnf-notations}
+    \begin{gathered}
+        \bigwedge_{i=1}^n \bigvee_{j=1}^{m_i} l_{ij} \\
+        ( l_{00} \lor l_{01} \lor \dots \lor l_{0m_0}) \land (l_{10} \lor l_{11} \lor \dots \lor l_{1m_1}) \land \dots \land (l_{n0} \lor l_{n1} \lor \dots \lor l_{nm_n}) \\
+        \{ \{ l_{00}, l_{01} , \dots , l_{0m_0} \} , \{ l_{10} , l_{11} , \dots , l_{1m_1} \}, \dots , \{ l_{n0} , l_{n1} , \dots , l_{nm_n} \} \}
+    \end{gathered}
+\end{equation}
+\eqcaption{Three notations used to represent a CNF formula with $n$ clauses and $m_i$ literals in the $i$-th clause.}
+
+A \textbf{SAT solver} is a procedure able to determine whether a given propositional formula is satisfiable, that is, if there exists a boolean assignment of values to the variables that makes the formula true.
+Although the problem is generally \textbf{NP-complete}, over the years many efficient algorithms have been developed to tackle it, with the most popular being the Conflict Driven Clause Learning (\textbf{CDCL}) algorithm~\cite{ref:handbook-sat}, which started as an extension of the original Davis–Putnam–Logemann–Loveland \textbf{DPLL} algorithm~\cite{ref:dpll} with additional key techniques, such as learning clauses and from conflicts and exploiting their structure~\cite{ref:conflict-driven-clause-learning}, lazy data structures and low efficient branching heuristics~\cite{ref:watched-literals}.
+CDCL is employed in most recent state-of-the-art SAT solvers, such as the version of \textit{Minisat} in cvc5~\cite{ref:cvc5-smt-comp-2022} and \textit{Glucose}~\cite{ref:glucose}.
+
+Satisfiability for propositional formulas can be extended to Satisfiability Modulo Theories (\textbf{SMT}).
+Let $\Sigma$ be a signature containing predicate and function symbols, with their arity, where $\Sigma^F$ is the set of functions and $\Sigma^P$ the set of predicates.
+Furthermore, let the 0-arity symbols of $\Sigma^F$ be constants, and the 0-arity symbols of $\Sigma^P$ propositions.
+A ground ($\Sigma$-)term $t$ is defined as a constant, the application of a function symbol to a list of terms compatible with its arity.
+A ground ($\Sigma$-)formula $\phi$ can be a proposition, a predicate over a list of terms, an equality between terms, the symbols $\top$ and $\bot$, and the logical connectives $\land$, $\lor$, $\neg$, $\implies$ and $\iff$ applied to other $\Sigma$-formulas.
+Lastly, the term $ite$, known as the if-then-else operator, is defined in terms of three arguments: a formula, a term to return if the formula evaluates to true and another to return otherwise.
+
+Some examples include the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}) and the theory of arrays (\textbf{QF\_AUFLIA})~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+To satisfy an SMT formula, the atoms must be assigned a true/false value that entail the satisfaction of the theory.
+
+The tool presented in this paper will focus on the QF\_LRA theory.
 The area of application we are interested in is the verification of big Neural Networks (NNs) and other machine learning models.
 The input space of these models is often very large, and the constraints that need to be verified are often piecewise linear.
 
 State-of-the-art SMT solvers such as Z3~\cite{ref:z3} and CVC5~\cite{ref:cvc5} already fully support the (QF\_LRA) theory.
 Their approach uses a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities, usually ignored by LP solvers.
 Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
-Unlike floating point arithmetic, the time required to complete the computation depends on the size of the input and the algorithm used~\cite{ref:fft-mult}, hence it can slow down the calculation significantly.
+Unlike floating point arithmetic, the time required to complete the computation grows based on the size of the rational representation, which is not fixed, and the algorithm used~\cite{ref:fft-mult}, hence it can slow down the calculation significantly.
 
 While in the LP community a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
 Inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
@@ -78,7 +112,7 @@ If no conflicts are found, a model is returned, terminating the process.
 Otherwise, it is the theory solver's responsibility to generate an explanation, which takes the form of one or more learned clauses to add to the formula, to force the SAT solver to backtrack and try a different assignment.
 If the SAT solver is unable to find a satisfying assignment, the formula is declared unsatisfiable.
 
-More formally, given an input boolean formula, usually in CNF~\footnote{\href{https://en.wikipedia.org/wiki/Conjunctive_normal_form}{Conjunctive normal form}}, the SAT solver is prompted to produce an assignment
+More formally, given an input boolean formula, usually in CNF, the SAT solver is prompted to produce an assignment
 \begin{equation} % Taken from Martin's thesis
     \label{eq:smt-formula}
     \phi = t_1(x) \le 0 \wedge \ldots \wedge t_m (x) \le 0
@@ -126,7 +160,7 @@ The original problem we want to verify the feasibility of
         \text{Maximise }   \quad & 0                                                          \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j,   \quad \forall j \in J  \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k,  \quad \forall k \in K \\
-        & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\},
+                                 & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\},
     \end{split}
 \end{equation}
 can be relaxed to
@@ -136,8 +170,8 @@ can be relaxed to
         \text{Maximise }   \quad & t                                                             \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k, \quad \forall k \in K     \\
-        & x_i \ge 0 , \quad i \in \{1, 2, \ldots, n\}                   \\
-        & t \ge 0
+                                 & x_i \ge 0 , \quad i \in \{1, 2, \ldots, n\}                   \\
+                                 & t \ge 0
     \end{split}
 \end{equation}
 
