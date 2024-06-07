@@ -69,7 +69,7 @@
   editor    = {Gramlich, Bernhard and Miller, Dale and Sattler, Uli},
   abstract  = {We introduce the notion of ``$\delta$-complete decision procedures'' for solving SMT problems over the real numbers, with the aim of handling a wide range of nonlinear functions including transcendental functions and solutions of Lipschitz-continuous ODEs. Given an SMT problem ϕ and a positive rational number $\delta$, a $\delta$-complete decision procedure determines either that ϕ is unsatisfiable, or that the ``$\delta$-weakening'' of ϕ is satisfiable. Here, the $\delta$-weakening of ϕ is a variant of ϕ that allows $\delta$-bounded numerical perturbations on ϕ. We establish the existence and complexity of $\delta$-complete decision procedures for bounded SMT over reals with functions mentioned above. We propose to use $\delta$-completeness as an ideal requirement for numerically-driven decision procedures. As a concrete example, we formally analyze the DPLL{\textlangle}ICP{\textrangle} framework, which integrates Interval Constraint Propagation in DPLL(T), and establish necessary and sufficient conditions for its $\delta$-completeness. We discuss practical applications of $\delta$-complete decision procedures for correctness-critical applications including formal verification and theorem proving.}
 }
-@article{paper:dpll,
+@article{ref:dpll,
   title      = {A Machine Program for Theorem-Proving},
   author     = {Davis, Martin and Logemann, George and Loveland, Donald},
   year       = 1962,
@@ -363,3 +363,45 @@
   howpublished = {\url{https://github.com/Z3Prover/z3}},
   commit       = {e8a38c548235d21c9f075cc9cdbe473fc68ef8bd}
 }
+@inproceedings{ref:watched-literals,
+  author    = {Moskewicz, M.W. and Madigan, C.F. and Zhao, Y. and Zhang, L. and Malik, S.},
+  booktitle = {Proceedings of the 38th Design Automation Conference (IEEE Cat. No.01CH37232)},
+  title     = {Chaff: engineering an efficient SAT solver},
+  year      = {2001},
+  volume    = {},
+  number    = {},
+  pages     = {530-535},
+  keywords  = {Electronic design automation and methodology;Artificial intelligence;Logic testing;Permission;Electronics packaging;Performance gain;Business continuity;Design engineering;Design automation;NP-complete problem},
+  doi       = {10.1145/378239.379017}
+}
+@misc{ref:cvc5-smt-comp-2022,
+  title  = {CVC5 at the SMT Competition 2022},
+  author = {Barbosa, Haniel and Barrett, Clark and Brain, Martin and Kremer, Gereon and Lachnitt, Hanna and Mohamed, Abdalrhman and Mohamed, Mudathir and Niemetz, Aina and N{\"o}tzli, Andres and Ozdemir, Alex and others},
+  year   = {2022}
+}
+@article{ref:glucose,
+  author   = {Audemard, Gilles and Simon, Laurent},
+  title    = {On the Glucose SAT Solver},
+  journal  = {International Journal on Artificial Intelligence Tools},
+  volume   = {27},
+  number   = {01},
+  pages    = {1840001},
+  year     = {2018},
+  doi      = {10.1142/S0218213018400018},
+  url      = {https://doi.org/10.1142/S0218213018400018},
+  eprint   = {https://doi.org/10.1142/S0218213018400018},
+  abstract = {The set of novelties introduced with the SAT solver Glucose is now considered as a standard for practical SAT solving. In this paper, we review the different strategies and technologies added in Glucose over the years. We detail each technique and discuss its impact on the final performances reached by Glucose. We also come back on one of the main developments of the solver over the very last years: its efficient parallelization. We extensively tested different versions of Glucose and Syrup (its parallel version) on all the benchmarks since 2011. By including, as a reference, the SAT solver Lingeling (and its parallel version Plingeling), we show that Glucose and Syrup are significantly faster than other solvers, even if they can solve fewer instances.}
+}
+
+@inproceedings{ref:conflict-driven-clause-learning,
+  author    = {Marques Silva, J.P. and Sakallah, K.A.},
+  booktitle = {Proceedings of International Conference on Computer Aided Design},
+  title     = {GRASP-A new search algorithm for satisfiability},
+  year      = {1996},
+  volume    = {},
+  number    = {},
+  pages     = {220-227},
+  keywords  = {Automatic test pattern generation;Electronic design automation and methodology;Algorithm design and analysis;Pattern analysis;Circuit testing;Logic testing;Business continuity;Laboratories;Fault diagnosis;Benchmark testing},
+  doi       = {10.1109/ICCAD.1996.569607}
+}
+
