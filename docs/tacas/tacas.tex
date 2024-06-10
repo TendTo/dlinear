@@ -56,6 +56,8 @@ A propositional formula is a construct that uses \textit{variables} (or \textit{
 A literal is a variable $x$ or its negation $\neg x$.
 Propositional formulae are usually expressed in the Conjunctive normal form (CNF), which is to say as a conjunction of clauses, where a clause is a disjunction of literals (see Eq.~\ref{eq:cnf-notations}).
 A generic propositional formula can be converted into and equisatisfiable CNF formulation through the Tseitin encoding~\cite{ref:handbook-sat}.
+If a clause contains exactly one literal, it is called a unit clause.
+Lastly, an empty clause, that is, a clause with no literals, corresponds to the formula $\bot$.
 \begin{equation}
     \label{eq:cnf-notations}
     \begin{gathered}
@@ -67,28 +69,91 @@ A generic propositional formula can be converted into and equisatisfiable CNF fo
 \eqcaption{Three notations used to represent a CNF formula with $n$ clauses and $m_i$ literals in the $i$-th clause.}
 
 A \textbf{SAT solver} is a procedure able to determine whether a given propositional formula is satisfiable, that is, if there exists a boolean assignment of values to the variables that makes the formula true.
-Although the problem is generally \textbf{NP-complete}, over the years many efficient algorithms have been developed to tackle it, with the most popular being the Conflict Driven Clause Learning (\textbf{CDCL}) algorithm~\cite{ref:handbook-sat}, which started as an extension of the original Davis–Putnam–Logemann–Loveland \textbf{DPLL} algorithm~\cite{ref:dpll} with additional key techniques, such as learning clauses and from conflicts and exploiting their structure~\cite{ref:conflict-driven-clause-learning}, lazy data structures and low efficient branching heuristics~\cite{ref:watched-literals}.
+Although the problem is generally \textbf{NP-complete}~\cite{ref:np-sat}, over the years many efficient algorithms have been developed to tackle it, with the most popular being the Conflict Driven Clause Learning (\textbf{CDCL}) algorithm~\cite{ref:handbook-sat}, which started as an extension of the original Davis–Putnam–Logemann–Loveland \textbf{DPLL} algorithm~\cite{ref:dpll} with additional key techniques, such as learning clauses and from conflicts and exploiting their structure~\cite{ref:conflict-driven-clause-learning}, lazy data structures and low efficient branching heuristics~\cite{ref:watched-literals}.
 CDCL is employed in most recent state-of-the-art SAT solvers, such as the version of \textit{Minisat} in cvc5~\cite{ref:cvc5-smt-comp-2022} and \textit{Glucose}~\cite{ref:glucose}.
 
 Satisfiability for propositional formulas can be extended to Satisfiability Modulo Theories (\textbf{SMT}).
 Let $\Sigma$ be a signature containing predicate and function symbols, with their arity, where $\Sigma^F$ is the set of functions and $\Sigma^P$ the set of predicates.
 Furthermore, let the 0-arity symbols of $\Sigma^F$ be constants, and the 0-arity symbols of $\Sigma^P$ propositions.
 A ground ($\Sigma$-)term $t$ is defined as a constant, the application of a function symbol to a list of terms compatible with its arity.
-A ground ($\Sigma$-)formula $\phi$ can be a proposition, a predicate over a list of terms, an equality between terms, the symbols $\top$ and $\bot$, and the logical connectives $\land$, $\lor$, $\neg$, $\implies$ and $\iff$ applied to other $\Sigma$-formulas.
-Lastly, the term $ite$, known as the if-then-else operator, is defined in terms of three arguments: a formula, a term to return if the formula evaluates to true and another to return otherwise.
+A ground ($\Sigma$-)formula $\varphi$ can be a proposition, a predicate over a list of terms, an equality between terms, the symbols $\top$ or $\bot$ or any logical connectives $\land$, $\lor$, $\neg$, $\implies$ and $\iff$ applied to other $\Sigma$-formulas.
+Lastly, the term $ite$, known as the if-then-else operator, is defined in terms of three elements: a formula and two terms.
+\begin{equation}
+    \label{eq:smt-notations}
+    \begin{gathered}
+        \begin{array}{lll}
+            A \in \Sigma^P & \text{arity } 0   & \text{proposition} \\
+            c \in \Sigma^F & \text{arity } 0   & \text{constant}    \\
+            p \in \Sigma^P & \text{arity } > 0 & \text{predicate}   \\
+            f \in \Sigma^F & \text{arity } > 0 & \text{function}    \\
+        \end{array}
+        \\
+        \begin{array}{lrll}
+            t       & \coloneqq & c                                                          & \text{ground term}    \\
+                    & \mid      & f(t_1, \ldots, t_n)                                                                \\
+                    & \mid      & ite(\varphi, t_1, t_2)                                                             \\
+            \\
+            \varphi & \coloneqq & A                                                          & \text{ground formula} \\
+                    & \mid      & p(t_1, \ldots, t_n)                                                                \\
+                    & \mid      & t_1 = t_2 \mid \top \mid \bot  \mid \neg\varphi                                    \\
+                    & \mid      & \varphi_1 \land \varphi_2 \mid \varphi_1 \lor \varphi_2                            \\
+                    & \mid      & \varphi_1 \implies \varphi_2 \mid \varphi_1 \iff \varphi_2                         \\
+        \end{array}
+    \end{gathered}
+\end{equation}
+\eqcaption{Notations used to represent a SMT formula}
+Literals in SMT formulas represent an \textbf{atom}, that is to say a proposition, a predicate, an equality between terms or the symbols $\top$ or $\bot$.
+Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, by applying a \textbf{model} $\mathcal{A}$, which is a pair consisting of a non empty set $A$ and a mapping from all constant symbol $c \in \Sigma^F$ to an element $a^\mathcal{A} \in A$, from each function symbol $f \in \Sigma^F$ of arity $n > 0$ to a total function $f^\mathcal{A} : A^n \to A$, from each proposition $B \in \Sigma^{P}$ to a boolean value $b \in \{\textbf{true}, \textbf{false}\}$ and finally from each predicate symbol $p \in \Sigma^P$ of arity $n > 0$ to a total function $p^\mathcal{A} : A^n \to \{ \textbf{true}, \textbf{false} \}$.
+The mapping in the model determines the \textit{interpretation} of the formula.
+Following the expected conversions, for any $\mathcal{A}$
+\begin{gather*}
+    f(t_1, \dots, t_n)^{\mathcal{A}} = f^{\mathcal{A}}(t_1^{\mathcal{A}}, \dots, t_n^{\mathcal{A}}) \\
+    p(t_1, \dots, t_n)^{\mathcal{A}} = p^{\mathcal{A}}(t_1^{\mathcal{A}}, \dots, t_n^{\mathcal{A}}) \\
+    ite(\varphi, t_1, t_2)^{\mathcal{A}} = \begin{cases}
+        t_1^{\mathcal{A}} & \text{if } \varphi^{\mathcal{A}} = \textbf{true}  \\
+        t_2^{\mathcal{A}} & \text{if } \varphi^{\mathcal{A}} = \textbf{false}
+    \end{cases} \\
+    \bot = \textbf{false} \quad \top = \textbf{true}
+\end{gather*}
+If follows that a model $\mathcal{A}$ \textbf{satisfies} a formula $\varphi$ if $\varphi^{\mathcal{A}} = \textbf{true}$.
+To conclude with some definitions, we say that a set $\Gamma$ of ground formulae \textbf{entails} a ground formula $\varphi$, denoted $\Gamma \models \varphi$, iff every model $\mathcal{A}$ that satisfies all formulae in $\Gamma$ satisfies $\varphi$ as well.
+$\Gamma$ is \textbf{consistent} iff $\Gamma \not\models \bot$ and it is \textbf{valid} iff $\emptyset \models \Gamma$.
 
-Some examples include the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}) and the theory of arrays (\textbf{QF\_AUFLIA})~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
-To satisfy an SMT formula, the atoms must be assigned a true/false value that entail the satisfaction of the theory.
+While these definitions are extremely generic, it is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of arrays (\textbf{QF\_AUFLIA}) and many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+Then, the problem of satisfiability is the problem of determining whether if is exists an interpretation within the chosen theory that satisfies the formula $\varphi$.
+The same problem can also be formulated as a validity problem, for to satisfy $\varphi$ means that $\neg\varphi$ must be valid and vice versa.
 
 The tool presented in this paper will focus on the QF\_LRA theory.
+The interpretation uses the domain $\bbbr$ of real numbers.
+Furthermore, only $+, -, \times,$ arithmetic operators are allowed, with $\times$ being restricted to multiply a variable only by a constant.
+Therefore, each atom can be expressed in the form $a_1x_1 + \ldots + a_nx_n \bowtie b$, where $x_i \in \bbbr \forall i \in \{1, 2, \dots, n\}$ are the variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
+With these restriction in place, the QF\_LRA theory is decidable.
 The area of application we are interested in is the verification of big Neural Networks (NNs) and other machine learning models.
 The input space of these models is often very large, and the constraints that need to be verified are often piecewise linear.
+
+It is easy to see how the QF\_LRA theory is very closely related to the Linear Programming (LP) problem.
+A linear program is a mathematical optimisation problem where the objective function to maximise and the constraints the solution is subject to are linear.
+LP problems are formulated in the \textit{standard form} (Eq.~\ref{eq:lp-standard}), where the objective function is to be maximised, the constraints are all $\le$ inequalities and the variables are non-negative.
+The conversion to the standard form is always possible and can be done in polynomial time.
+\begin{equation}
+    \label{eq:lp-standard}
+    \begin{split}
+        \text{Maximise }   \quad & \sum_{i=1}^{n} c_i x_i                      \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j            \\
+                                 & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\}
+    \end{split}
+\end{equation}
+\eqcaption{Standard form of a Linear Programming problem with $n$ variables and $m$ constraints.}
+
+The most commonly used algorithm to solve LP problems is the Simplex method~\cite{ref:simplex}.
+While having a worst-case exponential time complexity, it is often very efficient in practice.
+Unfortunately, most out-of-the-shelf implementations do not handle strict inequalities, which are common in SMT problems.
+We will discuss how to handle them in Section~\ref{sec:lra-theory-solver}.
 
 State-of-the-art SMT solvers such as Z3~\cite{ref:z3} and CVC5~\cite{ref:cvc5} already fully support the (QF\_LRA) theory.
 Their approach uses a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities, usually ignored by LP solvers.
 Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
 Unlike floating point arithmetic, the time required to complete the computation grows based on the size of the rational representation, which is not fixed, and the algorithm used~\cite{ref:fft-mult}, hence it can slow down the calculation significantly.
-
 While in the LP community a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
 Inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
 
@@ -115,24 +180,80 @@ If the SAT solver is unable to find a satisfying assignment, the formula is decl
 More formally, given an input boolean formula, usually in CNF, the SAT solver is prompted to produce an assignment
 \begin{equation} % Taken from Martin's thesis
     \label{eq:smt-formula}
-    \phi = t_1(x) \le 0 \wedge \ldots \wedge t_m (x) \le 0
+    \varphi = t_1(x) \le 0 \wedge \ldots \wedge t_m (x) \le 0
 \end{equation}
 where
 \begin{equation*}
     t_i(x) = A_{i1}x_1 + \ldots + A_{in}x_n - b_i, \quad 1 \le i \le m
 \end{equation*}
-and $x \in \bbbq^n, A \in \bbbq^{m \times n}, b \in \bbbq^m$, satisfying $\phi$ means verifying that
+and $x \in \bbbr^n, A \in \bbbr^{m \times n}, b \in \bbbr^m$, satisfying $\varphi$ means verifying that
 \begin{equation*}
-    \exists x \in \bbbq^n : t_1(x) \le 0 \wedge \ldots \wedge t_m(x) \le 0
+    \exists x \in \bbbr^n : t_1(x) \le 0 \wedge \ldots \wedge t_m(x) \le 0
 \end{equation*}
 which is a formulation for a LP problem without an objective function.
 
-In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of a Linear Programming (LP) problem fed to \soplex.
+In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of an LP problem fed to the LP solver.
 \dlinear offers the option to utilise a elementary theory preprocessor able to cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without the need to call the LP solver.
 Furthermore, \dlinear is able to parse MPS files, a standard format for LP problems, by implicitly creating a single assertion the LP solver will try to satisfy.
 
 % ---- Linear Real Arithmetic theory ----
 \section{Linear Real Arithmetic theory solver}
+\label{sec:lra-theory-solver}
+
+\subsection*{Preprocessing}
+
+\dlinear implements some of the common preprocessing strategies when it comes to optimising the performance solver for the QF\_LRA theory.
+All simple equality bounds are propagated using the problem's constraints in a graph-like structure (Figure~\ref{dg:preprocessor}).
+If one or more conflicts are detected, the original atoms are traced back and used to generate the explanations.
+This also allows to further guide the theory solver, by adding additional bounds to the variables, which further reduce the search space.
+The preprocessing can still be disabled by the user if its contribution is negligible, if not detrimental, to the overall performance on the given instance.
+
+\begin{figure}[h]
+    \begin{tikzpicture}
+        \begin{scope}[every node/.style={rectangle,thick,draw}]
+            \node (1) at (0,4) {$x_1 = 1$};
+            \node[shape=rectangle,draw=none] (a) at (3,3) {$x_1 + x_2 + x_4 = 7$};
+            \node (2) at (0,2) {$x_2 = 2$};
+            \node (3) at (0,0) {$x_3 = 3$};
+            \node[shape=rectangle,draw=blue] (4) at (6,3) {$x_4 = 4$};
+            \node[shape=rectangle,draw=blue] (5) at (6,1) {$x_5 = 5$};
+            \node[draw=red] (6) at (12,2) {$x_6 = 6 \land x_6 = 7$};
+        \end{scope}
+
+        \begin{scope}[>={Stealth[black]},
+            every node/.style={fill=white,rectangle},
+            every edge/.style={draw=black,very thick}]
+            \path [-] (1) edge (a);
+            \path [-] (2) edge (a);
+            \path [->] (a) edge (4);
+            \path [->] (1) edge[bend left=20] node {$3x_1 -  x_4 = 1$} (4);
+            \path [->] (3) edge[draw=red] node {$x_3 + 2x_5 = 13$} (5);
+            \path [->] (2) edge[draw=red] node {$-3x_2 + x_6 = 0$} (6);
+            \path [->] (5) edge[draw=red] node {$-7x_5 + x_6 = -28$} (6);
+        \end{scope}
+    \end{tikzpicture}
+    \caption{Example of a preprocessor graph. The given bounds (the nodes on the left) propagate using the constraints, inducing additional bounds (the blue nodes) that can be used to guide the solver.
+        If a conflict is detected (red node), the edges responsible (red edges) are traced back to the origin to formulate an explanation to add to the SAT solver.
+        In this case, the explanation adds the clause $(\neg l_1 \lor \neg l_2 \lor \neg l_3 \lor \neg l_4 \lor \neg l_5)$ where $l_1 \coloneqq x_2 = 2, l_2 \coloneqq x_3 = 3, l_3 \coloneqq -3x_2 + x_6 = 0, l_4 \coloneqq x_3 + 2x_5 = 13, l_5 \coloneqq -7x_5 + x_6 = -28$.
+        Graphically, at least one of the red edges or the nodes from which they originate must be absent.}
+         \label{dg:preprocessor}
+\end{figure}
+
+\subsection{LP solver}
+
+The LP solver used by \dlinear by default is \soplex.
+It implements both the incremental precision boosting and the iterative refinement algorithms.
+The user can choose between the two, or even an hybrid approach.
+The LP solver is used to verify the feasibility of the constraints.
+Because we are not interested in the optimal solution but in finding any solution, a low hanging fruit in terms of optimisation is to set the objective function to $0$ to avoid pointless computations.
+This is not the case in our implementations as we will see in section~\ref{sec:strict-bounds}.
+
+If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
+Note that there is no guarantee of uniqueness of the solution, so adding an artificial clause with the negation of the solution found will lead to another solution being found or the formula being declared unsatisfiable.
+On the other hand, if the LP problem is infeasible, we can use the Farkas Ray to determine the irreducible inconsistent subsystem of the original problem, and use it to produce an explanation.
+
+\subsection{Strict bounds}
+\label{sec:strict-bounds}
 
 To use out-of-the-box LP solvers as theory solvers, some adjustments in the formulation of the input may be required.
 A common optimisation technique is to drop the objective function, setting it to $0$.
@@ -141,7 +262,7 @@ Other state-of-the-art SMT solver employing rational arithmetic withing the theo
 Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one, while getting rid of the strict inequalities at the cost of losing the original objective function.
 To do so, introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$, since they can always be converted to $<$ by multiplying both sides by $-1$.
-Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbq$ the \textbf{decision variables}, $a_{11}, a_{12}, \ldots, a_{mn}, b_{2}, \ldots, b_{m}\in \bbbq$ some constants, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
+Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbr$ the \textbf{decision variables}, $a_{11}, a_{12}, \ldots, a_{mn}, b_{2}, \ldots, b_{m}\in \bbbr$ some constants, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
 Start by replacing each strict inequality
 \begin{align*}
     \sum_{i=1}^{n} a_{ji}x_{i} < b_j, \quad \forall j \in J
@@ -195,23 +316,23 @@ For instance, there is no need to continue solving subproblems if none of the \t
 
 % Taken from Martin's thesis
 \begin{definition}
-    If $\phi$ is a Boolean formula in which every atomic formula is of one the forms $t = 0$ or $t \le 0$ where $t$ is an arbitrary term, then the $\delta$-weakening of $\phi$, denoted $\phi^{-\delta}$, is, for any $\delta > 0$, the formula obtained by replacing every atomic formula $t = 0$ with $|t| \le \delta$, and every atomic formula $t \le 0$ with $t \le \delta$ (or, equivalently, $t - \delta \le 0$).
+    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t = 0$ or $t \le 0$ where $t$ is an arbitrary term, then the $\delta$-weakening of $\varphi$, denoted $\varphi^{-\delta}$, is, for any $\delta > 0$, the formula obtained by replacing every atomic formula $t = 0$ with $|t| \le \delta$, and every atomic formula $t \le 0$ with $t \le \delta$ (or, equivalently, $t - \delta \le 0$).
 \end{definition}
-If $\phi$ is defined as in (Eq.~\ref{eq:smt-formula}), then $\phi^{-\delta}$ can be written as
+If $\varphi$ is defined as in (Eq.~\ref{eq:smt-formula}), then $\varphi^{-\delta}$ can be written as
 \begin{equation*}
-    \phi^{-\delta} = t_1(x) \le \delta \land \ldots \land t_m(x) \le \delta
+    \varphi^{-\delta} = t_1(x) \le \delta \land \ldots \land t_m(x) \le \delta
 \end{equation*}
 and its satisfiability problem can be written in linear algebra notation as
 \begin{equation}
     \label{eq:delta-sat}
-    \exists x \in \bbbq^n : |Ax - b| \le \delta 1^m
+    \exists x \in \bbbr^n : |Ax - b| \le \delta 1^m
 \end{equation}
 where $1^\sigma = [1, \ldots, 1]$ denotes a vector of ones of size $\sigma$.
 \begin{definition}
-    A $\delta$-complete decision procedure for satisfiability over a class of formulas $F$ is an algorithm that, if provided as input any formula $\phi \in F$, terminates and outputs (non-deterministically) exactly one of the following symbols:
+    A $\delta$-complete decision procedure for satisfiability over a class of formulas $F$ is an algorithm that, if provided as input any formula $\varphi \in F$, terminates and outputs (non-deterministically) exactly one of the following symbols:
     \begin{enumerate}
-        \item unsat only if $\phi$ is unsatisfiable
-        \item $\delta$-sat only if $\phi^{-\delta}$ (the $\delta$-weakening of $\phi$) is satisfiable
+        \item unsat only if $\varphi$ is unsatisfiable
+        \item $\delta$-sat only if $\varphi^{-\delta}$ (the $\delta$-weakening of $\varphi$) is satisfiable
     \end{enumerate}
 \end{definition}
 Note that this is non-deterministic, because both conditions can simultaneously be true.
