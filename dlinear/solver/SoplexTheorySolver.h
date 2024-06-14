@@ -131,9 +131,11 @@ class SoplexTheorySolver : public TheorySolver {
   void CreateArtificials(int spx_row);
 
   /**
-   * Get the infeasibility rays of the LP problem.
+   * Get the infeasibility ray of the LP problem.
    *
    * This will return the Farkas ray, which can be used to find the infeasible core.
+   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
+   * @note The infeasible core is not guaranteed to be minimal
    * @pre The LP problem must be infeasible
    * @pre @code farkas_ray.size() == num_rows @endcode
    * @param[out] farkas_ray Farkas ray
@@ -144,6 +146,11 @@ class SoplexTheorySolver : public TheorySolver {
    *
    * This will return the Farkas ray and use it to compute the bounds ray.
    * Combinind both it is possible to to find an even more precise infeasible core.
+   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
+   * Furthermore, given the Farkas ray @f$y@f$, we get an infeasible linear inequality @f$y^T A x \le y^T b@f$.
+   * Therefore, even setting @f$x_i@f$ to the bound that minimises @f$y^T A x@f$, that minimum is still @f$> y^T b@f$,
+   * but tells which bound to include in the explanation.
+   * @note The infeasible core is not guaranteed to be minimal
    * @pre The LP problem must be infeasible
    * @pre @code farkas_ray.size() == num_rows @endcode
    * @pre @code bounds_ray.size() == num_cols - 1 @endcode

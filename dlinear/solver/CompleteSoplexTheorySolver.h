@@ -129,14 +129,17 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    *
    * The @p bit_iterator is used to explore the sub-problems produced by considering the non-equal constraints.
    * It uses some heuristics to update the iterator based on the current explanation to skip redundant sub-problems.
-   * There are two main cases, based on the number of non-equal rows in the explanation:
-   * - If there are no non-equal rows, there is no point in visiting other sub-problems, since the infeasibility resides
-   * in some other constraints, and the non-equal constraints are not relevant.
-   * - It here is only 1 non-equal row and it is the first time this row appear alone, we know that the current
-   * inequality violates some other constraints, so we can invert it immediately.
-   * - If the same non-equal row appears alone again, we know that the current inequality is the one that is causing the
-   * infeasibility, so we can stop and report the current explanation.
-   * - If there are more than 1 non-equal row, we can't do anything, so we just leave the iterator as it is
+   * Once an infeasibility is detected, the @ref IteratorNqRowsInLastExplanation method is used to determine which
+   * non-equal constraints are part of the explanation.
+   * If there is only one non-equal row responsible, the iterator learns to skip all future subproblems that contain
+   * that row in the same configuration.
+   * All the non-equal rows in the explanation are then temporarily disabled, to find any other infeasibilities,
+   * repeating the process untill what remains is feasible.
+   * The explanation collected this way are stored in the appropriate @ref nq_explanations_.
+   * Configurations that have been visited before are immediately skipped.
+   * If all possible configurations of a subset non-equal rows have been explored,
+   * we can return immediately knowing the problem is infeasible.
+   * @pre The subproblem without the non-equal constraints must be feasible.
    * @param bit_iterator the iterator used to explore the sub-problems to be updated
    * @return true if the loop should continue to enumerate the sub-problems
    * @return false if there is no point in continuing the loop and it can be stopped with the current explanation
@@ -155,11 +158,14 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    */
   void GetExplanation(Explanations& explanations);
 
+  /**
+   * Structure used to store the infeasibility explanation of a subset of non-equal constraints.
+   */
   struct NqExplanation {
     explicit NqExplanation(std::size_t size);
     explicit NqExplanation(const std::set<std::size_t>& size);
-    std::set<int> explanation;
-    std::vector<bool> visited;
+    std::set<int> explanation;  ///< Indexes of a subset of non-equal constraints that are part of the explanation
+    std::vector<bool> visited;  ///< Configuration of the non-equal constraints that have been visited
   };
 
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
@@ -174,8 +180,8 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   std::map<std::set<std::size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
 
   bool locked_solver_;  ///< Flag to indicate if the solver is locked. A locked solver will always return UNSAT.
-  std::set<std::size_t>
-      single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be inverted
+  std::set<std::size_t> single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be
+                                          ///< inverted at the next iteration
 };
 
 }  // namespace dlinear
