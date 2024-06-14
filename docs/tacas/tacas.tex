@@ -52,6 +52,8 @@
 % ---- Introduction ----
 \section{Introduction}
 
+\subsection{SAT and SMT}
+
 A propositional formula is a construct that uses \textit{variables} (or \textit{unknowns}), which are assigned a semantic value \textbf{True} or \textbf{False}, and \textit{logical connectives}, such as $\lor$ (or), $\land$ (and) and $\neg$ (not).
 A literal is a variable $x$ or its negation $\neg x$.
 Propositional formulae are usually expressed in the Conjunctive normal form (CNF), which is to say as a conjunction of clauses, where a clause is a disjunction of literals (see Eq.~\ref{eq:cnf-notations}).
@@ -131,9 +133,14 @@ With these restriction in place, the QF\_LRA theory is decidable.
 The area of application we are interested in is the verification of big Neural Networks (NNs) and other machine learning models.
 The input space of these models is often very large, and the constraints that need to be verified are often piecewise linear.
 
+\subsection{LP}
+\label{sec:lp}
+
 It is easy to see how the QF\_LRA theory is very closely related to the Linear Programming (LP) problem.
 A linear program is a mathematical optimisation problem where the objective function to maximise and the constraints the solution is subject to are linear.
-LP problems are formulated in the \textit{standard form} (Eq.~\ref{eq:lp-standard}), where the objective function is to be maximised, the constraints are all $\le$ inequalities and the variables are non-negative.
+Adopting a very common notation, consider a system of $m$ linear inequalities with unknown $x \in \bbbr^n$ and known constant values $A \in \bbbr^{m \times n}$, $b \in \bbbr^m$ and $c \in \bbbr^n$.
+The variables can also present bounds, $l \in \bbbr^n$ and $u \in \bbbr^n$, such that $l_i \le x_i \le u_i \quad \forall i \in \{1, 2, \ldots, n\}$.
+LP problems are often presented in the \textit{standard form} (Eq.~\ref{eq:lp-standard}), where the objective function is to be maximised, the constraints are all $\le$ inequalities and the variables are non-negative.
 The conversion to the standard form is always possible and can be done in polynomial time.
 \begin{equation}
     \label{eq:lp-standard}
@@ -236,7 +243,7 @@ The preprocessing can still be disabled by the user if its contribution is negli
         If a conflict is detected (red node), the edges responsible (red edges) are traced back to the origin to formulate an explanation to add to the SAT solver.
         In this case, the explanation adds the clause $(\neg l_1 \lor \neg l_2 \lor \neg l_3 \lor \neg l_4 \lor \neg l_5)$ where $l_1 \coloneqq x_2 = 2, l_2 \coloneqq x_3 = 3, l_3 \coloneqq -3x_2 + x_6 = 0, l_4 \coloneqq x_3 + 2x_5 = 13, l_5 \coloneqq -7x_5 + x_6 = -28$.
         Graphically, at least one of the red edges or the nodes from which they originate must be absent.}
-         \label{dg:preprocessor}
+    \label{dg:preprocessor}
 \end{figure}
 
 \subsection{LP solver}
@@ -250,7 +257,9 @@ This is not the case in our implementations as we will see in section~\ref{sec:s
 
 If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
 Note that there is no guarantee of uniqueness of the solution, so adding an artificial clause with the negation of the solution found will lead to another solution being found or the formula being declared unsatisfiable.
-On the other hand, if the LP problem is infeasible, we can use the Farkas Ray to determine the irreducible inconsistent subsystem of the original problem, and use it to produce an explanation.
+On the other hand, if the LP problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, which corresponds the last feasible solution of the dual problem before its unboundness or infeasibility was detected.
+Given the initial  $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimises $y^T A$, the result will still be $y^T A > y^T b$.
+By collecting the constraints corresponding to the indexes where the Farkas proof is non-zero and the minimising bounds, it is possible to determine a small infeasible subsystem of the original problem, albeit not necessarily an irreducible one, and use it to produce an explanation.
 
 \subsection{Strict bounds}
 \label{sec:strict-bounds}
@@ -308,6 +317,29 @@ If the number of not equal constraints is $m$, then $2^m$ problems must be solve
 If any of them is feasible, then it is possible to conclude that the original problem is feasible.
 Some smarter heuristics can improve the average performance of the solver.
 For instance, there is no need to continue solving subproblems if none of the \textit{not equal to} constraints appear in the explanation for last infeasibility, and if only exactly one of them appears, we can discard all other subproblems where it appears with with the same sense.
+% TODO!
+\begin{algorithm}
+    \caption{SMT adapted LP solver}\label{alg:cap}
+    \begin{algorithmic}
+        \Require $A \in \bbbr^{m, n}$ variable coefficients of the $m$ constraints of the   \\
+        $b \in \bbbr^m$ right-hand side values of the $m$ constraints \\
+        $s \in \{=, \le, <, \ne\}^m$  sense of the $m$ constraints. \\
+        \qquad Without loss of generality, we simplify the notation by not including $>$ and $\ge$ constraints \\
+        $B \in (\bbbr \bigcup \{-\infty, \infty\})^{2n}$ bounds, where $B_i$ is the lower bound and $B_{n+i}$ is the upper bound of the $i$-th variable
+        \Ensure FEASIBLE | INFEASIBLE
+        \State $N \gets \{a_i \in A_i : s_i \in \{\ne\}\}, N \in R$ \Comment{Set of not equal to constraints}
+        \State $S \gets \{a_i \in A_i : s_i \in \{<\}\}$ \Comment{Set of strict inequalities constraints}
+        \State $c \gets 0$
+        \While{$c \le 2^{|N|}$}
+        \State Let $C$ be the binary representation of $c$
+        \State $A' \gets A \setminus N \setminus S$
+        \State $A'' \gets A' \cup \{(c_i, 1) \in C\}$
+        \State $B' \gets B \setminus N \setminus S$
+        \State SIMPLEX($A, b, s, B$) \Comment{Solve the LP problem}
+        \State $c \gets c + 1$
+        \EndWhile
+    \end{algorithmic}
+\end{algorithm}
 
 % ---- Delta-completeness ----
 \section{delta-completeness}
