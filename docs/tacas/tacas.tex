@@ -184,24 +184,25 @@ If no conflicts are found, a model is returned, terminating the process.
 Otherwise, it is the theory solver's responsibility to generate an explanation, which takes the form of one or more learned clauses to add to the formula, to force the SAT solver to backtrack and try a different assignment.
 If the SAT solver is unable to find a satisfying assignment, the formula is declared unsatisfiable.
 
-More formally, given an input boolean formula, usually in CNF, the SAT solver is prompted to produce an assignment
+More formally, given an input boolean formula, usually in CNF, the SAT solver is prompted to produce an assignment over the input formula
 \begin{equation} % Taken from Martin's thesis
     \label{eq:smt-formula}
-    \varphi = t_1(x) \le 0 \wedge \ldots \wedge t_m (x) \le 0
+    \varphi = t_1(x) \bowtie 0 \wedge \ldots \wedge t_m (x) \bowtie 0
 \end{equation}
 where
 \begin{equation*}
     t_i(x) = A_{i1}x_1 + \ldots + A_{in}x_n - b_i, \quad 1 \le i \le m
 \end{equation*}
-and $x \in \bbbr^n, A \in \bbbr^{m \times n}, b \in \bbbr^m$, satisfying $\varphi$ means verifying that
+with $A \in \bbbr^{m \times n}, b \in \bbbr^m$ and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
+Satisfying $\varphi$ means verifying that
 \begin{equation*}
-    \exists x \in \bbbr^n : t_1(x) \le 0 \wedge \ldots \wedge t_m(x) \le 0
+    \exists x \in \bbbr^n : t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0
 \end{equation*}
-which is a formulation for a LP problem without an objective function.
+which can be seen as a LP problem where we do not care about the objective function, but only the feasibility of the constraints.
 
 In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of an LP problem fed to the LP solver.
 \dlinear offers the option to utilise a elementary theory preprocessor able to cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without the need to call the LP solver.
-Furthermore, \dlinear is able to parse MPS files, a standard format for LP problems, by implicitly creating a single assertion the LP solver will try to satisfy.
+\dlinear is also able to parse MPS files, a standard format for LP problems, by implicitly creating a single assertion the solver will try to satisfy.
 
 % ---- Linear Real Arithmetic theory ----
 \section{Linear Real Arithmetic theory solver}
@@ -213,7 +214,7 @@ Furthermore, \dlinear is able to parse MPS files, a standard format for LP probl
 All simple equality bounds are propagated using the problem's constraints in a graph-like structure (Figure~\ref{dg:preprocessor}).
 If one or more conflicts are detected, the original atoms are traced back and used to generate the explanations.
 This also allows to further guide the theory solver, by adding additional bounds to the variables, which further reduce the search space.
-The preprocessing can still be disabled by the user if its contribution is negligible, if not detrimental, to the overall performance on the given instance.
+The preprocessing can still be disabled by the user if its contribution is deemed to be negligible, if not detrimental, to the overall performance on the given instance.
 
 \begin{figure}[h]
     \begin{tikzpicture}
@@ -248,37 +249,39 @@ The preprocessing can still be disabled by the user if its contribution is negli
 
 \subsection{LP solver}
 
-The LP solver used by \dlinear by default is \soplex.
+The LP solver used by \dlinear by default is \soplex~\cite{ref:soplex}.
 It implements both the incremental precision boosting and the iterative refinement algorithms.
-The user can choose between the two, or even an hybrid approach.
+The user can choose between the two, or even try an hybrid approach.
 The LP solver is used to verify the feasibility of the constraints.
 Because we are not interested in the optimal solution but in finding any solution, a low hanging fruit in terms of optimisation is to set the objective function to $0$ to avoid pointless computations.
-This is not the case in our implementations as we will see in section~\ref{sec:strict-bounds}.
+This is not the case in our implementations for reasons that will become clear in section~\ref{sec:strict-bounds}.
 
 If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
 Note that there is no guarantee of uniqueness of the solution, so adding an artificial clause with the negation of the solution found will lead to another solution being found or the formula being declared unsatisfiable.
 On the other hand, if the LP problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, which corresponds the last feasible solution of the dual problem before its unboundness or infeasibility was detected.
-Given the initial  $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimises $y^T A$, the result will still be $y^T A > y^T b$.
+Given the initial  $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimises $y^T A$, the result will still be $y^T A x > y^T b$.
 By collecting the constraints corresponding to the indexes where the Farkas proof is non-zero and the minimising bounds, it is possible to determine a small infeasible subsystem of the original problem, albeit not necessarily an irreducible one, and use it to produce an explanation.
 
 \subsection{Strict bounds}
 \label{sec:strict-bounds}
 
 To use out-of-the-box LP solvers as theory solvers, some adjustments in the formulation of the input may be required.
-A common optimisation technique is to drop the objective function, setting it to $0$.
 Strict inequalities are common place in SMT formulas, but they are usually not supported by LP solvers, for they would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
 Other state-of-the-art SMT solver employing rational arithmetic withing the theory solver~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}}, use a symbolic variable representing an infinitesimal parameter $\delta$ witch enforces the inequality~\cite{ref:lra-dpll-t}.
 Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one, while getting rid of the strict inequalities at the cost of losing the original objective function.
-To do so, introduce a new variable called \textbf{strict variable}, $t$.
+We introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$, since they can always be converted to $<$ by multiplying both sides by $-1$.
-Following the standard LP notation, let us indicate with $x_1, x_2, \ldots, x_n \in \bbbr$ the \textbf{decision variables}, $a_{11}, a_{12}, \ldots, a_{mn}, b_{2}, \ldots, b_{m}\in \bbbr$ some constants, with $J$ the set of indexes of strict inequality constraints and with $K$ the set of indexes for all other constraints.
-Start by replacing each strict inequality
+The same applies to $\ge$ and $=$, which can be converted to $\le$ as discussed in Section~\ref{sec:lp}.
+Note that we are excluding \nqcs for now, as they will be discussed next.
+Let $K$ indicate the set of indexes of strict inequality constraints ($<$) and with $J$ the set of indexes for all other constraints ($\le$).
+Without loss of generality, assume that all the index in $K$ are less than those in $J$ ($\max(J) < \min(K)$).
+Using intuitive indexing over vector and matrix elements, start by replacing each strict inequality
 \begin{align*}
-    \sum_{i=1}^{n} a_{ji}x_{i} < b_j, \quad \forall j \in J
+    \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
 \end{align*}
 with equivalent non strict inequalities using the strict variable $t$:
 \begin{align*}
-    \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
+    \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
     t > 0
 \end{align*}
 This change would only move the strict inequality problem to the bound on $t$.
@@ -288,9 +291,9 @@ The original problem we want to verify the feasibility of
     \label{eq:lp-original}
     \begin{split}
         \text{Maximise }   \quad & 0                                                          \\
-        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j,   \quad \forall j \in J  \\
-        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k,  \quad \forall k \in K \\
-                                 & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\},
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j,  \quad \forall j \in J \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} < b_k,   \quad \forall k \in K  \\
+                                 & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
     \end{split}
 \end{equation}
 can be relaxed to
@@ -298,46 +301,138 @@ can be relaxed to
     \label{eq:lp-relaxed}
     \begin{split}
         \text{Maximise }   \quad & t                                                             \\
-        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} + t \le b_j, \quad \forall j \in J \\
-        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k, \quad \forall k \in K     \\
-                                 & x_i \ge 0 , \quad i \in \{1, 2, \ldots, n\}                   \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
+                                 & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\},        \\
                                  & t \ge 0
     \end{split}
 \end{equation}
 
 \begin{theorem}
     \label{thm:lp-relaxed}
-    The original problem \eqref{eq:lp-original} is feasible if and only if the relaxed problem \eqref{eq:lp-relaxed} is feasible and there exists a solution where the objective value is greater than $0$.
+    The original problem \eqref{eq:lp-original} is feasible if and only if the relaxed problem \eqref{eq:lp-relaxed} is feasible and there exists a solution that satisfies its constraints and for which the objective value is strictly greater than $0$.
 \end{theorem}
 
-A bigger challenge is represented by \textit{not equal to} ($\ne$) constraints.
-Two strict inequalities are needed to check whether the constraint is satisfied, one for each direction.
-Since checking both at the same time with an OR conjunction is not possible, the original problem must be split into two.
-If the number of not equal constraints is $m$, then $2^m$ problems must be solved.
-If any of them is feasible, then it is possible to conclude that the original problem is feasible.
+\subsection{Not equal to constraints}
+
+A bigger challenge is represented by \textit{not equal to} ($\ne$) constraints (\nqc for short).
+Let $D$ be the set of indexes of the \nqcs.
+Again, without loss of generality, assume that all the index in $D$ are greater than those in $K$ ($\max(K) < \min(D)$).
+The extended relaxed problem is defined as
+\begin{equation}
+    \label{eq:lp-extended}
+    \begin{split}
+        \text{Maximise }   \quad & t                                                             \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
+        \quad                    & \sum_{i=1}^{n} a_{di}x_{i} + t \le b_d, \quad \forall d \in D \\
+                                 & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}         \\
+                                 & t \ge 0
+    \end{split}
+\end{equation}
+
+Two strict inequalities are needed to check whether the constraint is satisfied.
+Since checking both at the same time with an OR conjunction is not possible, the original problem must be split into two subproblems.
+Hence, given $|D|$ \nqcs, $2^{|D|}$ problems must be solved (Eq.~\ref{eq:nq}).
+\begin{equation}
+    \label{eq:nq}
+    \begin{gathered}
+        \begin{cases}
+            A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+            A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+            A_{|J| + |K| + 1} x \ne b_{|J| + |K| + 1}                 \\
+            A_{|J| + |K| + 2} x \ne b_{|J| + |K| + 2}                 \\
+        \end{cases}
+        \\
+        \text{will be split into}
+        \\
+        \begin{pmatrix}
+            \begin{cases}
+                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+                A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
+                A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
+            \end{cases}
+             &
+            \begin{cases}
+                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+                A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
+                A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
+            \end{cases}
+            \\
+            \begin{cases}
+                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+                A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
+                A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
+            \end{cases}
+             &
+            \begin{cases}
+                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+                A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
+                A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
+            \end{cases}
+        \end{pmatrix}
+    \end{gathered}
+\end{equation}
+\eqcaption{Splitting an LP problem with 2 \nqcs into 4 subproblems. Note that the \nqcs appear in $4$ configurations: $\{<, <\}, \{<, >\}, \{>, <\}, \{>, >\}$.}
+
+If any of the subproblems is feasible, then it is possible to conclude that the original problem is feasible.
+On the other hand, in the worst case, all $2^{|D|}$ problems must be solved to prove infeasibility.
 Some smarter heuristics can improve the average performance of the solver.
-For instance, there is no need to continue solving subproblems if none of the \textit{not equal to} constraints appear in the explanation for last infeasibility, and if only exactly one of them appears, we can discard all other subproblems where it appears with with the same sense.
-% TODO!
+For instance, there is no need to continue solving subproblems if none of the \nqcs are involved in the infeasibility.
+Furthermore, if only exactly one of them appears in the explanation, we can skip all other subproblems where it appears with with the same sense, for they will surely be infeasible too.
+Also, we often do not need to explore the whole tree to determine infeasibility.
+In fact, if we find a subset of the \nqc that makes the problem infeasible on its own, we can immediately terminate the exploration.
+We can obtain this early termination by enumerating the number of time a unique configuration of such subset is solved.
+If that number is equal to $2^{|T|}$, where $T$ is the set of indexes of the \nqcs in the subset, we can return an infeasibility explanation obtained by merging all the explanations produced by the subproblems that were enumerated.
+Lastly, it is possible to \textit{hot start} the solver by starting in a configuration close to the one that caused the last infeasibility.
+
+\subsection{Theory solver algorithm}
+
+Let $\text{LpSolve}$ be a routine that, given a generic LP problem and the set of indexes corresponding to the senses of the constraints ($\le, <, \ne$) solves the extended relaxed problem (Eq. \eqref{eq:lp-extended}) and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
+To simplify the algorithm, only the essential heuristics are included in the pseudocode.
+Keep in mind that $\odot$ represents an element-wise multiplication between two vectors or a vector and a scalar, with the scalar repeated to match the size of the vector.
 \begin{algorithm}
-    \caption{SMT adapted LP solver}\label{alg:cap}
+    \caption{SMT adapted LP solver}\label{alg:theory-solver}
     \begin{algorithmic}
-        \Require $A \in \bbbr^{m, n}$ variable coefficients of the $m$ constraints of the   \\
-        $b \in \bbbr^m$ right-hand side values of the $m$ constraints \\
-        $s \in \{=, \le, <, \ne\}^m$  sense of the $m$ constraints. \\
-        \qquad Without loss of generality, we simplify the notation by not including $>$ and $\ge$ constraints \\
-        $B \in (\bbbr \bigcup \{-\infty, \infty\})^{2n}$ bounds, where $B_i$ is the lower bound and $B_{n+i}$ is the upper bound of the $i$-th variable
-        \Ensure FEASIBLE | INFEASIBLE
-        \State $N \gets \{a_i \in A_i : s_i \in \{\ne\}\}, N \in R$ \Comment{Set of not equal to constraints}
-        \State $S \gets \{a_i \in A_i : s_i \in \{<\}\}$ \Comment{Set of strict inequalities constraints}
-        \State $c \gets 0$
-        \While{$c \le 2^{|N|}$}
-        \State Let $C$ be the binary representation of $c$
-        \State $A' \gets A \setminus N \setminus S$
-        \State $A'' \gets A' \cup \{(c_i, 1) \in C\}$
-        \State $B' \gets B \setminus N \setminus S$
-        \State SIMPLEX($A, b, s, B$) \Comment{Solve the LP problem}
+        \Require $A \in \bbbr^{(|J| + |K| + |D|) \times n}, b \in \bbbr^{|J| + |K| + |D|}, l \in \bbbr^n, u \in \bbbr^n$ \\
+        \qquad as defined in Section~\ref{sec:lp} over the extended relaxed problem~\eqref{eq:lp-extended}
+        \Require $J, K, D$ as defined in this Section \\
+        \qquad note that $\max(J) < \min(K) \le \max(K) < \min(D)$
+        \Ensure Set of indexes of infeasible constraints $E$ or $\emptyset$
+        \State $E \gets \text{LpSolve}(A, b, l, u, J, K, \emptyset)$ \Comment{Solve the LP problem without $\ne$ constraints}
+        \If{$E \ne \emptyset$}
+        \State \Return $E$
+        \EndIf
+        \For {$s \in \text{ all non empty subsets of } D$}
+        \State $V_s \gets \emptyset$
+        \State $E_s \gets \emptyset$
+        \EndFor
+        \State $c \gets 0$ \Comment{Initialise the binary counter}
+        \While{$c \le 2^{|D|}$}
+        \State Let $C \in \{-1, 1\}^{|D|}$ be the binary representation of $c$ with $0$ replaced by $1$
+        \State $C' \in \{-1, 1\}^{|J|+|K|+|D|} \gets \begin{bmatrix} 1^{|J|} & 1^{|K|} & C\end{bmatrix}$
+        \State $A' \gets \begin{bmatrix}A_1 \odot C'_1 \\ \vdots \\ A_{|J|+|K|+|D|} \odot C'_{|J|+|K|+|D|}\end{bmatrix}$
+        \State $E \gets \text{LpSolve}(A', b \odot C', l, u, J, K, D)$
+        \If{$E = \emptyset$} \Comment{At least one subproblem is feasible}
+        \State \Return $\emptyset$
+        \EndIf
+        \State $T \gets E \cap D$
+        \State $l \gets (C'_{|J| + |K| + t}) \quad \forall t \in T$
+        \If{$l \in V_T$} \Comment{Avoid adding redundant explanations for the same infeasibility}
+        \State \textbf{Continue}
+        \EndIf
+        \State $V_T \gets V_T \cup \{l\}$
+        \State $E_T \gets E_T \cup E$
+        \If{$|V_T| = 2^{|T|}$} \Comment{Having explored it fully, a subset of the $\ne$ constraints is infeasible}
+        \State \Return $E_T$
+        \EndIf
         \State $c \gets c + 1$
         \EndWhile
+        \State \Return $E$
     \end{algorithmic}
 \end{algorithm}
 
@@ -348,18 +443,22 @@ For instance, there is no need to continue solving subproblems if none of the \t
 
 % Taken from Martin's thesis
 \begin{definition}
-    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t = 0$ or $t \le 0$ where $t$ is an arbitrary term, then the $\delta$-weakening of $\varphi$, denoted $\varphi^{-\delta}$, is, for any $\delta > 0$, the formula obtained by replacing every atomic formula $t = 0$ with $|t| \le \delta$, and every atomic formula $t \le 0$ with $t \le \delta$ (or, equivalently, $t - \delta \le 0$).
+    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t(x) \bowtie 0$ is an arbitrary term, then the $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$ relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
 \end{definition}
-If $\varphi$ is defined as in (Eq.~\ref{eq:smt-formula}), then $\varphi^{-\delta}$ can be written as
+Denoting with $J'$ the set of indexes of those that were equality constraints in $\varphi$ and with $K'$ the one with every other constraint except for \nqcs, then $\varphi^{-\delta}$ can be written as
 \begin{equation*}
-    \varphi^{-\delta} = t_1(x) \le \delta \land \ldots \land t_m(x) \le \delta
+    \varphi^{-\delta} = \bigwedge_{j \in J'} |t_j(x)| \le \delta \wedge \bigwedge_{k \in K'} t_k(x) \le \delta
 \end{equation*}
-and its satisfiability problem can be written in linear algebra notation as
+with the corresponding LP problem being
 \begin{equation}
-    \label{eq:delta-sat}
-    \exists x \in \bbbr^n : |Ax - b| \le \delta 1^m
+    \label{eq:delta-lp}
+    \begin{split}
+        \text{Maximise }   \quad & 0                                                                                \\
+        \text{subject to } \quad & \left|\sum_{i=1}^{n} a_{ji}x_{i}\right| \le b_j + \delta, \quad \forall j \in J' \\
+        \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k + \delta, \quad \forall k \in K'              \\
+        \quad                    & l_i - \delta \le x_i \le u_i + \delta,  \quad i \in \{1, 2, \ldots, n\}
+    \end{split}
 \end{equation}
-where $1^\sigma = [1, \ldots, 1]$ denotes a vector of ones of size $\sigma$.
 \begin{definition}
     A $\delta$-complete decision procedure for satisfiability over a class of formulas $F$ is an algorithm that, if provided as input any formula $\varphi \in F$, terminates and outputs (non-deterministically) exactly one of the following symbols:
     \begin{enumerate}
@@ -367,9 +466,33 @@ where $1^\sigma = [1, \ldots, 1]$ denotes a vector of ones of size $\sigma$.
         \item $\delta$-sat only if $\varphi^{-\delta}$ (the $\delta$-weakening of $\varphi$) is satisfiable
     \end{enumerate}
 \end{definition}
-Note that this is non-deterministic, because both conditions can simultaneously be true.
+Note that such procedure is non-deterministic, because both conditions can simultaneously be true.
 Furthermore, any complete method is, by definition, trivially $\delta$-complete.
 The advantage of this approach is given by the fact that the LP solver can stop refining the solution as soon as the arbitrary precision $\delta$, indicated by the user, is reached, possibly saving computation time, especially for numerically challenging instances.
+Leaving out the \nqcs also removes the potentially most computationally expensive part of the problem, as discussed in Section~\ref{sec:lra-theory-solver}.
+Whether this tradeoff between speed and completeness is acceptable is up to the user to decide.
+
+To implement delta-completeness in \dlinear, the user can set the $\delta$ parameter to a positive value, which is then given to the LP solver.
+The precision boosting or iterative refinement algorithms can stop as soon as the desired precision is reached, returning the solution found at that point.
+
+Let $\text{DeltaLpSolve}$ be a routine that, given a generic LP problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem (Eq. \eqref{eq:delta-lp}) and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
+We can define the delta-complete theory solver algorithm as in Algorithm~\ref{alg:delta-theory-solver}.
+
+\begin{algorithm}
+    \caption{SMT adapted delta complete LP solver}\label{alg:delta-theory-solver}
+    \begin{algorithmic}
+        \Require $A \in \bbbr^{(|J'| + |K'|) \times n}, b \in \bbbr^{|J'| + |K'|}, l \in \bbbr^n, u \in \bbbr^n$ \\
+        \qquad as defined in Section~\ref{sec:lp} over the delta weakened problem~\eqref{eq:delta-lp}
+        \Require $J', K'$ as defined in this Section
+        \Require $\delta > 0$
+        \Ensure Set of indexes of infeasible constraints $E$ or $\emptyset$
+        \State $E \gets \text{DeltaLpSolve}(A, b, l, u, J', K', \delta)$ \Comment{Solve the LP problem with $\delta$-weakened constraints}
+        \State \Return $E$
+    \end{algorithmic}
+\end{algorithm}
+
+
+\pagebreak
 
 % ---- Benchmarks ----
 \section{Benchmarks}
