@@ -1,20 +1,28 @@
 #!/usr/bin/make -f
 DEB_VERSION = $(shell dpkg-parsechangelog --show-field Version)
+TMP_DIR = debian/tmp
+BAZEL_OUT_DIR = bazel-bin/package
 
 clean:
-	rm -f uneededfile
+	rm -f $(BAZEL_OUT_DIR)/dlinear_${DEB_VERSION}_amd64.changes
+	rm -f $(BAZEL_OUT_DIR)/dlinear_${DEB_VERSION}_amd64.deb
+	rm -rf $(TMP_DIR)
 
 build: build-arch
 
 binary: binary-arch 
-	
+
 build-arch:
-	wget https://github.com/bazelbuild/bazelisk/releases/download/v1.20.0/bazelisk-linux-amd64 -O bazel
-	chmod +x bazel
-	./bazel build --enable_fpic_build //dlinear
+	./bazel --output_base=bazel_out build --enable_fpic_build //dlinear
 
 binary-arch:
-	rm -rf debian/tmp
-	./bazel build --enable_fpic_build //:package_deb
-	cp dlinear_${DEB_VERSION}_amd64.changes ..
-	cp dlinear_${DEB_VERSION}_amd64.deb ..
+	rm -rf $(TMP_DIR)
+	mkdir -p $(TMP_DIR)/DEBIAN
+	dpkg-gencontrol -pdlinear
+	./bazel --output_base=bazel_out build --enable_fpic_build //package:debian
+	dpkg-deb -xv $(BAZEL_OUT_DIR)/dlinear_${DEB_VERSION}_amd64.deb $(TMP_DIR)
+	cp --no-preserve=all $(BAZEL_OUT_DIR)/dlinear_${DEB_VERSION}_amd64.changes ..
+	cp --no-preserve=all $(BAZEL_OUT_DIR)/dlinear_${DEB_VERSION}_amd64.deb ..
+
+binary-indep:
+	echo "Nothing to do"

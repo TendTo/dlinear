@@ -3,7 +3,7 @@ Maintainer: TendTo <casablancaernesto@gmail.com>
 Standards-Version: 4.5.0
 Priority: optional
 Section: utils
-Build-Depends: wget, libgmp10, libgmpxx4ldbl, libmpfr6
+Build-Depends: wget, libgmp10, libgmpxx4ldbl, libmpfr6, git, python3, automake, libtool
 
 Package: dlinear
 Architecture: amd64
