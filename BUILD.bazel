@@ -1,3 +1,6 @@
 licenses(["notice"])  # Apache v2
 
-exports_files(["CPPLINT.cfg"])
+exports_files([
+    "CPPLINT.cfg",
+    "README.md",
+])

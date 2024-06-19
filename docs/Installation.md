@@ -49,7 +49,7 @@ sudo dpkg -i bazel-bin/dlinear/dlinear.deb
 
 ```bash
 # Add the PPA
-sudo add-apt-repository ppa:tendto/dlinear
+sudo add-apt-repository ppa:dlinear/dlinear
 # Update the package list
 sudo apt update
 # Install dlinear

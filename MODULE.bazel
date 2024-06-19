@@ -44,6 +44,9 @@ bazel_dep(name = "googletest", version = "1.14.0", dev_dependency = True)
 # Apache License 2.0 | Bazel rules for packaging the project
 bazel_dep(name = "rules_pkg", version = "0.10.1", dev_dependency = True)
 
+# Apache License 2.0 | Bazel rules for packaging the project
+bazel_dep(name = "rules_doxygen", version = "1.1.1", dev_dependency = True)
+
 # Apache License 2.0 | Integration of Boost into Bazel
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
 git_override(
@@ -164,6 +167,9 @@ boost_modules.version(
     version = "1.84.0",
 )
 use_repo(boost_modules, "boost")
+
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
+use_repo(doxygen_extension, "doxygen")
 
 flex = use_extension("@rules_flex//flex/extensions:flex_repository_ext.bzl", "flex_repository_ext")
 flex.repository(
