@@ -1,6 +1,6 @@
 # Usage
 
-After compilation, the binary, called `dlinear` will be located in the `bazel-bin/dlinear` directory.
+After [compilation](./Installation.md), the binary, called `dlinear` will be located in the `bazel-bin/dlinear` directory.
 There are several options to run it:
 
 - run `./bazel-bin/dlinear/dlinear` in the terminal
