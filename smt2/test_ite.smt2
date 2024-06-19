@@ -1,5 +1,0 @@
-(set-logic QF_LRA)
-(declare-const X01 Real)
-(declare-const X02 Real)
-(assert (or (and (> 0 X01) (< 0 X01)) (and (= 5 X02))))
-(check-sat)

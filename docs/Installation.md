@@ -50,36 +50,33 @@ The binary will be located in the `bazel-bin/dlinear` directory.
 
 ### Installation (Debian based systems)
 
+To install the binary along with the shared library and the header files, run the following command:
+
 ```bash
 # Install dlinear
-bazel build //:package_deb
+bazel build //package:debian
 sudo dpkg -i bazel-bin/dlinear/dlinear.deb
 ```
 
-## Packaging
+They will become be available system-wide.
 
-dlinear includes a packaging system to create a distributable package for the most common Linux distributions.
+## From package manager
 
-### Debian
+### Debian based systems (Debian, Ubuntu, etc.)
+
+`dlinear` is also distributed as a Debian package through a Personal Package Archive (PPA) hosted on Launchpad.
 
 #### Requirements
 
-- [gmp 6.3.0](https://gmplib.org/)
-- [mpfr 4.2.1](https://www.mpfr.org/)
-- [fmt 10.2.1](https://fmt.dev/)
-- [spdlog 1.12.0](https://github.com/gabime/spdlog)
-- [soplex](https://soplex.zib.de/)
+- [spdlog](https://github.com/gabime/spdlog)
 
-Most of the dependencies can be installed using the package manager of the system, although the versions may mismatch.
+Most of the dependencies will be installed automatically by the package manager, although the versions may mismatch.
+Make sure they match with the ones in the [Module.bazel](../Module.bazel) file.
 
-```bash
-sudo apt install libgmp-dev libmpfr-dev libfmt-dev libspdlog-dev
-```
-
-The soplex library must be compiled from source.
+The soplex library, unfortunately, must be compiled from source.
 Follow the instructions [installation file](https://github.com/scipopt/soplex/blob/master/INSTALL.md).
 
-The shared library expects to find a shared library for each of the dependencies in the system's library path, as `libgmp.so`, `libmpfr.so`, `libfmt.so`, and `libspdlog.so`.
+The shared library expects to find a shared library for each of the dependencies in the system's library path.
 If any of those is missing, but a versioned library is present, it is sufficient to create a symbolic link to the versioned library.
 
 ```bash
@@ -98,7 +95,7 @@ When including the shared library in a project, make sure to define the followin
 #include <dlinear/dlinear.h>
 ```
 
-or in the compilation command
+or, even better, in the compilation command
 
 ```bash
 g++ -std=c++20 -Iinclude <my_file>.cpp -lgmp lib/libdlinear.so -o a.out -DSPDLOG_FMT_EXTERNAL -DSPDLOG_COMPILED_LIB

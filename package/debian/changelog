@@ -1,3 +1,15 @@
+dlinear (0.0.2-1) jammy; urgency=low
+
+  * fix linting issues
+
+ -- TendTo (PPA key) <casablancaernesto@gmail.com>  Tue, 19 Jun 2024 21:00:00 +0000
+
+dlinear (0.0.1-2) jammy; urgency=low
+
+  * add dependencies
+
+ -- TendTo (PPA key) <casablancaernesto@gmail.com>  Tue, 19 Jun 2024 20:00:00 +0000
+
 dlinear (0.0.1-1) jammy; urgency=low
 
   * initial release

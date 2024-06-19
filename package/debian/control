@@ -3,8 +3,9 @@ Maintainer: TendTo <casablancaernesto@gmail.com>
 Standards-Version: 4.5.0
 Priority: optional
 Section: utils
-Build-Depends: wget, libgmp10, libgmpxx4ldbl, libmpfr6, git, python3, automake, libtool
+Build-Depends: libgmp-dev, libmpfr-dev, git, python3, automake, libtool
 
 Package: dlinear
 Architecture: amd64
 Description: Delta-complete SMT solver for linear programming
+Depends: libbz2-dev, libgmp-dev, libmpfr-dev, libspdlog-dev

@@ -2,7 +2,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION")
 
 pkg_tar(
-    name = "archive",
+    name = "package",
     extension = "tar.gz",
     tags = ["manual"],
     deps = [
@@ -15,7 +15,7 @@ pkg_tar(
 pkg_deb(
     name = "debian",
     architecture = "amd64",
-    built_using = "bazel (3.4.1)",
+    built_using = "bazel (7.1.1)",
     changelog = "debian/changelog",
     data = ":archive",
     depends = select({
@@ -24,10 +24,10 @@ pkg_deb(
             "libc6",
             "libgcc-s1",
             # External dependencies
-            "libbz2-1.0",
-            "libgmp10",
-            "libgmpxx4ldbl",
-            "libmpfr6",
+            "libbz2-dev",
+            "libgmp-dev",
+            "libmpfr-dev",
+            "libspdlog-dev",
             "picosat",
             "coinor-libclp1",
             "libboost-chrono1.74-dev",
@@ -42,11 +42,16 @@ pkg_deb(
             "libstdc++6",
             "libc6",
             "libgcc-s1",
+            # External dependencies
+            "libbz2-dev",
+            "libgmp-dev",
+            "libmpfr-dev",
+            "libspdlog-dev",
         ],
     }),
     description = "SMT solver for linear rational theories",
     homepage = "http://tendto.github.io/dlinear",
     maintainer = "TendTo <casablanca.ernesto@gmail.com>",
     package = DLINEAR_NAME,
-    version = "%s-1" % DLINEAR_VERSION,
+    version = "%s" % DLINEAR_VERSION,
 )
