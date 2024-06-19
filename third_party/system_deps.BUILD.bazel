@@ -17,7 +17,7 @@ cc_import(
 
 cc_library(
     name = "zlib_deps",
-    deps = ["@system_deps//:zlib"],
+    deps = [":zlib"],
 )
 
 cc_import(
@@ -32,7 +32,7 @@ cc_import(
 
 cc_library(
     name = "gmp_deps",
-    deps = ["@system_deps//:gmp"],
+    deps = [":gmp"],
 )
 
 cc_import(
@@ -47,7 +47,7 @@ cc_import(
 
 cc_library(
     name = "gmpxx_deps",
-    deps = ["@system_deps//:gmpxx"],
+    deps = [":gmpxx"],
 )
 
 cc_import(
@@ -62,7 +62,7 @@ cc_import(
 
 cc_library(
     name = "mpfr_deps",
-    deps = ["@system_deps//:mpfr"],
+    deps = [":mpfr"],
 )
 
 cc_import(
@@ -80,7 +80,7 @@ cc_import(
 
 cc_library(
     name = "fmt_deps",
-    deps = ["@system_deps//:fmt"],
+    deps = [":fmt"],
 )
 
 cc_import(
@@ -93,5 +93,17 @@ cc_import(
 
 cc_library(
     name = "spdlog_deps",
-    deps = ["@system_deps//:spdlog"],
+    deps = [":spdlog"],
+)
+
+cc_import(
+    name = "argparse",
+    hdrs = [SYSTEM_HEADERS_DIR + "argparse/argparse.hpp"],
+    includes = [SYSTEM_HEADERS_DIR],
+    system_provided = True,
+)
+
+cc_library(
+    name = "argparse_deps",
+    deps = [":argparse"],
 )
