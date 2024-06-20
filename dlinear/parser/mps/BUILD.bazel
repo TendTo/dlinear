@@ -61,7 +61,10 @@ dlinear_cc_library(
         "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
     }),
-    tags = ["no-iwyu"],
+    tags = [
+        "no-dwyu",
+        "no-iwyu",
+    ],
     deps = [
         ":mps_data",
         "//dlinear/libs:gmp",

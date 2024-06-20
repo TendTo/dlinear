@@ -1,6 +1,7 @@
 # Installation
 
-The following instructions are for Linux systems. The installation process for Windows and MacOS is not yet supported.
+The following instructions are for Linux systems.
+The installation process for Windows and MacOS is not yet supported.
 
 ## From source
 
@@ -31,7 +32,7 @@ bazel build //dlinear
 
 The binary will be located in the `bazel-bin/dlinear` directory.
 
-### System wide installation (Debian based systems)
+### System wide installation
 
 To install the binary along with the shared library and the header files system wide, run the following command:
 

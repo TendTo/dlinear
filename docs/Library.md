@@ -1,9 +1,6 @@
 # Library
 
-`dlinear` comes with a shared C++ library that can be used to interact with the solver programmatically.
-
-## Installation
-
+`dlinear` comes with a shared C++ library that can be used to interact with the solver programmatically.  
 See the [Installation](./Installation.md) page for instructions on how to install the library.
 
 ## Linking

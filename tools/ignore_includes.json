@@ -5,6 +5,12 @@
     "soplex.h",
     "sys/resource.h",
     "dlinear/symbolic/symbolic_expression_cell.h",
+    "qsopt_ex/QSopt_ex.h",
+    "string_view",
+    "unordered_map",
+    "unordered_set",
+    "type_traits",
+    "initializer_list",
     "FlexLexer.h"
   ]
 }

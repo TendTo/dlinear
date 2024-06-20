@@ -170,10 +170,13 @@ dlinear_cc_library(
             "CompleteSoplexTheorySolver.h",
             "DeltaSoplexTheorySolver.h",
             "SoplexTheorySolver.h",
-            "//dlinear/util:stats",
         ],
         "//conditions:default": [],
     }),
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:timer",
+    ],
     deps = [
         ":lp_bound",
         ":lp_sense",
@@ -187,8 +190,6 @@ dlinear_cc_library(
         "//dlinear/util:bit_increment_iterator",
         "//dlinear/util:box",
         "//dlinear/util:config",
-        "//dlinear/util:exception",
-        "//dlinear/util:infinity",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
     ] + select({

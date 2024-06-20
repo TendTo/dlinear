@@ -173,14 +173,17 @@ dlinear_cc_library(
     name = "tseitin_cnfizer",
     srcs = ["TseitinCnfizer.cpp"],
     hdrs = ["TseitinCnfizer.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:stats",
+        "//dlinear/util:timer",
+    ],
     deps = [
         ":cnfizer",
         ":formula_visitor",
+        ":literal",
         ":symbolic",
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-        "//dlinear/util:stats",
-        "//dlinear/util:timer",
+        "//dlinear/util:config",
     ],
 )
 

@@ -7,37 +7,24 @@
 Delta-complete SMT solver for linear programming.
 Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://github.com/dreal/dreal4).
 
-## Installation
+### Installation
 
-The following instructions are for Linux systems. The installation process for Windows and MacOS is not yet supported.
-For more information, refer to the [installation guide](https://tendto.github.io/dlinear/md_docs_Installation).
+The following instructions are for Linux systems.
+The installation process for Windows and MacOS is not yet supported.
+For more information, refer to the [installation guide](docs/Installation.md).
 
 ```bash
 bazel build //:package_deb
 sudo dpkg -i bazel-bin/dlinear/dlinear.deb
 ```
 
-## Usage
+### Usage
 
-For more information, refer to the [usage guide](https://tendto.github.io/dlinear/md_docs_Usage).
+For more information, refer to the [usage guide](docs/Usage.md).
 
 ```bash
 dlinear --help
 ```
-
-## Default parsing and solving behavior
-
-dlinear will parse and solve problems in `smt2` or `mps` format.
-The default behavior is to parse the input and produce a satisfiability result, either `delta-sat` or `unsat`.
-
-> [!warning]  
-> Some `smt` directives will be ignored, since their role is taken by the command line flags:
->
-> - `(check-sat)` is assumed to be present by default. It can be disabled with `--no-check-sat`
-> - `(produce-models)` is ignored by default. It can be enabled with `-m/--produce-models`
-> - `(minimize)`/`(maximize)` are ignored by default. They can be enabled with `-m/--produce-models`
->
->   This also implies that, when parsing a `mps` file, the objective function is ignored, unless the `-m/--produce-models` flag is used.
 
 ### Useful commands
 
@@ -79,63 +66,11 @@ bazel test --test_tag_filters=pydlinear //pydlinear/...
 bazel run //benchmark
 ```
 
-### Compilation flags
-
-- `--//tools:enable_dynamic_build=[True|False]` to enable or disable dynamic linking. Used for the python bindings. Default is `False`
-
-## Enabling autocompletion
-
-### On Ubuntu
+### Enabling autocompletion on Ubuntu
 
 ```bash
 # Install bash-completion
 sudo apt install bash-completion
 # Move the completion script to the bash-completion directory
 sudo cp script/dlinear_completion.sh /etc/bash_completion.d/dlinear.sh
-```
-
-## Install Python bindings
-
-### Requirements
-
-- [python-dev](https://packages.ubuntu.com/bionic/python-dev)
-
-### Install
-
-```bash
-pip install .
-# For development
-pip install -e .
-```
-
-### Upload to PyPI
-
-```bash
-script/upload_pydlinear.sh
-```
-
-### Running dlinear from Python
-
-If the package has been installed, either locally or from PyPI, it can be invoked with the same command as the binary.
-
-```bash
-pydlinear --help
-```
-
-Furthermore, the `pydlinear` module can be imported and used as a library.
-
-```python
-import sys
-import pydlinear as pdl
-
-
-def main():
-    config = pdl.Config.from_command_line(sys.argv)
-    with pdl.Solver(config) as s:
-        print(s.CheckSat())
-
-
-if __name__ == "__main__":
-    main()
-
 ```
