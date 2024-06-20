@@ -28,21 +28,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Doxygen
+      - name: Install graphviz
         run: sudo apt-get install graphviz -y
 
-      - uses: ssciwr/doxygen-install@v1.3.0
-        with:
-          version: "1.10.0"
-
-      - name: Remove installation directory
-        run: rm -rf doxygen-*
-
       - name: Generate Doxygen Documentation
-        run: ./script/doxygen.sh
+        run: bazel build //docs
 
       - name: Create .nojekyll (ensures pages with underscores work on gh pages)
-        run: touch docs/out/html/.nojekyll
+        run: sudo touch bazel-bin/docs/html/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -50,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "docs/out/html"
+          path: bazel-bin/docs/html
 
       - name: Deploy to GitHub Pages
         id: deployment
