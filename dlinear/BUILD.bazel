@@ -1,6 +1,5 @@
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "all_files", "dlinear_cc_binary", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION", "dlinear_cc_binary", "dlinear_cc_library", "dlinear_srcs")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -42,9 +41,6 @@ dlinear_cc_binary(
     ],
 )
 
-# ----------------------
-# Distribution
-# ----------------------
 cc_shared_library(
     name = "libdlinear.so",
     shared_lib_name = "libdlinear.so",
@@ -55,54 +51,15 @@ cc_shared_library(
     ],
 )
 
-all_files(
-    name = "all",
-    additional_hdrs = ["version.h"],
+dlinear_srcs(
+    name = "srcs",
     deps = [
-        "//dlinear/libs:all_headers_tar",
-        "//dlinear/parser:all_headers_tar",
-        "//dlinear/solver:all_headers_tar",
-        "//dlinear/symbolic:all_headers_tar",
-        "//dlinear/util:all_headers_tar",
+        "//dlinear/libs",
+        "//dlinear/parser",
+        "//dlinear/solver",
+        "//dlinear/symbolic",
+        "//dlinear/util",
     ],
-)
-
-pkg_tar(
-    name = "package_headers",
-    srcs = [
-        ":all_headers",
-    ],
-    extension = "tar.gz",
-    package_dir = "include/dlinear",
-    tags = ["manual"],
-    deps = [
-        "//dlinear/libs:all_headers_tar",
-        "//dlinear/parser:all_headers_tar",
-        "//dlinear/solver:all_headers_tar",
-        "//dlinear/symbolic:all_headers_tar",
-        "//dlinear/util:all_headers_tar",
-    ],
-)
-
-pkg_tar(
-    name = "package_bin",
-    srcs = [
-        ":dlinear",
-    ],
-    extension = "tar.gz",
-    mode = "0755",
-    package_dir = "bin",
-    tags = ["manual"],
-)
-
-pkg_tar(
-    name = "package_sharedlib",
-    srcs = [
-        ":libdlinear.so",
-    ],
-    extension = "tar.gz",
-    package_dir = "lib",
-    tags = ["manual"],
 )
 
 cpplint()

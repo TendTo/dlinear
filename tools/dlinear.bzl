@@ -276,34 +276,44 @@ def dlinear_cc_googletest(
         **kwargs
     )
 
-def all_files(name, subfolder = "", additional_files = [], additional_hdrs = [], deps = []):
-    """A filegroup that includes all header files in the directory.
+def dlinear_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visibility = ["//visibility:public"]):
+    """Returns three different lists of source files based on the name.
 
     Args:
-        name: The name of the filegroup. It will produce three targets: name_files, name_headers, and name_headers_tar.
+        name: The name of the target. The generated targets will be called "srcs", "hdrs", "all_srcs" and "hdrs_tar".
+        srcs: A list of source files include in the filegroup. If None, common c++ source files extensions will be used.
+        hdrs: A list of header files to include in the filegroup. If None, common c++ header files extensions will be used.
+        deps: A list of dependencies. Used for the all_srcs filegroup.
         subfolder: The subfolder to package the headers in. Can be empty.
-        additional_files: Additional files to include in the filegroup.
-        additional_hdrs: Additional headers to include in the filegroup.
-        deps: A list of other tar packages to add to the one produced by this rule.
+        visibility: A list of visibility labels to apply to the filegroups.
     """
-
+    srcs_name, hdrs_name, all_srcs_name, hdrs_tar_name = "srcs", "hdrs", "all_srcs", "hdrs_tar"
+    if srcs == None:
+        srcs = native.glob(["*.cpp", "*.cc", "*.cxx", "*.c"])
+    if hdrs == None:
+        hdrs = native.glob(["*.h", "*.hpp"])
+    srcs_deps = ["%s:%s" % (dep.split(":")[0], all_srcs_name) for dep in deps]
+    tar_deps = ["%s:%s" % (dep.split(":")[0], hdrs_tar_name) for dep in deps]
     native.filegroup(
-        name = "%s_files" % name,
-        srcs = native.glob(["**"]) + additional_files,
+        name = srcs_name,
+        srcs = srcs + hdrs,
+        visibility = visibility,
     )
-
     native.filegroup(
-        name = "%s_headers" % name,
-        srcs = native.glob([
-            "**/*.h",
-            "**/*.hpp",
-        ]) + additional_hdrs,
+        name = hdrs_name,
+        srcs = hdrs,
+        visibility = visibility,
     )
-
+    native.filegroup(
+        name = all_srcs_name,
+        srcs = srcs + hdrs + srcs_deps,
+        visibility = visibility,
+    )
     pkg_tar(
-        name = "%s_headers_tar" % name,
-        srcs = [":%s_headers" % name],
+        name = hdrs_tar_name,
+        srcs = [":%s" % hdrs_name],
         extension = "tar.gz",
         package_dir = subfolder,
-        deps = deps,
+        deps = tar_deps,
+        visibility = visibility,
     )

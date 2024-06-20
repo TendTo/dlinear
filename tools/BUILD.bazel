@@ -14,11 +14,6 @@ filegroup(
     srcs = ["mappings.imp"],
 )
 
-filegroup(
-    name = "all_files",
-    srcs = glob(["**"]),
-)
-
 ######################################################################################
 # Custom flags that control build behavior
 #

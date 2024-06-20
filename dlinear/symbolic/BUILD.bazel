@@ -1,5 +1,5 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "all_files", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
 
 package(default_visibility = [
     "//dlinear:__subpackages__",
@@ -7,10 +7,13 @@ package(default_visibility = [
     "//test:__subpackages__",
 ])
 
-all_files(
-    name = "all",
+dlinear_srcs(
+    name = "srcs",
+    hdrs = glob([
+        "*.h",
+        "*.hpp",
+    ]) + ["//third_party/com_github_robotlocomotion_drake:hdrs"],
     subfolder = "symbolic",
-    additional_hdrs = ["//third_party/com_github_robotlocomotion_drake:headers"],
 )
 
 dlinear_cc_library(

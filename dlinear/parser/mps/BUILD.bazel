@@ -1,5 +1,5 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "all_files", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
 load("//tools:lexyacc.bzl", "gen_lex", "gen_yacc")
 
 package(default_visibility = [
@@ -9,8 +9,8 @@ package(default_visibility = [
     "//test:__subpackages__",
 ])
 
-all_files(
-    name = "all",
+dlinear_srcs(
+    name = "srcs",
     subfolder = "mps",
 )
 

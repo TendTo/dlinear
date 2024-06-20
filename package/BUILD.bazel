@@ -2,13 +2,41 @@ load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION")
 
 pkg_tar(
+    name = "package_bin",
+    srcs = ["//dlinear"],
+    extension = "tar.gz",
+    mode = "0755",
+    package_dir = "bin",
+)
+
+pkg_tar(
+    name = "package_headers",
+    srcs = ["//dlinear:hdrs"],
+    extension = "tar.gz",
+    package_dir = "include/dlinear",
+    deps = [
+        "//dlinear/libs:hdrs_tar",
+        "//dlinear/parser:hdrs_tar",
+        "//dlinear/solver:hdrs_tar",
+        "//dlinear/symbolic:hdrs_tar",
+        "//dlinear/util:hdrs_tar",
+    ],
+)
+
+pkg_tar(
+    name = "package_sharedlib",
+    srcs = ["//dlinear:libdlinear.so"],
+    extension = "tar.gz",
+    package_dir = "lib",
+)
+
+pkg_tar(
     name = "package",
     extension = "tar.gz",
-    tags = ["manual"],
     deps = [
-        "//dlinear:package_bin",
-        "//dlinear:package_headers",
-        "//dlinear:package_sharedlib",
+        ":package_bin",
+        ":package_headers",
+        ":package_sharedlib",
     ],
 )
 
@@ -17,7 +45,7 @@ pkg_deb(
     architecture = "amd64",
     built_using = "bazel (7.1.1)",
     changelog = "debian/changelog",
-    data = ":archive",
+    data = ":package",
     depends = select({
         "//tools:dynamic_build": [
             "libstdc++6",

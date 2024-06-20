@@ -1,5 +1,5 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:dlinear.bzl", "all_files", "dlinear_cc_library")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
 
 package(default_visibility = [
     "//benchmark:__subpackages__",
@@ -8,8 +8,8 @@ package(default_visibility = [
     "//test:__subpackages__",
 ])
 
-all_files(
-    name = "all",
+dlinear_srcs(
+    name = "srcs",
     subfolder = "util",
 )
 
