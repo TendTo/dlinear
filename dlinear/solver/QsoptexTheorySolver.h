@@ -30,7 +30,11 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x,
 
 class QsoptexTheorySolver : public TheorySolver {
  public:
-  QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "QsoptexTheorySolver");
+  static const mpq_class infinity;   ///< Positive infinity
+  static const mpq_class ninfinity;  ///< Negative infinity
+
+  explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor,
+                               const std::string &class_name = "QsoptexTheorySolver");
   ~QsoptexTheorySolver() override;
 
   void AddVariable(const Variable &var) override;

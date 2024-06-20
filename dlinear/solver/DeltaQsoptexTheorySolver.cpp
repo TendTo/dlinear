@@ -11,7 +11,6 @@
 
 #include "dlinear/libs/libqsopt_ex.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Infinity.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
@@ -78,7 +77,7 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", expr);
   }
-  if (qsx_rhs_.back() <= Infinity::Ninfty() || qsx_rhs_.back() >= Infinity::Infty()) {
+  if (qsx_rhs_.back() <= QsoptexTheorySolver::ninfinity || qsx_rhs_.back() >= QsoptexTheorySolver::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", qsx_rhs_.back());
   }
 

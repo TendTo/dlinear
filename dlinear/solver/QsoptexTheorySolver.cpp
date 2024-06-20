@@ -10,14 +10,16 @@
 #include <map>
 #include <utility>
 
-#include "dlinear/util/Infinity.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
 
-QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor , const std::string& class_name)
+const mpq_class QsoptexTheorySolver::infinity{mpq_INFTY};
+const mpq_class QsoptexTheorySolver::ninfinity{mpq_NINFTY};
+
+QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
     : TheorySolver(predicate_abstractor, class_name),
       continuous_output_{config_.continuous_output()},
       with_timings_{config_.with_timings()},
@@ -79,9 +81,9 @@ void QsoptexTheorySolver::UpdateModelBounds() {
     DLINEAR_ASSERT(!res, "Invalid res");
     mpq_class ub{temp};
     mpq_class val;
-    if (Infinity::Ninfty() < lb) {
+    if (QsoptexTheorySolver::ninfinity < lb) {
       val = lb;
-    } else if (ub < Infinity::Infty()) {
+    } else if (ub < QsoptexTheorySolver::infinity) {
       val = ub;
     } else {
       val = 0;
@@ -111,9 +113,9 @@ void QsoptexTheorySolver::Reset(const Box &box) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(0 <= theory_col && theory_col < qsx_cols, "theory_col must be in bounds");
     if (box.has_variable(var)) {
-      DLINEAR_ASSERT(Infinity::Ninfty() <= box[var].lb(), "Lower bound too low");
+      DLINEAR_ASSERT(QsoptexTheorySolver::ninfinity <= box[var].lb(), "Lower bound too low");
       DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "Lower bound must be smaller than upper bound");
-      DLINEAR_ASSERT(box[var].ub() <= Infinity::Infty(), "Upper bound too high");
+      DLINEAR_ASSERT(box[var].ub() <= QsoptexTheorySolver::infinity, "Upper bound too high");
       theory_bounds_[theory_col].SetBounds(box[var].lb(), box[var].ub());
     }
     mpq_QSchange_bound(qsx_, theory_col, 'L', mpq_NINFTY);
@@ -167,7 +169,7 @@ void QsoptexTheorySolver::SetQSXVarCoef(int qsx_row, const Variable &var, const 
   // Variable is not present in the LP solver
   if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR("Variable undefined: {}");
   // Variable has the coefficients too large
-  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
+  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
 
@@ -183,7 +185,7 @@ void QsoptexTheorySolver::SetQSXVarObjCoef(const Variable &var, const mpq_class 
   // Variable is not present in the LP solver
   if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
 
-  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
+  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
   mpq_t c_value;
@@ -204,7 +206,7 @@ bool QsoptexTheorySolver::SetQSXVarBound(const Bound &bound, int qsx_col) {
   }
 
   DLINEAR_ASSERT(type == LpColBound::L || type == LpColBound::U, "Type must be '<=' or '>='");
-  if (value <= Infinity::Ninfty() || value >= Infinity::Infty()) {
+  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
   }
 

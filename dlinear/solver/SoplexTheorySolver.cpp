@@ -21,14 +21,11 @@ namespace dlinear {
 
 using soplex::Rational;
 
-mpq_class SoplexTheorySolver::infinity_{0};
-mpq_class SoplexTheorySolver::ninfinity_{0};
+const mpq_class SoplexTheorySolver::infinity_{soplex::infinity};
+const mpq_class SoplexTheorySolver::ninfinity_{-soplex::infinity};
 
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
     : TheorySolver(predicate_abstractor, class_name) {
-  // Initialize infinities
-  infinity_ = soplex::infinity;
-  ninfinity_ = -soplex::infinity;
   // Default SoPlex parameters
   spx_.setRealParam(soplex::SoPlex::FEASTOL, config_.precision());
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
