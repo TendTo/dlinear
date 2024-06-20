@@ -19,72 +19,70 @@ namespace dlinear {
 
 ExpressionEvaluator::ExpressionEvaluator(Expression e) : e_{std::move(e)} {}
 
-Box::Interval ExpressionEvaluator::operator()(const Box& box) const { return Visit(e_, box); }
+Interval ExpressionEvaluator::operator()(const Box& box) const { return Visit(e_, box); }
 
-Box::Interval ExpressionEvaluator::Visit(const Expression& e, const Box& box) const {
-  return VisitExpression<Box::Interval>(this, e, box);
+Interval ExpressionEvaluator::Visit(const Expression& e, const Box& box) const {
+  return VisitExpression<Interval>(this, e, box);
 }
 
-Box::Interval ExpressionEvaluator::VisitVariable(const Expression& e, const Box& box) {
+Interval ExpressionEvaluator::VisitVariable(const Expression& e, const Box& box) {
   const Variable& var{get_variable(e)};
   return box[var];
 }
 
-Box::Interval ExpressionEvaluator::VisitConstant(const Expression& e, const Box&) {
-  return Box::Interval{get_constant_value(e)};
-}
+Interval ExpressionEvaluator::VisitConstant(const Expression& e, const Box&) { return Interval{get_constant_value(e)}; }
 
-Box::Interval ExpressionEvaluator::VisitRealConstant(const Expression&, const Box&) {
+Interval ExpressionEvaluator::VisitRealConstant(const Expression&, const Box&) {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAddition(const Expression& e, const Box& box) const {
+Interval ExpressionEvaluator::VisitAddition(const Expression& e, const Box& box) const {
   const mpq_class& c{get_constant_in_addition(e)};
   const auto& expr_to_coeff_map = get_expr_to_coeff_map_in_addition(e);
-  return std::accumulate(expr_to_coeff_map.begin(), expr_to_coeff_map.end(), Box::Interval{c},
-                         [this, &box](const Box::Interval& init, const std::pair<const Expression, mpq_class>& p) {
+  return std::accumulate(expr_to_coeff_map.begin(), expr_to_coeff_map.end(), Interval{c},
+                         [this, &box](const Interval& init, const std::pair<const Expression, mpq_class>& p) {
                            return init + Visit(p.first, box) * p.second;
                          });
 }
 
-Box::Interval ExpressionEvaluator::VisitMultiplication(const Expression& e, const Box& box) const {
+Interval ExpressionEvaluator::VisitMultiplication(const Expression& e, const Box& box) const {
   const mpq_class& c{get_constant_in_multiplication(e)};
   const auto& base_to_exponent_map = get_base_to_exponent_map_in_multiplication(e);
-  return accumulate(base_to_exponent_map.begin(), base_to_exponent_map.end(), Box::Interval{c},
-                    [this, &box](const Box::Interval& init, const std::pair<const Expression, Expression>& p) {
+  return accumulate(base_to_exponent_map.begin(), base_to_exponent_map.end(), Interval{c},
+                    [this, &box](const Interval& init, const std::pair<const Expression, Expression>& p) {
                       return init * VisitPow(p.first, p.second, box);
                     });
 }
 
-Box::Interval ExpressionEvaluator::VisitDivision(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitDivision(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitLog(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitLog(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAbs(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitAbs(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitExp(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitExp(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitSqrt(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitSqrt(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitPow(const Expression& e, const Box& box) const {
+Interval ExpressionEvaluator::VisitPow(const Expression& e, const Box& box) const {
   return VisitPow(get_first_argument(e), get_second_argument(e), box);
 }
 
-Box::Interval ExpressionEvaluator::VisitPow(const Expression&, const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitPow(const Expression&, const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 #if 0
-  const Box::Interval first{Visit(e1, box)};
-  const Box::Interval second{Visit(e2, box)};
+  const Interval first{Visit(e1, box)};
+  const Interval second{Visit(e2, box)};
   if (second.is_degenerated() && !second.is_empty()) {
     DLINEAR_ASSERT(second.lb() == second.ub(), "Interval must be a point.");
     const double point{second.lb()};
@@ -103,59 +101,59 @@ Box::Interval ExpressionEvaluator::VisitPow(const Expression&, const Expression&
 #endif
 }
 
-Box::Interval ExpressionEvaluator::VisitSin(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitSin(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitCos(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitCos(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitTan(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitTan(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAsin(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitAsin(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAcos(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitAcos(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAtan(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitAtan(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitAtan2(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitAtan2(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitSinh(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitSinh(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitCosh(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitCosh(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitTanh(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitTanh(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitMin(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitMin(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitMax(const Expression&, const Box&) const {
+Interval ExpressionEvaluator::VisitMax(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitIfThenElse(const Expression& /* unused */, const Box& /* unused */) {
+Interval ExpressionEvaluator::VisitIfThenElse(const Expression& /* unused */, const Box& /* unused */) {
   DLINEAR_RUNTIME_ERROR("If-then-else expression is not supported yet.");
 }
 
-Box::Interval ExpressionEvaluator::VisitUninterpretedFunction(const Expression& /* unused */, const Box& /* unused */) {
+Interval ExpressionEvaluator::VisitUninterpretedFunction(const Expression& /* unused */, const Box& /* unused */) {
   DLINEAR_RUNTIME_ERROR("Uninterpreted function is not supported.");
 }
 

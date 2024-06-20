@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "dlinear/util/Box.h"
-#include "dlinear/util/Infinity.h"
 #include "test/symbolic/TestSymbolicUtils.h"
 
 using std::is_nothrow_move_constructible;
@@ -40,7 +39,7 @@ class TestBox : public ::testing::Test {
   const Variable b2_{"j", Variable::Type::BINARY};
 #endif
 
-  const mpq_class inf_{Infinity::Infty()};
+  const mpq_class inf_{"100000000000000000000000"};
 };
 
 TEST_F(TestBox, AddHasVariable) {
@@ -104,7 +103,7 @@ TEST_F(TestBox, IntervalVector) {
   EXPECT_EQ(b1.interval_vector()[0], b1[x_]);
 
   // Update
-  b1.m_interval_vector()[0] = Box::Interval(0, 1);
+  b1.m_interval_vector()[0] = Interval(0, 1);
   EXPECT_EQ(b1[x_].lb(), 0);
   EXPECT_EQ(b1[x_].ub(), 1);
 
@@ -161,20 +160,20 @@ TEST_F(TestBox, Sharing) {
 #if 0
 TEST_F(TestBox, InplaceUnion) {
   Box b1{{x_, y_}};
-  b1[x_] = Box::Interval(0, 1);
-  b1[y_] = Box::Interval(0, 1);
+  b1[x_] = Interval(0, 1);
+  b1[y_] = Interval(0, 1);
 
   Box b2{{x_, y_}};
-  b2[x_] = Box::Interval(2, 3);
-  b2[y_] = Box::Interval(3, 4);
+  b2[x_] = Interval(2, 3);
+  b2[y_] = Interval(3, 4);
 
   b1.InplaceUnion(b2);
-  EXPECT_EQ(b1[x_], Box::Interval(0, 3));
-  EXPECT_EQ(b1[y_], Box::Interval(0, 4));
+  EXPECT_EQ(b1[x_], Interval(0, 3));
+  EXPECT_EQ(b1[y_], Interval(0, 4));
 
   // No changes on b2.
-  EXPECT_EQ(b2[x_], Box::Interval(2, 3));
-  EXPECT_EQ(b2[y_], Box::Interval(3, 4));
+  EXPECT_EQ(b2[x_], Interval(2, 3));
+  EXPECT_EQ(b2[y_], Interval(3, 4));
 }
 #endif
 
@@ -273,7 +272,7 @@ TEST_F(TestBox, Equality) {
   EXPECT_TRUE(b1 == b3);
   EXPECT_FALSE(b1 != b3);
 
-  b3[y_] = Box::Interval(-5, 6);
+  b3[y_] = Interval(-5, 6);
   EXPECT_FALSE(b1 == b3);
   EXPECT_TRUE(b1 != b3);
 }
@@ -281,15 +280,14 @@ TEST_F(TestBox, Equality) {
 // Checks types in Box are nothrow move-constructible so that the
 // vectors including them can be processed efficiently.
 TEST_F(TestBox, IsNothrowMoveConstructible) {
-  static_assert(is_nothrow_move_constructible<Box::Interval>::value,
-                "Box::Interval should be nothrow_move_constructible.");
-  static_assert(is_nothrow_move_constructible<std::vector<Box::Interval>>::value,
-                "Box::IntervalVector should be nothrow_move_constructible.");
+  static_assert(is_nothrow_move_constructible<Interval>::value, "Interval should be nothrow_move_constructible.");
+  static_assert(is_nothrow_move_constructible<std::vector<Interval>>::value,
+                "IntervalVector should be nothrow_move_constructible.");
   static_assert(is_nothrow_move_constructible<Box>::value, "Box should be nothrow_move_constructible.");
 }
 
 TEST_F(TestBox, IntervalFromString) {
-  Box::Interval interval = Box::Interval::fromString("100");
+  Interval interval = Interval::fromString("100");
   EXPECT_EQ(interval.lb(), 100);  // TODO: should be -100??
   EXPECT_EQ(interval.ub(), 100);
 }

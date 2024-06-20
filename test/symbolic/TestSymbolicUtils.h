@@ -17,10 +17,8 @@
 #include "dlinear/symbolic/symbolic_formula.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Infinity.h"
 
 using dlinear::Config;
-using dlinear::Infinity;
 using dlinear::drake::hash_value;
 using dlinear::drake::symbolic::Environment;
 using dlinear::drake::symbolic::Expression;
@@ -32,8 +30,7 @@ using dlinear::drake::symbolic::VisitExpression;
 using dlinear::drake::symbolic::VisitFormula;
 
 struct DrakeSymbolicGuard {
-  explicit DrakeSymbolicGuard(Config::LPSolver solver = Config::LPSolver::SOPLEX) { Infinity::InftyStart(solver); }
-  ~DrakeSymbolicGuard() { Infinity::InftyFinish(); }
+  explicit DrakeSymbolicGuard(Config::LPSolver = Config::LPSolver::SOPLEX) {}
 };
 
 inline bool VarEqual(const Variable &v1, const Variable &v2) { return v1.equal_to(v2); }

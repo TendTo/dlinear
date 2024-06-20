@@ -9,28 +9,25 @@
 #include <memory>
 
 #include "dlinear/solver/PicosatSatSolver.h"
-#include "dlinear/solver/SolverGuard.h"
 
 using dlinear::Config;
 using dlinear::Formula;
 using dlinear::PicosatSatSolver;
 using dlinear::PredicateAbstractor;
 using dlinear::SatSolver;
-using dlinear::SolverGuard;
 using dlinear::Variable;
 using std::unique_ptr;
 
 class TestPicosatSatSolver : public ::testing::Test {
  protected:
   const Config config_;
-  const SolverGuard guard;
   PredicateAbstractor pa_;
   const Variable x_{"x"}, y_{"y"};
   const Formula f_{x_ > 1};
   const Formula f2_{!(y_ > 2)};
   const Formula f3_{x_ + y_ <= 3};
   const Formula f4_{f_ || f2_ || f3_};
-  explicit TestPicosatSatSolver() : config_{get_config()}, guard{config_}, pa_{config_} {}
+  explicit TestPicosatSatSolver() : config_{get_config()}, pa_{config_} {}
 
   static Config get_config() {
     Config config{};

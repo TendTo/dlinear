@@ -35,7 +35,6 @@ cc_library(
         "dlinear/symbolic/symbolic_variables.cc",
     ],
     hdrs = [":hdrs"],
-    implementation_deps = ["//dlinear/util:infinity"],
     includes = ["."],
     linkstatic = 1,
     deps = ["//dlinear/libs:gmp"],

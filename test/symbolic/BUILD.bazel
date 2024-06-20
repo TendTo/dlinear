@@ -7,7 +7,7 @@ dlinear_cc_library(
     visibility = ["//test:__subpackages__"],
     deps = [
         "//dlinear/symbolic",
-        "//dlinear/util:infinity",
+        "//dlinear/util:config",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
     ] + select({
         "//tools:enabled_soplex": ["//dlinear/libs:soplex"],

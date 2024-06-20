@@ -23,8 +23,10 @@ QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstract
     : TheorySolver(predicate_abstractor, class_name),
       continuous_output_{config_.continuous_output()},
       with_timings_{config_.with_timings()},
-      qsx_{mpq_QScreate_prob(nullptr, QS_MIN)},
+      qsx_{nullptr},
       ray_{1} {
+  qsopt_ex::QSXStart();
+  qsx_ = mpq_QScreate_prob(nullptr, QS_MIN);
   DLINEAR_ASSERT(qsx_, "Failed to create QSopt_ex problem");
   if (config_.verbose_simplex() > 3) {
     DLINEAR_RUNTIME_ERROR("With --lp-solver qsoptex, maximum value for --verbose-simplex is 3");
@@ -33,7 +35,10 @@ QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstract
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::QsoptexTheorySolver: precision = {}", config_.precision());
 }
 
-QsoptexTheorySolver::~QsoptexTheorySolver() { mpq_QSfree_prob(qsx_); }
+QsoptexTheorySolver::~QsoptexTheorySolver() {
+  mpq_QSfree_prob(qsx_);
+  qsopt_ex::QSXFinish();
+}
 
 void QsoptexTheorySolver::AddVariable(const Variable &var) {
   auto it = var_to_theory_col_.find(var.get_id());

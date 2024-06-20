@@ -14,6 +14,7 @@
 
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"
+#include "dlinear/util/Interval.h"
 
 namespace dlinear {
 
@@ -28,47 +29,46 @@ class ExpressionEvaluator {
   explicit ExpressionEvaluator(Expression e);
 
   /// Evaluates the expression with @p box.
-  Box::Interval operator()(const Box& box) const;
+  Interval operator()(const Box& box) const;
 
   [[nodiscard]] const Variables& variables() const { return e_.GetVariables(); }
 
   [[nodiscard]] const Expression& expression() const { return e_; }
 
  private:
-  [[nodiscard]] Box::Interval Visit(const Expression& e, const Box& box) const;
-  static Box::Interval VisitVariable(const Expression& e, const Box& box);
-  static Box::Interval VisitConstant(const Expression& e, const Box& box);
-  static Box::Interval VisitRealConstant(const Expression& e, const Box& box);
-  Box::Interval VisitAddition(const Expression& e, const Box& box) const;
-  Box::Interval VisitMultiplication(const Expression& e, const Box& box) const;
-  Box::Interval VisitDivision(const Expression& e, const Box& box) const;
-  Box::Interval VisitLog(const Expression& e, const Box& box) const;
-  Box::Interval VisitAbs(const Expression& e, const Box& box) const;
-  Box::Interval VisitExp(const Expression& e, const Box& box) const;
-  Box::Interval VisitSqrt(const Expression& e, const Box& box) const;
-  Box::Interval VisitPow(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval Visit(const Expression& e, const Box& box) const;
+  static Interval VisitVariable(const Expression& e, const Box& box);
+  static Interval VisitConstant(const Expression& e, const Box& box);
+  static Interval VisitRealConstant(const Expression& e, const Box& box);
+  [[nodiscard]] Interval VisitAddition(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitMultiplication(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitDivision(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitLog(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitAbs(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitExp(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitSqrt(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitPow(const Expression& e, const Box& box) const;
 
   // Evaluates `pow(e1, e2)` with the @p box.
-  Box::Interval VisitPow(const Expression& e1, const Expression& e2, const Box& box) const;
-  Box::Interval VisitSin(const Expression& e, const Box& box) const;
-  Box::Interval VisitCos(const Expression& e, const Box& box) const;
-  Box::Interval VisitTan(const Expression& e, const Box& box) const;
-  Box::Interval VisitAsin(const Expression& e, const Box& box) const;
-  Box::Interval VisitAcos(const Expression& e, const Box& box) const;
-  Box::Interval VisitAtan(const Expression& e, const Box& box) const;
-  Box::Interval VisitAtan2(const Expression& e, const Box& box) const;
-  Box::Interval VisitSinh(const Expression& e, const Box& box) const;
-  Box::Interval VisitCosh(const Expression& e, const Box& box) const;
-  Box::Interval VisitTanh(const Expression& e, const Box& box) const;
-  Box::Interval VisitMin(const Expression& e, const Box& box) const;
-  Box::Interval VisitMax(const Expression& e, const Box& box) const;
-  static Box::Interval VisitIfThenElse(const Expression& e, const Box& box);
-  static Box::Interval VisitUninterpretedFunction(const Expression& e, const Box& box);
+  [[nodiscard]] Interval VisitPow(const Expression& e1, const Expression& e2, const Box& box) const;
+  [[nodiscard]] Interval VisitSin(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitCos(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitTan(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitAsin(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitAcos(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitAtan(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitAtan2(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitSinh(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitCosh(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitTanh(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitMin(const Expression& e, const Box& box) const;
+  [[nodiscard]] Interval VisitMax(const Expression& e, const Box& box) const;
+  static Interval VisitIfThenElse(const Expression& e, const Box& box);
+  static Interval VisitUninterpretedFunction(const Expression& e, const Box& box);
 
   // Makes VisitExpression a friend of this class so that it can use private
   // operator()s.
-  friend Box::Interval drake::symbolic::VisitExpression<Box::Interval>(const ExpressionEvaluator*, const Expression&,
-                                                                       const Box&);
+  friend Interval drake::symbolic::VisitExpression<Interval>(const ExpressionEvaluator*, const Expression&, const Box&);
 
   const Expression e_;
 };

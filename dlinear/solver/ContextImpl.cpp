@@ -195,7 +195,7 @@ std::string Context::Impl::GetInfo(const std::string &key) const {
 void Context::Impl::SetInterval(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetInterval({} = [{}, {}])", v, lb, ub);
   if (lb > ub) DLINEAR_RUNTIME_ERROR_FMT("Lower bound {} is greater than upper bound {}.", lb, ub);
-  box()[v] = Box::Interval{lb, ub};
+  box()[v] = Interval{lb, ub};
 }
 
 void Context::Impl::SetLogic(const Logic logic) {

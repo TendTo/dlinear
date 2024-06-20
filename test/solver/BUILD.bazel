@@ -51,17 +51,13 @@ dlinear_cc_googletest(
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
-        "//dlinear/util:infinity",
     ],
 )
 
 dlinear_cc_googletest(
     name = "test_picosat_sat_solver",
     tags = ["solver"],
-    deps = [
-        "//dlinear/solver:sat_solver",
-        "//dlinear/solver:solver_guard",
-    ],
+    deps = ["//dlinear/solver:sat_solver"],
 )
 
 dlinear_cc_googletest(

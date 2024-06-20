@@ -95,7 +95,7 @@ void Smt2Driver::GetValue(const std::vector<Term> &term_list) const {
         const ExpressionEvaluator evaluator{e};
         pp.Print(e);
         term_str = ss.str();
-        const Box::Interval iv{ExpressionEvaluator(term.expression())(box)};
+        const Interval iv{ExpressionEvaluator(term.expression())(box)};
         value_str = (std::stringstream{} << iv).str();
         break;
       }

@@ -21,7 +21,6 @@
 #include "dlinear/util/ArgParser.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Infinity.h"
 #include "dlinear/util/logging.h"
 #include "dlinear/version.h"
 
@@ -249,14 +248,8 @@ PYBIND11_MODULE(_pydlinear, m) {
       .def(py::self - Variable());
 
   ExpressionClass.def(py::init<>())
-      .def(py::init<>([](double b) {
-        if (Infinity::IsInitialized()) return std::make_unique<Expression>(b);
-        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with SmtSolver`"};
-      }))
-      .def(py::init<>([](const Variable &var) {
-        if (Infinity::IsInitialized()) return std::make_unique<Expression>(var);
-        throw std::runtime_error{"Infinity is not initialized. Please use this class inside a `with SmtSolver`"};
-      }))
+      .def(py::init<>([](double b) { return std::make_unique<Expression>(b); }))
+      .def(py::init<>([](const Variable &var) { return std::make_unique<Expression>(var); }))
       .def(py::init<const Variable &>())
       .def("__abs__", [](const Expression &self) { return abs(self); })
       .def("__str__", &Expression::to_string)

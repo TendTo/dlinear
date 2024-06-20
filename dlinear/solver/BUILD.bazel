@@ -52,14 +52,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "solver_guard",
-    srcs = ["SolverGuard.cpp"],
-    hdrs = ["SolverGuard.h"],
-    implementation_deps = ["//dlinear/util:infinity"],
-    deps = ["//dlinear/util:config"],
-)
-
-dlinear_cc_library(
     name = "sat_solver",
     srcs = [
         "SatSolver.cpp",
@@ -280,7 +272,6 @@ dlinear_cc_library(
     ],
     deps = [
         ":context",
-        ":solver_guard",
         ":solver_output",
         "//dlinear/symbolic",
         "//dlinear/util:config",

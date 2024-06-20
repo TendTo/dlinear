@@ -14,7 +14,6 @@
 #include <limits>
 #include <ostream>
 
-#include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/math.h"
@@ -24,126 +23,28 @@ namespace dlinear {
 using gmp::ceil;
 using gmp::floor;
 
-Box::Interval::Interval() : lb_(Infinity::Ninfty()), ub_(Infinity::Infty()) {}
-
-Box::Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
-  DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
-}
-
-std::pair<Box::Interval, Box::Interval> Box::Interval::bisect(const mpq_class &p) const {
-  mpq_class midpoint{lb_ + p * (ub_ - lb_)};
-  return std::make_pair(Interval(lb_, midpoint), Interval(midpoint, ub_));
-}
-
-Box::Interval &Box::Interval::operator+=(const Box::Interval &o) {
-  lb_ += o.lb_;
-  ub_ += o.ub_;
-  return *this;
-}
-Box::Interval &Box::Interval::operator-=(const Box::Interval &o) {
-  lb_ -= o.ub_;
-  ub_ -= o.lb_;
-  return *this;
-}
-Box::Interval &Box::Interval::operator*=(const Box::Interval &o) {
-  const std::initializer_list<mpq_class> products{lb_ * o.lb_, lb_ * o.ub_, ub_ * o.lb_, ub_ * o.ub_};
-  const mpq_class lb{std::min(products)};
-  const mpq_class ub{std::max(products)};
-  lb_ = lb;
-  ub_ = ub;
-  return *this;
-}
-Box::Interval &Box::Interval::operator/=(const Box::Interval &o) {
-  if (o.is_degenerated() && o.lb() == 0) DLINEAR_RUNTIME_ERROR("Division by zero");
-
-  const std::initializer_list<mpq_class> quotients{lb_ / o.lb_, lb_ / o.ub_, ub_ / o.lb_, ub_ / o.ub_};
-  const mpq_class lb{std::min(quotients)};
-  const mpq_class ub{std::max(quotients)};
-  lb_ = lb;
-  ub_ = ub;
-  return *this;
-}
-Box::Interval &Box::Interval::operator+=(const mpq_class &o) {
-  lb_ += o;
-  ub_ += o;
-  return *this;
-}
-Box::Interval &Box::Interval::operator-=(const mpq_class &o) {
-  lb_ -= o;
-  ub_ -= o;
-  return *this;
-}
-Box::Interval &Box::Interval::operator*=(const mpq_class &o) {
-  const std::initializer_list<mpq_class> products{lb_ * o, lb_ * o, ub_ * o, ub_ * o};
-  const mpq_class lb{std::min(products)};
-  const mpq_class ub{std::max(products)};
-  lb_ = lb;
-  ub_ = ub;
-  return *this;
-}
-Box::Interval &Box::Interval::operator/=(const mpq_class &o) {
-  if (o == 0) DLINEAR_RUNTIME_ERROR("Division by zero");
-
-  const std::initializer_list<mpq_class> quotients{lb_ / o, lb_ / o, ub_ / o, ub_ / o};
-  const mpq_class lb{std::min(quotients)};
-  const mpq_class ub{std::max(quotients)};
-  lb_ = lb;
-  ub_ = ub;
-  return *this;
-}
-
-std::ostream &operator<<(std::ostream &os, const Box::Interval &iv) {
-  if (iv.is_empty()) {
-    return os << "[ empty ]";
-  } else if (iv.lb() <= Infinity::Ninfty() && iv.ub() >= Infinity::Infty()) {
-    return os << "[ ENTIRE ]";
-  } else {
-    os << "[";
-    if (iv.lb() <= Infinity::Ninfty()) {
-      os << "-inf";
-    } else {
-      os << iv.lb();
-    }
-    os << ", ";
-    if (iv.ub() >= Infinity::Infty()) {
-      os << "inf";
-    } else {
-      os << iv.ub();
-    }
-    return os << "]";
-  }
-}
-
-Box::Interval Box::Interval::fromString(const std::string &s) {
-  RoundingModeGuard guard(FE_UPWARD);
-  const double ub{stod(s)};
-  double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s);  // TODO: shouldn't this be -stod(s) or even -ub?
-  return Box::Interval{lb, ub};
-}
-
 Box::Box()
-    : variables_{std::make_shared<std::vector<Variable>>()},
-      // We have this hack here because it is not allowed to have a
-      // zero interval vector. Note that because of this special case,
-      // `variables_->size() == values_.size()` do not hold. We should
-      // rely on `values_.size()`.
-      values_(1),
+    :  // We have this hack here because it is not allowed to have a
+       // zero interval vector. Note that because of this special case,
+       // `variables_->size() == values_.size()` do not hold. We should
+       // rely on `values_.size()`.
+      values_{},
+      variables_{std::make_shared<std::vector<Variable>>()},
       var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
       idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {}
 
 Box::Box(const std::vector<Variable> &variables)
-    : variables_{std::make_shared<std::vector<Variable>>()},
-      values_(static_cast<int>(variables.size())),
+    : values_{},
+      variables_{std::make_shared<std::vector<Variable>>()},
       var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
       idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {
-  for (const Variable &var : variables) {
-    Add(var);
-  }
+  values_.reserve(variables.size());
+  variables_->reserve(variables.size());
+  for (const Variable &var : variables) Add(var);
 }
 
 void Box::Add(const Variable &v) {
   if (v.get_type() == Variable::Type::BINARY || v.get_type() == Variable::Type::INTEGER) {
-    // QSopt_ex changes
     DLINEAR_RUNTIME_ERROR("Integer variables not supported");
   }
 
@@ -164,14 +65,20 @@ void Box::Add(const Variable &v) {
   idx_to_var_->emplace(n, v);
   var_to_idx_->emplace(v, n);
   variables_->push_back(v);
-  values_.resize(size());
 
   // Set up Domain.
   // TODO(soonho): For now, we allow Boolean variables in a box. Change this.
-  if (v.get_type() == Variable::Type::BOOLEAN || v.get_type() == Variable::Type::BINARY) {
-    values_[n] = Interval(0, 1);
-  } else if (v.get_type() == Variable::Type::INTEGER) {
-    values_[n] = Interval(-std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+  switch (v.get_type()) {
+    case Variable::Type::BOOLEAN:
+    case Variable::Type::BINARY:
+      values_.emplace_back(0, 1);
+      break;
+    case Variable::Type::INTEGER:
+      DLINEAR_RUNTIME_ERROR("Integer variables not supported");
+      values_.emplace_back(-std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+      break;
+    case Variable::Type::CONTINUOUS:
+      DLINEAR_RUNTIME_ERROR("Continuous variables must specify bounds!");
   }
 }
 
@@ -201,16 +108,16 @@ void Box::set_empty() {
 
 int Box::size() const { return static_cast<int>(variables_->size()); }
 
-Box::Interval &Box::operator[](const int i) {
+Interval &Box::operator[](const int i) {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-Box::Interval &Box::operator[](const Variable &var) { return values_[(*var_to_idx_)[var]]; }
-const Box::Interval &Box::operator[](const int i) const {
+Interval &Box::operator[](const Variable &var) { return values_[(*var_to_idx_)[var]]; }
+const Interval &Box::operator[](const int i) const {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-const Box::Interval &Box::operator[](const Variable &var) const { return values_[(*var_to_idx_)[var]]; }
+const Interval &Box::operator[](const Variable &var) const { return values_[(*var_to_idx_)[var]]; }
 
 const std::vector<Variable> &Box::variables() const { return *variables_; }
 
@@ -220,8 +127,8 @@ bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(va
 
 int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
 
-const std::vector<Box::Interval> &Box::interval_vector() const { return values_; }
-std::vector<Box::Interval> &Box::m_interval_vector() { return values_; }
+const std::vector<Interval> &Box::interval_vector() const { return values_; }
+std::vector<Interval> &Box::m_interval_vector() { return values_; }
 
 std::pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};
@@ -329,7 +236,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
   IosFmtFlagSaver saver{os};
   int i{0};
   for (const Variable &var : *(box.variables_)) {
-    const Box::Interval interval{box.values_[i++]};
+    const Interval interval{box.values_[i++]};
     os << var << " : ";
     switch (var.get_type()) {
       case Variable::Type::INTEGER:
@@ -359,12 +266,12 @@ bool operator==(const Box &b1, const Box &b2) {
 
 bool operator!=(const Box &b1, const Box &b2) { return !(b1 == b2); }
 
-std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables,
-                          const std::vector<Box::Interval> &old_iv, const std::vector<Box::Interval> &new_iv) {
+std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variables, const std::vector<Interval> &old_iv,
+                          const std::vector<Interval> &new_iv) {
   IosFmtFlagSaver saver{os};
   for (std::size_t i = 0; i < variables.size(); ++i) {
-    const Box::Interval &old_i{old_iv[i]};
-    const Box::Interval &new_i{new_iv[i]};
+    const Interval &old_i{old_iv[i]};
+    const Interval &new_i{new_iv[i]};
     if (old_i != new_i) os << variables[i] << " : " << old_i << " -> " << new_i << "\n";
   }
   return os;

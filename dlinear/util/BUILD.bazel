@@ -77,41 +77,31 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "infinity",
-    srcs = ["Infinity.cpp"],
-    hdrs = ["Infinity.h"],
+    name = "box",
+    srcs = ["Box.cpp"],
+    hdrs = ["Box.h"],
     implementation_deps = [
         ":exception",
-        ":logging",
-    ] + select({
-        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
-        "//conditions:default": [],
-    }),
-    visibility = [
-        "//benchmark:__subpackages__",
-        "//dlinear:__subpackages__",
-        "//test:__subpackages__",
-        "//third_party:__subpackages__",
+        ":math",
     ],
     deps = [
-        ":config",
+        ":interval",
+        ":logging",
         "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
     ],
 )
 
 dlinear_cc_library(
-    name = "box",
-    srcs = ["Box.cpp"],
+    name = "interval",
+    srcs = ["Interval.cpp"],
     hdrs = [
-        "Box.h",
+        "Interval.h",
         "RoundingModeGuard.hpp",
     ],
     implementation_deps = [
         ":exception",
-        ":infinity",
         ":math",
     ],
     deps = [

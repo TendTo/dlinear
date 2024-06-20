@@ -9,11 +9,9 @@
 #include <memory>
 
 #include "dlinear/solver/SmtSolver.h"
-#include "dlinear/util/Infinity.h"
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
-using dlinear::Infinity;
 using dlinear::SmtSolver;
 using std::unique_ptr;
 
@@ -28,30 +26,6 @@ class TestSolver : public ::testing::TestWithParam<Config::LPSolver> {
 };
 
 INSTANTIATE_TEST_SUITE_P(TestSolver, TestSolver, enabled_test_solvers);
-
-TEST_P(TestSolver, ConstructorDefault) {
-  {
-    SmtSolver s{};
-    EXPECT_TRUE(Infinity::IsInitialized());
-  }
-  EXPECT_FALSE(Infinity::IsInitialized());
-}
-
-TEST_P(TestSolver, ConstructorFilename) {
-  {
-    SmtSolver s{config_};
-    EXPECT_TRUE(Infinity::IsInitialized());
-  }
-  EXPECT_FALSE(Infinity::IsInitialized());
-}
-
-TEST_P(TestSolver, ConstructorConfig) {
-  {
-    SmtSolver s{config_};
-    EXPECT_TRUE(Infinity::IsInitialized());
-  }
-  EXPECT_FALSE(Infinity::IsInitialized());
-}
 
 TEST_P(TestSolver, CheckSatWrongFilename) {
   SmtSolver s{"test.err"};

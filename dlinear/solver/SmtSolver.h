@@ -16,7 +16,6 @@
 
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/SmtSolverOutput.h"
-#include "dlinear/solver/SolverGuard.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 
@@ -138,7 +137,6 @@ class SmtSolver {
   bool ParseInput();
 
   Config config_;            ///< Configuration of the solver.
-  const SolverGuard guard_;  ///< Takes care of initializing and de-initializing the correct infinity values.
   SmtSolverOutput output_;   ///< Output of the solver.
   Context context_;          ///< Context obtained from the input file and passed to the SAT and SMT solvers.
 };

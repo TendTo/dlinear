@@ -31,8 +31,7 @@ inline bool ParseInputCore(const Config &config, Context &context) {
 }  // namespace
 
 SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
-SmtSolver::SmtSolver(Config config)
-    : config_{std::move(config)}, guard_{config_}, output_{config_}, context_{config_, &output_} {}
+SmtSolver::SmtSolver(Config config) : config_{std::move(config)}, output_{config_}, context_{config_, &output_} {}
 
 #ifdef DLINEAR_PYDLINEAR
 SmtSolver &SmtSolver::Enter() { return *this; }
