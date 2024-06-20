@@ -22,12 +22,13 @@ namespace dlinear {
 
 using drake::symbolic::Variable;
 
+/** A literal is a variable with an associated truth value, indicating whether it is true or false. */
 struct Literal {
-  Variable var;
-  bool truth;
+  Variable var;  ///< Variable.
+  bool truth;    ///< Truth value.
 };
-using LiteralSet = std::set<Literal>;
-using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;
+using LiteralSet = std::set<Literal>;                                 ///< A set of literals.
+using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;  ///< A model is a pair of two vectors of literals.
 
 bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
 std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Literal &rhs);

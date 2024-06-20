@@ -67,7 +67,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * If the LP problem is infeasible (or strictly infeasible), it will also update the explanation.
    * @pre The expected precision must be 0.
    * @return The result of the SAT check
-   * @see final_theory_rows_to_explanation_.
+   * @see theory_rows_to_explanations_.
    */
   SatResult SpxCheckSat();
 
@@ -153,7 +153,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   std::set<std::size_t> IteratorNqRowsInLastExplanation() const;
 
   /**
-   * Add a new explanation to @p explanations from @ref final_theory_rows_to_explanation_.
+   * Add a new explanation to @p explanations from @ref theory_rows_to_explanations_.
    * @param[out] explanations the set of explanations to add the new explanation to
    */
   void GetExplanation(Explanations& explanations);

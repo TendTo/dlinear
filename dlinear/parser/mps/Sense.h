@@ -38,6 +38,7 @@ enum class Sense {
  * - "E"
  * - "G"
  * - "N"
+ *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
  *
@@ -52,6 +53,7 @@ Sense ParseSense(const std::string &sense);
  * - "E"
  * - "G"
  * - "N"
+ *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
  *
@@ -66,6 +68,7 @@ Sense ParseSense(const char sense[]);
  * - 'E'
  * - 'G'
  * - 'N'
+ *
  * The input is case-insensitive.
  *
  * @param sense character representation of the sense

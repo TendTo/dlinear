@@ -52,6 +52,7 @@ enum class BoundType {
  * - "MI"
  * - "PL"
  * - "BV"
+ *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
  *
@@ -70,7 +71,8 @@ BoundType ParseBoundType(const std::string &bound_type);
  * - "FR"
  * - "MI"
  * - "PL"
- * - "BV"
+ * - "BV
+ *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
  *
