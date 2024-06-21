@@ -70,7 +70,7 @@ void Driver::CheckSat() {
 }
 
 void Driver::GetModel() {
-  if (!context_.config().silent()) return;
+  if (context_.config().silent()) return;
   std::cout << "(model\n" << context_.model() << "\n)" << std::endl;
 }
 
