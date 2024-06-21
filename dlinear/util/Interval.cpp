@@ -4,9 +4,6 @@
 
 namespace dlinear {
 
-mpq_class Interval::infinity{-1};
-mpq_class Interval::ninfinity{0};
-
 Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) {
   DLINEAR_ASSERT(lb <= ub, "Interval: lb > ub");
 }
@@ -73,24 +70,28 @@ Interval &Interval::operator/=(const mpq_class &o) {
   return *this;
 }
 
-std::ostream &operator<<(std::ostream &os, const Interval &iv) {
-  const bool inverted = Interval::infinity < Interval::ninfinity;
-  if (iv.is_empty()) return os << "[ empty ]";
-  if (!inverted && iv.lb() <= Interval::ninfinity && iv.ub() >= Interval::infinity) return os << "[ ENTIRE ]";
+std::ostream &Interval::printToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const {
+  if (is_empty()) return os << "[ empty ]";
+  if (lb() <= ninfinity && ub() >= infinity) return os << "[ ENTIRE ]";
 
   os << "[";
-  if (!inverted && iv.lb() <= Interval::ninfinity) {
+  if (lb() <= ninfinity) {
     os << "-inf";
   } else {
-    os << iv.lb();
+    os << lb();
   }
   os << ", ";
-  if (!inverted && iv.ub() >= Interval::infinity) {
+  if (ub() >= infinity) {
     os << "inf";
   } else {
-    os << iv.ub();
+    os << ub();
   }
   return os << "]";
+}
+
+std::ostream &operator<<(std::ostream &os, const Interval &iv) {
+  if (iv.is_empty()) return os << "[ empty ]";
+  return os << "[" << iv.lb() << ", " << iv.ub() << "]";
 }
 
 Interval Interval::fromString(const std::string &s) {

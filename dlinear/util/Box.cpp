@@ -17,27 +17,44 @@
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/math.h"
+#ifdef DLINEAR_ENABLED_QSOPTEX
+#include "dlinear/libs/libqsopt_ex.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
+#include "dlinear/libs/libsoplex.h"
+#endif
 
 namespace dlinear {
 
 using gmp::ceil;
 using gmp::floor;
 
-Box::Box()
-    :  // We have this hack here because it is not allowed to have a
-       // zero interval vector. Note that because of this special case,
-       // `variables_->size() == values_.size()` do not hold. We should
-       // rely on `values_.size()`.
+Box::Box(const Config::LPSolver lp_solver)
+    : ninfinity_{},
+      infinity_{},
       values_{},
       variables_{std::make_shared<std::vector<Variable>>()},
       var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {}
-
-Box::Box(const std::vector<Variable> &variables)
-    : values_{},
-      variables_{std::make_shared<std::vector<Variable>>()},
-      var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
       idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {
+  switch (lp_solver) {
+#ifdef DLINEAR_ENABLED_QSOPTEX
+    case Config::LPSolver::QSOPTEX:
+      ninfinity_ = -qsopt_ex::infinity();
+      infinity_ = qsopt_ex::infinity();
+      break;
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
+    case Config::LPSolver::SOPLEX:
+      ninfinity_ = -soplex::infinity;
+      infinity_ = soplex::infinity;
+      break;
+#endif
+    default:
+      DLINEAR_RUNTIME_ERROR_FMT("Unsupported LP solver: {}", lp_solver);
+  }
+}
+
+Box::Box(const std::vector<Variable> &variables, const Config::LPSolver lp_solver) : Box{lp_solver} {
   values_.reserve(variables.size());
   variables_->reserve(variables.size());
   for (const Variable &var : variables) Add(var);
@@ -78,7 +95,7 @@ void Box::Add(const Variable &v) {
       values_.emplace_back(-std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
       break;
     case Variable::Type::CONTINUOUS:
-      DLINEAR_RUNTIME_ERROR("Continuous variables must specify bounds!");
+      values_.emplace_back(ninfinity_, infinity_);
   }
 }
 
@@ -98,12 +115,10 @@ void Box::Add(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
   values_[(*var_to_idx_)[v]] = Interval{lb, ub};
 }
 
-bool Box::empty() const { return values_[0].is_empty(); }
+bool Box::empty() const { return values_.empty() || values_.front().is_empty(); }
 
 void Box::set_empty() {
-  for (Interval &iv : values_) {
-    iv.set_empty();
-  }
+  for (Interval &iv : values_) iv.set_empty();
 }
 
 int Box::size() const { return static_cast<int>(variables_->size()); }
@@ -242,7 +257,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
       case Variable::Type::INTEGER:
       case Variable::Type::BINARY:
       case Variable::Type::CONTINUOUS:
-        os << interval;
+        interval.printToStream(os, -box.ninfinity(), box.infinity());
         break;
       case Variable::Type::BOOLEAN:
         if (interval.ub() == 0.0)

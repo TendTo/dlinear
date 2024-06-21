@@ -29,10 +29,14 @@ class TestCompleteSmt2NoPreprocessor : public ::testing::TestWithParam<std::tupl
   Config config_;
 
   void SetUp() override {
+    const auto& [lp_solver, filename] = GetParam();
     config_.m_precision() = 0.0;
     config_.m_complete() = true;
     config_.m_format() = Config::Format::SMT2;
+    config_.m_filename() = filename;
+    config_.m_lp_solver() = lp_solver;
     config_.m_disable_theory_preprocessor() = true;
+    std::cout << "Testing " << filename << std::endl;
   }
 };
 
@@ -41,10 +45,14 @@ class TestCompleteSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSo
   Config config_;
 
   void SetUp() override {
+    const auto& [lp_solver, filename] = GetParam();
     config_.m_precision() = 0.0;
     config_.m_complete() = true;
     config_.m_format() = Config::Format::SMT2;
+    config_.m_filename() = filename;
+    config_.m_lp_solver() = lp_solver;
     config_.m_disable_theory_preprocessor() = false;
+    std::cout << "Testing " << filename << std::endl;
   }
 };
 
@@ -69,20 +77,12 @@ INSTANTIATE_TEST_SUITE_P(TestSmt2, TestCompleteSmt2,
 //}
 
 TEST_P(TestCompleteSmt2NoPreprocessor, Smt2InputAgainstExpectedOutput) {
-  const auto& [lp_solver, filename] = GetParam();
-  std::cout << "Testing " << filename << std::endl;
-  config_.m_filename() = filename;
-  config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
   const SmtResult result = s.Parse().result;
   EXPECT_EQ(s.GetExpected(), result);
 }
 
 TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
-  const auto& [lp_solver, filename] = GetParam();
-  std::cout << "Testing " << filename << std::endl;
-  config_.m_filename() = filename;
-  config_.m_lp_solver() = lp_solver;
   SmtSolver s{config_};
   const SmtResult result = s.Parse().result;
   EXPECT_EQ(s.GetExpected(), result);

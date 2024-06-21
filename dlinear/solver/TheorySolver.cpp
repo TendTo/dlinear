@@ -17,7 +17,7 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
       is_consolidated_{false},
       predicate_abstractor_{predicate_abstractor},
       preprocessor_{*this},
-      model_{},
+      model_{config_.lp_solver()},
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
 const Box &TheorySolver::model() const {

@@ -18,10 +18,6 @@ namespace dlinear {
 
 class Interval {
  public:
-  static mpq_class infinity;      ///< Infinity value used when printing greater bounds as "inf".
-                                    ///< If the infinity values are inverted, they are not used.
-  static mpq_class ninfinity;  ///< Negative infinity value used when printing lesser bounds as "-inf"
-                                  ///< If the infinity values are inverted, they are not used.
   /**
    * Constructs an interval from a string.
    * @code
@@ -64,6 +60,8 @@ class Interval {
 
   ARITHMETIC_OPERATORS(Interval)
   GENERIC_ARITHMETIC_OPERATORS(Interval, mpq_class &)
+
+  std::ostream &printToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const;
 
  private:
   mpq_class lb_, ub_;

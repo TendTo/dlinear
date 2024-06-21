@@ -52,13 +52,14 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
     : config_{config},
       output_{output},
       logic_{},
+      model_{config_.lp_solver()},
       have_objective_{false},
       is_max_{false},
       theory_loaded_{false},
       predicate_abstractor_{config},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_)},
       theory_solver_{GetTheorySolver(config)} {
-  boxes_.push_back(Box{});
+  boxes_.push_back(Box{config_.lp_solver()});
 }
 
 void Context::Impl::Assert(const Formula &f) {
@@ -238,7 +239,7 @@ Box Context::Impl::ExtractModel(const Box &box) const {
     // Every variable is a model variable. Simply return the @p box.
     return box;
   }
-  Box new_box;
+  Box new_box{config_.lp_solver()};
   for (const Variable &v : box.variables()) {
     if (IsModelVariable(v)) {
       new_box.Add(v, box[v].lb(), box[v].ub());

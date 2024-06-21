@@ -16,8 +16,8 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"  // IWYU pragma: keep for hash_value
+#include "dlinear/util/Config.h"
 #include "dlinear/util/Interval.h"
-#include "dlinear/util/definitions.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
@@ -25,13 +25,13 @@ namespace dlinear {
 class Box {
  public:
   /** Constructs an empty box. */
-  Box();
+  explicit Box(Config::LPSolver lp_solver);
 
   /**
    * Construct a box from @p variables.
    * @param variables variables contained in the box
    */
-  explicit Box(const std::vector<Variable> &variables);
+  explicit Box(const std::vector<Variable> &variables, Config::LPSolver lp_solver);
 
   /**
    * Add the variable @p v to the box.
@@ -48,9 +48,7 @@ class Box {
   void Add(const Variable &v, const mpq_class &lb, const mpq_class &ub);
 
   /**
-   * Check if the box is empty.
-   * @return true if the box is empty
-   * @return false if the box is not empty
+   * @checker{empty, box}
    * @see set_empty
    */
   [[nodiscard]] bool empty() const;
@@ -61,10 +59,7 @@ class Box {
    */
   void set_empty();
 
-  /**
-   * Return the number of variables in the box.
-   * @return number of variables in the box
-   */
+  /** @getter{number of variables, box} */
   [[nodiscard]] int size() const;
 
   /**
@@ -95,10 +90,11 @@ class Box {
    */
   const Interval &operator[](const Variable &var) const;
 
-  /**
-   * Return the variables in the box.
-   * @return vector of variables in the box
-   */
+  /** @getter{lower bound negative infinity, box} */
+  [[nodiscard]] const mpq_class &ninfinity() const { return ninfinity_; }
+  /** @getter{upper bound infinity, box} */
+  [[nodiscard]] const mpq_class &infinity() const { return infinity_; }
+  /** @getter{variables, box} */
   [[nodiscard]] const std::vector<Variable> &variables() const;
 
   /**
@@ -176,6 +172,8 @@ class Box {
    */
   [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
+  mpq_class ninfinity_;                                                                  ///< Lower bound of the box
+  mpq_class infinity_;                                                                   ///< Upper bound of the box
   std::vector<Interval> values_;                                                         ///< Interval vector of the box
   std::shared_ptr<std::vector<Variable>> variables_;                                     ///< Variables in the box
   std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;  ///< Variable to index map

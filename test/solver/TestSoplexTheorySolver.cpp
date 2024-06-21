@@ -90,7 +90,7 @@ TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
 
   EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
   EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
-  s.Reset(Box{});
+  s.Reset(Box{Config::LPSolver::SOPLEX});
 
   EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
   EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
@@ -99,7 +99,7 @@ TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
 TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
   const int theory_col = 0;
   mpq_class lb = 5, ub = 10;
-  Box box{};
+  Box box{Config::LPSolver::SOPLEX};
   box.Add(var_, lb, ub);
   config_.m_precision() = GetParam();
   MockSoplexTheorySolver s{abstractor_};

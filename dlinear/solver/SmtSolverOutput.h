@@ -53,6 +53,7 @@ struct SmtSolverOutput {
   explicit SmtSolverOutput(const Config &config)
       : produce_models{config.produce_models()},
         with_timings{config.with_timings()},
+        model{config.lp_solver()},
         precision{config.precision()},
         actual_precision{config.precision()} {}
 
@@ -107,7 +108,7 @@ struct SmtSolverOutput {
   SmtResult result{SmtResult::UNSOLVED};  ///< Result of the computation
   mpq_class lower_bound{0};               ///< Lower bound of the result
   mpq_class upper_bound{0};               ///< Upper bound of the result
-  Box model{};                            ///< Model of the result
+  Box model;                              ///< Model of the result
   mpq_class precision;                    ///< User-provided precision of the computation
   mpq_class actual_precision;             ///< Actual precision of the computation. Always <= than precision
 };

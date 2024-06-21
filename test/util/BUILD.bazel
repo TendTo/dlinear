@@ -17,6 +17,7 @@ dlinear_cc_googletest(
     tags = ["util"],
     deps = [
         "//dlinear/util:box",
+        "//test/solver:test_solver_utils",
         "//test/symbolic:test_symbolic_utils",
     ],
 )
