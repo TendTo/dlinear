@@ -257,7 +257,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
       case Variable::Type::INTEGER:
       case Variable::Type::BINARY:
       case Variable::Type::CONTINUOUS:
-        interval.printToStream(os, -box.ninfinity(), box.infinity());
+        interval.printToStream(os, box.ninfinity(), box.infinity());
         break;
       case Variable::Type::BOOLEAN:
         if (interval.ub() == 0.0)
