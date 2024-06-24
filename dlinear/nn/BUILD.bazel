@@ -1,0 +1,37 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
+
+package(default_visibility = [
+    "//benchmark:__subpackages__",
+    "//dlinear:__subpackages__",
+    "//pydlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_srcs(
+    name = "srcs",
+    subfolder = "util",
+)
+
+dlinear_cc_library(
+    name = "neural_network_model",
+    srcs = ["NeuralNetworkModel.cpp"],
+    hdrs = ["NeuralNetworkModel.h"],
+    implementation_deps = [],
+    deps = [
+        ":node_op_type",
+        "//dlinear/libs:gmp",
+        "//dlinear/libs:onnx",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+    ],
+)
+
+dlinear_cc_library(
+    name = "node_op_type",
+    srcs = ["NodeOpType.cpp"],
+    hdrs = ["NodeOpType.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+)
+
+cpplint()
