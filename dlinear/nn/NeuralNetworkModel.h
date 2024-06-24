@@ -26,9 +26,8 @@ class NeuralNetworkModel {
   explicit NeuralNetworkModel(const std::string& filename);
   explicit NeuralNetworkModel(std::ifstream& input);
 
-  Variables all_variables() const;
-  const std::unordered_map<std::string, Variables>& variables() const { return variables_; }
-  const std::unordered_map<std::string, Matrix>& initializers() const { return initializers_; }
+  const std::unordered_map<std::string, const Matrix*>& variables() const { return variables_; }
+  const std::unordered_map<std::string, Matrix>& available_inputs() const { return available_inputs_; }
   const onnx::ModelProto& model() const { return model_; }
   const onnx::GraphProto& graph() const { return model_.graph(); }
 
@@ -41,13 +40,11 @@ class NeuralNetworkModel {
   void AddInitializer(const onnx::TensorProto& tensor);
 
   template <NodeOpType T>
-  void AddNodeImpl(const onnx::NodeProto& node);
+  bool AddNodeImpl(const onnx::NodeProto& node);
 
   onnx::ModelProto model_;
-  std::unordered_map<std::string, Variables> variables_;
-  std::unordered_map<std::string, Matrix> initializers_;
+  std::unordered_map<std::string, const Matrix*> variables_;
   std::unordered_map<std::string, Matrix> available_inputs_;
-  std::unordered_map<std::string, Matrix> outputs_;
 };
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetworkModel& model);

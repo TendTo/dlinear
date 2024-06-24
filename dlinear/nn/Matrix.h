@@ -10,20 +10,31 @@
 #include <istream>
 
 #include "dlinear/libs/libeigen.h"
-#include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libonnx.h"
+#include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/definitions.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
 class Matrix {
  public:
-  using MatrixE = Eigen::Matrix<mpq_class, Eigen::Dynamic, Eigen::Dynamic>;
-  explicit Matrix(const onnx::TensorProto &tensor);
+  using MatrixE = Eigen::Matrix<Expression, Eigen::Dynamic, Eigen::Dynamic>;
   Matrix(int rows, int cols);
+  Matrix(int64_t rows, int64_t cols);
+  explicit Matrix(const onnx::TensorProto &tensor);
+  explicit Matrix(const onnx::ValueInfoProto &value_info);
 
   [[nodiscard]] int64_t rows() const { return rows_; }
   [[nodiscard]] int64_t cols() const { return cols_; }
   [[nodiscard]] const MatrixE &matrix() const { return matrix_; }
+
+  Expression &operator()(int row, int col);
+  const Expression &operator()(int row, int col) const;
+  Expression &operator[](int index);
+  const Expression &operator[](int index) const;
+
+  ARITHMETIC_OPERATORS(Matrix);
 
  private:
   int64_t rows_;
@@ -34,3 +45,5 @@ class Matrix {
 std::ostream &operator<<(std::ostream &os, const Matrix &matrix);
 
 }  // namespace dlinear
+
+OSTREAM_FORMATTER(dlinear::Matrix);
