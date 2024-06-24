@@ -1,0 +1,108 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
+load("//tools:lexyacc.bzl", "gen_lex", "gen_yacc")
+
+package(default_visibility = [
+    "//benchmark:__subpackages__",
+    "//dlinear:__subpackages__",
+    "//pydlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_srcs(
+    name = "srcs",
+    subfolder = "vnnlib",
+)
+
+gen_lex(
+    name = "scanner",
+    src = "scanner.ll",
+    hdr = "scanner.h",
+    source_out = "scanner.ll.cpp",
+    visibility = ["//visibility:private"],
+)
+
+gen_yacc(
+    name = "parser",
+    src = "parser.yy",
+    extra_outs = ["location.hh"],
+    header_out = "parser.yy.hpp",
+    source_out = "parser.yy.cpp",
+    visibility = ["//visibility:private"],
+)
+
+dlinear_cc_library(
+    name = "sort",
+    srcs = ["Sort.cpp"],
+    hdrs = ["Sort.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "term",
+    srcs = ["Term.cpp"],
+    hdrs = ["Term.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":sort",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "function_definition",
+    srcs = ["FunctionDefinition.cpp"],
+    hdrs = ["FunctionDefinition.h"],
+    deps = [
+        ":sort",
+        ":term",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:exception",
+    ],
+)
+
+dlinear_cc_library(
+    name = "vnnlib",
+    srcs = [
+        "Driver.cpp",
+        ":parser",
+        ":scanner",
+    ],
+    hdrs = ["Driver.h"],
+    implementation_deps = [
+        ":sort",
+        "//dlinear/libs:gmp",
+        "//dlinear/solver:logic",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:expression_evaluator",
+        "//dlinear/symbolic:prefix_printer",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:math",
+    ],
+    local_defines = select({
+        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
+        "//conditions:default": [],
+    }),
+    tags = [
+        "no-dwyu",
+        "no-iwyu",
+    ],
+    deps = [
+        ":function_definition",
+        ":term",
+        "//dlinear/parser:driver",
+        "//dlinear/solver:context",
+        "//dlinear/util:scoped_structures",
+        "@rules_flex//flex:current_flex_toolchain",
+    ],
+)
+
+cpplint()
