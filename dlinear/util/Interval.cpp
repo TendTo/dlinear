@@ -1,12 +1,13 @@
 /**
-* @file Interval.cpp
-* @author dlinear (https://github.com/TendTo/dlinear)
-* @copyright 2024 dlinear
-* @licence Apache-2.0 license
-*/
+ * @file Interval.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "Interval.h"
 
 #include "dlinear/util/RoundingModeGuard.hpp"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 

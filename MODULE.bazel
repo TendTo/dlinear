@@ -53,6 +53,9 @@ bazel_dep(name = "rules_pkg", version = "0.10.1", dev_dependency = True)
 # Apache License 2.0 | Bazel rules for packaging the project
 bazel_dep(name = "rules_doxygen", version = "1.1.1", dev_dependency = True)
 
+# MIT | rules for dealing with target dependencies
+bazel_dep(name = "depend_on_what_you_use", version = "0.4.0", dev_dependency = True)
+
 # Apache License 2.0 | Integration of Boost into Bazel
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
 git_override(
@@ -68,9 +71,6 @@ git_override(
     commit = "85cbd99369a3ed3f8c31234d2d887026f3e66bbc",
     remote = "https://github.com/TendTo/bazel_iwyu",
 )
-
-# MIT | rules for dealing with target dependencies
-bazel_dep(name = "depend_on_what_you_use", version = "0.3.0", dev_dependency = True)
 
 # Repository dependencies (see WORKSPACE for more details)
 

@@ -20,7 +20,7 @@ bool is_integer(const double v) {
     return false;
   }
   double intpart;  // dummy variable
-  return modf(v, &intpart) == 0.0;
+  return std::modf(v, &intpart) == 0.0;
 }
 
 bool is_integer(const mpq_class &v) {

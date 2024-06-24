@@ -109,14 +109,11 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":exception",
-        ":math",
     ],
     deps = [
         ":definitions",
         ":logging",
         "//dlinear/libs:gmp",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
     ],
 )
 

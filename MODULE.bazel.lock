@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "8ebfe27f817a71cc764a2a4a84b2da1228ac8a273810df0f9c46d5fc925347e2",
+  "moduleFileHash": "f3b4330bd5f4e73ec6db3474922664192c60fca1e4afd338b5921541b2a21765",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -314,9 +314,9 @@
         "googletest": "googletest@1.14.0.bcr.1",
         "rules_pkg": "rules_pkg@0.10.1",
         "rules_doxygen": "rules_doxygen@1.1.1",
+        "depend_on_what_you_use": "depend_on_what_you_use@0.4.0",
         "com_github_nelhage_rules_boost": "com_github_nelhage_rules_boost@_",
         "bazel_iwyu": "bazel_iwyu@_",
-        "depend_on_what_you_use": "depend_on_what_you_use@0.3.0",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
       }
@@ -1019,6 +1019,54 @@
         }
       }
     },
+    "depend_on_what_you_use@0.4.0": {
+      "name": "depend_on_what_you_use",
+      "version": "0.4.0",
+      "key": "depend_on_what_you_use@0.4.0",
+      "repoName": "depend_on_what_you_use",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [
+        {
+          "extensionBzlFile": "@depend_on_what_you_use//third_party:extensions.bzl",
+          "extensionName": "non_module_dependencies",
+          "usingModule": "depend_on_what_you_use@0.4.0",
+          "location": {
+            "file": "https://bcr.bazel.build/modules/depend_on_what_you_use/0.4.0/MODULE.bazel",
+            "line": 11,
+            "column": 40
+          },
+          "imports": {
+            "dwyu_pcpp": "dwyu_pcpp"
+          },
+          "devImports": [],
+          "tags": [],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        }
+      ],
+      "deps": {
+        "rules_cc": "rules_cc@0.0.9",
+        "rules_python": "rules_python@0.33.1",
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
+      },
+      "repoSpec": {
+        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+        "ruleClassName": "http_archive",
+        "attributes": {
+          "urls": [
+            "https://github.com/martis42/depend_on_what_you_use/releases/download/0.4.0/depend_on_what_you_use-0.4.0.tar.gz"
+          ],
+          "integrity": "sha256-5zQJmskiY/YfFV4qOdwpk3voGNFtJYkbFmR2cQ7CWsQ=",
+          "strip_prefix": "depend_on_what_you_use-0.4.0",
+          "remote_patches": {
+            "https://bcr.bazel.build/modules/depend_on_what_you_use/0.4.0/patches/module_dot_bazel.patch": "sha256-ZVqyVNzEdCfe+6D0OxK1d0N7M+qAdxpF/Ft/7SDZCR8="
+          },
+          "remote_patch_strip": 0
+        }
+      }
+    },
     "com_github_nelhage_rules_boost@_": {
       "name": "com_github_nelhage_rules_boost",
       "version": "",
@@ -1134,54 +1182,6 @@
         "bazel_skylib": "bazel_skylib@1.6.1",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
-      }
-    },
-    "depend_on_what_you_use@0.3.0": {
-      "name": "depend_on_what_you_use",
-      "version": "0.3.0",
-      "key": "depend_on_what_you_use@0.3.0",
-      "repoName": "depend_on_what_you_use",
-      "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
-      "extensionUsages": [
-        {
-          "extensionBzlFile": "@depend_on_what_you_use//third_party:extensions.bzl",
-          "extensionName": "non_module_dependencies",
-          "usingModule": "depend_on_what_you_use@0.3.0",
-          "location": {
-            "file": "https://bcr.bazel.build/modules/depend_on_what_you_use/0.3.0/MODULE.bazel",
-            "line": 11,
-            "column": 40
-          },
-          "imports": {
-            "dwyu_pcpp": "dwyu_pcpp"
-          },
-          "devImports": [],
-          "tags": [],
-          "hasDevUseExtension": false,
-          "hasNonDevUseExtension": true
-        }
-      ],
-      "deps": {
-        "rules_cc": "rules_cc@0.0.9",
-        "rules_python": "rules_python@0.33.1",
-        "bazel_tools": "bazel_tools@_",
-        "local_config_platform": "local_config_platform@_"
-      },
-      "repoSpec": {
-        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
-        "ruleClassName": "http_archive",
-        "attributes": {
-          "urls": [
-            "https://github.com/martis42/depend_on_what_you_use/releases/download/0.3.0/depend_on_what_you_use-0.3.0.tar.gz"
-          ],
-          "integrity": "sha256-tWzfrtDXSWf++1S90/Bb0WfExOuqKmevli2WnmpRlis=",
-          "strip_prefix": "depend_on_what_you_use-0.3.0",
-          "remote_patches": {
-            "https://bcr.bazel.build/modules/depend_on_what_you_use/0.3.0/patches/module_dot_bazel.patch": "sha256-boHUzmbHnNuCsnGTahBX3s2YraKDchMGZwyZZzj2e6g="
-          },
-          "remote_patch_strip": 0
-        }
       }
     },
     "bazel_tools@_": {
