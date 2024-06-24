@@ -49,4 +49,12 @@ dlinear_cc_library(
     }),
 )
 
+dlinear_cc_library(
+    name = "onnx",
+    srcs = ["libonnx.cpp"],
+    hdrs = ["libonnx.h"],
+    tags = ["no-iwyu"],
+    deps = ["@onnx//:onnx_proto_headers"],
+)
+
 cpplint()

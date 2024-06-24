@@ -1,6 +1,9 @@
 """Module for the dlinear repository"""
 
-module(name = "dlinear", version = "0.0.1")
+module(
+    name = "dlinear",
+    version = "0.0.1",
+)
 
 # Apache License 2.0 | rules_cc for building C++ libraries with Bazel
 bazel_dep(name = "rules_cc", version = "0.0.9")
@@ -34,6 +37,9 @@ bazel_dep(name = "rules_flex", version = "0.2.1")
 
 # https://www.gnu.org/software/bison/manual/html_node/Conditions.html | Bison parser generator
 bazel_dep(name = "rules_bison", version = "0.2.2")
+
+# Apache License 2.0 | Open Neural Network Exchange (ONNX) format support
+bazel_dep(name = "onnx", version = "1.15.0")
 
 # https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
 bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
@@ -187,6 +193,7 @@ use_repo(bison, "bison")
 register_toolchains("@bison//:toolchain")
 
 new_local_repository = use_repo_rule("//tools:local.bzl", "new_local_repository")
+
 new_local_repository(
     name = "system_deps",
     build_file = "//third_party:system_deps.BUILD.bazel",
