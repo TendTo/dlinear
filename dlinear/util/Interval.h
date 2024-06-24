@@ -13,6 +13,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/util/definitions.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

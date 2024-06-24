@@ -107,6 +107,9 @@ dlinear_cc_library(
         "Interval.h",
         "RoundingModeGuard.hpp",
     ],
+    implementation_deps = [
+        ":exception",
+    ],
     deps = [
         ":definitions",
         "//dlinear/libs:gmp",
