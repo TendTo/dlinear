@@ -37,29 +37,24 @@ class Config {
    * @see Config::lp_solver
    */
   enum class LPSolver {
-    SOPLEX = 0,
+    SOPLEX = 0,  ///< Default option
     QSOPTEX = 1,
   };
-  /**
-   * Default phase for the SAT solver.
-   */
+  /** Default phase for the SAT solver. */
   enum class SatDefaultPhase {
     False = 0,
     True = 1,
     JeroslowWang = 2,  ///< Default option
     RandomInitialPhase = 3
   };
-  /**
-   * Format of the input file.
-   */
+  /** Format of the input file. */
   enum class Format {
-    AUTO = 0,  ///< Default option
-    SMT2 = 1,
-    MPS = 2,
+    AUTO,   ///< Automatically detect the input format based on the file extension. Default option
+    SMT2,   ///< SMT2 format
+    MPS,    ///< MPS format
+    VNNLIB  ///< VNNLIB format
   };
-  /**
-   * LP mode used by the LP solver.
-   */
+  /** LP mode used by the LP solver. */
   enum class LPMode {
     AUTO = 0,  ///< Default option
     PURE_PRECISION_BOOSTING = 1,
@@ -72,18 +67,23 @@ class Config {
   explicit Config(bool read_from_stdin);
 
  public:
+  static constexpr std::string_view help_onnx_file{"ONNX file name"};
+  static constexpr std::string_view help_filename{"Input file name"};
+
   [[nodiscard]] std::string filename() const { return filename_.get(); }
   [[nodiscard]] std::string filename_extension() const;
   OptionValue<std::string> &m_filename() { return filename_; }
-  static constexpr std::string_view help_filename{"Input file name"};
+  [[nodiscard]] std::string onnx_file() const { return onnx_file_.get(); }
+  OptionValue<std::string> &m_onnx_file() { return onnx_file_; }
   [[nodiscard]] bool needs_expansion() const;
 
  private:
   OptionValue<std::string> filename_{""};
+  OptionValue<std::string> onnx_file_{""};
 
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
                     "Input file format\n"
-                    "\t\tOne of: auto (1), smt2 (2), mps (3)")
+                    "\t\tOne of: auto (1), smt2 (2), mps (3), vnnlib (4)")
   DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
   DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4,
                     "Delta precision used by the LP solver solver.\n"
