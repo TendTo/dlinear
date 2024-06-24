@@ -176,6 +176,9 @@ class Expression {
   // NOLINTNEXTLINE(runtime/explicit): This conversion is desirable.
   Expression(const double d);
   Expression(int d);
+  Expression(long d);
+  Expression(uint32_t d);
+  Expression(uint64_t d);
   /** Constructs an expression from @p var.
    * @pre @p var is neither a dummy nor a BOOLEAN variable.
    */
