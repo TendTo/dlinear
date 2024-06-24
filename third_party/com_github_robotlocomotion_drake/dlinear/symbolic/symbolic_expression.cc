@@ -1013,5 +1013,5 @@ Expression operator-(const Variable &var) { return -Expression{var}; }
 
 
 mpq_class std::numeric_limits<dlinear::drake::symbolic::Expression>::infinity() {
-  return mpq_class {"100000000000000000000000"}; // TODO: make sure this is correct
+  return mpq_class {1e100}; // TODO: make sure this is correct for Qsotex too
 }
