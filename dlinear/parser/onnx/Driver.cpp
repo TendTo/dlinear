@@ -1,48 +1,69 @@
 /**
- * @file NeuralNetworkModel.cpp
+ * @file OnnxDriver.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * @brief Neural network model.
  */
-#include "NeuralNetworkModel.h"
+#include "Driver.h"
 
 #include <fmt/core.h>
 
-#include "dlinear/nn/NodeOpType.h"
+#include <fstream>
 
-namespace dlinear {
+#include "dlinear/parser/onnx/NodeOpType.h"
 
-NeuralNetworkModel::NeuralNetworkModel(const std::string& filename) {
+namespace dlinear::onnxfile {
+
+OnnxDriver::OnnxDriver(Context& context) : Driver{context, "OnnxDriver"} {}
+
+bool OnnxDriver::ParseStreamCore(std::istream& in) {
+  const bool res = model_.ParseFromIstream(&in);
+  if (!res) {
+    DLINEAR_ERROR("Failed to parse model from input stream");
+    return false;
+  }
+  ParseGraph();
+  return true;
+}
+
+bool OnnxDriver::ParseFile(const std::string& filename) {
   std::ifstream input(filename, std::ios::binary);
-  if (!input) DLINEAR_RUNTIME_ERROR_FMT("Failed to open file: {}", filename);
-  const bool res = model_.ParseFromIstream(&input);
-  if (!res) DLINEAR_RUNTIME_ERROR_FMT("Failed to parse model: {}", filename);
-  ParseGraph();
+  if (!input.is_open()) {
+    DLINEAR_ERROR_FMT("Failed to open file: {}", filename);
+    return false;
+  }
+  return ParseStream(input);
 }
 
-NeuralNetworkModel::NeuralNetworkModel(std::ifstream& input) {
-  const bool res = model_.ParseFromIstream(&input);
-  if (!res) DLINEAR_RUNTIME_ERROR("Failed to parse model from input stream");
-  ParseGraph();
-}
-
-void NeuralNetworkModel::ParseGraph() {
-  for (const onnx::ValueInfoProto& input : model_.graph().input()) AddValueInfo(input);
-  for (const onnx::TensorProto& tensor : model_.graph().initializer()) AddInitializer(tensor);
+void OnnxDriver::ParseGraph() {
+  DLINEAR_TRACE("OnnxDriver::ParseGraph()");
+  for (const ::onnx::ValueInfoProto& input : model_.graph().input()) AddValueInfo(input, true);
+  for (const ::onnx::TensorProto& tensor : model_.graph().initializer()) AddInitializer(tensor);
+  for (const ::onnx::ValueInfoProto& output : model_.graph().output()) AddValueInfo(output);
   AddNodes();
-  for (const onnx::ValueInfoProto& output : model_.graph().output()) AddValueInfo(output);
+  DLINEAR_DEBUG_FMT("OnnxDriver::ParseGraph(): assertions {}", context_.assertions());
 }
 
-void NeuralNetworkModel::AddInitializer(const onnx::TensorProto& tensor) {
+void OnnxDriver::AddInitializer(const ::onnx::TensorProto& tensor) {
   DLINEAR_ASSERT(tensor.has_name(), "TensorProto must have a name");
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
   DLINEAR_ASSERT(tensor.dims_size() > 0, "TensorProto must have at least one dimension");
   available_inputs_.emplace(tensor.name(), tensor);
 }
 
+void OnnxDriver::AddFormula(const std::string& output_name) {
+  if (!variables_.contains(output_name) || !available_inputs_.contains(output_name)) return;
+  const Matrix& var_mat = variables_.at(output_name);
+  const Matrix& input_mat = available_inputs_.at(output_name);
+  DLINEAR_ASSERT(var_mat.rows() == input_mat.rows(), "Variable and input must have the same number of rows");
+  DLINEAR_ASSERT(var_mat.cols() == input_mat.cols(), "Variable and input must have the same number of cols");
+  for (int i = 0; i < var_mat.matrix().size(); i++) Assert(var_mat[i] == input_mat[i]);
+  DLINEAR_TRACE_FMT("Added formula for {}. Current assertions: {}", output_name, context_.assertions());
+}
+
 template <>
-bool NeuralNetworkModel::AddNodeImpl<NodeOpType::Add>(const onnx::NodeProto& node) {
+void OnnxDriver::AddNodeImpl<NodeOpType::Add>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
@@ -53,11 +74,11 @@ bool NeuralNetworkModel::AddNodeImpl<NodeOpType::Add>(const onnx::NodeProto& nod
   DLINEAR_TRACE_FMT("Add node: {} = {} + {}", output, input1, input2);
   DLINEAR_TRACE_FMT("{} = {} + {}", available_inputs_.at(output), available_inputs_.at(input1),
                     available_inputs_.at(input2));
-  return true;
+  AddFormula(output);
 }
 
 template <>
-bool NeuralNetworkModel::AddNodeImpl<NodeOpType::MatMul>(const onnx::NodeProto& node) {
+void OnnxDriver::AddNodeImpl<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
@@ -69,11 +90,11 @@ bool NeuralNetworkModel::AddNodeImpl<NodeOpType::MatMul>(const onnx::NodeProto& 
   DLINEAR_TRACE_FMT("MatMul node: {} = {} * {}", output, input1, input2);
   DLINEAR_TRACE_FMT("{} = {} * {}", available_inputs_.at(input1) * available_inputs_.at(input2),
                     available_inputs_.at(input1), available_inputs_.at(input2));
-  return true;
+  AddFormula(output);
 }
 
 template <>
-bool NeuralNetworkModel::AddNodeImpl<NodeOpType::Relu>(const onnx::NodeProto& node) {
+void OnnxDriver::AddNodeImpl<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
@@ -89,14 +110,13 @@ bool NeuralNetworkModel::AddNodeImpl<NodeOpType::Relu>(const onnx::NodeProto& no
     relu[i] = if_then_else(e >= 0, e, 0);
   }
   available_inputs_.emplace(output, relu);
-  DLINEAR_DEBUG_FMT("MatMul node: {} = 0 if input < 0 else {}", output, input);
-  DLINEAR_ERROR_FMT("{}", relu);
-  return true;
+  DLINEAR_DEBUG_FMT("MatMul node: {} = 0 if input < 0 else {}\n{}", output, input, relu);
+  AddFormula(output);
 }
 
-void NeuralNetworkModel::AddNodes() {
-  std::list<const onnx::NodeProto*> nodes;
-  for (const onnx::NodeProto& node : model_.graph().node()) nodes.push_back(&node);
+void OnnxDriver::AddNodes() {
+  std::list<const ::onnx::NodeProto*> nodes;
+  for (const ::onnx::NodeProto& node : model_.graph().node()) nodes.push_back(&node);
   bool added = true;
   while (added) {
     added = false;
@@ -110,7 +130,7 @@ void NeuralNetworkModel::AddNodes() {
   }
 }
 
-bool NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
+bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.has_op_type(), "NodeProto must have an op_type");
 
   const bool missing_input = std::any_of(node.input().begin(), node.input().end(), [this](const std::string& input) {
@@ -124,7 +144,8 @@ bool NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
   const NodeOpType op_type = parseNodeOpType(node.op_type());
   switch (op_type) {
     case NodeOpType::Add:
-      return AddNodeImpl<NodeOpType::Add>(node);
+      AddNodeImpl<NodeOpType::Add>(node);
+      break;
     case NodeOpType::AveragePool:
     case NodeOpType::BatchNormalization:
     case NodeOpType::Concat:
@@ -136,12 +157,14 @@ bool NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
     case NodeOpType::LeakyRelu:
       DLINEAR_UNREACHABLE();
     case NodeOpType::MatMul:
-      return AddNodeImpl<NodeOpType::MatMul>(node);
+      AddNodeImpl<NodeOpType::MatMul>(node);
+      break;
     case NodeOpType::MaxPool:
     case NodeOpType::Mul:
       DLINEAR_UNREACHABLE();
     case NodeOpType::Relu:
-      return AddNodeImpl<NodeOpType::Relu>(node);
+      AddNodeImpl<NodeOpType::Relu>(node);
+      break;
     case NodeOpType::Reshape:
     case NodeOpType::Sigmoid:
     case NodeOpType::Softmax:
@@ -150,32 +173,34 @@ bool NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
     default:
       DLINEAR_UNREACHABLE();
   }
+  return true;
 }
 
-void NeuralNetworkModel::AddValueInfo(const onnx::ValueInfoProto& value_info) {
+void OnnxDriver::AddValueInfo(const ::onnx::ValueInfoProto& value_info, const bool is_input) {
   DLINEAR_ASSERT(value_info.has_type(), "ValueInfoProto must have a type");
   DLINEAR_ASSERT(value_info.has_name(), "ValueInfoProto must have a name");
   switch (value_info.type().value_case()) {
-    case onnx::TypeProto::kTensorType:
-      AddValueInfoTensor(value_info);
+    case ::onnx::TypeProto::kTensorType:
+      AddValueInfoTensor(value_info, is_input);
       break;
     default:
       DLINEAR_UNREACHABLE();
   }
 }
 
-void NeuralNetworkModel::AddValueInfoTensor(const onnx::ValueInfoProto& value_info) {
+void OnnxDriver::AddValueInfoTensor(const ::onnx::ValueInfoProto& value_info, const bool is_input) {
   DLINEAR_ASSERT(value_info.has_name(), "ValueInfoProto must have a name");
-  DLINEAR_ASSERT(value_info.type().value_case() == onnx::TypeProto::kTensorType, "ValueInfoProto must be a tensor");
-  const auto [it, res] = available_inputs_.emplace(value_info.name(), Matrix(value_info));
-  variables_.emplace(value_info.name(), &it->second);
+  DLINEAR_ASSERT(value_info.type().value_case() == ::onnx::TypeProto::kTensorType, "ValueInfoProto must be a tensor");
+  const auto [it, res] = variables_.emplace(value_info.name(), Matrix(value_info, is_input ? "X" : "Y"));
+  if (is_input) available_inputs_.emplace(value_info.name(), it->second);
+  for (const auto& exp : it->second) context_.DeclareVariable(get_variable(exp));
 }
 
-std::ostream& operator<<(std::ostream& os, const NeuralNetworkModel& model) {
-  os << "NeuralNetworkModel(\n";
+std::ostream& operator<<(std::ostream& os, const OnnxDriver& model) {
+  os << "OnnxDriver(\n";
   os << "------\nVARIABLES\n------\n";
   for (const auto& [name, variables] : model.variables()) {
-    os << name << ": " << *variables << "\n";
+    os << name << ": " << variables << "\n";
   }
   os << "------\nINPUTS\n------\n";
   for (const auto& [name, values] : model.available_inputs()) {
@@ -184,4 +209,4 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkModel& model) {
   return os << ")";
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::onnxfile

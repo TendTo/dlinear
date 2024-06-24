@@ -10,22 +10,7 @@ package(default_visibility = [
 
 dlinear_srcs(
     name = "srcs",
-    subfolder = "util",
-)
-
-dlinear_cc_library(
-    name = "neural_network_model",
-    srcs = ["NeuralNetworkModel.cpp"],
-    hdrs = ["NeuralNetworkModel.h"],
-    implementation_deps = [],
-    deps = [
-        ":matrix",
-        ":node_op_type",
-        "//dlinear/libs:gmp",
-        "//dlinear/libs:onnx",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
-    ],
+    subfolder = "onnx",
 )
 
 dlinear_cc_library(
@@ -48,6 +33,25 @@ dlinear_cc_library(
         "//dlinear/symbolic",
         "//dlinear/util:definitions",
         "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "driver",
+    srcs = ["Driver.cpp"],
+    hdrs = ["Driver.h"],
+    local_defines = select({
+        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":matrix",
+        ":node_op_type",
+        "//dlinear/libs:gmp",
+        "//dlinear/libs:onnx",
+        "//dlinear/parser:driver",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
     ],
 )
 

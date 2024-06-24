@@ -60,7 +60,7 @@ class Driver {
    * @return true if successfully parsed
    * @return false if an error occurred
    */
-  bool ParseFile(const std::string &filename);
+  virtual bool ParseFile(const std::string &filename);
 
   /** General error handling. */
   static void Error(const std::string &m);
