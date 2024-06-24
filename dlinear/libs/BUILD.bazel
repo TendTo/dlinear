@@ -57,4 +57,15 @@ dlinear_cc_library(
     deps = ["@onnx//:onnx_proto_headers"],
 )
 
+dlinear_cc_library(
+    name = "eigen",
+    srcs = ["libeigen.cpp"],
+    hdrs = ["libeigen.h"],
+    tags = ["no-iwyu"],
+    deps = [
+        ":gmp",
+        "@eigen",
+    ],
+)
+
 cpplint()

@@ -31,9 +31,34 @@
 // IWYU pragma: end_exports
 
 // From dlinear
+#include "dlinear/libs/libeigen.h"
 #include "dlinear/symbolic/hash.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/logging.h"
+
+namespace Eigen {
+
+template <>
+struct NumTraits<dlinear::drake::symbolic::Expression> : GenericNumTraits<dlinear::drake::symbolic::Expression> {
+  typedef mpq_class Real;
+  typedef mpq_class NonInteger;
+  typedef mpq_class Nested;
+
+  static Real epsilon() { return 0; }
+  static Real dummy_precision() { return 0; }
+  static int digits10() { return 0; }
+
+  enum {
+    IsInteger = 0,
+    IsSigned = 1,
+    IsComplex = 0,
+    RequireInitialization = 1,
+    ReadCost = 6,
+    AddCost = 150,
+    MulCost = 100
+  };
+};
+}  // namespace Eigen
 
 namespace dlinear {
 

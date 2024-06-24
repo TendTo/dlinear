@@ -37,6 +37,7 @@ dlinear_cc_library(
     ],
     deps = [
         ":literal",
+        "//dlinear/libs:eigen",
         "//dlinear/util:logging",
         "//third_party/com_github_robotlocomotion_drake:drake_symbolic",
     ],
