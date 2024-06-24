@@ -39,87 +39,23 @@ void NeuralNetworkModel::ParseGraph() {
   for (const onnx::ValueInfoProto& input : model_.graph().input()) AddValueInfo(input);
   for (const onnx::ValueInfoProto& output : model_.graph().output()) AddValueInfo(output);
   for (const onnx::TensorProto& tensor : model_.graph().initializer()) AddInitializer(tensor);
-  for (const onnx::NodeProto& node : model_.graph().node()) AddNode(node);
+  AddNodes();
 }
 
 void NeuralNetworkModel::AddInitializer(const onnx::TensorProto& tensor) {
   DLINEAR_ASSERT(tensor.has_name(), "TensorProto must have a name");
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
   DLINEAR_ASSERT(tensor.dims_size() > 0, "TensorProto must have at least one dimension");
-
-  const void* const raw_data = tensor.has_raw_data() ? tensor.raw_data().data() : nullptr;
-  int64_t size = 1;
-  if (raw_data != nullptr) {
-    for (const int64_t dim : tensor.dims()) {
-      size *= dim;
-      DLINEAR_ASSERT(dim > 0, "Dimensions must be positive");
-    }
-  }
-
-  switch (tensor.data_type()) {
-    case onnx::TensorProto_DataType::TensorProto_DataType_FLOAT:
-      initializers_[tensor.name()] =
-          raw_data == nullptr
-              ? std::vector<mpq_class>(tensor.float_data().begin(), tensor.float_data().end())
-              : std::vector<mpq_class>(static_cast<const float*>(raw_data), static_cast<const float*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_DOUBLE:
-      initializers_[tensor.name()] =
-          raw_data == nullptr ? std::vector<mpq_class>(tensor.double_data().begin(), tensor.double_data().end())
-                              : std::vector<mpq_class>(static_cast<const double*>(raw_data),
-                                                       static_cast<const double*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_UINT64:
-      initializers_[tensor.name()] =
-          raw_data == nullptr ? std::vector<mpq_class>(tensor.uint64_data().begin(), tensor.uint64_data().end())
-                              : std::vector<mpq_class>(static_cast<const uint64_t*>(raw_data),
-                                                       static_cast<const uint64_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_INT64:
-      initializers_[tensor.name()] =
-          raw_data == nullptr ? std::vector<mpq_class>(tensor.int64_data().begin(), tensor.int64_data().end())
-                              : std::vector<mpq_class>(static_cast<const int64_t*>(raw_data),
-                                                       static_cast<const int64_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_BOOL:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for bool data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const bool*>(raw_data), static_cast<const bool*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_INT8:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int8 data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const int8_t*>(raw_data), static_cast<const int8_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_INT16:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int16 data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const int16_t*>(raw_data), static_cast<const int16_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_INT32:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int32 data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const int32_t*>(raw_data), static_cast<const int32_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_UINT8:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for uint8 data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const uint8_t*>(raw_data), static_cast<const uint8_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_UINT32:
-      DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for uint32 data type");
-      initializers_[tensor.name()] =
-          std::vector<mpq_class>(static_cast<const uint32_t*>(raw_data), static_cast<const uint32_t*>(raw_data) + size);
-      break;
-    case onnx::TensorProto_DataType::TensorProto_DataType_UNDEFINED:
-    default:
-      DLINEAR_RUNTIME_ERROR_FMT("Unsupported data type: {}", tensor.data_type());
-  }
+  initializers_.emplace(tensor.name(), tensor);
 }
 
 template <>
 void NeuralNetworkModel::AddNodeImpl<NodeOpType::Add>(const onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
+  for (const std::string& input : node.input()) {
+    DLINEAR_ASSERT(initializers_.contains(input) || variables_.contains(input), "Input variable not found");
+
+  }
 }
 
 template <>
@@ -132,7 +68,23 @@ void NeuralNetworkModel::AddNodeImpl<NodeOpType::Relu>(const onnx::NodeProto& no
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
 }
 
-void NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
+void NeuralNetworkModel::AddNodes() {
+  std::list<const onnx::NodeProto*> nodes;
+  for (const onnx::NodeProto& node : model_.graph().node()) nodes.push_back(&node);
+  bool added = true;
+  while (added) {
+    added = false;
+    for (auto it = nodes.begin(); it != nodes.end(); it++) {
+      if (AddNode(**it)) {
+        it = nodes.erase(it);
+        it--;
+        added = true;
+      }
+    }
+  }
+}
+
+bool NeuralNetworkModel::AddNode(const onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.has_op_type(), "NodeProto must have an op_type");
 
   const NodeOpType op_type = parseNodeOpType(node.op_type());
@@ -219,11 +171,7 @@ std::ostream& operator<<(std::ostream& os, const NeuralNetworkModel& model) {
   }
   os << "], initializers: [";
   for (const auto& [name, values] : model.initializers()) {
-    os << name << ": [";
-    for (const auto& value : values) {
-      os << value << ", ";
-    }
-    os << "], ";
+    os << name << ": " << values << "\n";
   }
   return os << "])";
 }

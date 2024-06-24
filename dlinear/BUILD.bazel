@@ -49,6 +49,7 @@ dlinear_cc_binary(
         "no-iwyu",
     ],
     deps = [
+        "//dlinear/libs:eigen",
         "//dlinear/libs:onnx",
         "//dlinear/nn:neural_network_model",
     ],

@@ -145,6 +145,8 @@ Expression::Expression(const mpq_class &d) : Expression{make_cell(d)} {}
 
 Expression::Expression(const double d) : Expression{make_cell(d)} {}
 
+Expression::Expression(const int d) : Expression{mpq_class(d)} {}
+
 Expression::Expression(ExpressionCell *ptr) : ptr_{ptr} {
   assert(ptr_ != nullptr);
   ptr_->increase_rc();

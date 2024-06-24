@@ -56,6 +56,9 @@ bazel_dep(name = "rules_doxygen", version = "1.1.1", dev_dependency = True)
 # MIT | rules for dealing with target dependencies
 bazel_dep(name = "depend_on_what_you_use", version = "0.4.0", dev_dependency = True)
 
+# Mozilla Public License 2.0 | eigen linear algebra library
+bazel_dep(name = "eigen", version = "3.4.0")
+
 # Apache License 2.0 | Integration of Boost into Bazel
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
 git_override(

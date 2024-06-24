@@ -7,11 +7,14 @@
  */
 #pragma once
 
+#include <list>
 #include <string>
 #include <unordered_map>
 
+#include "dlinear/libs/libeigen.h"
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libonnx.h"
+#include "dlinear/nn/Matrix.h"
 #include "dlinear/nn/NodeOpType.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -25,13 +28,14 @@ class NeuralNetworkModel {
 
   Variables all_variables() const;
   const std::unordered_map<std::string, Variables>& variables() const { return variables_; }
-  const std::unordered_map<std::string, std::vector<mpq_class>>& initializers() const { return initializers_; }
+  const std::unordered_map<std::string, Matrix>& initializers() const { return initializers_; }
   const onnx::ModelProto& model() const { return model_; }
   const onnx::GraphProto& graph() const { return model_.graph(); }
 
  private:
   void ParseGraph();
-  void AddNode(const onnx::NodeProto& node);
+  void AddNodes();
+  bool AddNode(const onnx::NodeProto& node);
   void AddValueInfo(const onnx::ValueInfoProto& value_info);
   void AddValueInfoTensor(const onnx::ValueInfoProto& value_info);
   void AddInitializer(const onnx::TensorProto& tensor);
@@ -41,7 +45,9 @@ class NeuralNetworkModel {
 
   onnx::ModelProto model_;
   std::unordered_map<std::string, Variables> variables_;
-  std::unordered_map<std::string, std::vector<mpq_class>> initializers_;
+  std::unordered_map<std::string, Matrix> initializers_;
+  std::unordered_map<std::string, Matrix> available_inputs_;
+  std::unordered_map<std::string, Matrix> outputs_;
 };
 
 std::ostream& operator<<(std::ostream& os, const NeuralNetworkModel& model);

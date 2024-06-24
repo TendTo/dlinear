@@ -175,6 +175,7 @@ class Expression {
   Expression(const mpq_class &d);
   // NOLINTNEXTLINE(runtime/explicit): This conversion is desirable.
   Expression(const double d);
+  Expression(int d);
   /** Constructs an expression from @p var.
    * @pre @p var is neither a dummy nor a BOOLEAN variable.
    */

@@ -19,6 +19,7 @@ dlinear_cc_library(
     hdrs = ["NeuralNetworkModel.h"],
     implementation_deps = [],
     deps = [
+        ":matrix",
         ":node_op_type",
         "//dlinear/libs:gmp",
         "//dlinear/libs:onnx",
@@ -32,6 +33,17 @@ dlinear_cc_library(
     srcs = ["NodeOpType.cpp"],
     hdrs = ["NodeOpType.h"],
     implementation_deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
+    name = "matrix",
+    srcs = ["Matrix.cpp"],
+    hdrs = ["Matrix.h"],
+    implementation_deps = [
+        "//dlinear/libs:eigen",
+        "//dlinear/libs:gmp",
+        "//dlinear/libs:onnx",
+    ],
 )
 
 cpplint()
