@@ -17,7 +17,10 @@ Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
-bool Config::needs_expansion() const { return format() == Config::Format::SMT2 || filename_extension() == "smt2"; }
+bool Config::needs_expansion() const {
+  return format() == Config::Format::SMT2 || format() == Config::Format::VNNLIB || filename_extension() == "smt2" ||
+         filename_extension() == "vnnlib";
+}
 
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
   switch (sat_default_phase) {
@@ -53,6 +56,8 @@ std::ostream &operator<<(std::ostream &os, const Config::Format &format) {
       return os << "mps";
     case Config::Format::SMT2:
       return os << "smt2";
+    case Config::Format::VNNLIB:
+      return os << "vnnlib";
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -89,6 +94,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "nlopt_maxeval = " << config.nlopt_maxeval_.get() << ",\n"
             << "nlopt_maxtime = " << config.nlopt_maxtime_.get() << ",\n"
             << "number_of_jobs = " << config.number_of_jobs_.get() << ",\n"
+            << "onnx_file = '" << config.onnx_file_.get() << ",\n"
             << "optimize = '" << config.optimize_.get() << "',\n"
             << "precision = " << config.precision_.get() << ",\n"
             << "produce_model = " << config.produce_models_.get() << ",\n"

@@ -76,6 +76,7 @@ void ArgParser::addOptions() {
   DLINEAR_TRACE("ArgParser::addOptions: adding options");
   parser_.add_description(prompt());
   parser_.add_argument("file").help("input file").default_value("");
+  parser_.add_argument("--onnx-file").help("ONNX file name").default_value("").nargs(1);
 
   DLINEAR_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
   DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
@@ -127,7 +128,8 @@ void ArgParser::addOptions() {
         if (value == "auto" || value == "1") return Config::Format::AUTO;
         if (value == "smt2" || value == "2") return Config::Format::SMT2;
         if (value == "mps" || value == "3") return Config::Format::MPS;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED("--format", value, "[ auto | smt2 | mps ] or [ 1 | 2 | 3 ]");
+        if (value == "vnnlib" || value == "4") return Config::Format::VNNLIB;
+        DLINEAR_INVALID_ARGUMENT_EXPECTED("--format", value, "[ auto | smt2 | mps  | vnnlib ] or [ 1 | 2 | 3 | 4 ]");
       })
       .nargs(1);
   parser_.add_argument("--lp-solver")
@@ -164,7 +166,6 @@ void ArgParser::addOptions() {
                                           "[ false | true | jeroslow-wang | random ] or [ 1 | 2 | 3 | 4 ]");
       })
       .nargs(1);
-
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
 
@@ -206,6 +207,7 @@ Config ArgParser::toConfig() const {
     config.m_nlopt_maxeval().set_from_command_line(parser_.get<unsigned int>("nlopt-maxeval"));
   if (parser_.is_used("nlopt-maxtime"))
     config.m_nlopt_maxtime().set_from_command_line(parser_.get<double>("nlopt-maxtime"));
+  if (parser_.is_used("onnx-file")) config.m_onnx_file().set_from_command_line(parser_.get<std::string>("onnx-file"));
   if (parser_.is_used("optimize")) config.m_optimize().set_from_command_line(parser_.get<bool>("optimize"));
   if (parser_.is_used("polytope")) config.m_use_polytope().set_from_command_line(parser_.get<bool>("polytope"));
   if (parser_.is_used("precision")) config.m_precision().set_from_command_line(parser_.get<double>("precision"));
@@ -246,8 +248,14 @@ void ArgParser::validateOptions() {
   if (parser_.is_used("file")) {
     const Config::Format format = parser_.get<Config::Format>("format");
     const std::string extension{get_extension(parser_.get<std::string>("file"))};
-    if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps") {
-      DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2 or .mps if --format is auto");
+    if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps" && extension != "vnnlib") {
+      DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2, .mps or .vnnlib if --format is auto");
+    }
+    if (format == Config::Format::VNNLIB || (format == Config::Format::AUTO && extension == "vnnlib")) {
+      if (!parser_.is_used("onnx-file"))
+        DLINEAR_INVALID_ARGUMENT("--onnx-file", "must be provided with --format vnnlib");
+      if (!std::filesystem::is_regular_file(parser_.get<std::string>("onnx-file")))
+        DLINEAR_INVALID_ARGUMENT("--onnx-file", "cannot find file or the file is not a regular file");
     }
   }
   // Check if the file exists

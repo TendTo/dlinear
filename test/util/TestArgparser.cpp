@@ -19,19 +19,22 @@ class TestArgParser : public ::testing::Test {
   dlinear::ArgParser parser_{};
   const std::string filename_smt2_{"TempFile.smt2"};
   const std::string filename_mps_{"TempFile.mps"};
+  const std::string filename_vnnlib_{"TempFile.vnnlib"};
+  const std::string filename_onnx_{"TempFile.onnx"};
   const std::string bad_filename_{"TempFile.err"};
   const std::string non_existing_filename_{"NotExistingTempFile.smt2"};
   void SetUp() override {
     std::ofstream f{filename_smt2_};
     std::ofstream m{filename_mps_};
+    std::ofstream v{filename_vnnlib_};
+    std::ofstream o{filename_onnx_};
     std::ofstream bf{bad_filename_};
-    f.close();
-    m.close();
-    bf.close();
   }
   void TearDown() override {
     std::remove(filename_smt2_.c_str());
     std::remove(filename_mps_.c_str());
+    std::remove(filename_vnnlib_.c_str());
+    std::remove(filename_onnx_.c_str());
     std::remove(bad_filename_.c_str());
   }
 };
@@ -245,4 +248,36 @@ TEST_F(TestArgParser, WrongInMissingFormat) {
 TEST_F(TestArgParser, WrongInAutoFormat) {
   const char *argv[] = {"dlinear", "--in", "--format", "auto"};
   EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --in");
+}
+
+TEST_F(TestArgParser, VnnlibOnnxFile) {
+  const char *argv[] = {"dlinear",     filename_vnnlib_.c_str(), "--format", "vnnlib",
+                        "--onnx-file", filename_onnx_.c_str()};
+  parser_.parse(sizeof(argv) / sizeof(argv[0]), argv);
+  auto config = parser_.toConfig();
+  EXPECT_EQ(config.onnx_file(), filename_onnx_.c_str());
+  EXPECT_EQ(config.format(), Config::Format::VNNLIB);
+}
+
+TEST_F(TestArgParser, MissingOnnxFile) {
+  const char *argv[] = {"dlinear", filename_vnnlib_.c_str(), "--format", "vnnlib"};
+  EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --onnx-file");
+}
+
+TEST_F(TestArgParser, ImplicitVnnlibFormat) {
+  const char *argv[] = {"dlinear", filename_vnnlib_.c_str(), "--onnx-file", filename_onnx_.c_str()};
+  parser_.parse(sizeof(argv) / sizeof(argv[0]), argv);
+  auto config = parser_.toConfig();
+  EXPECT_EQ(config.onnx_file(), filename_onnx_.c_str());
+  EXPECT_EQ(config.format(), Config::Format::AUTO);
+}
+
+TEST_F(TestArgParser, ImplicitMissingOnnxFile) {
+  const char *argv[] = {"dlinear", filename_vnnlib_.c_str()};
+  EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --onnx-file");
+}
+
+TEST_F(TestArgParser, OnnxFileNotFound) {
+  const char *argv[] = {"dlinear", filename_vnnlib_.c_str(), "--onnx-file", non_existing_filename_.c_str()};
+  EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --onnx-file");
 }
