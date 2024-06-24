@@ -13,6 +13,7 @@ dlinear_srcs(
     subfolder = "parser",
     deps = [
         "//dlinear/parser/mps",
+        "//dlinear/parser/onnx",
         "//dlinear/parser/smt2",
     ],
 )

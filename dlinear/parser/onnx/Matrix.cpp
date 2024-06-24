@@ -5,7 +5,7 @@
  * @licence Apache-2.0 license
  * @brief Matrix class.
  */
-#include "Matrix.h"
+#include "dlinear/parser/onnx/Matrix.h"
 
 #include <fmt/core.h>
 
@@ -47,15 +47,14 @@ Matrix::Matrix(const int rows, const int cols) : rows_{rows}, cols_{cols}, matri
   DLINEAR_ASSERT(cols > 0, "Cols must be positive");
 }
 
-Matrix::Matrix(const onnx::ValueInfoProto &value_info)
+Matrix::Matrix(const onnx::ValueInfoProto &value_info, const std::string &name)
     : rows_{get_row(value_info)}, cols_{get_col(value_info)}, matrix_{rows_, cols_} {
   DLINEAR_ASSERT(rows_ > 0, "Rows must be positive");
   DLINEAR_ASSERT(cols_ > 0, "Cols must be positive");
-  DLINEAR_ASSERT(value_info.has_name(), "ValueInfoProto must have a name");
 
   const int64_t num_variables = rows_ * cols_;
   for (int64_t i = 0; i < num_variables; i++) {
-    matrix_.data()[i] = Expression{Variable(fmt::format("{}[{}]", value_info.name(), i))};
+    matrix_.data()[i] = Expression{Variable(fmt::format("{}_{}", name.empty() ? value_info.name() : name, i))};
   }
 }
 

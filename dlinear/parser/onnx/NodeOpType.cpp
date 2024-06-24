@@ -4,7 +4,7 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "NodeOpType.h"
+#include "dlinear/parser/onnx/NodeOpType.h"
 
 #include "dlinear/util/exception.h"
 

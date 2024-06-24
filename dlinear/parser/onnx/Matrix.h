@@ -22,11 +22,12 @@ class Matrix {
   using MatrixE = Eigen::Matrix<Expression, Eigen::Dynamic, Eigen::Dynamic>;
   Matrix(int rows, int cols);
   Matrix(int64_t rows, int64_t cols);
-  explicit Matrix(const onnx::TensorProto &tensor);
-  explicit Matrix(const onnx::ValueInfoProto &value_info);
+  explicit Matrix(const ::onnx::TensorProto &tensor);
+  explicit Matrix(const onnx::ValueInfoProto &value_info, const std::string& name = "");
 
   [[nodiscard]] int64_t rows() const { return rows_; }
   [[nodiscard]] int64_t cols() const { return cols_; }
+  [[nodiscard]] int64_t size() const { return matrix_.size(); }
   [[nodiscard]] const MatrixE &matrix() const { return matrix_; }
 
   Expression &operator()(int row, int col);
@@ -35,6 +36,9 @@ class Matrix {
   const Expression &operator[](int index) const;
 
   ARITHMETIC_OPERATORS(Matrix);
+
+  auto begin() { return matrix_.data(); }
+  auto end() { return matrix_.data() + matrix_.size(); }
 
  private:
   int64_t rows_;

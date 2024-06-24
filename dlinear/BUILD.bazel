@@ -51,7 +51,7 @@ dlinear_cc_binary(
     deps = [
         "//dlinear/libs:eigen",
         "//dlinear/libs:onnx",
-        "//dlinear/nn:neural_network_model",
+        "//dlinear/parser/onnx:driver",
     ],
 )
 
