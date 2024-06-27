@@ -17,7 +17,10 @@
 
 namespace dlinear::vnnlib {
 
-VnnlibDriver::VnnlibDriver(Context &context) : Driver{context, "VnnlibDriver"} {}
+VnnlibDriver::VnnlibDriver(Context &context) : Driver{context, "VnnlibDriver"} {
+  for (const Variable& var : context_.box().variables()) scope_variables_.insert(var.get_name(), var);
+  DLINEAR_ERROR_FMT("Box variables: {}\nBox: {}", scope_variables_, context_.box());
+}
 
 bool VnnlibDriver::ParseStreamCore(std::istream &in) {
   VnnlibScanner scanner(&in);
@@ -50,6 +53,8 @@ void VnnlibDriver::DefineFun(const std::string &name, const std::vector<Variable
 }
 
 Variable VnnlibDriver::RegisterVariable(const std::string &name, const Sort sort) {
+  auto it = scope_variables_.find(name);
+  if (it != scope_variables_.cend()) return it->second;
   const Variable v{name, SortToType(sort)};
   scope_variables_.insert(v.get_name(), v);
   return v;
