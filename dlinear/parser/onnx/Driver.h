@@ -9,12 +9,12 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libonnx.h"
 #include "dlinear/parser/Driver.h"
-#include "dlinear/parser/onnx/Matrix.h"
 #include "dlinear/parser/onnx/NodeOpType.h"
+#include "dlinear/parser/onnx/Tensor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 
-namespace dlinear::onnxfile {
+namespace dlinear::onnx {
 
 class OnnxDriver : public Driver {
  public:
@@ -24,8 +24,8 @@ class OnnxDriver : public Driver {
   bool ParseStreamCore(std::istream& in) override;
   bool ParseFile(const std::string& filename) override;
 
-  const std::unordered_map<std::string, Matrix>& variables() const { return variables_; }
-  const std::unordered_map<std::string, Matrix>& available_inputs() const { return available_inputs_; }
+  const std::unordered_map<std::string, Tensor>& variables() const { return variables_; }
+  const std::unordered_map<std::string, Tensor>& available_inputs() const { return available_inputs_; }
   const ::onnx::ModelProto& model() const { return model_; }
   const ::onnx::GraphProto& graph() const { return model_.graph(); }
 
@@ -42,7 +42,7 @@ class OnnxDriver : public Driver {
   void AddNodeImpl(const ::onnx::NodeProto& node);
 
   ::onnx::ModelProto model_{};
-  std::unordered_map<std::string, Matrix> variables_;
-  std::unordered_map<std::string, Matrix> available_inputs_;
+  std::unordered_map<std::string, Tensor> variables_;
+  std::unordered_map<std::string, Tensor> available_inputs_;
 };
-}  // namespace dlinear::onnxfile
+}  // namespace dlinear::onnx

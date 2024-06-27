@@ -5,7 +5,7 @@
  * @licence Apache-2.0 license
  * @brief Neural network model.
  */
-#include "Driver.h"
+#include "dlinear/parser/onnx/Driver.h"
 
 #include <fmt/core.h>
 
@@ -13,7 +13,7 @@
 
 #include "dlinear/parser/onnx/NodeOpType.h"
 
-namespace dlinear::onnxfile {
+namespace dlinear::onnx {
 
 OnnxDriver::OnnxDriver(Context& context) : Driver{context, "OnnxDriver"} {}
 
@@ -54,11 +54,9 @@ void OnnxDriver::AddInitializer(const ::onnx::TensorProto& tensor) {
 
 void OnnxDriver::AddFormula(const std::string& output_name) {
   if (!variables_.contains(output_name) || !available_inputs_.contains(output_name)) return;
-  const Matrix& var_mat = variables_.at(output_name);
-  const Matrix& input_mat = available_inputs_.at(output_name);
-  DLINEAR_ASSERT(var_mat.rows() == input_mat.rows(), "Variable and input must have the same number of rows");
-  DLINEAR_ASSERT(var_mat.cols() == input_mat.cols(), "Variable and input must have the same number of cols");
-  for (int i = 0; i < var_mat.matrix().size(); i++) Assert(var_mat[i] == input_mat[i]);
+  const Tensor& var_tensor = variables_.at(output_name);
+  const Tensor& final_tensor = available_inputs_.at(output_name);
+  for (const Formula& f : (var_tensor == final_tensor)) Assert(f);
   DLINEAR_TRACE_FMT("Added formula for {}. Current assertions: {}", output_name, context_.assertions());
 }
 
@@ -86,9 +84,9 @@ void OnnxDriver::AddNodeImpl<NodeOpType::MatMul>(const ::onnx::NodeProto& node) 
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
   DLINEAR_ASSERT(!available_inputs_.contains(output), "Input1 must be available");
-  available_inputs_.emplace(output, available_inputs_.at(input1) * available_inputs_.at(input2));
+  available_inputs_.emplace(output, available_inputs_.at(input1).MatMul(available_inputs_.at(input2)));
   DLINEAR_TRACE_FMT("MatMul node: {} = {} * {}", output, input1, input2);
-  DLINEAR_TRACE_FMT("{} = {} * {}", available_inputs_.at(input1) * available_inputs_.at(input2),
+  DLINEAR_TRACE_FMT("{} = {} * {}", available_inputs_.at(input1).MatMul(available_inputs_.at(input2)),
                     available_inputs_.at(input1), available_inputs_.at(input2));
   AddFormula(output);
 }
@@ -100,17 +98,22 @@ void OnnxDriver::AddNodeImpl<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-
-  Variable var(fmt::format("Relu[{} => {}]", input, output), Variable::Type::BOOLEAN);
-
-  const Matrix& m = available_inputs_.at(input);
-  Matrix relu = Matrix{m.rows(), m.cols()};
-  for (int i = 0; i < m.matrix().size(); i++) {
-    const Expression& e = m[i];
-    relu[i] = if_then_else(e >= 0, e, 0);
-  }
+  Tensor relu = Tensor{available_inputs_.at(input)};
+  relu.Piecewise([](const Expression& e) { return if_then_else(e >= 0, e, 0); });
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("MatMul node: {} = 0 if input < 0 else {}\n{}", output, input, relu);
+  AddFormula(output);
+}
+
+template <>
+void OnnxDriver::AddNodeImpl<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Transpose", "NodeProto must have an op_type of Transpose");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Transpose());
+  DLINEAR_DEBUG_FMT("MatMul node: {} = {}^T", available_inputs_.at(input), available_inputs_.at(output));
   AddFormula(output);
 }
 
@@ -168,8 +171,10 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
     case NodeOpType::Reshape:
     case NodeOpType::Sigmoid:
     case NodeOpType::Softmax:
-    case NodeOpType::Transpose:
       DLINEAR_UNREACHABLE();
+    case NodeOpType::Transpose:
+      AddNodeImpl<NodeOpType::Transpose>(node);
+      break;
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -191,7 +196,7 @@ void OnnxDriver::AddValueInfo(const ::onnx::ValueInfoProto& value_info, const bo
 void OnnxDriver::AddValueInfoTensor(const ::onnx::ValueInfoProto& value_info, const bool is_input) {
   DLINEAR_ASSERT(value_info.has_name(), "ValueInfoProto must have a name");
   DLINEAR_ASSERT(value_info.type().value_case() == ::onnx::TypeProto::kTensorType, "ValueInfoProto must be a tensor");
-  const auto [it, res] = variables_.emplace(value_info.name(), Matrix(value_info, is_input ? "X" : "Y"));
+  const auto [it, res] = variables_.emplace(value_info.name(), Tensor(value_info, is_input ? "X" : "Y"));
   if (is_input) available_inputs_.emplace(value_info.name(), it->second);
   for (const auto& exp : it->second) context_.DeclareVariable(get_variable(exp));
 }
@@ -209,4 +214,4 @@ std::ostream& operator<<(std::ostream& os, const OnnxDriver& model) {
   return os << ")";
 }
 
-}  // namespace dlinear::onnxfile
+}  // namespace dlinear::onnx

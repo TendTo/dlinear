@@ -21,9 +21,9 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "matrix",
-    srcs = ["Matrix.cpp"],
-    hdrs = ["Matrix.h"],
+    name = "tensor",
+    srcs = ["Tensor.cpp"],
+    hdrs = ["Tensor.h"],
     implementation_deps = [
         "//dlinear/symbolic:literal",
     ],
@@ -31,6 +31,7 @@ dlinear_cc_library(
         "//dlinear/libs:eigen",
         "//dlinear/libs:onnx",
         "//dlinear/symbolic",
+        "//dlinear/util:concepts",
         "//dlinear/util:definitions",
         "//dlinear/util:logging",
     ],
@@ -45,8 +46,8 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        ":matrix",
         ":node_op_type",
+        ":tensor",
         "//dlinear/libs:gmp",
         "//dlinear/libs:onnx",
         "//dlinear/parser:driver",
