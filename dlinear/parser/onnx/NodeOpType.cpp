@@ -50,6 +50,8 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
       return os << "Sigmoid";
     case NodeOpType::Softmax:
       return os << "Softmax";
+    case NodeOpType::Sub:
+      return os << "Sub";
     case NodeOpType::Transpose:
       return os << "Transpose";
     case NodeOpType::Unsqueeze:
@@ -79,6 +81,7 @@ NodeOpType parseNodeOpType(const std::string& op_type) {
   if (op_type == "Reshape") return NodeOpType::Reshape;
   if (op_type == "Sigmoid") return NodeOpType::Sigmoid;
   if (op_type == "Softmax") return NodeOpType::Softmax;
+  if (op_type == "Sub") return NodeOpType::Sub;
   if (op_type == "Transpose") return NodeOpType::Transpose;
   if (op_type == "Unsqueeze") return NodeOpType::Unsqueeze;
   DLINEAR_UNREACHABLE();
