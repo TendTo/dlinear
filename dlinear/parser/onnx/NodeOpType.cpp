@@ -24,6 +24,8 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
       return os << "Conv";
     case NodeOpType::Dropout:
       return os << "Dropout";
+    case NodeOpType::Flatten:
+      return os << "Flatten";
     case NodeOpType::Gemm:
       return os << "Gemm";
     case NodeOpType::GlobalAveragePool:
@@ -32,6 +34,8 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
       return os << "Identity";
     case NodeOpType::LeakyRelu:
       return os << "LeakyRelu";
+    case NodeOpType::LRN:
+      return os << "LRN";
     case NodeOpType::MatMul:
       return os << "MatMul";
     case NodeOpType::MaxPool:
@@ -48,6 +52,8 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
       return os << "Softmax";
     case NodeOpType::Transpose:
       return os << "Transpose";
+    case NodeOpType::Unsqueeze:
+      return os << "Unsqueeze";
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -60,10 +66,12 @@ NodeOpType parseNodeOpType(const std::string& op_type) {
   if (op_type == "Concat") return NodeOpType::Concat;
   if (op_type == "Conv") return NodeOpType::Conv;
   if (op_type == "Dropout") return NodeOpType::Dropout;
+  if (op_type == "Flatten") return NodeOpType::Flatten;
   if (op_type == "Gemm") return NodeOpType::Gemm;
   if (op_type == "GlobalAveragePool") return NodeOpType::GlobalAveragePool;
   if (op_type == "Identity") return NodeOpType::Identity;
   if (op_type == "LeakyRelu") return NodeOpType::LeakyRelu;
+  if (op_type == "LRN") return NodeOpType::LRN;
   if (op_type == "MatMul") return NodeOpType::MatMul;
   if (op_type == "MaxPool") return NodeOpType::MaxPool;
   if (op_type == "Mul") return NodeOpType::Mul;
@@ -72,7 +80,8 @@ NodeOpType parseNodeOpType(const std::string& op_type) {
   if (op_type == "Sigmoid") return NodeOpType::Sigmoid;
   if (op_type == "Softmax") return NodeOpType::Softmax;
   if (op_type == "Transpose") return NodeOpType::Transpose;
+  if (op_type == "Unsqueeze") return NodeOpType::Unsqueeze;
   DLINEAR_UNREACHABLE();
 }
 
-}  // namespace dlinear
+}  // namespace dlinear::onnx

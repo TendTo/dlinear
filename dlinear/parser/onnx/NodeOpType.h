@@ -19,10 +19,12 @@ enum class NodeOpType {
   Concat,
   Conv,
   Dropout,
+  Flatten,
   Gemm,
   GlobalAveragePool,
   Identity,
   LeakyRelu,
+  LRN,
   MatMul,
   MaxPool,
   Mul,
@@ -31,6 +33,7 @@ enum class NodeOpType {
   Sigmoid,
   Softmax,
   Transpose,
+  Unsqueeze,
 };
 
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type);

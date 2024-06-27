@@ -61,7 +61,7 @@ void OnnxDriver::AddFormula(const std::string& output_name) {
 }
 
 template <>
-void OnnxDriver::AddNodeImpl<NodeOpType::Add>(const ::onnx::NodeProto& node) {
+void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
@@ -76,7 +76,21 @@ void OnnxDriver::AddNodeImpl<NodeOpType::Add>(const ::onnx::NodeProto& node) {
 }
 
 template <>
-void OnnxDriver::AddNodeImpl<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
+void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Flatten", "NodeProto must have an op_type of Flatten");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
+  DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly one attribute");
+  DLINEAR_ASSERT(node.attribute(0).has_i(), "NodeProto attribute must have an integer value");
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Flatten(node.attribute(0).i()));
+  DLINEAR_DEBUG_FMT("MatMul node: {} = {}^T", available_inputs_.at(input), available_inputs_.at(output));
+  AddFormula(output);
+}
+
+template <>
+void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
@@ -92,7 +106,7 @@ void OnnxDriver::AddNodeImpl<NodeOpType::MatMul>(const ::onnx::NodeProto& node) 
 }
 
 template <>
-void OnnxDriver::AddNodeImpl<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
+void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
@@ -106,7 +120,7 @@ void OnnxDriver::AddNodeImpl<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
 }
 
 template <>
-void OnnxDriver::AddNodeImpl<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
+void OnnxDriver::AddNode<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Transpose", "NodeProto must have an op_type of Transpose");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
   DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
@@ -147,33 +161,19 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
   const NodeOpType op_type = parseNodeOpType(node.op_type());
   switch (op_type) {
     case NodeOpType::Add:
-      AddNodeImpl<NodeOpType::Add>(node);
+      AddNode<NodeOpType::Add>(node);
       break;
-    case NodeOpType::AveragePool:
-    case NodeOpType::BatchNormalization:
-    case NodeOpType::Concat:
-    case NodeOpType::Conv:
-    case NodeOpType::Dropout:
-    case NodeOpType::Gemm:
-    case NodeOpType::GlobalAveragePool:
-    case NodeOpType::Identity:
-    case NodeOpType::LeakyRelu:
-      DLINEAR_UNREACHABLE();
+    case NodeOpType::Flatten:
+      AddNode<NodeOpType::Flatten>(node);
+      break;
     case NodeOpType::MatMul:
-      AddNodeImpl<NodeOpType::MatMul>(node);
+      AddNode<NodeOpType::MatMul>(node);
       break;
-    case NodeOpType::MaxPool:
-    case NodeOpType::Mul:
-      DLINEAR_UNREACHABLE();
     case NodeOpType::Relu:
-      AddNodeImpl<NodeOpType::Relu>(node);
+      AddNode<NodeOpType::Relu>(node);
       break;
-    case NodeOpType::Reshape:
-    case NodeOpType::Sigmoid:
-    case NodeOpType::Softmax:
-      DLINEAR_UNREACHABLE();
     case NodeOpType::Transpose:
-      AddNodeImpl<NodeOpType::Transpose>(node);
+      AddNode<NodeOpType::Transpose>(node);
       break;
     default:
       DLINEAR_UNREACHABLE();
