@@ -32,6 +32,7 @@ enum class NodeOpType {
   Reshape,
   Sigmoid,
   Softmax,
+  Sub,
   Transpose,
   Unsqueeze,
 };
@@ -39,4 +40,4 @@ enum class NodeOpType {
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type);
 NodeOpType parseNodeOpType(const std::string& op_type);
 
-}  // namespace dlinear
+}  // namespace dlinear::onnx
