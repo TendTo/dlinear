@@ -191,6 +191,8 @@ class Expression {
   /** Collects variables in expression. */
   const Variables &GetVariables() const;
 
+  void Swap(Expression &e);
+
   /** Checks structural equality.
    *
    * Two expressions e1 and e2 are structurally equal when they have the same
