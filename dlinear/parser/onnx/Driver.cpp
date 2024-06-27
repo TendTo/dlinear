@@ -20,7 +20,7 @@ OnnxDriver::OnnxDriver(Context& context) : Driver{context, "OnnxDriver"} {}
 bool OnnxDriver::ParseStreamCore(std::istream& in) {
   const bool res = model_.ParseFromIstream(&in);
   if (!res) {
-    DLINEAR_ERROR("Failed to parse model from input stream");
+    DLINEAR_ERROR("OnnxDriver::ParseStreamCore(): Failed to parse model from input stream");
     return false;
   }
   ParseGraph();
@@ -30,7 +30,7 @@ bool OnnxDriver::ParseStreamCore(std::istream& in) {
 bool OnnxDriver::ParseFile(const std::string& filename) {
   std::ifstream input(filename, std::ios::binary);
   if (!input.is_open()) {
-    DLINEAR_ERROR_FMT("Failed to open file: {}", filename);
+    DLINEAR_ERROR_FMT("OnnxDriver::ParseFile({}): Failed to open file", filename);
     return false;
   }
   return ParseStream(input);
@@ -140,7 +140,7 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
     return !available_inputs_.contains(input);
   });
   if (missing_input) {
-    DLINEAR_TRACE_FMT("Missing input for node {}", node.name());
+    DLINEAR_TRACE_FMT("Missing input for node {}. Delaying addition", node.name());
     return false;
   }
 

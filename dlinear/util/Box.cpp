@@ -79,9 +79,9 @@ void Box::Add(const Variable &v) {
     idx_to_var_ = std::make_shared<std::unordered_map<int, Variable>>(*idx_to_var_);
   }
   const int n{size()};
-  idx_to_var_->emplace(n, v);
-  var_to_idx_->emplace(v, n);
   variables_->push_back(v);
+  var_to_idx_->emplace(v, n);
+  idx_to_var_->emplace(n, v);
 
   // Set up Domain.
   // TODO(soonho): For now, we allow Boolean variables in a box. Change this.
