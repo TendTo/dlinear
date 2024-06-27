@@ -68,7 +68,7 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "vnnlib",
+    name = "driver",
     srcs = [
         "Driver.cpp",
         ":parser",

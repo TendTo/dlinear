@@ -15,11 +15,8 @@
 namespace dlinear {
 
 std::string get_extension(const std::string &name) {
-  DLINEAR_TRACE_FMT("get_extension({})", name);
   const std::size_t idx = name.rfind('.');
-  DLINEAR_TRACE_FMT("position of the '.': {}", idx);
-  if (idx == std::string::npos)  // No extension found
-    return "";
+  if (idx == std::string::npos) return "";
   return name.substr(idx + 1);
 }
 

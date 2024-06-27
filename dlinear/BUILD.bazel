@@ -49,9 +49,9 @@ dlinear_cc_binary(
         "no-iwyu",
     ],
     deps = [
-        "//dlinear/libs:eigen",
         "//dlinear/libs:onnx",
         "//dlinear/parser/onnx:driver",
+        "//dlinear/parser/vnnlib:driver",
     ],
 )
 
