@@ -158,6 +158,10 @@ Expression::Expression(ExpressionCell *ptr) : ptr_{ptr} {
   ptr_->increase_rc();
 }
 
+void Expression::Swap(Expression &e) {
+  std::swap(ptr_, e.ptr_);
+}
+
 ExpressionKind Expression::get_kind() const {
   assert(ptr_ != nullptr);
   return ptr_->get_kind();
