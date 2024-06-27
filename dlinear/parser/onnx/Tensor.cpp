@@ -9,6 +9,7 @@
 
 #include <fmt/core.h>
 
+#include <execution>
 #include <iostream>
 #include <numeric>
 #include <ostream>
@@ -47,10 +48,10 @@ inline std::vector<int64_t> get_dims(const ::onnx::TensorProto &tensor) {
 
 inline std::int64_t size_from_dims(const std::vector<std::int64_t> &dims) {
   DLINEAR_ASSERT(!dims.empty(), "dims cannot be empty");
-  return std::reduce(dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
+  return std::reduce(std::execution::par_unseq, dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
 }
 inline std::int64_t size_from_dims(const std::initializer_list<std::int64_t> &dims) {
-  return std::reduce(dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
+  return std::reduce(std::execution::par_unseq, dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
 }
 }  // namespace
 
@@ -73,6 +74,7 @@ Tensor::Tensor(std::vector<std::int64_t> dims) : dims_{std::move(dims)}, values_
 Tensor::Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name)
     : dims_{get_dims(value_info)}, values_{} {
   const std::int64_t size = size_from_dims(dims_);
+  DLINEAR_DEBUG_FMT("Dims {} -> Size: {}", dims_, size);
   values_.reserve(size);
   for (int64_t i = 0; i < size; i++) {
     values_.emplace_back(Variable(fmt::format("{}_{}", name.empty() ? value_info.name() : name, i)));
@@ -176,6 +178,18 @@ Tensor Tensor::Broadcast(const Tensor &) const { DLINEAR_UNREACHABLE(); }
 Tensor &Tensor::Flatten() {
   dims_.clear();
   dims_.push_back(static_cast<std::int64_t>(values_.size()));
+  return *this;
+}
+
+Tensor &Tensor::Flatten(const std::int64_t axis) {
+  if (axis < 0 || axis >= static_cast<std::int64_t>(dims_.size())) DLINEAR_OUT_OF_RANGE("Invalid axis");
+  const std::int64_t rows =
+      std::reduce(std::execution::par_unseq, dims_.begin(), dims_.begin() + axis, 1, std::multiplies<std::int64_t>{});
+  const std::int64_t cols =
+      std::reduce(std::execution::par_unseq, dims_.begin() + axis, dims_.end(), 1, std::multiplies<std::int64_t>{});
+  dims_.clear();
+  dims_.push_back(rows);
+  dims_.push_back(cols);
   return *this;
 }
 
@@ -335,7 +349,8 @@ const Expression &Tensor::operator[](const std::size_t index) const { return val
 std::int64_t Tensor::GetDimOffset(std::size_t starting_dim) const {
   if (starting_dim >= dims_.size()) return 1;
   const long starting_dim_offset = static_cast<long>(dims_.size() - starting_dim);
-  return std::reduce(dims_.begin() + starting_dim_offset, dims_.end(), 1, std::multiplies<std::int64_t>{});
+  return std::reduce(std::execution::par_unseq, dims_.begin() + starting_dim_offset, dims_.end(), 1,
+                     std::multiplies<std::int64_t>{});
 }
 
 std::ostream &operator<<(std::ostream &os, const Tensor &tensor) {
