@@ -39,7 +39,7 @@ class OnnxDriver : public Driver {
   void AddFormula(const std::string& output);
 
   template <NodeOpType T>
-  void AddNodeImpl(const ::onnx::NodeProto& node);
+  void AddNode(const ::onnx::NodeProto& node);
 
   ::onnx::ModelProto model_{};
   std::unordered_map<std::string, Tensor> variables_;
