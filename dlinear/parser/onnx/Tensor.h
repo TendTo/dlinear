@@ -24,7 +24,7 @@ class Tensor {
   Tensor(std::initializer_list<std::int64_t> dims);
   Tensor(std::vector<std::int64_t> dims);
   explicit Tensor(const ::onnx::TensorProto &tensor);
-  explicit Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name = "");
+  explicit Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name);
 
   [[nodiscard]] const std::vector<std::int64_t> &dims() const { return dims_; }
   [[nodiscard]] const std::vector<Expression> &values() const { return values_; };
@@ -38,11 +38,11 @@ class Tensor {
 
   [[nodiscard]] Tensor Broadcast(const Tensor &rhs) const;
   Tensor &Flatten();
+  Tensor &Flatten(std::int64_t axis);
   Tensor &Transpose();
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
-
 
   template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>
   Expression &operator()(Dim row, Dims... dims) {
