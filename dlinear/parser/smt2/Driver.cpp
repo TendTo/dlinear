@@ -5,7 +5,7 @@
  * @copyright 2023 dlinear
  */
 
-#include "Driver.h"
+#include "dlinear/parser/smt2/Driver.h"
 
 #include <iostream>
 #include <sstream>
