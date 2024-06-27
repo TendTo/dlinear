@@ -8,7 +8,7 @@
 
 #include "dlinear/util/exception.h"
 
-namespace dlinear {
+namespace dlinear::onnx {
 
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
   switch (op_type) {

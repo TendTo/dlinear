@@ -10,7 +10,7 @@
 #include <istream>
 #include <string>
 
-namespace dlinear {
+namespace dlinear::onnx {
 
 enum class NodeOpType {
   Add,
