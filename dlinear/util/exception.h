@@ -20,6 +20,7 @@
 #define DLINEAR_UNREACHABLE() std::terminate()
 #define DLINEAR_RUNTIME_ERROR(msg) throw std::runtime_error(msg)
 #define DLINEAR_RUNTIME_ERROR_FMT(msg, ...) throw std::runtime_error(msg)
+#define DLINEAR_OUT_OF_RANGE(msg) throw std::out_of_range(msg)
 #define DLINEAR_OUT_OF_RANGE_FMT(msg, ...) throw std::out_of_range(msg)
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::runtime_error(argument)
 #define DLINEAR_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) throw std::runtime_error(argument)
@@ -63,6 +64,12 @@
   do {                                                       \
     DLINEAR_CRITICAL_FMT(msg, __VA_ARGS__);                  \
     throw std::runtime_error(fmt::format(msg, __VA_ARGS__)); \
+  } while (false)
+
+#define DLINEAR_OUT_OF_RANGE(msg) \
+  do {                            \
+    DLINEAR_CRITICAL(msg);        \
+    throw std::out_of_range(msg); \
   } while (false)
 
 #define DLINEAR_OUT_OF_RANGE_FMT(msg, ...)                  \
