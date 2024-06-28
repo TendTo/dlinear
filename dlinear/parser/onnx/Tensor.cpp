@@ -193,6 +193,7 @@ bool Tensor::Equal(const Tensor &rhs) const { return values_ == rhs.values_ && d
 Tensor Tensor::Broadcast(const Tensor &rhs) const { return Broadcast(rhs.dims_); }
 Tensor Tensor::Broadcast(const std::vector<std::int64_t> &dims) const {
   if (dims_ == dims) return Tensor{*this};
+  throw std::runtime_error("Not implemented");
   std::vector<std::int64_t> old_dims;
   old_dims.reserve(dims.size());
   std::size_t diff = dims.size() - dims_.size();
