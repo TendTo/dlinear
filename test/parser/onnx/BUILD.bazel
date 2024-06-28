@@ -1,0 +1,23 @@
+load("//tools:dlinear.bzl", "dlinear_cc_googletest")
+
+dlinear_cc_googletest(
+    name = "test_node_op_type",
+    tags = ["onnx"],
+    deps = ["//dlinear/parser/onnx:node_op_type"],
+)
+
+dlinear_cc_googletest(
+    name = "test_tensor",
+    tags = ["onnx"],
+    deps = ["//dlinear/parser/onnx:tensor"],
+)
+
+dlinear_cc_googletest(
+    name = "test_onnx_driver",
+    data = ["onnx"],
+    tags = ["onnx"],
+    deps = [
+        "//dlinear/parser/onnx:driver",
+        "//dlinear/util:filesystem",
+    ],
+)
