@@ -10,7 +10,6 @@
 #include <fmt/core.h>
 
 #include <execution>
-#include <iostream>
 #include <numeric>
 #include <ostream>
 #include <utility>
@@ -47,16 +46,21 @@ inline std::vector<int64_t> get_dims(const ::onnx::TensorProto &tensor) {
 }
 
 inline std::int64_t size_from_dims(const std::vector<std::int64_t> &dims) {
-  DLINEAR_ASSERT(!dims.empty(), "dims cannot be empty");
+  for (const std::int64_t dim : dims) {
+    if (dim <= 0) DLINEAR_RUNTIME_ERROR("All dimensions of a tensor must be >= 1");
+  }
   return std::reduce(std::execution::par_unseq, dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
 }
 inline std::int64_t size_from_dims(const std::initializer_list<std::int64_t> &dims) {
+  for (const std::int64_t dim : dims) {
+    if (dim <= 0) DLINEAR_RUNTIME_ERROR("All dimensions of a tensor must be >= 1");
+  }
   return std::reduce(std::execution::par_unseq, dims.begin(), dims.end(), 1, std::multiplies<std::int64_t>{});
 }
 }  // namespace
 
 Tensor::Tensor(std::initializer_list<std::int64_t> dims) : dims_{dims}, values_(size_from_dims(dims_)) {
-  if (dims_.empty()) DLINEAR_RUNTIME_ERROR("Tensor must have at least one dimension");
+  if (dims_.empty()) dims_.push_back(1);
   for (const std::int64_t dim : dims_) {
     if (dim <= 0) DLINEAR_RUNTIME_ERROR("All dimensions of a tensor must be >= 1");
   }
@@ -64,7 +68,7 @@ Tensor::Tensor(std::initializer_list<std::int64_t> dims) : dims_{dims}, values_(
 }
 
 Tensor::Tensor(std::vector<std::int64_t> dims) : dims_{std::move(dims)}, values_(size_from_dims(dims_)) {
-  if (dims_.empty()) DLINEAR_RUNTIME_ERROR("Tensor must have at least one dimension");
+  if (dims_.empty()) dims_.push_back(1);
   for (const std::int64_t dim : dims_) {
     if (dim <= 0) DLINEAR_RUNTIME_ERROR("All dimensions of a tensor must be >= 1");
   }
@@ -166,6 +170,19 @@ bool Tensor::Broadcastable(const Tensor &rhs) const {
   return true;
 }
 
+std::vector<std::int64_t> Tensor::BroadcastDim(const Tensor &rhs) const { return BroadcastDim(rhs.dims_); }
+std::vector<std::int64_t> Tensor::BroadcastDim(const std::vector<std::int64_t> &dims) const {
+  std::vector<std::int64_t> new_dims;
+  const int max_size = static_cast<int>(std::max(dims_.size(), dims.size()));
+  new_dims.reserve(max_size);
+  for (int i = 0; i < max_size; i++) {
+    const std::int64_t dim = static_cast<std::size_t>(i) < dims_.size() ? dims_.rbegin()[i] : 1;
+    const std::int64_t rhs_dim = static_cast<std::size_t>(i) < dims.size() ? dims.rbegin()[i] : 1;
+    new_dims.push_back(std::max(dim, rhs_dim));
+  }
+  return new_dims;
+}
+
 bool Tensor::SameDim(const Tensor &rhs) const {
   if (values_.size() != rhs.size()) return false;
   return dims_ == rhs.dims_;
@@ -173,16 +190,42 @@ bool Tensor::SameDim(const Tensor &rhs) const {
 
 bool Tensor::Equal(const Tensor &rhs) const { return values_ == rhs.values_ && dims_ == rhs.dims_; }
 
-Tensor Tensor::Broadcast(const Tensor &) const { DLINEAR_UNREACHABLE(); }
+Tensor Tensor::Broadcast(const Tensor &rhs) const { return Broadcast(rhs.dims_); }
+Tensor Tensor::Broadcast(const std::vector<std::int64_t> &dims) const {
+  if (dims_ == dims) return Tensor{*this};
+  std::vector<std::int64_t> old_dims;
+  old_dims.reserve(dims.size());
+  std::size_t diff = dims.size() - dims_.size();
+  for (std::size_t i = 0; i < dims.size(); i++) old_dims.push_back(i < diff ? 1 : dims_[i - diff]);
+
+  Tensor new_tensor{dims};
+  for (std::size_t i = 0; i < dims.size(); i++) {
+    const std::int64_t idx = static_cast<std::int64_t>(dims.size() - i) - 1;
+    if (old_dims[idx] == dims[idx]) continue;
+    if (old_dims[idx] == 1) {
+      for (std::int64_t j = 1; j < new_tensor.dims_[idx] - 1; j++) {
+        new_tensor(j, 0l) = (*this)(0l, 0l);
+      }
+      new_tensor.dims_[idx] = dims[idx];
+    } else if (dims[idx] == 1) {
+      for (std::int64_t j = 1; j < new_tensor.dims_[idx] - 1; j++) {
+        new_tensor(j, 0l) = (*this)(j, 0l);
+      }
+    } else {
+      DLINEAR_OUT_OF_RANGE("Invalid broadcast");
+    }
+  }
+  return new_tensor;
+}
 
 Tensor &Tensor::Flatten() {
   dims_.clear();
   dims_.push_back(static_cast<std::int64_t>(values_.size()));
   return *this;
 }
-
 Tensor &Tensor::Flatten(const std::int64_t axis) {
-  if (axis < 0 || axis >= static_cast<std::int64_t>(dims_.size())) DLINEAR_OUT_OF_RANGE("Invalid axis");
+  if (axis < 0 || axis >= static_cast<std::int64_t>(dims_.size()))
+    DLINEAR_OUT_OF_RANGE_FMT("Invalid axis. Must be in [{}, {}]", 0, dims_.size());
   const std::int64_t rows =
       std::reduce(std::execution::par_unseq, dims_.begin(), dims_.begin() + axis, 1, std::multiplies<std::int64_t>{});
   const std::int64_t cols =
@@ -276,21 +319,18 @@ Tensor &Tensor::operator+=(const Tensor &rhs) {
   for (std::size_t i = 0; i < values_.size(); i++) values_[i] += rhs[i];
   return *this;
 }
-
 Tensor &Tensor::operator-=(const Tensor &rhs) {
   if (!Broadcastable(rhs)) DLINEAR_OUT_OF_RANGE("The two tensors must have the same dimensions");
   if (rhs.size() == 1) return *this -= rhs[0];
   for (std::size_t i = 0; i < values_.size(); i++) values_[i] -= rhs[i];
   return *this;
 }
-
 Tensor &Tensor::operator*=(const Tensor &rhs) {
   if (!Broadcastable(rhs)) DLINEAR_OUT_OF_RANGE("The two tensors must have the same dimensions");
   if (rhs.size() == 1) return *this *= rhs[0];
   for (std::size_t i = 0; i < values_.size(); i++) values_[i] *= rhs[i];
   return *this;
 }
-
 Tensor &Tensor::operator/=(const Tensor &rhs) {
   if (!Broadcastable(rhs)) DLINEAR_OUT_OF_RANGE("The two tensors must have the same dimensions");
   if (rhs.size() == 1) return *this /= rhs[0];
@@ -346,11 +386,24 @@ const Expression &Tensor::operator[](const int index) const { return values_.at(
 Expression &Tensor::operator[](const std::size_t index) { return values_.at(index); }
 const Expression &Tensor::operator[](const std::size_t index) const { return values_.at(index); }
 
-std::int64_t Tensor::GetDimOffset(std::size_t starting_dim) const {
-  if (starting_dim >= dims_.size()) return 1;
-  const long starting_dim_offset = static_cast<long>(dims_.size() - starting_dim);
-  return std::reduce(std::execution::par_unseq, dims_.begin() + starting_dim_offset, dims_.end(), 1,
-                     std::multiplies<std::int64_t>{});
+std::int64_t Tensor::GetDimOffset(std::size_t dim_offset) const {
+  if (dim_offset >= dims_.size() - 1) return 1;
+  return std::reduce(std::execution::par_unseq, dims_.begin() + static_cast<std::int64_t>(dim_offset) + 1, dims_.end(),
+                     1, std::multiplies<std::int64_t>{});
+}
+const Expression &Tensor::operator()(const std::vector<std::int64_t>& dims) const { return GetCore(dims); }
+Expression &Tensor::operator()(const std::vector<std::int64_t>& dims) { return const_cast<Expression &>(GetCore(dims)); }
+const Expression &Tensor::GetCore(const std::vector<std::int64_t>& dims) const {
+  if (dims.size() < dims_.size())
+    DLINEAR_OUT_OF_RANGE_FMT("Expected number of dimensions >= {}, got {}", dims_.size(), dims.size());
+  for (std::size_t i = dims_.size(); i < dims.size(); i++) {
+    if (dims[i] != 0) DLINEAR_OUT_OF_RANGE_FMT("Max right idx of non 0 dimensions < {}, got {}", dims_.size(), i);
+  }
+  std::int64_t offset = 0;
+  for (std::size_t i = 0; i < dims.size(); i++) {
+    offset += dims[i] * GetDimOffset(i);
+  }
+  return values_[offset];
 }
 
 std::ostream &operator<<(std::ostream &os, const Tensor &tensor) {
