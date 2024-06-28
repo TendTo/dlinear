@@ -13,6 +13,7 @@
 namespace dlinear::onnx {
 
 enum class NodeOpType {
+  Abs,
   Add,
   AveragePool,
   BatchNormalization,

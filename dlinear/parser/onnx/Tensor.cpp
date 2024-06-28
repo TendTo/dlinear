@@ -271,6 +271,11 @@ Tensor &Tensor::Transpose() {
   return *this;
 }
 
+Tensor &Tensor::Abs() {
+  for (Expression &e : values_) e = abs(e);
+  return *this;
+}
+
 Tensor &Tensor::Piecewise(const std::function<Expression(Expression)> &f) {
   for (Expression &e : values_) e = f(e);
   return *this;
@@ -392,9 +397,11 @@ std::int64_t Tensor::GetDimOffset(std::size_t dim_offset) const {
   return std::reduce(std::execution::par_unseq, dims_.begin() + static_cast<std::int64_t>(dim_offset) + 1, dims_.end(),
                      1, std::multiplies<std::int64_t>{});
 }
-const Expression &Tensor::operator()(const std::vector<std::int64_t>& dims) const { return GetCore(dims); }
-Expression &Tensor::operator()(const std::vector<std::int64_t>& dims) { return const_cast<Expression &>(GetCore(dims)); }
-const Expression &Tensor::GetCore(const std::vector<std::int64_t>& dims) const {
+const Expression &Tensor::operator()(const std::vector<std::int64_t> &dims) const { return GetCore(dims); }
+Expression &Tensor::operator()(const std::vector<std::int64_t> &dims) {
+  return const_cast<Expression &>(GetCore(dims));
+}
+const Expression &Tensor::GetCore(const std::vector<std::int64_t> &dims) const {
   if (dims.size() < dims_.size())
     DLINEAR_OUT_OF_RANGE_FMT("Expected number of dimensions >= {}, got {}", dims_.size(), dims.size());
   for (std::size_t i = dims_.size(); i < dims.size(); i++) {

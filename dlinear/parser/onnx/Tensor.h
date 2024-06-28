@@ -41,10 +41,12 @@ class Tensor {
 
   [[nodiscard]] Tensor Broadcast(const Tensor &rhs) const;
   [[nodiscard]] Tensor Broadcast(const std::vector<std::int64_t> &dims) const;
+
   Tensor &Flatten();
   Tensor &Flatten(std::int64_t axis);
   Tensor &Transpose();
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
+  Tensor &Abs();
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
 
