@@ -74,6 +74,19 @@ void OnnxDriver::AddFormula(const std::string& output_name) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Abs>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Abs", "NodeProto must have an op_type of Abs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly two inputs");
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Abs());
+  DLINEAR_DEBUG_FMT("Abs node: {} = |{}|", output, input);
+  DLINEAR_TRACE_FMT("{} = |{}|", available_inputs_.at(output), available_inputs_.at(input));
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
@@ -129,7 +142,7 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
   relu.Piecewise([](const Expression& e) { return if_then_else(e >= 0, e, 0); });
   available_inputs_.emplace(output, relu);
-  DLINEAR_DEBUG_FMT("MatMul node: {} = 0 if input < 0 else {}", output, input);
+  DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
   DLINEAR_TRACE_FMT("{}", relu);
   AddFormula(output);
 }
@@ -143,7 +156,7 @@ void OnnxDriver::AddNode<NodeOpType::Sub>(const ::onnx::NodeProto& node) {
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
   available_inputs_.emplace(output, available_inputs_.at(input1) - available_inputs_.at(input2));
-  DLINEAR_DEBUG_FMT("Add node: {} = {} - {}", output, input1, input2);
+  DLINEAR_DEBUG_FMT("Sub node: {} = {} - {}", output, input1, input2);
   DLINEAR_TRACE_FMT("{} = {} - {}", available_inputs_.at(output), available_inputs_.at(input1),
                     available_inputs_.at(input2));
   AddFormula(output);
@@ -177,6 +190,9 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
 
   const NodeOpType op_type = parseNodeOpType(node.op_type());
   switch (op_type) {
+    case NodeOpType::Abs:
+      AddNode<NodeOpType::Abs>(node);
+      break;
     case NodeOpType::Add:
       AddNode<NodeOpType::Add>(node);
       break;
@@ -196,7 +212,7 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
       AddNode<NodeOpType::Transpose>(node);
       break;
     default:
-      DLINEAR_UNREACHABLE();
+      DLINEAR_RUNTIME_ERROR_FMT("NodeOpType {} is not supported", node.op_type());
   }
   return true;
 }

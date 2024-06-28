@@ -12,6 +12,8 @@ namespace dlinear::onnx {
 
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
   switch (op_type) {
+    case NodeOpType::Abs:
+      return os << "Abs";
     case NodeOpType::Add:
       return os << "Add";
     case NodeOpType::AveragePool:
@@ -62,6 +64,7 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
 }
 
 NodeOpType parseNodeOpType(const std::string& op_type) {
+  if (op_type == "Abs") return NodeOpType::Abs;
   if (op_type == "Add") return NodeOpType::Add;
   if (op_type == "AveragePool") return NodeOpType::AveragePool;
   if (op_type == "BatchNormalization") return NodeOpType::BatchNormalization;
