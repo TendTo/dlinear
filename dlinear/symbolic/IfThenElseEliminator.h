@@ -40,7 +40,11 @@ class IfThenElseEliminator {
   const std::unordered_set<Variable, hash_value<Variable>> &variables() const;
   const IterationStats &stats() const { return stats_; }
 
+  static void ResetCounter() { counter_ = 0; }
+
  private:
+  static std::size_t counter_;  ///< Counter for the number of introduced variables.
+
   // Handle expressions.
   Expression Visit(const Expression &e, const Formula &guard);
   Expression VisitVariable(const Expression &e, const Formula &guard);

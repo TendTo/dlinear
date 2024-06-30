@@ -19,6 +19,8 @@
 
 namespace dlinear {
 
+std::size_t IfThenElseEliminator::counter_{0};
+
 Formula IfThenElseEliminator::Process(const Formula &f) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
@@ -136,10 +138,17 @@ Expression IfThenElseEliminator::VisitMax(const Expression &e, const Formula &gu
 }
 
 Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Formula &guard) {
-  static int counter{0};
-  const Variable new_var{"ITE" + std::to_string(counter++), Variable::Type::CONTINUOUS};
-  ite_variables_.insert(new_var);
+  // Both then and else expressions are the same.
+  if (get_then_expression(e).EqualTo(get_else_expression(e))) return Visit(get_then_expression(e), guard);
+
   const Formula c{Visit(get_conditional_formula(e), guard)};
+
+  // If the guard is the same (or inverted) as the current condition, short-circuit the ITE.
+  if (c.EqualTo(guard)) return Visit(get_then_expression(e), guard);
+  if (c.EqualTo(!guard)) return Visit(get_else_expression(e), guard);
+
+  const Variable new_var{"ITE" + std::to_string(counter_++), Variable::Type::CONTINUOUS};
+  ite_variables_.insert(new_var);
   const Formula then_guard{guard && c};
   const Formula else_guard{guard && !c};
   const Expression e1{Visit(get_then_expression(e), then_guard)};

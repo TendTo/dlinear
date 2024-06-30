@@ -18,8 +18,6 @@ using std::runtime_error;
 using std::vector;
 
 class TestIfThenElseEliminator : public ::testing::Test {
-  DrakeSymbolicGuard guard_;
-
  protected:
   const Variable x_{"x", Variable::Type::CONTINUOUS};
   const Variable y_{"y", Variable::Type::CONTINUOUS};
@@ -62,6 +60,8 @@ class TestIfThenElseEliminator : public ::testing::Test {
       (b1_ && b2_) || (!b1_ && !b2_),
       // clang-format on
   };
+
+  TestIfThenElseEliminator() { IfThenElseEliminator::ResetCounter(); }
 };
 
 TEST_F(TestIfThenElseEliminator, NonITEs) {
@@ -99,10 +99,10 @@ TEST_F(TestIfThenElseEliminator, NestedITEs) {
   IfThenElseEliminator ite_elim{{}};
   const Formula processed{ite_elim.Process(f)};
   EXPECT_EQ(processed.to_string(),
-            "((ITE1 > 0) and (b3 or (ITE1 == ITE3)) and ((ITE1 == ITE2) or "
-            "!(b3)) and ((ITE2 == x) or !((b1 and b3))) and ((ITE2 == y) or "
-            "!((b3 and !(b1)))) and ((ITE3 == z) or !((b2 and !(b3)))) and "
-            "((ITE3 == w) or !((!(b2) and !(b3)))))");
+            "((ITE0 > 0) and (b3 or (ITE0 == ITE2)) and ((ITE0 == ITE1) or "
+            "!(b3)) and ((ITE1 == x) or !((b1 and b3))) and ((ITE1 == y) or "
+            "!((b3 and !(b1)))) and ((ITE2 == z) or !((b2 and !(b3)))) and "
+            "((ITE2 == w) or !((!(b2) and !(b3)))))");
 }
 
 TEST_F(TestIfThenElseEliminator, ITEsInForall) {
@@ -110,6 +110,73 @@ TEST_F(TestIfThenElseEliminator, ITEsInForall) {
   IfThenElseEliminator ite_elim{{}};
   const Formula processed{ite_elim.Process(f)};
   EXPECT_EQ(processed.to_string(),
-            "forall({y, ITE4}. ((ITE4 > 0) or ((x > y) and !((ITE4 == x))) or "
-            "(!((ITE4 == y)) and !((x > y)))))");
+            "forall({y, ITE0}. ((ITE0 > 0) or ((x > y) and !((ITE0 == x))) or (!((ITE0 == y)) and !((x > y)))))");
+}
+
+TEST_F(TestIfThenElseEliminator, ITEPropagateFalse) {
+  const Expression e1{if_then_else(Formula{b1_}, 1, 2)};
+  const Expression e2{if_then_else(Formula{b2_}, 3, 4)};
+  const Formula f{e1 == e2};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "False");
+}
+
+TEST_F(TestIfThenElseEliminator, ITETrue) {
+  const Expression e1{if_then_else(Formula::True(), x_, y_)};
+  const Formula f{e1 == y_};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "(x == y)");
+}
+
+TEST_F(TestIfThenElseEliminator, ITEFalse) {
+  const Expression e1{if_then_else(Formula::False(), x_, y_)};
+  const Formula f{e1 == y_};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "True");
+}
+
+TEST_F(TestIfThenElseEliminator, ITESame) {
+  const Expression e1{if_then_else(Formula{b1_}, x_, x_)};
+  const Formula f{e1 == y_};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "(x == y)");
+}
+
+TEST_F(TestIfThenElseEliminator, ITESameTrue) {
+  const Expression e1{if_then_else(Formula{b1_}, y_, y_)};
+  const Formula f{e1 == y_};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "True");
+}
+
+TEST_F(TestIfThenElseEliminator, ITESimplifyNestedTrue) {
+  const Expression e1{if_then_else(Formula{b1_}, x_, y_)};
+  const Expression e2{if_then_else(Formula{b1_}, e1, z_)};
+  const Formula f{e2 == 0};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "((ITE0 == 0) and (b1 or (ITE0 == z)) and ((ITE0 == x) or !(b1)))");
+}
+
+TEST_F(TestIfThenElseEliminator, ITESimplifyNestedFalse) {
+  const Expression e1{if_then_else(Formula{b1_}, x_, y_)};
+  const Expression e2{if_then_else(!Formula{b1_}, e1, z_)};
+  const Formula f{e2 == 0};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "((ITE0 == 0) and (b1 or (ITE0 == y)) and ((ITE0 == z) or !(b1)))");
+}
+
+TEST_F(TestIfThenElseEliminator, ITESimplifyNestedConstantsFalse) {
+  const Expression e1{if_then_else(Formula{b2_}, 1, 2)};
+  const Expression e2{if_then_else(!Formula{b2_}, e1, 3)};
+  const Formula f{e2 == 4};
+  IfThenElseEliminator ite_elim{{}};
+  const Formula processed{ite_elim.Process(f)};
+  EXPECT_EQ(processed.to_string(), "False");
 }
