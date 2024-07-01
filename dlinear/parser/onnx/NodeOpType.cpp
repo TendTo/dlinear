@@ -48,6 +48,8 @@ std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
       return os << "Relu";
     case NodeOpType::Reshape:
       return os << "Reshape";
+    case NodeOpType::Slice:
+      return os << "Slice";
     case NodeOpType::Sigmoid:
       return os << "Sigmoid";
     case NodeOpType::Softmax:
@@ -82,6 +84,7 @@ NodeOpType parseNodeOpType(const std::string& op_type) {
   if (op_type == "Mul") return NodeOpType::Mul;
   if (op_type == "Relu") return NodeOpType::Relu;
   if (op_type == "Reshape") return NodeOpType::Reshape;
+  if (op_type == "Slice") return NodeOpType::Slice;
   if (op_type == "Sigmoid") return NodeOpType::Sigmoid;
   if (op_type == "Softmax") return NodeOpType::Softmax;
   if (op_type == "Sub") return NodeOpType::Sub;
