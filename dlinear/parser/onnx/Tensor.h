@@ -29,6 +29,7 @@ class Tensor {
   [[nodiscard]] const std::vector<std::int64_t> &dims() const { return dims_; }
   [[nodiscard]] const std::vector<Expression> &values() const { return values_; };
   [[nodiscard]] std::size_t size() const { return values_.size(); }
+  [[nodiscard]] bool empty() const { return values_.empty(); }
 
   [[nodiscard]] std::int64_t dim(std::size_t i) const;
 
@@ -48,6 +49,7 @@ class Tensor {
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
   Tensor &Abs();
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
+  Tensor &Slice(const Tensor &starts, const Tensor &ends, const Tensor &axes, const Tensor &steps);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
 
   template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>
@@ -62,8 +64,8 @@ class Tensor {
       DLINEAR_OUT_OF_RANGE_FMT("Expected number of dimensions >= {}, got {}", dims_.size(), sizeof...(dims) + 1);
     return GetCore(row * GetDimOffset(0), 1, dims...);
   }
-  const Expression &operator()(const std::vector<std::int64_t>& dims) const;
-  Expression &operator()(const std::vector<std::int64_t>& dims);
+  const Expression &operator()(const std::vector<std::int64_t> &dims) const;
+  Expression &operator()(const std::vector<std::int64_t> &dims);
 
   std::vector<Formula> operator<(const Tensor &rhs) const;
   std::vector<Formula> operator<=(const Tensor &rhs) const;
@@ -86,7 +88,7 @@ class Tensor {
   GENERIC_ARITHMETIC_OPERATORS(Tensor, Expression &);
 
  private:
-  const Expression &GetCore(const std::vector<std::int64_t>& dims) const;
+  const Expression &GetCore(const std::vector<std::int64_t> &dims) const;
   [[nodiscard]] std::int64_t GetDimOffset(std::size_t starting_dim) const;
   const Expression &GetCore(std::int64_t offset, std::int64_t) const { return values_[offset]; }
   template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>

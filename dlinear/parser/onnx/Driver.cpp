@@ -76,8 +76,8 @@ void OnnxDriver::AddFormula(const std::string& output_name) {
 template <>
 void OnnxDriver::AddNode<NodeOpType::Abs>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Abs", "NodeProto must have an op_type of Abs");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly two inputs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Abs());
@@ -89,8 +89,8 @@ void OnnxDriver::AddNode<NodeOpType::Abs>(const ::onnx::NodeProto& node) {
 template <>
 void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -104,9 +104,9 @@ void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
 template <>
 void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Flatten", "NodeProto must have an op_type of Flatten");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
-  DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly one attribute");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 inputs");
+  DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly 1 attribute");
   DLINEAR_ASSERT(node.attribute(0).has_i(), "NodeProto attribute must have an integer value");
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
@@ -117,26 +117,56 @@ void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Gemm", "NodeProto must have an op_type of Abs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 2 || node.input_size() == 3, "NodeProto must have [2-3] inputs");
+  const std::string& input1 = node.input(0);
+  const std::string& input2 = node.input(1);
+  const std::string& output = node.output(0);
+  const float alpha = node.attribute_size() > 0 && node.attribute(0).has_f() ? node.attribute(0).f() : 1;
+  Tensor gemm = available_inputs_.at(input1).MatMul(available_inputs_.at(input2)) * alpha;
+
+  if (node.attribute_size() == 2) {
+    DLINEAR_DEBUG_FMT("Gemm node: {} = {} * {} x {}", output, alpha, input1, input2);
+    DLINEAR_TRACE_FMT("{} = {} * {} x {}", gemm, alpha, available_inputs_.at(input1), available_inputs_.at(input2));
+  }
+
+  if (node.input_size() == 3) {
+    const auto beta = node.attribute_size() > 1 && node.attribute(1).has_f() ? node.attribute(1).f() : 1;
+    const std::string& input3 = node.input(2);
+    gemm += available_inputs_.at(input3) * beta;
+    DLINEAR_DEBUG_FMT("Gemm node: {} = {} * {} x {} + {} * {}", output, alpha, input1, input2, beta, input3);
+    DLINEAR_TRACE_FMT("{} = {} * {} x {} + {} * {}", gemm, alpha, available_inputs_.at(input1),
+                      available_inputs_.at(input2), beta, available_inputs_.at(input3));
+  }
+
+  available_inputs_.emplace(output, gemm);
+
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
   DLINEAR_ASSERT(!available_inputs_.contains(output), "Input1 must be available");
   available_inputs_.emplace(output, available_inputs_.at(input1).MatMul(available_inputs_.at(input2)));
   DLINEAR_DEBUG_FMT("MatMul node: {} = {} x {}", output, input1, input2);
-  DLINEAR_TRACE_FMT("{} = {} x {}", available_inputs_.at(input1).MatMul(available_inputs_.at(input2)),
-                    available_inputs_.at(input1), available_inputs_.at(input2));
+  DLINEAR_TRACE_FMT("{} = {} x {}", available_inputs_.contains(output), available_inputs_.at(input1),
+                    available_inputs_.at(input2));
   AddFormula(output);
 }
 
 template <>
 void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly one inputs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
@@ -144,6 +174,28 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
   DLINEAR_TRACE_FMT("{}", relu);
+  AddFormula(output);
+}
+
+template <>
+void OnnxDriver::AddNode<NodeOpType::Slice>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Slice", "NodeProto must have an op_type of Slice");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() < 3 || node.input_size() > 5, "NodeProto must have [3-5] inputs");
+  const std::string& data = node.input(0);
+  const std::string& starts = node.input(1);
+  const std::string& ends = node.input(2);
+  const std::string& axis = node.input_size() > 3 ? node.input(3) : "";
+  const std::string& steps = node.input_size() > 4 ? node.input(4) : "";
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output,
+                            available_inputs_.at(data).Slice(available_inputs_.at(starts), available_inputs_.at(ends)));
+
+  DLINEAR_DEBUG_FMT("Slice node: {} = {}[{}:{}:{}:{}]", output, data, starts, ends, axis, steps);
+  DLINEAR_TRACE_FMT("{} = {}[{}:{}:{}:{}", available_inputs_.at(output), available_inputs_.at(data),
+                    available_inputs_.at(starts), available_inputs_.at(ends), available_inputs_.at(axis),
+                    available_inputs_.at(steps));
+
   AddFormula(output);
 }
 
@@ -199,11 +251,17 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
     case NodeOpType::Flatten:
       AddNode<NodeOpType::Flatten>(node);
       break;
+    case NodeOpType::Gemm:
+      AddNode<NodeOpType::Gemm>(node);
+      break;
     case NodeOpType::MatMul:
       AddNode<NodeOpType::MatMul>(node);
       break;
     case NodeOpType::Relu:
       AddNode<NodeOpType::Relu>(node);
+      break;
+    case NodeOpType::Slice:
+      AddNode<NodeOpType::Slice>(node);
       break;
     case NodeOpType::Sub:
       AddNode<NodeOpType::Sub>(node);

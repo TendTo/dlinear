@@ -281,6 +281,13 @@ Tensor &Tensor::Piecewise(const std::function<Expression(Expression)> &f) {
   return *this;
 }
 
+Tensor &Tensor::Slice(const Tensor &starts, const Tensor &ends, const Tensor &axes, const Tensor &steps) {
+  if (starts.size() != ends.size() || starts.size() != axes.size() || starts.size() != steps.size())
+    DLINEAR_OUT_OF_RANGE("Starts, ends, axes and steps must have the same size");
+
+  return *this;
+}
+
 Tensor Tensor::MatMul(const Tensor &rhs) const {
   if (dims_.size() > 2 || rhs.dims_.size() > 2)
     DLINEAR_RUNTIME_ERROR("MatMul can only be applied to Matrices and Vectors");
@@ -303,18 +310,22 @@ Tensor Tensor::MatMul(const Tensor &rhs) const {
 }
 
 Tensor &Tensor::operator+=(const Expression &rhs) {
+  if (is_constant(rhs) && get_constant_value(rhs) == 0) return *this;
   for (Expression &e : values_) e += rhs;
   return *this;
 }
 Tensor &Tensor::operator-=(const Expression &rhs) {
+  if (is_constant(rhs) && get_constant_value(rhs) == 0) return *this;
   for (Expression &e : values_) e -= rhs;
   return *this;
 }
 Tensor &Tensor::operator*=(const Expression &rhs) {
+  if (is_constant(rhs) && get_constant_value(rhs) == 1) return *this;
   for (Expression &e : values_) e *= rhs;
   return *this;
 }
 Tensor &Tensor::operator/=(const Expression &rhs) {
+  if (is_constant(rhs) && get_constant_value(rhs) == 1) return *this;
   for (Expression &e : values_) e /= rhs;
   return *this;
 }
