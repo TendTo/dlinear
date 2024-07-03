@@ -10,8 +10,8 @@
 #include <istream>
 #include <numeric>
 
-#include "dlinear/libs/libeigen.h"
 #include "dlinear/libs/libonnx.h"
+#include "dlinear/libs/libxtensor.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/concepts.h"
 #include "dlinear/util/definitions.h"
@@ -21,27 +21,20 @@ namespace dlinear::onnx {
 
 class Tensor {
  public:
-  explicit Tensor(std::initializer_list<std::int64_t> dims);
-  explicit Tensor(std::vector<std::int64_t> dims);
+  Tensor(std::initializer_list<std::int64_t> dims);
+  explicit Tensor(const std::vector<std::int64_t> &dims);
   explicit Tensor(const ::onnx::TensorProto &tensor);
   explicit Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name);
 
-  [[nodiscard]] const std::vector<std::int64_t> &dims() const { return dims_; }
-  [[nodiscard]] const std::vector<Expression> &values() const { return values_; };
+  [[nodiscard]] const xt::xarray<Expression> &values() const { return values_; };
   [[nodiscard]] std::size_t size() const { return values_.size(); }
-  [[nodiscard]] bool empty() const { return values_.empty(); }
+  [[nodiscard]] std::size_t ndim() const { return values_.dimension(); }
+  [[nodiscard]] std::vector<std::int64_t> dims() const;
 
   [[nodiscard]] std::int64_t dim(std::size_t i) const;
 
-  [[nodiscard]] bool Broadcastable(const Tensor &rhs) const;
   [[nodiscard]] bool SameDim(const Tensor &rhs) const;
   [[nodiscard]] bool Equal(const Tensor &rhs) const;
-
-  [[nodiscard]] std::vector<std::int64_t> BroadcastDim(const Tensor &rhs) const;
-  [[nodiscard]] std::vector<std::int64_t> BroadcastDim(const std::vector<std::int64_t> &dims) const;
-
-  [[nodiscard]] Tensor Broadcast(const Tensor &rhs) const;
-  [[nodiscard]] Tensor Broadcast(const std::vector<std::int64_t> &dims) const;
 
   Tensor &Flatten();
   Tensor &Flatten(std::int64_t axis);
@@ -49,23 +42,21 @@ class Tensor {
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
   Tensor &Abs();
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
-  Tensor &Slice(const Tensor &starts, const Tensor &ends, const Tensor &axes, const Tensor &steps);
+  Tensor &Slice(const std::vector<std::int64_t> &starts, const std::vector<std::int64_t> &ends,
+                const std::vector<std::int64_t> &axes = {}, const std::vector<std::int64_t> &steps = {});
+  Tensor &Slice(const Tensor &starts, const Tensor &ends, const Tensor &axes = {}, const Tensor &steps = {});
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
 
-  template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>
-  Expression &operator()(Dim row, Dims... dims) {
-    if (sizeof...(dims) + 1 < dims_.size())
-      DLINEAR_OUT_OF_RANGE_FMT("Expected number of dimensions >= {}, got {}", dims_.size(), sizeof...(dims) + 1);
-    return const_cast<Expression &>(GetCore(row * GetDimOffset(0), 1, dims...));
+  template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
+  Expression &operator()(Dims... dims) {
+    return values_(dims...);
   }
-  template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>
-  const Expression &operator()(Dim row, Dims... dims) const {
-    if (sizeof...(dims) + 1 < dims_.size())
-      DLINEAR_OUT_OF_RANGE_FMT("Expected number of dimensions >= {}, got {}", dims_.size(), sizeof...(dims) + 1);
-    return GetCore(row * GetDimOffset(0), 1, dims...);
+  template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
+  const Expression &operator()(Dims... dims) const {
+    return values_(dims...);
   }
-  const Expression &operator()(const std::vector<std::int64_t> &dims) const;
-  Expression &operator()(const std::vector<std::int64_t> &dims);
+  Expression &operator()(std::initializer_list<std::int64_t> dims);
+  const Expression &operator()(std::initializer_list<std::int64_t> dims) const;
 
   std::vector<Formula> operator<(const Tensor &rhs) const;
   std::vector<Formula> operator<=(const Tensor &rhs) const;
@@ -74,34 +65,27 @@ class Tensor {
   std::vector<Formula> operator==(const Tensor &rhs) const;
   std::vector<Formula> operator!=(const Tensor &rhs) const;
 
+  explicit operator std::vector<std::int64_t>() const;
+  explicit operator std::vector<double>() const;
+
   Expression &operator[](int index);
   const Expression &operator[](int index) const;
   Expression &operator[](std::size_t index);
   const Expression &operator[](std::size_t index) const;
 
-  std::vector<Expression>::iterator begin() { return values_.begin(); }
-  std::vector<Expression>::iterator end() { return values_.end(); }
-  std::vector<Expression>::const_iterator cbegin() { return values_.cbegin(); }
-  std::vector<Expression>::const_iterator cend() { return values_.cend(); }
+  auto begin() { return values_.begin(); }
+  auto end() { return values_.end(); }
+  auto cbegin() { return values_.cbegin(); }
+  auto cend() { return values_.cend(); }
 
   ARITHMETIC_OPERATORS(Tensor);
   GENERIC_ARITHMETIC_OPERATORS(Tensor, Expression &);
 
  private:
-  const Expression &GetCore(const std::vector<std::int64_t> &dims) const;
-  [[nodiscard]] std::int64_t GetDimOffset(std::size_t starting_dim) const;
-  const Expression &GetCore(std::int64_t offset, std::int64_t) const { return values_[offset]; }
-  template <IsAnyOf<int, std::int64_t> Dim, IsAnyOf<int, std::int64_t>... Dims>
-  const Expression &GetCore(std::int64_t offset, std::int64_t dim_offset, Dim row, Dims... dims) const {
-    if (row != 0 && static_cast<std::size_t>(dim_offset) >= dims_.size())
-      DLINEAR_OUT_OF_RANGE_FMT("Max right idx of non 0 dimensions < {}, got {}", dims_.size(), dim_offset);
-    if (row != 0 && row >= dims_[dim_offset])
-      DLINEAR_OUT_OF_RANGE_FMT("Maximum dimension is {}, got {}", dims_[dim_offset], row);
-    return GetCore(offset + row * GetDimOffset(dim_offset), dim_offset + 1, dims...);
-  }
+  [[nodiscard]] std::size_t ComputeOffset(std::initializer_list<std::int64_t> dims) const;
+  [[nodiscard]] std::size_t ComputeOffset(const std::int64_t *dims, std::size_t size) const;
 
-  std::vector<std::int64_t> dims_;
-  std::vector<Expression> values_;
+  xt::xarray<Expression> values_;
 };
 
 std::ostream &operator<<(std::ostream &os, const Tensor &matrix);

@@ -58,13 +58,13 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "eigen",
-    srcs = ["libeigen.cpp"],
-    hdrs = ["libeigen.h"],
+    name = "xtensor",
+    srcs = ["libxtensor.cpp"],
+    hdrs = ["libxtensor.h"],
     tags = ["no-iwyu"],
     deps = [
         ":gmp",
-        "@eigen",
+        "@xtensor",
     ],
 )
 

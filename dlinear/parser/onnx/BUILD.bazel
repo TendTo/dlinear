@@ -28,8 +28,8 @@ dlinear_cc_library(
         "//dlinear/symbolic:literal",
     ],
     deps = [
-        "//dlinear/libs:eigen",
         "//dlinear/libs:onnx",
+        "//dlinear/libs:xtensor",
         "//dlinear/symbolic",
         "//dlinear/util:concepts",
         "//dlinear/util:definitions",

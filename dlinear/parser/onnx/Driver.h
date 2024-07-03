@@ -5,7 +5,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "dlinear/libs/libeigen.h"
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libonnx.h"
 #include "dlinear/parser/Driver.h"

@@ -41,6 +41,9 @@ bazel_dep(name = "rules_bison", version = "0.2.2")
 # Apache License 2.0 | Open Neural Network Exchange (ONNX) format support
 bazel_dep(name = "onnx", version = "1.15.0")
 
+# MIT | C++ json library
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+
 # https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
 bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
 
@@ -55,9 +58,6 @@ bazel_dep(name = "rules_doxygen", version = "1.1.1", dev_dependency = True)
 
 # MIT | rules for dealing with target dependencies
 bazel_dep(name = "depend_on_what_you_use", version = "0.4.0", dev_dependency = True)
-
-# Mozilla Public License 2.0 | eigen linear algebra library
-bazel_dep(name = "eigen", version = "3.4.0")
 
 # Apache License 2.0 | Integration of Boost into Bazel
 bazel_dep(name = "com_github_nelhage_rules_boost", version = "0.0.1")
@@ -116,6 +116,24 @@ github_archive(
     commit = "ee542566ca89717af1b4558b0b3f226eb3b6b42d",  # master
     repository = "dreal-deps/picosat",
     sha256 = "9a047b7ba3ac1075a2288d35045585e2e3c24961f078f30ad97a313b8e539eb2",
+)
+
+# BSD 3 | C++ generic template library
+github_archive(
+    name = "xtl",
+    build_file = "//third_party:xtl.BUILD.bazel",
+    commit = "0.7.7",
+    repository = "xtensor-stack/xtl",
+    sha256 = "",
+)
+
+# BSD 3 | C++ generic template library
+github_archive(
+    name = "xtensor",
+    build_file = "//third_party:xtensor.BUILD.bazel",
+    commit = "0.25.0",
+    repository = "xtensor-stack/xtensor",
+    sha256 = "",
 )
 
 # TODO: check if we still need this

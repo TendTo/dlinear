@@ -67,7 +67,6 @@ void OnnxDriver::AddFormula(const std::string& output_name) {
   DLINEAR_DEBUG_FMT("AddFormula({})", output_name);
   const Tensor& var_tensor = variables_.at(output_name);
   const Tensor& final_tensor = available_inputs_.at(output_name);
-  DLINEAR_DEBUG_FMT("AddFormula({}): len({}) == len({})", output_name, var_tensor.dims(), final_tensor.dims());
   DLINEAR_TRACE_FMT("AddFormula({}): {} == {}", output_name, var_tensor, final_tensor);
   for (const Formula& f : (var_tensor == final_tensor)) Assert(f);
   DLINEAR_TRACE_FMT("Added formula for {}. Current assertions: {}", output_name, context_.assertions());
@@ -188,8 +187,13 @@ void OnnxDriver::AddNode<NodeOpType::Slice>(const ::onnx::NodeProto& node) {
   const std::string& axis = node.input_size() > 3 ? node.input(3) : "";
   const std::string& steps = node.input_size() > 4 ? node.input(4) : "";
   const std::string& output = node.output(0);
-  available_inputs_.emplace(output,
-                            available_inputs_.at(data).Slice(available_inputs_.at(starts), available_inputs_.at(ends)));
+  const std::vector<std::int64_t> starts_v = static_cast<std::vector<std::int64_t>>(available_inputs_.at(starts));
+  const std::vector<std::int64_t> ends_v = static_cast<std::vector<std::int64_t>>(available_inputs_.at(ends));
+  const std::vector<std::int64_t> axis_v =
+      axis.empty() ? std::vector<std::int64_t>{} : static_cast<std::vector<std::int64_t>>(available_inputs_.at(axis));
+  const std::vector<std::int64_t> steps_v =
+      steps.empty() ? std::vector<std::int64_t>{} : static_cast<std::vector<std::int64_t>>(available_inputs_.at(steps));
+  available_inputs_.emplace(output, available_inputs_.at(data).Slice(starts_v, ends_v, axis_v, steps_v));
 
   DLINEAR_DEBUG_FMT("Slice node: {} = {}[{}:{}:{}:{}]", output, data, starts, ends, axis, steps);
   DLINEAR_TRACE_FMT("{} = {}[{}:{}:{}:{}", available_inputs_.at(output), available_inputs_.at(data),
