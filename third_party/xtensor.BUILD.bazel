@@ -1,0 +1,20 @@
+"""xtensor library for Bazel"""
+
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+licenses(["notice"])  # BSD 3-Clause License
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "xtensor",
+    hdrs = glob(["include/xtensor/*.hpp"]),
+    includes = ["include"],
+    defines = select({
+        "@dlinear//tools:debug": ["TENSOR_ENABLE_ASSERT", "XTENSOR_ENABLE_CHECK_DIMENSION"],
+        "@dlinear//tools:release": [],
+        "//conditions:default": ["TENSOR_ENABLE_ASSERT"],
+    }) + ["XTENSOR_FORCE_TEMPORARY_MEMORY_IN_ASSIGNMENTS"],
+    deps = ["@nlohmann_json//:json", "@xtl"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,14 @@
+"""xtl library for Bazel"""
+
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+licenses(["notice"])  # BSD 3-Clause License
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "xtl",
+    hdrs = glob(["include/xtl/*.hpp"]),
+    includes = ["include"],
+    deps = ["@nlohmann_json//:json"],
+)

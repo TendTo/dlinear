@@ -125,6 +125,11 @@ config_setting(
     values = {"compilation_mode": "dbg"},
 )
 
+config_setting(
+    name = "release",
+    values = {"compilation_mode": "opt"},
+)
+
 ###########################################
 # Version header script
 ###########################################
