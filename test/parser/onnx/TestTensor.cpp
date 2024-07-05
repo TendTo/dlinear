@@ -36,13 +36,19 @@ TEST_F(TestTensor, DimConstructor) {
   EXPECT_EQ(tensor.values().size(), 1u * 2u * 3u);
 }
 
-TEST_F(TestTensor, EmptyDimConstructor) {
-  Tensor tensor{};
-  EXPECT_EQ(tensor.dims().size(), 1u);
-  EXPECT_EQ(tensor.dims()[0], 1);
+TEST_F(TestTensor, SingleValueConstructor) {
+  Tensor tensor(1.0f);
+  EXPECT_EQ(tensor.dims().size(), 0u);
   EXPECT_EQ(tensor.values().size(), 1u);
 }
-TEST_F(TestTensor, NegativeDimConstructor) { EXPECT_THROW(Tensor({1, -1, 1}), std::runtime_error); }
+
+
+TEST_F(TestTensor, EmptyDimConstructor) {
+  Tensor tensor{};
+  EXPECT_EQ(tensor.dims().size(), 0u);
+  EXPECT_EQ(tensor.values().size(), 1u);
+}
+TEST_F(TestTensor, NegativeDimConstructor) { EXPECT_THROW(Tensor({1, -1, 1}), std::bad_array_new_length); }
 
 TEST_F(TestTensor, VectorConstructor) {
   Tensor tensor{std::vector<std::int64_t>{1, 2, 3}};
@@ -55,12 +61,11 @@ TEST_F(TestTensor, VectorConstructor) {
 
 TEST_F(TestTensor, EmptyVectorConstructor) {
   Tensor tensor{std::vector<std::int64_t>{}};
-  EXPECT_EQ(tensor.dims().size(), 1u);
-  EXPECT_EQ(tensor.dims()[0], 1);
+  EXPECT_EQ(tensor.dims().size(), 0u);
   EXPECT_EQ(tensor.values().size(), 1u);
 }
 TEST_F(TestTensor, NegativeVectorConstructor) {
-  EXPECT_THROW(Tensor{std::vector<std::int64_t>({1, -1, 1})}, std::runtime_error);
+  EXPECT_THROW(Tensor{std::vector<std::int64_t>({1, -1, 1})}, std::bad_array_new_length);
 }
 
 TEST_F(TestTensor, RoundParenthesisAccessTwoDim) {
@@ -91,12 +96,15 @@ TEST_F(TestTensor, RoundParenthesisAccessExtraDim) {
   tensor[0] = tensor[1] = tensor[2] = tensor[3] = 0;
   tensor[4] = tensor[5] = tensor[6] = tensor[7] = 1;
   tensor[8] = tensor[9] = tensor[10] = tensor[11] = 2;
-  for (std::int64_t i = 0; i < tensor.dim(0); i++) EXPECT_EQ(get_constant_value(tensor(i, 1, 0, 0, 0)), i);
+  for (std::int64_t i = 0; i < tensor.dim(0); i++) EXPECT_EQ(get_constant_value(tensor(0, 0, 0, i, 1)), i);
 }
 
-TEST_F(TestTensor, InvalidRoundParenthesisAccessExtraDim) {
+TEST_F(TestTensor, RoundParenthesisAccessMissingDim) {
   Tensor tensor{3, 4};
-  EXPECT_THROW(tensor(1l, 1l, 1l, 1l, 1l), std::out_of_range);
+  tensor[0] = tensor[1] = tensor[2] = tensor[3] = 0;
+  tensor[4] = tensor[5] = tensor[6] = tensor[7] = 1;
+  tensor[8] = tensor[9] = tensor[10] = tensor[11] = 2;
+  for (std::int64_t i = 0; i < tensor.dim(1); i++) EXPECT_EQ(get_constant_value(tensor(i)), 0);
 }
 
 TEST_F(TestTensor, RoundParenthesisVectorAccessTwoDim) {
@@ -127,12 +135,15 @@ TEST_F(TestTensor, RoundParenthesisVectorAccessExtraDim) {
   tensor[0] = tensor[1] = tensor[2] = tensor[3] = 0;
   tensor[4] = tensor[5] = tensor[6] = tensor[7] = 1;
   tensor[8] = tensor[9] = tensor[10] = tensor[11] = 2;
-  for (std::int64_t i = 0; i < tensor.dim(0); i++) EXPECT_EQ(get_constant_value(tensor({i, 1, 0, 0})), i);
+  for (std::int64_t i = 0; i < tensor.dim(0); i++) EXPECT_EQ(get_constant_value(tensor({0, 0, i, 1})), i);
 }
 
-TEST_F(TestTensor, InvalidRoundParenthesisVectorAccessExtraDim) {
+TEST_F(TestTensor, InvalidRoundParenthesisVectorAccessMissingDim) {
   Tensor tensor{3, 4};
-  EXPECT_THROW(tensor({1l, 1l, 1l, 1l, 1l}), std::out_of_range);
+  tensor[0] = tensor[1] = tensor[2] = tensor[3] = 0;
+  tensor[4] = tensor[5] = tensor[6] = tensor[7] = 1;
+  tensor[8] = tensor[9] = tensor[10] = tensor[11] = 2;
+  for (std::int64_t i = 0; i < tensor.dim(1); i++) EXPECT_EQ(get_constant_value(tensor({i})), 0);
 }
 
 TEST_F(TestTensor, SameDim) {
@@ -155,28 +166,6 @@ TEST_F(TestTensor, DifferentDim) {
   EXPECT_FALSE(tensor3.SameDim(tensor32));
   Tensor tensor4{3, 4, 1}, tensor42{3, 4, 2};
   EXPECT_FALSE(tensor4.SameDim(tensor42));
-}
-
-TEST_F(TestTensor, Broadcastable) {
-  Tensor tensor1{5, 7, 3}, tensor12{5, 7, 3};
-  EXPECT_TRUE(tensor1.Broadcastable(tensor12));
-  Tensor tensor2{5, 3, 4, 1}, tensor22{3, 1, 1};
-  EXPECT_TRUE(tensor2.Broadcastable(tensor22));
-  Tensor tensor3{1}, tensor32{3, 1, 7};
-  EXPECT_TRUE(tensor3.Broadcastable(tensor32));
-  Tensor tensor4{5, 1}, tensor42{5, 5};
-  EXPECT_TRUE(tensor4.Broadcastable(tensor42));
-}
-
-TEST_F(TestTensor, NotBroadcastable) {
-  Tensor tensor1{1, 3, 1}, tensor12{3, 7, 7};
-  EXPECT_FALSE(tensor1.Broadcastable(tensor12));
-  Tensor tensor2{5, 2, 4, 1}, tensor22{3, 1, 1};
-  EXPECT_FALSE(tensor2.Broadcastable(tensor22));
-  Tensor tensor3{2}, tensor32{3, 1, 7};
-  EXPECT_FALSE(tensor3.Broadcastable(tensor32));
-  Tensor tensor4{4, 5}, tensor42{5, 5};
-  EXPECT_FALSE(tensor4.Broadcastable(tensor42));
 }
 
 TEST_F(TestTensor, Equal) {
@@ -213,41 +202,6 @@ TEST_F(TestTensor, NotEqual) {
   EXPECT_FALSE(tensor4.Equal(tensor42));
 }
 
-TEST_F(TestTensor, BroadcastSameSize) {
-  Tensor tensor1{5, 7, 3}, tensor12{5, 7, 3};
-  for (std::size_t i = 0; i < tensor1.size(); i++) tensor1[i] = tensor12[i] = i;
-  Tensor broadcast{tensor1.Broadcast(tensor12)};
-  EXPECT_EQ(broadcast.size(), tensor1.size());
-  EXPECT_EQ(broadcast.dims(), tensor1.dims());
-  EXPECT_TRUE(tensor1.Equal(broadcast));
-}
-
-TEST_F(TestTensor, BroadcastMatrixRowVector) {
-  Tensor tensor1{3}, tensor12{3, 4};
-  for (std::size_t i = 0; i < tensor1.size(); i++) tensor1[i] = i * 100;
-  for (std::size_t i = 0; i < tensor12.size(); i++) tensor12[i] = i;
-  return;  // TODO: remove
-  Tensor broadcast{tensor1.Broadcast(tensor12)};
-  EXPECT_EQ(broadcast.size(), tensor12.size());
-  EXPECT_EQ(broadcast.dims(), tensor12.dims());
-  for (std::int64_t row = 0; row < tensor12.dim(0); row++)
-    for (std::int64_t col = 0; col < tensor12.dim(1); col++)
-      EXPECT_EQ(get_constant_value(broadcast(row, col)), col * 100);
-}
-
-TEST_F(TestTensor, BroadcastMatrixColVector) {
-  Tensor tensor1{1, 4}, tensor12{3, 4};
-  for (std::size_t i = 0; i < tensor1.size(); i++) tensor1[i] = i * 100;
-  for (std::size_t i = 0; i < tensor12.size(); i++) tensor12[i] = i;
-  return;  // TODO: remove
-  Tensor broadcast{tensor1.Broadcast(tensor12)};
-  EXPECT_EQ(broadcast.size(), tensor12.size());
-  EXPECT_EQ(broadcast.dims(), tensor12.dims());
-  for (std::int64_t row = 0; row < tensor12.dim(0); row++)
-    for (std::int64_t col = 0; col < tensor12.dim(1); col++)
-      EXPECT_EQ(get_constant_value(broadcast(row, col)), row * 100);
-}
-
 TEST_F(TestTensor, Addition) {
   Tensor double_tensor = tensor_ + tensor_;
   EXPECT_EQ(double_tensor.size(), tensor_.size());
@@ -271,7 +225,7 @@ TEST_F(TestTensor, AdditionSingleDimension) {
   EXPECT_EQ(get_constant_value(tensor_one_(0)), 2);
 }
 
-TEST_F(TestTensor, InvalidAdditionSize) { EXPECT_THROW(tensor_ += tensor2_, std::out_of_range); }
+TEST_F(TestTensor, InvalidAdditionSize) { EXPECT_THROW(tensor_ += tensor2_, xt::broadcast_error); }
 
 TEST_F(TestTensor, Subtraction) {
   Tensor zero_tensor = tensor_ - tensor_;
@@ -286,7 +240,7 @@ TEST_F(TestTensor, SubtractionSingleDimension) {
   EXPECT_EQ(get_constant_value(tensor_one_(0)), 0);
 }
 
-TEST_F(TestTensor, InvalidSubtractionSize) { EXPECT_THROW(tensor_ -= tensor2_, std::out_of_range); }
+TEST_F(TestTensor, InvalidSubtractionSize) { EXPECT_THROW(tensor_ -= tensor2_, xt::broadcast_error); }
 
 TEST_F(TestTensor, Multiplication) {
   Tensor square_tensor = tensor_ * tensor_;
@@ -302,7 +256,7 @@ TEST_F(TestTensor, MultiplicationSingleDimension) {
   EXPECT_EQ(get_constant_value(tensor_one_(0)), 1);
 }
 
-TEST_F(TestTensor, InvalidMultiplicationSize) { EXPECT_THROW(tensor_ *= tensor2_, std::out_of_range); }
+TEST_F(TestTensor, InvalidMultiplicationSize) { EXPECT_THROW(tensor_ *= tensor2_, xt::broadcast_error); }
 
 TEST_F(TestTensor, Division) {
   Tensor square_tensor = tensor_ / tensor_;
@@ -317,7 +271,7 @@ TEST_F(TestTensor, DivisionSingleDimension) {
   EXPECT_EQ(get_constant_value(tensor_one_(0)), 1);
 }
 
-TEST_F(TestTensor, InvalidDivisionSize) { EXPECT_THROW(tensor_ /= tensor2_, std::out_of_range); }
+TEST_F(TestTensor, InvalidDivisionSize) { EXPECT_THROW(tensor_ /= tensor2_, xt::broadcast_error); }
 
 TEST_F(TestTensor, MatMul) {
   Tensor a{2, 4}, b{4, 3};

@@ -22,7 +22,10 @@ namespace dlinear::onnx {
 class Tensor {
  public:
   Tensor(std::initializer_list<std::int64_t> dims);
+  explicit Tensor(std::int64_t value);
+  explicit Tensor(float value);
   explicit Tensor(const std::vector<std::int64_t> &dims);
+  explicit Tensor(xt::xarray<Expression> values);
   explicit Tensor(const ::onnx::TensorProto &tensor);
   explicit Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name);
 
@@ -40,11 +43,15 @@ class Tensor {
   Tensor &Flatten(std::int64_t axis);
   Tensor &Transpose();
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
+  Tensor &Unsqueeze(const Tensor &tensor);
   Tensor &Abs();
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
   Tensor &Slice(const std::vector<std::int64_t> &starts, const std::vector<std::int64_t> &ends,
                 const std::vector<std::int64_t> &axes = {}, const std::vector<std::int64_t> &steps = {});
   Tensor &Slice(const Tensor &starts, const Tensor &ends, const Tensor &axes = {}, const Tensor &steps = {});
+  Tensor Concat(const Tensor &rhs, std::int64_t axis);
+  Tensor Concat(const std::vector<Tensor> &rhs, std::int64_t axis);
+  Tensor Gather(const Tensor &indices, std::int64_t axis);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
 
   template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
@@ -75,8 +82,10 @@ class Tensor {
 
   auto begin() { return values_.begin(); }
   auto end() { return values_.end(); }
-  auto cbegin() { return values_.cbegin(); }
-  auto cend() { return values_.cend(); }
+  [[nodiscard]] auto begin() const { return values_.begin(); }
+  [[nodiscard]] auto end() const { return values_.end(); }
+  [[nodiscard]] auto cbegin() const { return values_.cbegin(); }
+  [[nodiscard]] auto cend() const { return values_.cend(); }
 
   ARITHMETIC_OPERATORS(Tensor);
   GENERIC_ARITHMETIC_OPERATORS(Tensor, Expression &);

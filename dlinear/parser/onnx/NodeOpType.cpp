@@ -6,91 +6,74 @@
  */
 #include "dlinear/parser/onnx/NodeOpType.h"
 
+#include <map>
+#include <string>
+
 #include "dlinear/util/exception.h"
 
 namespace dlinear::onnx {
 
+const std::map<std::string, NodeOpType> string_to_node_op_type{
+    {"Abs", NodeOpType::Abs},
+    {"Add", NodeOpType::Add},
+    {"AveragePool", NodeOpType::AveragePool},
+    {"BatchNormalization", NodeOpType::BatchNormalization},
+    {"Concat", NodeOpType::Concat},
+    {"Constant", NodeOpType::Constant},
+    {"Conv", NodeOpType::Conv},
+    {"Dropout", NodeOpType::Dropout},
+    {"Flatten", NodeOpType::Flatten},
+    {"Gather", NodeOpType::Gather},
+    {"Gemm", NodeOpType::Gemm},
+    {"GlobalAveragePool", NodeOpType::GlobalAveragePool},
+    {"Identity", NodeOpType::Identity},
+    {"LeakyRelu", NodeOpType::LeakyRelu},
+    {"LRN", NodeOpType::LRN},
+    {"MatMul", NodeOpType::MatMul},
+    {"MaxPool", NodeOpType::MaxPool},
+    {"Mul", NodeOpType::Mul},
+    {"Relu", NodeOpType::Relu},
+    {"Reshape", NodeOpType::Reshape},
+    {"Slice", NodeOpType::Slice},
+    {"Sigmoid", NodeOpType::Sigmoid},
+    {"Softmax", NodeOpType::Softmax},
+    {"Sub", NodeOpType::Sub},
+    {"Transpose", NodeOpType::Transpose},
+    {"Unsqueeze", NodeOpType::Unsqueeze},
+};
+const std::map<NodeOpType, std::string> node_op_type_to_string{
+    {NodeOpType::Abs, "Abs"},
+    {NodeOpType::Add, "Add"},
+    {NodeOpType::AveragePool, "AveragePool"},
+    {NodeOpType::BatchNormalization, "BatchNormalization"},
+    {NodeOpType::Concat, "Concat"},
+    {NodeOpType::Constant, "Constant"},
+    {NodeOpType::Conv, "Conv"},
+    {NodeOpType::Dropout, "Dropout"},
+    {NodeOpType::Flatten, "Flatten"},
+    {NodeOpType::Gather, "Gather"},
+    {NodeOpType::Gemm, "Gemm"},
+    {NodeOpType::GlobalAveragePool, "GlobalAveragePool"},
+    {NodeOpType::Identity, "Identity"},
+    {NodeOpType::LeakyRelu, "LeakyRelu"},
+    {NodeOpType::LRN, "LRN"},
+    {NodeOpType::MatMul, "MatMul"},
+    {NodeOpType::MaxPool, "MaxPool"},
+    {NodeOpType::Mul, "Mul"},
+    {NodeOpType::Relu, "Relu"},
+    {NodeOpType::Reshape, "Reshape"},
+    {NodeOpType::Slice, "Slice"},
+    {NodeOpType::Sigmoid, "Sigmoid"},
+    {NodeOpType::Softmax, "Softmax"},
+    {NodeOpType::Sub, "Sub"},
+    {NodeOpType::Transpose, "Transpose"},
+    {NodeOpType::Unsqueeze, "Unsqueeze"},
+};
+
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
-  switch (op_type) {
-    case NodeOpType::Abs:
-      return os << "Abs";
-    case NodeOpType::Add:
-      return os << "Add";
-    case NodeOpType::AveragePool:
-      return os << "AveragePool";
-    case NodeOpType::BatchNormalization:
-      return os << "BatchNormalization";
-    case NodeOpType::Concat:
-      return os << "Concat";
-    case NodeOpType::Conv:
-      return os << "Conv";
-    case NodeOpType::Dropout:
-      return os << "Dropout";
-    case NodeOpType::Flatten:
-      return os << "Flatten";
-    case NodeOpType::Gemm:
-      return os << "Gemm";
-    case NodeOpType::GlobalAveragePool:
-      return os << "GlobalAveragePool";
-    case NodeOpType::Identity:
-      return os << "Identity";
-    case NodeOpType::LeakyRelu:
-      return os << "LeakyRelu";
-    case NodeOpType::LRN:
-      return os << "LRN";
-    case NodeOpType::MatMul:
-      return os << "MatMul";
-    case NodeOpType::MaxPool:
-      return os << "MaxPool";
-    case NodeOpType::Mul:
-      return os << "Mul";
-    case NodeOpType::Relu:
-      return os << "Relu";
-    case NodeOpType::Reshape:
-      return os << "Reshape";
-    case NodeOpType::Slice:
-      return os << "Slice";
-    case NodeOpType::Sigmoid:
-      return os << "Sigmoid";
-    case NodeOpType::Softmax:
-      return os << "Softmax";
-    case NodeOpType::Sub:
-      return os << "Sub";
-    case NodeOpType::Transpose:
-      return os << "Transpose";
-    case NodeOpType::Unsqueeze:
-      return os << "Unsqueeze";
-    default:
-      DLINEAR_UNREACHABLE();
-  }
+  return os << node_op_type_to_string.at(op_type);
 }
 
-NodeOpType parseNodeOpType(const std::string& op_type) {
-  if (op_type == "Abs") return NodeOpType::Abs;
-  if (op_type == "Add") return NodeOpType::Add;
-  if (op_type == "AveragePool") return NodeOpType::AveragePool;
-  if (op_type == "BatchNormalization") return NodeOpType::BatchNormalization;
-  if (op_type == "Concat") return NodeOpType::Concat;
-  if (op_type == "Conv") return NodeOpType::Conv;
-  if (op_type == "Dropout") return NodeOpType::Dropout;
-  if (op_type == "Flatten") return NodeOpType::Flatten;
-  if (op_type == "Gemm") return NodeOpType::Gemm;
-  if (op_type == "GlobalAveragePool") return NodeOpType::GlobalAveragePool;
-  if (op_type == "Identity") return NodeOpType::Identity;
-  if (op_type == "LeakyRelu") return NodeOpType::LeakyRelu;
-  if (op_type == "LRN") return NodeOpType::LRN;
-  if (op_type == "MatMul") return NodeOpType::MatMul;
-  if (op_type == "MaxPool") return NodeOpType::MaxPool;
-  if (op_type == "Mul") return NodeOpType::Mul;
-  if (op_type == "Relu") return NodeOpType::Relu;
-  if (op_type == "Reshape") return NodeOpType::Reshape;
-  if (op_type == "Slice") return NodeOpType::Slice;
-  if (op_type == "Sigmoid") return NodeOpType::Sigmoid;
-  if (op_type == "Softmax") return NodeOpType::Softmax;
-  if (op_type == "Sub") return NodeOpType::Sub;
-  if (op_type == "Transpose") return NodeOpType::Transpose;
-  if (op_type == "Unsqueeze") return NodeOpType::Unsqueeze;
-  DLINEAR_UNREACHABLE();
-}
+NodeOpType parseNodeOpType(const std::string& op_type) { return string_to_node_op_type.at(op_type); }
 
 }  // namespace dlinear::onnx

@@ -12,6 +12,7 @@
 #include <execution>
 #include <numeric>
 #include <ostream>
+#include <span>
 #include <utility>
 
 #include "dlinear/symbolic/literal.h"
@@ -49,7 +50,13 @@ inline std::vector<int64_t> get_dims(const ::onnx::TensorProto &tensor) {
 
 Tensor::Tensor(std::initializer_list<std::int64_t> dims) : values_(xt::xarray<Expression>::from_shape(dims)) {}
 
+Tensor::Tensor(const std::int64_t value) : values_(value) {}
+
+Tensor::Tensor(const float value) : values_(value) {}
+
 Tensor::Tensor(const std::vector<std::int64_t> &dims) : values_(xt::xarray<Expression>::from_shape(dims)) {}
+
+Tensor::Tensor(xt::xarray<Expression> values) : values_(std::move(values)) {}
 
 Tensor::Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name)
     : values_{xt::xarray<Expression>::from_shape(get_dims(value_info))} {
@@ -58,7 +65,6 @@ Tensor::Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name
 }
 
 Tensor::Tensor(const ::onnx::TensorProto &tensor) : values_{xt::xarray<Expression>::from_shape(get_dims(tensor))} {
-  DLINEAR_ASSERT(tensor.has_name(), "TensorProto must have a name");
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
   DLINEAR_ASSERT(tensor.dims_size() > 0, "TensorProto must have at least one dimension");
 
@@ -68,57 +74,57 @@ Tensor::Tensor(const ::onnx::TensorProto &tensor) : values_{xt::xarray<Expressio
   switch (tensor.data_type()) {
     case ::onnx::TensorProto_DataType::TensorProto_DataType_FLOAT:
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = raw_data == nullptr ? tensor.float_data(i) : static_cast<const float *>(raw_data)[i];
+        values_.flat(i) = raw_data == nullptr ? tensor.float_data(i) : static_cast<const float *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_DOUBLE:
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = raw_data == nullptr ? tensor.double_data(i) : static_cast<const double *>(raw_data)[i];
+        values_.flat(i) = raw_data == nullptr ? tensor.double_data(i) : static_cast<const double *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_UINT64:
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = raw_data == nullptr ? tensor.uint64_data(i) : static_cast<const uint64_t *>(raw_data)[i];
+        values_.flat(i) = raw_data == nullptr ? tensor.uint64_data(i) : static_cast<const uint64_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_INT64:
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = raw_data == nullptr ? tensor.int64_data(i) : static_cast<const int64_t *>(raw_data)[i];
+        values_.flat(i) = raw_data == nullptr ? tensor.int64_data(i) : static_cast<const int64_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_BOOL:
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = raw_data == nullptr ? tensor.int32_data(i) : static_cast<const int32_t *>(raw_data)[i];
+        values_.flat(i) = raw_data == nullptr ? tensor.int32_data(i) : static_cast<const int32_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_INT8:
       DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int8 data type");
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = static_cast<const int8_t *>(raw_data)[i];
+        values_.flat(i) = static_cast<const int8_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_INT16:
       DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int16 data type");
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = static_cast<const int16_t *>(raw_data)[i];
+        values_.flat(i) = static_cast<const int16_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_INT32:
       DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for int32 data type");
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = static_cast<const int32_t *>(raw_data)[i];
+        values_.flat(i) = static_cast<const int32_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_UINT8:
       DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for uint8 data type");
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = static_cast<const uint8_t *>(raw_data)[i];
+        values_.flat(i) = static_cast<const uint8_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_UINT32:
       DLINEAR_ASSERT(raw_data != nullptr, "Raw data must be provided for uint32 data type");
       for (int i = 0; i < size; ++i) {
-        values_.storage()[i] = static_cast<const uint32_t *>(raw_data)[i];
+        values_.flat(i) = static_cast<const uint32_t *>(raw_data)[i];
       }
       break;
     case ::onnx::TensorProto_DataType::TensorProto_DataType_UNDEFINED:
@@ -127,9 +133,7 @@ Tensor::Tensor(const ::onnx::TensorProto &tensor) : values_{xt::xarray<Expressio
   }
 }
 
-std::vector<std::int64_t> Tensor::dims() const {
-  return std::vector<std::int64_t>(values_.shape().cbegin(), values_.shape().cend());
-}
+std::vector<std::int64_t> Tensor::dims() const { return {values_.shape().cbegin(), values_.shape().cend()}; }
 
 std::int64_t Tensor::dim(std::size_t i) const {
   if (i >= values_.dimension()) return 1;
@@ -144,7 +148,7 @@ bool Tensor::SameDim(const Tensor &rhs) const {
 bool Tensor::Equal(const Tensor &rhs) const {
   if (values_.shape() != rhs.values_.shape()) return false;
   for (std::size_t i = 0; i < values_.size(); i++) {
-    if (!values_.storage()[i].EqualTo(rhs.values_.storage()[i])) return false;
+    if (!values_.flat(i).EqualTo(rhs.values_.flat(i))) return false;
   }
   return true;
 }
@@ -161,6 +165,16 @@ Tensor &Tensor::Flatten(const std::int64_t axis) {
   const std::int64_t cols = std::reduce(std::execution::par_unseq, values_.shape().cbegin() + axis,
                                         values_.shape().cend(), 1, std::multiplies<std::int64_t>{});
   values_.reshape({rows, cols});
+  return *this;
+}
+
+Tensor &Tensor::Unsqueeze(const Tensor &axes) {
+  std::vector<std::size_t> new_shape(values_.shape().size() + axes.size(), 0);
+  for (const std::int64_t axes_value : static_cast<std::vector<std::int64_t>>(axes)) new_shape.at(axes_value) = 1;
+  for (std::size_t i = 0, j = 0; i < new_shape.size(); i++) {
+    if (new_shape[i] != 1) new_shape[i] = values_.shape()[j++];
+  }
+  values_.reshape(new_shape);
   return *this;
 }
 
@@ -204,7 +218,6 @@ Tensor &Tensor::Slice(const Tensor &starts, const Tensor &ends, const Tensor &ax
   return Slice(static_cast<std::vector<std::int64_t>>(starts), static_cast<std::vector<std::int64_t>>(ends),
                static_cast<std::vector<std::int64_t>>(axes), static_cast<std::vector<std::int64_t>>(steps));
 }
-
 Tensor &Tensor::Slice(const std::vector<std::int64_t> &starts, const std::vector<std::int64_t> &ends,
                       const std::vector<std::int64_t> &axes, const std::vector<std::int64_t> &steps) {
   if (starts.empty() || ends.empty()) DLINEAR_OUT_OF_RANGE("Starts and ends must not be empty");
@@ -212,22 +225,69 @@ Tensor &Tensor::Slice(const std::vector<std::int64_t> &starts, const std::vector
   if (!axes.empty() && axes.size() != starts.size()) DLINEAR_OUT_OF_RANGE("Axes must have the same size as starts");
   if (!steps.empty() && steps.size() != starts.size()) DLINEAR_OUT_OF_RANGE("Steps must have the same size as starts");
 
-  xt::xstrided_slice_vector sv(values_.dimension());
+  xt::xstrided_slice_vector sv(values_.dimension(), xt::all());
   for (std::size_t i = 0; i < starts.size(); i++) {
     const std::int64_t start =
         starts[i] < 0 ? starts[i] + dim(axes.empty() ? static_cast<std::int64_t>(i) : axes[i]) : starts[i];
-    const std::int64_t end =
-        ends[i] < 0 ? ends[i] + dim(axes.empty() ? static_cast<std::int64_t>(i) : axes[i]) : ends[i];
+    std::int64_t end = ends[i] < 0 ? ends[i] + dim(axes.empty() ? static_cast<std::int64_t>(i) : axes[i]) : ends[i];
     const std::int64_t axis = axes.empty() ? static_cast<std::int64_t>(i) : axes[i];
     const std::int64_t step = steps.empty() ? 1 : steps[i];
+    end = std::min(end, dim(axis));
     if (start >= dim(axis)) DLINEAR_OUT_OF_RANGE_FMT("Invalid start value: {}", start);
-    if (end >= dim(axis)) DLINEAR_OUT_OF_RANGE_FMT("Invalid end value: {}", end);
     if (step <= 0) DLINEAR_OUT_OF_RANGE_FMT("Invalid step value: {}", step);
     if (start >= end) DLINEAR_OUT_OF_RANGE_FMT("Invalid slice: start {} >= end {}", start, end);
     sv[axis] = xt::range(start, end, step);
   }
   values_ = xt::xarray<Expression>(xt::strided_view(values_, sv));
   return *this;
+}
+
+Tensor Tensor::Concat(const Tensor &rhs, const std::int64_t axis) {
+  return Tensor{xt::concatenate(xt::xtuple(values_, rhs.values_), axis < 0 ? values_.dimension() + axis : axis)};
+}
+
+Tensor Tensor::Concat(const std::vector<Tensor> &rhs, const std::int64_t axis) {
+  const std::size_t normalized_axis = axis < 0 ? values_.dimension() + axis : axis;
+  xt::xarray<Expression> values = values_;
+  for (const Tensor &t : rhs) values = xt::concatenate(xt::xtuple(values, t.values_), normalized_axis);
+  return Tensor{values};
+}
+
+Tensor Tensor::Gather(const dlinear::onnx::Tensor &indices, std::int64_t axis) {
+  if (axis < 0 || axis >= static_cast<std::int64_t>(values_.dimension()))
+    DLINEAR_OUT_OF_RANGE_FMT("Invalid axis. Must be in [{}, {}]", 0, values_.dimension());
+
+  // TODO: make sure this gather implementation is correct
+  std::vector<std::int64_t> new_shape{};
+  new_shape.insert(new_shape.end(), values_.shape().begin(), values_.shape().begin() + axis);
+  new_shape.insert(new_shape.end(), indices.values_.shape().begin(), indices.values_.shape().end());
+  new_shape.insert(new_shape.end(), values_.shape().begin() + axis + 1, values_.shape().end());
+  xt::xarray<Expression> new_values = xt::zeros<Expression>(new_shape);
+
+  int counter = 0;
+  for (const auto &index : indices) {
+    xt::xstrided_slice_vector data_slices{};
+    xt::xstrided_slice_vector new_values_slices{};
+    for (int i = 0; i < axis; ++i) {
+      data_slices.emplace_back(xt::all());
+      new_values_slices.emplace_back(xt::all());
+    }
+    for (size_t i = 1; i < indices.ndim(); ++i) {
+      new_values_slices.emplace_back(0);
+    }
+    data_slices.emplace_back(get_constant_value(index).get_num().get_ui());
+    new_values_slices.emplace_back(counter++);
+    data_slices.emplace_back(xt::ellipsis());
+    new_values_slices.emplace_back(xt::ellipsis());
+
+    auto data_slice = xt::strided_view(values_, data_slices);
+    auto new_slice = xt::strided_view(new_values, new_values_slices);
+    for (size_t j = 0; j < data_slice.size(); ++j) {
+      new_slice(j) = data_slice(j);
+    }
+  }
+
+  return Tensor{new_values};
 }
 
 Tensor Tensor::MatMul(const Tensor &rhs) const {
@@ -290,52 +350,62 @@ Tensor &Tensor::operator/=(const Tensor &rhs) {
 }
 
 std::vector<Formula> Tensor::operator<(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] < rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) < rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator<=(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] <= rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) <= rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator>(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] > rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) > rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator>=(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] >= rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) >= rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator==(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] == rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) == rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator!=(const Tensor &rhs) const {
+  if (values_.shape() != rhs.values_.shape())
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
-  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_[i] != rhs[i]);
+  for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) != rhs[i]);
   return formulas;
 }
 
-Expression &Tensor::operator[](const int index) { return values_.storage().at(index); }
-const Expression &Tensor::operator[](const int index) const { return values_.storage().at(index); }
-Expression &Tensor::operator[](const std::size_t index) { return values_.storage().at(index); }
-const Expression &Tensor::operator[](const std::size_t index) const { return values_.storage().at(index); }
+Expression &Tensor::operator[](const int index) { return values_.flat(index); }
+const Expression &Tensor::operator[](const int index) const { return values_.flat(index); }
+Expression &Tensor::operator[](const std::size_t index) { return values_.flat(index); }
+const Expression &Tensor::operator[](const std::size_t index) const { return values_.flat(index); }
 
-Expression &Tensor::operator()(std::initializer_list<std::int64_t> dims) {
-  return values_.storage().at(ComputeOffset(dims));
-}
+Expression &Tensor::operator()(std::initializer_list<std::int64_t> dims) { return values_.flat(ComputeOffset(dims)); }
 const Expression &Tensor::operator()(std::initializer_list<std::int64_t> dims) const {
-  return values_.storage().at(ComputeOffset(dims));
+  return values_.flat(ComputeOffset(dims));
 }
 
 Tensor::operator std::vector<std::int64_t>() const {
@@ -363,7 +433,6 @@ std::size_t Tensor::ComputeOffset(const std::int64_t *const dims, const std::siz
     offset += dims[size - i - 1] * stride;
     stride *= values_.shape().rbegin()[static_cast<std::int64_t>(i)];
   }
-  std::cout << "offset: " << offset << " size: " << size << " stride: " << stride << "\n";
   return offset;
 }
 std::ostream &operator<<(std::ostream &os, const Tensor &tensor) {

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <functional>
 #include <istream>
 #include <list>
+#include <map>
 #include <string>
 #include <unordered_map>
 
@@ -29,6 +31,8 @@ class OnnxDriver : public Driver {
   const ::onnx::GraphProto& graph() const { return model_.graph(); }
 
  private:
+  static const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodeProto&)>> node_handlers;
+
   void ParseGraph();
   void AddNodes();
   bool AddNode(const ::onnx::NodeProto& node);
