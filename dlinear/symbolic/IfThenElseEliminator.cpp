@@ -19,8 +19,6 @@
 
 namespace dlinear {
 
-std::size_t IfThenElseEliminator::counter_{0};
-
 Formula IfThenElseEliminator::Process(const Formula &f) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
@@ -30,8 +28,8 @@ Formula IfThenElseEliminator::Process(const Formula &f) {
   return new_f && make_conjunction(added_formulas_);
 }
 
-const std::unordered_set<Variable, hash_value<Variable>> &IfThenElseEliminator::variables() const {
-  return ite_variables_;
+const std::unordered_map<Expression, Variable, hash_value<Expression>> &IfThenElseEliminator::variables() const {
+  return ite_to_var_;
 }
 
 Expression IfThenElseEliminator::Visit(const Expression &e, const Formula &guard) {
@@ -139,6 +137,8 @@ Expression IfThenElseEliminator::VisitMax(const Expression &e, const Formula &gu
 
 Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Formula &guard) {
   // Both then and else expressions are the same.
+  const auto it = ite_to_var_.find(e);
+  if (it != ite_to_var_.end()) return it->second;
   if (get_then_expression(e).EqualTo(get_else_expression(e))) return Visit(get_then_expression(e), guard);
 
   const Formula c{Visit(get_conditional_formula(e), guard)};
@@ -148,13 +148,13 @@ Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Form
   if (c.EqualTo(!guard)) return Visit(get_else_expression(e), guard);
 
   const Variable new_var{"ITE" + std::to_string(counter_++), Variable::Type::CONTINUOUS};
-  ite_variables_.insert(new_var);
   const Formula then_guard{guard && c};
   const Formula else_guard{guard && !c};
   const Expression e1{Visit(get_then_expression(e), then_guard)};
   const Expression e2{Visit(get_else_expression(e), else_guard)};
   added_formulas_.push_back(!then_guard || (new_var == e1));  // then_guard => (new_var = e1)
   added_formulas_.push_back(!else_guard || (new_var == e2));  // else_guard => (new_var = e2)
+  ite_to_var_.emplace(e, new_var);
   return new_var;
 }
 
@@ -240,7 +240,9 @@ Formula IfThenElseEliminator::VisitForall(const Formula &f, const Formula &) {
   const Formula &quantified_formula{get_quantified_formula(f)};
   IfThenElseEliminator ite_eliminator_forall{false};
   const Formula eliminated{ite_eliminator_forall.Process(!quantified_formula)};
-  quantified_variables.insert(ite_eliminator_forall.variables().begin(), ite_eliminator_forall.variables().end());
+  for (const auto &[_, v] : ite_eliminator_forall.variables()) {
+    quantified_variables.insert(v);
+  }
   return forall(quantified_variables, Nnfizer{}.Convert(!eliminated));
 }
 

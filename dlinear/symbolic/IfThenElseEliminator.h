@@ -28,23 +28,19 @@ namespace dlinear {
 class IfThenElseEliminator {
  public:
   explicit IfThenElseEliminator(const Config &config)
-      : stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
-  explicit IfThenElseEliminator(const bool with_timings) : stats_{with_timings, "IfThenElseEliminator", "Process"} {}
+      : counter_{0}, stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
+  explicit IfThenElseEliminator(const bool with_timings)
+      : counter_{0}, stats_{with_timings, "IfThenElseEliminator", "Process"} {}
   /**
-   * Returns a equisatisfiable formula by eliminating
-   * if-then-expressions in @p f by introducing new variables.
+   * Returns a equisatisfiable formula by eliminating if-then-expressions in @p f by introducing new variables.
    * @param f Formula to be processed.
    * @return Processed formula.
    */
   Formula Process(const Formula &f);
-  const std::unordered_set<Variable, hash_value<Variable>> &variables() const;
+  const std::unordered_map<Expression, Variable, hash_value<Expression>> &variables() const;
   const IterationStats &stats() const { return stats_; }
 
-  static void ResetCounter() { counter_ = 0; }
-
  private:
-  static std::size_t counter_;  ///< Counter for the number of introduced variables.
-
   // Handle expressions.
   Expression Visit(const Expression &e, const Formula &guard);
   Expression VisitVariable(const Expression &e, const Formula &guard);
@@ -95,7 +91,10 @@ class IfThenElseEliminator {
   std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process
   std::unordered_set<Variable, hash_value<Variable>>
       ite_variables_;  ///< The variables introduced by the elimination process.
+  std::unordered_map<Expression, Variable, hash_value<Expression>>
+      ite_to_var_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
 
+  std::size_t counter_;   ///< Counter for the number of introduced variables.
   IterationStats stats_;  ///< Statistics of the elimination process.
 
   // Makes VisitFormula a friend of this class so that it can use private
