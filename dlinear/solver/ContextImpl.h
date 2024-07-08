@@ -28,6 +28,7 @@
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/solver/TheorySolver.h"
+#include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -294,6 +295,7 @@ class Context::Impl {
   bool theory_loaded_;   ///< Whether the theory solver has been loaded with all the assertions parsed by the SAT
 
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
+  IfThenElseEliminator ite_eliminator_;       ///< Eliminates if-then-else expressions from the formula.
   // TODO: these could become templated classes for added efficiency
   const std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   const std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.

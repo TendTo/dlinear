@@ -57,6 +57,7 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
       is_max_{false},
       theory_loaded_{false},
       predicate_abstractor_{config},
+      ite_eliminator_{config},
       sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_)},
       theory_solver_{GetTheorySolver(config)} {
   boxes_.push_back(Box{config_.lp_solver()});
@@ -71,12 +72,11 @@ void Context::Impl::Assert(const Formula &f) {
   }
 
   DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
-  IfThenElseEliminator ite_eliminator{config_};
-  const Formula no_ite{ite_eliminator.Process(f)};
+  const Formula no_ite{ite_eliminator_.Process(f)};
 
   // Note that the following does not mark `ite_var` as a model variable.
-  for (const Variable &ite_var : ite_eliminator.variables()) AddToBox(ite_var);
-  if (config_.with_timings() && output_ != nullptr) output_->ite_stats += ite_eliminator.stats();
+  for (const auto &[ite_expr, ite_var] : ite_eliminator_.variables()) AddToBox(ite_var);
+  if (config_.with_timings() && output_ != nullptr) output_->ite_stats += ite_eliminator_.stats();
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
 }

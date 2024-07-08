@@ -18,8 +18,7 @@
 namespace dlinear::vnnlib {
 
 VnnlibDriver::VnnlibDriver(Context &context) : Driver{context, "VnnlibDriver"} {
-  for (const Variable& var : context_.box().variables()) scope_variables_.insert(var.get_name(), var);
-  DLINEAR_ERROR_FMT("Box variables: {}\nBox: {}", scope_variables_, context_.box());
+  for (const Variable &var : context_.box().variables()) scope_variables_.insert(var.get_name(), var);
 }
 
 bool VnnlibDriver::ParseStreamCore(std::istream &in) {
@@ -47,7 +46,7 @@ Formula VnnlibDriver::EliminateBooleanVariables(const Variables &vars, const For
 }
 
 void VnnlibDriver::DefineFun(const std::string &name, const std::vector<Variable> &parameters, Sort return_type,
-                           const Term &body) {
+                             const Term &body) {
   FunctionDefinition func{parameters, return_type, body};
   scope_functions_.insert(name, func);
 }
