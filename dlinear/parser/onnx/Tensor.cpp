@@ -436,7 +436,15 @@ std::size_t Tensor::ComputeOffset(const std::int64_t *const dims, const std::siz
   return offset;
 }
 std::ostream &operator<<(std::ostream &os, const Tensor &tensor) {
-  return os << fmt::format("Tensor({})\n{}", tensor.values().shape(), tensor.values());
+  return os << "Tensor(" << tensor.values().shape() << ")\n" << tensor.values();
+}
+std::ostream &operator<<(std::ostream &os, const xt::xarray<dlinear::Expression> &values) {
+  for (const Expression &e : values) os << e << '\n';
+  return os;
+}
+std::ostream &operator<<(std::ostream &os, const xt::xarray<dlinear::Expression>::shape_type &shape) {
+  for (const std::size_t dim : shape) os << dim << ' ';
+  return os;
 }
 
 }  // namespace dlinear::onnx

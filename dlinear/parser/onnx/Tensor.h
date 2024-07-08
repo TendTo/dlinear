@@ -98,7 +98,7 @@ class Tensor {
 };
 
 std::ostream &operator<<(std::ostream &os, const Tensor &matrix);
+std::ostream &operator<<(std::ostream &os, const xt::xarray<dlinear::Expression> &values);
+std::ostream &operator<<(std::ostream &os, const xt::xarray<dlinear::Expression>::shape_type &shape);
 
 }  // namespace dlinear::onnx
-
-OSTREAM_FORMATTER(dlinear::onnx::Tensor);

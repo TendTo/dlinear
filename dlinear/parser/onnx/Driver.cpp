@@ -329,7 +329,9 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.has_op_type(), "NodeProto must have an op_type");
 
   DLINEAR_TRACE_FMT("AddNode({})", node.name());
-  for (const std::string& input : node.input()) DLINEAR_TRACE_FMT("Node input: {}", input);
+  if (DLINEAR_TRACE_ENABLED) {
+    for ([[maybe_unused]] const std::string& input : node.input()) DLINEAR_TRACE_FMT("Node input: {}", input);
+  }
   const bool missing_input = std::any_of(node.input().begin(), node.input().end(), [this](const std::string& input) {
     return !available_inputs_.contains(input);
   });
@@ -358,7 +360,10 @@ void OnnxDriver::AddNodes() {
   }
   if (!nodes.empty()) {
     DLINEAR_ERROR("Failed to add all nodes");
-    for (const ::onnx::NodeProto* node : nodes) DLINEAR_ERROR_FMT("Failed to add node: {}", node->name());
+    if (DLINEAR_TRACE_ENABLED) {
+      for ([[maybe_unused]] const ::onnx::NodeProto* node : nodes)
+        DLINEAR_ERROR_FMT("Failed to add node: {}", node->name());
+    }
   }
 }
 
