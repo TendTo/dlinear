@@ -44,7 +44,7 @@ class FormulaCell {
   /** Returns hash of formula. */
   size_t get_hash() const { return hash_; }
   /** Returns set of free variables in formula. */
-  const Variables &GetFreeVariables() const;
+  const Variables &GetFreeVariables();
   /** Checks structural equality. */
   virtual bool EqualTo(const FormulaCell &c) const = 0;
   /** Checks ordering. */
@@ -71,18 +71,20 @@ class FormulaCell {
 
  protected:
   /** Construct FormulaCell of kind @p k with @p hash. */
-  FormulaCell(FormulaKind k, size_t hash, bool include_ite,
-              Variables variables);
+  FormulaCell(FormulaKind k, size_t hash, bool include_ite);
   /** Default destructor. */
   virtual ~FormulaCell() = default;
   /** Returns a Formula pointing to this FormulaCell. */
   Formula GetFormula();
 
+  virtual void ExtractFreeVariables() {}
+
+  Variables variables_;
+
  private:
   const FormulaKind kind_{};
   const size_t hash_{};
   const bool include_ite_{false};
-  const Variables variables_;
 
   // Reference counter.
   mutable std::atomic<unsigned> rc_{0};
@@ -126,6 +128,9 @@ class RelationalFormulaCell : public FormulaCell {
   /** Returns the expression on right-hand-side. */
   const Expression &get_rhs_expression() const { return e_rhs_; }
 
+protected:
+    void ExtractFreeVariables() override;
+
  private:
   const Expression e_lhs_;
   const Expression e_rhs_;
@@ -162,10 +167,9 @@ class NaryFormulaCell : public FormulaCell {
 
  protected:
   std::ostream &DisplayWithOp(std::ostream &os, const std::string &op) const;
+  void ExtractFreeVariables() override;
 
  private:
-  static Variables ExtractFreeVariables(const std::set<Formula> &formulas);
-
   std::set<Formula> formulas_;
 };
 
@@ -209,6 +213,9 @@ class FormulaVar : public FormulaCell {
                      const FormulaSubstitution &formula_substubst) override;
   std::ostream &Display(std::ostream &os) const override;
   const Variable &get_variable() const;
+
+ protected:
+  void ExtractFreeVariables() override;
 
  private:
   const Variable var_;
@@ -320,6 +327,9 @@ class FormulaNot : public FormulaCell {
   /** Returns the operand. */
   const Formula &get_operand() const { return f_; }
 
+ protected:
+  void ExtractFreeVariables() override;
+
  private:
   const Formula f_;
 };
@@ -341,6 +351,9 @@ class FormulaForall : public FormulaCell {
   const Variables &get_quantified_variables() const { return vars_; }
   /** Returns the quantified formula. */
   const Formula &get_quantified_formula() const { return f_; }
+
+ protected:
+  void ExtractFreeVariables() override;
 
  private:
   const Variables vars_;  // Quantified variables.

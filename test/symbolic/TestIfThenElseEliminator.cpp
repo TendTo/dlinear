@@ -60,8 +60,6 @@ class TestIfThenElseEliminator : public ::testing::Test {
       (b1_ && b2_) || (!b1_ && !b2_),
       // clang-format on
   };
-
-  TestIfThenElseEliminator() { IfThenElseEliminator::ResetCounter(); }
 };
 
 TEST_F(TestIfThenElseEliminator, NonITEs) {
@@ -85,7 +83,7 @@ TEST_F(TestIfThenElseEliminator, ITEs) {
   const Formula converted = ite_elim.Process(f);
   ASSERT_FALSE(ite_elim.variables().empty());
   ASSERT_EQ(ite_elim.variables().size(), 1u);
-  const Variable &ite_var{*(ite_elim.variables().begin())};
+  const Variable &ite_var{ite_elim.variables().begin()->second};
   const Formula expected{ite_var == z_ && (!(x_ > y_) || ite_var == x_ + 1.0) && (x_ > y_ || ite_var == y_ + 1.0)};
   EXPECT_PRED2(FormulaNotEqual, f, converted);
   EXPECT_PRED2(FormulaEqual, converted, expected);
