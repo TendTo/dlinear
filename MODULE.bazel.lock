@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "b44b5593991b2c53bc44c37c1927e531c58f355cc1ad90c41240617f96ca7bf9",
+  "moduleFileHash": "c4b77beaca4bf0c3ee60838919edcdcff38bc55bc33f616b7c95ce9f056fbb85",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -120,7 +120,7 @@
                 "build_file": "//third_party:xtl.BUILD.bazel",
                 "commit": "0.7.7",
                 "repository": "xtensor-stack/xtl",
-                "sha256": "",
+                "sha256": "44fb99fbf5e56af5c43619fc8c29aa58e5fad18f3ba6e7d9c55c111b62df1fbb",
                 "name": "xtl"
               },
               "devDependency": false,
@@ -136,7 +136,7 @@
                 "build_file": "//third_party:xtensor.BUILD.bazel",
                 "commit": "0.25.0",
                 "repository": "xtensor-stack/xtensor",
-                "sha256": "",
+                "sha256": "32d5d9fd23998c57e746c375a544edf544b74f0a18ad6bc3c38cbba968d5e6c7",
                 "name": "xtensor"
               },
               "devDependency": false,
