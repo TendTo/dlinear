@@ -23,6 +23,8 @@ Formula IfThenElseEliminator::Process(const Formula &f) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
+  added_formulas_.clear();
+
   Formula new_f{Visit(f, Formula::True())};
   if (f.EqualTo(new_f) && added_formulas_.empty()) return f;
   return new_f && make_conjunction(added_formulas_);
@@ -138,7 +140,10 @@ Expression IfThenElseEliminator::VisitMax(const Expression &e, const Formula &gu
 Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Formula &guard) {
   // Both then and else expressions are the same.
   const auto it = ite_to_var_.find(e);
-  if (it != ite_to_var_.end()) return it->second;
+  if (it != ite_to_var_.end()) {
+    added_formulas_.push_back(ite_var_to_formulas_.at(it->second));
+    return it->second;
+  }
   if (get_then_expression(e).EqualTo(get_else_expression(e))) return Visit(get_then_expression(e), guard);
 
   const Formula c{Visit(get_conditional_formula(e), guard)};
@@ -155,6 +160,7 @@ Expression IfThenElseEliminator::VisitIfThenElse(const Expression &e, const Form
   added_formulas_.push_back(!then_guard || (new_var == e1));  // then_guard => (new_var = e1)
   added_formulas_.push_back(!else_guard || (new_var == e2));  // else_guard => (new_var = e2)
   ite_to_var_.emplace(e, new_var);
+  ite_var_to_formulas_.emplace(new_var, added_formulas_.back() && *(added_formulas_.rbegin() + 1));
   return new_var;
 }
 

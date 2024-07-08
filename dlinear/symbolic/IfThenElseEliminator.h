@@ -88,11 +88,14 @@ class IfThenElseEliminator {
   // Member fields
   // ---------------
 
-  std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process
+  std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process. Resets after
+                                         ///< each call to Process.
   std::unordered_set<Variable, hash_value<Variable>>
       ite_variables_;  ///< The variables introduced by the elimination process.
   std::unordered_map<Expression, Variable, hash_value<Expression>>
       ite_to_var_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
+  std::unordered_map<Variable, Formula, hash_value<Variable>>
+      ite_var_to_formulas_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
 
   std::size_t counter_;   ///< Counter for the number of introduced variables.
   IterationStats stats_;  ///< Statistics of the elimination process.
