@@ -55,6 +55,14 @@ class Context {
    */
   void Assert(const Formula &f);
   /**
+   * Assert an ITE expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
+   * @pre @p e is an ITE expression
+   * @param e ITE expression to be asserted
+   * @return fresh variable introduced to represent the ITE expression or simple expression if a simplification happened
+   */
+  Expression AssertIte(const Expression &e);
+
+  /**
    * Check the satisfiability of the asserted formulas, and sets
    * @p actual_precision to the actual max infeasibility where appropriate.
    * @param[out] actual_precision initialized with the desired precision, it will be

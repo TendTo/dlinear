@@ -37,6 +37,7 @@ class IfThenElseEliminator {
    * @return Processed formula.
    */
   Formula Process(const Formula &f);
+  std::pair<Expression, Formula> Process(const Expression& e);
   const std::unordered_map<Expression, Variable, hash_value<Expression>> &variables() const;
   const IterationStats &stats() const { return stats_; }
 

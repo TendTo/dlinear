@@ -29,6 +29,16 @@ Formula IfThenElseEliminator::Process(const Formula &f) {
   if (f.EqualTo(new_f) && added_formulas_.empty()) return f;
   return new_f && make_conjunction(added_formulas_);
 }
+std::pair<Expression, Formula> IfThenElseEliminator::Process(const Expression &e) {
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
+
+  added_formulas_.clear();
+
+  Expression new_e{Visit(e, Formula::True())};
+  if (e.EqualTo(new_e) && added_formulas_.empty()) return {e, {}};
+  return {new_e, make_conjunction(added_formulas_)};
+}
 
 const std::unordered_map<Expression, Variable, hash_value<Expression>> &IfThenElseEliminator::variables() const {
   return ite_to_var_;

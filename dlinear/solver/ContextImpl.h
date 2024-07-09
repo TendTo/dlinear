@@ -62,6 +62,13 @@ class Context::Impl {
    * @param f the formula to be asserted
    */
   void Assert(const Formula &f);
+  /**
+   * Assert an ITE expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
+   * @pre @p e is an ITE expression
+   * @param e ITE expression to be asserted
+   * @return fresh variable introduced to represent the ITE expression or simple expression if a simplification happened
+   */
+  Expression AssertIte(const Expression &e);
 
   /** Pop the top of the stack of assertions. */
   void Pop();

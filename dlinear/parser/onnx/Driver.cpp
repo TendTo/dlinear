@@ -249,7 +249,7 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
-  relu.Piecewise([](const Expression& e) { return if_then_else(e >= 0, e, 0); });
+  relu.Piecewise([this](const Expression& e) { return context_.AssertIte(if_then_else(e >= 0, e, 0)); });
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
   DLINEAR_TRACE_FMT("{}", relu);

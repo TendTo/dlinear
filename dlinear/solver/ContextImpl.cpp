@@ -71,14 +71,28 @@ void Context::Impl::Assert(const Formula &f) {
     return;
   }
 
-  DLINEAR_DEBUG_FMT("ContextImpl::Assert: {} is added.", f);
+  DLINEAR_DEBUG_FMT("ContextImpl::Assert({})", f);
   const Formula no_ite{ite_eliminator_.Process(f)};
 
   // Note that the following does not mark `ite_var` as a model variable.
   for (const auto &[ite_expr, ite_var] : ite_eliminator_.variables()) AddToBox(ite_var);
-  if (config_.with_timings() && output_ != nullptr) output_->ite_stats += ite_eliminator_.stats();
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
+}
+Expression Context::Impl::AssertIte(const Expression &e) {
+  DLINEAR_ASSERT(is_if_then_else(e), "e must be an ITE");
+
+  DLINEAR_DEBUG_FMT("ContextImpl::AssertIte({})", e);
+  const auto [no_ite, assertion] = ite_eliminator_.Process(e);
+
+  if (Formula::True().EqualTo(assertion)) return no_ite;
+
+  DLINEAR_ASSERT(is_variable(no_ite), "e must be a variable");
+  // Note that the following does not mark `ite_var` as a model variable.
+  AddToBox(to_variable(no_ite)->get_variable());
+  stack_.push_back(assertion);
+  sat_solver_->AddFormula(assertion);
+  return no_ite;
 }
 
 void Context::Impl::Pop() {
