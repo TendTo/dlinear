@@ -53,6 +53,11 @@ class Tensor {
   Tensor Concat(const std::vector<Tensor> &rhs, std::int64_t axis);
   Tensor Gather(const Tensor &indices, std::int64_t axis);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
+  [[nodiscard]] Tensor Convolution(const Tensor &w, const std::string &auto_pad,
+                                   const std::vector<std::int64_t> &dilations, std::int64_t group,
+                                   const std::vector<std::int64_t> &kernel_shape, const std::vector<std::int64_t> &pads,
+                                   const std::vector<std::int64_t> &strides) const;
+  [[nodiscard]] Tensor Pad(const std::vector<std::int64_t> &pads);
 
   template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
   Expression &operator()(Dims... dims) {
