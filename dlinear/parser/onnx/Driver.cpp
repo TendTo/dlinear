@@ -149,6 +149,88 @@ void OnnxDriver::AddNode<NodeOpType::Constant>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Conv>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Conv", "NodeProto must have an op_type of Conv");
+  DLINEAR_ASSERT(node.input_size() == 2 || node.input_size() == 3, "NodeProto must have [2-3] inputs");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+
+  const std::string& input1 = node.input(0);
+  const std::string& input2 = node.input(1);
+
+  const std::string& output = node.output(0);
+  const Tensor& x = available_inputs_.at(input1);
+  const Tensor& w = available_inputs_.at(input2);
+
+  std::string auto_pad = "NOTSET";
+  std::vector<std::int64_t> dilations{1, 1};
+  std::int64_t group = 1;
+  std::vector<std::int64_t> kernel_shape{w.values().shape().begin() + 2, w.values().shape().end()};
+  std::vector<std::int64_t> pads{0, 0};
+  std::vector<std::int64_t> strides{1, 1};
+  for (const ::onnx::AttributeProto& attr : node.attribute()) {
+    if (!attr.has_name()) continue;
+    if (attr.name() == "auto_pad")
+      auto_pad = attr.s();
+    else if (attr.name() == "dilations") {
+      dilations.clear();
+      dilations.reserve(attr.ints_size());
+      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(dilations));
+    } else if (attr.name() == "group") {
+      group = attr.i();
+    } else if (attr.name() == "kernel_shape") {
+      kernel_shape.clear();
+      kernel_shape.reserve(attr.ints_size());
+      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(kernel_shape));
+    } else if (attr.name() == "pads") {
+      pads.clear();
+      pads.reserve(attr.ints_size());
+      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(pads));
+    } else if (attr.name() == "strides") {
+      strides.clear();
+      strides.reserve(attr.ints_size());
+      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(strides));
+    }
+  }
+  if (auto_pad != "NOTSET") {
+    pads.clear();
+    for (std::size_t i = 0; i < strides.size(); ++i) {
+      if (auto_pad == "VALID") {
+        pads.push_back(0);
+        pads.push_back(0);
+      } else {
+        if (std::any_of(dilations.begin(), dilations.end(), [](std::int64_t d) { return d != 1; })) {
+          DLINEAR_RUNTIME_ERROR("Only dilation [1, 1] is supported with auto_pad");
+        }
+        const std::int64_t out_dim =
+            ceil(static_cast<double>(x.values().shape()[i + 2]) / static_cast<double>(strides[i]));
+        const std::int64_t pad =
+            (out_dim - 1) * strides[i] + kernel_shape[i] - static_cast<std::int64_t>(x.values().shape()[i + 2]);
+        if (auto_pad == "SAME_UPPER") {
+          pads.push_back(pad / 2);
+          pads.push_back(pad / 2 + (pad & 1));
+        } else if (auto_pad == "SAME_LOWER") {
+          pads.push_back(pad / 2 + (pad & 1));
+          pads.push_back(pad / 2);
+        }
+      }
+    }
+  }
+
+  Tensor conv{x.Convolution(w, dilations, group, kernel_shape, pads, strides)};
+  if (node.input_size() > 2) {
+    Tensor& b = available_inputs_.at(node.input(2));
+    b.Reshape({1, static_cast<std::int64_t>(b.size()), 1, 1});
+    conv += b;
+  }
+  available_inputs_.emplace(output, std::move(conv));
+
+  DLINEAR_DEBUG_FMT("Conv node: {} <- conv({}, {}, {}, {}, {}, {}, {}, {})", output, input1, input2, auto_pad,
+                    dilations, group, kernel_shape, pads, strides);
+  DLINEAR_TRACE_FMT("{} <- conv({}, {})", available_inputs_.at(output), x, w);
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Flatten", "NodeProto must have an op_type of Flatten");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
@@ -249,7 +331,22 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
-  relu.Piecewise([this](const Expression& e) { return context_.AssertIte(if_then_else(e >= 0, e, 0)); });
+
+  relu.Piecewise([this](const Expression& e) {
+    Formula implication{};
+    if (is_addition(e)) {
+      for (const auto& [expr, coeff] : to_addition(e)->get_expr_to_coeff_map()) {
+        if (is_variable(expr) && to_variable(expr)->get_variable().get_name().starts_with("X")) {
+          implication = Formula::False();
+          break;
+        }
+        if (coeff > 0) implication = implication && expr == 0;
+      }
+    }
+    const Expression new_expr = context_.AssertIte(if_then_else(e > 0, e, 0));
+    if (!implication.EqualTo(Formula::False())) context_.Assert(imply(implication, new_expr == 0));
+    return new_expr;
+  });
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
   DLINEAR_TRACE_FMT("{}", relu);
@@ -411,7 +508,7 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     //    {"BatchNormalization", &OnnxDriver::AddNode<NodeOpType::BatchNormalization>},
     {"Concat", &OnnxDriver::AddNode<NodeOpType::Concat>},
     {"Constant", &OnnxDriver::AddNode<NodeOpType::Constant>},
-    //    {"Conv", &OnnxDriver::AddNode<NodeOpType::Conv>},
+    {"Conv", &OnnxDriver::AddNode<NodeOpType::Conv>},
     //    {"Dropout", &OnnxDriver::AddNode<NodeOpType::Dropout>},
     {"Flatten", &OnnxDriver::AddNode<NodeOpType::Flatten>},
     {"Gather", &OnnxDriver::AddNode<NodeOpType::Gather>},

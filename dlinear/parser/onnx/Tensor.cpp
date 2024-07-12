@@ -290,14 +290,15 @@ Tensor Tensor::Gather(const dlinear::onnx::Tensor &indices, std::int64_t axis) {
   return Tensor{new_values};
 }
 
-Tensor Tensor::Convolution(const Tensor &w, const std::string &, const std::vector<std::int64_t> &,
-                           const std::int64_t group, const std::vector<std::int64_t> &,
-                           const std::vector<std::int64_t> &, const std::vector<std::int64_t> &) const {
-  DLINEAR_ASSERT(values_.dimension() >= 4, "Convolution can only be applied to at least a 4D tensors");
-  DLINEAR_ASSERT(w.values_.dimension() >= 4, "Convolution can only be applied to at least a 4D tensors");
+Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dilation,
+                           const std::int64_t group, const std::vector<std::int64_t> &kernel_shape,
+                           const std::vector<std::int64_t> &pads, const std::vector<std::int64_t> &stride) const {
+  DLINEAR_ASSERT(values_.dimension() == 4, "Convolution can only be applied to a 4D tensors");
+  DLINEAR_ASSERT(w.values_.dimension() == 4, "Convolution can only be applied to a 4D tensors");
   DLINEAR_ASSERT(values_.shape()[1] == w.values_.shape()[1] * group,
                  "The number of input channels must be equal to the number of output channels times the group");
   DLINEAR_ASSERT(w.values_.shape()[0] % group == 0, "The number of output channels must be divisible by the group");
+  DLINEAR_ASSERT(group == 1, "Group convolution is not supported yet");
 
   [[maybe_unused]] const std::size_t batch_size = values_.shape()[0];
   const std::size_t input_channels = values_.shape()[1];
@@ -308,28 +309,90 @@ Tensor Tensor::Convolution(const Tensor &w, const std::string &, const std::vect
                  "The number of input channels must be equal to the number of output channels");
   const std::vector<std::size_t> remaining_kernel_shapes{w.values_.shape().begin() + 2, w.values_.shape().end()};
 
-  return Tensor{*this};
+  const auto image = xt::view(values_, 0ul, 0ul);
+  std::vector<std::size_t> new_shape{};
+  for (std::size_t i = 0; i < image.shape().size(); i++) {
+    const std::size_t pad_offset = pads.size() / 2;
+    DLINEAR_ASSERT(
+        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) % stride[i] ==
+            0,
+        "Invalid convolution parameters");
+    new_shape.push_back(
+        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) / stride[i] +
+        1);
+  }
+
+  std::vector<std::size_t> new_values_shape{1, w.values_.shape()[0]};
+  new_values_shape.insert(new_values_shape.end(), new_shape.begin(), new_shape.end());
+  xt::xarray<Expression> new_values{new_values_shape};
+
+  for (std::size_t i = 0; i < w.values_.shape()[0]; i++) {
+    const auto kernel = xt::view(w.values_, i, 0ul, xt::range(0, kernel_shape[0]), xt::range(0, kernel_shape[1]));
+    xt::xarray<Expression> row_values{Convolution(image, kernel, new_shape, dilation, group, pads, stride)};
+
+    for (std::size_t j = 1; j < values_.shape()[1]; j++) {
+      row_values +=
+          Convolution(xt::view(values_, 0ul, j),
+                      xt::view(w.values_, i, j, xt::range(0, kernel_shape[0]), xt::range(0, kernel_shape[1])),
+                      new_shape, dilation, group, pads, stride);
+    }
+    auto new_values_view = xt::view(new_values, 0l, i, xt::all(), xt::all());
+    std::size_t counter = 0;
+    for (Expression& e : new_values_view) {
+      e = row_values.flat(counter++);
+    }
+  }
+
+  return Tensor{std::move(new_values)};
+}
+xt::xarray<Expression> Tensor::Convolution(const ImageView &image, const KernelView &kernel,
+                                           const std::vector<std::size_t> &new_shape,
+                                           const std::vector<std::int64_t> &dilation, std::int64_t,
+                                           const std::vector<std::int64_t> &pads,
+                                           const std::vector<std::int64_t> &stride) const {
+  xt::xarray<Expression> new_values{xt::zeros<Expression>(new_shape)};
+
+  std::size_t out_r = 0;
+  std::size_t out_c = 0;
+  const auto ih = static_cast<std::int64_t>(image.shape()[0]);
+  const auto iw = static_cast<std::int64_t>(image.shape()[1]);
+  const auto kh = static_cast<std::int64_t>(kernel.shape()[0]);
+  const auto kw = static_cast<std::int64_t>(kernel.shape()[1]);
+  const std::int64_t kmh = kh / 2;
+  const std::int64_t kmw = kw / 2;
+  for (std::int64_t r = -pads[0] + kmh * dilation[0]; r < ih + pads[2] - kmh * dilation[0]; r += stride[0]) {
+    for (std::int64_t c = -pads[1] + kmw * dilation[1]; c < iw + pads[3] - kmw * dilation[1]; c += stride[1]) {
+      new_values(out_r, out_c) = 0;
+      for (std::int64_t i = 0; i < kh; i++) {
+        for (std::int64_t j = 0; j < kw; j++) {
+          const std::int64_t ir = r + (i - kmh) * dilation[0];
+          const std::int64_t ic = c + (j - kmw) * dilation[1];
+          new_values(out_r, out_c) +=
+              (ir >= 0 && ir < ih && ic >= 0 && ic < iw ? image(ir, ic) : Expression::Zero()) * kernel(i, j);
+        }
+      }
+      out_c++;
+    }
+    out_c = 0;
+    out_r++;
+  }
+  new_values.reshape({1, 1, new_values.shape()[0], new_values.shape()[1]});
+  return new_values;
 }
 
-Tensor Tensor::Pad(const std::vector<std::int64_t> &pads) {
+Tensor Tensor::Pad(const std::vector<std::int64_t> &pads) const {
   if ((pads.size() & 1) != 0) DLINEAR_OUT_OF_RANGE("Pads must have an even number of elements");
   if (pads.size() > values_.dimension() * 2)
     DLINEAR_OUT_OF_RANGE_FMT("Pads must have at most {} elements", values_.dimension() * 2);
 
-  fmt::println("fEST\n");
   std::vector<std::size_t> new_shape(values_.shape().size(), 0);
-  fmt::println("new_shape: {}\n", new_shape);
   for (std::size_t i = 0; i < values_.shape().size(); i++) {
-    const std::size_t pad = i * 2;
-    new_shape[i] = values_.shape()[i] + (pad >= pads.size() ? 0 : pads[pad] + pads[pad + 1]);
+    new_shape[i] = values_.shape()[i] + (i >= pads.size() / 2 ? 0 : pads[i] + pads[i + pads.size() / 2]);
   }
-
-  fmt::println("new_shape: {}\n", new_shape);
 
   xt::xstrided_slice_vector slices(values_.dimension());
   for (std::size_t i = 0; i < values_.dimension(); i++) {
-    const std::size_t pad = i * 2;
-    const std::size_t offset = pad >= pads.size() ? 0 : pads[pad];
+    const std::size_t offset = i >= pads.size() / 2 ? 0 : pads[i];
     slices[i] = xt::range(offset, values_.shape()[i] + offset);
   }
 
@@ -434,7 +497,8 @@ std::vector<Formula> Tensor::operator>=(const Tensor &rhs) const {
 }
 std::vector<Formula> Tensor::operator==(const Tensor &rhs) const {
   if (values_.shape() != rhs.values_.shape())
-    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}\n{}\n{}", values_.shape(), rhs.values_.shape(),
+                              *this, rhs);
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
   for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) == rhs[i]);

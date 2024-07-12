@@ -441,7 +441,7 @@ TEST_F(TestTensor, PadLessThanTwoDimensions) {
 TEST_F(TestTensor, PadDifferentDimensions) {
   xt::xarray<Expression> values{{1, 2, 3}, {4, 5, 6}};
   Tensor tensor{values};
-  Tensor padded{tensor.Pad({1, 2, 3, 4})};
+  Tensor padded{tensor.Pad({1, 3, 2, 4})};
 
   ASSERT_EQ(padded.dims().size(), 2u);
   EXPECT_EQ(padded.dim(0), 5);
@@ -453,6 +453,32 @@ TEST_F(TestTensor, PadDifferentDimensions) {
         EXPECT_TRUE(padded(i, j).EqualTo(0));
       } else {
         EXPECT_TRUE(padded(i, j).EqualTo(values(i - 1, j - 3)));
+      }
+    }
+  }
+}
+
+TEST_F(TestTensor, PadHigherDimensions) {
+  xt::xarray<Expression> values{{{{1, 2, 3}, {4, 5, 6}}}};
+  Tensor tensor{values};
+  Tensor padded{tensor.Pad({0, 0, 1, 3, 0, 0, 2, 4})};
+
+  ASSERT_EQ(padded.dims().size(), 4u);
+  EXPECT_EQ(padded.dim(0), 1);
+  EXPECT_EQ(padded.dim(1), 1);
+  EXPECT_EQ(padded.dim(2), 5);
+  EXPECT_EQ(padded.dim(3), 10);
+
+  for (std::int64_t l = 0; l < padded.dim(3); l++) {
+    for (std::int64_t k = 0; k < padded.dim(2); k++) {
+      for (std::int64_t j = 0; j < padded.dim(1); j++) {
+        for (std::int64_t i = 0; i < padded.dim(0); i++) {
+          if (i == 0 || i >= 3 || j <= 2 || j >= 6) {
+            EXPECT_TRUE(padded(i, j, k).EqualTo(0));
+          } else {
+            EXPECT_TRUE(padded(i, j, k).EqualTo(values(i, j, k - 1, l - 3)));
+          }
+        }
       }
     }
   }

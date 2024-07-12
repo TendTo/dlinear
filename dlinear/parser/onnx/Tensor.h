@@ -19,8 +19,13 @@
 
 namespace dlinear::onnx {
 
+[[maybe_unused]] const xt::xarray<Expression> unused_;
+
 class Tensor {
  public:
+  using ImageView = decltype(xt::view(unused_, std::size_t{}, std::size_t{}));
+  using KernelView = decltype(xt::view(unused_, std::size_t{}, std::size_t{}, xt::xrange(0l, 0l), xt::xrange(0l, 0l)));
+
   Tensor(std::initializer_list<std::int64_t> dims);
   explicit Tensor(std::int64_t value);
   explicit Tensor(float value);
@@ -53,11 +58,15 @@ class Tensor {
   Tensor Concat(const std::vector<Tensor> &rhs, std::int64_t axis);
   Tensor Gather(const Tensor &indices, std::int64_t axis);
   [[nodiscard]] Tensor MatMul(const Tensor &tensor) const;
-  [[nodiscard]] Tensor Convolution(const Tensor &w, const std::string &auto_pad,
-                                   const std::vector<std::int64_t> &dilations, std::int64_t group,
+  [[nodiscard]] Tensor Convolution(const Tensor &w, const std::vector<std::int64_t> &dilations, std::int64_t group,
                                    const std::vector<std::int64_t> &kernel_shape, const std::vector<std::int64_t> &pads,
                                    const std::vector<std::int64_t> &strides) const;
-  [[nodiscard]] Tensor Pad(const std::vector<std::int64_t> &pads);
+  [[nodiscard]] xt::xarray<Expression> Convolution(const ImageView &image, const KernelView &kernel,
+                                                   const std::vector<std::size_t> &new_shape,
+                                                   const std::vector<std::int64_t> &dilations, std::int64_t group,
+                                                   const std::vector<std::int64_t> &pads,
+                                                   const std::vector<std::int64_t> &strides) const;
+  [[nodiscard]] Tensor Pad(const std::vector<std::int64_t> &pads) const;
 
   template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
   Expression &operator()(Dims... dims) {
