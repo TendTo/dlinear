@@ -34,6 +34,30 @@ class TestOnnxDriver : public ::testing::Test {
   static std::string GetPathToFile(const std::string& filename) {
     return "test/parser/onnx/onnx/" + filename + ".onnx";
   }
+
+  void AssertCorrect(const std::string& name, const std::initializer_list<std::int64_t> dims, const Tensor& expected,
+                     const std::string& output_name = "y") {
+    const std::string filename{GetPathToFile(name)};
+    driver_.ParseFile(filename);
+
+    const std::int64_t y_size = std::reduce(dims.begin(), dims.end(), 1, std::multiplies<>());
+
+    EXPECT_EQ(context_.box().size(), 1 + y_size);  // Add both input (1) and output (1 x 4 x 2 x 2)
+    EXPECT_EQ(context_.assertions().size(), static_cast<std::size_t>(y_size));
+
+    ASSERT_EQ(driver_.available_inputs().at(output_name).ndim(), dims.size());
+    for (std::size_t i = 0; i < dims.size(); i++) {
+      EXPECT_EQ(driver_.available_inputs().at(output_name).dims()[i], dims.begin()[i]);
+    }
+
+    for (const auto& assertion : context_.assertions()) {
+      EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+      EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+      EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+    }
+
+    EXPECT_TRUE(driver_.available_inputs().at(output_name).Equal(expected));
+  }
 };
 
 TEST_F(TestOnnxDriver, Abs) {
@@ -656,6 +680,32 @@ TEST_F(TestOnnxDriver, ConvolutionB) {
 
   Tensor expected{values};
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
+TEST_F(TestOnnxDriver, ConstantResnet2b) {
+  AssertCorrect("resnet_2b.constant", {1, 10},
+                Tensor{xt::xarray<Expression>{
+                    {mpq_class{"67259515042599560786479318875811559149350469211976057544786367146397071001/"
+                               "27606985387162255149739023449108101809804435888681546220650096895197184"},
+                     mpq_class{"5457631274884186893146315784632508683050887613465050503029690961477573631/"
+                               "6901746346790563787434755862277025452451108972170386555162524223799296"},
+                     mpq_class{"43401139709273914685253191977833347346714044717479229654383067566827532381/"
+                               "110427941548649020598956093796432407239217743554726184882600387580788736"},
+                     mpq_class{"-16194617341877112080997059234285649292825040514720270675444766303195398447/"
+                               "27606985387162255149739023449108101809804435888681546220650096895197184"},
+                     mpq_class{"-11949424451746129869138054392468334338224563551114444403457807911045395969/"
+                               "55213970774324510299478046898216203619608871777363092441300193790394368"},
+                     mpq_class{"-4238408437553481654211608236809096536276300638292329391404945626087415315719/"
+                               "3533694129556768659166595001485837031654967793751237916243212402585239552"},
+                     mpq_class{"9618317673931359354336008266248732138428483533434915871485885972991345183/"
+                               "55213970774324510299478046898216203619608871777363092441300193790394368"},
+                     mpq_class{"-388642497236228708677965478483626012674958787931010724023564829510474140685/"
+                               "220855883097298041197912187592864814478435487109452369765200775161577472"},
+                     mpq_class{"-13664684914010402101623100626311568506835384699896675001641022394960294079/"
+                               "110427941548649020598956093796432407239217743554726184882600387580788736"},
+                     mpq_class{"323307245234318070101351814953780763046097102525185292283941754424222481087/"
+                               "3533694129556768659166595001485837031654967793751237916243212402585239552"}}}},
+                "33");
 }
 
 // TEST_F(TestOnnxDriver, TripleRelu) {

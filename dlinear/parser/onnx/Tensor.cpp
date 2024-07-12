@@ -313,10 +313,6 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   std::vector<std::size_t> new_shape{};
   for (std::size_t i = 0; i < image.shape().size(); i++) {
     const std::size_t pad_offset = pads.size() / 2;
-    DLINEAR_ASSERT(
-        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) % stride[i] ==
-            0,
-        "Invalid convolution parameters");
     new_shape.push_back(
         (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) / stride[i] +
         1);
