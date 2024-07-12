@@ -333,7 +333,7 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Piecewise([this](const Expression& e) {
-    Formula implication{};
+    Formula implication{is_addition(e) ? Formula::True() : Formula::False()};
     if (is_addition(e)) {
       for (const auto& [expr, coeff] : to_addition(e)->get_expr_to_coeff_map()) {
         if (is_variable(expr) && to_variable(expr)->get_variable().get_name().starts_with("X")) {

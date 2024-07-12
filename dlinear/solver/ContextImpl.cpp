@@ -80,7 +80,7 @@ void Context::Impl::Assert(const Formula &f) {
   sat_solver_->AddFormula(no_ite);
 }
 Expression Context::Impl::AssertIte(const Expression &e) {
-  DLINEAR_ASSERT(is_if_then_else(e), "e must be an ITE");
+  if (!is_if_then_else(e)) return e;
 
   DLINEAR_DEBUG_FMT("ContextImpl::AssertIte({})", e);
   const auto [no_ite, assertion] = ite_eliminator_.Process(e);
