@@ -290,9 +290,9 @@ Tensor Tensor::Gather(const dlinear::onnx::Tensor &indices, std::int64_t axis) {
   return Tensor{new_values};
 }
 
-Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dilation,
-                           const std::int64_t group, const std::vector<std::int64_t> &kernel_shape,
-                           const std::vector<std::int64_t> &pads, const std::vector<std::int64_t> &stride) const {
+Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dilation, const std::int64_t group,
+                           const std::vector<std::int64_t> &kernel_shape, const std::vector<std::int64_t> &pads,
+                           const std::vector<std::int64_t> &stride) const {
   DLINEAR_ASSERT(values_.dimension() == 4, "Convolution can only be applied to a 4D tensors");
   DLINEAR_ASSERT(w.values_.dimension() == 4, "Convolution can only be applied to a 4D tensors");
   DLINEAR_ASSERT(values_.shape()[1] == w.values_.shape()[1] * group,
@@ -314,7 +314,8 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   for (std::size_t i = 0; i < image.shape().size(); i++) {
     const std::size_t pad_offset = pads.size() / 2;
     new_shape.push_back(
-        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) / stride[i] +
+        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) /
+            stride[i] +
         1);
   }
 
@@ -327,14 +328,13 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
     xt::xarray<Expression> row_values{Convolution(image, kernel, new_shape, dilation, group, pads, stride)};
 
     for (std::size_t j = 1; j < values_.shape()[1]; j++) {
-      row_values +=
-          Convolution(xt::view(values_, 0ul, j),
-                      xt::view(w.values_, i, j, xt::range(0, kernel_shape[0]), xt::range(0, kernel_shape[1])),
-                      new_shape, dilation, group, pads, stride);
+      row_values += Convolution(xt::view(values_, 0ul, j),
+                                xt::view(w.values_, i, j, xt::range(0, kernel_shape[0]), xt::range(0, kernel_shape[1])),
+                                new_shape, dilation, group, pads, stride);
     }
     auto new_values_view = xt::view(new_values, 0l, i, xt::all(), xt::all());
     std::size_t counter = 0;
-    for (Expression& e : new_values_view) {
+    for (Expression &e : new_values_view) {
       e = row_values.flat(counter++);
     }
   }
@@ -460,6 +460,7 @@ Tensor &Tensor::operator/=(const Tensor &rhs) {
 }
 
 std::vector<Formula> Tensor::operator<(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) < rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
     DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
@@ -468,6 +469,7 @@ std::vector<Formula> Tensor::operator<(const Tensor &rhs) const {
   return formulas;
 }
 std::vector<Formula> Tensor::operator<=(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) <= rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
     DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
@@ -476,6 +478,7 @@ std::vector<Formula> Tensor::operator<=(const Tensor &rhs) const {
   return formulas;
 }
 std::vector<Formula> Tensor::operator>(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) > rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
     DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
@@ -484,6 +487,7 @@ std::vector<Formula> Tensor::operator>(const Tensor &rhs) const {
   return formulas;
 }
 std::vector<Formula> Tensor::operator>=(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) >= rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
     DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
@@ -492,15 +496,16 @@ std::vector<Formula> Tensor::operator>=(const Tensor &rhs) const {
   return formulas;
 }
 std::vector<Formula> Tensor::operator==(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) == rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
-    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}\n{}\n{}", values_.shape(), rhs.values_.shape(),
-                              *this, rhs);
+    DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
   formulas.reserve(values_.size());
   for (std::size_t i = 0; i < values_.size(); i++) formulas.push_back(values_.flat(i) == rhs[i]);
   return formulas;
 }
 std::vector<Formula> Tensor::operator!=(const Tensor &rhs) const {
+  if (values_.size() == 1 && rhs.values_.size() == 1) return {values_.flat(0) != rhs.values_.flat(0)};
   if (values_.shape() != rhs.values_.shape())
     DLINEAR_RUNTIME_ERROR_FMT("Invalid comparison between {} and {}", values_.shape(), rhs.values_.shape());
   std::vector<Formula> formulas;
