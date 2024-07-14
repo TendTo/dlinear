@@ -57,7 +57,6 @@ void OnnxDriver::ParseGraph() {
 void OnnxDriver::AddInitializer(const ::onnx::TensorProto& tensor) {
   DLINEAR_ASSERT(tensor.has_name(), "TensorProto must have a name");
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
-  DLINEAR_ASSERT(tensor.dims_size() > 0, "TensorProto must have at least one dimension");
   DLINEAR_TRACE_FMT("AddInitializer({})", tensor.name());
   available_inputs_.emplace(tensor.name(), tensor);
 }
@@ -401,7 +400,11 @@ void OnnxDriver::AddNode<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Transpose());
+  std::vector<std::int64_t> perm;
+  if (node.attribute_size() == 1) {
+    perm.insert(perm.end(), node.attribute(0).ints().cbegin(), node.attribute(0).ints().cend());
+  }
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Transpose(perm));
   DLINEAR_DEBUG_FMT("Transpose {} = {}^T", output, input);
   DLINEAR_TRACE_FMT("{} = {}^T", available_inputs_.at(output), available_inputs_.at(input));
   AddFormula(output);

@@ -28,15 +28,20 @@ inline std::vector<int64_t> get_dims(const ::onnx::ValueInfoProto &value_info) {
   std::vector<int64_t> dims;
   dims.reserve(value_info.type().tensor_type().shape().dim_size());
   for (const ::onnx::TensorShapeProto_Dimension &dim : value_info.type().tensor_type().shape().dim()) {
-    DLINEAR_ASSERT(dim.has_dim_value(), "ValueInfoProto must have a dim_value");
-    DLINEAR_ASSERT(dim.dim_value() > 0, "All dimensions of a tensor must be >= 1");
-    dims.push_back(dim.dim_value());
+    if (dim.has_dim_value()) {
+      dims.push_back(dim.dim_value());
+    } else if (dim.has_dim_param()) {
+      DLINEAR_WARN_FMT("Parametric dimension {} is being set to 1", dim.dim_param());
+      dims.push_back(1);
+    } else {
+      DLINEAR_UNREACHABLE();
+    }
   }
   return dims;
 }
 
 inline std::vector<int64_t> get_dims(const ::onnx::TensorProto &tensor) {
-  DLINEAR_ASSERT(tensor.dims_size() > 0, "Tensor must have at least a dimentsion");
+  if (tensor.dims_size() == 0) return {1};
   std::vector<int64_t> dims;
   dims.reserve(tensor.dims_size());
   for (const std::int64_t dim : tensor.dims()) {
@@ -66,7 +71,6 @@ Tensor::Tensor(const ::onnx::ValueInfoProto &value_info, const std::string &name
 
 Tensor::Tensor(const ::onnx::TensorProto &tensor) : values_{xt::xarray<Expression>::from_shape(get_dims(tensor))} {
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
-  DLINEAR_ASSERT(tensor.dims_size() > 0, "TensorProto must have at least one dimension");
 
   const void *const raw_data = tensor.has_raw_data() ? tensor.raw_data().data() : nullptr;
   const int size = static_cast<int>(values_.size());
@@ -183,24 +187,8 @@ Tensor &Tensor::Reshape(std::initializer_list<std::int64_t> dims) {
   return *this;
 }
 
-Tensor &Tensor::Transpose() {
-  if (values_.dimension() > 2) DLINEAR_RUNTIME_ERROR("Transpose can only be applied to Matrices and Vectors");
-
-  // In-place transpose
-  std::vector<bool> visited(values_.size(), false);
-  const auto size = static_cast<std::int64_t>(values_.size() - 1);
-  for (auto cycle = values_.begin() + 1; cycle != values_.cend(); cycle++) {
-    if (visited[cycle - values_.begin()]) continue;
-    std::int64_t a = std::distance(values_.begin(), cycle);
-    do {
-      a = a == size ? size : (dim(0) * a) % size;
-      (values_.begin() + a)->Swap(*cycle);
-      visited[a] = true;
-    } while ((values_.cbegin() + a) != cycle);
-  }
-
-  // Invert dimensions
-  values_.reshape({dim(1), dim(0)});
+Tensor &Tensor::Transpose(const std::vector<std::int64_t> &perm) {
+  values_ = perm.empty() ? xt::transpose(values_) : xt::transpose(values_, perm);
   return *this;
 }
 

@@ -46,7 +46,7 @@ class Tensor {
 
   Tensor &Flatten();
   Tensor &Flatten(std::int64_t axis);
-  Tensor &Transpose();
+  Tensor &Transpose(const std::vector<std::int64_t>& perm = {});
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
   Tensor &Unsqueeze(const Tensor &tensor);
   Tensor &Abs();
