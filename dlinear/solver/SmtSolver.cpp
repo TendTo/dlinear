@@ -10,7 +10,9 @@
 #include <utility>
 
 #include "dlinear/parser/mps/Driver.h"
+#include "dlinear/parser/onnx/Driver.h"
 #include "dlinear/parser/smt2/Driver.h"
+#include "dlinear/parser/vnnlib/Driver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/OptionValue.hpp"
@@ -22,11 +24,18 @@
 namespace dlinear {
 
 namespace {
-template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver> T>
+template <IsAnyOf<smt2::Smt2Driver, mps::MpsDriver, onnx::OnnxDriver, vnnlib::VnnlibDriver> T>
 inline bool ParseInputCore(const Config &config, Context &context) {
   DLINEAR_DEBUG("SmtSolver::ParseSmt2");
   T driver{context};
   return config.read_from_stdin() ? driver.ParseStream(std::cin, "(stdin)") : driver.ParseFile(config.filename());
+}
+
+template <>
+inline bool ParseInputCore<onnx::OnnxDriver>(const Config &config, Context &context) {
+  DLINEAR_DEBUG("SmtSolver::ParseOnnx");
+  onnx::OnnxDriver driver{context};
+  return driver.ParseFile(config.onnx_file());
 }
 }  // namespace
 
@@ -99,11 +108,18 @@ bool SmtSolver::ParseInput() {
       if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
       if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_);
       if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_);
+      if (config_.filename_extension() == "vnnlib") {
+        if (!ParseInputCore<onnx::OnnxDriver>(config_, context_)) return false;
+        return ParseInputCore<vnnlib::VnnlibDriver>(config_, context_);
+      }
       DLINEAR_UNREACHABLE();
     case Config::Format::SMT2:
       return ParseInputCore<smt2::Smt2Driver>(config_, context_);
     case Config::Format::MPS:
       return ParseInputCore<mps::MpsDriver>(config_, context_);
+    case Config::Format::VNNLIB:
+      if (!ParseInputCore<onnx::OnnxDriver>(config_, context_)) return false;
+      return ParseInputCore<vnnlib::VnnlibDriver>(config_, context_);
     default:
       DLINEAR_UNREACHABLE();
   }
