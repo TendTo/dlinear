@@ -164,7 +164,7 @@ void OnnxDriver::AddNode<NodeOpType::Conv>(const ::onnx::NodeProto& node) {
   std::vector<std::int64_t> dilations{1, 1};
   std::int64_t group = 1;
   std::vector<std::int64_t> kernel_shape{w.values().shape().begin() + 2, w.values().shape().end()};
-  std::vector<std::int64_t> pads{0, 0};
+  std::vector<std::int64_t> pads{0, 0, 0, 0};
   std::vector<std::int64_t> strides{1, 1};
   for (const ::onnx::AttributeProto& attr : node.attribute()) {
     if (!attr.has_name()) continue;
@@ -353,17 +353,21 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
 }
 
 template <>
-void OnnxDriver::AddNode<NodeOpType::Sub>(const ::onnx::NodeProto& node) {
-  DLINEAR_ASSERT(node.op_type() == "Sub", "NodeProto must have an op_type of Sub");
-  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly one output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly two inputs");
-  const std::string& input1 = node.input(0);
-  const std::string& input2 = node.input(1);
+void OnnxDriver::AddNode<NodeOpType::Sigmoid>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Sigmoid", "NodeProto must have an op_type of Sigmoid");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  available_inputs_.emplace(output, available_inputs_.at(input1) - available_inputs_.at(input2));
-  DLINEAR_DEBUG_FMT("Sub node: {} = {} - {}", output, input1, input2);
-  DLINEAR_TRACE_FMT("{} = {} - {}", available_inputs_.at(output), available_inputs_.at(input1),
-                    available_inputs_.at(input2));
+  Tensor relu = Tensor{available_inputs_.at(input)};
+
+  relu.Piecewise([](const Expression& e) {
+    if (!is_constant(e)) DLINEAR_RUNTIME_ERROR("Cannot apply the sigmoid function to a non constant value");
+    return 1 / (1 + exp(-get_constant_value(e).get_d()));
+  });
+  available_inputs_.emplace(output, relu);
+  DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
+  DLINEAR_TRACE_FMT("{}", relu);
   AddFormula(output);
 }
 
@@ -390,6 +394,47 @@ void OnnxDriver::AddNode<NodeOpType::Slice>(const ::onnx::NodeProto& node) {
   DLINEAR_TRACE_FMT("{} = {}[{}:{}:{}:{}", available_inputs_.at(output), available_inputs_.at(data), starts_v, ends_v,
                     axis_v, steps_v);
 
+  AddFormula(output);
+}
+
+template <>
+void OnnxDriver::AddNode<NodeOpType::Softmax>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Softmax", "NodeProto must have an op_type of Softmax");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  const xt::xarray<Expression> softmax_values{xt::exp(available_inputs_.at(input).values())};
+  const std::int64_t axis = node.attribute_size() > 0 && node.attribute(0).has_i() ? node.attribute(0).i() : -1;
+
+  DLINEAR_ASSERT(std::for_each(available_inputs_.at(input).begin(), available_inputs_.at(input).end(),
+                               [](const Expression& e) { return is_constant(e); }),
+                 "Softmax input must be constant");
+
+  xt::xarray<Expression> sum{xt::sum(softmax_values, axis)};
+  auto shape = available_inputs_.at(input).values().shape();
+  shape.at(axis < 0 ? shape.size() + axis : axis) = 1;
+  sum.reshape(shape);
+  DLINEAR_ERROR_FMT("Softmax input: {}, axis: {}, sum: {}, result: {}", available_inputs_.at(input), axis, sum,
+                    softmax_values / sum);
+  available_inputs_.emplace(output, softmax_values / sum);
+  DLINEAR_DEBUG_FMT("Softmax node: {} = softmax({}, axis = {})", output, input, axis);
+  DLINEAR_TRACE_FMT("{} = softmax({}, axis = {})", available_inputs_.at(output), available_inputs_.at(input), axis);
+  AddFormula(output);
+}
+
+template <>
+void OnnxDriver::AddNode<NodeOpType::Sub>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Sub", "NodeProto must have an op_type of Sub");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  const std::string& input1 = node.input(0);
+  const std::string& input2 = node.input(1);
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output, available_inputs_.at(input1) - available_inputs_.at(input2));
+  DLINEAR_DEBUG_FMT("Sub node: {} = {} - {}", output, input1, input2);
+  DLINEAR_TRACE_FMT("{} = {} - {}", available_inputs_.at(output), available_inputs_.at(input1),
+                    available_inputs_.at(input2));
   AddFormula(output);
 }
 
@@ -525,9 +570,9 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Mul", &OnnxDriver::AddNode<NodeOpType::Mul>},
     {"Relu", &OnnxDriver::AddNode<NodeOpType::Relu>},
     //    {"Reshape", &OnnxDriver::AddNode<NodeOpType::Reshape>},
-    //    {"Sigmoid", &OnnxDriver::AddNode<NodeOpType::Sigmoid>},
+    {"Sigmoid", &OnnxDriver::AddNode<NodeOpType::Sigmoid>},
     {"Slice", &OnnxDriver::AddNode<NodeOpType::Slice>},
-    //    {"Softmax", &OnnxDriver::AddNode<NodeOpType::Softmax>},
+    {"Softmax", &OnnxDriver::AddNode<NodeOpType::Softmax>},
     {"Sub", &OnnxDriver::AddNode<NodeOpType::Sub>},
     {"Transpose", &OnnxDriver::AddNode<NodeOpType::Transpose>},
     {"Unsqueeze", &OnnxDriver::AddNode<NodeOpType::Unsqueeze>},

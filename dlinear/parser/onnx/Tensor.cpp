@@ -334,6 +334,11 @@ xt::xarray<Expression> Tensor::Convolution(const ImageView &image, const KernelV
                                            const std::vector<std::int64_t> &dilation, std::int64_t,
                                            const std::vector<std::int64_t> &pads,
                                            const std::vector<std::int64_t> &stride) const {
+  DLINEAR_ASSERT(pads.size() == 4, "Pads must have 4 elements");
+  DLINEAR_ASSERT(dilation.size() == 2, "Dilations must have 2 elements");
+  DLINEAR_ASSERT(stride.size() == 2, "Strides must have 2 elements");
+  DLINEAR_ASSERT(image.dimension() == 2, "Image must be a 2D tensor");
+  DLINEAR_ASSERT(kernel.dimension() == 2, "Kernel must be a 2D tensor");
   xt::xarray<Expression> new_values{xt::zeros<Expression>(new_shape)};
 
   std::size_t out_r = 0;

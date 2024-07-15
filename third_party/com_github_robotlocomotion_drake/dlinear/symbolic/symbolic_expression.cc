@@ -719,7 +719,7 @@ Expression abs(const Expression &e) {
 Expression exp(const Expression &e) {
   // Simplification: constant folding.
   if (is_constant(e)) {
-    throw runtime_error("Not implemented");  // Because of mpq_class
+    return Expression{std::exp(get_constant_value(e).get_d())};
     //return Expression{std::exp(get_constant_value(e))};
   }
   return Expression{new ExpressionExp(e)};

@@ -379,23 +379,27 @@ TEST_F(TestTensor, TransposeRowVector) {
   }
 }
 
-TEST_F(TestTensor, TransposeColumnVector) {
-  Tensor rectangleMatrix{9};
-  for (std::size_t i = 0; i < rectangleMatrix.size(); i++) rectangleMatrix[i] = i;
-  rectangleMatrix.Transpose();
-
-  EXPECT_EQ(rectangleMatrix.dim(0), 1);
-  EXPECT_EQ(rectangleMatrix.dim(1), 9);
-  for (std::int64_t j = 0; j < rectangleMatrix.dim(1); j++) {
-    for (std::int64_t i = 0; i < rectangleMatrix.dim(0); i++) {
-      EXPECT_EQ(get_constant_value(rectangleMatrix(i, j)), j + i);
-    }
-  }
-}
+// Disabled by the numpy Transpose implementation
+//TEST_F(TestTensor, TransposeColumnVector) {
+//  Tensor rectangleMatrix{9};
+//  for (std::size_t i = 0; i < rectangleMatrix.size(); i++) rectangleMatrix[i] = i;
+//  rectangleMatrix.Transpose();
+//
+//  EXPECT_EQ(rectangleMatrix.dim(0), 1);
+//  EXPECT_EQ(rectangleMatrix.dim(1), 9);
+//  for (std::int64_t j = 0; j < rectangleMatrix.dim(1); j++) {
+//    for (std::int64_t i = 0; i < rectangleMatrix.dim(0); i++) {
+//      EXPECT_EQ(get_constant_value(rectangleMatrix(i, j)), j + i);
+//    }
+//  }
+//}
 
 TEST_F(TestTensor, TransposeHigherDimensionTensor) {
   Tensor tensor{2, 3, 4};
-  EXPECT_THROW(tensor.Transpose(), std::runtime_error);
+  tensor.Transpose();
+  EXPECT_EQ(tensor.dim(0), 4);
+  EXPECT_EQ(tensor.dim(1), 3);
+  EXPECT_EQ(tensor.dim(2), 2);
 }
 
 TEST_F(TestTensor, Pad) {

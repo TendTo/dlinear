@@ -682,6 +682,75 @@ TEST_F(TestOnnxDriver, ConvolutionB) {
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
 
+TEST_F(TestOnnxDriver, Softmax) {
+  const std::string filename{GetPathToFile("softmax")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 + 1 * 4 * 2 * 2);  // Add both input (1) and output (1 x 4 x 2 x 2)
+  EXPECT_EQ(context_.assertions().size(), 1u * 4u * 2u * 2u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 4);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 2);
+
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+  }
+  xt::xarray<Expression> values{
+      {{{mpq_class{"2251799813685248/8372826328553321"}, mpq_class{"6121026514868073/8372826328553321"}},
+        {mpq_class{"4159668786720471/15466820862071011"}, mpq_class{"11307152075350540/15466820862071011"}}},
+       {{mpq_class{"1921001626128022/7142825438872101"}, mpq_class{"5221823812744079/7142825438872101"}},
+        {mpq_class{"7097194390798479/26389368936347447"}, mpq_class{"19292174545548968/26389368936347447"}}},
+       {{mpq_class{"3277597968664119/12187032967878073"}, mpq_class{"8909434999213954/12187032967878073"}},
+        {mpq_class{"3027294407525040/11256333784896047"}, mpq_class{"8229039377371007/11256333784896047"}}},
+       {{mpq_class{"2796106025647693/10396710225610658"}, mpq_class{"7600604199962965/10396710225610658"}},
+        {mpq_class{"1721715356839069/6401822925113591"}, mpq_class{"4680107568274522/6401822925113591"}}}}};
+
+  DLINEAR_ERROR_FMT("{}", driver_.available_inputs().at("y"));
+  Tensor expected{values};
+  EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
+TEST_F(TestOnnxDriver, SoftmaxAxis) {
+  const std::string filename{GetPathToFile("softmax_axis")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 + 1 * 4 * 2 * 2);  // Add both input (1) and output (1 x 4 x 2 x 2)
+  EXPECT_EQ(context_.assertions().size(), 1u * 4u * 2u * 2u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 4);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 2);
+
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+  }
+  xt::xarray<Expression> values{
+      {{{mpq_class{"17592186044416/2916632230760971963"}, mpq_class{"2040342171622691/338271078108822138467"}},
+        {mpq_class{"47812284904833/7926863144107427489"}, mpq_class{"565357603767527/93731398979693950247"}}},
+       {{mpq_class{"960500813064011/2916632230760971963"}, mpq_class{"334196724015621056/1014813234326466415401"}},
+        {mpq_class{"75703406835183776/229879031179115397181"}, mpq_class{"8123020861283776/24666157626235250065"}}},
+       {{mpq_class{"52441567498625904/2916632230760971963"}, mpq_class{"18246522878390177792/1014813234326466415401"}},
+        {mpq_class{"4133265964407521280/229879031179115397181"},
+         mpq_class{"8426536322427911168/468656994898469751235"}}},
+       {{mpq_class{"2863212570263237632/2916632230760971963"},
+         mpq_class{"996226393697545748480/1014813234326466415401"}},
+        {mpq_class{"225668675251610451968/229879031179115397181"},
+         mpq_class{"460073294391658610688/468656994898469751235"}}}}};
+
+  DLINEAR_ERROR_FMT("{}", driver_.available_inputs().at("y"));
+  Tensor expected{values};
+  EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
 TEST_F(TestOnnxDriver, ConstantResnet2b) {
   AssertCorrect("resnet_2b.constant", {1, 10},
                 Tensor{xt::xarray<Expression>{
@@ -706,6 +775,13 @@ TEST_F(TestOnnxDriver, ConstantResnet2b) {
                      mpq_class{"323307245234318070101351814953780763046097102525185292283941754424222481087/"
                                "3533694129556768659166595001485837031654967793751237916243212402585239552"}}}},
                 "33");
+}
+TEST_F(TestOnnxDriver, Constant3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30) {
+  AssertCorrect("3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30.constant", {1, 43},
+                Tensor{xt::xarray<Expression>{{0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
+                                               0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                                               0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.}}},
+                "activation_10");
 }
 
 // TEST_F(TestOnnxDriver, TripleRelu) {
