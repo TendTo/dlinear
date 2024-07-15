@@ -300,7 +300,7 @@ void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(!available_inputs_.contains(output), "Input1 must be available");
   available_inputs_.emplace(output, available_inputs_.at(input1).MatMul(available_inputs_.at(input2)));
   DLINEAR_DEBUG_FMT("MatMul node: {} = {} x {}", output, input1, input2);
-  DLINEAR_TRACE_FMT("{} = {} x {}", available_inputs_.contains(output), available_inputs_.at(input1),
+  DLINEAR_TRACE_FMT("{} = {} x {}", available_inputs_.at(output), available_inputs_.at(input1),
                     available_inputs_.at(input2));
   AddFormula(output);
 }
@@ -348,8 +348,8 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Piecewise([this](const Expression& e) {
-    Formula implication{is_addition(e) ? Formula::True() : Formula::False()};
-    if (is_addition(e)) {
+    Formula implication{is_addition(e) && get_constant_in_addition(e) == 0 ? Formula::True() : Formula::False()};
+    if (is_addition(e) && get_constant_in_addition(e) == 0) {
       for (const auto& [expr, coeff] : to_addition(e)->get_expr_to_coeff_map()) {
         if (is_variable(expr) && to_variable(expr)->get_variable().get_name().starts_with("X")) {
           implication = Formula::False();
