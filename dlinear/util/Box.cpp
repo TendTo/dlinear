@@ -39,8 +39,8 @@ Box::Box(const Config::LPSolver lp_solver)
   switch (lp_solver) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
-      ninfinity_ = -qsopt_ex::infinity();
-      infinity_ = qsopt_ex::infinity();
+      ninfinity_ = mpq_class{mpq_NINFTY};
+      infinity_ = mpq_class{mpq_INFTY};
       break;
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
