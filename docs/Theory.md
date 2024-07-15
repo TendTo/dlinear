@@ -43,9 +43,9 @@ The transformation uses three basic operators:
 
 | Original    | $ p \iff \text{formula} $                             | In CNF                                                                    |
 | ----------- | ----------------------------------------------------- | ------------------------------------------------------------------------- |
-| $\neg a$    | $(\neg a \implies p) \land (p \implies \neg a)$       | $(a \lor p) \land (\neg a \lor \neg p)$                                   |
-| $a \land b$ | $(a \land b \implies p) \land (p \implies a \land b)$ | $(\neg a \lor \neg b \lor p) \land (a \lor \neg p) \land (b \lor \neg p)$ |
-| $a \lor b$  | $(a \lor b \implies p) \land (p \implies a \lor b)$   | $(a \lor b \lor \neg p) \land (\neg a \lor p) \land (\neg b \lor p)$      |
+| $\neg a$    | $(\neg a \Longrightarrow p) \land (p \Longrightarrow \neg a)$       | $(a \lor p) \land (\neg a \lor \neg p)$                                   |
+| $a \land b$ | $(a \land b \Longrightarrow p) \land (p \Longrightarrow a \land b)$ | $(\neg a \lor \neg b \lor p) \land (a \lor \neg p) \land (b \lor \neg p)$ |
+| $a \lor b$  | $(a \lor b \Longrightarrow p) \land (p \Longrightarrow a \lor b)$   | $(a \lor b \lor \neg p) \land (\neg a \lor p) \land (\neg b \lor p)$      |
 
 $$
 \begin{array}{}
@@ -88,22 +88,22 @@ One of the most widely used algorithms to solve **SAT** problems in **CNF** is t
 During its execution, the state of the solver keeps track of a partial assignment $M$ over the formula $F$.
 In practice, $M$ is a set of literal, either $l$ or $\neg l$, where $l$ is a variable.
 The literal can also be marked as a decision literal $l^d$.
-In addition, if a literal is in $M$, its negation must not: $l \in M \implies \neg l \not\in M$.
+In addition, if a literal is in $M$, its negation must not: $l \in M \Longrightarrow \neg l \not\in M$.
 Given the state $M \parallel F$, a clause $C$ conflicts if $M \models \neg C$.
 
 Each state of the algorithm can transition to the next by following a _transition rule_.
 If the transition system $R$ does not admit any transition from the current state $S$, then $S$ is final with respect to $R$.
 The classical **DPLL** algorithm uses the following transition rules:
 
-- **Unit propagate**: $M \parallel F, C \lor l \implies M l \parallel F, C \lor l \quad \text{if} \begin{cases} M \models \neg C \\ l \not \in M \end{cases}$
+- **Unit propagate**: $M \parallel F, C \lor l \Longrightarrow M l \parallel F, C \lor l \quad \text{if} \begin{cases} M \models \neg C \\ l \not \in M \end{cases}$
   If a clause contains a single variable $l$ not yet in $M$ and all others marked as _false_, $M$ must be extended to mark $l$ as _true_.
-- **Pure literal**: $M \parallel F \implies M l \parallel F  \quad \text{if} \begin{cases} l \in F \\ \neg l \not \in F \\ l \not \in M \end{cases}$
+- **Pure literal**: $M \parallel F \Longrightarrow M l \parallel F  \quad \text{if} \begin{cases} l \in F \\ \neg l \not \in F \\ l \not \in M \end{cases}$
   If a literal $l$ is pure, meaning it only occurs with the same polarity, it can be safely marked to make it _true_.
-- **Decide**: $M \parallel F \implies M l^d \parallel F  \quad \text{if} \begin{cases} l \text{(or } \neg l \text{)} \in F \\ l \not \in M \end{cases}$
+- **Decide**: $M \parallel F \Longrightarrow M l^d \parallel F  \quad \text{if} \begin{cases} l \text{(or } \neg l \text{)} \in F \\ l \not \in M \end{cases}$
   A literal $l$ not yet in $M$ is chosen to be put in $M$ and is marked as a decision literal. If a contradiction is found later in the execution, the algorithm can backtrack to this decision and try the opposite value.
-- **Fail**: $M \parallel F, C \implies \bot  \quad \text{if} \begin{cases} M \models \neg C \\ \not \exists l: l^d \in M \end{cases}$
+- **Fail**: $M \parallel F, C \Longrightarrow \bot  \quad \text{if} \begin{cases} M \models \neg C \\ \not \exists l: l^d \in M \end{cases}$
   The formula is unsatisfiable if a conflicting clause is detected while no decision literals are in $M$.
-- **Backtrack**: $M l^d N \parallel F, C \implies M \neg l \parallel F, C  \quad \text{if} \begin{cases} M l^d N \models \neg C \\ \not \exists l: l^d \in N \end{cases}$
+- **Backtrack**: $M l^d N \parallel F, C \Longrightarrow M \neg l \parallel F, C  \quad \text{if} \begin{cases} M l^d N \models \neg C \\ \not \exists l: l^d \in N \end{cases}$
   If a conflicting clause is detected while there are decision literals in $M$, the algorithm backtracks to the last decision literal, negates it and tries again. Note that the negation of a decision literal is not a decision literal.
 
 Using the transition system described, it is possible to evaluate the satisfiability of a formula $F$ by starting from the state $\emptyset \parallel F$ and applying the transition rules until a final state is reached.
