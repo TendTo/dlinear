@@ -113,6 +113,14 @@ class SoplexTheorySolver : public TheorySolver {
   virtual void EnableSpxRow(int spx_row, bool truth) = 0;
 
   /**
+   * Disable all disabled spx rows from the LP solver.
+   *
+   * Whether a row is disabled or not is determined by the @ref theory_row_state_ field,
+   * where a true value means the row is enabled and a false value means the row is disabled.
+   */
+  void DisableSpxRows();
+
+  /**
    * Parse a row and return the vector of coefficients to apply to the decisional variables.
    *
    * Parse an formula representing a row in order to produce store the rhs term in @ref spx_rhs_ and create a

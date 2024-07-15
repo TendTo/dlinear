@@ -52,6 +52,7 @@ void TheorySolver::Consolidate() {
   DLINEAR_DEBUG("TheorySolver::Consolidate()");
   is_consolidated_ = true;
   enabled_theory_rows_.reserve(theory_row_to_lit_.size());
+  theory_rows_state_.resize(theory_row_to_lit_.size(), false);
 }
 
 bool TheorySolver::IsSimpleBound(const Formula &formula) {

@@ -160,6 +160,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   // Set the bounds for the variables
   EnableSPXVarBound();
+  // Remove all the disabled rows from the LP solver
+  DisableSpxRows();
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
@@ -261,6 +263,7 @@ void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
         sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
         sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
   }
+  theory_rows_state_.at(spx_row) = true;
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);
 }
 

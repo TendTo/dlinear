@@ -193,6 +193,8 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 
   // Set the bounds for the variables
   EnableSPXVarBound();
+  // Remove all the disabled rows from the LP solver
+  DisableSpxRows();
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
@@ -590,6 +592,7 @@ void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
 
+  theory_rows_state_.at(spx_row) = true;
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: Row({}) ↦ {} {} {} | Sense({})", spx_row,
                     lp_row.lhs(), lp_row.rowVector(), lp_row.rhs(), sense);
 }

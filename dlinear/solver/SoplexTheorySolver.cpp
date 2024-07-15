@@ -205,6 +205,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
 
   // Omitting to do this seems to cause problems in soplex
+  // https://github.com/scipopt/soplex/issues/38
   spx_.clearBasis();
   // Clear the preprocessor
   preprocessor_.Clear();
@@ -215,7 +216,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   for (auto &bound : theory_bounds_) bound.Clear();
   const int spx_rows = spx_.numRowsRational();
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
-  for (int i = 0; i < spx_rows; i++) spx_.changeRangeRational(i, -soplex::infinity, soplex::infinity);
+  theory_rows_state_.assign(spx_rows, false);
 
   // Clear variable bounds
   [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
@@ -275,6 +276,12 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
       TheoryBoundsToExplanation(theory_col, true, explanation);
     }
+  }
+}
+
+void SoplexTheorySolver::DisableSpxRows() {
+  for (int theory_row = 0; theory_row < spx_.numRowsRational(); theory_row++) {
+    if (!theory_rows_state_.at(theory_row)) spx_.changeRangeRational(theory_row, -soplex::infinity, soplex::infinity);
   }
 }
 

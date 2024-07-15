@@ -403,6 +403,8 @@ class TheorySolver {
                                                    ///< Rows that have been enabled in the current problem instance.
   TheorySolverBoundVectorVector theory_bounds_;    ///< Theory bounds.
                                                    ///< The bounds are the constraints on the values of the variables.
+  std::vector<bool> theory_rows_state_;            ///< Whether each theory row is active or not.
+
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
   TheorySolverBoundPreprocessor preprocessor_;  ///< Preprocessor for the bounds.
