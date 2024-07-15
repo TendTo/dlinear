@@ -219,6 +219,7 @@ void Context::Impl::SetLogic(const Logic logic) {
     case Logic::QF_LRA:
       logic_ = logic;
       break;
+    case Logic::LRA:
     default:
       DLINEAR_RUNTIME_ERROR_FMT("Unsupported logic: {}", logic);
   }

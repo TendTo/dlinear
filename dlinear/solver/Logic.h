@@ -25,6 +25,7 @@ enum class Logic {
   QF_LRA,      ///< Quantifier free linear real arithmetic
   QF_RDL,      ///< Quantifier free real difference logic
   QF_LIA,      ///< Quantifier free linear integer arithmetic
+  LRA,         ///< Linear real arithmetic
 };
 
 Logic parseLogic(const std::string &s);
