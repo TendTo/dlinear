@@ -38,7 +38,7 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "driver",
+    name = "onnx",
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],
     local_defines = select({

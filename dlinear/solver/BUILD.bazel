@@ -258,7 +258,9 @@ dlinear_cc_library(
     hdrs = ["SmtSolver.h"],
     implementation_deps = [
         "//dlinear/parser/mps",
+        "//dlinear/parser/onnx",
         "//dlinear/parser/smt2",
+        "//dlinear/parser/vnnlib",
         "//dlinear/util:concepts",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
