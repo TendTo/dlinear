@@ -438,6 +438,11 @@ Tensor Tensor::MatMul(const Tensor &rhs) const {
       }
     }
   }
+  if (values_.dimension() != 2) {
+    new_tensor.values_.reshape({rhs.dim(1)});
+  } else if (rhs.values_.dimension() != 2) {
+    new_tensor.values_.reshape({dim(0)});
+  }
   return new_tensor;
 }
 
@@ -463,18 +468,22 @@ Tensor &Tensor::operator/=(const Expression &rhs) {
 }
 
 Tensor &Tensor::operator+=(const Tensor &rhs) {
+  if (rhs.values_.size() == 1) return *this += rhs.values_.flat(0);
   values_ += rhs.values_;
   return *this;
 }
 Tensor &Tensor::operator-=(const Tensor &rhs) {
+  if (rhs.values_.size() == 1) return *this -= rhs.values_.flat(0);
   values_ -= rhs.values_;
   return *this;
 }
 Tensor &Tensor::operator*=(const Tensor &rhs) {
+  if (rhs.values_.size() == 1) return *this *= rhs.values_.flat(0);
   values_ *= rhs.values_;
   return *this;
 }
 Tensor &Tensor::operator/=(const Tensor &rhs) {
+  if (rhs.values_.size() == 1) return *this /= rhs.values_.flat(0);
   values_ /= rhs.values_;
   return *this;
 }
