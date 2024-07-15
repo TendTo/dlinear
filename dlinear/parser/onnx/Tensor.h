@@ -46,8 +46,9 @@ class Tensor {
 
   Tensor &Flatten();
   Tensor &Flatten(std::int64_t axis);
-  Tensor &Transpose(const std::vector<std::int64_t>& perm = {});
+  Tensor &Transpose(const std::vector<std::int64_t> &perm = {});
   Tensor &Reshape(std::initializer_list<std::int64_t> dims);
+  Tensor &Reshape(const Tensor &tensor_dim, bool allow_zero);
   Tensor &Unsqueeze(const Tensor &tensor);
   Tensor &Abs();
   Tensor &Piecewise(const std::function<Expression(Expression)> &f);
@@ -88,6 +89,7 @@ class Tensor {
 
   explicit operator std::vector<std::int64_t>() const;
   explicit operator std::vector<double>() const;
+  explicit operator std::vector<std::size_t>() const;
 
   Expression &operator[](int index);
   const Expression &operator[](int index) const;

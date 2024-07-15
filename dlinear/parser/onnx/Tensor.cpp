@@ -186,6 +186,33 @@ Tensor &Tensor::Reshape(std::initializer_list<std::int64_t> dims) {
   values_.reshape(dims);
   return *this;
 }
+Tensor &Tensor::Reshape(const Tensor &tensor_dim, const bool allow_zero) {
+  DLINEAR_ASSERT(
+      std::none_of(tensor_dim.begin(), tensor_dim.end(),
+                   [](const Expression &e) { return get_constant_value(e) < 0 && get_constant_value(e) != -1; }),
+      "The dimension must be a positive integer or -1");
+  DLINEAR_ASSERT(std::count_if(tensor_dim.begin(), tensor_dim.end(),
+                               [](const Expression &e) { return get_constant_value(e) == -1; }) <= 1,
+                 "At most one dimension can be -1");
+  const auto dims = static_cast<std::vector<std::int64_t>>(tensor_dim);
+  std::vector<std::size_t> new_dims;
+  new_dims.reserve(tensor_dim.size());
+  for (const std::int64_t &dim : dims) {
+    if (dim == 0 && !allow_zero) {
+      new_dims.push_back(values_.shape(new_dims.size()));
+      continue;
+    }
+    if (dim == -1) {
+      new_dims.push_back(values_.size() / std::reduce(dims.cbegin(), dims.cend(), -1, std::multiplies<std::int64_t>{}));
+      continue;
+    }
+    new_dims.push_back(dim);
+  }
+  DLINEAR_ERROR_FMT("Dimension: {} - Original: {}", new_dims,
+                    std::vector<std::size_t>(values_.shape().begin(), values_.shape().end()));
+  values_.reshape(new_dims);
+  return *this;
+}
 
 Tensor &Tensor::Transpose(const std::vector<std::int64_t> &perm) {
   values_ = perm.empty() ? xt::transpose(values_) : xt::transpose(values_, perm);
@@ -520,13 +547,30 @@ const Expression &Tensor::operator()(std::initializer_list<std::int64_t> dims) c
 Tensor::operator std::vector<std::int64_t>() const {
   std::vector<std::int64_t> result;
   result.reserve(values_.size());
-  for (const Expression &e : values_) result.push_back(static_cast<std::int64_t>(e.Evaluate().get_d()));
+  for (const Expression &e : values_) {
+    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
+    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Dimension must be an integer");
+    result.push_back(e.Evaluate().get_num().get_si());
+  }
   return result;
 }
 Tensor::operator std::vector<double>() const {
   std::vector<double> result;
   result.reserve(values_.size());
-  for (const Expression &e : values_) result.push_back(e.Evaluate().get_d());
+  for (const Expression &e : values_) {
+    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
+    result.push_back(e.Evaluate().get_d());
+  }
+  return result;
+}
+Tensor::operator std::vector<std::size_t>() const {
+  std::vector<std::size_t> result;
+  result.reserve(values_.size());
+  for (const Expression &e : values_) {
+    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
+    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Dimension must be an integer");
+    result.push_back(e.Evaluate().get_num().get_ui());
+  }
   return result;
 }
 

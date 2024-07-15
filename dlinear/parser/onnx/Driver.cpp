@@ -39,8 +39,6 @@ bool OnnxDriver::ParseFile(const std::string& filename) {
 void OnnxDriver::ParseGraph() {
   DLINEAR_TRACE("OnnxDriver::ParseGraph()");
   if (!model_.has_graph()) DLINEAR_RUNTIME_ERROR("ModelProto must have a graph");
-  if (model_.graph().input_size() == 0) DLINEAR_RUNTIME_ERROR("GraphProto must have at least one input");
-  if (model_.graph().output_size() == 0) DLINEAR_RUNTIME_ERROR("GraphProto must have at least one output");
   std::unordered_set<std::string> initializers;
   for (const ::onnx::TensorProto& tensor : model_.graph().initializer()) {
     AddInitializer(tensor);
@@ -323,6 +321,24 @@ void OnnxDriver::AddNode<NodeOpType::Mul>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Reshape>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Reshape", "NodeProto must have an op_type of Reshape");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  const std::string& input1 = node.input(0);
+  const std::string& input2 = node.input(1);
+  const std::string& output = node.output(0);
+  const bool allow_zero = node.attribute_size() > 0 && node.attribute(0).has_i() && node.attribute(0).i() == 1;
+
+  const Tensor& shape = available_inputs_.at(input2);
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input1)}.Reshape(shape, allow_zero));
+  DLINEAR_DEBUG_FMT("Reshape node: {} = reshape({}, {})", output, input1, input2);
+  DLINEAR_TRACE_FMT("{} = reshape({}, {})", available_inputs_.at(output), available_inputs_.at(input1),
+                    available_inputs_.at(input2));
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
@@ -583,7 +599,7 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     //    {"MaxPool", &OnnxDriver::AddNode<NodeOpType::MaxPool>},
     {"Mul", &OnnxDriver::AddNode<NodeOpType::Mul>},
     {"Relu", &OnnxDriver::AddNode<NodeOpType::Relu>},
-    //    {"Reshape", &OnnxDriver::AddNode<NodeOpType::Reshape>},
+    {"Reshape", &OnnxDriver::AddNode<NodeOpType::Reshape>},
     {"Sign", &OnnxDriver::AddNode<NodeOpType::Sign>},
     {"Sigmoid", &OnnxDriver::AddNode<NodeOpType::Sigmoid>},
     {"Slice", &OnnxDriver::AddNode<NodeOpType::Slice>},

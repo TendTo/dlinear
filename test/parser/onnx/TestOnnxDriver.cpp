@@ -710,7 +710,6 @@ TEST_F(TestOnnxDriver, Softmax) {
        {{mpq_class{"2796106025647693/10396710225610658"}, mpq_class{"7600604199962965/10396710225610658"}},
         {mpq_class{"1721715356839069/6401822925113591"}, mpq_class{"4680107568274522/6401822925113591"}}}}};
 
-  DLINEAR_ERROR_FMT("{}", driver_.available_inputs().at("y"));
   Tensor expected{values};
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
@@ -746,7 +745,6 @@ TEST_F(TestOnnxDriver, SoftmaxAxis) {
         {mpq_class{"225668675251610451968/229879031179115397181"},
          mpq_class{"460073294391658610688/468656994898469751235"}}}}};
 
-  DLINEAR_ERROR_FMT("{}", driver_.available_inputs().at("y"));
   Tensor expected{values};
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
@@ -777,6 +775,7 @@ TEST_F(TestOnnxDriver, ConstantResnet2b) {
                 "33");
 }
 TEST_F(TestOnnxDriver, Constant3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30) {
+  DLINEAR_LOG_INIT_VERBOSITY(5);
   AssertCorrect("3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30.constant", {1, 43},
                 Tensor{xt::xarray<Expression>{{0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
                                                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
