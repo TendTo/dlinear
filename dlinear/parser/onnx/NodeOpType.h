@@ -34,6 +34,7 @@ enum class NodeOpType {
   Relu,
   Reshape,
   Sigmoid,
+  Sign,
   Slice,
   Softmax,
   Sub,

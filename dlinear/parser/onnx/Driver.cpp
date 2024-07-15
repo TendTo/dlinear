@@ -353,6 +353,22 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Sign>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Sign", "NodeProto must have an op_type of Sign");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  Tensor sign = Tensor{available_inputs_.at(input)};
+
+  sign.Piecewise([](const Expression& e) { return if_then_else(e == 0, 0, if_then_else(e >= 0, 1, -1)); });
+  available_inputs_.emplace(output, sign);
+  DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
+  DLINEAR_TRACE_FMT("{}", sign);
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::Sigmoid>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Sigmoid", "NodeProto must have an op_type of Sigmoid");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
@@ -415,8 +431,6 @@ void OnnxDriver::AddNode<NodeOpType::Softmax>(const ::onnx::NodeProto& node) {
   auto shape = available_inputs_.at(input).values().shape();
   shape.at(axis < 0 ? shape.size() + axis : axis) = 1;
   sum.reshape(shape);
-  DLINEAR_ERROR_FMT("Softmax input: {}, axis: {}, sum: {}, result: {}", available_inputs_.at(input), axis, sum,
-                    softmax_values / sum);
   available_inputs_.emplace(output, softmax_values / sum);
   DLINEAR_DEBUG_FMT("Softmax node: {} = softmax({}, axis = {})", output, input, axis);
   DLINEAR_TRACE_FMT("{} = softmax({}, axis = {})", available_inputs_.at(output), available_inputs_.at(input), axis);
@@ -570,6 +584,7 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Mul", &OnnxDriver::AddNode<NodeOpType::Mul>},
     {"Relu", &OnnxDriver::AddNode<NodeOpType::Relu>},
     //    {"Reshape", &OnnxDriver::AddNode<NodeOpType::Reshape>},
+    {"Sign", &OnnxDriver::AddNode<NodeOpType::Sign>},
     {"Sigmoid", &OnnxDriver::AddNode<NodeOpType::Sigmoid>},
     {"Slice", &OnnxDriver::AddNode<NodeOpType::Slice>},
     {"Softmax", &OnnxDriver::AddNode<NodeOpType::Softmax>},
