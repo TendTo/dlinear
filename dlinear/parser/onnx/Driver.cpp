@@ -1,13 +1,10 @@
 /**
- * @file OnnxDriver.cpp
+ * @file Driver.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Neural network model.
  */
 #include "dlinear/parser/onnx/Driver.h"
-
-#include <fmt/core.h>
 
 #include <bit>
 #include <fstream>
@@ -28,6 +25,23 @@ inline void invalid_number_of_inputs(const ::onnx::NodeProto& node, const int ac
     DLINEAR_RUNTIME_ERROR_FMT("Onnx operation '{}' expected to have between {} and {} inputs, but found {}",
                               node.op_type(), lowerBound, upperBound, actualNumberOfInputs);
   }
+}
+
+inline const ::onnx::AttributeProto* FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                                   ::onnx::AttributeProto_AttributeType expectedType,
+                                                   bool throw_on_missing = false) {
+  for (const ::onnx::AttributeProto& attr : node.attribute()) {
+    if (attr.name() == name) {
+      if (attr.type() != expectedType) {
+        DLINEAR_RUNTIME_ERROR_FMT("Attribute '{}' must be of type {}", name,
+                                  AttributeProto_AttributeType_Name(expectedType));
+      }
+      return &attr;
+    }
+  }
+  if (throw_on_missing)
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx node of type {} is missing the expected attribute {}", node.op_type(), name);
+  return nullptr;
 }
 }  // namespace
 
@@ -66,23 +80,6 @@ void OnnxDriver::ParseGraph() {
   for (const ::onnx::ValueInfoProto& output : model_.graph().output()) AddValueInfo(output);
   AddNodes();
   DLINEAR_DEBUG_FMT("OnnxDriver::ParseGraph(): assertions {}", context_.assertions());
-}
-
-const ::onnx::AttributeProto* OnnxDriver::FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
-                                                        const ::onnx::AttributeProto_AttributeType expectedType,
-                                                        const bool throw_on_missing) {
-  for (const ::onnx::AttributeProto& attr : node.attribute()) {
-    if (attr.name() == name) {
-      if (attr.type() != expectedType) {
-        DLINEAR_RUNTIME_ERROR_FMT("Attribute '{}' must be of type {}", name,
-                                  AttributeProto_AttributeType_Name(expectedType));
-      }
-      return &attr;
-    }
-  }
-  if (throw_on_missing)
-    DLINEAR_RUNTIME_ERROR_FMT("Onnx node of type {} is missing the expected attribute {}", node.op_type(), name);
-  return nullptr;
 }
 
 template <>
@@ -442,7 +439,7 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
 
-  relu.Piecewise([this](const Expression& e) {
+  relu.Elementwise([this](const Expression& e) {
     Formula implication{is_addition(e) && get_constant_in_addition(e) == 0 ? Formula::True() : Formula::False()};
     if (is_addition(e) && get_constant_in_addition(e) == 0) {
       for (const auto& [expr, coeff] : to_addition(e)->get_expr_to_coeff_map()) {
@@ -473,7 +470,7 @@ void OnnxDriver::AddNode<NodeOpType::Sign>(const ::onnx::NodeProto& node) {
   const std::string& output = node.output(0);
   Tensor sign = Tensor{available_inputs_.at(input)};
 
-  sign.Piecewise([](const Expression& e) { return if_then_else(e == 0, 0, if_then_else(e >= 0, 1, -1)); });
+  sign.Elementwise([](const Expression& e) { return if_then_else(e == 0, 0, if_then_else(e >= 0, 1, -1)); });
   available_inputs_.emplace(output, sign);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
   DLINEAR_TRACE_FMT("{}", sign);
@@ -490,7 +487,7 @@ void OnnxDriver::AddNode<NodeOpType::Sigmoid>(const ::onnx::NodeProto& node) {
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
 
-  relu.Piecewise([](const Expression& e) {
+  relu.Elementwise([](const Expression& e) {
     if (!is_constant(e)) DLINEAR_RUNTIME_ERROR("Cannot apply the sigmoid function to a non constant value");
     return 1 / (1 + exp(-get_constant_value(e).get_d()));
   });

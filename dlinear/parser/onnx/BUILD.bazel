@@ -26,6 +26,7 @@ dlinear_cc_library(
     hdrs = ["Tensor.h"],
     implementation_deps = [
         "//dlinear/symbolic:literal",
+        "@fmt",
     ],
     deps = [
         "//dlinear/libs:onnx",
@@ -53,6 +54,7 @@ dlinear_cc_library(
         "//dlinear/parser:driver",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
+        "//dlinear/util:concepts",
     ],
 )
 

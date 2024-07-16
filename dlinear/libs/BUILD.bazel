@@ -53,7 +53,10 @@ dlinear_cc_library(
     name = "onnx",
     srcs = ["libonnx.cpp"],
     hdrs = ["libonnx.h"],
-    tags = ["no-iwyu"],
+    tags = [
+        "no-dwyu",
+        "no-iwyu",
+    ],
     deps = ["@onnx//:onnx_proto_headers"],
 )
 
@@ -63,7 +66,6 @@ dlinear_cc_library(
     hdrs = ["libxtensor.h"],
     tags = ["no-iwyu"],
     deps = [
-        ":gmp",
         "@xtensor",
     ],
 )

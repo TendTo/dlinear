@@ -5,6 +5,9 @@
     "soplex.h",
     "dlinear/symbolic/symbolic_expression_cell.h",
     "qsopt_ex/QSopt_ex.h",
-    "FlexLexer.h"
+    "FlexLexer.h",
+    "onnx/onnx-data.pb.h",
+    "onnx/onnx-ml.pb.h",
+    "onnx/onnx-operators.pb.h"
   ]
 }

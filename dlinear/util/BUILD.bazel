@@ -112,6 +112,7 @@ dlinear_cc_library(
     ],
     deps = [
         ":definitions",
+        ":logging",
         "//dlinear/libs:gmp",
     ],
 )

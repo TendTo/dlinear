@@ -157,10 +157,6 @@ bool Tensor::Equal(const Tensor &rhs) const {
   return true;
 }
 
-Tensor &Tensor::Flatten() {
-  values_.reshape({values_.size()});
-  return *this;
-}
 Tensor &Tensor::Flatten(const std::int64_t axis) {
   if (axis < 0 || axis >= static_cast<std::int64_t>(values_.size()))
     DLINEAR_OUT_OF_RANGE_FMT("Invalid axis. Must be in [{}, {}]", 0, values_.size());
@@ -224,7 +220,7 @@ Tensor &Tensor::Abs() {
   return *this;
 }
 
-Tensor &Tensor::Piecewise(const std::function<Expression(Expression)> &f) {
+Tensor &Tensor::Elementwise(const std::function<Expression(Expression)> &f) {
   for (Expression &e : values_) e = f(e);
   return *this;
 }
