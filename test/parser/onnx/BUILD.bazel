@@ -17,7 +17,7 @@ dlinear_cc_googletest(
     data = ["onnx"],
     tags = ["onnx"],
     deps = [
-        "//dlinear/parser/onnx:driver",
+        "//dlinear/parser/onnx",
         "//dlinear/util:filesystem",
     ],
 )

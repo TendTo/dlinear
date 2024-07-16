@@ -4,6 +4,7 @@
 #include <istream>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -14,6 +15,7 @@
 #include "dlinear/parser/onnx/Tensor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/concepts.h"
 
 namespace dlinear::onnx {
 
@@ -32,6 +34,21 @@ class OnnxDriver : public Driver {
 
  private:
   static const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodeProto&)>> node_handlers;
+
+  static const ::onnx::AttributeProto* FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                                     ::onnx::AttributeProto_AttributeType expectedType);
+
+  template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
+                    std::vector<std::string>, const ::onnx::TensorProto*>
+                T>
+  std::optional<T> GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const;
+  template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
+                    std::vector<std::string>, const ::onnx::TensorProto*>
+                T>
+  T EnsureGetAttribute(const ::onnx::NodeProto& node, const std::string& name) const;
+
+  static void EnsureInput(const ::onnx::NodeProto& node, int lb, int ub);
+  static void EnsureInput(const ::onnx::NodeProto& node, int exact);
 
   void ParseGraph();
   void AddNodes();

@@ -15,6 +15,19 @@
 
 namespace dlinear::onnx {
 
+namespace {
+inline void invalid_number_of_inputs(const ::onnx::NodeProto& node, const int actualNumberOfInputs,
+                                     const int lowerBound, const int upperBound) {
+  if (lowerBound == upperBound) {
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx operation '{}' expected to have exactly {} inputs, but found {}", node.op_type(),
+                              lowerBound, actualNumberOfInputs);
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx operation '{}' expected to have between {} and {} inputs, but found {}",
+                              node.op_type(), lowerBound, upperBound, actualNumberOfInputs);
+  }
+}
+}  // namespace
+
 OnnxDriver::OnnxDriver(Context& context) : Driver{context, "OnnxDriver"} {}
 
 bool OnnxDriver::ParseStreamCore(std::istream& in) {
@@ -52,6 +65,93 @@ void OnnxDriver::ParseGraph() {
   DLINEAR_DEBUG_FMT("OnnxDriver::ParseGraph(): assertions {}", context_.assertions());
 }
 
+const ::onnx::AttributeProto* OnnxDriver::FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                                        ::onnx::AttributeProto_AttributeType expectedType) {
+  for (const ::onnx::AttributeProto& attr : node.attribute()) {
+    if (attr.name() == name) {
+      if (attr.type() != expectedType) {
+        DLINEAR_RUNTIME_ERROR_FMT("Attribute '{}' must be of type {}", name,
+                                  AttributeProto_AttributeType_Name(expectedType));
+      }
+      return &attr;
+    }
+  }
+  return nullptr;
+}
+
+template <>
+std::optional<bool> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  return attr == nullptr ? std::nullopt : std::optional{attr->i() != 0};
+}
+template <>
+std::optional<float> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  return attr == nullptr ? std::nullopt : std::optional{attr->f()};
+}
+template <>
+std::optional<std::int64_t> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  return attr == nullptr ? std::nullopt : std::optional{attr->i()};
+}
+template <>
+std::optional<std::string> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
+  return attr == nullptr ? std::nullopt : std::optional{attr->s()};
+}
+template <>
+std::optional<std::vector<float>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
+                                                           const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
+  return attr == nullptr ? std::nullopt
+                         : std::optional{std::vector<float>{attr->floats().begin(), attr->floats().end()}};
+}
+template <>
+std::optional<std::vector<std::int64_t>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
+                                                                  const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  return attr == nullptr ? std::nullopt
+                         : std::optional{std::vector<std::int64_t>{attr->ints().begin(), attr->ints().end()}};
+}
+template <>
+std::optional<std::vector<std::string>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
+                                                                 const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
+  return attr == nullptr ? std::nullopt
+                         : std::optional{std::vector<std::string>{attr->strings().begin(), attr->strings().end()}};
+}
+template <>
+std::optional<const ::onnx::TensorProto*> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
+                                                                   const std::string& name) const {
+  const ::onnx::AttributeProto* const attr =
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
+  return attr == nullptr ? std::nullopt : std::optional{&attr->t()};
+}
+
+template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
+                  std::vector<std::string>, const ::onnx::TensorProto*>
+              T>
+T OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+  const std::optional<T> attr = GetAttribute<T>(node, name);
+  if (!attr.has_value())
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx node of type {} is missing the expected attribute {}", node.op_type(), name);
+  return attr.value();
+}
+
+void OnnxDriver::EnsureInput(const ::onnx::NodeProto& node, const int lb, const int ub) {
+  if (node.input_size() < lb || node.input_size() > ub) invalid_number_of_inputs(node, node.input_size(), lb, ub);
+}
+void OnnxDriver::EnsureInput(const ::onnx::NodeProto& node, const int exact) {
+  if (node.input_size() != exact) invalid_number_of_inputs(node, node.input_size(), exact, exact);
+}
+
 void OnnxDriver::AddInitializer(const ::onnx::TensorProto& tensor) {
   DLINEAR_ASSERT(tensor.has_name(), "TensorProto must have a name");
   DLINEAR_ASSERT(tensor.has_data_type(), "TensorProto must have a data_type");
@@ -73,7 +173,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Abs>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Abs", "NodeProto must have an op_type of Abs");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Abs());
@@ -86,7 +187,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Add", "NodeProto must have an op_type of Add");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -100,12 +202,10 @@ void OnnxDriver::AddNode<NodeOpType::Add>(const ::onnx::NodeProto& node) {
 template <>
 void OnnxDriver::AddNode<NodeOpType::Concat>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Concat", "NodeProto must have an op_type of Concat");
-  DLINEAR_ASSERT(node.input_size() > 0, "NodeProto must have at least 1 input");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly 1 attribute");
-  DLINEAR_ASSERT(node.attribute(0).has_i(), "NodeProto attribute must have an integer value");
+  EnsureInput(node, 1, 2147483647);
 
-  const std::int64_t axis = node.attribute(0).i();
+  const auto axis = EnsureGetAttribute<std::int64_t>(node, "axis");
   const std::string& output = node.output(0);
   const std::string& input1 = node.input(0);
   const std::vector<std::string> inputs(node.input().begin() + 1, node.input().end());
@@ -125,6 +225,7 @@ void OnnxDriver::AddNode<NodeOpType::Constant>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Constant", "NodeProto must have an op_type of Constant");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
   DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly 1 attribute");
+
   const std::string& output = node.output(0);
   const ::onnx::AttributeProto& attr = node.attribute(0);
   if (attr.has_t()) {
@@ -158,36 +259,18 @@ void OnnxDriver::AddNode<NodeOpType::Conv>(const ::onnx::NodeProto& node) {
   const Tensor& x = available_inputs_.at(input1);
   const Tensor& w = available_inputs_.at(input2);
 
-  std::string auto_pad = "NOTSET";
-  std::vector<std::int64_t> dilations{1, 1};
-  std::int64_t group = 1;
-  std::vector<std::int64_t> kernel_shape{w.values().shape().begin() + 2, w.values().shape().end()};
-  std::vector<std::int64_t> pads{0, 0, 0, 0};
-  std::vector<std::int64_t> strides{1, 1};
-  for (const ::onnx::AttributeProto& attr : node.attribute()) {
-    if (!attr.has_name()) continue;
-    if (attr.name() == "auto_pad")
-      auto_pad = attr.s();
-    else if (attr.name() == "dilations") {
-      dilations.clear();
-      dilations.reserve(attr.ints_size());
-      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(dilations));
-    } else if (attr.name() == "group") {
-      group = attr.i();
-    } else if (attr.name() == "kernel_shape") {
-      kernel_shape.clear();
-      kernel_shape.reserve(attr.ints_size());
-      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(kernel_shape));
-    } else if (attr.name() == "pads") {
-      pads.clear();
-      pads.reserve(attr.ints_size());
-      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(pads));
-    } else if (attr.name() == "strides") {
-      strides.clear();
-      strides.reserve(attr.ints_size());
-      std::copy(attr.ints().begin(), attr.ints().end(), std::back_inserter(strides));
-    }
-  }
+  std::string auto_pad{GetAttribute<std::string>(node, "auto_pad").value_or("NOTSET")};
+  std::vector<std::int64_t> dilations{
+      GetAttribute<std::vector<std::int64_t>>(node, "dilations").value_or(std::vector<std::int64_t>{1, 1})};
+  std::int64_t group = GetAttribute<std::int64_t>(node, "group").value_or(1);
+  std::vector<std::int64_t> kernel_shape{
+      GetAttribute<std::vector<std::int64_t>>(node, "kernel_shape")
+          .value_or(std::vector<std::int64_t>{w.values().shape().begin() + 2, w.values().shape().end()})};
+  std::vector<std::int64_t> pads{
+      GetAttribute<std::vector<std::int64_t>>(node, "pads").value_or(std::vector<std::int64_t>{0, 0, 0, 0})};
+  std::vector<std::int64_t> strides{
+      GetAttribute<std::vector<std::int64_t>>(node, "strides").value_or(std::vector<std::int64_t>{1, 1})};
+
   if (auto_pad != "NOTSET") {
     pads.clear();
     for (std::size_t i = 0; i < strides.size(); ++i) {
@@ -231,12 +314,12 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Flatten", "NodeProto must have an op_type of Flatten");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 inputs");
-  DLINEAR_ASSERT(node.attribute_size() == 1, "NodeProto must have exactly 1 attribute");
-  DLINEAR_ASSERT(node.attribute(0).has_i(), "NodeProto attribute must have an integer value");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Flatten(node.attribute(0).i()));
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(1);
+  available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Flatten(axis));
   DLINEAR_DEBUG_FMT("Flatten node: {} <- {}", output, input);
   DLINEAR_TRACE_FMT("{} <- {}", available_inputs_.at(output), available_inputs_.at(input));
   AddFormula(output);
@@ -246,11 +329,12 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Gather>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Gather", "NodeProto must have an op_type of Gather");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const std::int64_t axis = node.attribute_size() > 0 && node.attribute(0).has_i() ? node.attribute(0).i() : 0;
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(0);
   available_inputs_.emplace(output, available_inputs_.at(input1).Gather(available_inputs_.at(input2), axis));
 
   DLINEAR_DEBUG_FMT("Gather node: {} = {}[{}, axis = {}]", output, input1, input2, axis);
@@ -263,12 +347,20 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Gemm", "NodeProto must have an op_type of Abs");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2 || node.input_size() == 3, "NodeProto must have [2-3] inputs");
+  EnsureInput(node, 2, 3);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const float alpha = node.attribute_size() > 0 && node.attribute(0).has_f() ? node.attribute(0).f() : 1;
-  Tensor gemm = available_inputs_.at(input1).MatMul(available_inputs_.at(input2)) * alpha;
+  const float alpha = GetAttribute<float>(node, "alpha").value_or(1);
+  const bool transA = GetAttribute<bool>(node, "transA").value_or(false);
+  const bool transB = GetAttribute<bool>(node, "transB").value_or(false);
+
+  Tensor A{available_inputs_.at(input1)};
+  if (transA) A.Transpose();
+  Tensor B{available_inputs_.at(input2)};
+  if (transB) B.Transpose();
+  Tensor gemm = A.MatMul(B) * alpha;
 
   if (node.attribute_size() == 2) {
     DLINEAR_DEBUG_FMT("Gemm node: {} = {} * {} x {}", output, alpha, input1, input2);
@@ -276,7 +368,7 @@ void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
   }
 
   if (node.input_size() == 3) {
-    const auto beta = node.attribute_size() > 1 && node.attribute(1).has_f() ? node.attribute(1).f() : 1;
+    const auto beta = GetAttribute<float>(node, "beta").value_or(1);
     const std::string& input3 = node.input(2);
     gemm += available_inputs_.at(input3) * beta;
     DLINEAR_DEBUG_FMT("Gemm node: {} = {} * {} x {} + {} * {}", output, alpha, input1, input2, beta, input3);
@@ -293,7 +385,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -309,7 +402,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Mul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Mul", "NodeProto must have an op_type of Mul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -324,11 +418,12 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Reshape>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Reshape", "NodeProto must have an op_type of Reshape");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const bool allow_zero = node.attribute_size() > 0 && node.attribute(0).has_i() && node.attribute(0).i() == 1;
+  const bool allow_zero = GetAttribute<bool>(node, "allowzero").value_or(false);
 
   const Tensor& shape = available_inputs_.at(input2);
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input1)}.Reshape(shape, allow_zero));
@@ -342,7 +437,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Relu", "NodeProto must have an op_type of Relu");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
@@ -372,7 +468,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Sign>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Sign", "NodeProto must have an op_type of Sign");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor sign = Tensor{available_inputs_.at(input)};
@@ -388,7 +485,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Sigmoid>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Sigmoid", "NodeProto must have an op_type of Sigmoid");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
@@ -407,7 +505,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Slice>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Slice", "NodeProto must have an op_type of Slice");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() >= 3 && node.input_size() <= 5, "NodeProto must have [3-5] inputs");
+  EnsureInput(node, 3, 5);
+
   const std::string& data = node.input(0);
   const std::string& starts = node.input(1);
   const std::string& ends = node.input(2);
@@ -433,11 +532,12 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Softmax>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Softmax", "NodeProto must have an op_type of Softmax");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   const xt::xarray<Expression> softmax_values{xt::exp(available_inputs_.at(input).values())};
-  const std::int64_t axis = node.attribute_size() > 0 && node.attribute(0).has_i() ? node.attribute(0).i() : -1;
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(-1);
 
   DLINEAR_ASSERT(std::for_each(available_inputs_.at(input).begin(), available_inputs_.at(input).end(),
                                [](const Expression& e) { return is_constant(e); }),
@@ -457,7 +557,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Sub>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Sub", "NodeProto must have an op_type of Sub");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -472,13 +573,12 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Transpose", "NodeProto must have an op_type of Transpose");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 1, "NodeProto must have exactly 1 input");
+  EnsureInput(node, 1);
+
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  std::vector<std::int64_t> perm;
-  if (node.attribute_size() == 1) {
-    perm.insert(perm.end(), node.attribute(0).ints().cbegin(), node.attribute(0).ints().cend());
-  }
+  std::vector<std::int64_t> perm{
+      GetAttribute<std::vector<std::int64_t>>(node, "perm").value_or(std::vector<std::int64_t>{})};
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Transpose(perm));
   DLINEAR_DEBUG_FMT("Transpose {} = {}^T", output, input);
   DLINEAR_TRACE_FMT("{} = {}^T", available_inputs_.at(output), available_inputs_.at(input));
@@ -489,7 +589,8 @@ template <>
 void OnnxDriver::AddNode<NodeOpType::Unsqueeze>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "Unsqueeze", "NodeProto must have an op_type of Unsqueeze");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
-  DLINEAR_ASSERT(node.input_size() == 2, "NodeProto must have exactly 2 inputs");
+  EnsureInput(node, 2);
+
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
@@ -515,7 +616,11 @@ bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
     return false;
   }
 
-  node_handlers.at(node.op_type())(*this, node);
+  const auto it = node_handlers.find(node.op_type());
+  if (it == node_handlers.end()) {
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx operation {} not currently supported", node.op_type());
+  }
+  it->second(*this, node);
   return true;
 }
 
@@ -608,5 +713,14 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Transpose", &OnnxDriver::AddNode<NodeOpType::Transpose>},
     {"Unsqueeze", &OnnxDriver::AddNode<NodeOpType::Unsqueeze>},
 };
+
+template bool OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template float OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template std::int64_t OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template std::string OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template std::vector<float> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template std::vector<std::int64_t> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template std::vector<std::string> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
+template const ::onnx::TensorProto* OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
 
 }  // namespace dlinear::onnx
