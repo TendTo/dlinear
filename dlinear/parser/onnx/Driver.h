@@ -36,16 +36,14 @@ class OnnxDriver : public Driver {
   static const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodeProto&)>> node_handlers;
 
   static const ::onnx::AttributeProto* FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
-                                                     ::onnx::AttributeProto_AttributeType expectedType);
+                                                     ::onnx::AttributeProto_AttributeType expectedType,
+                                                     bool throw_on_missing = false);
 
   template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
                     std::vector<std::string>, const ::onnx::TensorProto*>
                 T>
-  std::optional<T> GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const;
-  template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
-                    std::vector<std::string>, const ::onnx::TensorProto*>
-                T>
-  T EnsureGetAttribute(const ::onnx::NodeProto& node, const std::string& name) const;
+  T GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                 const std::optional<T>& default_value = {}) const;
 
   static void EnsureInput(const ::onnx::NodeProto& node, int lb, int ub);
   static void EnsureInput(const ::onnx::NodeProto& node, int exact);

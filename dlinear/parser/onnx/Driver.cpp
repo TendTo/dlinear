@@ -9,11 +9,14 @@
 
 #include <fmt/core.h>
 
+#include <bit>
 #include <fstream>
 
 #include "dlinear/parser/onnx/NodeOpType.h"
 
 namespace dlinear::onnx {
+
+static_assert(std::endian::native == std::endian::little, "Only little-endian systems are supported for onnx parsing");
 
 namespace {
 inline void invalid_number_of_inputs(const ::onnx::NodeProto& node, const int actualNumberOfInputs,
@@ -66,7 +69,8 @@ void OnnxDriver::ParseGraph() {
 }
 
 const ::onnx::AttributeProto* OnnxDriver::FindAttribute(const ::onnx::NodeProto& node, const std::string& name,
-                                                        ::onnx::AttributeProto_AttributeType expectedType) {
+                                                        const ::onnx::AttributeProto_AttributeType expectedType,
+                                                        const bool throw_on_missing) {
   for (const ::onnx::AttributeProto& attr : node.attribute()) {
     if (attr.name() == name) {
       if (attr.type() != expectedType) {
@@ -76,73 +80,72 @@ const ::onnx::AttributeProto* OnnxDriver::FindAttribute(const ::onnx::NodeProto&
       return &attr;
     }
   }
+  if (throw_on_missing)
+    DLINEAR_RUNTIME_ERROR_FMT("Onnx node of type {} is missing the expected attribute {}", node.op_type(), name);
   return nullptr;
 }
 
 template <>
-std::optional<bool> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
-  const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
-  return attr == nullptr ? std::nullopt : std::optional{attr->i() != 0};
+bool OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                              const std::optional<bool>& default_value) const {
+  const ::onnx::AttributeProto* const attr = FindAttribute(
+      node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT, !default_value.has_value());
+  return attr == nullptr ? default_value.value() : attr->i() != 0;
 }
 template <>
-std::optional<float> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
-  const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
-  return attr == nullptr ? std::nullopt : std::optional{attr->f()};
+float OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                               const std::optional<float>& default_value) const {
+  const ::onnx::AttributeProto* const attr = FindAttribute(
+      node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT, !default_value.has_value());
+  return attr == nullptr ? default_value.value() : attr->f();
 }
 template <>
-std::optional<std::int64_t> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
-  const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
-  return attr == nullptr ? std::nullopt : std::optional{attr->i()};
+std::int64_t OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                      const std::optional<std::int64_t>& default_value) const {
+  const ::onnx::AttributeProto* const attr = FindAttribute(
+      node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT, !default_value.has_value());
+  return attr == nullptr ? default_value.value() : attr->i();
 }
 template <>
-std::optional<std::string> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
+std::string OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                     const std::optional<std::string>& default_value) const {
   const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
-  return attr == nullptr ? std::nullopt : std::optional{attr->s()};
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING,
+                    !default_value.has_value());
+  return attr == nullptr ? default_value.value() : attr->s();
 }
 template <>
-std::optional<std::vector<float>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
-                                                           const std::string& name) const {
+std::vector<float> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                            const std::optional<std::vector<float>>& default_value) const {
   const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
-  return attr == nullptr ? std::nullopt
-                         : std::optional{std::vector<float>{attr->floats().begin(), attr->floats().end()}};
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS,
+                    !default_value.has_value());
+  return attr == nullptr ? default_value.value() : std::vector<float>{attr->floats().begin(), attr->floats().end()};
 }
 template <>
-std::optional<std::vector<std::int64_t>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
-                                                                  const std::string& name) const {
-  const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
-  return attr == nullptr ? std::nullopt
-                         : std::optional{std::vector<std::int64_t>{attr->ints().begin(), attr->ints().end()}};
+std::vector<std::int64_t> OnnxDriver::GetAttribute(
+    const ::onnx::NodeProto& node, const std::string& name,
+    const std::optional<std::vector<std::int64_t>>& default_value) const {
+  const ::onnx::AttributeProto* const attr = FindAttribute(
+      node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS, !default_value.has_value());
+  return attr == nullptr ? default_value.value() : std::vector<std::int64_t>{attr->ints().begin(), attr->ints().end()};
 }
 template <>
-std::optional<std::vector<std::string>> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
-                                                                 const std::string& name) const {
+std::vector<std::string> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node, const std::string& name,
+                                                  const std::optional<std::vector<std::string>>& default_value) const {
   const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
-  return attr == nullptr ? std::nullopt
-                         : std::optional{std::vector<std::string>{attr->strings().begin(), attr->strings().end()}};
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_STRING,
+                    !default_value.has_value());
+  return attr == nullptr ? default_value.value()
+                         : std::vector<std::string>{attr->strings().begin(), attr->strings().end()};
 }
 template <>
-std::optional<const ::onnx::TensorProto*> OnnxDriver::GetAttribute(const ::onnx::NodeProto& node,
-                                                                   const std::string& name) const {
+const ::onnx::TensorProto* OnnxDriver::GetAttribute(
+    const ::onnx::NodeProto& node, const std::string& name,
+    const std::optional<const ::onnx::TensorProto*>& default_value) const {
   const ::onnx::AttributeProto* const attr =
-      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
-  return attr == nullptr ? std::nullopt : std::optional{&attr->t()};
-}
-
-template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
-                  std::vector<std::string>, const ::onnx::TensorProto*>
-              T>
-T OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto& node, const std::string& name) const {
-  const std::optional<T> attr = GetAttribute<T>(node, name);
-  if (!attr.has_value())
-    DLINEAR_RUNTIME_ERROR_FMT("Onnx node of type {} is missing the expected attribute {}", node.op_type(), name);
-  return attr.value();
+      FindAttribute(node, name, ::onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR, true);
+  return attr == nullptr ? default_value.value() : &attr->t();
 }
 
 void OnnxDriver::EnsureInput(const ::onnx::NodeProto& node, const int lb, const int ub) {
@@ -205,7 +208,7 @@ void OnnxDriver::AddNode<NodeOpType::Concat>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
   EnsureInput(node, 1, 2147483647);
 
-  const auto axis = EnsureGetAttribute<std::int64_t>(node, "axis");
+  const auto axis = GetAttribute<std::int64_t>(node, "axis");
   const std::string& output = node.output(0);
   const std::string& input1 = node.input(0);
   const std::vector<std::string> inputs(node.input().begin() + 1, node.input().end());
@@ -259,17 +262,13 @@ void OnnxDriver::AddNode<NodeOpType::Conv>(const ::onnx::NodeProto& node) {
   const Tensor& x = available_inputs_.at(input1);
   const Tensor& w = available_inputs_.at(input2);
 
-  std::string auto_pad{GetAttribute<std::string>(node, "auto_pad").value_or("NOTSET")};
-  std::vector<std::int64_t> dilations{
-      GetAttribute<std::vector<std::int64_t>>(node, "dilations").value_or(std::vector<std::int64_t>{1, 1})};
-  std::int64_t group = GetAttribute<std::int64_t>(node, "group").value_or(1);
-  std::vector<std::int64_t> kernel_shape{
-      GetAttribute<std::vector<std::int64_t>>(node, "kernel_shape")
-          .value_or(std::vector<std::int64_t>{w.values().shape().begin() + 2, w.values().shape().end()})};
-  std::vector<std::int64_t> pads{
-      GetAttribute<std::vector<std::int64_t>>(node, "pads").value_or(std::vector<std::int64_t>{0, 0, 0, 0})};
-  std::vector<std::int64_t> strides{
-      GetAttribute<std::vector<std::int64_t>>(node, "strides").value_or(std::vector<std::int64_t>{1, 1})};
+  std::string auto_pad{GetAttribute<std::string>(node, "auto_pad", "NOTSET")};
+  std::vector<std::int64_t> dilations{GetAttribute<std::vector<std::int64_t>>(node, "dilations", {{1, 1}})};
+  const auto group = GetAttribute<std::int64_t>(node, "group", 1);
+  std::vector<std::int64_t> kernel_shape{GetAttribute<std::vector<std::int64_t>>(
+      node, "kernel_shape", {{w.values().shape().begin() + 2, w.values().shape().end()}})};
+  std::vector<std::int64_t> pads{GetAttribute<std::vector<std::int64_t>>(node, "pads", {{0, 0, 0, 0}})};
+  std::vector<std::int64_t> strides{GetAttribute<std::vector<std::int64_t>>(node, "strides", {{1, 1}})};
 
   if (auto_pad != "NOTSET") {
     pads.clear();
@@ -318,7 +317,7 @@ void OnnxDriver::AddNode<NodeOpType::Flatten>(const ::onnx::NodeProto& node) {
 
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(1);
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis", 1);
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Flatten(axis));
   DLINEAR_DEBUG_FMT("Flatten node: {} <- {}", output, input);
   DLINEAR_TRACE_FMT("{} <- {}", available_inputs_.at(output), available_inputs_.at(input));
@@ -334,7 +333,7 @@ void OnnxDriver::AddNode<NodeOpType::Gather>(const ::onnx::NodeProto& node) {
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(0);
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis", 0);
   available_inputs_.emplace(output, available_inputs_.at(input1).Gather(available_inputs_.at(input2), axis));
 
   DLINEAR_DEBUG_FMT("Gather node: {} = {}[{}, axis = {}]", output, input1, input2, axis);
@@ -352,9 +351,9 @@ void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const float alpha = GetAttribute<float>(node, "alpha").value_or(1);
-  const bool transA = GetAttribute<bool>(node, "transA").value_or(false);
-  const bool transB = GetAttribute<bool>(node, "transB").value_or(false);
+  const float alpha = GetAttribute<float>(node, "alpha", 1);
+  const bool transA = GetAttribute<bool>(node, "transA", false);
+  const bool transB = GetAttribute<bool>(node, "transB", false);
 
   Tensor A{available_inputs_.at(input1)};
   if (transA) A.Transpose();
@@ -368,7 +367,7 @@ void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
   }
 
   if (node.input_size() == 3) {
-    const auto beta = GetAttribute<float>(node, "beta").value_or(1);
+    const auto beta = GetAttribute<float>(node, "beta", 1);
     const std::string& input3 = node.input(2);
     gemm += available_inputs_.at(input3) * beta;
     DLINEAR_DEBUG_FMT("Gemm node: {} = {} * {} x {} + {} * {}", output, alpha, input1, input2, beta, input3);
@@ -423,7 +422,7 @@ void OnnxDriver::AddNode<NodeOpType::Reshape>(const ::onnx::NodeProto& node) {
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  const bool allow_zero = GetAttribute<bool>(node, "allowzero").value_or(false);
+  const bool allow_zero = GetAttribute<bool>(node, "allowzero", false);
 
   const Tensor& shape = available_inputs_.at(input2);
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input1)}.Reshape(shape, allow_zero));
@@ -537,7 +536,7 @@ void OnnxDriver::AddNode<NodeOpType::Softmax>(const ::onnx::NodeProto& node) {
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
   const xt::xarray<Expression> softmax_values{xt::exp(available_inputs_.at(input).values())};
-  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis").value_or(-1);
+  const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis", -1);
 
   DLINEAR_ASSERT(std::for_each(available_inputs_.at(input).begin(), available_inputs_.at(input).end(),
                                [](const Expression& e) { return is_constant(e); }),
@@ -577,8 +576,7 @@ void OnnxDriver::AddNode<NodeOpType::Transpose>(const ::onnx::NodeProto& node) {
 
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  std::vector<std::int64_t> perm{
-      GetAttribute<std::vector<std::int64_t>>(node, "perm").value_or(std::vector<std::int64_t>{})};
+  std::vector<std::int64_t> perm{GetAttribute<std::vector<std::int64_t>>(node, "perm", {{}})};
   available_inputs_.emplace(output, Tensor{available_inputs_.at(input)}.Transpose(perm));
   DLINEAR_DEBUG_FMT("Transpose {} = {}^T", output, input);
   DLINEAR_TRACE_FMT("{} = {}^T", available_inputs_.at(output), available_inputs_.at(input));
@@ -713,14 +711,5 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Transpose", &OnnxDriver::AddNode<NodeOpType::Transpose>},
     {"Unsqueeze", &OnnxDriver::AddNode<NodeOpType::Unsqueeze>},
 };
-
-template bool OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template float OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template std::int64_t OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template std::string OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template std::vector<float> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template std::vector<std::int64_t> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template std::vector<std::string> OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
-template const ::onnx::TensorProto* OnnxDriver::EnsureGetAttribute(const ::onnx::NodeProto&, const std::string&) const;
 
 }  // namespace dlinear::onnx
