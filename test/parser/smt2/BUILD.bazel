@@ -13,12 +13,6 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
-    name = "test_command",
-    tags = ["smt2"],
-    deps = ["//dlinear/parser/smt2:command"],
-)
-
-dlinear_cc_googletest(
     name = "test_function_definition",
     tags = ["smt2"],
     deps = [

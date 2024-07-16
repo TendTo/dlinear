@@ -68,22 +68,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "command",
-    srcs = [
-        "Command.cpp",
-        "CommandCell.cpp",
-    ],
-    hdrs = [
-        "Command.h",
-        "CommandCell.h",
-    ],
-    deps = [
-        "//dlinear/solver:logic",
-        "//dlinear/symbolic",
-    ],
-)
-
-dlinear_cc_library(
     name = "smt2",
     srcs = [
         "Driver.cpp",
