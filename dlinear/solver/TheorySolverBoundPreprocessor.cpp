@@ -467,7 +467,7 @@ void TheorySolverBoundPreprocessor::AddPathToExplanation(const Variable& from, c
       const int theory_row = *graph_.GetEdgeWeight(path[i - 1], path[i]);
       explanation.insert(theory_rows_[theory_row]);
     }
-    return VisitResult::CONTINUE;
+    return VisitResult::STOP;
   });
 }
 
