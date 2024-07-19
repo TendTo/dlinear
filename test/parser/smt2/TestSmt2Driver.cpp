@@ -27,12 +27,12 @@ class TestSmt2Driver : public ::testing::Test {
 TEST_F(TestSmt2Driver, ValidSetLogic) {
   Smt2Driver driver{context_};
   EXPECT_TRUE(driver.ParseString("(set-logic QF_LRA)"));
-  EXPECT_TRUE(driver.ParseString("(set-logic LRA)"));
 }
 
 TEST_F(TestSmt2Driver, InvalidSetLogic) {
   Smt2Driver driver{context_};
   EXPECT_THROW(driver.ParseString("(set-logic QF_LIA)"), std::runtime_error);
+  EXPECT_THROW(driver.ParseString("(set-logic LRA)"), std::runtime_error);
   EXPECT_THROW(driver.ParseString("(set-logic LIA)"), std::runtime_error);
   EXPECT_THROW(driver.ParseString("(set-logic QF_BV)"), std::runtime_error);
   EXPECT_THROW(driver.ParseString("(set-logic QF_UF)"), std::runtime_error);
