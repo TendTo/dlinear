@@ -276,10 +276,9 @@ class TheorySolver {
   /**
    * Gather the bounds of the @p theory_col and produce an explanation for the SAT solver.
    * @param theory_col column of the theory solver the bounds are associated with
-   * @param active whether to only consider the active bounds (true) or include the inactive ones as well (false)
    * @param[out] explanation set of literals that correspond to the conflicting bounds
    */
-  void TheoryBoundsToExplanation(int theory_col, bool active, LiteralSet &explanation) const;
+  void TheoryBoundsToExplanation(int theory_col, LiteralSet &explanation);
   /**
    * Gather the bounds that enforced @p value on @p theory_col and produce an explanation for the SAT solver.
    * @param theory_col theory column the bounds are associated with
@@ -322,7 +321,7 @@ class TheorySolver {
    * @param type type of violation the bound is associated with
    * @param[out] bound_idxs set of indexes of the bounds
    */
-  void TheoryBoundsToBoundIdxs(int theory_col, BoundViolationType type, std::set<int> &bound_idxs) const;
+  void TheoryBoundsToBoundIdxs(int theory_col, BoundViolationType type, std::set<int> &bound_idxs);
   /**
    * Generate a tuple (var, type, value) that represents a bound on the variable.
    *

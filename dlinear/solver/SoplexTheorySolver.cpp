@@ -274,7 +274,7 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
     // Add all the active bounds for the free variables in the row to the explanation
     for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
-      TheoryBoundsToExplanation(theory_col, true, explanation);
+      TheoryBoundsToExplanation(theory_col, explanation);
     }
   }
 }
@@ -289,6 +289,14 @@ void SoplexTheorySolver::EnableSPXVarBound() {
   for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
     spx_.changeBoundsRational(theory_col, theory_bounds_[theory_col].active_lower_bound().get_mpq_t(),
                               theory_bounds_[theory_col].active_upper_bound().get_mpq_t());
+    if (theory_col == static_cast<int>(theory_bounds_.size() - 1)) continue;
+    DLINEAR_TRACE_FMT("EnableSPXVarBound: {} = [{}, {}]", theory_col_to_var_[theory_col],
+                      theory_bounds_[theory_col].active_lower_bound(), theory_bounds_[theory_col].active_upper_bound());
+  }
+  for (const auto &[var, value] : preprocessor_.env()) {
+    const int theory_col = var_to_theory_col_.at(var.get_id());
+    DLINEAR_TRACE_FMT("EnableSPXVarBound: {} = {} (theory_col: {})", var, value, theory_col);
+    spx_.changeBoundsRational(theory_col, value.get_mpq_t(), value.get_mpq_t());
   }
 }
 

@@ -56,6 +56,9 @@ class TheorySolverBoundPreprocessor {
   Explanations Process(const std::vector<int>& enabled_theory_rows = {});
   void Process(const std::vector<int>& enabled_theory_rows, Explanations& explanations);
 
+  void GetActiveExplanation(int theory_col, LiteralSet& explanation);
+  void GetActiveBoundIdxs(int theory_col, std::set<int>& bound_idxs);
+
   void Clear();
 
   [[nodiscard]] const Config& config() const { return config_; }
@@ -104,6 +107,9 @@ class TheorySolverBoundPreprocessor {
   void AddPathToExplanation(const Variable& from, const Variable& to, LiteralSet& explanation);
   void AddPathToExplanation(const Variable& from, const Variable& to, const TheorySolverBoundVector& from_bounds,
                             const TheorySolverBoundVector& to_bounds, LiteralSet& explanation);
+  void AddPathToExplanationBoundIdxs(const Variable& from, const Variable& to,
+                                     const TheorySolverBoundVector& from_bounds,
+                                     const TheorySolverBoundVector& to_bounds, std::set<int>& explanation);
 
   std::pair<Variable, Variable> ExtractBoundEdge(const Formula& formula) const;
   /**
@@ -118,7 +124,11 @@ class TheorySolverBoundPreprocessor {
   mpq_class ExtractEqBoundCoefficient(const Formula& formula) const;
 
   void GetExplanation(const Variable& var, LiteralSet& explanation);
+  void GetExplanationBoundIdxs(const Variable& var, std::set<int>& bound_idxs);
+
+#if DEBUGGING_PREPROCESSOR
   std::vector<Variable> GetExplanationOrigins(const Variable& var);
+#endif
 
  private:
   const Config& config_;

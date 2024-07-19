@@ -114,6 +114,14 @@ bool TheorySolverBoundPreprocessor::AddConstraint(const int theory_row, const Fo
   return true;
 }
 
+void TheorySolverBoundPreprocessor::GetActiveExplanation(int theory_col, LiteralSet& explanation) {
+  GetExplanation(theory_cols_[theory_col], explanation);
+}
+
+void TheorySolverBoundPreprocessor::GetActiveBoundIdxs(const int theory_col, std::set<int>& bound_idxs) {
+  GetExplanationBoundIdxs(theory_cols_[theory_col], bound_idxs);
+}
+
 TheorySolverBoundPreprocessor::Explanations TheorySolverBoundPreprocessor::Process(
     const std::vector<int>& enabled_theory_rows) {
   Explanations explanations;
@@ -162,6 +170,7 @@ void TheorySolverBoundPreprocessor::SetEnvironmentFromBounds() {
     if (active_bound == nullptr) continue;
     const Variable& var = theory_cols_[theory_col];
     env_[var] = *active_bound;
+    DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::SetEnvironmentFromBounds: {} = {}", var, *active_bound);
   }
 }
 
@@ -170,18 +179,29 @@ TheorySolverBoundPreprocessor::PropagateEqBinomialResult TheorySolverBoundPrepro
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::PropagateEqBinomial({})", theory_row);
 
   const mpq_class& coeff = row_to_eq_binomial_edge_coefficients_.at(theory_row);
-  const auto& [from, to] = ExtractBoundEdge(predicate_abstractor_[theory_rows_[theory_row].var]);
+  const Formula& formula = predicate_abstractor_[theory_rows_[theory_row].var];
+  const auto& [from, to] = ExtractBoundEdge(formula);
+
+  DLINEAR_ASSERT(is_equal_to(formula), "Formula should be an equality relation");
+  DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
+  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
+
+  const Expression& lhs = get_lhs_expression(formula);
+  const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
+  DLINEAR_ASSERT(map.size() == 2, "Expression should have exactly two variables");
+  DLINEAR_ASSERT(get_constant_value(get_rhs_expression(formula)) == 0, "The right-hand side must be 0");
+  const bool from_is_first = get_variable(map.cbegin()->first).equal_to(from);
 
   Environment::const_iterator updater_it;
   Variable to_update_variable;
   mpq_class new_value;
   if ((updater_it = env_.find(from)) != env_.end()) {
     DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::PropagateEqBinomial: {} --{} --> {}", to, theory_row, from);
-    new_value = updater_it->second * coeff;
+    new_value = from_is_first ? mpq_class{updater_it->second / coeff} : mpq_class{updater_it->second * coeff};
     to_update_variable = to;
   } else if ((updater_it = env_.find(to)) != env_.end()) {
     DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::PropagateEqBinomial: {} --{} --> {}", from, theory_row, to);
-    new_value = updater_it->second / coeff;
+    new_value = from_is_first ? mpq_class{updater_it->second * coeff} : mpq_class{updater_it->second / coeff};
     to_update_variable = from;
   } else {
     // Neither of the two variables is in the environment. Can't propagate
@@ -332,7 +352,7 @@ bool TheorySolverBoundPreprocessor::ShouldEvaluate(const Formula& formula) const
   DLINEAR_TRACE_FMT("TheorySolverBoundPreprocessor::ShouldEvaluate({})", formula);
   // All free variables must be in the environment
   return std::all_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
-                     [this](const Variable& v) { return env_.find(v) != env_.end(); });
+                     [this](const Variable& v) { return env_.contains(v); });
 }
 
 bool TheorySolverBoundPreprocessor::ShouldPropagateEqBinomial(const Literal& lit) const {
@@ -487,6 +507,47 @@ void TheorySolverBoundPreprocessor::GetExplanation(const Variable& var, LiteralS
   }
 }
 
+void TheorySolverBoundPreprocessor::AddPathToExplanationBoundIdxs(const Variable& from, const Variable& to,
+                                                                  const TheorySolverBoundVector& from_bounds,
+                                                                  const TheorySolverBoundVector& to_bounds,
+                                                                  std::set<int>& explanation) {
+  DLINEAR_ASSERT_FMT(to_bounds.GetActiveEqualityBound() != nullptr, "The ending variable {} must have an eq bound", to);
+  graph_.AllPaths(from, to, [&](std::vector<Variable>& path) {
+    // Insert start and end bounds to the explanation
+    if (from_bounds.GetActiveEqualityBound() != nullptr) {
+      for (auto it = from_bounds.GetActiveBound(); it; ++it) explanation.insert(it->idx);
+    }
+    if (to_bounds.GetActiveEqualityBound() != nullptr) {
+      for (auto it = to_bounds.GetActiveBound(); it; ++it) explanation.insert(it->idx);
+    }
+    // Insert all rows from the edges in the path to the explanation
+    for (std::size_t i = 1; i < path.size(); i++) {
+      DLINEAR_ASSERT(graph_.GetEdgeWeight(path[i - 1], path[i]) != nullptr, "Edge must exist");
+      const int theory_row = *graph_.GetEdgeWeight(path[i - 1], path[i]);
+      explanation.insert(theory_row);
+    }
+    return VisitResult::STOP;
+  });
+}
+
+void TheorySolverBoundPreprocessor::GetExplanationBoundIdxs(const dlinear::drake::symbolic::Variable& var,
+                                                            std::set<int>& bound_idxs) {
+  const TheorySolverBoundVector& bounds = theory_bounds_.at(var_to_cols_.at(var.get_id()));
+  // If the variable has its bounds set directly by some literals, simply add them to the explanation
+  if (bounds.GetActiveEqualityBound() != nullptr) {
+    for (auto it = bounds.GetActiveBound(); it; ++it) bound_idxs.insert(it->idx);
+  } else {  // else we need to find the variable responsible for the bound propagation from the bound_graph
+    graph_.BFS(var, [&](const Variable& from, const Variable& to, const Weight&) {
+      if (to.equal_to(from)) return VisitResult::CONTINUE;
+      const TheorySolverBoundVector& to_bounds = theory_bounds_.at(var_to_cols_.at(to.get_id()));
+      if (to_bounds.GetActiveEqualityBound() == nullptr) return VisitResult::CONTINUE;
+      AddPathToExplanationBoundIdxs(var, to, bounds, to_bounds, bound_idxs);
+      return VisitResult::SKIP;
+    });
+  }
+}
+
+#if DEBUGGING_PREPROCESSOR
 std::vector<Variable> TheorySolverBoundPreprocessor::GetExplanationOrigins(const Variable& var) {
   const TheorySolverBoundVector& bounds = theory_bounds_.at(var_to_cols_.at(var.get_id()));
   // If the variable has its bounds set directly by some literals, it is its own origin
@@ -505,14 +566,14 @@ std::vector<Variable> TheorySolverBoundPreprocessor::GetExplanationOrigins(const
   DLINEAR_ASSERT(!origins.empty(), "There must be at least one origin");
   return origins;
 }
+#endif
 
 std::ostream& operator<<(std::ostream& os, const TheorySolverBoundPreprocessor& preprocessor) {
-  return os << "TheorySolverBoundPreprocessor{"
-            << "env_ = " << preprocessor.env() << ", "
+  return os << "TheorySolverBoundPreprocessor{" << "env_ = " << preprocessor.env() << ", "
             << "theory_cols_ = " << preprocessor.theory_cols() << ", "
             << "theory_rows_ = " << preprocessor.theory_rows() << ", "
-            << "theory_bounds_ = " << preprocessor.theory_bounds() << ", "
-            << "graph_ = " << preprocessor.bound_graph() << "}";
+            << "theory_bounds_ = " << preprocessor.theory_bounds() << ", " << "graph_ = " << preprocessor.bound_graph()
+            << "}";
 }
 
 }  // namespace dlinear

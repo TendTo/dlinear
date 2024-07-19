@@ -138,13 +138,11 @@ void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_ro
     explanations.insert(explanation);
   }
 }
-void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const bool active, LiteralSet &explanation) const {
-  if (active) {
-    theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
+void TheorySolver::TheoryBoundsToExplanation(const int theory_col, LiteralSet &explanation) {
+  if (!config_.disable_theory_preprocessor() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
+    preprocessor_.GetActiveExplanation(theory_col, explanation);
   } else {
-    for (const auto &bound : theory_bounds_[theory_col].bounds()) {
-      explanation.insert(theory_row_to_lit_[bound.idx]);
-    }
+    theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
   }
 }
 void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const mpq_class &value,
@@ -178,9 +176,12 @@ void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const mpq_class
   for (auto it = theory_bounds_[theory_col].GetActiveBound(value); it; ++it) bound_idxs.insert(it->idx);
 }
 void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const TheorySolver::BoundViolationType type,
-                                           std::set<int> &bound_idxs) const {
+                                           std::set<int> &bound_idxs) {
   if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
   const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
+  if (!config_.disable_theory_preprocessor() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
+    return preprocessor_.GetActiveBoundIdxs(theory_col, bound_idxs);
+  }
   return TheoryBoundsToBoundIdxs(
       theory_col,
       type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),

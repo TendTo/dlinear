@@ -276,7 +276,7 @@ void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explana
     // For each free variable in the literal, add their bounds to the explanation
     for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
       const int theory_col = var_to_theory_col_.at(col_var.get_id());
-      TheoryBoundsToExplanation(theory_col, true, explanation);
+      TheoryBoundsToExplanation(theory_col, explanation);
     }
   }
 }
