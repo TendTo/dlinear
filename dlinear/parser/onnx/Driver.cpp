@@ -472,7 +472,7 @@ void OnnxDriver::AddNode<NodeOpType::Sign>(const ::onnx::NodeProto& node) {
 
   sign.Elementwise([](const Expression& e) { return if_then_else(e == 0, 0, if_then_else(e >= 0, 1, -1)); });
   available_inputs_.emplace(output, sign);
-  DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
+  DLINEAR_DEBUG_FMT("Sign node: {} = Sign({})", output, input);
   DLINEAR_TRACE_FMT("{}", sign);
   AddFormula(output);
 }
@@ -532,7 +532,9 @@ void OnnxDriver::AddNode<NodeOpType::Softmax>(const ::onnx::NodeProto& node) {
 
   const std::string& input = node.input(0);
   const std::string& output = node.output(0);
-  const xt::xarray<Expression> softmax_values{xt::exp(available_inputs_.at(input).values())};
+
+  const Expression& max = available_inputs_.at(input).Max();
+  const xt::xarray<Expression> softmax_values{xt::exp((available_inputs_.at(input) - max).values())};
   const std::int64_t axis = GetAttribute<std::int64_t>(node, "axis", -1);
 
   DLINEAR_ASSERT(std::for_each(available_inputs_.at(input).begin(), available_inputs_.at(input).end(),
