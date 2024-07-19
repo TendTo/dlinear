@@ -125,6 +125,9 @@ class Environment {
    * (throwing a runtime error instead) if the key does not exist. */
   const mapped_type &operator[](const key_type &key) const;
 
+  /** Checks whether the environment contains a variable @p key. */
+  bool contains(const key_type &key) const;
+
   friend std::ostream &operator<<(std::ostream &os, const Environment &env);
 
  private:

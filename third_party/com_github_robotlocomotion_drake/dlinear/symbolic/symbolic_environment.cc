@@ -79,6 +79,10 @@ const Environment::mapped_type &Environment::at(const Environment::key_type &key
   return value;
 }
 
+bool Environment::contains(const key_type &key) const {
+  return map_.find(key) != map_.end();
+}
+
 Environment::mapped_type &Environment::operator[](const key_type &key) {
   if (key.is_dummy()) {
     ostringstream oss;
