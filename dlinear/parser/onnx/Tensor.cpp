@@ -372,8 +372,10 @@ xt::xarray<Expression> Tensor::Convolution(const ImageView &image, const KernelV
   const auto kw = static_cast<std::int64_t>(kernel.shape()[1]);
   const std::int64_t kmh = kh / 2;
   const std::int64_t kmw = kw / 2;
-  for (std::int64_t r = -pads[0] + kmh * dilation[0]; r < ih + pads[2] - kmh * dilation[0]; r += stride[0]) {
-    for (std::int64_t c = -pads[1] + kmw * dilation[1]; c < iw + pads[3] - kmw * dilation[1]; c += stride[1]) {
+  for (std::int64_t r = -pads[0] + kmh * dilation[0]; r < ih + pads[2] - kmh * dilation[0] + (kw & 1 ? 0 : 1);
+       r += stride[0]) {
+    for (std::int64_t c = -pads[1] + kmw * dilation[1]; c < iw + pads[3] - kmw * dilation[1] + (kw & 1 ? 0 : 1);
+         c += stride[1]) {
       new_values(out_r, out_c) = 0;
       for (std::int64_t i = 0; i < kh; i++) {
         for (std::int64_t j = 0; j < kw; j++) {
@@ -390,6 +392,14 @@ xt::xarray<Expression> Tensor::Convolution(const ImageView &image, const KernelV
   }
   new_values.reshape({1, 1, new_values.shape()[0], new_values.shape()[1]});
   return new_values;
+}
+
+const Expression &Tensor::Max() const {
+  DLINEAR_ASSERT(values_.size() > 0, "Cannot get the maximum value of an empty tensor");
+  return *std::max_element(values_.begin(), values_.end(), [](const Expression &lhs, const Expression &rhs) {
+    if (!is_constant(lhs) || !is_constant(rhs)) DLINEAR_RUNTIME_ERROR_FMT("Cannot compare {} and {}", lhs, rhs);
+    return get_constant_value(lhs) < get_constant_value(rhs);
+  });
 }
 
 Tensor Tensor::Pad(const std::vector<std::int64_t> &pads) const {

@@ -267,6 +267,7 @@ class Tensor {
                                                    const std::vector<std::int64_t> &dilations, std::int64_t group,
                                                    const std::vector<std::int64_t> &pads,
                                                    const std::vector<std::int64_t> &strides) const;
+  const Expression& Max() const;
   /**
    * Pad the tensor with the given @p pads.
    *
