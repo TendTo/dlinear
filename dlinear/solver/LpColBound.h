@@ -28,7 +28,7 @@
 namespace dlinear {
 
 /**
- * Describes the bound of a linear program variable.
+ * Describe the bound of a linear program variable.
  * @warning The order of the enum is important and should not be changed.
  * It is used to compare the bounds.
  */
@@ -42,7 +42,17 @@ enum class LpColBound {
   F,   ///< Free variable
 };
 
+/**
+ * Parse the bound from a character.
+ * @param bound character to parse
+ * @return corresponding bound
+ */
 LpColBound parseLpBound(char bound);
+/**
+ * Convert the bound to a character.
+ * @param bound bound to convert
+ * @return corresponding character
+ */
 char toChar(LpColBound bound);
 /**
  * Invert the bound with delta == 0

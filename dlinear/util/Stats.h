@@ -36,20 +36,11 @@ class Stats {
   Stats &operator+=(const Stats &other);
   Stats operator+(const Stats &other) const;
 
-  /**
-   * Return whether the stats is enabled.
-   * @return whether the stats is enabled.
-   */
+  /** @checker{enabled, stats} */
   [[nodiscard]] bool enabled() const { return enabled_; }
-  /**
-   * Return a mutable reference to the timer
-   * @return timer
-   */
+  /** @getsetter{timer, stats} */
   [[nodiscard]] Timer &m_timer() { return timer_; }
-  /**
-   * Return a constant reference to the timer
-   * @return timer
-   */
+  /** @getter{timer, stats} */
   [[nodiscard]] const Timer &timer() const { return timer_; }
   /**
    * Convert the current state of the object to a formatted string, only including the specific

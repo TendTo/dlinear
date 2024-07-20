@@ -167,10 +167,7 @@ class Context {
    */
   [[nodiscard]] std::string GetOption(const std::string &key) const;
 
-  /**
-   * Get the configuration of the context.
-   * @return configuration of the context
-   */
+  /** @getter{configuration, context}*/
   [[nodiscard]] const Config &config() const;
   /**
    * Get the the asserted formulas.
@@ -179,7 +176,7 @@ class Context {
    */
   [[nodiscard]] const ScopedVector<Formula> &assertions() const;
   /**
-   * Get the current active box from the top of the @ref stack of boxes.
+   * Get the current active box from the top of the stack of boxes.
    * @return the active box of the context
    */
   [[nodiscard]] const Box &box() const;

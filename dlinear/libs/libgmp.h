@@ -143,13 +143,13 @@ inline bool is_digit_or_sign(char c) { return std::isdigit(c) || c == '+' || c =
  */
 inline mpq_class string_to_mpq(std::string_view str) {
   // Remove leading + and - sign
-  bool is_negative = str[0] == '-';
+  const bool is_negative = str[0] == '-';
   if (is_negative || str[0] == '+') str.remove_prefix(1);
   if (str == "inf") return {1e100};
   if (str == "-inf") return {-1e100};
 
   // case 1: string is given in integer format
-  size_t symbol_pos = str.find_first_of("/.Ee");
+  const size_t symbol_pos = str.find_first_of("/.Ee");
   if (symbol_pos == std::string::npos) {
     const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
     if (start_pos == std::string_view::npos) return {0};

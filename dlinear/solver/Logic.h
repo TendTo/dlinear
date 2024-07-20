@@ -16,9 +16,7 @@
 
 namespace dlinear {
 
-/**
- * Describes the logic the SMT2 file is using.
- */
+/** Describe the logic the SMT2 file is using. */
 enum class Logic {
   QF_NRA,      ///< Quantifier free non-linear real arithmetic
   QF_NRA_ODE,  ///< Quantifier free non-linear real arithmetic with ODEs
@@ -28,6 +26,11 @@ enum class Logic {
   LRA,         ///< Linear real arithmetic
 };
 
+/**
+ * Parse the logic from a string.
+ * @param s string to parse
+ * @return corresponding logic
+ */
 Logic parseLogic(const std::string &s);
 std::ostream &operator<<(std::ostream &os, const Logic &logic);
 

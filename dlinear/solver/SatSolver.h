@@ -3,8 +3,9 @@
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Base class for SAT solvers.
+ * @brief SatSolver class.
  *
+ * Base class for SAT solvers.
  * The SAT solver's role is to convert a generic formula into a CNF of boolean clauses,
  * abstracting away the theory literals.
  * Then, it checks the satisfiability of the CNF.
@@ -32,9 +33,8 @@
 namespace dlinear {
 
 /**
- * SatSolver class.
- *
  * Base class for SAT solvers.
+ *
  * The SAT solver's role is to convert a generic formula into a CNF of boolean clauses,
  * abstracting away the theory literals.
  * Then, it checks the satisfiability of the CNF.
@@ -65,7 +65,7 @@ class SatSolver {
    * Add a formula @p f to the solver.
    * @note If @p f is a clause, please use @ref AddClause function. This
    * function does not assume anything about @p f and perform
-   * pre-processings (CNFize and PredicateAbstraction).
+   * pre-processing (CNFize and PredicateAbstraction).
    *
    * @param f formula to add
    */
@@ -105,20 +105,11 @@ class SatSolver {
    * @return empty optional if UNSAT
    */
   virtual std::optional<Model> CheckSat() = 0;
-  /**
-   * Get the list of Literal which correspond to a theory literal that have been inserted into the SAT solver.
-   * @return vector of literals
-   */
+  /** @getter{list of asserted theory literals, SAT solver}*/
   const std::vector<Literal> &theory_literals() const { return theory_literals_; }
-  /**
-   * Get the statistics of the SAT solver.
-   * @return statistics of the SAT solver
-   */
+  /** @getter{statistics, SAT solver}*/
   const IterationStats &stats() const { return stats_; }
-  /**
-   * Get the statistics of the CNFizer used by the SAT solver.
-   * @return statistics of the CNFizer
-   */
+  /** @getter{statistics of the cnfizer, SAT solver} */
   const IterationStats &cnfizer_stats() const;
 
  protected:

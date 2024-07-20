@@ -26,9 +26,7 @@
 
 namespace dlinear {
 
-/**
- * Sense of a linear programming row describing a constraint.
- */
+/** Sense of a linear programming row describing a constraint. */
 enum class LpRowSense {
   GT,  ///< Greater than
   GE,  ///< Greater than or equal to
@@ -39,15 +37,26 @@ enum class LpRowSense {
   IN,  ///< Inactive
 };
 
+/**
+ * Parse the sense from a character.
+ * @param sense character to parse
+ * @return corresponding sense
+ */
 LpRowSense parseLpSense(char sense);
+/**
+ * Convert the sense to a character.
+ * @param sense sense to convert
+ * @return corresponding character
+ */
 char toChar(LpRowSense sense);
 /**
  * Invert the sense with delta == 0.
  *
  * More specifically, !LE == GT, !GE == LT, !EQ == NQ, !NQ == EQ, !IN == IN, !GT == LE, !LT == GE.
  * @warning This is not the same as operator-()
- * @param sense
- * @return
+ * @param sense sense to invert
+ * @return inverted sense
+ * @see operator-(LpRowSense)
  */
 LpRowSense operator!(LpRowSense sense);
 /**
@@ -58,6 +67,7 @@ LpRowSense operator!(LpRowSense sense);
  * @warning This is not the same as operator!()
  * @param sense sense to invert
  * @return inverted sense
+ * @see operator!(LpRowSense)
  */
 LpRowSense operator-(LpRowSense sense);
 
