@@ -136,6 +136,30 @@ TEST_F(TestOnnxDriver, AddBroadcastSingle) {
   }
 }
 
+TEST_F(TestOnnxDriver, Identity) {
+  const std::string filename{GetPathToFile("identity")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 * 4 * 2 * 2 * 2);  // Add both input and output (1 x 4 x 2 x 2)
+  EXPECT_EQ(context_.assertions().size(), 1u * 4u * 2u * 2u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 4);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 2);
+
+  int i = 0;
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_EQ(get_rhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_rhs_expression(assertion)));
+    EXPECT_EQ(assertion.to_string(), fmt::format("(Y_{} == X_{})", i, i));
+    i++;
+  }
+}
+
 // TODO: implement AveragePool
 // TEST_F(TestOnnxDriver, AveragePool) {
 //  const std::string filename{GetPathToFile("average_pooling")};

@@ -378,6 +378,20 @@ void OnnxDriver::AddNode<NodeOpType::Gemm>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::Identity>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "Identity", "NodeProto must have an op_type of Identity");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  EnsureInput(node, 1);
+
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  available_inputs_.emplace(output, available_inputs_.at(input));
+  DLINEAR_DEBUG_FMT("Identity node: {} = {}", output, input);
+  DLINEAR_TRACE_FMT("{} = {}", available_inputs_.at(output), available_inputs_.at(input));
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
@@ -386,7 +400,6 @@ void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   const std::string& input1 = node.input(0);
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
-  DLINEAR_ASSERT(!available_inputs_.contains(output), "Input1 must be available");
   available_inputs_.emplace(output, available_inputs_.at(input1).MatMul(available_inputs_.at(input2)));
   DLINEAR_DEBUG_FMT("MatMul node: {} = {} x {}", output, input1, input2);
   DLINEAR_TRACE_FMT("{} = {} x {}", available_inputs_.at(output), available_inputs_.at(input1),
@@ -694,7 +707,7 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Gather", &OnnxDriver::AddNode<NodeOpType::Gather>},
     {"Gemm", &OnnxDriver::AddNode<NodeOpType::Gemm>},
     //    {"GlobalAveragePool", &OnnxDriver::AddNode<NodeOpType::GlobalAveragePool>},
-    //    {"Identity", &OnnxDriver::AddNode<NodeOpType::Identity>},
+    {"Identity", &OnnxDriver::AddNode<NodeOpType::Identity>},
     //    {"LeakyRelu", &OnnxDriver::AddNode<NodeOpType::LeakyRelu>},
     //    {"LRN", &OnnxDriver::AddNode<NodeOpType::LRN>},
     {"MatMul", &OnnxDriver::AddNode<NodeOpType::MatMul>},
