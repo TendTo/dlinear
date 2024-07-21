@@ -269,24 +269,20 @@ void OnnxDriver::AddNode<NodeOpType::Conv>(const ::onnx::NodeProto& node) {
 
   if (auto_pad != "NOTSET") {
     pads.clear();
-    for (std::size_t i = 0; i < strides.size(); ++i) {
-      if (auto_pad == "VALID") {
-        pads.push_back(0);
-        pads.push_back(0);
-      } else {
-        if (std::any_of(dilations.begin(), dilations.end(), [](std::int64_t d) { return d != 1; })) {
-          DLINEAR_RUNTIME_ERROR("Only dilation [1, 1] is supported with auto_pad");
-        }
-        const std::int64_t out_dim =
-            ceil(static_cast<double>(x.values().shape()[i + 2]) / static_cast<double>(strides[i]));
-        const std::int64_t pad =
-            (out_dim - 1) * strides[i] + kernel_shape[i] - static_cast<std::int64_t>(x.values().shape()[i + 2]);
-        if (auto_pad == "SAME_UPPER") {
-          pads.push_back(pad / 2);
-          pads.push_back(pad / 2 + (pad & 1));
-        } else if (auto_pad == "SAME_LOWER") {
-          pads.push_back(pad / 2 + (pad & 1));
-          pads.push_back(pad / 2);
+    pads.assign(2 * strides.size(), 0);  // If auto_pad is VALID, we are done
+    if (auto_pad != "VALID") {
+      for (std::size_t i = 0; i < strides.size(); ++i) {
+        const std::int64_t out_dim = (x.values().shape()[i + 2] + strides[i] - 1) / strides[i];
+        const std::int64_t fks = kernel_shape[i] / 2;
+        const std::int64_t lks = kernel_shape[i] / 2 - (kernel_shape[i] & 1 ? 0 : 1);
+        const std::int64_t pad = out_dim * strides[i] + fks * dilations[i] + lks * dilations[i] -
+                                 static_cast<std::int64_t>(x.values().shape()[i + 2]);
+        if (auto_pad == "SAME_LOWER") {
+          pads[i] = pad / 2;
+          pads[i + strides.size()] = pad / 2 + (pad & 1);
+        } else if (auto_pad == "SAME_UPPER") {
+          pads[i] = pad / 2 + (pad & 1);
+          pads[i + strides.size()] = pad / 2;
         }
       }
     }
@@ -723,5 +719,24 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Transpose", &OnnxDriver::AddNode<NodeOpType::Transpose>},
     {"Unsqueeze", &OnnxDriver::AddNode<NodeOpType::Unsqueeze>},
 };
+
+// else if (strcmp(nodeType, "Dropout") == 0) {
+//   dropout(node);
+// }
+// else if (strcmp(nodeType, "Squeeze") == 0) {
+//   squeeze(node);
+// }
+// else if (strcmp(nodeType, "BatchNormalization") == 0) {
+//   batchNormEquations(node, makeEquations);
+// }
+// else if (strcmp(nodeType, "MaxPool") == 0) {
+//   maxPoolEquations(node, makeEquations);
+// }
+// else if (strcmp(nodeType, "LeakyRelu") == 0) {
+//   leakyReluEquations(node, makeEquations);
+// }
+// else if (strcmp(nodeType, "Tanh") == 0) {
+//   tanhEquations(node, makeEquations);
+// }
 
 }  // namespace dlinear::onnx

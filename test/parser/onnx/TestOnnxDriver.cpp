@@ -555,6 +555,60 @@ TEST_F(TestOnnxDriver, Convolution) {
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
 
+TEST_F(TestOnnxDriver, ConvolutionLarge) {
+  const std::string filename{GetPathToFile("convolution_large")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 * 1 * 2 * 2);  // Add both input (0) and output (1 x 1 x 15 x 15)
+  EXPECT_EQ(context_.assertions().size(), 1u * 1u * 2u * 2u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 2);
+
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_EQ(get_rhs_expression(assertion).GetVariables().size(), 0u);
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+  }
+
+  xt::xarray<Expression> values{{31184, 38140}, {39180, 47800}};
+  values.reshape({1, 1, 2, 2});
+  Tensor expected{values};
+  EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
+TEST_F(TestOnnxDriver, ConvolutionEven) {
+  const std::string filename{GetPathToFile("convolution_even")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 * 1 * 6 * 6);  // Add both input (0) and output (1 x 1 x 6 x 6)
+  EXPECT_EQ(context_.assertions().size(), 1u * 1u * 6u * 6u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 6);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 6);
+
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_EQ(get_rhs_expression(assertion).GetVariables().size(), 0u);
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+  }
+
+  xt::xarray<Expression> values{{55, 65, 75, 85, 95, 105},      {125, 135, 145, 155, 165, 175},
+                                {195, 205, 215, 225, 235, 245}, {265, 275, 285, 295, 305, 315},
+                                {335, 345, 355, 365, 375, 385}, {405, 415, 425, 435, 445, 455}};
+  values.reshape({1, 1, 6, 6});
+  Tensor expected{values};
+  EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
 TEST_F(TestOnnxDriver, ConvolutionNoPadding) {
   const std::string filename{GetPathToFile("convolution_no_padding")};
   driver_.ParseFile(filename);
@@ -645,6 +699,36 @@ TEST_F(TestOnnxDriver, ConvolutionDilation) {
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
 
+TEST_F(TestOnnxDriver, ConvolutionDilationEven) {
+  const std::string filename{GetPathToFile("convolution_dilation_even")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 1 * 1 * 5 * 5);  // Add both input (0) and output (1 x 1 x 5 x 5)
+  EXPECT_EQ(context_.assertions().size(), 1u * 1u * 5u * 5u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 4u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 1);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 5);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[3], 5);
+
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_EQ(get_rhs_expression(assertion).GetVariables().size(), 0u);
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+  }
+
+  xt::xarray<Expression> values{{110, 120, 130, 140, 150},
+                                {180, 190, 200, 210, 220},
+                                {250, 260, 270, 280, 290},
+                                {320, 330, 340, 350, 360},
+                                {390, 400, 410, 420, 430}};
+  values.reshape({1, 1, 5, 5});
+  Tensor expected{values};
+  EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
+}
+
 TEST_F(TestOnnxDriver, ConvolutionFeatures) {
   const std::string filename{GetPathToFile("convolution_features")};
   driver_.ParseFile(filename);
@@ -696,10 +780,10 @@ TEST_F(TestOnnxDriver, ConvolutionB) {
   }
 
   xt::xarray<Expression> values{{
-      {{4843., 7474.}, {8371., 12754.}},
-      {{10937., 17294.}, {20378., 31808.}},
-      {{17031., 27114.}, {32385., 50862.}},
-      {{23125., 36934.}, {44392., 69916.}},
+      {{4843, 7474}, {8371, 12754}},
+      {{10937, 17294}, {20378, 31808}},
+      {{17031, 27114}, {32385, 50862}},
+      {{23125, 36934}, {44392, 69916}},
   }};
 
   Tensor expected{values};
@@ -803,7 +887,6 @@ TEST_F(TestOnnxDriver, ConstantResnet2b) {
                 "33");
 }
 TEST_F(TestOnnxDriver, Constant3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30) {
-  DLINEAR_LOG_INIT_VERBOSITY(5);
   AssertCorrect(
       "3_30_30_QConv_16_3_QConv_32_2_Dense_43_ep_30.constant", {1, 43},
       Tensor{xt::xarray<Expression>{

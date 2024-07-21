@@ -324,10 +324,14 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   std::vector<std::size_t> new_shape{};
   for (std::size_t i = 0; i < image.shape().size(); i++) {
     const std::size_t pad_offset = pads.size() / 2;
-    new_shape.push_back(
-        (image.shape()[i] + pads[i] + pads[i + pad_offset] - w.values_.shape()[i + 2] - (dilation[i] - 1) * 2) /
-            stride[i] +
-        1);
+    const std::size_t half_kernel_shape = w.values_.shape()[i + 2] / 2;
+    fmt::println("Image shape: {}, Pads: {}, Stride: {}, Dilation: {}, Kernel shape: {}", image.shape()[i], pads,
+                 stride, dilation, half_kernel_shape);
+    new_shape.push_back((image.shape()[i] + pads[i] + pads[i + pad_offset] -
+                         (half_kernel_shape * dilation[i]) -                                           // First half
+                         ((half_kernel_shape - (w.values_.shape()[i + 2] & 1 ? 0 : 1)) * dilation[i])  // Second half
+                         + stride[i] - 1) /
+                        stride[i]);
   }
 
   std::vector<std::size_t> new_values_shape{1, w.values_.shape()[0]};
@@ -370,19 +374,19 @@ xt::xarray<Expression> Tensor::Convolution(const ImageView &image, const KernelV
   const auto iw = static_cast<std::int64_t>(image.shape()[1]);
   const auto kh = static_cast<std::int64_t>(kernel.shape()[0]);
   const auto kw = static_cast<std::int64_t>(kernel.shape()[1]);
-  const std::int64_t kmh = kh / 2;
-  const std::int64_t kmw = kw / 2;
-  for (std::int64_t r = -pads[0] + kmh * dilation[0]; r < ih + pads[2] - kmh * dilation[0] + (kw & 1 ? 0 : 1);
-       r += stride[0]) {
-    for (std::int64_t c = -pads[1] + kmw * dilation[1]; c < iw + pads[3] - kmw * dilation[1] + (kw & 1 ? 0 : 1);
-         c += stride[1]) {
+  const std::int64_t fkmh = kh / 2;
+  const std::int64_t fkmw = kw / 2;
+  const std::int64_t lkmh = kw / 2 - (kh & 1 ? 0 : 1);
+  const std::int64_t lkmw = kw / 2 - (kw & 1 ? 0 : 1);
+  for (std::int64_t r = -pads[0] + fkmh * dilation[0]; r < ih + pads[2] - lkmh * dilation[0]; r += stride[0]) {
+    for (std::int64_t c = -pads[1] + fkmw * dilation[1]; c < iw + pads[3] - lkmw * dilation[1]; c += stride[1]) {
       new_values(out_r, out_c) = 0;
       for (std::int64_t i = 0; i < kh; i++) {
         for (std::int64_t j = 0; j < kw; j++) {
-          const std::int64_t ir = r + (i - kmh) * dilation[0];
-          const std::int64_t ic = c + (j - kmw) * dilation[1];
+          const std::int64_t ir = r + (i - fkmh) * dilation[0];
+          const std::int64_t ic = c + (j - fkmw) * dilation[1];
           new_values(out_r, out_c) +=
-              (ir >= 0 && ir < ih && ic >= 0 && ic < iw ? image(ir, ic) : Expression::Zero()) * kernel(i, j);
+              ir >= 0 && ir < ih && ic >= 0 && ic < iw ? image(ir, ic) * kernel(i, j) : Expression::Zero();
         }
       }
       out_c++;
