@@ -16,8 +16,9 @@ namespace dlinear::onnx {
 static_assert(std::endian::native == std::endian::little, "Only little-endian systems are supported for onnx parsing");
 
 namespace {
-inline void invalid_number_of_inputs(const ::onnx::NodeProto& node, const int actualNumberOfInputs,
-                                     const int lowerBound, const int upperBound) {
+inline void invalid_number_of_inputs([[maybe_unused]] const ::onnx::NodeProto& node,
+                                     [[maybe_unused]] const int actualNumberOfInputs,
+                                     [[maybe_unused]] const int lowerBound, [[maybe_unused]] const int upperBound) {
   if (lowerBound == upperBound) {
     DLINEAR_RUNTIME_ERROR_FMT("Onnx operation '{}' expected to have exactly {} inputs, but found {}", node.op_type(),
                               lowerBound, actualNumberOfInputs);

@@ -312,7 +312,7 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   DLINEAR_ASSERT(group == 1, "Group convolution is not supported yet");
 
   [[maybe_unused]] const std::size_t batch_size = values_.shape()[0];
-  const std::size_t input_channels = values_.shape()[1];
+  [[maybe_unused]] const std::size_t input_channels = values_.shape()[1];
   const std::vector<std::size_t> remaining_input_shapes{values_.shape().begin() + 2, values_.shape().end()};
 
   [[maybe_unused]] const std::size_t feature_map = w.values_.shape()[0];
@@ -325,8 +325,6 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   for (std::size_t i = 0; i < image.shape().size(); i++) {
     const std::size_t pad_offset = pads.size() / 2;
     const std::size_t half_kernel_shape = w.values_.shape()[i + 2] / 2;
-    fmt::println("Image shape: {}, Pads: {}, Stride: {}, Dilation: {}, Kernel shape: {}", image.shape()[i], pads,
-                 stride, dilation, half_kernel_shape);
     new_shape.push_back((image.shape()[i] + pads[i] + pads[i + pad_offset] -
                          (half_kernel_shape * dilation[i]) -                                           // First half
                          ((half_kernel_shape - (w.values_.shape()[i + 2] & 1 ? 0 : 1)) * dilation[i])  // Second half
