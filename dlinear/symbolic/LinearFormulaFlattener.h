@@ -24,10 +24,10 @@ namespace dlinear {
 class LinearFormulaFlattener {
  public:
   /**
-   *
-   * @param config
+   * Construct a new LinearFormulaFlattener object.
+   * @param config configuration
    */
-  explicit LinearFormulaFlattener(const Config& config) : config_{config} {}
+  explicit LinearFormulaFlattener(const Config& config) : config_{config}, flattened_formulas_{} {}
   /**
    * Flatten the given formula.
    *
@@ -41,7 +41,7 @@ class LinearFormulaFlattener {
    * @param formula the formula to flatten.
    * @return a reference to the flattened formula.
    */
-  [[nodiscard]] Formula Flatten(const Formula& formula) const;
+  [[nodiscard]] Formula Flatten(const Formula& formula);
 
  private:
   /**
@@ -60,7 +60,8 @@ class LinearFormulaFlattener {
    */
   [[nodiscard]] Formula BuildFlatteredFormula(const Expression& lhs, const Expression& rhs, FormulaKind kind) const;
 
-  const Config& config_;       ///< Configuration
+  const Config& config_;                                     ///< Configuration
+  std::unordered_map<Formula, Formula> flattened_formulas_;  ///< Cache for the flattered formulas
 };
 
 }  // namespace dlinear

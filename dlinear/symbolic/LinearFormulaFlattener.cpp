@@ -14,8 +14,13 @@
 
 namespace dlinear {
 
-Formula LinearFormulaFlattener::Flatten(const Formula& formula) const {
+Formula LinearFormulaFlattener::Flatten(const Formula& formula) {
+  // If the formula is not relational, return it as is.
   if (!is_relational(formula)) return formula;
+  // If the formula is already flattened, return it.
+  auto it = flattened_formulas_.find(formula);
+  if (it != flattened_formulas_.end()) return it->second;
+
   const bool needs_expansion_{config_.needs_expansion()};
   const Expression& lhs = get_lhs_expression(formula);
   const Expression& rhs = get_rhs_expression(formula);
@@ -24,11 +29,10 @@ Formula LinearFormulaFlattener::Flatten(const Formula& formula) const {
   DLINEAR_ASSERT_FMT(is_addition(expr) || is_multiplication(expr) || is_variable(expr),
                      "Expression must be an addition, multiplication or a variable. Instead found {}", expr);
 
-  if (is_addition(expr)) {
-    const mpq_class& constant{get_constant_in_addition(expr)};
-    return BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
-  }
-  return BuildFlatteredFormula(expr, 0, formula.get_kind());
+  const mpq_class constant{is_addition(expr) ? get_constant_in_addition(expr) : 0};
+  const Formula f = BuildFlatteredFormula(expr - constant, Expression{-constant}, formula.get_kind());
+  flattened_formulas_.emplace(formula, f);
+  return f;
 }
 
 Formula LinearFormulaFlattener::BuildFlatteredFormula(const Expression& lhs, const Expression& rhs,
