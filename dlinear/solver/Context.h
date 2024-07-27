@@ -61,6 +61,15 @@ class Context {
    * @return fresh variable introduced to represent the ITE expression or simple expression if a simplification happened
    */
   Expression AssertIte(const Expression &e);
+  /**
+   * Assert a max expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
+   *
+   * If @p e is not a max expression, it will be returned unchanged.
+   * No recursion is performed.
+   * @param e max expression to be asserted
+   * @return fresh variable introduced to represent the max expression or simple expression if a simplification happened
+   */
+  Expression AssertMax(const Expression &e);
 
   /**
    * Check the satisfiability of the asserted formulas, and sets

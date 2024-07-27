@@ -94,6 +94,38 @@ Expression Context::Impl::AssertIte(const Expression &e) {
   sat_solver_->AddFormula(assertion);
   return no_ite;
 }
+Expression Context::Impl::AssertMax(const Expression &e) {
+  if (!drake::symbolic::is_max(e)) return e;
+
+  DLINEAR_DEBUG_FMT("ContextImpl::AssertMax({})", e);
+  const auto [no_ite_max, assertion] = ite_eliminator_.Process(e);
+  DLINEAR_ASSERT(drake::symbolic::is_max(no_ite_max), "no_ite_max must be a max expression");
+
+  const Expression &lhs = drake::symbolic::get_first_argument(no_ite_max);
+  const Expression &rhs = drake::symbolic::get_second_argument(no_ite_max);
+
+  DLINEAR_ASSERT(!lhs.EqualTo(rhs), "lhs must be different from rhs");
+
+  if (!Formula::True().EqualTo(assertion)) {
+    stack_.push_back(assertion);
+    sat_solver_->AddFormula(assertion);
+  }
+
+  const Expression a1 = Expression(Variable{"a1 | " + e.to_string()});
+  const Expression a2 = Expression(Variable{"a2 | " + e.to_string()});
+  const Expression no_max = Expression(Variable{"no_max | " + e.to_string()});
+
+  Assert(no_max - lhs == a1);
+  Assert(no_max - rhs == a2);
+  Assert(a1 >= 0);
+  Assert(a2 >= 0);
+  Assert(a1 <= 0 || a2 <= 0);
+  // Note that the following does not mark the introduced variables as a model variable.
+  AddToBox(to_variable(no_max)->get_variable());
+  AddToBox(to_variable(a1)->get_variable());
+  AddToBox(to_variable(a2)->get_variable());
+  return no_max;
+}
 
 void Context::Impl::Pop() {
   DLINEAR_DEBUG("ContextImpl::Pop()");
