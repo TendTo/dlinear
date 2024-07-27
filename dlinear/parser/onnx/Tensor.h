@@ -267,7 +267,7 @@ class Tensor {
                                                    const std::vector<std::int64_t> &dilations, std::int64_t group,
                                                    const std::vector<std::int64_t> &pads,
                                                    const std::vector<std::int64_t> &strides) const;
-  const Expression& Max() const;
+  const Expression &Max() const;
   /**
    * Pad the tensor with the given @p pads.
    *
@@ -275,6 +275,9 @@ class Tensor {
    * @param pads padding for the beginning and ending along each spatial axis
    */
   [[nodiscard]] Tensor Pad(const std::vector<std::int64_t> &pads) const;
+
+  [[nodiscard]] Tensor Squeeze() const;
+  [[nodiscard]] Tensor Squeeze(std::vector<std::int64_t> axes) const;
 
   template <IsAnyOf<int, std::int64_t, std::size_t>... Dims>
   Expression &operator()(Dims... dims) {

@@ -404,6 +404,16 @@ const Expression &Tensor::Max() const {
   });
 }
 
+Tensor Tensor::Squeeze() const { return Tensor{xt::squeeze(values_)}; }
+Tensor Tensor::Squeeze(std::vector<std::int64_t> axes) const {
+  for (std::int64_t &axis : axes) {
+    if (axis >= static_cast<std::int64_t>(values_.dimension()))
+      DLINEAR_OUT_OF_RANGE_FMT("Invalid axis. Must be in [{}, {}]", -values_.dimension() + 1, -1);
+    if (axis < 0) axis += static_cast<std::int64_t>(values_.dimension());
+  }
+  return Tensor{xt::squeeze(values_, axes)};
+}
+
 Tensor Tensor::Pad(const std::vector<std::int64_t> &pads) const {
   if ((pads.size() & 1) != 0) DLINEAR_OUT_OF_RANGE("Pads must have an even number of elements");
   if (pads.size() > values_.dimension() * 2)
@@ -565,8 +575,8 @@ Tensor::operator std::vector<std::int64_t>() const {
   std::vector<std::int64_t> result;
   result.reserve(values_.size());
   for (const Expression &e : values_) {
-    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
-    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Dimension must be an integer");
+    DLINEAR_ASSERT(is_constant(e), "Values must constants");
+    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Values must be integers");
     result.push_back(e.Evaluate().get_num().get_si());
   }
   return result;
@@ -575,7 +585,7 @@ Tensor::operator std::vector<double>() const {
   std::vector<double> result;
   result.reserve(values_.size());
   for (const Expression &e : values_) {
-    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
+    DLINEAR_ASSERT(is_constant(e), "Values must constants");
     result.push_back(e.Evaluate().get_d());
   }
   return result;
@@ -584,8 +594,8 @@ Tensor::operator std::vector<std::size_t>() const {
   std::vector<std::size_t> result;
   result.reserve(values_.size());
   for (const Expression &e : values_) {
-    DLINEAR_ASSERT(is_constant(e), "Dimension must be a constant");
-    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Dimension must be an integer");
+    DLINEAR_ASSERT(is_constant(e), "Values must constants");
+    DLINEAR_ASSERT(get_constant_value(e).get_den().get_ui() == 1, "Values must be integers");
     result.push_back(e.Evaluate().get_num().get_ui());
   }
   return result;
@@ -605,6 +615,7 @@ std::size_t Tensor::ComputeOffset(const std::int64_t *const dims, const std::siz
   }
   return offset;
 }
+
 std::ostream &operator<<(std::ostream &os, const Tensor &tensor) {
   return os << "Tensor(" << tensor.values().shape() << ")\n" << tensor.values();
 }

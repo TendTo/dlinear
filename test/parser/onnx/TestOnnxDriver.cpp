@@ -790,6 +790,47 @@ TEST_F(TestOnnxDriver, ConvolutionB) {
   EXPECT_TRUE(driver_.available_inputs().at("y").Equal(expected));
 }
 
+TEST_F(TestOnnxDriver, Squeeze) {
+  const std::string filename{GetPathToFile("squeeze")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 2 * 3);  // Add output (2 x 3)
+  EXPECT_EQ(context_.assertions().size(), 2u * 3u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 2u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 3);
+
+  int i = 0;
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+    EXPECT_TRUE(get_constant_value(get_rhs_expression(assertion)) == i++);
+  }
+}
+
+TEST_F(TestOnnxDriver, SqueezeAxis) {
+  const std::string filename{GetPathToFile("squeeze_axis")};
+  driver_.ParseFile(filename);
+
+  EXPECT_EQ(context_.box().size(), 2 * 3 * 1);  // Add output (2 x 3 x 1)
+  EXPECT_EQ(context_.assertions().size(), 2u * 3u * 1u);
+
+  ASSERT_EQ(driver_.available_inputs().at("y").ndim(), 3u);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[0], 2);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[1], 3);
+  EXPECT_EQ(driver_.available_inputs().at("y").dims()[2], 1);
+
+  int i = 0;
+  for (const auto& assertion : context_.assertions()) {
+    EXPECT_EQ(get_lhs_expression(assertion).GetVariables().size(), 1u);
+    EXPECT_TRUE(is_variable(get_lhs_expression(assertion)));
+    EXPECT_TRUE(is_constant(get_rhs_expression(assertion)));
+    EXPECT_TRUE(get_constant_value(get_rhs_expression(assertion)) == i++);
+  }
+}
+
 TEST_F(TestOnnxDriver, Softmax) {
   const std::string filename{GetPathToFile("softmax")};
   driver_.ParseFile(filename);

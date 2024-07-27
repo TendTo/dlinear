@@ -37,6 +37,7 @@ enum class NodeOpType {
   Sign,
   Slice,
   Softmax,
+  Squeeze,
   Sub,
   Transpose,
   Unsqueeze,
