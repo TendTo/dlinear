@@ -778,9 +778,6 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Unsqueeze", &OnnxDriver::AddNode<NodeOpType::Unsqueeze>},
 };
 
-// else if (strcmp(nodeType, "Squeeze") == 0) {
-//   squeeze(node);
-// }
 // else if (strcmp(nodeType, "BatchNormalization") == 0) {
 //   batchNormEquations(node, makeEquations);
 // }

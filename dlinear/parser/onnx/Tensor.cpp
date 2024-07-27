@@ -324,12 +324,9 @@ Tensor Tensor::Convolution(const Tensor &w, const std::vector<std::int64_t> &dil
   std::vector<std::size_t> new_shape{};
   for (std::size_t i = 0; i < image.shape().size(); i++) {
     const std::size_t pad_offset = pads.size() / 2;
-    const std::size_t half_kernel_shape = w.values_.shape()[i + 2] / 2;
-    new_shape.push_back((image.shape()[i] + pads[i] + pads[i + pad_offset] -
-                         (half_kernel_shape * dilation[i]) -                                           // First half
-                         ((half_kernel_shape - (w.values_.shape()[i + 2] & 1 ? 0 : 1)) * dilation[i])  // Second half
-                         + stride[i] - 1) /
-                        stride[i]);
+    new_shape.push_back(
+        1 + (image.shape()[i] + pads[i] + pads[i + pad_offset] - dilation[i] * (w.values_.shape()[i + 2] - 1) - 1) /
+                stride[i]);
   }
 
   std::vector<std::size_t> new_values_shape{1, w.values_.shape()[0]};
