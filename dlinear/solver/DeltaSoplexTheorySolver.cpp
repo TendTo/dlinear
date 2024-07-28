@@ -49,18 +49,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
-  if (IsEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::EQ);
-  } else if (IsGreaterThan(formula) || IsGreaterThanOrEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::GE);
-  } else if (IsLessThan(formula) || IsLessThanOrEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::LE);
-  } else if (IsNotEqualTo(formula)) {
-    // This constraint will be ignored, because it is always delta-sat for delta > 0.
-    spx_sense_.push_back(LpRowSense::NQ);
-  } else {
-    DLINEAR_UNREACHABLE();
-  }
+  spx_sense_.emplace_back(~parseLpSense(formula));
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: {} -> {}", lit, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};

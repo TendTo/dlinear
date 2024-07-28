@@ -32,7 +32,10 @@ dlinear_cc_library(
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],
     implementation_deps = ["//dlinear/util:exception"],
-    deps = ["//dlinear/util:logging"],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/util:logging",
+    ],
 )
 
 dlinear_cc_library(

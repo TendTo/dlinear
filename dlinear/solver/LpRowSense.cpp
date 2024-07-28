@@ -10,6 +10,17 @@
 
 namespace dlinear {
 
+LpRowSense parseLpSense(const Formula &f) {
+  DLINEAR_ASSERT(is_relational(f), "Expected a relational formula");
+  if (is_equal_to(f)) return LpRowSense::EQ;
+  if (is_greater_than(f)) return LpRowSense::GT;
+  if (is_greater_than_or_equal_to(f)) return LpRowSense::GE;
+  if (is_less_than(f)) return LpRowSense::LT;
+  if (is_less_than_or_equal_to(f)) return LpRowSense::LE;
+  if (is_not_equal_to(f)) return LpRowSense::NQ;
+  DLINEAR_UNREACHABLE();
+}
+
 LpRowSense parseLpSense(char sense) {
   switch (sense) {
     case 'g':
@@ -88,6 +99,17 @@ LpRowSense operator-(LpRowSense sense) {
       return LpRowSense::IN;
     default:
       DLINEAR_UNREACHABLE();
+  }
+}
+
+LpRowSense operator~(LpRowSense sense) {
+  switch (sense) {
+    case LpRowSense::GT:
+      return LpRowSense::GE;
+    case LpRowSense::LT:
+      return LpRowSense::LE;
+    default:
+      return sense;
   }
 }
 

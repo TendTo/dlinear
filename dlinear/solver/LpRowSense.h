@@ -22,21 +22,33 @@
 
 #include <ostream>
 
+#include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
 
-/** Sense of a linear programming row describing a constraint. */
+/**
+ * Sense of a linear programming row describing a constraint.
+ * @warning The order of the enum is important and should not be changed.
+ * It is used to compare the senses.
+ */
 enum class LpRowSense {
-  GT,  ///< Greater than
-  GE,  ///< Greater than or equal to
-  EQ,  ///< Equal to
-  NQ,  ///< Not equal to
-  LE,  ///< Less than or equal to
-  LT,  ///< Less than
-  IN,  ///< Inactive
+  LT = 0,  ///< Less than
+  LE = 1,  ///< Less than or equal to
+  EQ = 2,  ///< Equal to
+  GE = 3,  ///< Greater than or equal to
+  GT = 4,  ///< Greater than
+  NQ = 5,  ///< Not equal to
+  IN = 6,  ///< Inactive
 };
 
+/**
+ * Parse the sense from a formula
+ * @pre f is a relational formula
+ * @param f formula to parse
+ * @return corresponding sense
+ */
+LpRowSense parseLpSense(const Formula &f);
 /**
  * Parse the sense from a character.
  * @param sense character to parse
@@ -70,6 +82,15 @@ LpRowSense operator!(LpRowSense sense);
  * @see operator!(LpRowSense)
  */
 LpRowSense operator-(LpRowSense sense);
+/**
+ * Relax the sense, assuming delta > 0.e
+ *
+ * More specifically, LT -> LE, GT -> GE.
+ * The other senses remain unchanged.
+ * @param sense sense to relax
+ * @return relaxed sense
+ */
+LpRowSense operator~(LpRowSense sense);
 
 std::ostream &operator<<(std::ostream &os, const LpRowSense &lp_result);
 

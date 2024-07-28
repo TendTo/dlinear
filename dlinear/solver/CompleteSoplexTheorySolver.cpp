@@ -82,21 +82,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
-  if (IsEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::EQ);
-  } else if (IsGreaterThan(formula)) {
-    spx_sense_.push_back(LpRowSense::GT);
-  } else if (IsGreaterThanOrEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::GE);
-  } else if (IsLessThan(formula)) {
-    spx_sense_.push_back(LpRowSense::LT);
-  } else if (IsLessThanOrEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::LE);
-  } else if (IsNotEqualTo(formula)) {
-    spx_sense_.push_back(LpRowSense::NQ);
-  } else {
-    DLINEAR_UNREACHABLE();
-  }
+  spx_sense_.push_back(parseLpSense(formula));
   DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLinearLiteral: {} -> {}", lit, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};

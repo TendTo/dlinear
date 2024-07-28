@@ -33,13 +33,13 @@ namespace dlinear {
  * It is used to compare the bounds.
  */
 enum class LpColBound {
-  L,   ///< Lower bound
-  SL,  ///< Strict lower bound
-  B,   ///< Both upper and lower bound are equal (fixed)
-  SU,  ///< Strict upper bound
-  U,   ///< Upper bound
-  D,   ///< Variable must be different from the bound
-  F,   ///< Free variable
+  L = 0,   ///< Lower bound
+  SL = 1,  ///< Strict lower bound
+  B = 2,   ///< Both upper and lower bound are equal (fixed)
+  SU = 3,  ///< Strict upper bound
+  U = 4,   ///< Upper bound
+  D = 5,   ///< Variable must be different from the bound
+  F = 6,   ///< Free variable
 };
 
 /**
