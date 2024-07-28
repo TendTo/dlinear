@@ -298,16 +298,19 @@ def dlinear_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visi
         name = srcs_name,
         srcs = srcs + hdrs,
         visibility = visibility,
+        tags = ["no-cpplint"],
     )
     native.filegroup(
         name = hdrs_name,
         srcs = hdrs,
         visibility = visibility,
+        tags = ["no-cpplint"],
     )
     native.filegroup(
         name = all_srcs_name,
         srcs = srcs + hdrs + srcs_deps,
         visibility = visibility,
+        tags = ["no-cpplint"],
     )
     pkg_tar(
         name = hdrs_tar_name,

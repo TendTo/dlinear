@@ -93,7 +93,7 @@ def cpplint(data = None, extra_srcs = None):
         source_labels = [label for label in candidate_labels if _is_source_label(label)]
         source_filenames = ["$(location %s)" % x for x in source_labels]
 
-        if len(source_filenames) == 0:
+        if len(source_filenames) == 0 or "no-cpplint" in rule.get("tags"):
             continue
 
         # Run the cpplint checker as a single unit test.
