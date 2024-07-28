@@ -142,9 +142,9 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::ViolatedBounds(c
     case LpColBound::U:
       if (value < *active_lower_bound_) return {FindLowerBound(&value, !lp_bound), LowerBoundEnd()};
       it = bounds_.lower_bound({&value, lp_bound, 0});
-      if (it == bounds_.cbegin() || *(it - 1)->value != value) return {};
-      if (lp_bound == LpColBound::U && (it - 1)->lp_bound != LpColBound::SL) return {};
-      TRACE_VIOLATED_BOUNDS((it - 1));
+      if (it == bounds_.cbegin() || *(std::prev(it))->value != value) return {};
+      if (lp_bound == LpColBound::U && (std::prev(it))->lp_bound != LpColBound::SL) return {};
+      TRACE_VIOLATED_BOUNDS((std::prev(it)));
       DLINEAR_ASSERT(FindLowerBound(&value, !lp_bound) < LowerBoundEnd(), "Bounds must not be inverted");
       return {FindLowerBound(&value, !lp_bound), LowerBoundEnd()};
     case LpColBound::B:
@@ -157,8 +157,8 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::ViolatedBounds(c
         return {LowerBoundEnd(), FindUpperBound(&value, LpColBound::SU)};
       }
       it = bounds_.lower_bound({&value, LpColBound::U, 0});
-      if ((it != bounds_.cbegin() && *(it - 1)->value == value && (it - 1)->lp_bound == LpColBound::SL)) {
-        TRACE_VIOLATED_BOUNDS((it - 1));
+      if ((it != bounds_.cbegin() && *(std::prev(it))->value == value && (std::prev(it))->lp_bound == LpColBound::SL)) {
+        TRACE_VIOLATED_BOUNDS(std::prev(it));
         DLINEAR_ASSERT(FindLowerBound(&value, LpColBound::SL) < LowerBoundEnd(), "Bounds must not be inverted");
         return {FindLowerBound(&value, LpColBound::SL), LowerBoundEnd()};
       }
@@ -234,13 +234,13 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBound(c
   auto lb_it = FindUpperBound(&lb, LpColBound::SL);
   auto ub_it = FindLowerBound(&ub, LpColBound::SU);
   // Adjust the iterators based on the state of the vector
-  if (lb_it != bounds_.cbegin() && lb == *(lb_it - 1)->value) lb_it--;
+  if (lb_it != bounds_.cbegin() && lb == *(std::prev(lb_it))->value) lb_it--;
   if (ub_it != bounds_.cend() && ub == *ub_it->value) ub_it++;
   return BoundIterator{
       lb_it, ub_it,  // The non-equal bounds become inclusive if there is no normal bounds
       lb_it == ub_it || lb_it->lp_bound != LpColBound::SL ? FindLowerNqBoundValue(&lb) : FindUpperNqBoundValue(&lb),
-      lb_it == ub_it || (ub_it - 1)->lp_bound != LpColBound::SU ? FindUpperNqBoundValue(&ub)
-                                                                : FindLowerNqBoundValue(&ub)};
+      lb_it == ub_it || (std::prev(ub_it))->lp_bound != LpColBound::SU ? FindUpperNqBoundValue(&ub)
+                                                                       : FindLowerNqBoundValue(&ub)};
 }
 TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(const mpq_class& lb,
                                                                                 const mpq_class& ub) const {
@@ -251,7 +251,7 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(
   // The active bounds are empty. Non-equal bounds are inclusive
   if (lb_it == ub_it) return {lb_it, ub_it, FindLowerNqBoundValue(&lb), FindUpperNqBoundValue(&ub)};
   const auto& [value_lb, type_lb, idx_lb] = *lb_it;
-  const auto& [value_ub, type_ub, idx_ub] = *(ub_it - 1);
+  const auto& [value_ub, type_ub, idx_ub] = *(std::prev(ub_it));
   // The bounds contains only one type of bound or span across mutiple values. There is no equality bound
   if (type_lb != LpColBound::L || type_ub != LpColBound::U || value_lb != value_ub)
     return {lb_it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
@@ -261,11 +261,11 @@ TheorySolverBoundVector::BoundIterator TheorySolverBoundVector::GetActiveBounds(
   for (; type != type_ub; ++it, type = it->lp_bound, idx = it->idx) {
     if (idx == idx_ub) return {it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
   }
-  it = ub_it - 1;
+  it = std::prev(ub_it);
   type = it->lp_bound;
   idx = it->idx;
   for (; type != type_lb; --it, type = it->lp_bound, idx = it->idx) {
-    if (idx == idx_lb) return {lb_it, it + 1, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
+    if (idx == idx_lb) return {lb_it, std::next(it), FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
   }
   return {lb_it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
 }
