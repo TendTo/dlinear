@@ -66,8 +66,7 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
     if (model_i == 0) continue;
     lits.insert(model_i * i);
   }
-  // Use the superclass method to filter out literals that are not
-  // required by main clauses.
+  // Use the superclass method to filter out literals that are not required by main clauses.
   SatSolver::GetMainActiveLiterals(lits);
   return lits;
 }
@@ -97,15 +96,31 @@ void PicosatSatSolver::AddClauseToSat(const Formula &f) {
   cur_clause_start_ = main_clauses_copy_.size();
   if (is_disjunction(f)) {
     // f = l₁ ∨ ... ∨ lₙ
-    for (const Formula &l : get_operands(f)) {
-      SatSolver::AddLiteral(l);
-    }
+    for (const Formula &l : get_operands(f)) SatSolver::AddLiteral(l);
   } else {
     // f = b or f = ¬b.
     SatSolver::AddLiteral(f);
   }
   picosat_add(sat_, 0);
   main_clauses_copy_.push_back(0);
+}
+
+void PicosatSatSolver::Push() {
+  DLINEAR_DEBUG("PicosatSatSolver::Push()");
+  picosat_push(sat_);
+  var_to_sat_.push();
+  sat_to_var_.push();
+  cnf_variables_.push();
+  DLINEAR_RUNTIME_ERROR("picosat_push is bugged.");
+}
+void PicosatSatSolver::Pop() {
+  DLINEAR_DEBUG("PicosatSatSolver::Pop()");
+  cnf_variables_.pop();
+  var_to_sat_.pop();
+  sat_to_var_.pop();
+  picosat_pop(sat_);
+  has_picosat_pop_used_ = true;
+  DLINEAR_RUNTIME_ERROR("picosat_pop is bugged.");
 }
 
 }  // namespace dlinear

@@ -47,13 +47,13 @@ class OnnxDriver : public Driver {
   bool ParseFile(const std::string& filename) override;
 
   /** @getter{variables, Driver} */
-  const std::unordered_map<std::string, Tensor>& variables() const { return variables_; }
+  [[nodiscard]] const std::unordered_map<std::string, Tensor>& variables() const { return variables_; }
   /** @getter{available_inputs, Driver} */
-  const std::unordered_map<std::string, Tensor>& available_inputs() const { return available_inputs_; }
+  [[nodiscard]] const std::unordered_map<std::string, Tensor>& available_inputs() const { return available_inputs_; }
   /** @getter{model, Driver} */
-  const ::onnx::ModelProto& model() const { return model_; }
+  [[nodiscard]] const ::onnx::ModelProto& model() const { return model_; }
   /** @getter{graph, Driver} */
-  const ::onnx::GraphProto& graph() const { return model_.graph(); }
+  [[nodiscard]] const ::onnx::GraphProto& graph() const { return model_.graph(); }
 
  private:
   static const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodeProto&)>>

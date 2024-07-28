@@ -384,7 +384,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
     theory_solver_->Reset(box());
-    TheorySolver::Explanations bound_explanations = theory_solver_->EnableLiterals(theory_model);
+    const TheorySolver::Explanations bound_explanations = theory_solver_->EnableLiterals(theory_model);
     if (!bound_explanations.empty()) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
       LearnExplanations(bound_explanations);
@@ -445,10 +445,10 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
                     stack_.get_vector().size());
   DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
+  DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG
   explanations_so_far.insert(explanation);
 #endif
-  if (explanation.empty()) DLINEAR_RUNTIME_ERROR("No explanation is provided. Infinite loop detected.");
   sat_solver_->AddLearnedClause(explanation);
 }
 

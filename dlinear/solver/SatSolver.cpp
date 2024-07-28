@@ -37,9 +37,6 @@ void SatSolver::AddFormula(const Formula &f) {
   AddClauses(clauses);
 }
 
-void SatSolver::Pop() { DLINEAR_RUNTIME_ERROR("Not implemented"); }
-void SatSolver::Push() { DLINEAR_RUNTIME_ERROR("Not implemented"); }
-
 void SatSolver::AddFormulas(const std::vector<Formula> &formulas) {
   for (const Formula &f : formulas) AddFormula(f);
 }

@@ -59,8 +59,8 @@ class SatSolver {
   explicit SatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name = "SatSolver");
   virtual ~SatSolver() = default;
 
-  void Pop();
-  void Push();
+  virtual void Push() = 0;
+  virtual void Pop() = 0;
   /**
    * Add a formula @p f to the solver.
    * @note If @p f is a clause, please use @ref AddClause function. This

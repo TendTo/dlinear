@@ -40,6 +40,9 @@ class PicosatSatSolver : public SatSolver {
 
   std::optional<Model> CheckSat() override;
 
+  void Push() override;
+  void Pop() override;
+
  protected:
   void AddClauseToSat(const Formula &f) override;
 
