@@ -34,12 +34,12 @@ namespace dlinear {
  */
 enum class LpRowSense {
   LT = 0,  ///< Less than
-  LE = 1,  ///< Less than or equal to
-  EQ = 2,  ///< Equal to
-  GE = 3,  ///< Greater than or equal to
-  GT = 4,  ///< Greater than
-  NQ = 5,  ///< Not equal to
-  IN = 6,  ///< Inactive
+  EQ = 1,  ///< Equal to
+  LE = 2,  ///< Less than or equal to
+  GE,      ///< Greater than or equal to
+  GT,      ///< Greater than
+  NQ,      ///< Not equal to
+  IN,      ///< Inactive
 };
 
 /**

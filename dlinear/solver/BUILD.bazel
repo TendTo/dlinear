@@ -108,6 +108,24 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "theory_propagator",
+    srcs = ["TheoryPropagator.cpp"],
+    hdrs = ["TheoryPropagator.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+    ],
+    deps = [
+        ":lp_sense",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
     name = "theory_solver_bound_preprocessor",
     srcs = [
         "TheorySolver.h",  # For the forward declaration of TheorySolver
@@ -208,6 +226,7 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":sat_solver",
+        ":theory_propagator",
         ":theory_solver",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/symbolic:predicate_abstractor",

@@ -20,6 +20,7 @@
 #endif
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/TheoryPropagator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
@@ -332,6 +333,10 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Found Model\n{}", box());
     return SatResult::SAT_SATISFIABLE;
   }
+
+  TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
+  propagator.Propagate();
+
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.
   signalhandlerguard guard{sigint, interrupt_handler, &g_interrupted};

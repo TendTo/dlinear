@@ -160,7 +160,6 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FX:
-        // bounds_[column] = bounds_[column] && (columns_.at(column) == value);
         bounds_[column] &= (value <= columns_.at(column)) && (columns_.at(column) <= value);
         skip_lower_bound_[column] = true;
         break;

@@ -211,8 +211,8 @@ class Context {
 
  private:
   /**
-   * This header is exposed to external users as a part of API. We use
-   * PIMPL idiom to hide internals and to reduce number of '#includes' in this file.
+   * This header is exposed to external users as a part of API.
+   * We use PIMPL idiom to hide internals and to reduce number of '#includes' in this file.
    */
   class Impl;
 
