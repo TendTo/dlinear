@@ -1,9 +1,9 @@
 /**
-* @file TheoryPropagator.cpp
-* @author dlinear (https://github.com/TendTo/dlinear)
-* @copyright 2024 dlinear
-* @licence Apache-2.0 license
-*/
+ * @file TheoryPropagator.cpp
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "TheoryPropagator.h"
 
 #include <ranges>
@@ -68,6 +68,10 @@ void TheoryPropagator::Propagate() {
 void TheoryPropagator::PropagateAssertions() {
   for (const auto& [var, constraints] : constraints_) {
     if (constraints.size() <= 1) continue;
+    // Propagate simple < and <= constraints
+    // Iterate over the array in order (i.e. [ < = <= ] )
+    // Then (<) implies (<=), (<) implies (not =), a smaller constraint implies a greater constraint
+    // E.g. x < 1 => x <= 1, x < 1 => not (x = 1), x <= 2 => x < 3, x <= 2 => not (x = 3)
     const Constraint* last_l_constraint = nullptr;
     for (const Constraint& constraint : constraints) {
       const auto& [value, sense, bool_var] = constraint;
@@ -85,6 +89,49 @@ void TheoryPropagator::PropagateAssertions() {
       assert_(imply(*last_l_constraint->variable, !(*bool_var)));
       DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
                         predicate_abstractor_[*last_l_constraint->variable], !predicate_abstractor_[*bool_var]);
+    }
+    // Propagate simple > and >= constraints
+    // Iterate over the array in reverse order (i.e. [ > = >= ] )
+    // Then (>) implies (>=), (>) implies (not =), a greater constraint implies a lesser constraint
+    // E.g. x > 1 => x >= 1, x > 1 => not (x = 1), x >= 2 => x > 1, x >= 2 => not (x = 1)
+    const Constraint* last_g_constraint = nullptr;
+    for (const Constraint& constraint : std::views::reverse(constraints)) {
+      const auto& [value, sense, bool_var] = constraint;
+      if (sense == LpRowSense::LE || sense == LpRowSense::LT) {
+        if (last_g_constraint != nullptr) {
+          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+                            !predicate_abstractor_[*last_g_constraint->variable], !predicate_abstractor_[*bool_var]);
+          assert_(imply(!*last_g_constraint->variable, !*bool_var));
+        }
+        last_g_constraint = &constraint;
+        continue;
+      }
+      DLINEAR_ASSERT(sense == LpRowSense::EQ, "Unexpected sense");
+      if (last_g_constraint == nullptr) continue;
+      assert_(imply(!*last_g_constraint->variable, !(*bool_var)));
+      DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+                        !predicate_abstractor_[*last_g_constraint->variable], !predicate_abstractor_[*bool_var]);
+    }
+    // Propagate simple = constraints
+    // Iterate over the array and make so two different consecutive = constraints cannot be true at the same time
+    // Note that this is not complete, since that would require a quadratic number of assertions
+    // E.g. not (x = 1) or not (x = 2), not (x = 2) or not (x = 4)
+    const Constraint* last_eq_constraint = nullptr;
+    for (const Constraint& constraint : constraints) {
+      const auto& [value, sense, bool_var] = constraint;
+      if (sense != LpRowSense::EQ) continue;
+      if (last_eq_constraint != nullptr) {
+        if (value == last_eq_constraint->value) {
+          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} <=> {}",
+                            predicate_abstractor_[*last_eq_constraint->variable], predicate_abstractor_[*bool_var]);
+          assert_(iff(*last_eq_constraint->variable, *bool_var));
+        } else {
+          assert_(!*last_eq_constraint->variable || !*bool_var);
+          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} || {}",
+                            predicate_abstractor_[*last_eq_constraint->variable], predicate_abstractor_[*bool_var]);
+        }
+      }
+      last_eq_constraint = &constraint;
     }
   }
 }
