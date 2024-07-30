@@ -180,8 +180,9 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   std::map<std::set<std::size_t>, NqExplanation> nq_explanations_;  ///< Map of non-equal explanations
 
   bool locked_solver_;  ///< Flag to indicate if the solver is locked. A locked solver will always return UNSAT.
-  std::set<std::size_t> single_nq_rows_;  ///< Set of non-equal rows that appear alone in the explanation. Can be
-                                          ///< inverted at the next iteration
+  std::set<std::pair<std::size_t, bool>> single_nq_rows_;  ///< Set of non-equal rows that appear alone in the
+                                                           ///< explanation, with the current assignment.
+                                                           ///< Can be inverted at the next iteration
 };
 
 }  // namespace dlinear

@@ -31,9 +31,9 @@ namespace dlinear {
 
 namespace {
 
-inline size_t bool_vector_to_int(const std::vector<bool> &v, const std::set<size_t> &positions) {
-  size_t result = 0;
-  for (const size_t &pos : positions) {
+inline std::size_t bool_vector_to_int(const std::vector<bool> &v, const std::set<std::size_t> &positions) {
+  std::size_t result = 0;
+  for (const std::size_t &pos : positions) {
     result <<= 1;
     result |= v.at(pos);
   }
@@ -478,7 +478,7 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     if (single_nq_rows_.empty()) {
       ++bit_iterator;
     } else {
-      for (const size_t &nq_row : single_nq_rows_) bit_iterator.Learn(nq_row);
+      for (const auto &[nq_row, nq_row_value] : single_nq_rows_) bit_iterator.Learn(nq_row, !nq_row_value);
       single_nq_rows_.clear();
     }
     EnableNqLiterals(*bit_iterator, true);
@@ -506,7 +506,8 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
     nq_explanation.explanation.insert(last_theory_rows_to_explanation_.cbegin(),
                                       last_theory_rows_to_explanation_.cend());
 
-    if (nq_in_explanation.size() == 1) single_nq_rows_.insert(*nq_in_explanation.begin());
+    if (nq_in_explanation.size() == 1)
+      single_nq_rows_.emplace(*nq_in_explanation.begin(), bit_iterator[*nq_in_explanation.begin()]);
 
     // All boolean combinations of this set of non-equal rows have been tried, so the problem is UNSAT
     if (std::all_of(nq_explanation.visited.begin(), nq_explanation.visited.end(), [](bool b) { return b; })) {
