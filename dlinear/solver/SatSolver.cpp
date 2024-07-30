@@ -29,7 +29,7 @@ void SatSolver::AddFormula(const Formula &f) {
   std::vector<Formula> clauses{cnfizer_.Convert(f)};
 
   // Collect CNF variables and store them in `cnf_variables_`.
-  for (const auto &p : cnfizer_.vars()) cnf_variables_.insert(p.get_id());
+  for (const Variable &p : cnfizer_.vars()) cnf_variables_.insert(p.get_id());
   // Convert a first-order clauses into a Boolean formula by predicate abstraction
   // The original can be retrieved by `predicate_abstractor_[abstracted_formula]`.
   for (Formula &clause : clauses) clause = predicate_abstractor_.Convert(clause);
@@ -71,16 +71,13 @@ void SatSolver::UpdateLookup(int lit, int learned) {
 }
 
 void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
-  std::set<size_t> examined_clauses_idx;
   for (auto it = lits.begin(); it != lits.end();) {
-    int i = *it;
-    int required = false;
+    const int i = *it;
+    bool required = false;
     // Determine whether literal `i' is required
-    auto c_it = main_clause_lookup_.find(i);
+    const auto c_it = main_clause_lookup_.find(i);
     if (c_it != main_clause_lookup_.end()) {
       for (size_t c : c_it->second) {
-        // Make sure 'c' is a clause we haven't checked yet
-        if (examined_clauses_idx.count(c) > 0) continue;
         int count = 0;
         size_t j;
         for (j = c; j < main_clauses_copy_.size() && main_clauses_copy_[j]; ++j) {
@@ -93,10 +90,7 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
           // `i' is the only active literal in clause `c'; hence, required.
           required = true;
           break;
-        } else {
-          // There are at least two active literals in clause 'c'. There is no point in checking it again
-          examined_clauses_idx.insert(c);
-        }
+        } 
       }
     }
     // There is more than one literal in every main (non-learned) clause
