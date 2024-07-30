@@ -61,11 +61,17 @@ dlinear_cc_library(
     ] + select({
         "//tools:enabled_picosat": ["PicosatSatSolver.cpp"],
         "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["CadicalSatSolver.cpp"],
+        "//conditions:default": [],
     }),
     hdrs = [
         "SatSolver.h",
     ] + select({
         "//tools:enabled_picosat": ["PicosatSatSolver.h"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["CadicalSatSolver.h"],
         "//conditions:default": [],
     }),
     implementation_deps = [
@@ -83,6 +89,9 @@ dlinear_cc_library(
         "//dlinear/util:stats",
     ] + select({
         "//tools:enabled_picosat": ["@picosat"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["@cadical"],
         "//conditions:default": [],
     }),
 )

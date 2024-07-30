@@ -22,7 +22,6 @@ std::vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   const Formula &g{nnfizer_.Convert(f, true /* push_negation_into_relationals */)};
   aux_.clear();
   vars_.clear();
-  std::vector<Formula> ret;
   const Formula head{Visit(g)};
   aux_.push_back(head);
   return aux_;

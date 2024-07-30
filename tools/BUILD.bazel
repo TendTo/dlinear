@@ -58,6 +58,11 @@ bool_flag(
 )
 
 bool_flag(
+    name = "enable_cadical",
+    build_setting_default = True,
+)
+
+bool_flag(
     name = "enable_patchelf",
     build_setting_default = False,
 )
@@ -99,6 +104,11 @@ config_setting(
 config_setting(
     name = "enabled_picosat",
     flag_values = {":enable_picosat": "True"},
+)
+
+config_setting(
+    name = "enabled_cadical",
+    flag_values = {":enable_cadical": "True"},
 )
 
 config_setting(

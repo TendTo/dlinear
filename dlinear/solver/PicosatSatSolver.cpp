@@ -59,12 +59,12 @@ void PicosatSatSolver::AddLiteral(const Literal &l, bool learned) {
   if (!learned) theory_literals_.emplace_back(var, truth);
 }
 
-std::set<int> PicosatSatSolver::GetMainActiveLiterals() const {
+std::set<int> PicosatSatSolver::GetMainActiveLiterals() {
   std::set<int> lits;
   for (int i = 1; i <= picosat_variables(sat_); ++i) {
-    const int model_i = has_picosat_pop_used_ ? picosat_deref(sat_, i) : picosat_deref_partial(sat_, i);
-    if (model_i == 0) continue;
-    lits.insert(model_i * i);
+    const int lit = i * (has_picosat_pop_used_ ? picosat_deref(sat_, i) : picosat_deref_partial(sat_, i));
+    if (lit == 0) continue;
+    lits.insert(lit);
   }
   // Use the superclass method to filter out literals that are not required by main clauses.
   SatSolver::GetMainActiveLiterals(lits);

@@ -262,6 +262,33 @@ TEST(TestBitIncrementIterator, LearnTrueAdvancedVectorInit) {
   EXPECT_EQ(iterations, 2 + (1u << (dim - 1)));
 }
 
+TEST(TestBitIncrementIterator, FirstBitTrue) {
+  const size_t dim = 4u;
+  size_t iterations = 0;
+  BitIncrementIterator it{{true, false, false, false}};
+  it.Learn(0);
+  EXPECT_FALSE((*it)[0]);
+  for (size_t counter = 0b0000; it; ++it, ++counter, ++iterations) {
+    EXPECT_EQ(it->size(), dim);
+    EXPECT_THAT(*it, ::testing::ElementsAreArray(number_to_bit_vector(counter, dim)));
+  }
+  EXPECT_EQ(iterations, (1u << (dim - 1)));
+}
+
+TEST(TestBitIncrementIterator, DoubleLearn) {
+  size_t iterations = 0;
+  BitIncrementIterator it{19};
+  it.Learn(13);
+  it.Learn(16);
+  EXPECT_TRUE((*it)[13]);
+  EXPECT_TRUE((*it)[16]);
+  for (const bool val : *it) {
+    if (iterations == 13 || iterations == 16) continue;
+    EXPECT_FALSE(val);
+    iterations++;
+  }
+}
+
 TEST_P(TestBitIncrementIteratorBegin, LearnTrueVectorInit) {
   const auto& [start_value, idx] = GetParam();
   // Only handle "learn true" cases

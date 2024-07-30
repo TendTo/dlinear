@@ -87,6 +87,9 @@ def _get_defines(rule_defines):
     }) + select({
         "//tools:enabled_picosat": ["DLINEAR_ENABLED_PICOSAT"],
         "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["DLINEAR_ENABLED_CADICAL"],
+        "//conditions:default": [],
     })
 
 def _get_static(rule_linkstatic):

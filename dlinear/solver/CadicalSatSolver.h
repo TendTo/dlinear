@@ -1,20 +1,19 @@
 /**
- * @file PicosatSatSolver.h
+ * @file CadicalSatSolver.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief SAT solver based on PicoSAT.
+ * @brief SAT solver based on CaDiCal.
  *
- * PicoSAT is a SAT solver written in C. It is used as a library in dlinear.
+ * CaDiCal is a SAT solver written in C++. It is used as a library in dlinear.
  */
 #pragma once
 
-#ifndef DLINEAR_ENABLED_PICOSAT
-#error PicoSAT is not enabled. Please enable it by adding "--//tools:enable_picosat" to the bazel command.
+#ifndef DLINEAR_ENABLED_CADICAL
+#error CaDiCaL is not enabled. Please enable it by adding "--//tools:enable_cadical" to the bazel command.
 #endif
 
-#include <picosat/picosat.h>
-
+#include <cadical/cadical.hpp>
 #include <optional>
 #include <set>
 #include <string>
@@ -26,11 +25,10 @@
 
 namespace dlinear {
 
-class PicosatSatSolver : public SatSolver {
+class CadicalSatSolver : public SatSolver {
  public:
-  explicit PicosatSatSolver(PredicateAbstractor &predicate_abstractor,
-                            const std::string &class_name = "PicosatSatSolver");
-  ~PicosatSatSolver() override;
+  explicit CadicalSatSolver(PredicateAbstractor &predicate_abstractor,
+                            const std::string &class_name = "CadicalSatSolver");
 
   void AddLiteral(const Literal &l, bool learned) override;
 
@@ -49,9 +47,8 @@ class PicosatSatSolver : public SatSolver {
  private:
   [[nodiscard]] std::set<int> GetMainActiveLiterals() override;
 
-  PicoSAT *const sat_{};
-
-  bool has_picosat_pop_used_;
+  CaDiCaL::Solver sat_{};
+  int next_var_id_{1};
 };
 
 }  // namespace dlinear

@@ -155,7 +155,7 @@ class SatSolver {
    *
    * @return set of literals
    */
-  virtual std::set<int> GetMainActiveLiterals() const = 0;
+  virtual std::set<int> GetMainActiveLiterals() = 0;
   /**
    * Get a set of the currently active literals in the clauses,
    * ignoring those required by learned clauses.

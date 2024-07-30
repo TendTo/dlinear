@@ -1,0 +1,21 @@
+"""Include the picosat SAT solver in the build."""
+licenses(["notice"])  # MIT
+
+cc_library(
+    name = "cadical",
+    srcs = glob(["src/*.cpp", "src/*.hpp", "src/*.h"], exclude = ["src/cadical.cpp", "src/mobical.cpp"]),
+    hdrs = ["src/cadical.hpp"],
+    include_prefix = "cadical",
+    strip_include_prefix = "src",
+    includes = ["."],
+    linkstatic = select({
+        "@dlinear//tools:dynamic_build": False,
+        "//conditions:default": True,
+    }),
+    local_defines = select({
+        "@dlinear//tools:debug": ["LOGGING", "TRACING", "NBUILD"],
+        "@dlinear//tools:release": ["NDEBUG", "QUIET", "NBUILD"],
+        "//conditions:default": ["NBUILD"],
+    }),
+    visibility = ["//visibility:public"],
+)

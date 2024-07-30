@@ -136,6 +136,15 @@ github_archive(
     sha256 = "32d5d9fd23998c57e746c375a544edf544b74f0a18ad6bc3c38cbba968d5e6c7",
 )
 
+# MIT | cadical SAT solver
+github_archive(
+    name = "cadical",
+    build_file = "//third_party:cadical.BUILD.bazel",
+    commit = "rel-2.0.0",
+    repository = "arminbiere/cadical",
+    sha256 = "9afe5f6439442d854e56fc1fac3244ce241dbb490735939def8fd03584f89331",
+)
+
 # TODO: check if we still need this
 #bazel_dep(
 #    name = "pybind11",  # https://github.com/pybind/pybind11/blob/master/LICENSE
