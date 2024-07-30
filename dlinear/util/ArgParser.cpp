@@ -141,6 +141,15 @@ void ArgParser::addOptions() {
         DLINEAR_INVALID_ARGUMENT_EXPECTED("--lp-solver", value, "[ soplex | qsoptex ] or [ 1 | 2 ]");
       })
       .nargs(1);
+  parser_.add_argument("--sat-solver")
+      .help(Config::help_sat_solver)
+      .default_value(Config::default_sat_solver)
+      .action([](const std::string &value) {
+        if (value == "cadical" || value == "1") return Config::SatSolver::CADICAL;
+        if (value == "picosat" || value == "2") return Config::SatSolver::PICOSAT;
+        DLINEAR_INVALID_ARGUMENT_EXPECTED("--lp-solver", value, "[ cadical | picosat ] or [ 1 | 2 ]");
+      })
+      .nargs(1);
   parser_.add_argument("--lp-mode")
       .help(Config::help_lp_mode)
       .default_value(Config::default_lp_mode)
@@ -217,6 +226,8 @@ Config ArgParser::toConfig() const {
     config.m_random_seed().set_from_command_line(parser_.get<unsigned int>("random-seed"));
   if (parser_.is_used("sat-default-phase"))
     config.m_sat_default_phase().set_from_command_line(parser_.get<Config::SatDefaultPhase>("sat-default-phase"));
+  if (parser_.is_used("sat-solver"))
+    config.m_sat_solver().set_from_command_line(parser_.get<Config::SatSolver>("sat-solver"));
   if (parser_.is_used("simplex-sat-phase"))
     config.m_simplex_sat_phase().set_from_command_line(parser_.get<int>("simplex-sat-phase"));
   if (parser_.is_used("silent")) config.m_silent().set_from_command_line(parser_.get<bool>("silent"));

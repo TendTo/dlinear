@@ -206,10 +206,14 @@ class Context::Impl {
 
   /**
    * Get the correct theory solver subclass based on the configuration.
-   * @param config configuration of the context determining the theory solver to use
    * @return theory solver subclass
    */
-  std::unique_ptr<TheorySolver> GetTheorySolver(const Config &config);
+  std::unique_ptr<TheorySolver> GetTheorySolver();
+  /**
+   * Get the correct sat solver subclass based on the configuration.
+   * @return sat solver subclass
+   */
+  std::unique_ptr<SatSolver> GetSatSolver();
 
   /**
    * Add the variable @p v to the current box. This is used to

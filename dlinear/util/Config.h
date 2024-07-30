@@ -40,12 +40,20 @@ namespace dlinear {
 class Config {
  public:
   /**
-   * LP solver used by the theory solver.
+   * Underlying LP solver used by the theory solver.
    * @see Config::lp_solver
    */
   enum class LPSolver {
     SOPLEX = 0,   ///< Soplex Solver. Default option
     QSOPTEX = 1,  ///< Qsoptex Solver
+  };
+  /**
+   * Underlying SAT solver used by the abstract SAT solver.
+   * @see Config::sat_solver
+   */
+  enum class SatSolver {
+    CADICAL = 0,  ///< Cadical Solver. Default option
+    PICOSAT = 1,  ///< Picosat Solver
   };
   /** Default phase for the SAT solver. */
   enum class SatDefaultPhase {
@@ -124,8 +132,11 @@ class Config {
                     "LP mode used by the LP solver.\n"
                     "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")
   DLINEAR_PARAMETER(lp_solver, LPSolver, dlinear::Config::LPSolver::SOPLEX,
-                    "LP solver used by the LP solver.\n"
+                    "Underlying LP solver used by the theory solver.\n"
                     "\t\tOne of: soplex (1), qsoptex (2)")
+  DLINEAR_PARAMETER(sat_solver, SatSolver, dlinear::Config::SatSolver::CADICAL,
+                    "Underlying SAT solver used by the SAT solver.\n"
+                    "\t\tOne of: cadical (1), picosat (2)")
   DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
   DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
@@ -155,6 +166,7 @@ class Config {
 std::ostream &operator<<(std::ostream &os, const Config &config);
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
 std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
+std::ostream &operator<<(std::ostream &os, const Config::SatSolver &mode);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 
@@ -162,6 +174,7 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
 
 OSTREAM_FORMATTER(dlinear::Config::SatDefaultPhase)
 OSTREAM_FORMATTER(dlinear::Config::LPSolver)
+OSTREAM_FORMATTER(dlinear::Config::SatSolver)
 OSTREAM_FORMATTER(dlinear::Config::Format)
 OSTREAM_FORMATTER(dlinear::Config::LPMode)
 OSTREAM_FORMATTER(dlinear::Config)

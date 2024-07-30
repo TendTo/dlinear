@@ -18,6 +18,7 @@
 #include "dlinear/solver/CompleteSoplexTheorySolver.h"
 #include "dlinear/solver/DeltaSoplexTheorySolver.h"
 #endif
+#include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/TheoryPropagator.h"
@@ -59,8 +60,8 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
       theory_loaded_{false},
       predicate_abstractor_{config},
       ite_eliminator_{config},
-      sat_solver_{std::make_unique<PicosatSatSolver>(predicate_abstractor_)},
-      theory_solver_{GetTheorySolver(config)} {
+      sat_solver_{GetSatSolver()},
+      theory_solver_{GetTheorySolver()} {
   boxes_.push_back(Box{config_.lp_solver()});
 }
 
@@ -420,8 +421,8 @@ LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe
 void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
   DLINEAR_RUNTIME_ERROR("MinimizeCore() Not implemented");
 }
-std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &config) {
-  switch (config.lp_solver()) {
+std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver() {
+  switch (config_.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
       if (config.complete())  // TODO: add support for complete QSOPTEX
@@ -431,10 +432,24 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver(const Config &confi
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
-      if (config.complete())
+      if (config_.complete())
         return std::make_unique<CompleteSoplexTheorySolver>(predicate_abstractor_);
       else
         return std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_);
+#endif
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+std::unique_ptr<SatSolver> Context::Impl::GetSatSolver() {
+  switch (config_.sat_solver()) {
+#ifdef DLINEAR_ENABLED_CADICAL
+    case Config::SatSolver::CADICAL:
+      return std::make_unique<CadicalSatSolver>(predicate_abstractor_);
+#endif
+#ifdef DLINEAR_ENABLED_PICOSAT
+    case Config::SatSolver::PICOSAT:
+      return std::make_unique<PicosatSatSolver>(predicate_abstractor_);
 #endif
     default:
       DLINEAR_UNREACHABLE();

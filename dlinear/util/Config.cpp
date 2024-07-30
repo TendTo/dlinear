@@ -48,6 +48,17 @@ std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver) {
   }
 }
 
+std::ostream &operator<<(std::ostream &os, const Config::SatSolver &sat_solver) {
+  switch (sat_solver) {
+    case Config::SatSolver::CADICAL:
+      return os << "cadical";
+    case Config::SatSolver::PICOSAT:
+      return os << "picosat";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const Config::Format &format) {
   switch (format) {
     case Config::Format::AUTO:
@@ -101,6 +112,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "random_seed = " << config.random_seed() << ",\n"
             << "read_from_stdin = " << config.read_from_stdin() << ",\n"
             << "sat_default_phase = " << config.sat_default_phase() << ",\n"
+            << "sat_solver = " << config.sat_solver() << ",\n"
             << "silent = " << config.silent() << ",\n"
             << "simplex_sat_phase = " << config.simplex_sat_phase() << ",\n"
             << "use_local_optimization = " << config.use_local_optimization() << ",\n"
