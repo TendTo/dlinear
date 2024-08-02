@@ -105,45 +105,21 @@ class TheorySolver {
    */
   virtual Explanations EnableLiteral(const Literal &lit) = 0;
 
-  /**
-   * Get a model that satisfies all the constraints of the theory
-   * @return model that satisfies all the constraints of the theory
-   */
+  /** @getter{model that satisfies all the constraints, TheorySolver} */
   [[nodiscard]] const Box &model() const;
-  /**
-   * Get the configuration of the theory solver.
-   * @return configuration of the theory solver
-   */
+  /** @getter{configuration, TheorySolver} */
   [[nodiscard]] const Config &config() const { return config_; }
-  /**
-   * Get the predicate abstractor.
-   * @return predicate abstractr
-   */
+  /** @getter{predicate abstractor, TheorySolver} */
   [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
-  /**
-   * Get the map of the variables to the theory columns.
-   * @return map of the variables to the theory columns
-   */
+  /** @getter{map of variables to the theory columns, TheorySolver} */
   [[nodiscard]] const std::map<Variable::Id, int> &var_to_theory_col() const { return var_to_theory_col_; }
-  /**
-   * Get the map of theories columns to the variables.
-   * @return map of theories columns to the variables
-   */
+  /** @getter{map of theory columns to the variables, TheorySolver} */
   [[nodiscard]] const std::vector<Variable> &theory_col_to_var() const { return theory_col_to_var_; }
-  /**
-   * Get the map of literals to the theory rows.
-   * @return map of literals to the theory rows
-   */
+  /** @getter{map of literals to the theory rows, TheorySolver} */
   [[nodiscard]] const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
-  /**
-   * Get the map of theory rows to the literals.
-   * @return map of theory rows to the literals
-   */
+  /** @getter{map of theory rows to the literals, TheorySolver} */
   [[nodiscard]] const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
-  /**
-   * Get the theory bounds.
-   * @return theory bounds
-   */
+  /** @getter{theory bounds, TheorySolver} */
   [[nodiscard]] const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
 
   /**
