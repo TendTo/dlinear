@@ -22,6 +22,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Context.h"
+#include "dlinear/solver/GuidedConstraint.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"
@@ -80,6 +81,14 @@ class Context::Impl {
    * @return fresh variable introduced to represent the max expression or simple expression if a simplification happened
    */
   Expression AssertMax(const Expression &e);
+  /**
+   * Assert a ReLU expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
+   * @pre @p e is a ReLU expression
+   * @param e ReLU expression to be asserted
+   * @return fresh variable introduced to represent the ReLU expression
+   * @return simple expression if a simplification happened
+   */
+  Expression AssertRelu(const Expression &e);
 
   /** Pop the top of the stack of assertions. */
   void Pop();

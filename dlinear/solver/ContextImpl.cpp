@@ -20,6 +20,7 @@
 #endif
 #include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
+#include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/TheoryPropagator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
@@ -84,7 +85,7 @@ void Context::Impl::Assert(const Formula &f) {
 Expression Context::Impl::AssertIte(const Expression &e) {
   if (!is_if_then_else(e)) return e;
 
-  DLINEAR_DEBUG_FMT("ContextImpl::AssertIte({})", e);
+  DLINEAR_TRACE_FMT("ContextImpl::AssertIte({})", e);
   const auto [no_ite, assertion] = ite_eliminator_.Process(e);
 
   if (Formula::True().EqualTo(assertion)) return no_ite;
@@ -99,7 +100,7 @@ Expression Context::Impl::AssertIte(const Expression &e) {
 Expression Context::Impl::AssertMax(const Expression &e) {
   if (!drake::symbolic::is_max(e)) return e;
 
-  DLINEAR_DEBUG_FMT("ContextImpl::AssertMax({})", e);
+  DLINEAR_TRACE_FMT("ContextImpl::AssertMax({})", e);
   const auto [no_ite_max, assertion] = ite_eliminator_.Process(e);
   DLINEAR_ASSERT(drake::symbolic::is_max(no_ite_max), "no_ite_max must be a max expression");
 
@@ -127,6 +128,24 @@ Expression Context::Impl::AssertMax(const Expression &e) {
   AddToBox(to_variable(a1)->get_variable());
   AddToBox(to_variable(a2)->get_variable());
   return no_max;
+}
+Expression Context::Impl::AssertRelu(const dlinear::drake::symbolic::Expression &e) {
+  DLINEAR_ASSERT(is_if_then_else(e), "e must be an ITE expression");
+  DLINEAR_ASSERT(!get_then_expression(e).include_ite(), "'then' branch of e must not include ITE expression");
+  DLINEAR_ASSERT(!get_else_expression(e).include_ite(), "'else' branch of e must not include ITE expression");
+  DLINEAR_TRACE_FMT("ContextImpl::AssertRelu({})", e);
+
+  const auto [no_relu, assertion] = ite_eliminator_.Process(e);
+
+  if (Formula::True().EqualTo(assertion)) return no_relu;
+
+  DLINEAR_ASSERT(is_variable(no_relu), "no_relu must be a variable");
+
+  // Note that the following does not mark `no_relu` as a model variable.
+  AddToBox(to_variable(no_relu)->get_variable());
+  stack_.push_back(assertion);
+  sat_solver_->AddFormula(assertion);
+  return no_relu;
 }
 
 void Context::Impl::Pop() {
@@ -337,6 +356,9 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
   TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
   propagator.Propagate();
+
+  TheorySolverBoundVectorMap bounds_map;
+  TheorySolverBoundVector bounds{box().infinity(), box().ninfinity()};
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.

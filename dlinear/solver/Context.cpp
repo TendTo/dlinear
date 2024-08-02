@@ -24,6 +24,7 @@ Context::Context(Config &config, SmtSolverOutput *const output) : impl_{std::mak
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
 Expression Context::AssertIte(const Expression &e) { return impl_->AssertIte(e); }
 Expression Context::AssertMax(const Expression &e) { return impl_->AssertMax(e); }
+Expression Context::AssertRelu(const Expression &e) { return impl_->AssertRelu(e); }
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
 LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
