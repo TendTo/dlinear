@@ -44,9 +44,8 @@ void CadicalSatSolver::AddLiteral(const Literal &l, bool learned) {
   // f = b or f = ¬b.
   const int lit = truth ? var_to_sat_[var.get_id()] : -var_to_sat_[var.get_id()];
   sat_.add(lit);
-  UpdateLookup(lit, learned);
-  // If the literal is from the original formula, add it to the theory solver and store it in the
-  if (!learned) theory_literals_.emplace_back(var, truth);
+  // If the literal is from the original formula, update the mapping lookup.
+  if (!learned) UpdateLookup(lit);
 }
 
 std::set<int> CadicalSatSolver::GetMainActiveLiterals() {

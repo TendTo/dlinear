@@ -66,24 +66,17 @@ void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
   SoplexTheorySolver::AddVariable(var);
 }
 
-void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
+void CompleteSoplexTheorySolver::AddLiteral(const Variable &formulaVar, const Formula& formula) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
-  const auto &[formulaVar, truth] = lit;
-  const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
-  const auto it = var_to_formula_map.find(formulaVar);
-  // Boolean variable - no need to involve theory solver
-  if (it == var_to_formula_map.end()) return;
-  const auto it2 = lit_to_theory_row_.find(formulaVar.get_id());
+  const auto it = lit_to_theory_row_.find(formulaVar.get_id());
   // Literal is already present
-  if (it2 != lit_to_theory_row_.end()) return;
+  if (it != lit_to_theory_row_.end()) return;
 
-  // Theory formula
-  const Formula &formula = it->second;
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
-  spx_sense_.push_back(parseLpSense(formula));
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLinearLiteral: {} -> {}", lit, spx_sense_.back());
+  spx_sense_.emplace_back(parseLpSense(formula));
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLinearLiteral: {} -> {}", formulaVar, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};
 
@@ -101,7 +94,7 @@ void CompleteSoplexTheorySolver::AddLiteral(const Literal &lit) {
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == last_nq_status_.size() - 1, "incorrect spx_rhs_.size()");
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({} ↦ {})", lit, spx_row);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({} ↦ {})", formulaVar, spx_row);
 }
 
 CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiteral(const Literal &lit) {

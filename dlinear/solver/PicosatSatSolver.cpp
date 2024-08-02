@@ -54,9 +54,8 @@ void PicosatSatSolver::AddLiteral(const Literal &l, bool learned) {
   // f = b or f = ¬b.
   const int lit = truth ? var_to_sat_[var.get_id()] : -var_to_sat_[var.get_id()];
   picosat_add(sat_, lit);
-  UpdateLookup(lit, learned);
-  // If the literal is from the original formula, add it to the theory solver.
-  if (!learned) theory_literals_.emplace_back(var, truth);
+  // If the literal is from the original formula, update the mapping lookup.
+  if (!learned) UpdateLookup(lit);
 }
 
 std::set<int> PicosatSatSolver::GetMainActiveLiterals() {

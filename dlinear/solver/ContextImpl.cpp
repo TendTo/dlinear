@@ -58,7 +58,6 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
       model_{config_.lp_solver()},
       have_objective_{false},
       is_max_{false},
-      theory_loaded_{false},
       predicate_abstractor_{config},
       ite_eliminator_{config},
       sat_solver_{GetSatSolver()},
@@ -330,11 +329,6 @@ bool Context::Impl::is_max() const { return is_max_; }
 
 SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
-  if (!theory_loaded_) {
-    DLINEAR_DEBUG("ContextImpl::CheckSatCore(): Loading theory solver");
-    theory_solver_->AddLiterals(sat_solver_->theory_literals());
-    theory_loaded_ = true;
-  }
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
   if (box().empty()) {
     DLINEAR_DEBUG("ContextImpl::CheckSat: Box is empty");
@@ -354,11 +348,13 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_SATISFIABLE;
   }
 
+  // Add the theory literals into the theory solver.
+  theory_solver_->AddLiterals();
+
   TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
   propagator.Propagate();
 
-  TheorySolverBoundVectorMap bounds_map;
-  TheorySolverBoundVector bounds{box().infinity(), box().ninfinity()};
+  [[maybe_unused]] const TheorySolverBoundVectorVector &theory_bounds = theory_solver_->theory_bounds();
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.

@@ -63,11 +63,9 @@ void SatSolver::AddLiteral(const Formula &f) {
   }
 }
 
-void SatSolver::UpdateLookup(int lit, int learned) {
-  if (!learned) {
-    main_clauses_copy_.push_back(lit);
-    main_clause_lookup_[lit].insert(cur_clause_start_);
-  }
+void SatSolver::UpdateLookup(int lit) {
+  main_clauses_copy_.push_back(lit);
+  main_clause_lookup_[lit].insert(cur_clause_start_);
 }
 
 void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
@@ -90,7 +88,7 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
           // `i' is the only active literal in clause `c'; hence, required.
           required = true;
           break;
-        } 
+        }
       }
     }
     // There is more than one literal in every main (non-learned) clause

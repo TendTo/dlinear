@@ -22,18 +22,11 @@ DeltaQsoptexTheorySolver::DeltaQsoptexTheorySolver(PredicateAbstractor &predicat
                                                    const std::string &class_name)
     : QsoptexTheorySolver(predicate_abstractor, class_name) {}
 
-void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
-  const auto &[formulaVar, truth] = lit;
-  const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
-  const auto it = var_to_formula_map.find(formulaVar);
-  // Boolean variable - no need to involve theory solver
-  if (it == var_to_formula_map.end()) return;
-  const auto it2 = lit_to_theory_row_.find(formulaVar.get_id());
+void DeltaQsoptexTheorySolver::AddLiteral(const Variable &formulaVar, const Formula &formula) {
+  const auto it = lit_to_theory_row_.find(formulaVar.get_id());
   // Literal is already present
-  if (it2 != lit_to_theory_row_.end()) return;
+  if (it != lit_to_theory_row_.end()) return;
 
-  // Theory formula
-  const Formula &formula = it->second;
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
@@ -41,13 +34,13 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   // It will be handled when enabling the literal
   if (IsSimpleBound(formula)) return;
 
-  if (IsEqualTo(formula, truth)) {
+  if (IsEqualTo(formula)) {
     qsx_sense_.push_back(LpRowSense::EQ);
-  } else if (IsGreaterThan(formula, truth) || IsGreaterThanOrEqualTo(formula, truth)) {
+  } else if (IsGreaterThan(formula) || IsGreaterThanOrEqualTo(formula)) {
     qsx_sense_.push_back(LpRowSense::GE);
-  } else if (IsLessThan(formula, truth) || IsLessThanOrEqualTo(formula, truth)) {
+  } else if (IsLessThan(formula) || IsLessThanOrEqualTo(formula)) {
     qsx_sense_.push_back(LpRowSense::LE);
-  } else if (IsNotEqualTo(formula, truth)) {
+  } else if (IsNotEqualTo(formula)) {
     // The constraint, because this constraint is always delta-sat for delta > 0.
     qsx_sense_.push_back(LpRowSense::NQ);
   } else {
@@ -84,8 +77,8 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Literal &lit) {
   // Update indexes
   lit_to_theory_row_.emplace(formulaVar.get_id(), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
-  theory_row_to_lit_.push_back(lit);
-  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({} ↦ {})", lit, qsx_row);
+  theory_row_to_lit_.emplace_back(formulaVar, true);
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({} ↦ {})", formulaVar, qsx_row);
 }
 
 DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {

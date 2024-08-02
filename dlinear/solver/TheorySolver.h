@@ -64,19 +64,18 @@ class TheorySolver {
   /**
    * Add a vector of literals to the theory solver.
    *
-   * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
-   * and the truth value (sense) of such literal
-   * @param theory_literals vector of literals
+   * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
    */
-  void AddLiterals(const std::vector<Literal> &theory_literals);
+  void AddLiterals();
   /**
    * Add a Literal to the theory solver.
    *
-   * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor,
-   * and the truth value (sense) of such literal
-   * @param lit literal to be added
+   * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
+   * and the formula itself
+   * @param formulaVar boolean variable that corresponds to the theory formula
+   * @param formula symbolic formula that represents the theory formula
    */
-  virtual void AddLiteral(const Literal &lit) = 0;
+  virtual void AddLiteral(const Variable &formulaVar, const Formula& formula) = 0;
   /**
    * Add a variable (column) to the theory solver.
    * @param var variable to add

@@ -30,7 +30,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit MockSoplexTheorySolver(PredicateAbstractor &predicate_abstractor)
       : SoplexTheorySolver{predicate_abstractor} {}
-  MOCK_METHOD(void, AddLiteral, (const dlinear::Literal &lit), (override));
+  MOCK_METHOD(void, AddLiteral, (const dlinear::Variable &formulaVar, const dlinear::Formula &formula), (override));
   MOCK_METHOD(SoplexTheorySolver::Explanations, EnableLiteral, (const dlinear::Literal &lit), (override));
   MOCK_METHOD(SatResult, CheckSat,
               (const dlinear::Box &box, mpq_class *actual_precision, SoplexTheorySolver::Explanations &explanation),

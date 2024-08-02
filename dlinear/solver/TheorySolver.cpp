@@ -25,8 +25,8 @@ const Box &TheorySolver::model() const {
   return model_;
 }
 
-void TheorySolver::AddLiterals(const std::vector<Literal> &theory_literals) {
-  for (const auto &lit : theory_literals) AddLiteral(lit);
+void TheorySolver::AddLiterals() {
+  for (const auto &[var, f] : predicate_abstractor_.var_to_formula_map()) AddLiteral(var, f);
 }
 
 TheorySolver::Explanations TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {

@@ -53,21 +53,18 @@ TEST_F(TestCadicalSatSolver, Constructor) { CadicalSatSolver s{pa_}; }
 TEST_F(TestCadicalSatSolver, AddFormula) {
   s_.AddFormula(f_);
 
-  EXPECT_EQ(s_.theory_literals().size(), 1u);
   EXPECT_EQ(pa_.var_to_formula_map().size(), 1u);
 }
 
 TEST_F(TestCadicalSatSolver, AddClauseLiteral) {
   s_.AddClause(Formula{Variable{"x_", Variable::Type::BOOLEAN}});
 
-  EXPECT_EQ(s_.theory_literals().size(), 1u);
   EXPECT_EQ(pa_.var_to_formula_map().size(), 0u);
 }
 
 TEST_F(TestCadicalSatSolver, AddClauseDisjunction) {
   s_.AddClause(bx_ || by_);
 
-  EXPECT_EQ(s_.theory_literals().size(), 2u);
   EXPECT_EQ(pa_.var_to_formula_map().size(), 0u);
 }
 

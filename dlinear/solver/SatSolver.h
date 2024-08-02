@@ -105,8 +105,6 @@ class SatSolver {
    * @return empty optional if UNSAT
    */
   virtual std::optional<Model> CheckSat() = 0;
-  /** @getter{list of asserted theory literals, SAT solver}*/
-  const std::vector<Literal> &theory_literals() const { return theory_literals_; }
   /** @getter{statistics, SAT solver}*/
   const IterationStats &stats() const { return stats_; }
   /** @getter{statistics of the cnfizer, SAT solver} */
@@ -175,14 +173,10 @@ class SatSolver {
    */
   Model OnSatResult();
   /**
-   * Update data structures used to remove literals that are only required by
-   * learned clauses.
-   *
+   * Update data structures used to minimize the number of assigned literals the theory solver has to verify.
    * @param lit literal from the SAT solver
-   * @param learned whether the literal is learned or was in the original
-   * formula
    */
-  void UpdateLookup(int lit, int learned);
+  void UpdateLookup(int lit);
 
   const Config &config_;  ///< Configuration of the SAT solver
 
@@ -190,7 +184,6 @@ class SatSolver {
   std::vector<int> main_clauses_copy_;
   std::map<int, std::set<std::size_t>> main_clause_lookup_;
   std::size_t cur_clause_start_;
-  std::vector<Literal> theory_literals_;
 
   ScopedUnorderedMap<Variable::Id, int> var_to_sat_;  ///< Map symbolic::Variable → int (Variable type in PicoSat).
   ScopedUnorderedMap<int, Variable> sat_to_var_;      ///< Map int (Variable type in PicoSat) → symbolic::Variable.
