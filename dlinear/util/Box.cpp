@@ -14,15 +14,10 @@
 #include <limits>
 #include <ostream>
 
+#include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/math.h"
-#ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/libs/libqsopt_ex.h"
-#endif
-#ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/libs/libsoplex.h"
-#endif
 
 namespace dlinear {
 
@@ -30,29 +25,11 @@ using gmp::ceil;
 using gmp::floor;
 
 Box::Box(const Config::LPSolver lp_solver)
-    : ninfinity_{},
-      infinity_{},
+    : lp_solver_{lp_solver},
       values_{},
       variables_{std::make_shared<std::vector<Variable>>()},
       var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
-      idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {
-  switch (lp_solver) {
-#ifdef DLINEAR_ENABLED_QSOPTEX
-    case Config::LPSolver::QSOPTEX:
-      ninfinity_ = mpq_class{mpq_NINFTY};
-      infinity_ = mpq_class{mpq_INFTY};
-      break;
-#endif
-#ifdef DLINEAR_ENABLED_SOPLEX
-    case Config::LPSolver::SOPLEX:
-      ninfinity_ = -soplex::infinity;
-      infinity_ = soplex::infinity;
-      break;
-#endif
-    default:
-      DLINEAR_RUNTIME_ERROR_FMT("Unsupported LP solver: {}", lp_solver);
-  }
-}
+      idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {}
 
 Box::Box(const std::vector<Variable> &variables, const Config::LPSolver lp_solver) : Box{lp_solver} {
   values_.reserve(variables.size());
@@ -95,7 +72,7 @@ void Box::Add(const Variable &v) {
       values_.emplace_back(-std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
       break;
     case Variable::Type::CONTINUOUS:
-      values_.emplace_back(ninfinity_, infinity_);
+      values_.emplace_back(Infinity::ninfinity(lp_solver_), Infinity::infinity(lp_solver_));
   }
 }
 
@@ -257,7 +234,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
       case Variable::Type::INTEGER:
       case Variable::Type::BINARY:
       case Variable::Type::CONTINUOUS:
-        interval.printToStream(os, box.ninfinity(), box.infinity());
+        interval.printToStream(os, Infinity::ninfinity(box.lp_solver()), Infinity::infinity(box.lp_solver()));
         break;
       case Variable::Type::BOOLEAN:
         if (interval.ub() == 0.0)

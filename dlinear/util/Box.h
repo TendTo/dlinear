@@ -90,10 +90,8 @@ class Box {
    */
   const Interval &operator[](const Variable &var) const;
 
-  /** @getter{lower bound negative infinity, box} */
-  [[nodiscard]] const mpq_class &ninfinity() const { return ninfinity_; }
-  /** @getter{upper bound infinity, box} */
-  [[nodiscard]] const mpq_class &infinity() const { return infinity_; }
+  /** @getter{lp_solver, box} */
+  [[nodiscard]] Config::LPSolver lp_solver() const { return lp_solver_; }
   /** @getter{variables, box} */
   [[nodiscard]] const std::vector<Variable> &variables() const;
 
@@ -172,8 +170,7 @@ class Box {
    */
   [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
-  mpq_class ninfinity_;                                                                  ///< Lower bound of the box
-  mpq_class infinity_;                                                                   ///< Upper bound of the box
+  Config::LPSolver lp_solver_;                                                           ///< LP solver
   std::vector<Interval> values_;                                                         ///< Interval vector of the box
   std::shared_ptr<std::vector<Variable>> variables_;                                     ///< Variables in the box
   std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;  ///< Variable to index map
