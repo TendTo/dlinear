@@ -33,7 +33,7 @@ class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
 
   Explanations EnableLiteral(const Literal& lit) override;
 
-  void AddLiteral(const Variable& formulaVar, const Formula& formula) override;
+  void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
   SatResult CheckSat(const Box& box, mpq_class* actual_precision, Explanations& explanations) override;
 };

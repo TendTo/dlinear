@@ -33,9 +33,9 @@ DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_
                                                  const std::string &class_name)
     : SoplexTheorySolver(predicate_abstractor, class_name) {}
 
-void DeltaSoplexTheorySolver::AddLiteral(const Variable &formulaVar, const Formula& formula) {
+void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula& formula) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
-  const auto it = lit_to_theory_row_.find(formulaVar.get_id());
+  const auto it = lit_to_theory_row_.find(formula_var.get_id());
   // Literal is already present
   if (it != lit_to_theory_row_.end()) return;
 
@@ -43,7 +43,7 @@ void DeltaSoplexTheorySolver::AddLiteral(const Variable &formulaVar, const Formu
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
   spx_sense_.emplace_back(~parseLpSense(formula));
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: {} -> {}", formulaVar, spx_sense_.back());
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: {} -> {}", formula_var, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};
 
@@ -54,14 +54,14 @@ void DeltaSoplexTheorySolver::AddLiteral(const Variable &formulaVar, const Formu
   if (2 == config_.simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), spx_row);
-  theory_row_to_lit_.emplace_back(formulaVar, true);
+  lit_to_theory_row_.emplace(formula_var.get_id(), spx_row);
+  theory_row_to_lit_.emplace_back(formula_var, true);
 
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == theory_row_to_lit_.size() - 1,
                  "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({} ↦ {})", formulaVar, spx_row);
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({} ↦ {})", formula_var, spx_row);
 }
 
 DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {

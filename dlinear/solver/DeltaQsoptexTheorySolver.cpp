@@ -22,8 +22,8 @@ DeltaQsoptexTheorySolver::DeltaQsoptexTheorySolver(PredicateAbstractor &predicat
                                                    const std::string &class_name)
     : QsoptexTheorySolver(predicate_abstractor, class_name) {}
 
-void DeltaQsoptexTheorySolver::AddLiteral(const Variable &formulaVar, const Formula &formula) {
-  const auto it = lit_to_theory_row_.find(formulaVar.get_id());
+void DeltaQsoptexTheorySolver::AddLiteral(const Variable &formula_var, const Formula &formula) {
+  const auto it = lit_to_theory_row_.find(formula_var.get_id());
   // Literal is already present
   if (it != lit_to_theory_row_.end()) return;
 
@@ -75,10 +75,10 @@ void DeltaQsoptexTheorySolver::AddLiteral(const Variable &formulaVar, const Form
   }
 
   // Update indexes
-  lit_to_theory_row_.emplace(formulaVar.get_id(), qsx_row);
+  lit_to_theory_row_.emplace(formula_var.get_id(), qsx_row);
   DLINEAR_ASSERT(static_cast<size_t>(qsx_row) == theory_row_to_lit_.size(), "Row count mismatch");
-  theory_row_to_lit_.emplace_back(formulaVar, true);
-  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({} ↦ {})", formulaVar, qsx_row);
+  theory_row_to_lit_.emplace_back(formula_var, true);
+  DLINEAR_DEBUG_FMT("DeltaQsoptexTheorySolver::AddLinearLiteral({} ↦ {})", formula_var, qsx_row);
 }
 
 DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(const Literal &lit) {

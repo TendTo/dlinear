@@ -72,10 +72,10 @@ class TheorySolver {
    *
    * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
    * and the formula itself
-   * @param formulaVar boolean variable that corresponds to the theory formula
+   * @param formula_var boolean variable that corresponds to the theory formula
    * @param formula symbolic formula that represents the theory formula
    */
-  virtual void AddLiteral(const Variable &formulaVar, const Formula& formula) = 0;
+  virtual void AddLiteral(const Variable &formula_var, const Formula& formula) = 0;
   /**
    * Add a variable (column) to the theory solver.
    * @param var variable to add
