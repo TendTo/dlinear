@@ -152,6 +152,9 @@ class BoundIterator {
   [[nodiscard]] internal_iterator begin() const { return bounds_it_; }
   [[nodiscard]] internal_iterator end() const { return end_nq_bounds_it_; }
 
+  LiteralSet explanation() const;
+  void explanation(LiteralSet& explanation) const;
+
  private:
   static const vector_type default_empty_vector_;  ///< Default empty vector. Used for default construction.
 

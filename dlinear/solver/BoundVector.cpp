@@ -35,9 +35,10 @@ BoundVector::BoundVector(const mpq_class& inf_l, const mpq_class& inf_u)
       active_upper_bound_{inf_u_} {}
 
 BoundIterator BoundVector::AddBound(const Bound& bound) {
-  return AddBound(*bound.value, bound.lp_bound, bound.explanation);
+  return AddBound(*bound.value, bound.lp_bound, bound.theory_literal, bound.explanation);
 }
-BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound, const LiteralSet& explanation) {
+BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound, const Literal& theory_lit,
+                                    const LiteralSet& explanation) {
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D,
                      "Valid must be L, U, B, SL, SU or D. Received: {}", lp_bound);
@@ -50,11 +51,11 @@ BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
     case LpColBound::SL:
     case LpColBound::L:
       ++n_lower_bounds_;
-      it = bounds_.emplace(&value, lp_bound, explanation);
+      it = bounds_.emplace(&value, lp_bound, theory_lit, explanation);
       break;
     case LpColBound::SU:
     case LpColBound::U:
-      it = bounds_.emplace(false, &value, lp_bound, explanation);
+      it = bounds_.emplace(false, &value, lp_bound, theory_lit, explanation);
       break;
     case LpColBound::B:
       // Check if adding this lp_bound will cause a violation
@@ -62,12 +63,12 @@ BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
         return {bounds_.cend(), bounds_.cend(), FindLowerNqBoundValue(&value), FindUpperNqBoundValue(&value)};
       ++n_lower_bounds_;
       active_lower_bound_ = active_upper_bound_ = &value;
-      bounds_.emplace(false, &value, LpColBound::L, explanation);
-      bounds_.emplace(&value, LpColBound::U, explanation);
+      bounds_.emplace(false, &value, LpColBound::L, theory_lit, explanation);
+      bounds_.emplace(&value, LpColBound::U, theory_lit, explanation);
       return {};
     case LpColBound::D:
       if (IsActiveEquality(value)) return {FindLowerBoundValue(&value), FindUpperBoundValue(&value)};
-      nq_bounds_.emplace(&value, lp_bound, explanation);
+      nq_bounds_.emplace(&value, lp_bound, theory_lit, explanation);
       return {};
     default:
       break;
@@ -237,22 +238,22 @@ BoundIterator BoundVector::GetActiveBounds(const mpq_class& lb, const mpq_class&
   const auto ub_it = FindUpperBoundValue(&ub);
   // The active bounds are empty. Non-equal bounds are inclusive
   if (lb_it == ub_it) return {lb_it, ub_it, FindLowerNqBoundValue(&lb), FindUpperNqBoundValue(&ub)};
-  const auto& [value_lb, type_lb, exp_lb] = *lb_it;
-  const auto& [value_ub, type_ub, exp_ub] = *(std::prev(ub_it));
-  // The bounds contains only one type of bound or span across mutiple values. There is no equality bound
+  const auto& [value_lb, type_lb, lit_lb, exp_lb] = *lb_it;
+  const auto& [value_ub, type_ub, lit_ub, exp_ub] = *(std::prev(ub_it));
+  // The bounds contain only one type of bound or span across multiple values. There is no equality bound
   if (type_lb != LpColBound::L || type_ub != LpColBound::U || value_lb != value_ub)
     return {lb_it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
 
   auto it = lb_it;
-  auto [value, type, exp] = *it;
-  for (; type != type_ub; ++it, type = it->lp_bound, exp = it->explanation) {
-    if (exp == exp_ub) return {it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
+  auto [value, type, lit, exp] = *it;
+  for (; type != type_ub; ++it, type = it->lp_bound, lit = it->theory_literal) {
+    if (lit == lit_ub) return {it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
   }
   it = std::prev(ub_it);
   type = it->lp_bound;
-  exp = it->explanation;
-  for (; type != type_lb; --it, type = it->lp_bound, exp = it->explanation) {
-    if (exp == exp_lb) return {lb_it, std::next(it), FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
+  lit = it->theory_literal;
+  for (; type != type_lb; --it, type = it->lp_bound, lit = it->theory_literal) {
+    if (lit == lit_lb) return {lb_it, std::next(it), FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
   }
   return {lb_it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
 }
@@ -263,8 +264,10 @@ LiteralSet BoundVector::GetActiveExplanation() const {
   return explanation;
 }
 void BoundVector::GetActiveExplanation(LiteralSet& explanation) const {
-  for (BoundIterator it = GetActiveBound(); it; ++it)
+  for (BoundIterator it = GetActiveBound(); it; ++it) {
     explanation.insert(it->explanation.cbegin(), it->explanation.cend());
+    explanation.insert(it->theory_literal);
+  }
 }
 LiteralSet BoundVector::GetActiveEqExplanation() const {
   LiteralSet explanation;
@@ -273,8 +276,10 @@ LiteralSet BoundVector::GetActiveEqExplanation() const {
 }
 void BoundVector::GetActiveEqExplanation(LiteralSet& explanation) const {
   if (GetActiveEqualityBound() == nullptr) return;
-  for (BoundIterator it = GetActiveBound(); it; ++it)
+  for (BoundIterator it = GetActiveBound(); it; ++it) {
     explanation.insert(it->explanation.cbegin(), it->explanation.cend());
+    explanation.insert(it->theory_literal);
+  }
 }
 
 std::pair<const mpq_class&, const mpq_class&> BoundVector::GetActiveBoundsValue() const {
@@ -303,8 +308,8 @@ void BoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
 
 std::ostream& operator<<(std::ostream& os, const BoundVector& bounds_vector) {
   os << "BoundVector[" << bounds_vector.active_lower_bound() << "," << bounds_vector.active_upper_bound() << "]{ ";
-  for (const auto& [value, type, row_idx] : bounds_vector.bounds()) {
-    os << "row " << row_idx << ": " << *value << "( " << type << " ), ";
+  for (const auto& [value, type, lit, exp] : bounds_vector.bounds()) {
+    os << "row " << lit << ": " << *value << "( " << type << " ), ";
   }
   os << "}";
   return os;

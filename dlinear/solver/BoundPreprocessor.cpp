@@ -91,9 +91,25 @@ bool check_explanation(const BoundPreprocessor& preprocessor, const LiteralSet& 
 BoundPreprocessor::BoundPreprocessor(const PredicateAbstractor& predicate_abstractor)
     : config_{predicate_abstractor.config()}, predicate_abstractor_{predicate_abstractor} {}
 
-BoundIterator BoundPreprocessor::AddConstraint(const Literal& lit) {
+void BoundPreprocessor::Init() {
+  DLINEAR_TRACE("BoundPreprocessor::Init()");
+  for (const auto& [formula_var, formula] : predicate_abstractor_.var_to_formula_map()) {
+    for (const Variable& var : formula.GetFreeVariables())
+      theory_bounds_.emplace(var, BoundVector{Infinity::ninfinity(predicate_abstractor_.config()),
+                                              Infinity::infinity(predicate_abstractor_.config())});
+  }
+}
+
+LiteralSet BoundPreprocessor::AddConstraint(const Literal& lit) {
+  LiteralSet explanation;
+  AddConstraint(lit, explanation);
+  return explanation;
+}
+void BoundPreprocessor::AddConstraint(const Literal& lit, LiteralSet& explanation) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::AddConstraint({})", lit);
   // If the literal is already fixed, return immediately
-  if (fixed_literals_.contains(lit)) return {};
+  if (fixed_literals_.contains(lit)) return;
+
 
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
@@ -103,14 +119,14 @@ BoundIterator BoundPreprocessor::AddConstraint(const Literal& lit) {
     // We know there is exactly 1 variable in the formula
     const Variable& var = *formula.GetFreeVariables().cbegin();
     // Add the simple bound to the theory_bound. If a violation is detected, report it immediately
-    const BoundIterator violation{GetBoundVector(var).AddBound(GetBound(lit, formula))};
+    const BoundIterator violation{theory_bounds_.at(var).AddBound(GetSimpleBound(lit, formula))};
     if (!violation.empty()) {
-      DLINEAR_DEBUG_FMT("BoundPreprocessor::AddConstraint: {} conflict found", violation->explanation);
-      return violation;
+      DLINEAR_DEBUG_FMT("BoundPreprocessor::AddConstraint: {} conflict found", violation.explanation());
+      violation.explanation(explanation);
+      explanation.insert(lit);
     }
   };
-  DLINEAR_TRACE_FMT("BoundPreprocessor::AddConstraint({}, {})", formula_var, formula);
-  return {};
+  DLINEAR_TRACE_FMT("BoundPreprocessor::AddConstraint: added constraint {}", lit);
 }
 
 void BoundPreprocessor::GetActiveExplanation(const Variable& var, LiteralSet& explanation) {
@@ -186,7 +202,7 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(cons
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   DLINEAR_ASSERT(ShouldPropagateEqPolynomial(lit), "The formula should be propagated");
 
-  LiteralSet explanation{lit};
+  LiteralSet explanation{};
   std::vector<Variable> dependencies;
   mpq_class rhs{get_constant_value(get_rhs_expression(formula))};
   mpq_class var_coeff{};
@@ -210,16 +226,17 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(cons
   rhs /= var_coeff;
   // Add all the dependencies edges to the graph
   for (const Variable& dependency : dependencies) {
-    const LiteralSet dependency_explanation = GetBoundVector(dependency).GetActiveEqExplanation();
+    const LiteralSet dependency_explanation = theory_bounds_.at(dependency).GetActiveEqExplanation();
     explanation.insert(dependency_explanation.begin(), dependency_explanation.end());
   }
   const auto [env_it, inserted] = env_.insert(var_propagated, rhs);
   DLINEAR_ASSERT(inserted, "The variable was not in the environment before");
   fmt::println("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_propagated, rhs,
                lit, dependencies);
-  BoundIterator violation{GetBoundVector(var_propagated).AddBound(env_it->second, LpColBound::B, explanation)};
+  BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(env_it->second, LpColBound::B, lit, explanation)};
   if (!violation.empty()) {
-    for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
+    explanation.insert(lit);
+    violation.explanation(explanation);
     DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     explanations.insert(explanation);
     // Remove the propagated constraint from the environment
@@ -242,7 +259,7 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   DLINEAR_ASSERT(ShouldPropagateBoundsPolynomial(lit), "The formula should be propagated");
 
-  LiteralSet explanation{lit};
+  LiteralSet explanation{};
   std::vector<Variable> dependencies;
   mpq_class l_rhs{get_constant_value(get_rhs_expression(formula))};
   mpq_class u_rhs{get_constant_value(get_rhs_expression(formula))};
@@ -251,15 +268,15 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     const Variable& var = get_variable(expr);
-    if (GetBoundVector(var).IsBounded()) {
-      fmt::println("{} -> {} * [{}, {}]", var, coeff, GetBoundVector(var).active_lower_bound(),
-                   GetBoundVector(var).active_upper_bound());
+    if (theory_bounds_.at(var).IsBounded()) {
+      fmt::println("{} -> {} * [{}, {}]", var, coeff, theory_bounds_.at(var).active_lower_bound(),
+                   theory_bounds_.at(var).active_upper_bound());
       if (coeff > 0) {
-        l_rhs -= GetBoundVector(var).active_upper_bound() * coeff;
-        u_rhs -= GetBoundVector(var).active_lower_bound() * coeff;
+        l_rhs -= theory_bounds_.at(var).active_upper_bound() * coeff;
+        u_rhs -= theory_bounds_.at(var).active_lower_bound() * coeff;
       } else {
-        l_rhs -= GetBoundVector(var).active_lower_bound() * coeff;
-        u_rhs -= GetBoundVector(var).active_upper_bound() * coeff;
+        l_rhs -= theory_bounds_.at(var).active_lower_bound() * coeff;
+        u_rhs -= theory_bounds_.at(var).active_upper_bound() * coeff;
       }
     } else {
       var_propagated = var;
@@ -277,27 +294,30 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
 
   // Add all the dependencies edges to the explanation
   for (const Variable& dependency : dependencies) {
-    const LiteralSet dependency_explanation = GetBoundVector(dependency).GetActiveEqExplanation();
+    const LiteralSet dependency_explanation = theory_bounds_.at(dependency).GetActiveEqExplanation();
     explanation.insert(dependency_explanation.begin(), dependency_explanation.end());
   }
 
   fmt::println("Propagating {}\n{} <= {} <= {}\n{}", lit, l_rhs, var_propagated, u_rhs, var_coeff);
 
   if (IsEqualTo(formula, lit.truth)) {
-    const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
+    const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, explanation};
+    BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(bound)};
     if (!violation.empty()) {
-      for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
+      explanation.insert(lit);
+      violation.explanation(explanation);
       DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
       fmt::println("BoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
     }
-    const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    BoundIterator violation2{GetBoundVector(var_propagated).AddBound(bound2)};
+    const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, explanation};
+    BoundIterator violation2{theory_bounds_.at(var_propagated).AddBound(bound2)};
     if (!violation2.empty()) {
-      for (; violation2; ++violation2)
-        explanation.insert(violation2->explanation.begin(), violation2->explanation.end());
+      explanation.insert(lit);
+      for (; violation2; ++violation2) {
+      }
+      explanation.insert(violation2->explanation.begin(), violation2->explanation.end());
       DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
@@ -313,33 +333,34 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
   // Add the bound on the single unbounded variable based on the upper and lower bound computed over the polynomial
   if (var_coeff > 0) {
     if (IsGreaterThan(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
+      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, lit, explanation};
     } else if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
+      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, lit, explanation};
     } else if (IsLessThan(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
+      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, lit, explanation};
     } else {
       DLINEAR_ASSERT(IsLessThanOrEqualTo(formula, lit.truth), "The formula must be a less than or equal to relation");
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
+      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, lit, explanation};
     }
   } else {
     DLINEAR_ASSERT(var_coeff < 0, "The coefficient must be less than 0");
     if (IsGreaterThan(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
+      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, lit, explanation};
     } else if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
+      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, lit, explanation};
     } else if (IsLessThan(formula, lit.truth)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
+      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, lit, explanation};
     } else {
       DLINEAR_ASSERT(IsLessThanOrEqualTo(formula, lit.truth), "The formula must be a less than or equal to relation");
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
+      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, lit, explanation};
     }
   }
   fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}", var_propagated,
                l_rhs, u_rhs, lit, dependencies);
-  BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
+  BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(bound)};
   if (!violation.empty()) {
-    for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
+    explanation.insert(lit);
+    violation.explanation(explanation);
     DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     explanations.insert(explanation);
     return PropagateResult::CONFLICT;
@@ -544,42 +565,36 @@ const mpq_class* BoundPreprocessor::StoreTemporaryMpq(const mpq_class& value) {
   temporary_mpq_vector_.emplace_back(value);
   return &temporary_mpq_vector_.back();
 }
-
-BoundVector& BoundPreprocessor::GetBoundVector(const Variable& var) {
-  const auto [it, inserted] =
-      theory_bounds_.emplace(var, BoundVector{Infinity::ninfinity(config_), Infinity::infinity(config_)});
-  return it->second;
+Bound BoundPreprocessor::GetSimpleBound(const dlinear::Literal& lit) const {
+  return GetSimpleBound(lit, predicate_abstractor_[lit.var]);
 }
-Bound BoundPreprocessor::GetBound(const dlinear::Literal& lit) const {
-  return GetBound(lit, predicate_abstractor_[lit.var]);
-}
-Bound BoundPreprocessor::GetBound(const Literal& lit, const Formula& formula) const {
+Bound BoundPreprocessor::GetSimpleBound(const Literal& lit, const Formula& formula) const {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
   const Expression& lhs{get_lhs_expression(formula)};
   const Expression& rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::B, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::B, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::B, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::B, lit};
   }
   if (IsGreaterThan(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SL, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SU, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SL, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SU, lit};
   }
   if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::L, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::U, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::L, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::U, lit};
   }
   if (IsLessThan(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SU, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SL, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SU, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SL, lit};
   }
   if (IsLessThanOrEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::U, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::L, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::U, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::L, lit};
   }
   if (IsNotEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::D, {lit}};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::D, {lit}};
+    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::D, lit};
+    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::D, lit};
   }
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }

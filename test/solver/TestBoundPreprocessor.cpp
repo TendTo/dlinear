@@ -1,5 +1,5 @@
 /**
- * @file TestContextBoundPreprocessor.cpp
+ * @file TestBoundPreprocessor.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
@@ -46,7 +46,7 @@ class MockContextBoundPreprocessor : public BoundPreprocessor {
   }
 };
 
-class TestContextBoundPreprocessor : public ::testing::Test {
+class TestBoundPreprocessor : public ::testing::Test {
  protected:
   const Config config_{std::string{"input.smt2"}};
   PredicateAbstractor pa_{config_};
@@ -59,11 +59,12 @@ class TestContextBoundPreprocessor : public ::testing::Test {
   LiteralSet active_constraints_;
   std::vector<Literal> added_constraints_;
 
-  TestContextBoundPreprocessor() : bound_preprocessor_{pa_} { DLINEAR_LOG_INIT_VERBOSITY(0); }
+  TestBoundPreprocessor() : bound_preprocessor_{pa_} { DLINEAR_LOG_INIT_VERBOSITY(0); }
 
   void AddConstraints(std::initializer_list<Formula> formulas) {
     for (const auto &formula : formulas) {
       const Formula flattened = pa_.Convert(formula);
+      bound_preprocessor_.Init();
       const Variable &var = is_negation(flattened) ? get_variable(get_operand(flattened)) : get_variable(flattened);
       const Literal lit{var, !is_negation(flattened)};
       bound_preprocessor_.AddConstraint(lit);
@@ -73,46 +74,46 @@ class TestContextBoundPreprocessor : public ::testing::Test {
   }
 };
 
-TEST_F(TestContextBoundPreprocessor, Constructor) {
+TEST_F(TestBoundPreprocessor, Constructor) {
   BoundPreprocessor bound_preprocessor{pa_};
   EXPECT_EQ(&bound_preprocessor.predicate_abstractor(), &pa_);
 }
 
-TEST_F(TestContextBoundPreprocessor, AddConstraints) {
+TEST_F(TestBoundPreprocessor, AddConstraints) {
   AddConstraints({x1_ == 0, x2_ == 0, x3_ == x1_ + x2_ + x4_});
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 3u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
 }
 
-TEST_F(TestContextBoundPreprocessor, AddConstraintsPropagation) {
+TEST_F(TestBoundPreprocessor, AddConstraintsPropagation) {
   AddConstraints({x1_ == 0, x1_ == x2_, x2_ == x3_, x3_ == 0});
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
-TEST_F(TestContextBoundPreprocessor, AddConstraintsPropagationWithConstant) {
+TEST_F(TestBoundPreprocessor, AddConstraintsPropagationWithConstant) {
   AddConstraints({x1_ == 0, x1_ + 1 == x2_, x2_ + 3 == x3_, x3_ == 4});
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
 
-TEST_F(TestContextBoundPreprocessor, EnableConstraintsPropagation) {
+TEST_F(TestBoundPreprocessor, EnableConstraintsPropagation) {
   AddConstraints({x1_ == 0, x1_ == x2_, x2_ == x3_, x3_ == 0});
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessSetEnvironment) {
+TEST_F(TestBoundPreprocessor, ProcessSetEnvironment) {
   AddConstraints({x1_ == 0, x4_ == 0});
   bound_preprocessor_.Process(active_constraints_);
 
@@ -121,7 +122,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessSetEnvironment) {
   EXPECT_EQ(bound_preprocessor_.env()[x4_], 0);
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPath) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPath) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_});
   bound_preprocessor_.Process(active_constraints_);
@@ -133,7 +134,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPath) {
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathConstant) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathConstant) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ + 1 == x2_, x2_ + 2 == x3_, x3_ + 5 == x4_});
   bound_preprocessor_.Process(active_constraints_);
@@ -145,7 +146,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathConstant) {
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val + 3);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val + 8);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathConstantFromRight) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathConstantFromRight) {
   const mpq_class val = 7;
   AddConstraints({x1_ == x2_ + 5, x2_ == x3_ + 2, x3_ == x4_ + 1, x4_ == val});
   bound_preprocessor_.Process(active_constraints_);
@@ -157,7 +158,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathConstantFromRight
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val + 1);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficient) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficient) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, 2 * x1_ == 5 * x2_, 3 * x2_ == 4 * x3_, 5 * x3_ == 7 * x4_});
   bound_preprocessor_.Process(active_constraints_);
@@ -169,7 +170,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficient) {
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val * 6 / 20);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val * 30 / 140);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstant) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstant) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, 2 * x1_ + 1 == 5 * x2_, 3 * x2_ + 2 == 4 * x3_, 5 * x3_ + 3 == 7 * x4_});
   bound_preprocessor_.Process(active_constraints_);
@@ -181,7 +182,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficientConsta
   EXPECT_EQ(bound_preprocessor_.env()[x3_], (((val * 2 + 1) / 5 * 3) + 2) / 4);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], (((((val * 2 + 1) / 5 * 3) + 2) / 4) * 5 + 3) / 7);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstantFromRight) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstantFromRight) {
   const mpq_class val = 7;
   AddConstraints({x4_ == val, 2 * x4_ + 1 == 5 * x3_, 3 * x3_ + 2 == 4 * x2_, 5 * x2_ + 3 == 7 * x1_});
   bound_preprocessor_.Process(active_constraints_);
@@ -194,7 +195,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathCoefficientConsta
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x4_ == val});
   bound_preprocessor_.Process(active_constraints_);
@@ -207,7 +208,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateSpread) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateSpread) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x2_ == x5_, x5_ == x6_, x3_ == x7_, x1_ == x8_,
                   x8_ == x9_, x9_ == x2_});
@@ -226,7 +227,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateSpread) {
   EXPECT_EQ(bound_preprocessor_.env()[x9_], val);
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleViolation) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleViolation) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == mpq_class{val + 1}, x2_ == x3_, x3_ == x4_, x4_ == x5_,
                   x5_ == mpq_class{val + 2}, x6_ == x7_, x7_ == mpq_class{val + 3}, x7_ == x8_, x8_ == x9_,
@@ -267,7 +268,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleViolation) {
   }
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateCompatibleDifferentEqBounds) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateCompatibleDifferentEqBounds) {
   AddConstraints({x1_ == 0, x1_ == 2 * x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 5 * x3_, x3_ == 0});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
@@ -278,7 +279,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateCompatibleDifferentEqBounds
   EXPECT_TRUE(explanations.empty());
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBounds) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBounds) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == val});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
@@ -289,7 +290,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoun
               ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1], added_constraints_[2]));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEnds) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEnds) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == mpq_class{val + 1}});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
@@ -313,7 +314,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoun
   }
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEndsAdvanced) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEndsAdvanced) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 4 * x4_, x3_ == 13 * x4_,
                   x4_ == mpq_class{val + 1}});
@@ -343,7 +344,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoun
   }
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleOrigins) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOrigins) {
   const mpq_class val = 7;
   const mpq_class val2 = val + 1;
   /**
@@ -365,7 +366,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleOrigins) {
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
+TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
   const mpq_class val = 7;
   const mpq_class val2 = val + 1;
   /**
@@ -387,7 +388,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolation) {
+TEST_F(TestBoundPreprocessor, ProcessEvaluateViolation) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x2_ == x3_, x3_ == val, x4_ == (x1_ + x5_), x6_ == x2_, x5_ == x6_,
                   x7_ == mpq_class{val + 1}, x7_ == x4_});
@@ -406,7 +407,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolation) {
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
+TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
   const mpq_class val = 7;
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ > val, x2_ == x4_});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
@@ -417,12 +418,13 @@ TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) 
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 
   fmt::print("explanations: {}\n", explanations);
+  fmt::print("added_constraints_: {}\n", bound_preprocessor_.theory_bounds());
   ASSERT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
                                                                       added_constraints_[2], added_constraints_[3]));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) {
+TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) {
   const mpq_class val = 7;
   AddConstraints({
       x1_ == val,
@@ -454,7 +456,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessEvaluateViolationInComplexInequality
                                               added_constraints_[5]));
 }
 
-TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleEqBinomial) {
+TEST_F(TestBoundPreprocessor, ProcessBoundSimpleEqBinomial) {
   const mpq_class val = 7;
   const mpq_class lb = (3 * val - 11) / 5;
   const mpq_class ub = (3 * val + 3 - 11) / 5;
@@ -471,7 +473,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleEqBinomial) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_lower_bound(), lb);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_upper_bound(), ub);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleGeBinomial) {
+TEST_F(TestBoundPreprocessor, ProcessBoundSimpleGeBinomial) {
   const mpq_class val = 7;
   const mpq_class lb = (3 * val - 11) / 5;
   const mpq_class ub = (3 * val + 3 - 11) / 5;
@@ -488,7 +490,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleGeBinomial) {
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsLowerBounded());
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_upper_bound(), ub);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleGtBinomial) {
+TEST_F(TestBoundPreprocessor, ProcessBoundSimpleGtBinomial) {
   const mpq_class val = 7;
   const mpq_class ub = (3 * val + 3 - 11) / 5;
   AddConstraints({
@@ -504,7 +506,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleGtBinomial) {
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsLowerBounded());
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_upper_bound(), ub);
 }
-TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleLeBinomial) {
+TEST_F(TestBoundPreprocessor, ProcessBoundSimpleLeBinomial) {
   const mpq_class val = 7;
   const mpq_class lb = (3 * val - 11) / 5;
   AddConstraints({
@@ -520,7 +522,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessBoundSimpleLeBinomial) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_lower_bound(), lb);
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsUpperBounded());
 }
-TEST_F(TestContextBoundPreprocessor, ProcessBoundNegativeLeBinomial) {
+TEST_F(TestBoundPreprocessor, ProcessBoundNegativeLeBinomial) {
   const mpq_class val = 7;
   const mpq_class lb = (3 * val - 11) / 5;
   AddConstraints({
@@ -537,7 +539,7 @@ TEST_F(TestContextBoundPreprocessor, ProcessBoundNegativeLeBinomial) {
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsUpperBounded());
 }
 
-TEST_F(TestContextBoundPreprocessor, ShouldPropagateTrue) {
+TEST_F(TestBoundPreprocessor, ShouldPropagateTrue) {
   AddConstraints({x1_ == 0});
   bound_preprocessor_.Process(active_constraints_);
   EXPECT_TRUE(bound_preprocessor_.ShouldPropagate(x1_ == x2_));
@@ -558,7 +560,7 @@ TEST_F(TestContextBoundPreprocessor, ShouldPropagateTrue) {
   EXPECT_TRUE(bound_preprocessor_.ShouldPropagate(-x1_ == x2_ - 1));
 }
 
-TEST_F(TestContextBoundPreprocessor, ShouldPropagateFalse) {
+TEST_F(TestBoundPreprocessor, ShouldPropagateFalse) {
   AddConstraints({x1_ == 0});
   bound_preprocessor_.Process(active_constraints_);
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(x1_ == 0));
@@ -569,7 +571,7 @@ TEST_F(TestContextBoundPreprocessor, ShouldPropagateFalse) {
   EXPECT_FALSE(bound_preprocessor_.ShouldPropagate(x2_ + x1_ == x2_ + x2_ + x1_));
 }
 
-TEST_F(TestContextBoundPreprocessor, ExtractCoefficient) {
+TEST_F(TestBoundPreprocessor, ExtractCoefficient) {
   EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ == x2_), 1);
   EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(x1_ + x2_ == 0), -1);
   EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(2 * x1_ == 3 * x2_), mpq_class(3, 2));
@@ -582,4 +584,4 @@ TEST_F(TestContextBoundPreprocessor, ExtractCoefficient) {
   EXPECT_EQ(bound_preprocessor_.ExtractCoefficient(2 * x1_ + 2 * x2_ == 3 * x2_), mpq_class(1, 2));
 }
 
-TEST_F(TestContextBoundPreprocessor, Stdcout) { EXPECT_NO_THROW(std::cout << bound_preprocessor_ << std::endl); }
+TEST_F(TestBoundPreprocessor, Stdcout) { EXPECT_NO_THROW(std::cout << bound_preprocessor_ << std::endl); }

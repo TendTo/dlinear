@@ -112,6 +112,23 @@ typename BoundIterator::value_type BoundIterator::operator[](int i) const {
   const int distance = std::distance(begin_bounds_it_, end_bounds_it_);
   return i < distance ? *(bounds_it_ + i) : *(nq_bounds_it_ + i - distance);
 }
+LiteralSet BoundIterator::explanation() const {
+  LiteralSet explanation;
+  BoundIterator::explanation(explanation);
+  return explanation;
+}
+void BoundIterator::explanation(LiteralSet &explanation) const {
+  auto [bound_it, end_bound_it] = bounds();
+  for (; bound_it != end_bound_it; ++bound_it) {
+    explanation.insert(bound_it->explanation.begin(), bound_it->explanation.end());
+    explanation.insert(bound_it->theory_literal);
+  }
+  auto [nq_bound_it, end_nq_bound_it] = nq_bounds();
+  for (; nq_bound_it != end_nq_bound_it; ++nq_bound_it) {
+    explanation.insert(nq_bound_it->explanation.begin(), nq_bound_it->explanation.end());
+    explanation.insert(nq_bound_it->theory_literal);
+  }
+}
 
 std::ostream &operator<<(std::ostream &os, const BoundIterator &violation) {
   BoundIterator it{violation.bounds(), violation.nq_bounds()};

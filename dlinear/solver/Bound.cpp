@@ -3,8 +3,8 @@
 namespace dlinear {
 
 std::strong_ordering Bound::operator<=>(const Bound& other) const {
-  const auto& [value_l, type_l, expl_l] = *this;
-  const auto& [value_r, type_r, expl_r] = other;
+  const auto& [value_l, type_l, lit_l, expl_l] = *this;
+  const auto& [value_r, type_r, lit_r, expl_r] = other;
   if (*value_l < *value_r) return std::strong_ordering::less;
   if (*value_l > *value_r) return std::strong_ordering::greater;
   if (type_l < type_r) return std::strong_ordering::less;
@@ -12,14 +12,14 @@ std::strong_ordering Bound::operator<=>(const Bound& other) const {
   return std::strong_ordering::equal;
 }
 bool Bound::operator==(const Bound& other) const {
-  const auto& [value_l, type_l, idx_l] = *this;
-  const auto& [value_r, type_r, idx_r] = other;
-  return *value_l == *value_r && type_l == type_r && idx_l == idx_r;
+  const auto& [value_l, type_l, lit_l, expl_l] = *this;
+  const auto& [value_r, type_r, lit_r, expl_r] = other;
+  return *value_l == *value_r && type_l == type_r && lit_l == lit_r && expl_l == expl_r;
 }
 
 std::ostream& operator<<(std::ostream& os, const Bound& bound) {
-  const auto& [value, type, idx] = bound;
-  return os << "Bound{ " << *value << ", " << type << ", " << idx << " }";
+  const auto& [value, type, lit, expl] = bound;
+  return os << "Bound{ " << *value << ", " << type << ", " << lit << ", " << expl << " }";
 }
 
 }  // namespace dlinear

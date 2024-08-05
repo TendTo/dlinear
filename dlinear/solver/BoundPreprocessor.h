@@ -42,7 +42,10 @@ class BoundPreprocessor {
 
   explicit BoundPreprocessor(const PredicateAbstractor& predicate_abstractor);
 
-  BoundIterator AddConstraint(const Literal& lit);
+  void Init();
+
+  LiteralSet AddConstraint(const Literal& lit);
+  void AddConstraint(const Literal& lit, LiteralSet& explanation);
 
   Explanations Process(const LiteralSet& enabled_literals = {});
   void Process(const LiteralSet& enabled_literals, Explanations& explanations);
@@ -144,9 +147,8 @@ class BoundPreprocessor {
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
 
-  BoundVector& GetBoundVector(const Variable& var);
-  Bound GetBound(const Literal& var) const;
-  Bound GetBound(const Literal& lit, const Formula& formula) const;
+  Bound GetSimpleBound(const dlinear::Literal& lit) const;
+  Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
 
   void SetEnvironmentFromBounds();
   /**

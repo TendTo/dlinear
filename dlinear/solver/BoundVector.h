@@ -84,11 +84,13 @@ class BoundVector {
    * @note If a violation is detected, the bound will not be added. The vector will remain unchanged.
    * @param value value of the new bound
    * @param lp_bound type of the new bound
+   * @param theory_lit theory literal associated with the bound
    * @param explanation set of theory literals justifying the existence of the bound
    * @return empty @ref BoundIterator if the bound has been added successfully
    * @return @ref BoundIterator containing all the violated bounds in the vector
    */
-  BoundIterator AddBound(const mpq_class& value, LpColBound lp_bound, const LiteralSet& explanation);
+  BoundIterator AddBound(const mpq_class& value, LpColBound lp_bound, const Literal& theory_lit,
+                         const LiteralSet& explanation = {});
   /**
    * Manually set the active lower bound to @p value.
    *
