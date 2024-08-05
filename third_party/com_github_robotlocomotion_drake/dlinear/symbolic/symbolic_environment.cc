@@ -21,8 +21,7 @@ namespace {
 void throw_if_dummy(const Variable &var) {
   if (var.is_dummy()) {
     ostringstream oss;
-    oss << "Dummy variable (ID = 0) is detected"
-        << "in the initialization of an environment.";
+    oss << "Dummy variable (ID = 0) is detected" << "in the initialization of an environment.";
     throw runtime_error(oss.str());
   }
 }
@@ -79,9 +78,10 @@ const Environment::mapped_type &Environment::at(const Environment::key_type &key
   return value;
 }
 
-bool Environment::contains(const key_type &key) const {
-  return map_.find(key) != map_.end();
-}
+std::size_t Environment::erase(const Environment::key_type &key) { return map_.erase(key); }
+void Environment::erase(const Environment::iterator &pos) { map_.erase(pos); }
+
+bool Environment::contains(const key_type &key) const { return map_.find(key) != map_.end(); }
 
 Environment::mapped_type &Environment::operator[](const key_type &key) {
   if (key.is_dummy()) {
@@ -100,8 +100,7 @@ const Environment::mapped_type &Environment::operator[](const key_type &key) con
   }
   if (!map_.count(key)) {
     ostringstream oss;
-    oss << "Environment::operator[] was called on a const Environment "
-        << "with a missing key \"" << key << "\".";
+    oss << "Environment::operator[] was called on a const Environment " << "with a missing key \"" << key << "\".";
     throw runtime_error(oss.str());
   }
   return map_.at(key);

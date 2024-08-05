@@ -110,6 +110,11 @@ class Environment {
   /** Returns the value that is mapped to a key equivalent to @p key. */
   const mapped_type &at(const key_type &key) const;
 
+  /** Erases the element with specific @p key */
+  std::size_t erase(const key_type &key);
+  /** Erases the element at the specified @p pos */
+  void erase(const iterator &pos);
+
   /** Returns the domain of this environment. */
   Variables domain() const;
 
