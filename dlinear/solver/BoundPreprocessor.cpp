@@ -1,10 +1,10 @@
 /**
- * @file ContextBoundPreprocessor.cpp
+ * @file BoundPreprocessor.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "ContextBoundPreprocessor.h"
+#include "BoundPreprocessor.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -50,12 +50,12 @@ void cartesian_product(const std::set<LiteralSet>& a, const std::set<LiteralSet>
 #if DEBUGGING_PREPROCESSOR
 
 bool print_all = false;
-Variable find_variable(const ContextBoundPreprocessor& preprocessor, const std::string& name) {
+Variable find_variable(const BoundPreprocessor& preprocessor, const std::string& name) {
   for (const Variable& var : preprocessor.theory_cols())
     if (var.get_name() == name) return var;
   DLINEAR_UNREACHABLE();
 }
-bool check_explanation(const ContextBoundPreprocessor& preprocessor, const LiteralSet& explanation) {
+bool check_explanation(const BoundPreprocessor& preprocessor, const LiteralSet& explanation) {
   mpq_class zero{0};
   Config config = preprocessor.config();
 
@@ -78,7 +78,7 @@ bool check_explanation(const ContextBoundPreprocessor& preprocessor, const Liter
   }
   return true;
 }
-[[maybe_unused]] bool check_explanation(const ContextBoundPreprocessor& preprocessor,
+[[maybe_unused]] bool check_explanation(const BoundPreprocessor& preprocessor,
                                         const std::set<LiteralSet>& explanations) {
   for (const auto& explanation : explanations) {
     return check_explanation(preprocessor, explanation);
@@ -88,10 +88,10 @@ bool check_explanation(const ContextBoundPreprocessor& preprocessor, const Liter
 #endif
 }  // namespace
 
-ContextBoundPreprocessor::ContextBoundPreprocessor(const PredicateAbstractor& predicate_abstractor)
+BoundPreprocessor::BoundPreprocessor(const PredicateAbstractor& predicate_abstractor)
     : config_{predicate_abstractor.config()}, predicate_abstractor_{predicate_abstractor} {}
 
-ContextBoundVector::BoundIterator ContextBoundPreprocessor::AddConstraint(const Literal& lit) {
+BoundIterator BoundPreprocessor::AddConstraint(const Literal& lit) {
   // If the literal is already fixed, return immediately
   if (fixed_literals_.contains(lit)) return {};
 
@@ -103,29 +103,29 @@ ContextBoundVector::BoundIterator ContextBoundPreprocessor::AddConstraint(const 
     // We know there is exactly 1 variable in the formula
     const Variable& var = *formula.GetFreeVariables().cbegin();
     // Add the simple bound to the theory_bound. If a violation is detected, report it immediately
-    const ContextBoundVector::BoundIterator violation{GetBoundVector(var).AddBound(GetBound(lit, formula))};
+    const BoundIterator violation{GetBoundVector(var).AddBound(GetBound(lit, formula))};
     if (!violation.empty()) {
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::AddConstraint: {} conflict found", violation->explanation);
+      DLINEAR_DEBUG_FMT("BoundPreprocessor::AddConstraint: {} conflict found", violation->explanation);
       return violation;
     }
   };
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::AddConstraint({}, {})", formula_var, formula);
+  DLINEAR_TRACE_FMT("BoundPreprocessor::AddConstraint({}, {})", formula_var, formula);
   return {};
 }
 
-void ContextBoundPreprocessor::GetActiveExplanation(const Variable& var, LiteralSet& explanation) {
+void BoundPreprocessor::GetActiveExplanation(const Variable& var, LiteralSet& explanation) {
   const auto it = theory_bounds_.find(var);
   if (it == theory_bounds_.end()) return;
   it->second.GetActiveExplanation(explanation);
 }
-ContextBoundPreprocessor::Explanations ContextBoundPreprocessor::Process(const LiteralSet& enabled_literals) {
+BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& enabled_literals) {
   Explanations explanations;
   Process(enabled_literals, explanations);
   return explanations;
 }
-void ContextBoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
+void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
   if (config_.disable_theory_preprocessor()) return;
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::Process({})", enabled_literals);
+  DLINEAR_TRACE_FMT("BoundPreprocessor::Process({})", enabled_literals);
   std::list<Literal> mutable_enabled_formula_vars{enabled_literals.cbegin(), enabled_literals.cend()};
   SetEnvironmentFromBounds();
 
@@ -134,7 +134,7 @@ void ContextBoundPreprocessor::Process(const LiteralSet& enabled_literals, Expla
       [this](const Literal& lit) { return predicate_abstractor_[lit.var].GetFreeVariables().size() <= 1; });
 
   PropagateConstraints(mutable_enabled_formula_vars, explanations);
-  DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::Process: {} conflict found in propagation", explanations.size());
+  DLINEAR_DEBUG_FMT("BoundPreprocessor::Process: {} conflict found in propagation", explanations.size());
   if (!explanations.empty()) return;
 
   // Add back all rows that have only one free variable and were not active equality bounds before propagation
@@ -147,10 +147,10 @@ void ContextBoundPreprocessor::Process(const LiteralSet& enabled_literals, Expla
   //  }
 
   EvaluateFormulas(mutable_enabled_formula_vars, explanations);
-  DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::Process: {} conflict found in evaluation", explanations.size());
+  DLINEAR_DEBUG_FMT("BoundPreprocessor::Process: {} conflict found in evaluation", explanations.size());
 }
 
-void ContextBoundPreprocessor::Clear() {
+void BoundPreprocessor::Clear() {
   env_ = Environment{};
   theory_bounds_.clear();
   temporary_mpq_vector_.clear();
@@ -159,24 +159,24 @@ void ContextBoundPreprocessor::Clear() {
   fixed_temporary_mpq_vector_.clear();
   fixed_literals_.clear();
 }
-void ContextBoundPreprocessor::Reset() {
+void BoundPreprocessor::Reset() {
   theory_bounds_ = fixed_theory_bounds_;
   env_ = fixed_env_;
   temporary_mpq_vector_ = fixed_temporary_mpq_vector_;
 }
 
-void ContextBoundPreprocessor::SetEnvironmentFromBounds() {
+void BoundPreprocessor::SetEnvironmentFromBounds() {
   for (const auto& [formula_var, bound] : theory_bounds_) {
     const mpq_class* const active_bound = bound.GetActiveEqualityBound();
     if (active_bound == nullptr) continue;
     env_[formula_var] = *active_bound;
-    DLINEAR_TRACE_FMT("ContextBoundPreprocessor::SetEnvironmentFromBounds: {} = {}", formula_var, *active_bound);
+    DLINEAR_TRACE_FMT("BoundPreprocessor::SetEnvironmentFromBounds: {} = {}", formula_var, *active_bound);
   }
 }
 
-ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqPolynomial(const Literal& lit,
-                                                                                          Explanations& explanations) {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqPolynomial({})", lit);
+BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(const Literal& lit,
+                                                                            Explanations& explanations) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateEqPolynomial({})", lit);
 
   const Formula& formula = predicate_abstractor_[lit.var];
 
@@ -215,27 +215,26 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqP
   }
   const auto [env_it, inserted] = env_.insert(var_propagated, rhs);
   DLINEAR_ASSERT(inserted, "The variable was not in the environment before");
-  fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_propagated,
-               rhs, lit, dependencies);
-  ContextBoundVector::BoundIterator violation{
-      GetBoundVector(var_propagated).AddBound(env_it->second, LpColBound::B, explanation)};
+  fmt::println("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_propagated, rhs,
+               lit, dependencies);
+  BoundIterator violation{GetBoundVector(var_propagated).AddBound(env_it->second, LpColBound::B, explanation)};
   if (!violation.empty()) {
     for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-    DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
+    DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     explanations.insert(explanation);
     // Remove the propagated constraint from the environment
     env_.erase(env_it);
-    fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
+    fmt::println("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     return PropagateResult::CONFLICT;
   }
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}",
-                    var_propagated, rhs, lit, dependencies);
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_propagated,
+                    rhs, lit, dependencies);
   return PropagateResult::PROPAGATED;
 }
 
-ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateBoundsPolynomial(
-    const Literal& lit, Explanations& explanations) {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateInPolynomial({})", lit);
+BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit,
+                                                                                Explanations& explanations) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateInPolynomial({})", lit);
 
   const Formula& formula = predicate_abstractor_[lit.var];
 
@@ -285,32 +284,32 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateBou
   fmt::println("Propagating {}\n{} <= {} <= {}\n{}", lit, l_rhs, var_propagated, u_rhs, var_coeff);
 
   if (IsEqualTo(formula, lit.truth)) {
-    const ContextBoundVector::Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    ContextBoundVector::BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
+    const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
+    BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
     if (!violation.empty()) {
       for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
-      fmt::println("ContextBoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
+      DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
+      fmt::println("BoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
     }
-    const ContextBoundVector::Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    ContextBoundVector::BoundIterator violation2{GetBoundVector(var_propagated).AddBound(bound2)};
+    const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
+    BoundIterator violation2{GetBoundVector(var_propagated).AddBound(bound2)};
     if (!violation2.empty()) {
       for (; violation2; ++violation2)
         explanation.insert(violation2->explanation.begin(), violation2->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints2: {} conflict found", explanation);
+      DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
     }
-    DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
+    DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
                       var_propagated, l_rhs, u_rhs, lit, dependencies);
-    fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
+    fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
                  var_propagated, l_rhs, u_rhs, lit, dependencies);
     return PropagateResult::PROPAGATED;
   }
 
-  ContextBoundVector::Bound bound;
+  Bound bound;
   // Add the bound on the single unbounded variable based on the upper and lower bound computed over the polynomial
   if (var_coeff > 0) {
     if (IsGreaterThan(formula, lit.truth)) {
@@ -336,30 +335,30 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateBou
       bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
     }
   }
-  fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
-               var_propagated, l_rhs, u_rhs, lit, dependencies);
-  ContextBoundVector::BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
+  fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}", var_propagated,
+               l_rhs, u_rhs, lit, dependencies);
+  BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
   if (!violation.empty()) {
     for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-    DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
+    DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     explanations.insert(explanation);
     return PropagateResult::CONFLICT;
   }
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
                     var_propagated, l_rhs, u_rhs, lit, dependencies);
   return PropagateResult::PROPAGATED;
 }
 
-void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
-  DLINEAR_TRACE("ContextBoundPreprocessor::PropagateConstraints()");
-  fmt::println("ContextBoundPreprocessor::PropagateConstraints({})", enabled_literals);
+void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
+  DLINEAR_TRACE("BoundPreprocessor::PropagateConstraints()");
+  fmt::println("BoundPreprocessor::PropagateConstraints({})", enabled_literals);
   bool continue_propagating;
   // While we still have constraints to propagate...
   do {
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
-      fmt::println("ContextBoundPreprocessor: propagating {}", lit);
+      fmt::println("BoundPreprocessor: propagating {}", lit);
       // Equality polynomial missing a single variable. Propagate it
       if (ShouldPropagateEqPolynomial(lit)) {
         const PropagateResult propagation_result = PropagateEqPolynomial(lit, explanations);
@@ -380,7 +379,7 @@ void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
-      fmt::println("ContextBoundPreprocessor: propagating {} - {}\n{}", lit, ShouldPropagateBoundsPolynomial(lit),
+      fmt::println("BoundPreprocessor: propagating {} - {}\n{}", lit, ShouldPropagateBoundsPolynomial(lit),
                    theory_bounds_);
       if (ShouldPropagateBoundsPolynomial(lit)) {
         const PropagateResult propagation_result = PropagateBoundsPolynomial(lit, explanations);
@@ -399,23 +398,23 @@ void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_
   std::cout << std::endl;
 }
 
-void ContextBoundPreprocessor::EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations) {
+void BoundPreprocessor::EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations) {
   DLINEAR_ASSERT(explanations.empty(), "The explanations vector must be empty");
-  DLINEAR_TRACE("ContextBoundPreprocessor::EvaluateFormulas()");
+  DLINEAR_TRACE("BoundPreprocessor::EvaluateFormulas()");
   for (const Literal& lit : enabled_literals) {
     if (!ShouldEvaluate(lit)) continue;
     const Formula& formula = predicate_abstractor_[lit.var];
     const bool satisfied = formula.Evaluate(env_) == lit.truth;
     if (!satisfied) {
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::EvaluateFormulas: {} => FAIL", lit);
+      DLINEAR_DEBUG_FMT("BoundPreprocessor::EvaluateFormulas: {} => FAIL", lit);
       FormulaViolationExplanation(lit, formula, explanations);
     }
   }
 }
 
-void ContextBoundPreprocessor::FormulaViolationExplanation(const Literal& lit, const Formula& formula,
-                                                           Explanations& explanations) {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::FormulaViolationExplanation({})", formula);
+void BoundPreprocessor::FormulaViolationExplanation(const Literal& lit, const Formula& formula,
+                                                    Explanations& explanations) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::FormulaViolationExplanation({})", formula);
   // TODO: produce more than just one explanation! Produce as many as possible!
   LiteralSet explanation;
   explanation.insert(lit);
@@ -445,20 +444,20 @@ void ContextBoundPreprocessor::FormulaViolationExplanation(const Literal& lit, c
   explanations.insert(explanation);
 }
 
-bool ContextBoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldEvaluate({})", lit);
+bool BoundPreprocessor::ShouldEvaluate(const Literal& lit) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldEvaluate({})", lit);
   const Formula& formula = predicate_abstractor_[lit.var];
   return ShouldEvaluate(formula);
 }
-bool ContextBoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldEvaluate({})", formula);
+bool BoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldEvaluate({})", formula);
   // All free variables must be in the environment
   return std::all_of(formula.GetFreeVariables().begin(), formula.GetFreeVariables().end(),
                      [this](const Variable& v) { return env_.contains(v); });
 }
 
-bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateEqPolynomial({})", lit);
+bool BoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateEqPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
   // There must be exactly two free variables and an equality relation between them
@@ -466,8 +465,8 @@ bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) c
   if (!truth && !is_not_equal_to(formula)) return false;
   return ShouldPropagateEqPolynomial(formula);
 }
-bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formula) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateEqPolynomial({})", formula);
+bool BoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formula) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateEqPolynomial({})", formula);
   // There must be exactly two free variables and an equality relation between them
   if (!is_equal_to(formula) && !is_not_equal_to(formula)) return false;
   if (formula.GetFreeVariables().size() < 2) return false;
@@ -482,16 +481,16 @@ bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formul
   }
   return missing_var_count == 1;
 }
-bool ContextBoundPreprocessor::ShouldPropagateBoundsPolynomial(const Literal& lit) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInPolynomial({})", lit);
+bool BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Literal& lit) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateInPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
   // There must be exactly two free variables and an equality relation between them
   if (!is_relational(formula)) return false;
   return ShouldPropagateBoundsPolynomial(formula);
 }
-bool ContextBoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& formula) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInPolynomial({})", formula);
+bool BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& formula) const {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateInPolynomial({})", formula);
   // There must be more than two free variables and an inequality relation between them
   if (!is_relational(formula)) return false;
   if (formula.GetFreeVariables().size() < 2) return false;
@@ -513,7 +512,7 @@ bool ContextBoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& fo
   return missing_var_count == 1;
 }
 
-std::pair<Variable, Variable> ContextBoundPreprocessor::ExtractBoundEdge(const Formula& formula) const {
+std::pair<Variable, Variable> BoundPreprocessor::ExtractBoundEdge(const Formula& formula) const {
   DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   const Expression& lhs = get_lhs_expression(formula);
@@ -528,7 +527,7 @@ std::pair<Variable, Variable> ContextBoundPreprocessor::ExtractBoundEdge(const F
   };
 }
 
-mpq_class ContextBoundPreprocessor::ExtractEqBoundCoefficient(const Formula& formula) const {
+mpq_class BoundPreprocessor::ExtractEqBoundCoefficient(const Formula& formula) const {
   DLINEAR_ASSERT(is_equal_to(formula), "Formula should be an equality relation");
   DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
@@ -541,20 +540,20 @@ mpq_class ContextBoundPreprocessor::ExtractEqBoundCoefficient(const Formula& for
   return -(std::next(map.cbegin())->second) / map.cbegin()->second;
 }
 
-const mpq_class* ContextBoundPreprocessor::StoreTemporaryMpq(const mpq_class& value) {
+const mpq_class* BoundPreprocessor::StoreTemporaryMpq(const mpq_class& value) {
   temporary_mpq_vector_.emplace_back(value);
   return &temporary_mpq_vector_.back();
 }
 
-ContextBoundVector& ContextBoundPreprocessor::GetBoundVector(const Variable& var) {
+BoundVector& BoundPreprocessor::GetBoundVector(const Variable& var) {
   const auto [it, inserted] =
-      theory_bounds_.emplace(var, ContextBoundVector{Infinity::ninfinity(config_), Infinity::infinity(config_)});
+      theory_bounds_.emplace(var, BoundVector{Infinity::ninfinity(config_), Infinity::infinity(config_)});
   return it->second;
 }
-ContextBoundVector::Bound ContextBoundPreprocessor::GetBound(const dlinear::Literal& lit) const {
+Bound BoundPreprocessor::GetBound(const dlinear::Literal& lit) const {
   return GetBound(lit, predicate_abstractor_[lit.var]);
 }
-ContextBoundVector::Bound ContextBoundPreprocessor::GetBound(const Literal& lit, const Formula& formula) const {
+Bound BoundPreprocessor::GetBound(const Literal& lit, const Formula& formula) const {
   DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
   const Expression& lhs{get_lhs_expression(formula)};
   const Expression& rhs{get_rhs_expression(formula)};
@@ -585,7 +584,7 @@ ContextBoundVector::Bound ContextBoundPreprocessor::GetBound(const Literal& lit,
   DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
 }
 
-bool ContextBoundPreprocessor::IsSimpleBound(const Formula& formula) {
+bool BoundPreprocessor::IsSimpleBound(const Formula& formula) {
   // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
   if (!is_relational(formula)) return false;
   // The number of variables must be exactly one
@@ -597,38 +596,38 @@ bool ContextBoundPreprocessor::IsSimpleBound(const Formula& formula) {
   return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
 }
 
-bool ContextBoundPreprocessor::IsEqualTo(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsEqualTo(const Formula& formula, const bool truth) {
   return truth ? is_equal_to(formula) : is_not_equal_to(formula);
 }
 
-bool ContextBoundPreprocessor::IsNotEqualTo(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsNotEqualTo(const Formula& formula, const bool truth) {
   return truth ? is_not_equal_to(formula) : is_equal_to(formula);
 }
 
-bool ContextBoundPreprocessor::IsGreaterThan(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsGreaterThan(const Formula& formula, const bool truth) {
   return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
 }
 
-bool ContextBoundPreprocessor::IsLessThan(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsLessThan(const Formula& formula, const bool truth) {
   return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
 }
 
-bool ContextBoundPreprocessor::IsGreaterThanOrEqualTo(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsGreaterThanOrEqualTo(const Formula& formula, const bool truth) {
   return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
 }
 
-bool ContextBoundPreprocessor::IsLessThanOrEqualTo(const Formula& formula, const bool truth) {
+bool BoundPreprocessor::IsLessThanOrEqualTo(const Formula& formula, const bool truth) {
   return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
 }
 
-void ContextBoundPreprocessor::GetExplanation(const Variable& var, LiteralSet& explanation) {
+void BoundPreprocessor::GetExplanation(const Variable& var, LiteralSet& explanation) {
   const auto it = theory_bounds_.find(var);
   if (it == theory_bounds_.end()) return;
   it->second.GetActiveExplanation(explanation);
 }
 
-std::ostream& operator<<(std::ostream& os, const ContextBoundPreprocessor& preprocessor) {
-  return os << "ContextBoundPreprocessor{" << "env_ = " << preprocessor.env() << ", "
+std::ostream& operator<<(std::ostream& os, const BoundPreprocessor& preprocessor) {
+  return os << "BoundPreprocessor{" << "env_ = " << preprocessor.env() << ", "
             << "theory_bounds_ = " << preprocessor.theory_bounds() << "}";
 }
 

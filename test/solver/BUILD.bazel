@@ -20,15 +20,15 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
-    name = "test_context_bound_vector",
+    name = "test_bound_vector",
     tags = ["solver"],
-    deps = ["//dlinear/solver:context_bounds"],
+    deps = ["//dlinear/solver:bound_vector"],
 )
 
 dlinear_cc_googletest(
-    name = "test_context_bound_preprocessor",
+    name = "test_bound_preprocessor",
     tags = ["solver"],
-    deps = ["//dlinear/solver:context_bound_preprocessor"],
+    deps = ["//dlinear/solver:bound_preprocessor"],
 )
 
 dlinear_cc_googletest(

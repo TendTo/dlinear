@@ -6,20 +6,21 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/solver/ContextBoundVector.h"
+#include "dlinear/solver/BoundVector.h"
 
-using dlinear::ContextBoundVector;
+using dlinear::BoundVector;
 using dlinear::Literal;
 using dlinear::LpColBound;
 using dlinear::Variable;
+using dlinear::Bound;
 
 class TestContextBoundVector : public ::testing::Test {
  protected:
   const mpq_class inf_l_{-100};
   const mpq_class inf_u_{100};
   int idx_{0};
-  ContextBoundVector bounds_;
-  ContextBoundVector empty_bounds_;
+  BoundVector bounds_;
+  BoundVector empty_bounds_;
   const mpq_class val_[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   Literal exp1_, exp2_, exp3_, exp4_, exp5_;
 
@@ -37,7 +38,7 @@ class TestContextBoundVector : public ::testing::Test {
 };
 
 TEST_F(TestContextBoundVector, Constructor) {
-  ContextBoundVector bounds{inf_l_, inf_u_};
+  BoundVector bounds{inf_l_, inf_u_};
   EXPECT_EQ(bounds.n_upper_bounds(), 0);
   EXPECT_EQ(bounds.n_lower_bounds(), 0);
   EXPECT_TRUE(bounds.bounds().empty());
@@ -142,7 +143,7 @@ TEST_F(TestContextBoundVector, AddDBound) {
   EXPECT_EQ(empty_bounds_.active_lower_bound(), inf_l_);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), inf_u_);
   EXPECT_EQ(empty_bounds_.nq_bounds().size(), 1u);
-  EXPECT_EQ(*empty_bounds_.nq_bounds().begin(), ContextBoundVector::Bound(&value, LpColBound::D, {exp}));
+  EXPECT_EQ(*empty_bounds_.nq_bounds().begin(), Bound(&value, LpColBound::D, {exp}));
 }
 
 TEST_F(TestContextBoundVector, EmptyActiveBound) {
@@ -202,7 +203,7 @@ TEST_F(TestContextBoundVector, OnlyLowerBoundsActiveBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cend() - 1);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::SL, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::SL, eq_exp));
 }
 TEST_F(TestContextBoundVector, OnlyLowerBoundsActiveBounds) {
   const std::set<Literal> eq_exp = exp(), eq_exp2 = exp();
@@ -217,8 +218,8 @@ TEST_F(TestContextBoundVector, OnlyLowerBoundsActiveBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cend() - 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(++it), ContextBoundVector::Bound(&val_[3], LpColBound::SL, eq_exp2));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(++it), Bound(&val_[3], LpColBound::SL, eq_exp2));
 }
 TEST_F(TestContextBoundVector, OnlyUpperBoundsActiveBound) {
   const std::set<Literal> eq_exp = exp();
@@ -233,7 +234,7 @@ TEST_F(TestContextBoundVector, OnlyUpperBoundsActiveBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cbegin() + 1);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::SU, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::SU, eq_exp));
 }
 TEST_F(TestContextBoundVector, OnlyUpperBoundsActiveBounds) {
   const std::set<Literal> eq_exp = exp(), eq_exp2 = exp();
@@ -248,8 +249,8 @@ TEST_F(TestContextBoundVector, OnlyUpperBoundsActiveBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cbegin() + 2);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::SU, eq_exp));
-  EXPECT_EQ(*(++it), ContextBoundVector::Bound(&val_[1], LpColBound::U, eq_exp2));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::SU, eq_exp));
+  EXPECT_EQ(*(++it), Bound(&val_[1], LpColBound::U, eq_exp2));
 }
 
 TEST_F(TestContextBoundVector, NqBoundsActiveBound) {
@@ -387,8 +388,8 @@ TEST_F(TestContextBoundVector, PriorityEqBoundsActiveBoundOverLower) {
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
-  EXPECT_EQ(*it.bounds().first, ContextBoundVector::Bound(&val_[3], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(it.bounds().first + 1), ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it.bounds().first, Bound(&val_[3], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(it.bounds().first + 1), Bound(&val_[3], LpColBound::U, eq_exp));
 }
 TEST_F(TestContextBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   const std::set<Literal> eq_exp = exp();
@@ -402,8 +403,8 @@ TEST_F(TestContextBoundVector, PriorityEqBoundsActiveBoundsOverLower) {
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
-  EXPECT_EQ(*it.bounds().first, ContextBoundVector::Bound(&val_[3], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(it.bounds().first + 1), ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it.bounds().first, Bound(&val_[3], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(it.bounds().first + 1), Bound(&val_[3], LpColBound::U, eq_exp));
 }
 TEST_F(TestContextBoundVector, PriorityEqBoundActiveBoundsOverUpper) {
   const std::set<Literal> eq_exp = exp();
@@ -417,8 +418,8 @@ TEST_F(TestContextBoundVector, PriorityEqBoundActiveBoundsOverUpper) {
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
-  EXPECT_EQ(*it.bounds().first, ContextBoundVector::Bound(&val_[3], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(it.bounds().first + 1), ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it.bounds().first, Bound(&val_[3], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(it.bounds().first + 1), Bound(&val_[3], LpColBound::U, eq_exp));
 }
 TEST_F(TestContextBoundVector, PriorityEqBoundsActiveBoundsOverUpper) {
   const std::set<Literal> eq_exp = exp();
@@ -432,8 +433,8 @@ TEST_F(TestContextBoundVector, PriorityEqBoundsActiveBoundsOverUpper) {
   EXPECT_EQ(it.size(), 2u);
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds_size(), 2u);
-  EXPECT_EQ(*it.bounds().first, ContextBoundVector::Bound(&val_[3], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(it.bounds().first + 1), ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it.bounds().first, Bound(&val_[3], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(it.bounds().first + 1), Bound(&val_[3], LpColBound::U, eq_exp));
 }
 TEST_F(TestContextBoundVector, EqBoundsActiveBound) {
   empty_bounds_.AddBound(val_[3], LpColBound::L, exp());
@@ -579,7 +580,7 @@ TEST_F(TestContextBoundVector, StrictLowerGetActiveSingleBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 1);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::SL, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::SL, eq_exp));
 }
 TEST_F(TestContextBoundVector, StrictLowerGetActiveSingleBounds) {
   const std::set<Literal> eq_exp = exp(), eq_exp2 = exp();
@@ -596,8 +597,8 @@ TEST_F(TestContextBoundVector, StrictLowerGetActiveSingleBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::L, eq_exp));
-  EXPECT_EQ(*(++it), ContextBoundVector::Bound(&val_[1], LpColBound::SL, eq_exp2));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::L, eq_exp));
+  EXPECT_EQ(*(++it), Bound(&val_[1], LpColBound::SL, eq_exp2));
 }
 TEST_F(TestContextBoundVector, LowerGetActiveSingleBound) {
   const std::set<Literal> eq_exp = exp();
@@ -612,7 +613,7 @@ TEST_F(TestContextBoundVector, LowerGetActiveSingleBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::L, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::L, eq_exp));
 }
 TEST_F(TestContextBoundVector, LowerGetActiveSingleBounds) {
   const std::set<Literal> eq_exp = exp();
@@ -627,7 +628,7 @@ TEST_F(TestContextBoundVector, LowerGetActiveSingleBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin());
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 2);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[1], LpColBound::L, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[1], LpColBound::L, eq_exp));
 }
 TEST_F(TestContextBoundVector, StrictUpperGetActiveSingleBound) {
   const std::set<Literal> eq_exp = exp();
@@ -644,7 +645,7 @@ TEST_F(TestContextBoundVector, StrictUpperGetActiveSingleBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend() - 1);
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::SU, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::SU, eq_exp));
 }
 TEST_F(TestContextBoundVector, StrictUpperGetActiveSingleBounds) {
   const std::set<Literal> eq_exp = exp(), eq_exp2 = exp();
@@ -661,8 +662,8 @@ TEST_F(TestContextBoundVector, StrictUpperGetActiveSingleBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::SU, eq_exp));
-  EXPECT_EQ(*(++it), ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp2));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::SU, eq_exp));
+  EXPECT_EQ(*(++it), Bound(&val_[3], LpColBound::U, eq_exp2));
 }
 TEST_F(TestContextBoundVector, UpperGetActiveSingleBound) {
   const std::set<Literal> eq_exp = exp();
@@ -677,7 +678,7 @@ TEST_F(TestContextBoundVector, UpperGetActiveSingleBound) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::U, eq_exp));
 }
 TEST_F(TestContextBoundVector, UpperGetActiveSingleBounds) {
   const std::set<Literal> eq_exp = exp();
@@ -692,7 +693,7 @@ TEST_F(TestContextBoundVector, UpperGetActiveSingleBounds) {
   EXPECT_TRUE(it.nq_bounds_empty());
   EXPECT_EQ(it.bounds().first, empty_bounds_.bounds().cbegin() + 2);
   EXPECT_EQ(it.bounds().second, empty_bounds_.bounds().cend());
-  EXPECT_EQ(*it, ContextBoundVector::Bound(&val_[3], LpColBound::U, eq_exp));
+  EXPECT_EQ(*it, Bound(&val_[3], LpColBound::U, eq_exp));
 }
 
 TEST_F(TestContextBoundVector, SetBounds) {

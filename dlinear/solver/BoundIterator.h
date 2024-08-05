@@ -1,12 +1,12 @@
 /**
- * @file ContextBoundIterator.h
+ * @file BoundIterator.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief ContextBoundIterator class.
+ * @brief BoundIterator class.
  *
  * It is used to iterate over the bounds of a theory solver without copying each @ref
- * dlinear::ContextBoundVector::Bound. Usually the results of bound violation.
+ * dlinear::BoundVector::Bound. Usually the results of bound violation.
  */
 #pragma once
 
@@ -14,13 +14,16 @@
 #include <iosfwd>
 #include <iterator>
 #include <utility>
+#include <vector>
+
+#include "dlinear/solver/Bound.h"
 
 namespace dlinear {
 
 /**
- * ContextBoundIterator class.
+ * BoundIterator class.
  *
- * It is used to iterate over the bounds of a theory solver without copying each @ref ContextBoundVector::Bound.
+ * It is used to iterate over the bounds of a theory solver without copying each @ref BoundVector::Bound.
  * Can be returned as a result of a bound violation or to iterate over the active bounds.
  * It allows to iterate over the two types of bounds: standard and non-equal as if they were a single container.
  * @code
@@ -29,19 +32,17 @@ namespace dlinear {
  * bounds.push_back(Bound{1, BoundType::L, 2});
  * bounds.push_back(Bound{2, BoundType::B, 1});
  * nq_bounds.push_back(Bound{3, BoundType::D, 3});
- * ContextBoundIterator<std::vector<Bound>> it{bounds.begin(), bounds.end(), nq_bounds.begin(), nq_bounds.end()};
+ * BoundIterator<std::vector<Bound>> it{bounds.begin(), bounds.end(), nq_bounds.begin(), nq_bounds.end()};
  * for (; it; ++it) {
  *  std::cout << *it << std::endl;
  * }
  * // Output:
  * // Bound{0, BoundType::U, 4}, Bound{1, BoundType::L, 2}, Bound{2, BoundType::B, 1}, Bound{3, BoundType::D, 3}
  * @endcode
- * @tparam T data structure that stores the bounds
  */
-template <class T>
-class ContextBoundIterator {
+class BoundIterator {
  public:
-  using vector_type = T;
+  using vector_type = std::vector<Bound>;
   using internal_iterator = typename vector_type::const_iterator;
   using iterator_category = std::input_iterator_tag;
   using value_type = typename vector_type::value_type;
@@ -50,20 +51,20 @@ class ContextBoundIterator {
   using difference_type = std::ptrdiff_t;
 
   /** Construct an empty iterator. */
-  ContextBoundIterator();
+  BoundIterator();
   /**
    * Construct an iterator from a pair of iterators, @p begin_bounds_it and @p end_bounds_it.
    * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param begin_bounds_it begin iterator to the first bound
    * @param end_bounds_it end iterator of the bounds
    */
-  ContextBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
+  BoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it);
   /**
    * Construct an iterator from a pair of iterators, @p bounds.
    * @note Bounds will be normalized, i.e., all ending bounds will be greater or equal to the being bounds.
    * @param bounds pair of iterators to the bounds, begin and end
    */
-  explicit ContextBoundIterator(std::pair<internal_iterator, internal_iterator> bounds);
+  explicit BoundIterator(std::pair<internal_iterator, internal_iterator> bounds);
   /**
    * Construct an iterator from a pair of iterators to the standard bounds, @p begin_bounds_it and @p end_bounds_it,
    * and a pair of iterators to the non-equal bounds, @p begin_nq_bounds_it and @p end_nq_bounds_it.
@@ -73,8 +74,8 @@ class ContextBoundIterator {
    * @param begin_nq_bounds_it begin iterator to the first non-equal bound
    * @param end_nq_bounds_it end iterator of the non-equal bounds
    */
-  ContextBoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it,
-                       internal_iterator begin_nq_bounds_it, internal_iterator end_nq_bounds_it);
+  BoundIterator(internal_iterator begin_bounds_it, internal_iterator end_bounds_it,
+                internal_iterator begin_nq_bounds_it, internal_iterator end_nq_bounds_it);
   /**
    * Construct an iterator from a pair of iterators to the standard bounds, @p bounds,
    * and a pair of iterators to the non-equal bounds, @p nq_bounds.
@@ -82,19 +83,19 @@ class ContextBoundIterator {
    * @param bounds begin and end iterators to the bounds
    * @param nq_bounds begin and end iterators to the non-equal bounds
    */
-  ContextBoundIterator(std::pair<internal_iterator, internal_iterator> bounds,
-                       std::pair<internal_iterator, internal_iterator> nq_bounds);
+  BoundIterator(std::pair<internal_iterator, internal_iterator> bounds,
+                std::pair<internal_iterator, internal_iterator> nq_bounds);
 
   explicit operator bool() const { return bounds_it_ != end_bounds_it_ || nq_bounds_it_ != end_nq_bounds_it_; }
 
   pointer operator->() const { return bounds_it_ != end_bounds_it_ ? &*bounds_it_ : &*nq_bounds_it_; }
   reference operator*() const { return bounds_it_ != end_bounds_it_ ? *bounds_it_ : *nq_bounds_it_; }
 
-  ContextBoundIterator &operator++();
-  const ContextBoundIterator operator++(int);
+  BoundIterator &operator++();
+  const BoundIterator operator++(int);
 
-  ContextBoundIterator &operator--();
-  const ContextBoundIterator operator--(int);
+  BoundIterator &operator--();
+  const BoundIterator operator--(int);
 
   value_type operator[](int i) const;
 
@@ -102,12 +103,14 @@ class ContextBoundIterator {
    * Return the pair of iterators to the bounds.
    * @return begin and end iterators to the bounds
    */
-  std::pair<internal_iterator, internal_iterator> bounds() const { return {bounds_it_, end_bounds_it_}; }
+  [[nodiscard]] std::pair<internal_iterator, internal_iterator> bounds() const { return {bounds_it_, end_bounds_it_}; }
   /**
    * Return the pair of iterators to the non-equal bounds.
    * @return begin and end iterators to the non-equal bounds
    */
-  std::pair<internal_iterator, internal_iterator> nq_bounds() const { return {nq_bounds_it_, end_nq_bounds_it_}; }
+  [[nodiscard]] std::pair<internal_iterator, internal_iterator> nq_bounds() const {
+    return {nq_bounds_it_, end_nq_bounds_it_};
+  }
   /**
    * Number of bounds included between the begin and end iterators.
    * @return number of bounds
@@ -146,8 +149,8 @@ class ContextBoundIterator {
    */
   [[nodiscard]] inline std::size_t size() const { return bounds_size() + nq_bounds_size(); }
 
-  internal_iterator begin() const { return bounds_it_; }
-  internal_iterator end() const { return end_nq_bounds_it_; }
+  [[nodiscard]] internal_iterator begin() const { return bounds_it_; }
+  [[nodiscard]] internal_iterator end() const { return end_nq_bounds_it_; }
 
  private:
   static const vector_type default_empty_vector_;  ///< Default empty vector. Used for default construction.
@@ -161,7 +164,6 @@ class ContextBoundIterator {
   const internal_iterator end_nq_bounds_it_;    ///< End iterator of the non-equal bounds
 };
 
-template <class T>
-std::ostream &operator<<(std::ostream &os, const ContextBoundIterator<T> &violation);
+std::ostream &operator<<(std::ostream &os, const BoundIterator &violation);
 
 }  // namespace dlinear

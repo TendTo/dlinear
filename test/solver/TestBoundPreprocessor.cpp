@@ -11,12 +11,11 @@
 #include <numeric>
 #include <vector>
 
-#include "dlinear/solver/ContextBoundPreprocessor.h"
+#include "dlinear/solver/BoundPreprocessor.h"
 
+using dlinear::BoundPreprocessor;
+using dlinear::BoundVectorMap;
 using dlinear::Config;
-using dlinear::ContextBoundPreprocessor;
-using dlinear::ContextBoundVector;
-using dlinear::ContextBoundVectorMap;
 using dlinear::Formula;
 using dlinear::Literal;
 using dlinear::LiteralSet;
@@ -24,19 +23,19 @@ using dlinear::PredicateAbstractor;
 using dlinear::Variable;
 using Explanations = std::set<LiteralSet>;
 
-class MockContextBoundPreprocessor : public ContextBoundPreprocessor {
+class MockContextBoundPreprocessor : public BoundPreprocessor {
  public:
-  MockContextBoundPreprocessor(PredicateAbstractor &abstractor) : ContextBoundPreprocessor{abstractor} {}
-  auto ShouldEvaluate(const Formula &formula) { return ContextBoundPreprocessor::ShouldEvaluate(Flatten(formula)); }
+  MockContextBoundPreprocessor(PredicateAbstractor &abstractor) : BoundPreprocessor{abstractor} {}
+  auto ShouldEvaluate(const Formula &formula) { return BoundPreprocessor::ShouldEvaluate(Flatten(formula)); }
   auto ShouldPropagate(const Formula &formula) {
-    return ContextBoundPreprocessor::ShouldPropagateEqPolynomial(Flatten(formula));
+    return BoundPreprocessor::ShouldPropagateEqPolynomial(Flatten(formula));
   }
   auto ExtractEdge(const Formula &formula) {
-    const auto [from, to] = ContextBoundPreprocessor::ExtractBoundEdge(Flatten(formula));
+    const auto [from, to] = BoundPreprocessor::ExtractBoundEdge(Flatten(formula));
     return std::make_pair(from, to);
   }
   auto ExtractCoefficient(const Formula &formula) {
-    return ContextBoundPreprocessor::ExtractEqBoundCoefficient(Flatten(formula));
+    return BoundPreprocessor::ExtractEqBoundCoefficient(Flatten(formula));
   }
 
  private:
@@ -52,7 +51,7 @@ class TestContextBoundPreprocessor : public ::testing::Test {
   const Config config_{std::string{"input.smt2"}};
   PredicateAbstractor pa_{config_};
   MockContextBoundPreprocessor bound_preprocessor_{pa_};
-  ContextBoundVectorMap &theory_bounds_{const_cast<ContextBoundVectorMap &>(bound_preprocessor_.theory_bounds())};
+  BoundVectorMap &theory_bounds_{const_cast<BoundVectorMap &>(bound_preprocessor_.theory_bounds())};
   const Variable x1_{"x1"}, x2_{"x2"}, x3_{"x3"}, x4_{"x4"}, x5_{"x5"}, x6_{"x6"}, x7_{"x7"}, x8_{"x8"}, x9_{"x9"},
       x10_{"x10"};
   const mpq_class inf_{100};
@@ -75,7 +74,7 @@ class TestContextBoundPreprocessor : public ::testing::Test {
 };
 
 TEST_F(TestContextBoundPreprocessor, Constructor) {
-  ContextBoundPreprocessor bound_preprocessor{pa_};
+  BoundPreprocessor bound_preprocessor{pa_};
   EXPECT_EQ(&bound_preprocessor.predicate_abstractor(), &pa_);
 }
 

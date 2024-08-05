@@ -1,10 +1,10 @@
 /**
- * @file ContextBoundVector.cpp
+ * @file BoundVector.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "ContextBoundVector.h"
+#include "BoundVector.h"
 
 #include <algorithm>
 #include <ostream>
@@ -12,9 +12,9 @@
 
 #include "dlinear/util/exception.h"
 
-#define TRACE_VIOLATED_BOUNDS(it)                                                                             \
-  DLINEAR_TRACE_FMT("ContextBoundVector::ViolatedBounds: ({} {}) incompatible with ({} {})", value, lp_bound, \
-                    *(it)->value, (it)->lp_bound)
+#define TRACE_VIOLATED_BOUNDS(it)                                                                                    \
+  DLINEAR_TRACE_FMT("BoundVector::ViolatedBounds: ({} {}) incompatible with ({} {})", value, lp_bound, *(it)->value, \
+                    (it)->lp_bound)
 
 namespace dlinear {
 
@@ -25,22 +25,7 @@ namespace dlinear {
 #define FindLowerNqBoundValue(value_ptr) nq_bounds_.lower_bound({value_ptr, LpColBound::D, {}})
 #define FindUpperNqBoundValue(value_ptr) nq_bounds_.upper_bound({value_ptr, LpColBound::D, {}})
 
-std::strong_ordering ContextBoundVector::Bound::operator<=>(const dlinear::ContextBoundVector::Bound& other) const {
-  const auto& [value_l, type_l, expl_l] = *this;
-  const auto& [value_r, type_r, expl_r] = other;
-  if (*value_l < *value_r) return std::strong_ordering::less;
-  if (*value_l > *value_r) return std::strong_ordering::greater;
-  if (type_l < type_r) return std::strong_ordering::less;
-  if (type_l > type_r) return std::strong_ordering::greater;
-  return std::strong_ordering::equal;
-}
-bool ContextBoundVector::Bound::operator==(const dlinear::ContextBoundVector::Bound& other) const {
-  const auto& [value_l, type_l, idx_l] = *this;
-  const auto& [value_r, type_r, idx_r] = other;
-  return *value_l == *value_r && type_l == type_r && idx_l == idx_r;
-}
-
-ContextBoundVector::ContextBoundVector(const mpq_class& inf_l, const mpq_class& inf_u)
+BoundVector::BoundVector(const mpq_class& inf_l, const mpq_class& inf_u)
     : n_lower_bounds_{0},
       bounds_{},
       nq_bounds_{},
@@ -49,11 +34,10 @@ ContextBoundVector::ContextBoundVector(const mpq_class& inf_l, const mpq_class& 
       active_lower_bound_{inf_l_},
       active_upper_bound_{inf_u_} {}
 
-ContextBoundVector::BoundIterator ContextBoundVector::AddBound(const Bound& bound) {
+BoundIterator BoundVector::AddBound(const Bound& bound) {
   return AddBound(*bound.value, bound.lp_bound, bound.explanation);
 }
-ContextBoundVector::BoundIterator ContextBoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
-                                                               const LiteralSet& explanation) {
+BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound, const LiteralSet& explanation) {
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU || lp_bound == LpColBound::D,
                      "Valid must be L, U, B, SL, SU or D. Received: {}", lp_bound);
@@ -117,15 +101,14 @@ ContextBoundVector::BoundIterator ContextBoundVector::AddBound(const mpq_class& 
   return {};
 }
 
-ContextBoundVector::BoundIterator ContextBoundVector::ViolatedBounds(const mpq_class& value,
-                                                                     LpColBound lp_bound) const {
+BoundIterator BoundVector::ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const {
   if (lp_bound == LpColBound::D) return {};
   DLINEAR_ASSERT_FMT(lp_bound == LpColBound::L || lp_bound == LpColBound::U || lp_bound == LpColBound::B ||
                          lp_bound == LpColBound::SL || lp_bound == LpColBound::SU,
                      "Valid must be L, U, B, SL or SU. Received: {}", lp_bound);
 
-  DLINEAR_TRACE_FMT("ContextBoundVector::ViolatedBounds: checking ({} {})", value, lp_bound);
-  BoundVector::const_iterator it;
+  DLINEAR_TRACE_FMT("BoundVector::ViolatedBounds: checking ({} {})", value, lp_bound);
+  Bounds::const_iterator it;
 
   switch (lp_bound) {
     case LpColBound::SL:
@@ -167,7 +150,7 @@ ContextBoundVector::BoundIterator ContextBoundVector::ViolatedBounds(const mpq_c
   }
 }
 
-bool ContextBoundVector::ViolatedNqBounds() const {
+bool BoundVector::ViolatedNqBounds() const {
   if (active_upper_bound_ != active_lower_bound_) return false;
   // The active bounds are equal, verify whether they are violated
   auto nq_value_it = nq_bounds_.find({active_upper_bound_, LpColBound::D, {}});
@@ -177,7 +160,7 @@ bool ContextBoundVector::ViolatedNqBounds() const {
   return true;
 }
 
-bool ContextBoundVector::ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const {
+bool BoundVector::ViolatedNqBounds(const mpq_class& lb, const mpq_class& ub) const {
   if (lb != ub) return false;
   // The active bounds are equal, verify whether they are violated
   auto nq_value_it = nq_bounds_.find({&lb, LpColBound::D, {}});
@@ -187,7 +170,7 @@ bool ContextBoundVector::ViolatedNqBounds(const mpq_class& lb, const mpq_class& 
   return true;
 }
 
-void ContextBoundVector::Clear() {
+void BoundVector::Clear() {
   bounds_.clear();
   n_lower_bounds_ = 0;
   nq_bounds_.clear();
@@ -195,51 +178,45 @@ void ContextBoundVector::Clear() {
   active_upper_bound_ = inf_u_;
 }
 
-bool ContextBoundVector::IsActiveEquality(const mpq_class& value) const {
+bool BoundVector::IsActiveEquality(const mpq_class& value) const {
   if (n_lower_bounds_ == 0 || n_lower_bounds_ == static_cast<int>(bounds_.size())) return false;
   return *active_upper_bound_ == *active_lower_bound_ && *active_upper_bound_ == value;
 }
 
-bool ContextBoundVector::IsLowerBound(const mpq_class& value) const {
+bool BoundVector::IsLowerBound(const mpq_class& value) const {
   auto it = bounds_.find({&value, LpColBound::L, {}});
   if (it != bounds_.cend()) return true;
   it = bounds_.find({&value, LpColBound::SL, {}});
   return it != bounds_.cend();
 }
 
-bool ContextBoundVector::IsUpperBound(const mpq_class& value) const {
+bool BoundVector::IsUpperBound(const mpq_class& value) const {
   auto it = bounds_.find({&value, LpColBound::U, {}});
   if (it != bounds_.cend()) return true;
   it = bounds_.find({&value, LpColBound::SU, {}});
   return it != bounds_.cend();
 }
 
-bool ContextBoundVector::IsLowerBounded() const {
+bool BoundVector::IsLowerBounded() const {
   if (active_lower_bound_ == inf_l_ || bounds_.empty() || n_lower_bounds_ == 0) return false;
   return *active_lower_bound_ > *inf_l_;
 }
 
-bool ContextBoundVector::IsUpperBounded() const {
+bool BoundVector::IsUpperBounded() const {
   if (active_upper_bound_ == inf_u_ || bounds_.empty() || n_lower_bounds_ == static_cast<int>(bounds_.size()))
     return false;
   return *active_upper_bound_ < *inf_u_;
 }
 
-bool ContextBoundVector::IsBounded() const { return IsLowerBounded() && IsUpperBounded(); }
+bool BoundVector::IsBounded() const { return IsLowerBounded() && IsUpperBounded(); }
 
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBound() const {
-  return GetActiveBound(*active_lower_bound_, *active_upper_bound_);
-}
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBound(const mpq_class& value) const {
-  return GetActiveBound(value, value);
-}
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBounds() const {
+BoundIterator BoundVector::GetActiveBound() const { return GetActiveBound(*active_lower_bound_, *active_upper_bound_); }
+BoundIterator BoundVector::GetActiveBound(const mpq_class& value) const { return GetActiveBound(value, value); }
+BoundIterator BoundVector::GetActiveBounds() const {
   return GetActiveBounds(*active_lower_bound_, *active_upper_bound_);
 }
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBounds(const mpq_class& value) const {
-  return GetActiveBounds(value, value);
-}
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBound(const mpq_class& lb, const mpq_class& ub) const {
+BoundIterator BoundVector::GetActiveBounds(const mpq_class& value) const { return GetActiveBounds(value, value); }
+BoundIterator BoundVector::GetActiveBound(const mpq_class& lb, const mpq_class& ub) const {
   DLINEAR_ASSERT(lb == ub || (lb == *active_lower_bound_ && ub == *active_upper_bound_), "Bounds must be == or active");
   DLINEAR_ASSERT(lb <= ub, "Lower bound must be less or equal to upper bound");
   auto lb_it = FindUpperBound(&lb, LpColBound::SL);
@@ -253,7 +230,7 @@ ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBound(const mpq_c
       lb_it == ub_it || (std::prev(ub_it))->lp_bound != LpColBound::SU ? FindUpperNqBoundValue(&ub)
                                                                        : FindLowerNqBoundValue(&ub)};
 }
-ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const {
+BoundIterator BoundVector::GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const {
   DLINEAR_ASSERT(lb == ub || (lb == *active_lower_bound_ && ub == *active_upper_bound_), "Bounds must be == or active");
   DLINEAR_ASSERT(lb <= ub, "Lower bound must be less or equal to upper bound");
   const auto lb_it = FindLowerBoundValue(&lb);
@@ -280,43 +257,43 @@ ContextBoundVector::BoundIterator ContextBoundVector::GetActiveBounds(const mpq_
   return {lb_it, ub_it, FindUpperNqBoundValue(&lb), FindLowerNqBoundValue(&ub)};
 }
 
-LiteralSet ContextBoundVector::GetActiveExplanation() const {
+LiteralSet BoundVector::GetActiveExplanation() const {
   LiteralSet explanation;
   GetActiveExplanation(explanation);
   return explanation;
 }
-void ContextBoundVector::GetActiveExplanation(LiteralSet& explanation) const {
+void BoundVector::GetActiveExplanation(LiteralSet& explanation) const {
   for (BoundIterator it = GetActiveBound(); it; ++it)
     explanation.insert(it->explanation.cbegin(), it->explanation.cend());
 }
-LiteralSet ContextBoundVector::GetActiveEqExplanation() const {
+LiteralSet BoundVector::GetActiveEqExplanation() const {
   LiteralSet explanation;
   GetActiveEqExplanation(explanation);
   return explanation;
 }
-void ContextBoundVector::GetActiveEqExplanation(LiteralSet& explanation) const {
+void BoundVector::GetActiveEqExplanation(LiteralSet& explanation) const {
   if (GetActiveEqualityBound() == nullptr) return;
   for (BoundIterator it = GetActiveBound(); it; ++it)
     explanation.insert(it->explanation.cbegin(), it->explanation.cend());
 }
 
-std::pair<const mpq_class&, const mpq_class&> ContextBoundVector::GetActiveBoundsValue() const {
+std::pair<const mpq_class&, const mpq_class&> BoundVector::GetActiveBoundsValue() const {
   return {*active_lower_bound_, *active_upper_bound_};
 }
 
-void ContextBoundVector::SetLowerBound(const mpq_class& value) {
+void BoundVector::SetLowerBound(const mpq_class& value) {
   if (value > *active_upper_bound_)
     DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
                               *active_lower_bound_, *active_upper_bound_);
   if (value > *active_lower_bound_) active_lower_bound_ = &value;
 }
-void ContextBoundVector::SetUpperBound(const mpq_class& value) {
+void BoundVector::SetUpperBound(const mpq_class& value) {
   if (value < *active_lower_bound_)
     DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
                               *active_lower_bound_, *active_upper_bound_);
   if (value < *active_upper_bound_) active_upper_bound_ = &value;
 }
-void ContextBoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
+void BoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
   if (ub < std::max(lb, *active_lower_bound_) || lb > std::min(ub, *active_upper_bound_))
     DLINEAR_RUNTIME_ERROR_FMT("Upper bound must be greater or equal to lower bound. Lower: {}, Upper: {}",
                               *active_lower_bound_, *active_upper_bound_);
@@ -324,20 +301,15 @@ void ContextBoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
   if (ub < *active_upper_bound_) active_upper_bound_ = &ub;
 }
 
-std::ostream& operator<<(std::ostream& os, const ContextBoundVector& bounds_vector) {
-  os << "ContextBoundVector[" << bounds_vector.active_lower_bound() << "," << bounds_vector.active_upper_bound()
-     << "]{ ";
+std::ostream& operator<<(std::ostream& os, const BoundVector& bounds_vector) {
+  os << "BoundVector[" << bounds_vector.active_lower_bound() << "," << bounds_vector.active_upper_bound() << "]{ ";
   for (const auto& [value, type, row_idx] : bounds_vector.bounds()) {
     os << "row " << row_idx << ": " << *value << "( " << type << " ), ";
   }
   os << "}";
   return os;
 }
-std::ostream& operator<<(std::ostream& os, const ContextBoundVector::Bound& bound) {
-  const auto& [value, type, idx] = bound;
-  return os << "Bound{ " << *value << ", " << type << ", " << idx << " }";
-}
-std::ostream& operator<<(std::ostream& os, const ContextBoundVectorMap& bounds_vector_map) {
+std::ostream& operator<<(std::ostream& os, const BoundVectorMap& bounds_vector_map) {
   os << "ContextBoundVectorMap{ ";
   for (const auto& [col, bounds_vector] : bounds_vector_map) {
     os << "id " << col << ": " << bounds_vector << ", ";
@@ -345,7 +317,7 @@ std::ostream& operator<<(std::ostream& os, const ContextBoundVectorMap& bounds_v
   os << "}";
   return os;
 }
-std::ostream& operator<<(std::ostream& os, const ContextBoundVectorVector& bounds_vector_map) {
+std::ostream& operator<<(std::ostream& os, const BoundVectorVector& bounds_vector_map) {
   os << "ContextBoundVectorVector{ ";
   for (const auto& bounds_vector : bounds_vector_map) {
     os << bounds_vector << ", ";

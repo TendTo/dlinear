@@ -1,5 +1,5 @@
 /**
- * @file ContextBoundVector.h
+ * @file BoundVector.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/ContextBoundIterator.h"
+#include "dlinear/solver/BoundIterator.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/SortedVector.hpp"
@@ -26,7 +26,7 @@
 namespace dlinear {
 
 /**
- * ContextBoundVector class.
+ * BoundVector class.
  *
  * It keeps track of the bounds in the LP solver in a sorted vector
  * to determine the active lower and upper bound for the column.
@@ -34,7 +34,7 @@ namespace dlinear {
  * If a violation is detected, it returns the iterator to the first and last violated bound.
  * The violating bound is not added and the vector remains unchanged.
  * @code
- * ContextBoundVector bounds(100);
+ * BoundVector bounds(100);
  * bounds.AddBound(1, LpColBound::L, x <= 1));
  * bounds.AddBound(1, LpColBound::SL, 1 < x));
  * bounds.AddBound(1, LpColBound::L, 1 <= 1));
@@ -50,26 +50,16 @@ namespace dlinear {
  * // (1, SL, 1 < x), (1, SL, 1 < x), (2, L, 2 < x), (2, SL, 2 <= x)
  * @endcode
  */
-class ContextBoundVector {
+class BoundVector {
  public:
-  /** Bound. It is a tuple of value, bound type and index */
-  struct Bound {
-    const mpq_class* value;  ///< Value of the bound
-    LpColBound lp_bound;     ///< Type of the bound (e.g. L, SL, U, SU)
-    LiteralSet explanation;  ///< Explanation for the existence of the bound
-
-    std::strong_ordering operator<=>(const Bound& other) const;
-    bool operator==(const Bound& other) const;
-  };
-  using BoundVector = SortedVector<Bound>;                  ///< Sorted vector of bounds
-  using BoundIterator = ContextBoundIterator<BoundVector>;  ///< BoundIterator iterator over the violated bounds
+  using Bounds = SortedVector<Bound>;  ///< Sorted vector of bounds
 
   /**
-   * Construct a new ContextBoundVector using @p inf_l as the the lower bound and @p inf_u as the upper bound.
+   * Construct a new BoundVector using @p inf_l as the the lower bound and @p inf_u as the upper bound.
    * @param inf_l lower bound
    * @param inf_u upper bound
    */
-  ContextBoundVector(const mpq_class& inf_l, const mpq_class& inf_u);
+  BoundVector(const mpq_class& inf_l, const mpq_class& inf_u);
 
   /**
    * Add a new bound to the vector.
@@ -88,7 +78,7 @@ class ContextBoundVector {
    *
    * The bound will be sorted in the vector according to its value and type with the goal of identifying
    * violating bounds as fast a possible.
-   * The @p idx it is ignored by the @ref ContextBoundVector, but can be used by the caller to identify the bound.
+   * The @p idx it is ignored by the @ref BoundVector, but can be used by the caller to identify the bound.
    * Before adding a new bound, a check is performed to ensure it does not violate any of the existing bounds.
    * If a violation is detected, a @ref BoundIterator containing all the violated bounds is returned instead.
    * @note If a violation is detected, the bound will not be added. The vector will remain unchanged.
@@ -213,14 +203,14 @@ class ContextBoundVector {
    * It contains all the bounds, both equality and inequality, except for the non-equality bounds.
    * @return bounds vector
    */
-  [[nodiscard]] const BoundVector& bounds() const { return bounds_; }
+  [[nodiscard]] const Bounds& bounds() const { return bounds_; }
   /**
    * Return the non-equality bounds vector.
    *
    * It only contains the non-equality bounds.
    * @return non-equality bounds vector
    */
-  [[nodiscard]] const BoundVector& nq_bounds() const { return nq_bounds_; }
+  [[nodiscard]] const Bounds& nq_bounds() const { return nq_bounds_; }
   /**
    * Return the starting lower bound.
    * @return starting lower bound
@@ -329,7 +319,7 @@ class ContextBoundVector {
    * Return an iterator over @ref bounds_ after the last lower bound and to the first upper bound.
    * @return iterator after the last lower bound and to the first upper bound
    */
-  [[nodiscard]] inline BoundVector::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
+  [[nodiscard]] inline Bounds::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
   /**
    * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p lb, @p ub]
    * as well as all the not-equal constraints in that interval.
@@ -353,26 +343,24 @@ class ContextBoundVector {
   [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const;
 
   int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
-  BoundVector bounds_;                   ///< Equality and inequality bounds
-  BoundVector nq_bounds_;                ///< Non-equality bounds
+  Bounds bounds_;                        ///< Equality and inequality bounds
+  Bounds nq_bounds_;                     ///< Non-equality bounds
   const mpq_class* const inf_l_;         ///< Starting lower bound
   const mpq_class* const inf_u_;         ///< Starting upper bound
   const mpq_class* active_lower_bound_;  ///< Active lower bound
   const mpq_class* active_upper_bound_;  ///< Active upper bound
 };
 
-using ContextBoundVectorMap = std::map<Variable, ContextBoundVector>;
-using ContextBoundVectorVector = std::vector<ContextBoundVector>;
+using BoundVectorMap = std::map<Variable, BoundVector>;
+using BoundVectorVector = std::vector<BoundVector>;
 
-std::ostream& operator<<(std::ostream& os, const ContextBoundVector& bounds_vector);
-std::ostream& operator<<(std::ostream& os, const ContextBoundVector::Bound& bound);
-std::ostream& operator<<(std::ostream& os, const ContextBoundVectorMap& bounds_vector_map);
-std::ostream& operator<<(std::ostream& os, const ContextBoundVectorVector& bounds_vector_vector);
+std::ostream& operator<<(std::ostream& os, const BoundVector& bounds_vector);
+std::ostream& operator<<(std::ostream& os, const BoundVectorMap& bounds_vector_map);
+std::ostream& operator<<(std::ostream& os, const BoundVectorVector& bounds_vector_vector);
 
 }  // namespace dlinear
 
-OSTREAM_FORMATTER(dlinear::ContextBoundVector::Bound)
-OSTREAM_FORMATTER(dlinear::ContextBoundVector::BoundIterator)
-OSTREAM_FORMATTER(dlinear::ContextBoundVector)
-OSTREAM_FORMATTER(dlinear::ContextBoundVectorMap)
-OSTREAM_FORMATTER(dlinear::ContextBoundVectorVector)
+OSTREAM_FORMATTER(dlinear::BoundIterator)
+OSTREAM_FORMATTER(dlinear::BoundVector)
+OSTREAM_FORMATTER(dlinear::BoundVectorMap)
+OSTREAM_FORMATTER(dlinear::BoundVectorVector)

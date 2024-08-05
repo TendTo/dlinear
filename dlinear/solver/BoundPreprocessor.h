@@ -1,9 +1,9 @@
 /**
- * @file ContextBoundPreprocessor.h
+ * @file BoundPreprocessor.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief ContextBoundPreprocessor class.
+ * @brief BoundPreprocessor class.
  *
  * This class uses some basic algebraic operations to preprocess the constraints
  * and identify violations before invoking the solver.
@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/ContextBoundVector.h"
+#include "dlinear/solver/BoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/environment.h"
 #include "dlinear/symbolic/literal.h"
@@ -35,14 +35,14 @@ namespace dlinear {
  * This class uses some basic algebraic operations to preprocess the constraints
  * and identify violations before invoking the solver.
  */
-class ContextBoundPreprocessor {
+class BoundPreprocessor {
  public:
   using Explanations = std::set<LiteralSet>;
   using VarToEqBinomialMap = std::unordered_map<Variable, mpq_class>;
 
-  explicit ContextBoundPreprocessor(const PredicateAbstractor& predicate_abstractor);
+  explicit BoundPreprocessor(const PredicateAbstractor& predicate_abstractor);
 
-  ContextBoundVector::BoundIterator AddConstraint(const Literal& lit);
+  BoundIterator AddConstraint(const Literal& lit);
 
   Explanations Process(const LiteralSet& enabled_literals = {});
   void Process(const LiteralSet& enabled_literals, Explanations& explanations);
@@ -52,13 +52,13 @@ class ContextBoundPreprocessor {
   void Clear();
   void Reset();
 
-  /** @getter{configuration, ContextBoundPreprocessor} */
+  /** @getter{configuration, BoundPreprocessor} */
   [[nodiscard]] const Config& config() const { return config_; }
-  /** @getter{bounds of the variables in the LP solver, ContextBoundPreprocessor} */
-  [[nodiscard]] const ContextBoundVectorMap& theory_bounds() const { return theory_bounds_; }
-  /** @getter{predicate abstractor, ContextBoundPreprocessor} */
+  /** @getter{bounds of the variables in the LP solver, BoundPreprocessor} */
+  [[nodiscard]] const BoundVectorMap& theory_bounds() const { return theory_bounds_; }
+  /** @getter{predicate abstractor, BoundPreprocessor} */
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
-  /** @getter{propagated environment containing the variable's values, ContextBoundPreprocessor} */
+  /** @getter{propagated environment containing the variable's values, BoundPreprocessor} */
   [[nodiscard]] const Environment& env() const { return env_; }
 
   /**
@@ -144,9 +144,9 @@ class ContextBoundPreprocessor {
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
 
-  ContextBoundVector& GetBoundVector(const Variable& var);
-  ContextBoundVector::Bound GetBound(const Literal& var) const;
-  ContextBoundVector::Bound GetBound(const Literal& lit, const Formula& formula) const;
+  BoundVector& GetBoundVector(const Variable& var);
+  Bound GetBound(const Literal& var) const;
+  Bound GetBound(const Literal& lit, const Formula& formula) const;
 
   void SetEnvironmentFromBounds();
   /**
@@ -214,17 +214,17 @@ class ContextBoundPreprocessor {
   const Config& config_;  ///< Configuration of the preprocessor
   const PredicateAbstractor& predicate_abstractor_;
 
-  ContextBoundVectorMap theory_bounds_;
+  BoundVectorMap theory_bounds_;
   Environment env_;
 
   LiteralSet fixed_literals_;
-  ContextBoundVectorMap fixed_theory_bounds_;
+  BoundVectorMap fixed_theory_bounds_;
   Environment fixed_env_;
   std::list<mpq_class> fixed_temporary_mpq_vector_;
 };
 
-std::ostream& operator<<(std::ostream& os, const ContextBoundPreprocessor& preprocessor);
+std::ostream& operator<<(std::ostream& os, const BoundPreprocessor& preprocessor);
 
 }  // namespace dlinear
 
-OSTREAM_FORMATTER(dlinear::ContextBoundPreprocessor)
+OSTREAM_FORMATTER(dlinear::BoundPreprocessor)

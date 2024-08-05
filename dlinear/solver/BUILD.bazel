@@ -97,6 +97,78 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "guided_constraint",
+    srcs = ["GuidedConstraint.cpp"],
+    hdrs = ["GuidedConstraint.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
+    name = "relu_constraint",
+    srcs = [
+        "ReluConstraint.cpp",
+    ],
+    hdrs = [
+        "ReluConstraint.h",
+    ],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":guided_constraint",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound",
+    srcs = ["Bound.cpp"],
+    hdrs = ["Bound.h"],
+    deps = [
+        ":lp_bound",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_iterator",
+    srcs = ["BoundIterator.cpp"],
+    hdrs = ["BoundIterator.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":bound",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_vector",
+    srcs = ["BoundVector.cpp"],
+    hdrs = ["BoundVector.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":bound",
+        ":bound_iterator",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
     name = "theory_solver_bounds",
     srcs = [
         "TheorySolverBoundIterator.cpp",
@@ -131,6 +203,33 @@ dlinear_cc_library(
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:config",
         "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_preprocessor",
+    srcs = ["BoundPreprocessor.cpp"],
+    hdrs = ["BoundPreprocessor.h"],
+    implementation_deps = [
+        ":lp_bound",
+        ":sat_result",
+        "//dlinear/util:box",
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+        "//dlinear/util:stats",
+    ],
+    deps = [
+        ":bound",
+        ":bound_iterator",
+        ":bound_vector",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:environment",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:graph",
+        "//dlinear/util:logging",
     ],
 )
 
@@ -234,6 +333,7 @@ dlinear_cc_library(
         "Context.h",
     ],
     implementation_deps = [
+        ":relu_constraint",
         ":sat_solver",
         ":theory_propagator",
         ":theory_solver",
@@ -248,6 +348,7 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     deps = [
+        ":guided_constraint",
         ":logic",
         ":lp_result",
         ":sat_result",
