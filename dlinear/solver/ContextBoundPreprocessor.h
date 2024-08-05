@@ -60,8 +60,6 @@ class ContextBoundPreprocessor {
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
   /** @getter{propagated environment containing the variable's values, ContextBoundPreprocessor} */
   [[nodiscard]] const Environment& env() const { return env_; }
-  /** @getter{map between a theory literal and the edges of the graph, ContextBoundPreprocessor} */
-  [[nodiscard]] const VarToEqBinomialMap& edges() const { return var_to_eq_binomial_edge_coefficients_; }
 
   /**
    * Check whether the formula is a simple relational bound.
@@ -139,14 +137,10 @@ class ContextBoundPreprocessor {
  protected:
   enum class PropagateResult { NO_PROPAGATION, UNCHANGED, PROPAGATED, CONFLICT };
 
-  bool ShouldPropagateEqBinomial(const Literal& lit) const;
-  bool ShouldPropagateEqBinomial(const Formula& formula) const;
   bool ShouldPropagateEqPolynomial(const Literal& lit) const;
   bool ShouldPropagateEqPolynomial(const Formula& formula) const;
-  bool ShouldPropagateInBinomial(const Literal& lit) const;
-  bool ShouldPropagateInBinomial(const Formula& formula) const;
-  bool ShouldPropagateInPolynomial(const Literal& lit) const;
-  bool ShouldPropagateInPolynomial(const Formula& formula) const;
+  bool ShouldPropagateBoundsPolynomial(const Literal& lit) const;
+  bool ShouldPropagateBoundsPolynomial(const Formula& formula) const;
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
 
@@ -155,23 +149,6 @@ class ContextBoundPreprocessor {
   ContextBoundVector::Bound GetBound(const Literal& lit, const Formula& formula) const;
 
   void SetEnvironmentFromBounds();
-  /**
-   * Propagate the bounds of the variables in the given formula.
-   *
-   * It only works for formulas of the form @f$ ax = by @f$.
-   * At least one of the two variables in the formula must have a value assigned in the @ref env_ .
-   * Its value will be used to assign the value to the other variable.
-   * The explanation will be added to the bound vector.
-   * If the new assignment is incompatible with the current one, a conflict is found.
-   * @pre the formula is of the form @f$ ax = by @f$.
-   * @pre the formula has been added to @ref row_to_eq_binomial_edge_coefficients_ .
-   * @param lit theory literal corresponding to the formula to propagate
-   * @param explanations the explanations to be updated if a conflict is found
-   * @return CONFLICT if a conflict has been found
-   * @return PROPAGATED if the propagation took place
-   * @return UNCHANGED if no propagation took place
-   */
-  PropagateResult PropagateEqBinomial(const Literal& lit, Explanations& explanations);
   /**
    * Propagate the bounds of the variables in the given formula.
    *
@@ -192,21 +169,6 @@ class ContextBoundPreprocessor {
   /**
    * Propagate the bounds of the variables in the given formula.
    *
-   * It only works for formulas of the form @f$ ax = by @f$.
-   * Their values will be used to assign the value to the last unknown variable.
-   * The explanation will be added to the bound vector.
-   * If the new assignment is incompatible with the current one, a conflict is found.
-   * @pre the formula is of the form @f$ ax = by @f$
-   * @pre exactly one of the two variable is unbounded
-   * @param lit theory literal corresponding to the formula to propagate
-   * @param explanations the explanations to be updated if a conflict is found
-   * @return CONFLICT if a conflict has been found
-   * @return PROPAGATED if the propagation took place
-   */
-  PropagateResult PropagateInBinomial(const Literal& lit, Explanations& explanations);
-  /**
-   * Propagate the bounds of the variables in the given formula.
-   *
    * It only works for formulas of the form @f$ \sum_{i = 1}^n a_i x_i \bowtie c @f$
    * where the values @f$ a_i, c \in \mathbb{R} @f$ are known, @f$ \bowtie \in \{<, \le, =, \ge, >\} @f$,
    * and all but exactly one variable among the @f$ x_i @f$ are bounded.
@@ -220,7 +182,7 @@ class ContextBoundPreprocessor {
    * @return CONFLICT if a conflict has been found
    * @return PROPAGATED if the propagation took place
    */
-  PropagateResult PropagateInPolynomial(const Literal& lit, Explanations& explanations);
+  PropagateResult PropagateBoundsPolynomial(const Literal& lit, Explanations& explanations);
   void PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
   void EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
@@ -246,19 +208,19 @@ class ContextBoundPreprocessor {
 #endif
 
  private:
-  std::vector<mpq_class>
+  std::list<mpq_class>
       temporary_mpq_vector_;  ///< Vector used to store temporary mpq values obtained from more complex constraints
 
   const Config& config_;  ///< Configuration of the preprocessor
   const PredicateAbstractor& predicate_abstractor_;
-  VarToEqBinomialMap var_to_eq_binomial_edge_coefficients_;
 
   ContextBoundVectorMap theory_bounds_;
   Environment env_;
 
+  LiteralSet fixed_literals_;
   ContextBoundVectorMap fixed_theory_bounds_;
   Environment fixed_env_;
-  std::vector<mpq_class> fixed_temporary_mpq_vector_;
+  std::list<mpq_class> fixed_temporary_mpq_vector_;
 };
 
 std::ostream& operator<<(std::ostream& os, const ContextBoundPreprocessor& preprocessor);

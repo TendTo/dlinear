@@ -92,6 +92,9 @@ ContextBoundPreprocessor::ContextBoundPreprocessor(const PredicateAbstractor& pr
     : config_{predicate_abstractor.config()}, predicate_abstractor_{predicate_abstractor} {}
 
 ContextBoundVector::BoundIterator ContextBoundPreprocessor::AddConstraint(const Literal& lit) {
+  // If the literal is already fixed, return immediately
+  if (fixed_literals_.contains(lit)) return {};
+
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
 
@@ -101,15 +104,12 @@ ContextBoundVector::BoundIterator ContextBoundPreprocessor::AddConstraint(const 
     const Variable& var = *formula.GetFreeVariables().cbegin();
     // Add the simple bound to the theory_bound. If a violation is detected, report it immediately
     const ContextBoundVector::BoundIterator violation{GetBoundVector(var).AddBound(GetBound(lit, formula))};
-    if (!violation.empty()) return violation;
+    if (!violation.empty()) {
+      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::AddConstraint: {} conflict found", violation->explanation);
+      return violation;
+    }
   };
-
-  if (config_.disable_theory_preprocessor()) return {};
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::AddConstraint({}, {})", formula_var, formula);
-  if (!ShouldPropagateEqBinomial(formula)) return {};
-  const mpq_class coeff = ExtractEqBoundCoefficient(formula);
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::AddConstraint: {}, coeff = {}", formula, coeff);
-  var_to_eq_binomial_edge_coefficients_.emplace(formula_var, coeff);
   return {};
 }
 
@@ -154,6 +154,10 @@ void ContextBoundPreprocessor::Clear() {
   env_ = Environment{};
   theory_bounds_.clear();
   temporary_mpq_vector_.clear();
+  fixed_env_ = Environment{};
+  fixed_theory_bounds_.clear();
+  fixed_temporary_mpq_vector_.clear();
+  fixed_literals_.clear();
 }
 void ContextBoundPreprocessor::Reset() {
   theory_bounds_ = fixed_theory_bounds_;
@@ -170,83 +174,6 @@ void ContextBoundPreprocessor::SetEnvironmentFromBounds() {
   }
 }
 
-ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqBinomial(const Literal& lit,
-                                                                                        Explanations& explanations) {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqBinomial({})", lit);
-
-  const mpq_class& coeff = var_to_eq_binomial_edge_coefficients_.at(lit.var);
-  const Formula& formula = predicate_abstractor_[lit.var];
-  const auto& [from, to] = ExtractBoundEdge(formula);
-
-  DLINEAR_ASSERT(is_equal_to(formula) || is_not_equal_to(formula), "Formula should be an = or != relation");
-  DLINEAR_ASSERT(is_equal_to(formula) || !lit.truth, "If lit is true, formula must be an equality relation");
-  DLINEAR_ASSERT(is_not_equal_to(formula) || lit.truth, "If lit is false, formula must be a not equal to relation");
-  DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
-  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-
-  const Expression& lhs = get_lhs_expression(formula);
-  const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
-  DLINEAR_ASSERT(map.size() == 2, "Expression should have exactly two variables");
-  DLINEAR_ASSERT(get_constant_value(get_rhs_expression(formula)) == 0, "The right-hand side must be 0");
-  const bool from_is_first = get_variable(map.cbegin()->first).equal_to(from);
-
-  Environment::const_iterator updater_it;
-  Variable updating_variable;
-  Variable to_update_variable;
-  mpq_class new_value;
-  if ((updater_it = env_.find(from)) != env_.end()) {
-    DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqBinomial: {} -- {} --> {}", to, lit, from);
-    new_value = from_is_first ? mpq_class{updater_it->second / coeff} : mpq_class{updater_it->second * coeff};
-    updating_variable = from;
-    to_update_variable = to;
-  } else if ((updater_it = env_.find(to)) != env_.end()) {
-    DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqBinomial: {} -- {} --> {}", from, lit, to);
-    new_value = from_is_first ? mpq_class{updater_it->second * coeff} : mpq_class{updater_it->second / coeff};
-    updating_variable = to;
-    to_update_variable = from;
-  } else {
-    // Neither of the two variables is in the environment. Can't propagate
-    return PropagateResult::NO_PROPAGATION;
-  }
-
-  auto to_update_it = env_.find(to_update_variable);
-
-  fmt::println("ContextBoundPreprocessor::PropagateEqBinomial: {} -- {} --> {}", updating_variable, lit,
-               to_update_variable);
-  fmt::println("ContextBoundPreprocessor::PropagateEqBinomial: {} = {}", env_, theory_bounds_);
-
-  // The value is the same as the one already in the environment. Nothing to propagate
-  if (to_update_it != env_.end() && to_update_it->second == new_value) {
-    return PropagateResult::UNCHANGED;
-  }
-
-  LiteralSet explanation = GetBoundVector(updating_variable).GetActiveEqExplanation();
-  explanation.insert(lit);
-
-  // The value was still not in the environment. Propagate it
-  if (to_update_it == env_.end()) {
-    const auto [it, inserted] = env_.insert(to_update_variable, new_value);
-    DLINEAR_ASSERT(inserted, "The variable was not in the environment before");
-    ContextBoundVector::BoundIterator violation =
-        GetBoundVector(to_update_variable).AddBound(it->second, LpColBound::B, explanation);
-    // Adding the new value to the environment caused a conflict in the bounds
-    if (!violation.empty()) {
-      for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateEqBinomial: {} conflict found", explanation);
-      explanations.insert(explanation);
-      return PropagateResult::CONFLICT;
-    }
-    return PropagateResult::PROPAGATED;
-  }
-
-  // The value conflicts with the one already in the environment
-  DLINEAR_ASSERT(to_update_it->second != new_value, "A conflict must have been detected");
-  const LiteralSet to_update_explanation = GetBoundVector(to_update_variable).GetActiveEqExplanation();
-  explanation.insert(to_update_explanation.begin(), to_update_explanation.end());
-  explanations.insert(explanation);
-  return PropagateResult::CONFLICT;
-}
-
 ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqPolynomial(const Literal& lit,
                                                                                           Explanations& explanations) {
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqPolynomial({})", lit);
@@ -256,7 +183,6 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqP
   DLINEAR_ASSERT(is_equal_to(formula) || is_not_equal_to(formula), "Formula should be an = or != relation");
   DLINEAR_ASSERT(is_equal_to(formula) || !lit.truth, "If lit is true, formula must be an equality relation");
   DLINEAR_ASSERT(is_not_equal_to(formula) || lit.truth, "If lit is false, formula must be a not equal to relation");
-  DLINEAR_ASSERT(formula.GetFreeVariables().size() > 2, "Formula should have more than two free variables");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   DLINEAR_ASSERT(ShouldPropagateEqPolynomial(lit), "The formula should be propagated");
 
@@ -299,6 +225,7 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqP
     explanations.insert(explanation);
     // Remove the propagated constraint from the environment
     env_.erase(env_it);
+    fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
     return PropagateResult::CONFLICT;
   }
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}",
@@ -306,126 +233,15 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateEqP
   return PropagateResult::PROPAGATED;
 }
 
-ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateInBinomial(const Literal& lit,
-                                                                                        Explanations& explanations) {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateEqBinomial({})", lit);
-
-  const Formula& formula = predicate_abstractor_[lit.var];
-  LiteralSet explanation{lit};
-
-  DLINEAR_ASSERT(!is_equal_to(formula) && !is_not_equal_to(formula), "Formula should be an = or != relation");
-  DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
-  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-
-  const Expression& lhs = get_lhs_expression(formula);
-  const std::map<Expression, mpq_class>& map = get_expr_to_coeff_map_in_addition(lhs);
-  DLINEAR_ASSERT(map.size() == 2, "Expression should have exactly two variables");
-  DLINEAR_ASSERT(get_constant_value(get_rhs_expression(formula)) == 0, "The right-hand side must be 0");
-
-  mpq_class l_rhs{get_constant_value(get_rhs_expression(formula))};
-  mpq_class u_rhs{get_constant_value(get_rhs_expression(formula))};
-
-  const Variable& first = get_variable(map.begin()->first);
-  const Variable& second = get_variable(std::next(map.begin())->first);
-
-  const Variable from = GetBoundVector(first).IsBounded() ? first : second;
-  const Variable to = from.equal_to(first) ? second : first;
-  DLINEAR_ASSERT(GetBoundVector(from).IsBounded(), "At least one variable must be bounded");
-  DLINEAR_ASSERT(!GetBoundVector(to).IsBounded(), "At least one variable must be unbounded");
-  const mpq_class& from_value = from.equal_to(first) ? map.begin()->second : std::next(map.begin())->second;
-  const mpq_class& to_value = from.equal_to(first) ? std::next(map.begin())->second : map.begin()->second;
-
-  // Cases:
-  // 1. ax + by > c     =>  x in [l, u] => y in [(c - ua)/b, -]
-  // 2. -ax + by > c    =>  x in [l, u] => y in [(c + la)/b, -]
-  // 3. ax + -by > c    =>  x in [l, u] => y in [-, (-c + ua)/b]
-  // 4. -ax + -by > c   =>  x in [l, u] => y in [-, (-c - la)/b]
-
-  // 5. ax + by < c     =>  x in [l, u] => y in [-, (c - la)/b]
-  // 6. -ax + by < c    =>  x in [l, u] => y in [-, (c + ua)/b]
-  // 7. ax + -by < c    =>  x in [l, u] => y in [(-c + la)/b, -]
-  // 8. -ax + -by < c   =>  x in [l, u] => y in [(-c - ua)/b, -]
-
-  if (from_value > 0) {
-    l_rhs -= GetBoundVector(from).active_upper_bound() * from_value;
-    u_rhs -= GetBoundVector(from).active_lower_bound() * from_value;
-  } else {
-    l_rhs -= GetBoundVector(from).active_lower_bound() * from_value;
-    u_rhs -= GetBoundVector(from).active_upper_bound() * from_value;
-  }
-
-  l_rhs /= to_value;
-  u_rhs /= to_value;
-
-  if ((lit.truth && is_equal_to(formula)) || (!lit.truth && is_not_equal_to(formula))) {
-    ContextBoundVector::Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    ContextBoundVector::BoundIterator violation{GetBoundVector(to).AddBound(bound)};
-    if (!violation.empty()) {
-      for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
-      explanations.insert(explanation);
-      return PropagateResult::CONFLICT;
-    }
-    ContextBoundVector::Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    ContextBoundVector::BoundIterator violation2{GetBoundVector(to).AddBound(bound2)};
-    if (!violation2.empty()) {
-      for (; violation2; ++violation2)
-        explanation.insert(violation2->explanation.begin(), violation2->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
-      explanations.insert(explanation);
-      return PropagateResult::CONFLICT;
-    }
-    return PropagateResult::PROPAGATED;
-  }
-
-  ContextBoundVector::Bound bound;
-  if (to_value > 0) {
-    if (is_greater_than(formula)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
-    } else if (is_greater_than_or_equal_to(formula)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    } else if (is_less_than(formula)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
-    } else {
-      DLINEAR_ASSERT(is_less_than_or_equal_to(formula), "The formula must be a less than or equal to relation");
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    }
-  } else {
-    if (is_greater_than(formula)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
-    } else if (is_greater_than_or_equal_to(formula)) {
-      bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    } else if (is_less_than(formula)) {
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
-    } else {
-      DLINEAR_ASSERT(is_less_than_or_equal_to(formula), "The formula must be a less than or equal to relation");
-      bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    }
-  }
-
-  ContextBoundVector::BoundIterator violation{GetBoundVector(to).AddBound(bound)};
-  if (!violation.empty()) {
-    for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-    DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateInBinomial: {} conflict found", explanation);
-    explanations.insert(explanation);
-    return PropagateResult::CONFLICT;
-  }
-
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {}", to, l_rhs,
-                    u_rhs, lit);
-  return PropagateResult::PROPAGATED;
-}
-
-ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateInPolynomial(const Literal& lit,
-                                                                                          Explanations& explanations) {
+ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateBoundsPolynomial(
+    const Literal& lit, Explanations& explanations) {
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateInPolynomial({})", lit);
 
   const Formula& formula = predicate_abstractor_[lit.var];
 
   DLINEAR_ASSERT(is_relational(formula), "Formula should be a relational relation other than = or !=");
-  DLINEAR_ASSERT(formula.GetFreeVariables().size() > 2, "Formula should have more than two free variables");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-  DLINEAR_ASSERT(ShouldPropagateInPolynomial(lit), "The formula should be propagated");
+  DLINEAR_ASSERT(ShouldPropagateBoundsPolynomial(lit), "The formula should be propagated");
 
   LiteralSet explanation{lit};
   std::vector<Variable> dependencies;
@@ -437,6 +253,8 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateInP
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     const Variable& var = get_variable(expr);
     if (GetBoundVector(var).IsBounded()) {
+      fmt::println("{} -> {} * [{}, {}]", var, coeff, GetBoundVector(var).active_lower_bound(),
+                   GetBoundVector(var).active_upper_bound());
       if (coeff > 0) {
         l_rhs -= GetBoundVector(var).active_upper_bound() * coeff;
         u_rhs -= GetBoundVector(var).active_lower_bound() * coeff;
@@ -456,56 +274,65 @@ ContextBoundPreprocessor::PropagateResult ContextBoundPreprocessor::PropagateInP
   l_rhs /= var_coeff;
   u_rhs /= var_coeff;
 
+  if (var_coeff < 0) std::swap(l_rhs, u_rhs);
+
   // Add all the dependencies edges to the explanation
   for (const Variable& dependency : dependencies) {
     const LiteralSet dependency_explanation = GetBoundVector(dependency).GetActiveEqExplanation();
     explanation.insert(dependency_explanation.begin(), dependency_explanation.end());
   }
 
-  if ((lit.truth && is_equal_to(formula)) || (!lit.truth && is_not_equal_to(formula))) {
-    ContextBoundVector::Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
+  fmt::println("Propagating {}\n{} <= {} <= {}\n{}", lit, l_rhs, var_propagated, u_rhs, var_coeff);
+
+  if (IsEqualTo(formula, lit.truth)) {
+    const ContextBoundVector::Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
     ContextBoundVector::BoundIterator violation{GetBoundVector(var_propagated).AddBound(bound)};
     if (!violation.empty()) {
       for (; violation; ++violation) explanation.insert(violation->explanation.begin(), violation->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
+      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
+      fmt::println("ContextBoundPreprocessor::PropagateConstraints1: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
     }
-    ContextBoundVector::Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
+    const ContextBoundVector::Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
     ContextBoundVector::BoundIterator violation2{GetBoundVector(var_propagated).AddBound(bound2)};
     if (!violation2.empty()) {
       for (; violation2; ++violation2)
         explanation.insert(violation2->explanation.begin(), violation2->explanation.end());
-      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
+      DLINEAR_DEBUG_FMT("ContextBoundPreprocessor::PropagateConstraints2: {} conflict found", explanation);
       explanations.insert(explanation);
       return PropagateResult::CONFLICT;
     }
+    DLINEAR_TRACE_FMT("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
+                      var_propagated, l_rhs, u_rhs, lit, dependencies);
+    fmt::println("ContextBoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
+                 var_propagated, l_rhs, u_rhs, lit, dependencies);
     return PropagateResult::PROPAGATED;
   }
 
   ContextBoundVector::Bound bound;
   // Add the bound on the single unbounded variable based on the upper and lower bound computed over the polynomial
   if (var_coeff > 0) {
-    if (is_greater_than(formula)) {
+    if (IsGreaterThan(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
-    } else if (is_greater_than_or_equal_to(formula)) {
+    } else if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
-    } else if (is_less_than(formula)) {
+    } else if (IsLessThan(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
     } else {
-      DLINEAR_ASSERT(is_less_than_or_equal_to(formula), "The formula must be a less than or equal to relation");
+      DLINEAR_ASSERT(IsLessThanOrEqualTo(formula, lit.truth), "The formula must be a less than or equal to relation");
       bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
     }
   } else {
     DLINEAR_ASSERT(var_coeff < 0, "The coefficient must be less than 0");
-    if (is_greater_than(formula)) {
+    if (IsGreaterThan(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(u_rhs), LpColBound::SU, explanation};
-    } else if (is_greater_than_or_equal_to(formula)) {
+    } else if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(u_rhs), LpColBound::U, explanation};
-    } else if (is_less_than(formula)) {
+    } else if (IsLessThan(formula, lit.truth)) {
       bound = {StoreTemporaryMpq(l_rhs), LpColBound::SL, explanation};
     } else {
-      DLINEAR_ASSERT(is_less_than_or_equal_to(formula), "The formula must be a less than or equal to relation");
+      DLINEAR_ASSERT(IsLessThanOrEqualTo(formula, lit.truth), "The formula must be a less than or equal to relation");
       bound = {StoreTemporaryMpq(l_rhs), LpColBound::L, explanation};
     }
   }
@@ -533,22 +360,6 @@ void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
       fmt::println("ContextBoundPreprocessor: propagating {}", lit);
-      // Simple binomial equality. Handle it more efficiently
-      if (ShouldPropagateEqBinomial(lit)) {
-        const PropagateResult propagation_result = PropagateEqBinomial(lit, explanations);
-        switch (propagation_result) {
-          case PropagateResult::NO_PROPAGATION:
-            ++it;
-            continue;
-          case PropagateResult::PROPAGATED:
-            continue_propagating = true;
-            [[fallthrough]];
-          case PropagateResult::UNCHANGED:
-          case PropagateResult::CONFLICT:
-            it = enabled_literals.erase(it);
-            continue;
-        }
-      }
       // Equality polynomial missing a single variable. Propagate it
       if (ShouldPropagateEqPolynomial(lit)) {
         const PropagateResult propagation_result = PropagateEqPolynomial(lit, explanations);
@@ -564,26 +375,15 @@ void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_
       ++it;
     }
   } while (continue_propagating && explanations.empty());
+  if (!explanations.empty()) return;
   do {
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
-      fmt::println("ContextBoundPreprocessor: propagating {} - {} - {}\n{}", lit, ShouldPropagateInBinomial(lit),
-                   ShouldPropagateInPolynomial(lit), theory_bounds_);
-      std::cout << std::endl;
-      if (ShouldPropagateInBinomial(lit)) {
-        const PropagateResult propagation_result = PropagateInBinomial(lit, explanations);
-        if (propagation_result == PropagateResult::PROPAGATED) {
-          continue_propagating = true;
-          it = enabled_literals.erase(it);
-        } else {
-          DLINEAR_ASSERT(propagation_result == PropagateResult::CONFLICT, "The propagation result must be a conflict");
-          ++it;
-        }
-        continue;
-      }
-      if (ShouldPropagateInPolynomial(lit)) {
-        const PropagateResult propagation_result = PropagateInPolynomial(lit, explanations);
+      fmt::println("ContextBoundPreprocessor: propagating {} - {}\n{}", lit, ShouldPropagateBoundsPolynomial(lit),
+                   theory_bounds_);
+      if (ShouldPropagateBoundsPolynomial(lit)) {
+        const PropagateResult propagation_result = PropagateBoundsPolynomial(lit, explanations);
         if (propagation_result == PropagateResult::PROPAGATED) {
           continue_propagating = true;
           it = enabled_literals.erase(it);
@@ -596,6 +396,7 @@ void ContextBoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_
       ++it;
     }
   } while (continue_propagating && explanations.empty());
+  std::cout << std::endl;
 }
 
 void ContextBoundPreprocessor::EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations) {
@@ -656,31 +457,6 @@ bool ContextBoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
                      [this](const Variable& v) { return env_.contains(v); });
 }
 
-bool ContextBoundPreprocessor::ShouldPropagateEqBinomial(const Literal& lit) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateEqBinomial({})", lit);
-  const auto& [formula_var, truth] = lit;
-  const Formula& formula = predicate_abstractor_[formula_var];
-  // There must be exactly two free variables and an equality relation between them
-  if (truth && !is_equal_to(formula)) return false;
-  if (!truth && !is_not_equal_to(formula)) return false;
-  return ShouldPropagateEqBinomial(formula);
-}
-bool ContextBoundPreprocessor::ShouldPropagateEqBinomial(const Formula& formula) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateEqBinomial({})", formula);
-  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-  // There must be exactly two free variables and an equality relation between them
-  if (formula.GetFreeVariables().size() != 2) return false;
-  if (!is_equal_to(formula) && !is_not_equal_to(formula)) return false;
-
-  // The formula must be of the form 'ax == by + c', with a,b != 0
-  const Expression& lhs = get_lhs_expression(formula);
-  if (!is_addition(lhs) || get_constant_in_addition(lhs) != 0) return false;
-  const auto& expr_to_coeff_map = to_addition(lhs)->get_expr_to_coeff_map();
-  if (expr_to_coeff_map.size() != 2) return false;
-  return is_variable(expr_to_coeff_map.cbegin()->first) && is_variable(std::next(expr_to_coeff_map.cbegin())->first) &&
-         expr_to_coeff_map.cbegin()->second != 0 && std::next(expr_to_coeff_map.cbegin())->second != 0;
-}
-
 bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) const {
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateEqPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
@@ -706,44 +482,15 @@ bool ContextBoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formul
   }
   return missing_var_count == 1;
 }
-bool ContextBoundPreprocessor::ShouldPropagateInBinomial(const Literal& lit) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInBinomial({})", lit);
-  const auto& [formula_var, truth] = lit;
-  const Formula& formula = predicate_abstractor_[formula_var];
-  // There must be exactly two free variables and an equality relation between them
-  if (!is_relational(formula)) return false;
-  return ShouldPropagateInBinomial(formula);
-}
-bool ContextBoundPreprocessor::ShouldPropagateInBinomial(const Formula& formula) const {
-  DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInBinomial({})", formula);
-  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-  // There must be exactly two free variables and an equality relation between them
-  if (!is_relational(formula)) return false;
-  if (formula.GetFreeVariables().size() != 2) return false;
-
-  // The formula must be of the form 'ax <=> by + c', with a,b != 0 and <=> in {<, <=, >, >=, !=}
-  const Expression& lhs = get_lhs_expression(formula);
-  if (!is_addition(lhs) || get_constant_in_addition(lhs) != 0) return false;
-  const auto& expr_to_coeff_map = to_addition(lhs)->get_expr_to_coeff_map();
-  if (expr_to_coeff_map.size() != 2) return false;
-
-  const Variable& first = get_variable(expr_to_coeff_map.cbegin()->first);
-  const Variable& second = get_variable(std::next(expr_to_coeff_map.cbegin())->first);
-  if (expr_to_coeff_map.cbegin()->second == 0 || std::next(expr_to_coeff_map.cbegin())->second == 0) return false;
-  const auto it = theory_bounds_.find(first);
-  if (it == theory_bounds_.end() || !it->second.IsBounded())
-    return theory_bounds_.find(second) != theory_bounds_.end() && theory_bounds_.at(second).IsBounded();
-  return theory_bounds_.find(second) == theory_bounds_.end() && !theory_bounds_.at(second).IsBounded();
-}
-bool ContextBoundPreprocessor::ShouldPropagateInPolynomial(const Literal& lit) const {
+bool ContextBoundPreprocessor::ShouldPropagateBoundsPolynomial(const Literal& lit) const {
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
   // There must be exactly two free variables and an equality relation between them
   if (!is_relational(formula)) return false;
-  return ShouldPropagateInPolynomial(formula);
+  return ShouldPropagateBoundsPolynomial(formula);
 }
-bool ContextBoundPreprocessor::ShouldPropagateInPolynomial(const Formula& formula) const {
+bool ContextBoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& formula) const {
   DLINEAR_TRACE_FMT("ContextBoundPreprocessor::ShouldPropagateInPolynomial({})", formula);
   // There must be more than two free variables and an inequality relation between them
   if (!is_relational(formula)) return false;
