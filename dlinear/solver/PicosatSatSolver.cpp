@@ -104,6 +104,29 @@ void PicosatSatSolver::AddClauseToSat(const Formula &f) {
   main_clauses_copy_.push_back(0);
 }
 
+void PicosatSatSolver::FixedTheoryLiterals(LiteralSet &fixed_literals) {
+  std::vector<int> clause;
+  clause.reserve(main_clauses_copy_.size());
+  for (const int sat_lit : main_clauses_copy_) {
+    if (sat_lit == 0) {
+      if (clause.size() == 1) {
+        DLINEAR_ASSERT(clause[0] != 0, "Clause must be either true or false");
+        const Variable &var = sat_to_var_[abs(clause[0])];
+        if (predicate_abstractor_.var_to_formula_map().contains(var)) fixed_literals.emplace(var, clause[0] > 0);
+      }
+      clause.clear();
+      continue;
+    }
+    clause.push_back(sat_lit);
+  }
+  DLINEAR_TRACE_FMT("PicosatSatSolver::FixedTheoryLiterals() fixed_literals = {}", fixed_literals);
+}
+
+void PicosatSatSolver::Assume(const Literal &lit) {
+  DLINEAR_TRACE_FMT("PicosatSatSolver::Assume({})", lit);
+  picosat_assume(sat_, lit.truth ? var_to_sat_[lit.var.get_id()] : -var_to_sat_[lit.var.get_id()]);
+}
+
 void PicosatSatSolver::Push() {
   DLINEAR_DEBUG("PicosatSatSolver::Push()");
   picosat_push(sat_);

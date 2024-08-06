@@ -92,6 +92,21 @@ void CadicalSatSolver::AddClauseToSat(const Formula &f) {
   main_clauses_copy_.push_back(0);
 }
 
+void CadicalSatSolver::FixedTheoryLiterals(LiteralSet &fixed_literals) {
+  for (int i = 1; i <= sat_.vars(); ++i) {
+    const int lit = sat_.fixed(i);
+    fmt::println("lit: {} -> {}", i, lit);
+    if (lit == 0) continue;
+    const Variable &var = sat_to_var_[i];
+    if (predicate_abstractor_.var_to_formula_map().contains(var)) fixed_literals.emplace(var, lit > 0);
+  }
+  DLINEAR_TRACE_FMT("CadicalSatSolver::FixedTheoryLiterals({})", fixed_literals);
+}
+void CadicalSatSolver::Assume(const Literal &l) {
+  DLINEAR_TRACE_FMT("CadicalSatSolver::Assume({})", l);
+  sat_.assume(l.truth ? var_to_sat_[l.var.get_id()] : -var_to_sat_[l.var.get_id()]);
+}
+
 void CadicalSatSolver::Push() {
   DLINEAR_DEBUG("CadicalSatSolver::Push()");
   // TODO(tend): push

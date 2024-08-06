@@ -27,6 +27,9 @@ namespace dlinear {
 
 class CadicalSatSolver : public SatSolver {
  public:
+  using SatSolver::FixedTheoryLiterals;
+  using SatSolver::Assume;
+
   explicit CadicalSatSolver(PredicateAbstractor &predicate_abstractor,
                             const std::string &class_name = "CadicalSatSolver");
 
@@ -40,6 +43,10 @@ class CadicalSatSolver : public SatSolver {
 
   void Push() override;
   void Pop() override;
+
+  void FixedTheoryLiterals(LiteralSet &fixed_literals) override;
+
+  void Assume(const Literal &l) override;
 
  protected:
   void AddClauseToSat(const Formula &f) override;

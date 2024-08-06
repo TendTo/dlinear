@@ -100,15 +100,53 @@ class SatSolver {
    */
   virtual void AddLearnedClause(const LiteralSet &literals) = 0;
   /**
+   * Get the theory literals that are fixed in the current configuration.
+   *
+   * This means that, for the model to be sat, these literals will never change their assignment.
+   * This allows for slight optimizations
+   * (e.g. their bound can be computed once, at the beginning of the run instead of at each iteration)
+   * @return set of literals that are fixed
+   */
+  LiteralSet FixedTheoryLiterals();
+  /**
+   * Get the theory literals that are fixed in the current configuration.
+   *
+   * This means that, for the model to be sat, these literals will never change their assignment.
+   * This allows for slight optimizations
+   * (e.g. their bound can be computed once, at the beginning of the run instead of at each iteration)
+   * @param[out] fixed_literals set of literals that are fixed
+   */
+  virtual void FixedTheoryLiterals(LiteralSet &fixed_literals) = 0;
+
+  /**
+   * Assume a set of @p literals to be fixed for the next iteration.
+   *
+   * The @p literals are temporarily added to the solver with the indicated value.
+   * @note The solver will not remember the assumptions after the next call to @ref CheckSat.
+   * @param literals set of literals to assume
+   */
+  void Assume(const LiteralSet &literals);
+  /**
+   * Assume a literals to be fixed for the next iteration.
+   *
+   * The @p lit is temporarily added to the solver with the indicated value.
+   * @note The solver will not remember the assumption after the next call to @ref CheckSat.
+   * @param lit literal to assume
+   */
+  virtual void Assume(const Literal &lit) = 0;
+
+  /**
    * Check the satisfiability of the current configuration.
    * @return a witness, satisfying model if the problem is SAT.
    * @return empty optional if UNSAT
    */
   virtual std::optional<Model> CheckSat() = 0;
   /** @getter{statistics, SAT solver}*/
-  const IterationStats &stats() const { return stats_; }
+  [[nodiscard]] const IterationStats &stats() const { return stats_; }
   /** @getter{statistics of the cnfizer, SAT solver} */
-  const IterationStats &cnfizer_stats() const;
+  [[nodiscard]] const IterationStats &cnfizer_stats() const;
+  /** @getter{predicate abstractor, SAT solver} */
+  [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
 
  protected:
   /**

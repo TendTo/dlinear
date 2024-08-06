@@ -63,6 +63,15 @@ void SatSolver::AddLiteral(const Formula &f) {
   }
 }
 
+LiteralSet SatSolver::FixedTheoryLiterals() {
+  LiteralSet fixed_literals;
+  FixedTheoryLiterals(fixed_literals);
+  return fixed_literals;
+}
+void SatSolver::Assume(const LiteralSet &literals) {
+  for (const Literal &lit : literals) Assume(lit);
+}
+
 void SatSolver::UpdateLookup(int lit) {
   main_clauses_copy_.push_back(lit);
   main_clause_lookup_[lit].insert(cur_clause_start_);

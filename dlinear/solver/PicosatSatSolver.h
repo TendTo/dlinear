@@ -28,6 +28,9 @@ namespace dlinear {
 
 class PicosatSatSolver : public SatSolver {
  public:
+  using SatSolver::FixedTheoryLiterals;
+  using SatSolver::Assume;
+
   explicit PicosatSatSolver(PredicateAbstractor &predicate_abstractor,
                             const std::string &class_name = "PicosatSatSolver");
   ~PicosatSatSolver() override;
@@ -42,6 +45,10 @@ class PicosatSatSolver : public SatSolver {
 
   void Push() override;
   void Pop() override;
+
+  void FixedTheoryLiterals(LiteralSet &fixed_literals) override;
+
+  void Assume(const Literal &l) override;
 
  protected:
   void AddClauseToSat(const Formula &f) override;
