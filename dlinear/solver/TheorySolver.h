@@ -18,10 +18,10 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/BoundIterator.h"
+#include "dlinear/solver/BoundPreprocessor.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/SatResult.h"
-#include "dlinear/solver/TheorySolverBoundPreprocessor.h"
-#include "dlinear/solver/TheorySolverBoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -44,8 +44,8 @@ namespace dlinear {
 class TheorySolver {
  public:
   using Bound = std::tuple<const Variable &, LpColBound, const mpq_class &>;  ///< Bound on the variable
-  using Violation = TheorySolverBoundVector::BoundIterator;  ///< Bound iterator over some violated bounds
-  using Explanations = std::set<LiteralSet>;                 ///< Set of explanations of the conflict
+  using Violation = BoundIterator;            ///< Bound iterator over some violated bounds
+  using Explanations = std::set<LiteralSet>;  ///< Set of explanations of the conflict
   /**
    * Construct a new Theory Solver object.
    *
@@ -75,7 +75,7 @@ class TheorySolver {
    * @param formula_var boolean variable that corresponds to the theory formula
    * @param formula symbolic formula that represents the theory formula
    */
-  virtual void AddLiteral(const Variable &formula_var, const Formula& formula) = 0;
+  virtual void AddLiteral(const Variable &formula_var, const Formula &formula) = 0;
   /**
    * Add a variable (column) to the theory solver.
    * @param var variable to add
@@ -118,8 +118,8 @@ class TheorySolver {
   [[nodiscard]] const std::map<Variable::Id, int> &lit_to_theory_row() const { return lit_to_theory_row_; }
   /** @getter{map of theory rows to the literals, TheorySolver} */
   [[nodiscard]] const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
-  /** @getter{theory bounds, TheorySolver} */
-  [[nodiscard]] const TheorySolverBoundVectorVector &theory_bounds() const { return theory_bounds_; }
+  /** @getter{bounds of each theory variable, TheorySolver} */
+  [[nodiscard]] const BoundVectorMap &theory_bounds() const { return preprocessor_.theory_bounds(); }
 
   /**
    * Check the satisfiability of the theory.
@@ -161,7 +161,7 @@ class TheorySolver {
     LOWER_BOUND_VIOLATION,  ///< The lower bound is involved in the infeasibility
     UPPER_BOUND_VIOLATION,  //< The upper bound is involved in the infeasibility
   };
-
+#if 0
   /**
    * Check whether the formula is a simple relational bound.
    *
@@ -318,7 +318,9 @@ class TheorySolver {
    * @return tuple representing a bound
    */
   static Bound GetBound(const Formula &formula, bool truth = true);
-
+#endif
+  void BoundsToTheoryRows(const Variable &var, const mpq_class &value, std::set<int> &theory_rows) const;
+  void BoundsToTheoryRows(const Variable &var, BoundViolationType type, std::set<int> &bound_idxs) const;
   /**
    * Update each variable in the model with the bounds passed to the theory solver.
    * @note there is no check in place on whether the bounds are inverted or the constraints satisfied.
@@ -375,13 +377,12 @@ class TheorySolver {
                                                    ///< It may not contain simple bounds
   std::vector<int> enabled_theory_rows_;           ///< Enabled theory rows.
                                                    ///< Rows that have been enabled in the current problem instance.
-  TheorySolverBoundVectorVector theory_bounds_;    ///< Theory bounds.
                                                    ///< The bounds are the constraints on the values of the variables.
   std::vector<bool> theory_rows_state_;            ///< Whether each theory row is active or not.
 
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
-  TheorySolverBoundPreprocessor preprocessor_;  ///< Preprocessor for the bounds.
+  BoundPreprocessor preprocessor_;  ///< Preprocessor for the bounds.
   ///< Propagates the bounds through simple expressions to produce a precise explanation of the conflict
   ///< without invoking the LP solver.
 

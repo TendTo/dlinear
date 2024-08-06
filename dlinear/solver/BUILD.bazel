@@ -169,26 +169,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "theory_solver_bounds",
-    srcs = [
-        "TheorySolverBoundIterator.cpp",
-        "TheorySolverBoundVector.cpp",
-    ],
-    hdrs = [
-        "TheorySolverBoundIterator.h",
-        "TheorySolverBoundVector.h",
-    ],
-    implementation_deps = ["//dlinear/util:exception"],
-    deps = [
-        ":lp_bound",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic:literal",
-        "//dlinear/util:logging",
-        "//dlinear/util:sorted_vector",
-    ],
-)
-
-dlinear_cc_library(
     name = "theory_propagator",
     srcs = ["TheoryPropagator.cpp"],
     hdrs = ["TheoryPropagator.h"],
@@ -222,33 +202,6 @@ dlinear_cc_library(
         ":bound",
         ":bound_iterator",
         ":bound_vector",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:environment",
-        "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:config",
-        "//dlinear/util:graph",
-        "//dlinear/util:logging",
-    ],
-)
-
-dlinear_cc_library(
-    name = "theory_solver_bound_preprocessor",
-    srcs = [
-        "TheorySolver.h",  # For the forward declaration of TheorySolver
-        "TheorySolverBoundPreprocessor.cpp",
-    ],
-    hdrs = ["TheorySolverBoundPreprocessor.h"],
-    implementation_deps = [
-        ":lp_bound",
-        ":sat_result",
-        "//dlinear/util:box",
-        "//dlinear/util:exception",
-        "//dlinear/util:stats",
-    ],
-    deps = [
-        ":theory_solver_bounds",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:environment",
@@ -299,11 +252,12 @@ dlinear_cc_library(
         "//dlinear/util:timer",
     ],
     deps = [
+        ":bound_iterator",
+        ":bound_preprocessor",
+        ":bound_vector",
         ":lp_bound",
         ":lp_sense",
         ":sat_result",
-        ":theory_solver_bound_preprocessor",
-        ":theory_solver_bounds",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",

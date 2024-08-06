@@ -21,17 +21,17 @@ const auto enabled_test_solvers = ::testing::Values(
 #endif
 );
 
-std::vector<dlinear::SmtResult> expected_results(dlinear::SmtResult res) {
+std::set<dlinear::SmtResult> delta_result(dlinear::SmtResult res) {
   switch (res) {
     case dlinear::SmtResult::SAT:
-      return std::vector{dlinear::SmtResult::SAT, dlinear::SmtResult::DELTA_SAT};
+      return {dlinear::SmtResult::SAT, dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::DELTA_SAT:
-      return std::vector{dlinear::SmtResult::DELTA_SAT};
+      return {dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::UNSAT:
-      // return std::vector{dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
-      return std::vector{dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
+      // return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
+      return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::UNKNOWN:
-      return std::vector{dlinear::SmtResult::UNKNOWN};
+      return {dlinear::SmtResult::UNKNOWN};
     default:
       DLINEAR_UNREACHABLE();
   }

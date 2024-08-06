@@ -18,7 +18,6 @@ using dlinear::drake::symbolic::Sum;
 using dlinear::drake::symbolic::Prod;
 
 class TestSymbolic : public ::testing::Test {
-  DrakeSymbolicGuard guard_;
  protected:
   const Variable x_{"x", Variable::Type::CONTINUOUS};
   const Variable y_{"y", Variable::Type::CONTINUOUS};

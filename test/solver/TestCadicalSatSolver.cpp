@@ -92,7 +92,6 @@ TEST_F(TestCadicalSatSolver, SolveOrTwo) {
   s_.AddFormula(bx_ || by_);
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_LE(res.value().first.size(), 2u);
   EXPECT_GE(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 1);
@@ -103,7 +102,6 @@ TEST_F(TestCadicalSatSolver, SolveOrThree) {
   s_.AddFormula(bx_ || by_ || bz_);
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_LE(res.value().first.size(), 3u);
   EXPECT_GE(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 1);
@@ -115,7 +113,6 @@ TEST_F(TestCadicalSatSolver, SolveAndTwo) {
 
   const std::optional<Model> res = s_.CheckSat();
   EXPECT_TRUE(res.has_value());
-  fmt::print("res = {}\n", res.value());
 
   EXPECT_EQ(res.value().first.size(), 2u);
   EXPECT_EQ(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 2);
@@ -126,7 +123,6 @@ TEST_F(TestCadicalSatSolver, SolveAndThree) {
   s_.AddFormula(bx_ && by_ && bz_);
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_EQ(res.value().first.size(), 3u);
   EXPECT_EQ(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 3);
@@ -138,7 +134,6 @@ TEST_F(TestCadicalSatSolver, SolveImplyFalse) {
   s_.AddFormula(!by_);
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_EQ(res.value().first.size(), 2u);
   EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), FalseLiteral));
@@ -150,7 +145,6 @@ TEST_F(TestCadicalSatSolver, SolveImplyTrue) {
   s_.AddFormula(Formula{bx_});
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_EQ(res.value().first.size(), 2u);
   EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), TrueLiteral));
@@ -161,7 +155,6 @@ TEST_F(TestCadicalSatSolver, SolveIffFalse) {
   s_.AddFormula(!bx_);
 
   const std::optional<Model> res = s_.CheckSat();
-  fmt::print("res = {}\n", res.value());
   EXPECT_TRUE(res.has_value());
   EXPECT_EQ(res.value().first.size(), 2u);
   EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), FalseLiteral));

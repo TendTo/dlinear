@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <iosfwd>
 #include <iterator>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -152,8 +153,42 @@ class BoundIterator {
   [[nodiscard]] internal_iterator begin() const { return bounds_it_; }
   [[nodiscard]] internal_iterator end() const { return end_nq_bounds_it_; }
 
-  LiteralSet explanation() const;
-  void explanation(LiteralSet& explanation) const;
+  /**
+   * Produce and explanation formed by all the theory literals present in the violation.
+   *
+   * It puts in a single set all the explanations and literals of all the bounds.
+   * @return explanation
+   */
+  [[nodiscard]] LiteralSet explanation() const;
+  /**
+   * Produce and explanation formed by all the theory literals present in the violation.
+   *
+   * It puts in a single set all the explanations and literals of all the bounds.
+   * @param explanation[out] set to store the explanation
+   * @return explanation
+   */
+  void explanation(LiteralSet &explanation) const;
+  /**
+   * Produce a set of explanations.
+   *
+   * Each of the explanations is produced from a single bound of the violation,
+   * putting together its explanation and literal.
+   * If @p lit is present, it will be added to every explanation.
+   * @param lit if specified, it is added to all explanations
+   * @return set of explanations
+   */
+  [[nodiscard]] std::set<LiteralSet> explanations(const std::optional<Literal> &lit = {}) const;
+  /**
+   * Produce a set of explanations.
+   *
+   * Each of the explanations is produced from a single bound of the violation,
+   * putting together its explanation and literal.
+   * If @p lit is present, it will be added to every explanation.
+   * @param explanations[out] set to store the explanations
+   * @param lit if specified, it is added to all explanations
+   * @return set of explanations
+   */
+  void explanations(std::set<LiteralSet> &explanations, const std::optional<Literal> &lit = {}) const;
 
  private:
   static const vector_type default_empty_vector_;  ///< Default empty vector. Used for default construction.

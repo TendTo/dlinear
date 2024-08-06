@@ -15,7 +15,6 @@ using dlinear::Variable;
 using dlinear::mps::MpsDriver;
 
 class TestMpsDriver : public ::testing::Test {
-  const DrakeSymbolicGuard guard_;
 
  protected:
   Config config_;

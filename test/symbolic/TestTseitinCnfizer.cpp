@@ -34,7 +34,6 @@ bool IsSatisfiable(const Formula &f) {
 }
 
 class TestTseitinCnfizer : public ::testing::Test {
-  const DrakeSymbolicGuard guard_;
   const Config config_;
 
  protected:

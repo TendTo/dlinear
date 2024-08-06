@@ -10,21 +10,19 @@
 
 #include "dlinear/solver/Context.h"
 #include "test/solver/TestSolverUtils.h"
-#include "test/symbolic/TestSymbolicUtils.h"
 
 using dlinear::Config;
 using dlinear::Context;
+using dlinear::Variable;
 using std::unique_ptr;
 
 class TestContext : public ::testing::TestWithParam<Config::LPSolver> {
-  const DrakeSymbolicGuard guard_;
-
  protected:
   const Variable x_{"x"};
   const Variable y_{"Y"};
   Config config_;
   Context context_;
-  explicit TestContext() : guard_{GetParam()}, context_{config_} {
+  explicit TestContext() : context_{config_} {
     config_.m_lp_solver() = GetParam();
     context_.DeclareVariable(x_);
     context_.DeclareVariable(y_);

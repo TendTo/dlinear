@@ -14,12 +14,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_googletest(
-    name = "test_theory_solver_bound_vector",
-    tags = ["solver"],
-    deps = ["//dlinear/solver:theory_solver_bounds"],
-)
-
-dlinear_cc_googletest(
     name = "test_bound_vector",
     tags = ["solver"],
     deps = ["//dlinear/solver:bound_vector"],
@@ -32,19 +26,9 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
-    name = "test_theory_solver_bound_iterator",
+    name = "test_bound_iterator",
     tags = ["solver"],
-    deps = ["//dlinear/solver:theory_solver_bounds"],
-)
-
-dlinear_cc_googletest(
-    name = "test_theory_solver_bound_preprocessor",
-    tags = ["solver"],
-    deps = [
-        "//dlinear/solver:theory_solver",
-        "//dlinear/solver:theory_solver_bound_preprocessor",
-        "//test/symbolic:test_symbolic_utils",
-    ],
+    deps = ["//dlinear/solver:bound_iterator"],
 )
 
 dlinear_cc_googletest(
@@ -53,7 +37,6 @@ dlinear_cc_googletest(
     deps = [
         ":test_solver_utils",
         "//dlinear/solver:context",
-        "//test/symbolic:test_symbolic_utils",
     ],
 )
 
@@ -84,7 +67,6 @@ dlinear_cc_googletest(
     deps = [
         ":test_solver_utils",
         "//dlinear/solver:theory_solver",
-        "//test/symbolic:test_symbolic_utils",
     ],
 )
 

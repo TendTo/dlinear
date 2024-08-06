@@ -15,6 +15,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <span>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -42,13 +43,18 @@ class BoundPreprocessor {
 
   explicit BoundPreprocessor(const PredicateAbstractor& predicate_abstractor);
 
-  void Init();
+  void AddVariable(const Variable& var);
 
-  LiteralSet AddConstraint(const Literal& lit);
-  void AddConstraint(const Literal& lit, LiteralSet& explanation);
+  std::set<LiteralSet> EnableLiterals(const std::vector<Literal>& enabled_literals);
+  void EnableLiterals(const std::vector<Literal>& enabled_literals, std::set<LiteralSet>& explanation);
 
-  Explanations Process(const LiteralSet& enabled_literals = {});
-  void Process(const LiteralSet& enabled_literals, Explanations& explanations);
+  std::set<LiteralSet> EnableLiteral(const Literal& lit);
+  void EnableLiteral(const Literal& lit, std::set<LiteralSet>& explanations);
+
+  Explanations Process();
+  void Process(Explanations& explanations);
+  Explanations Process(std::span<Literal> enabled_literals);
+  void Process(std::span<Literal> enabled_literals, Explanations& explanations);
 
   void GetActiveExplanation(const Variable& var, LiteralSet& explanation);
 
@@ -215,6 +221,8 @@ class BoundPreprocessor {
 
   const Config& config_;  ///< Configuration of the preprocessor
   const PredicateAbstractor& predicate_abstractor_;
+
+  std::vector<Literal> enabled_literals_;
 
   BoundVectorMap theory_bounds_;
   Environment env_;

@@ -6,29 +6,33 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/solver/TheorySolverBoundIterator.h"
-#include "dlinear/solver/TheorySolverBoundVector.h"
+#include "dlinear/solver/BoundIterator.h"
 
+using dlinear::Bound;
+using dlinear::BoundIterator;
+using dlinear::Literal;
 using dlinear::LpColBound;
-using dlinear::SortedVector;
-using Violation = dlinear::TheorySolverBoundVector::BoundIterator;
-using BoundVector = dlinear::TheorySolverBoundVector::BoundVector;
+using dlinear::Variable;
 
-class TestTheorySolverBoundIterator : public ::testing::Test {
+class TestBoundIterator : public ::testing::Test {
  protected:
-  const BoundVector bound_vector_;
-  const BoundVector nq_bound_vector_;
-  Violation it_;
+  const Literal lit_{Variable{"lit", Variable::Type::BOOLEAN}, true};
+  const std::vector<Bound> bound_vector_;
+  const std::vector<Bound> nq_bound_vector_;
+  BoundIterator it_;
   const mpq_class val_[6] = {0, 1, 2, 3, 4, 5};
 
-  TestTheorySolverBoundIterator()
-      : bound_vector_{{&val_[1], LpColBound::SL, 0}, {&val_[2], LpColBound::L, 0}, {&val_[3], LpColBound::U, 0}, {&val_[4], LpColBound::SU, 0}},
-        nq_bound_vector_{{&val_[0], LpColBound::D, 0}, {&val_[5], LpColBound::D, 0}},
+  TestBoundIterator()
+      : bound_vector_{{&val_[1], LpColBound::SL, lit_},
+                      {&val_[2], LpColBound::L, lit_},
+                      {&val_[3], LpColBound::U, lit_},
+                      {&val_[4], LpColBound::SU, lit_}},
+        nq_bound_vector_{{&val_[0], LpColBound::D, lit_}, {&val_[5], LpColBound::D, lit_}},
         it_{bound_vector_.begin(), bound_vector_.end(), nq_bound_vector_.begin(), nq_bound_vector_.end()} {}
 };
 
-TEST_F(TestTheorySolverBoundIterator, ConstructorDefault) {
-  Violation it{};
+TEST_F(TestBoundIterator, ConstructorDefault) {
+  BoundIterator it{};
   EXPECT_FALSE(it);
   EXPECT_EQ(it.size(), 0u);
   EXPECT_TRUE(it.empty());
@@ -38,9 +42,9 @@ TEST_F(TestTheorySolverBoundIterator, ConstructorDefault) {
   EXPECT_TRUE(it.nq_bounds_empty());
 }
 
-TEST_F(TestTheorySolverBoundIterator, ConstructorSingleEmpty) {
-  BoundVector empty_vector;
-  Violation it{empty_vector.begin(), empty_vector.end()};
+TEST_F(TestBoundIterator, ConstructorSingleEmpty) {
+  std::vector<Bound> empty_vector;
+  BoundIterator it{empty_vector.begin(), empty_vector.end()};
   EXPECT_FALSE(it);
   EXPECT_EQ(it.size(), 0u);
   EXPECT_TRUE(it.empty());
@@ -50,10 +54,10 @@ TEST_F(TestTheorySolverBoundIterator, ConstructorSingleEmpty) {
   EXPECT_TRUE(it.nq_bounds_empty());
 }
 
-TEST_F(TestTheorySolverBoundIterator, ConstructorDoubleEmpty) {
-  BoundVector empty_vector;
-  BoundVector empty_vector2;
-  Violation it{empty_vector.begin(), empty_vector.end(), empty_vector2.begin(), empty_vector2.end()};
+TEST_F(TestBoundIterator, ConstructorDoubleEmpty) {
+  std::vector<Bound> empty_vector;
+  std::vector<Bound> empty_vector2;
+  BoundIterator it{empty_vector.begin(), empty_vector.end(), empty_vector2.begin(), empty_vector2.end()};
   EXPECT_FALSE(it);
   EXPECT_EQ(it.size(), 0u);
   EXPECT_TRUE(it.empty());
@@ -63,8 +67,8 @@ TEST_F(TestTheorySolverBoundIterator, ConstructorDoubleEmpty) {
   EXPECT_TRUE(it.nq_bounds_empty());
 }
 
-TEST_F(TestTheorySolverBoundIterator, ConstructorSingle) {
-  Violation it{bound_vector_.begin(), bound_vector_.end()};
+TEST_F(TestBoundIterator, ConstructorSingle) {
+  BoundIterator it{bound_vector_.begin(), bound_vector_.end()};
   EXPECT_TRUE(it);
   EXPECT_EQ(*it, bound_vector_[0]);
   EXPECT_EQ(it.size(), bound_vector_.size());
@@ -78,8 +82,8 @@ TEST_F(TestTheorySolverBoundIterator, ConstructorSingle) {
   }
 }
 
-TEST_F(TestTheorySolverBoundIterator, ConstructorDouble) {
-  Violation it{bound_vector_.begin(), bound_vector_.end(), nq_bound_vector_.begin(), nq_bound_vector_.end()};
+TEST_F(TestBoundIterator, ConstructorDouble) {
+  BoundIterator it{bound_vector_.begin(), bound_vector_.end(), nq_bound_vector_.begin(), nq_bound_vector_.end()};
   EXPECT_TRUE(it);
   EXPECT_EQ(*it, bound_vector_[0]);
   EXPECT_EQ(it.size(), bound_vector_.size() + nq_bound_vector_.size());
@@ -96,8 +100,8 @@ TEST_F(TestTheorySolverBoundIterator, ConstructorDouble) {
   }
 }
 
-TEST_F(TestTheorySolverBoundIterator, SingleIteration) {
-  Violation it{bound_vector_.begin(), bound_vector_.end()};
+TEST_F(TestBoundIterator, SingleIteration) {
+  BoundIterator it{bound_vector_.begin(), bound_vector_.end()};
   EXPECT_TRUE(it);
   size_t i = 0;
   for (; it; ++it, ++i) {
@@ -107,7 +111,7 @@ TEST_F(TestTheorySolverBoundIterator, SingleIteration) {
   EXPECT_EQ(i, bound_vector_.size());
 }
 
-TEST_F(TestTheorySolverBoundIterator, DoubleIteration) {
+TEST_F(TestBoundIterator, DoubleIteration) {
   EXPECT_TRUE(it_);
   size_t i = 0;
   for (; it_; ++it_, ++i) {

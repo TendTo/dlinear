@@ -12,9 +12,9 @@
 #include <string_view>
 
 #include "dlinear/solver/SoplexTheorySolver.h"
-#include "test/solver/TestSolverUtils.h"
-#include "test/symbolic/TestSymbolicUtils.h"
 
+using dlinear::BoundPreprocessor;
+using dlinear::BoundVectorMap;
 using dlinear::Box;
 using dlinear::Config;
 using dlinear::Literal;
@@ -22,7 +22,6 @@ using dlinear::LiteralSet;
 using dlinear::PredicateAbstractor;
 using dlinear::SatResult;
 using dlinear::SoplexTheorySolver;
-using dlinear::TheorySolverBoundVectorVector;
 using dlinear::Variable;
 using std::unique_ptr;
 
@@ -39,13 +38,12 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
 };
 
 class TestSoplexTheorySolver : public ::testing::TestWithParam<double> {
-  const DrakeSymbolicGuard guard_;
-
  protected:
   const Variable var_{"x"};
   Config config_;
   PredicateAbstractor abstractor_;
-  explicit TestSoplexTheorySolver() : config_{GetConfig()}, abstractor_{config_} {}
+  MockSoplexTheorySolver s_;
+  explicit TestSoplexTheorySolver() : config_{GetConfig()}, abstractor_{config_}, s_{abstractor_} {}
   static Config GetConfig() {
     Config config;
     config.m_precision() = 0;
@@ -59,56 +57,50 @@ INSTANTIATE_TEST_SUITE_P(TestSoplexTheorySolver, TestSoplexTheorySolver, ::testi
 TEST_P(TestSoplexTheorySolver, AddVariable) {
   const int theory_col = 0;
   config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_};
-  EXPECT_EQ(s.theory_col_to_var().size(), 0u);
+  EXPECT_EQ(s_.theory_col_to_var().size(), 0u);
 
-  s.AddVariable(var_);
-  EXPECT_EQ(s.theory_col_to_var().size(), 1u);
-  EXPECT_EQ(s.theory_col_to_var().at(theory_col), var_);
-  EXPECT_EQ(s.var_to_theory_col().size(), 1u);
-  EXPECT_EQ(s.var_to_theory_col().at(var_.get_id()), theory_col);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
+  s_.AddVariable(var_);
+  EXPECT_EQ(s_.theory_col_to_var().size(), 1u);
+  EXPECT_EQ(s_.theory_col_to_var().at(theory_col), var_);
+  EXPECT_EQ(s_.var_to_theory_col().size(), 1u);
+  EXPECT_EQ(s_.var_to_theory_col().at(var_.get_id()), theory_col);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_upper_bound(), soplex::infinity);
 }
 
 TEST_P(TestSoplexTheorySolver, EnableLiterals) {
   config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_};
-  EXPECT_EQ(s.theory_col_to_var().size(), 0u);
+  EXPECT_EQ(s_.theory_col_to_var().size(), 0u);
 
   std::vector<Literal> literals{{var_, true}, {var_, false}, {var_, false}};
-  EXPECT_CALL(s, EnableLiteral(testing::_)).Times(static_cast<int>(literals.size()));
+  EXPECT_CALL(s_, EnableLiteral(testing::_)).Times(static_cast<int>(literals.size()));
 
-  s.EnableLiterals(literals);
+  s_.EnableLiterals(literals);
 }
 
 TEST_P(TestSoplexTheorySolver, ResetBoxEmpty) {
-  const int theory_col = 0;
   config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_};
-  s.AddVariable(var_);
+  s_.AddVariable(var_);
 
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
-  s.Reset(Box{Config::LPSolver::SOPLEX});
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_upper_bound(), soplex::infinity);
+  s_.Reset(Box{Config::LPSolver::SOPLEX});
 
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_upper_bound(), soplex::infinity);
 }
 
 TEST_P(TestSoplexTheorySolver, ResetBoxBounds) {
-  const int theory_col = 0;
   mpq_class lb = 5, ub = 10;
   Box box{Config::LPSolver::SOPLEX};
   box.Add(var_, lb, ub);
   config_.m_precision() = GetParam();
-  MockSoplexTheorySolver s{abstractor_};
-  s.AddVariable(var_);
+  s_.AddVariable(var_);
 
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), -soplex::infinity);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), soplex::infinity);
-  s.Reset(box);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_lower_bound(), -soplex::infinity);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_upper_bound(), soplex::infinity);
+  s_.Reset(box);
 
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_lower_bound(), lb);
-  EXPECT_EQ(s.theory_bounds()[theory_col].active_upper_bound(), ub);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_lower_bound(), lb);
+  EXPECT_EQ(s_.theory_bounds().at(var_).active_upper_bound(), ub);
 }

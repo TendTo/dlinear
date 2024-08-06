@@ -29,10 +29,6 @@ using dlinear::drake::symbolic::Variables;
 using dlinear::drake::symbolic::VisitExpression;
 using dlinear::drake::symbolic::VisitFormula;
 
-struct DrakeSymbolicGuard {
-  explicit DrakeSymbolicGuard(Config::LPSolver = Config::LPSolver::SOPLEX) {}
-};
-
 inline bool VarEqual(const Variable &v1, const Variable &v2) { return v1.equal_to(v2); }
 
 inline bool VarNotEqual(const Variable &v1, const Variable &v2) { return !VarEqual(v1, v2); }

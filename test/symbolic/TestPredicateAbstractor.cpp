@@ -14,7 +14,6 @@ using std::set;
 namespace dlinear {
 
 class TestPredicateAbstractor : public ::testing::Test {
-  DrakeSymbolicGuard guard_;
   Config config_;
 
  protected:

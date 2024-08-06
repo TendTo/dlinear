@@ -144,6 +144,7 @@ Expression Context::Impl::AssertRelu(const dlinear::drake::symbolic::Expression 
   AddToBox(to_variable(no_relu)->get_variable());
   stack_.push_back(assertion);
   sat_solver_->AddFormula(assertion);
+  guided_constraints_.emplace_back(std::make_unique<ReluConstraint>(predicate_abstractor_[assertion]));
   return no_relu;
 }
 
@@ -348,13 +349,12 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_SATISFIABLE;
   }
 
-  // Add the theory literals into the theory solver.
-  theory_solver_->AddLiterals();
-
+  // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
   TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
   propagator.Propagate();
 
-  [[maybe_unused]] const TheorySolverBoundVectorVector &theory_bounds = theory_solver_->theory_bounds();
+  // Add the theory literals in the predicate abstractor into the theory solver.
+  theory_solver_->AddLiterals();
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.
@@ -403,7 +403,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
     theory_solver_->Reset(box());
-    const TheorySolver::Explanations bound_explanations = theory_solver_->EnableLiterals(theory_model);
+    const TheorySolver::Explanations bound_explanations{theory_solver_->EnableLiterals(theory_model)};
     if (!bound_explanations.empty()) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
       LearnExplanations(bound_explanations);
@@ -443,7 +443,7 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver() {
   switch (config_.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
-      if (config.complete())  // TODO: add support for complete QSOPTEX
+      if (config_.complete())  // TODO: add support for complete QSOPTEX
         return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_);
       else
         return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_);

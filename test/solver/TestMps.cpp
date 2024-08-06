@@ -19,22 +19,29 @@ using dlinear::SmtResult;
 using dlinear::SmtSolver;
 using std::unique_ptr;
 
-class TestMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
+class TestMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double, bool>> {
  protected:
   Config config_;
+
+  TestMps() {
+    const auto& [lp_solver, filename, precision, preprocessor] = GetParam();
+    config_.m_precision() = precision;
+    config_.m_complete() = false;
+    config_.m_format() = Config::Format::MPS;
+    config_.m_filename() = filename;
+    config_.m_lp_solver() = lp_solver;
+    config_.m_disable_theory_preprocessor() = preprocessor;
+    std::cout << "Testing " << filename << std::endl;
+  }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/mps")),
-                                            ::testing::Values(0.0, 0.1)));
+                                            ::testing::Values(0.0, 0.1), ::testing::Values(true, false)));
 
 TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
-  const auto& [lp_solver, filename, precision] = GetParam();
-  config_.m_filename() = filename;
-  config_.m_lp_solver() = lp_solver;
-  config_.m_precision() = precision;
   SmtSolver s{config_};
   s.Parse();
   const SmtResult result = s.CheckSat().result;
-  EXPECT_THAT(expected_results(s.GetExpected()), ::testing::Contains(result));
+  EXPECT_THAT(delta_result(s.GetExpected()), ::testing::Contains(result));
 }

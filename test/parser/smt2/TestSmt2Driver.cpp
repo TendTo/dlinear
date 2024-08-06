@@ -17,8 +17,6 @@ using dlinear::smt2::Smt2Driver;
 using dlinear::smt2::Term;
 
 class TestSmt2Driver : public ::testing::Test {
-  const DrakeSymbolicGuard guard_;
-
  protected:
   Config config_;
   Context context_{config_};
@@ -229,7 +227,6 @@ TEST_F(TestSmt2Driver, CustomSumFunction) {
   EXPECT_TRUE(sum.expression().EqualTo(x + y));
 
   EXPECT_EQ(driver.context().box().size(), 4);
-  fmt::print("{}\n", driver.context().box());
   EXPECT_EQ(driver.context().assertions().size(), 1u);
   EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x + y == 2 * x));
 }

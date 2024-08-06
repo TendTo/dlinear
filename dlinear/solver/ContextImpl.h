@@ -324,6 +324,10 @@ class Context::Impl {
   bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
 
+  std::vector<std::unique_ptr<GuidedConstraint>>
+      guided_constraints_;  ///< Special constraints that can be used to guide the SAT solver towards a possible SAT
+                            ///< assignment.
+
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   IfThenElseEliminator ite_eliminator_;       ///< Eliminates if-then-else expressions from the formula.
   // TODO: these could become templated classes for added efficiency

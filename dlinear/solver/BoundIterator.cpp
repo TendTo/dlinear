@@ -129,6 +129,29 @@ void BoundIterator::explanation(LiteralSet &explanation) const {
     explanation.insert(nq_bound_it->theory_literal);
   }
 }
+std::set<LiteralSet> BoundIterator::explanations(const std::optional<Literal> &lit) const {
+  std::set<LiteralSet> explanations;
+  BoundIterator::explanations(explanations, lit);
+  return explanations;
+}
+void BoundIterator::explanations(std::set<LiteralSet> &explanations, const std::optional<Literal> &lit) const {
+  auto [bound_it, end_bound_it] = bounds();
+  for (; bound_it != end_bound_it; ++bound_it) {
+    LiteralSet explanation;
+    if (lit.has_value()) explanation.insert(lit.value());
+    explanation.insert(bound_it->explanation.begin(), bound_it->explanation.end());
+    explanation.insert(bound_it->theory_literal);
+    explanations.insert(explanation);
+  }
+  auto [nq_bound_it, end_nq_bound_it] = nq_bounds();
+  for (; nq_bound_it != end_nq_bound_it; ++nq_bound_it) {
+    LiteralSet explanation;
+    if (lit.has_value()) explanation.insert(lit.value());
+    explanation.insert(nq_bound_it->explanation.begin(), nq_bound_it->explanation.end());
+    explanation.insert(nq_bound_it->theory_literal);
+    explanations.insert(explanation);
+  }
+}
 
 std::ostream &operator<<(std::ostream &os, const BoundIterator &violation) {
   BoundIterator it{violation.bounds(), violation.nq_bounds()};

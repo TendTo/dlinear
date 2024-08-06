@@ -6,7 +6,6 @@
  */
 #include "TheorySolver.h"
 
-#include "dlinear/solver/TheorySolverBoundIterator.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -16,7 +15,7 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
     : config_{predicate_abstractor.config()},
       is_consolidated_{false},
       predicate_abstractor_{predicate_abstractor},
-      preprocessor_{*this},
+      preprocessor_{predicate_abstractor},
       model_{config_.lp_solver()},
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
@@ -54,7 +53,7 @@ void TheorySolver::Consolidate() {
   enabled_theory_rows_.reserve(theory_row_to_lit_.size());
   theory_rows_state_.resize(theory_row_to_lit_.size(), false);
 }
-
+#if 0
 bool TheorySolver::IsSimpleBound(const Formula &formula) {
   // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
   if (!is_relational(formula)) return false;
@@ -186,6 +185,26 @@ void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const TheorySolver::B
       theory_col,
       type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
       bound_idxs);
+}
+#endif
+
+void TheorySolver::BoundsToTheoryRows(const Variable &var, BoundViolationType type, std::set<int> &theory_rows) const {
+  if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
+  auto it = preprocessor_.theory_bounds().find(var);
+  if (it == preprocessor_.theory_bounds().end()) return;
+  const BoundVector &bound = it->second;
+  return BoundsToTheoryRows(
+      var, type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
+      theory_rows);
+}
+void TheorySolver::BoundsToTheoryRows(const Variable &var, const mpq_class &value, std::set<int> &theory_rows) const {
+  auto bound_it = preprocessor_.theory_bounds().find(var);
+  if (bound_it == preprocessor_.theory_bounds().end()) return;
+  const BoundVector &bound = bound_it->second;
+  for (auto it = bound.GetActiveBound(value); it; ++it) {
+    theory_rows.insert(lit_to_theory_row_.at(it->theory_literal.var.get_id()));
+    for (const Literal &exp : it->explanation) theory_rows.insert(lit_to_theory_row_.at(exp.var.get_id()));
+  }
 }
 
 }  // namespace dlinear

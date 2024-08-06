@@ -56,20 +56,18 @@ class TestBoundPreprocessor : public ::testing::Test {
       x10_{"x10"};
   const mpq_class inf_{100};
   const mpq_class ninf_{-100};
-  LiteralSet active_constraints_;
-  std::vector<Literal> added_constraints_;
+  std::vector<Literal> active_constraints_;
 
   TestBoundPreprocessor() : bound_preprocessor_{pa_} { DLINEAR_LOG_INIT_VERBOSITY(0); }
 
   void AddConstraints(std::initializer_list<Formula> formulas) {
     for (const auto &formula : formulas) {
+      for (const Variable &var : formula.GetFreeVariables()) bound_preprocessor_.AddVariable(var);
       const Formula flattened = pa_.Convert(formula);
-      bound_preprocessor_.Init();
       const Variable &var = is_negation(flattened) ? get_variable(get_operand(flattened)) : get_variable(flattened);
       const Literal lit{var, !is_negation(flattened)};
-      bound_preprocessor_.AddConstraint(lit);
-      active_constraints_.insert(lit);
-      added_constraints_.push_back(lit);
+      bound_preprocessor_.EnableLiteral(lit);
+      active_constraints_.push_back(lit);
     }
   }
 };
@@ -245,22 +243,22 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleViolation) {
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[2]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[8], added_constraints_[9],
-                                                                 added_constraints_[10], added_constraints_[11]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[8], active_constraints_[9],
+                                                                 active_constraints_[10], active_constraints_[11]));
         break;
       case 5:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAre(added_constraints_[2], added_constraints_[3], added_constraints_[4],
-                                                    added_constraints_[5], added_constraints_[6]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[2], active_constraints_[3],
+                                                                 active_constraints_[4], active_constraints_[5],
+                                                                 active_constraints_[6]));
         break;
       case 6:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[3], added_constraints_[4],
-                                                                 added_constraints_[5], added_constraints_[6]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[3], active_constraints_[4],
+                                                                 active_constraints_[5], active_constraints_[6]));
         break;
       default:
         FAIL();
@@ -287,7 +285,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBounds) {
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
   ASSERT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(),
-              ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1], added_constraints_[2]));
+              ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1], active_constraints_[2]));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDifferentEnds) {
@@ -301,12 +299,12 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDiffe
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[2]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[3], added_constraints_[4]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[3], active_constraints_[4]));
         break;
       default:
         FAIL();
@@ -326,17 +324,17 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDiffe
   for (const auto &explanation : explanations) {
     switch (explanation.size()) {
       case 3:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[2]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[2]));
         break;
       case 4:
-        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                 added_constraints_[4], added_constraints_[6]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[4], active_constraints_[6]));
         break;
       case 5:
-        EXPECT_THAT(explanation,
-                    ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1], added_constraints_[3],
-                                                    added_constraints_[5], added_constraints_[6]));
+        EXPECT_THAT(explanation, ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                 active_constraints_[3], active_constraints_[5],
+                                                                 active_constraints_[6]));
         break;
       default:
         FAIL();
@@ -363,7 +361,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOrigins) {
   EXPECT_EQ(bound_preprocessor_.env().size(), 8u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 8u);
   ASSERT_EQ(explanations.size(), 1u);
-  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(active_constraints_));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
@@ -385,7 +383,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 9u);
   ASSERT_EQ(explanations.size(), 1u);
-  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(active_constraints_));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessEvaluateViolation) {
@@ -404,7 +402,7 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolation) {
   EXPECT_EQ(bound_preprocessor_.env()[x7_], val + 1);
 
   ASSERT_EQ(explanations.size(), 1u);
-  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(added_constraints_));
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(active_constraints_));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
@@ -417,24 +415,24 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 
-  fmt::print("explanations: {}\n", explanations);
-  fmt::print("added_constraints_: {}\n", bound_preprocessor_.theory_bounds());
   ASSERT_EQ(explanations.size(), 1u);
-  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                      added_constraints_[2], added_constraints_[3]));
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                      active_constraints_[2], active_constraints_[3]));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) {
   const mpq_class val = 7;
   AddConstraints({
-      x1_ == val,
-      x1_ == x2_,
-      x2_ == x3_,
-      x3_ + x2_ != mpq_class(2 * val),
-      x3_ + x2_<mpq_class(2 * val), x3_ + x2_> mpq_class(2 * val),
-      x3_ + x2_ >= mpq_class(2 * val),
-      x3_ + x2_ <= mpq_class(2 * val),
-      x3_ + x2_ == mpq_class(2 * val),
+      x1_ == val,                       // 0
+      x1_ == x2_,                       // 1
+      x2_ == x3_,                       // 2
+      x3_ + x2_ != mpq_class(2 * val),  // 3
+      x3_ + x2_<mpq_class(2 * val),     // 4
+                x3_ + x2_>
+                mpq_class(2 * val),     // 5
+      x3_ + x2_ >= mpq_class(2 * val),  // 6
+      x3_ + x2_ <= mpq_class(2 * val),  // 7
+      x3_ + x2_ == mpq_class(2 * val),  // 8
       x2_ == x4_,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
@@ -445,15 +443,17 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) 
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 
+  fmt::println("{}", explanations);
+  std::cout << std::endl;
   ASSERT_THAT(explanations.size(), 3u);
-  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1],
-                                                                      added_constraints_[2], added_constraints_[3]));
+  EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
+                                                                      active_constraints_[2], active_constraints_[3]));
   EXPECT_THAT(*std::next(explanations.begin()),
-              ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1], added_constraints_[2],
-                                              added_constraints_[4]));
+              ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1], active_constraints_[2],
+                                              active_constraints_[4]));
   EXPECT_THAT(*std::next(std::next(explanations.begin())),
-              ::testing::UnorderedElementsAre(added_constraints_[0], added_constraints_[1], added_constraints_[2],
-                                              added_constraints_[5]));
+              ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1], active_constraints_[2],
+                                              active_constraints_[5]));
 }
 
 TEST_F(TestBoundPreprocessor, ProcessBoundSimpleEqBinomial) {

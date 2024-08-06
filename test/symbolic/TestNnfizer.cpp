@@ -12,7 +12,6 @@
 using dlinear::Nnfizer;
 
 class NnfizerTest : public ::testing::Test {
-  DrakeSymbolicGuard guard_;
  protected:
   const Variable x_{"x", Variable::Type::CONTINUOUS};
   const Variable y_{"y", Variable::Type::CONTINUOUS};

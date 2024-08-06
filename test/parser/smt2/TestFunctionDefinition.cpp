@@ -19,8 +19,6 @@ using dlinear::smt2::Term;
 using std::runtime_error;
 
 class TestFunctionDefinition : public ::testing::TestWithParam<bool> {
-  const DrakeSymbolicGuard guard_;
-
  protected:
   const double min_val_ = 5, max_val_ = 6;
   const Variable lhs_{"lhs"}, rhs_{"rhs"};

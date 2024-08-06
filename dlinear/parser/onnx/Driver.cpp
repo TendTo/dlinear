@@ -595,8 +595,6 @@ void OnnxDriver::AddNode<NodeOpType::Squeeze>(const ::onnx::NodeProto& node) {
   const std::string& input1 = node.input(0);
   const std::string& output = node.output(0);
 
-  fmt::println("Squeeze node input size: {}", node.input_size());
-
   if (node.input_size() == 1) {
     available_inputs_.emplace(output, available_inputs_.at(input1).Squeeze());
     DLINEAR_DEBUG_FMT("Squeeze node: {} = squeeze({})", output, input1);
@@ -606,8 +604,6 @@ void OnnxDriver::AddNode<NodeOpType::Squeeze>(const ::onnx::NodeProto& node) {
   }
 
   const std::string& input2 = node.input(1);
-  fmt::println("Squeeze node: {} = squeeze({}, {} - {})", output, input1, input2,
-               static_cast<std::vector<std::int64_t>>(available_inputs_.at(input2)));
   available_inputs_.emplace(output, available_inputs_.at(input1).Squeeze(
                                         static_cast<std::vector<std::int64_t>>(available_inputs_.at(input2))));
   std::cout << std::endl;
