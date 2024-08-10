@@ -307,9 +307,21 @@ void BoundVector::SetBounds(const mpq_class& lb, const mpq_class& ub) {
 }
 
 std::ostream& operator<<(std::ostream& os, const BoundVector& bounds_vector) {
-  os << "BoundVector[" << bounds_vector.active_lower_bound() << "," << bounds_vector.active_upper_bound() << "]{ ";
+  os << "BoundVector[";
+  if (bounds_vector.active_lower_bound() == bounds_vector.inf_l())
+    os << "-∞";
+  else
+    os << bounds_vector.active_lower_bound();
+  os << ", ";
+  if (bounds_vector.active_upper_bound() == bounds_vector.inf_u())
+    os << "∞";
+  else
+    os << bounds_vector.active_upper_bound();
+  os << "]{ ";
   for (const auto& [value, type, lit, exp] : bounds_vector.bounds()) {
-    os << "row " << lit << ": " << *value << "( " << type << " ), ";
+    for (const Literal& e : exp) os << e << " ";
+    if (!exp.empty()) os << "=> ";
+    os << lit << ": " << *value << "( " << type << " ), ";
   }
   os << "}";
   return os;
