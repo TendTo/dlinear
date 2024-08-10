@@ -82,7 +82,7 @@ TEST_F(TestBoundPreprocessor, AddConstraints) {
   EXPECT_EQ(&bound_preprocessor_.predicate_abstractor(), &pa_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 3u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
 }
 
 TEST_F(TestBoundPreprocessor, AddConstraintsPropagation) {
@@ -91,7 +91,7 @@ TEST_F(TestBoundPreprocessor, AddConstraintsPropagation) {
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
 TEST_F(TestBoundPreprocessor, AddConstraintsPropagationWithConstant) {
   AddConstraints({x1_ == 0, x1_ + 1 == x2_, x2_ + 3 == x3_, x3_ == 4});
@@ -99,7 +99,7 @@ TEST_F(TestBoundPreprocessor, AddConstraintsPropagationWithConstant) {
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
 
 TEST_F(TestBoundPreprocessor, EnableConstraintsPropagation) {
@@ -108,7 +108,7 @@ TEST_F(TestBoundPreprocessor, EnableConstraintsPropagation) {
   EXPECT_EQ(&bound_preprocessor_.theory_bounds(), &theory_bounds_);
 
   EXPECT_EQ(bound_preprocessor_.predicate_abstractor().var_to_formula_map().size(), 4u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
 }
 
 TEST_F(TestBoundPreprocessor, ProcessSetEnvironment) {
@@ -125,7 +125,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPath) {
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
@@ -137,7 +137,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathConstant) {
   AddConstraints({x1_ == val, x1_ + 1 == x2_, x2_ + 2 == x3_, x3_ + 5 == x4_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val + 1);
@@ -149,7 +149,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathConstantFromRight) {
   AddConstraints({x1_ == x2_ + 5, x2_ == x3_ + 2, x3_ == x4_ + 1, x4_ == val});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val + 8);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val + 3);
@@ -161,7 +161,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficient) {
   AddConstraints({x1_ == val, 2 * x1_ == 5 * x2_, 3 * x2_ == 4 * x3_, 5 * x3_ == 7 * x4_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val * 2 / 5);
@@ -173,7 +173,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstant) {
   AddConstraints({x1_ == val, 2 * x1_ + 1 == 5 * x2_, 3 * x2_ + 2 == 4 * x3_, 5 * x3_ + 3 == 7 * x4_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], (val * 2 + 1) / 5);
@@ -185,7 +185,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathCoefficientConstantFromR
   AddConstraints({x4_ == val, 2 * x4_ + 1 == 5 * x3_, 3 * x3_ + 2 == 4 * x2_, 5 * x2_ + 3 == 7 * x1_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], (((((val * 2 + 1) / 5 * 3) + 2) / 4) * 5 + 3) / 7);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], (((val * 2 + 1) / 5 * 3) + 2) / 4);
@@ -198,7 +198,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateLinearPathBothEnds) {
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ == x4_, x4_ == val});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
@@ -212,7 +212,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateSpread) {
                   x8_ == x9_, x9_ == x2_});
   bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 9u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 9u);
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
@@ -232,7 +232,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleViolation) {
                   x9_ == mpq_class{val + 4}, x9_ == x10_});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 10u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 10u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val + 1);
   EXPECT_EQ(bound_preprocessor_.env()[x5_], val + 2);
@@ -270,7 +270,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateCompatibleDifferentEqBounds) {
   AddConstraints({x1_ == 0, x1_ == 2 * x2_, x1_ == 10 * x2_, x2_ == x3_, x2_ == 5 * x3_, x3_ == 0});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], 0);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], 0);
@@ -282,7 +282,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBounds) {
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == val});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
   ASSERT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(),
               ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1], active_constraints_[2]));
@@ -293,7 +293,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDiffe
   AddConstraints({x1_ == val, x1_ == x2_, x1_ == 10 * x2_, x2_ == x3_, x3_ == mpq_class{val + 1}});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 3u);
   ASSERT_EQ(explanations.size(), 2u);
 
   for (const auto &explanation : explanations) {
@@ -318,7 +318,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateIncompatibleDifferentEqBoundsDiffe
                   x4_ == mpq_class{val + 1}});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   ASSERT_EQ(explanations.size(), 3u);
 
   for (const auto &explanation : explanations) {
@@ -359,7 +359,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOrigins) {
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 8u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 8u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 8u);
   ASSERT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(active_constraints_));
 }
@@ -381,7 +381,7 @@ TEST_F(TestBoundPreprocessor, ProcessPropagateMultipleOriginsCommonOrigin) {
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
   EXPECT_EQ(bound_preprocessor_.env().size(), 9u);
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 9u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 9u);
   ASSERT_EQ(explanations.size(), 1u);
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAreArray(active_constraints_));
 }
@@ -392,7 +392,7 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolation) {
                   x7_ == mpq_class{val + 1}, x7_ == x4_});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 7u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 7u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
@@ -410,7 +410,7 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInInequalityBound) {
   AddConstraints({x1_ == val, x1_ == x2_, x2_ == x3_, x3_ > val, x2_ == x4_});
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
@@ -437,14 +437,12 @@ TEST_F(TestBoundPreprocessor, ProcessEvaluateViolationInComplexInequalityBound) 
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 4u);
   EXPECT_EQ(bound_preprocessor_.env()[x1_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x2_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x3_], val);
   EXPECT_EQ(bound_preprocessor_.env()[x4_], val);
 
-  fmt::println("{}", explanations);
-  std::cout << std::endl;
   ASSERT_THAT(explanations.size(), 3u);
   EXPECT_THAT(*explanations.cbegin(), ::testing::UnorderedElementsAre(active_constraints_[0], active_constraints_[1],
                                                                       active_constraints_[2], active_constraints_[3]));
@@ -466,8 +464,9 @@ TEST_F(TestBoundPreprocessor, ProcessBoundSimpleEqBinomial) {
       3 * x1_ == 5 * x2_ + 11,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+  ASSERT_TRUE(explanations.empty());
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_lower_bound(), val);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_upper_bound(), val + 1);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_lower_bound(), lb);
@@ -483,8 +482,9 @@ TEST_F(TestBoundPreprocessor, ProcessBoundSimpleGeBinomial) {
       3 * x1_ >= 5 * x2_ + 11,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+  ASSERT_TRUE(explanations.empty());
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_lower_bound(), val);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_upper_bound(), val + 1);
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsLowerBounded());
@@ -499,8 +499,9 @@ TEST_F(TestBoundPreprocessor, ProcessBoundSimpleGtBinomial) {
       3 * x1_ > 5 * x2_ + 11,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+  ASSERT_TRUE(explanations.empty());
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_lower_bound(), val);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_upper_bound(), val + 1);
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsLowerBounded());
@@ -515,8 +516,9 @@ TEST_F(TestBoundPreprocessor, ProcessBoundSimpleLeBinomial) {
       3 * x1_ <= 5 * x2_ + 11,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+  ASSERT_TRUE(explanations.empty());
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_lower_bound(), val);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_upper_bound(), val + 1);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_lower_bound(), lb);
@@ -531,12 +533,47 @@ TEST_F(TestBoundPreprocessor, ProcessBoundNegativeLeBinomial) {
       3 * x1_ <= 5 * x2_ + 11,
   });
   const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+  ASSERT_TRUE(explanations.empty());
 
-  EXPECT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
+  ASSERT_EQ(bound_preprocessor_.theory_bounds().size(), 2u);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_lower_bound(), val);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x1_).active_upper_bound(), val + 1);
   EXPECT_EQ(bound_preprocessor_.theory_bounds().at(x2_).active_lower_bound(), lb);
   EXPECT_FALSE(bound_preprocessor_.theory_bounds().at(x2_).IsUpperBounded());
+}
+
+TEST_F(TestBoundPreprocessor, ProcessBoundInferEq) {
+  const mpq_class val = 7;
+  const mpq_class lb = (3 * val - 11) / 5;
+  const Variable x11_{"x11"}, x13_{"x13"}, x16_{"x16"}, x87{"x87"}, L52{"L52"}, v_86{"v_86"}, ITE3{"ITE3"},
+      ITE2{"ITE2"}, ITE10{"ITE10"}, L46{"L46"}, ITE11{"ITE11"};
+  AddConstraints({
+      6 * x13_ - 5 * x16_ <= 40,  // 0
+      x16_ != 40,                 // 1
+      x3_ == x13_,                // 2
+      x7_ == 2,                   // 3
+      x3_ == 20,                  // 4
+      x2_ - L46 == -2,            // 5
+      6 * x2_ - L52 == -10,       // 6
+      x6_ == ITE3,                // 7
+      ITE2 == ITE3,               // 8
+      x16_ == ITE2,               // 9
+      x6_ != 10,                  // 10
+      x11_ == ITE10,              // 11
+      L46 == ITE11,               // 12
+      x6_ == ITE10,               // 13
+      x7_ == ITE11,               // 14
+      x2_ + 2 * x11_ >= 20,       // 15
+      x11_ <= L52,                // 16
+  });
+  const Explanations explanations = bound_preprocessor_.Process(active_constraints_);
+
+  ASSERT_EQ(explanations.size(), 1u);
+  EXPECT_THAT(*explanations.cbegin(),
+              ::testing::UnorderedElementsAre(active_constraints_[3], active_constraints_[5], active_constraints_[6],
+                                              active_constraints_[10], active_constraints_[11], active_constraints_[12],
+                                              active_constraints_[13], active_constraints_[14], active_constraints_[15],
+                                              active_constraints_[16]));
 }
 
 TEST_F(TestBoundPreprocessor, ShouldPropagateTrue) {
