@@ -15,6 +15,7 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
     : config_{predicate_abstractor.config()},
       is_consolidated_{false},
       predicate_abstractor_{predicate_abstractor},
+      fixed_preprocessor_{predicate_abstractor},
       preprocessor_{predicate_abstractor},
       model_{config_.lp_solver()},
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
@@ -26,6 +27,11 @@ const Box &TheorySolver::model() const {
 
 void TheorySolver::AddLiterals() {
   for (const auto &[var, f] : predicate_abstractor_.var_to_formula_map()) AddLiteral(var, f);
+}
+
+TheorySolver::Explanations TheorySolver::AddFixedLiterals(const LiteralSet &fixed_literals) {
+  for (const Literal &lit : fixed_literals) fixed_preprocessor_.EnableLiteral(lit);
+  return fixed_preprocessor_.Process();
 }
 
 TheorySolver::Explanations TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {

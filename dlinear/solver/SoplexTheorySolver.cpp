@@ -58,6 +58,7 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
+  fixed_preprocessor_.AddVariable(var);
   preprocessor_.AddVariable(var);
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
@@ -206,7 +207,7 @@ void SoplexTheorySolver::Reset(const Box &box) {
   // Clear enabled theory rows
   enabled_theory_rows_.clear();
 
-  preprocessor_.Clear();
+  preprocessor_.Clear(fixed_preprocessor_);
 
   // Clear constraint bounds
   const int spx_rows = spx_.numRowsRational();

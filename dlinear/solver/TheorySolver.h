@@ -77,6 +77,15 @@ class TheorySolver {
    */
   virtual void AddLiteral(const Variable &formula_var, const Formula &formula) = 0;
   /**
+   * Add the fixed literals to the theory solver.
+   *
+   * This means that, for the model to be sat, these literals will never change their assignment.
+   * This allows for slight optimizations
+   * (e.g. their bound can be computed once, at the beginning of the run instead of at each iteration)
+   * @param fixed_literals set of fixed literals
+   */
+  virtual Explanations AddFixedLiterals(const LiteralSet &fixed_literals);
+  /**
    * Add a variable (column) to the theory solver.
    * @param var variable to add
    */
@@ -120,6 +129,8 @@ class TheorySolver {
   [[nodiscard]] const std::vector<Literal> &theory_row_to_lit() const { return theory_row_to_lit_; }
   /** @getter{bounds of each theory variable, TheorySolver} */
   [[nodiscard]] const BoundVectorMap &theory_bounds() const { return preprocessor_.theory_bounds(); }
+  /** @getter{fixed bounds of each theory variable, TheorySolver} */
+  [[nodiscard]] const BoundVectorMap &fixed_theory_bounds() const { return fixed_preprocessor_.theory_bounds(); }
 
   /**
    * Check the satisfiability of the theory.
@@ -382,7 +393,8 @@ class TheorySolver {
 
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
-  BoundPreprocessor preprocessor_;  ///< Preprocessor for the bounds.
+  BoundPreprocessor fixed_preprocessor_;  ///< Preprocessor for the bounds.
+  BoundPreprocessor preprocessor_;        ///< Preprocessor for the bounds.
   ///< Propagates the bounds through simple expressions to produce a precise explanation of the conflict
   ///< without invoking the LP solver.
 
