@@ -1,5 +1,5 @@
 /**
- * @file TestMps.cpp
+ * @file TestDeltaSmt2.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
@@ -17,31 +17,29 @@ using dlinear::Config;
 using dlinear::get_files;
 using dlinear::SmtResult;
 using dlinear::SmtSolver;
-using std::unique_ptr;
 
-class TestMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double, bool>> {
+class TestDeltaSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double, bool>> {
  protected:
   Config config_;
 
-  TestMps() {
+  TestDeltaSmt2() {
     const auto& [lp_solver, filename, precision, preprocessor] = GetParam();
     config_.m_precision() = precision;
     config_.m_complete() = false;
-    config_.m_format() = Config::Format::MPS;
+    config_.m_format() = Config::Format::SMT2;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
-    config_.m_disable_theory_preprocessor() = preprocessor;
+    config_.m_disable_eq_propagation() = preprocessor;
     std::cout << "Testing " << filename << std::endl;
   }
 };
 
-INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
-                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/mps")),
+INSTANTIATE_TEST_SUITE_P(TestDeltaSmt2, TestDeltaSmt2,
+                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/smt2")),
                                             ::testing::Values(0.0, 0.1), ::testing::Values(true, false)));
 
-TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
+TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
   SmtSolver s{config_};
-  s.Parse();
-  const SmtResult result = s.CheckSat().result;
+  const SmtResult result = s.Parse().result;
   EXPECT_THAT(delta_result(s.GetExpected()), ::testing::Contains(result));
 }

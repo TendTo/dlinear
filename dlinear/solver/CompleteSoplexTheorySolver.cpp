@@ -149,10 +149,8 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
     return SatResult::SAT_SATISFIABLE;
   }
 
-  if (!config_.disable_theory_preprocessor()) {
-    preprocessor_.Process(explanations);
-    if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
-  }
+  preprocessor_.Process(explanations);
+  if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
   DLINEAR_ERROR("CompleteSoplexTheorySolver::CheckSat: running soplex");
 
   // Set the bounds for the variables

@@ -436,14 +436,8 @@ PYBIND11_MODULE(_pydlinear, m) {
                     [](Config &self, const Config::Format &format) { self.m_format() = format; })
       .def_property("lp_solver", &Config::lp_solver,
                     [](Config &self, const Config::LPSolver lp_solver) { self.m_lp_solver() = lp_solver; })
-      .def_property("nlopt_ftol_abs", &Config::nlopt_ftol_abs,
-                    [](Config &self, const bool nlopt_ftol_abs) { self.m_nlopt_ftol_abs() = nlopt_ftol_abs; })
-      .def_property("nlopt_ftol_rel", &Config::nlopt_ftol_rel,
-                    [](Config &self, const bool nlopt_ftol_rel) { self.m_nlopt_ftol_rel() = nlopt_ftol_rel; })
       .def_property("nlopt_maxeval", &Config::nlopt_maxeval,
                     [](Config &self, const bool nlopt_maxeval) { self.m_nlopt_maxeval() = nlopt_maxeval; })
-      .def_property("nlopt_maxtime", &Config::nlopt_maxtime,
-                    [](Config &self, const bool nlopt_maxtime) { self.m_nlopt_maxtime() = nlopt_maxtime; })
       .def_property("number_of_jobs", &Config::number_of_jobs,
                     [](Config &self, const int number_of_jobs) { self.m_number_of_jobs() = number_of_jobs; })
       .def_property("precision", &Config::precision, [](Config &self, const double prec) { self.m_precision() = prec; })
@@ -462,20 +456,6 @@ PYBIND11_MODULE(_pydlinear, m) {
                     [](Config &self, const int simplex_sat_phase) { self.m_simplex_sat_phase() = simplex_sat_phase; })
       .def_property("skip_check_sat", &Config::skip_check_sat,
                     [](Config &self, const bool skip_check_sat) { self.m_skip_check_sat() = skip_check_sat; })
-      .def_property("use_local_optimization", &Config::use_local_optimization,
-                    [](Config &self, const bool use_local_optimization) {
-                      self.m_use_local_optimization() = use_local_optimization;
-                    })
-      .def_property("use_polytope", &Config::use_polytope,
-                    [](Config &self, const bool use_polytope) { self.m_use_polytope() = use_polytope; })
-      .def_property("use_polytope_in_forall", &Config::use_polytope_in_forall,
-                    [](Config &self, const bool use_polytope_in_forall) {
-                      self.m_use_polytope_in_forall() = use_polytope_in_forall;
-                    })
-      .def_property("use_worklist_fixpoint", &Config::use_worklist_fixpoint,
-                    [](Config &self, const bool use_worklist_fixpoint) {
-                      self.m_use_worklist_fixpoint() = use_worklist_fixpoint;
-                    })
       .def_property("verbose_dlinear", &Config::verbose_dlinear,
                     [](Config &self, const int verbose_dlinear) { self.m_verbose_dlinear() = verbose_dlinear; })
       .def_property("verbose_simplex", &Config::verbose_simplex,

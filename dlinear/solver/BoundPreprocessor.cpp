@@ -61,7 +61,7 @@ bool check_explanation(const BoundPreprocessor& preprocessor, const LiteralSet& 
 
   config.m_filename() = "";
   config.m_read_from_stdin() = false;
-  config.m_disable_theory_preprocessor() = true;
+  config.m_disable_eq_propagation() = true;
   Context smt_solver{config};
   for (const auto& [var, truth] : explanation) {
     const Formula f = truth ? preprocessor.predicate_abstractor()[var] : !preprocessor.predicate_abstractor()[var];
@@ -159,7 +159,7 @@ BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& ena
   return explanations;
 }
 void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
-  if (config_.disable_theory_preprocessor()) return;
+  if (config_.disable_eq_propagation()) return;
   DLINEAR_TRACE_FMT("BoundPreprocessor::Process({})", enabled_literals);
   std::list<Literal> mutable_enabled_formula_vars{enabled_literals.begin(), enabled_literals.end()};
 
@@ -325,8 +325,8 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
     std::swap(l_explanation, u_explanation);
   }
 
-  fmt::println("PropagateBoundPolynomial: Propagating {}\n{} <= {} <= {}\n{} ({}) <= {} <= ({})", lit, l_rhs,
-               var_propagated, u_rhs, var_coeff, l_explanation, var_coeff, u_explanation);
+  //  fmt::println("PropagateBoundPolynomial: Propagating {}\n{} <= {} <= {}\n{} ({}) <= {} <= ({})", lit, l_rhs,
+  //               var_propagated, u_rhs, var_coeff, l_explanation, var_coeff, u_explanation);
 
   // The formula is an equality relation (==)
   if (IsEqualTo(formula, lit.truth)) {
@@ -434,6 +434,7 @@ void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literal
   bool continue_propagating;
   // While we still have constraints to propagate...
   do {
+    if (config_.disable_eq_propagation()) break;
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
@@ -453,6 +454,7 @@ void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literal
     }
   } while (continue_propagating && explanations.empty());
   if (!explanations.empty()) return;
+  if (config_.disable_bound_propagation()) return;
   do {
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {

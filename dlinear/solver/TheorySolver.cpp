@@ -146,7 +146,7 @@ void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_ro
   }
 }
 void TheorySolver::TheoryBoundsToExplanation(const int theory_col, LiteralSet &explanation) {
-  if (!config_.disable_theory_preprocessor() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
+  if (!config_.disable_eq_propagation() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
     preprocessor_.GetActiveExplanation(theory_col, explanation);
   } else {
     theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
@@ -186,7 +186,7 @@ void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const TheorySolver::B
                                            std::set<int> &bound_idxs) {
   if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
   const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
-  if (!config_.disable_theory_preprocessor() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
+  if (!config_.disable_eq_propagation() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
     return preprocessor_.GetActiveBoundIdxs(theory_col, bound_idxs);
   }
   return TheoryBoundsToBoundIdxs(

@@ -47,7 +47,7 @@ void TheoryPropagator::AddAssertion<1>(const Formula& assertion) {
 }
 
 void TheoryPropagator::Propagate() {
-  if (config_.disable_theory_preprocessor()) return;
+  if (config_.disable_eq_propagation()) return;
   for (const auto& [var, assertion] : predicate_abstractor_.var_to_formula_map()) {
     if (!is_relational(assertion)) {
       fmt::println("Assertion must be relational. Skipping.");
