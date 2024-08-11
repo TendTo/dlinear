@@ -111,56 +111,51 @@ class Config {
   OptionValue<std::string> filename_{""};
   OptionValue<std::string> onnx_file_{""};
 
+  DLINEAR_PARAMETER(complete, bool, false,
+                    "Run the solver in complete mode.\n"
+                    "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
+  DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
+  DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
+  DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
+  DLINEAR_PARAMETER(disable_eq_propagation, bool, false, "Disable the propagation of equality constraints")
+  DLINEAR_PARAMETER(disable_bound_propagation, bool, false, "Disable the propagation of bounds among constraints")
+  DLINEAR_PARAMETER(disable_theory_preprocessing, bool, false,
+                    "Disable the addition of constraints based on theory propagation")
+  DLINEAR_PARAMETER(
+      enforce_check_sat, bool, false,
+      "Perform a satisfiability check at the end of the parsing if the input does not contain a (check-sat) directive")
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
                     "Input file format\n"
                     "\t\tOne of: auto (1), smt2 (2), mps (3), vnnlib (4)")
-  DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
-  DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4,
-                    "Delta precision used by the LP solver solver.\n"
-                    "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
-                    "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
-                    "\t\tUse the --complete flag if you are looking for a complete solution")
-  DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
-  DLINEAR_PARAMETER(optimize, bool, false, "Whether to optimize the objective function. Only affects the MPS format")
-  DLINEAR_PARAMETER(use_polytope, bool, false, "Use polytope contractor")
-  DLINEAR_PARAMETER(use_polytope_in_forall, bool, false, "Use polytope contractor in forall contractor")
-  DLINEAR_PARAMETER(use_worklist_fixpoint, bool, false, "Use worklist fixpoint algorithm in ICP")
-  DLINEAR_PARAMETER(use_local_optimization, bool, false, "Use local optimization algorithm for exist-forall problems")
-  DLINEAR_PARAMETER(disable_theory_preprocessor, bool, false, "Disable the preprocessor in the Theory solver")
-  DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(lp_mode, LPMode, dlinear::Config::LPMode::AUTO,
                     "LP mode used by the LP solver.\n"
                     "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")
   DLINEAR_PARAMETER(lp_solver, LPSolver, dlinear::Config::LPSolver::SOPLEX,
                     "Underlying LP solver used by the theory solver.\n"
                     "\t\tOne of: soplex (1), qsoptex (2)")
-  DLINEAR_PARAMETER(sat_solver, SatSolver, dlinear::Config::SatSolver::CADICAL,
-                    "Underlying SAT solver used by the SAT solver.\n"
-                    "\t\tOne of: cadical (1), picosat (2)")
-  DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
-  DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
-  DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
-  DLINEAR_PARAMETER(complete, bool, false,
-                    "Run the solver in complete mode.\n"
-                    "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
-  DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
   DLINEAR_PARAMETER(number_of_jobs, unsigned int, 1u, "Number of jobs")
-  DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
-  DLINEAR_PARAMETER(nlopt_ftol_rel, double, 1e-6, "Set the relative tolerance on function value")
-  DLINEAR_PARAMETER(nlopt_ftol_abs, double, 1e-6, "Set the absolute tolerance on function value")
-  DLINEAR_PARAMETER(nlopt_maxeval, unsigned int, 100u, "Set the maximum number of function evaluations")
-  DLINEAR_PARAMETER(nlopt_maxtime, double, 0.01, "Set the maximum optimization time (in second)")
+  DLINEAR_PARAMETER(optimize, bool, false, "Whether to optimize the objective function. Only affects the MPS format")
+  DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4,
+                    "Delta precision used by the LP solver solver.\n"
+                    "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
+                    "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
+                    "\t\tUse the --complete flag if you are looking for a complete solution")
+  DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
+  DLINEAR_PARAMETER(random_seed, unsigned int, 0u,
+                    "Set the random seed. 0 means that the seed will be generated on the fly")
+  DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
   DLINEAR_PARAMETER(sat_default_phase, SatDefaultPhase, dlinear::Config::SatDefaultPhase::JeroslowWang,
                     "set default initial phase for SAT solver.\n"
                     "\t\tOne of: false (0), true (1), Jeroslow-Wang (2), random initial phase (3)")
-  DLINEAR_PARAMETER(random_seed, unsigned int, 0u,
-                    "Set the random seed. 0 means that the seed will be generated on the fly")
-  DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
-  DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
+  DLINEAR_PARAMETER(sat_solver, SatSolver, dlinear::Config::SatSolver::CADICAL,
+                    "Underlying SAT solver used by the SAT solver.\n"
+                    "\t\tOne of: cadical (1), picosat (2)")
+  DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
+  DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(skip_check_sat, bool, false, "Parse the input, but does not run the solver")
-  DLINEAR_PARAMETER(
-      enforce_check_sat, bool, false,
-      "Perform a satisfiability check at the end of the parsing if the input does not contain a (check-sat) directive")
+  DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
+  DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
+  DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
 };
 
 std::ostream &operator<<(std::ostream &os, const Config &config);

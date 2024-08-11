@@ -51,21 +51,13 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_FALSE(parser_.get<bool>("continuous-output"));
   EXPECT_FALSE(parser_.get<bool>("debug-parsing"));
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
-  EXPECT_FALSE(parser_.get<bool>("forall-polytope"));
   EXPECT_EQ(parser_.get<Config::Format>("format"), Config::Format::AUTO);
   EXPECT_FALSE(parser_.get<bool>("in"));
-  EXPECT_FALSE(parser_.get<bool>("local-optimization"));
   EXPECT_EQ(parser_.get<Config::LPSolver>("lp-solver"), Config::LPSolver::SOPLEX);
-  EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-abs"), 1e-6);
-  EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-ftol-rel"), 1e-6);
-  EXPECT_EQ(parser_.get<uint>("nlopt-maxeval"), 100u);
-  EXPECT_DOUBLE_EQ(parser_.get<double>("nlopt-maxtime"), 0.01);
-  EXPECT_FALSE(parser_.get<bool>("polytope"));
   EXPECT_EQ(parser_.get<Config::SatDefaultPhase>("sat-default-phase"), Config::SatDefaultPhase::JeroslowWang);
   EXPECT_EQ(parser_.get<int>("simplex-sat-phase"), 1);
   EXPECT_FALSE(parser_.get<bool>("timings"));
   EXPECT_EQ(parser_.get<int>("verbose-simplex"), 0);
-  EXPECT_FALSE(parser_.get<bool>("worklist-fixpoint"));
   EXPECT_FALSE(parser_.get<bool>("silent"));
   EXPECT_FALSE(parser_.get<bool>("skip-check-sat"));
 }
