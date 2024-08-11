@@ -95,7 +95,6 @@ void CadicalSatSolver::AddClauseToSat(const Formula &f) {
 void CadicalSatSolver::FixedTheoryLiterals(LiteralSet &fixed_literals) {
   for (int i = 1; i <= sat_.vars(); ++i) {
     const int lit = sat_.fixed(i);
-    fmt::println("lit: {} -> {}", i, lit);
     if (lit == 0) continue;
     const Variable &var = sat_to_var_[i];
     if (predicate_abstractor_.var_to_formula_map().contains(var)) fixed_literals.emplace(var, lit > 0);

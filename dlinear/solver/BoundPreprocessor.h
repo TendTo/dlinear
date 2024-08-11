@@ -53,13 +53,13 @@ class BoundPreprocessor {
 
   Explanations Process();
   void Process(Explanations& explanations);
-  Explanations Process(std::span<Literal> enabled_literals);
-  void Process(std::span<Literal> enabled_literals, Explanations& explanations);
+  Explanations Process(const LiteralSet& enabled_literals);
+  void Process(const LiteralSet& enabled_literals, Explanations& explanations);
 
   void GetActiveExplanation(const Variable& var, LiteralSet& explanation);
 
   void Clear();
-  void Reset();
+  void Clear(const BoundPreprocessor& fixed_preprocessor);
 
   /** @getter{configuration, BoundPreprocessor} */
   [[nodiscard]] const Config& config() const { return config_; }
@@ -156,7 +156,6 @@ class BoundPreprocessor {
   Bound GetSimpleBound(const dlinear::Literal& lit) const;
   Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
 
-  void SetEnvironmentFromBounds();
   /**
    * Propagate the bounds of the variables in the given formula.
    *
@@ -222,15 +221,10 @@ class BoundPreprocessor {
   const Config& config_;  ///< Configuration of the preprocessor
   const PredicateAbstractor& predicate_abstractor_;
 
-  std::vector<Literal> enabled_literals_;
+  LiteralSet enabled_literals_;
 
   BoundVectorMap theory_bounds_;
   Environment env_;
-
-  LiteralSet fixed_literals_;
-  BoundVectorMap fixed_theory_bounds_;
-  Environment fixed_env_;
-  std::list<mpq_class> fixed_temporary_mpq_vector_;
 };
 
 std::ostream& operator<<(std::ostream& os, const BoundPreprocessor& preprocessor);

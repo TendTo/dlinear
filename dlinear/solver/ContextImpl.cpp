@@ -355,6 +355,9 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
   // Add the theory literals in the predicate abstractor into the theory solver.
   theory_solver_->AddLiterals();
+  theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals());
+
+  // fmt::println("FIXED!!!\n{}", theory_solver_->fixed_theory_bounds());
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.
