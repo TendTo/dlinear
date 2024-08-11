@@ -30,8 +30,10 @@ void TheorySolver::AddLiterals() {
 }
 
 TheorySolver::Explanations TheorySolver::AddFixedLiterals(const LiteralSet &fixed_literals) {
-  for (const Literal &lit : fixed_literals) fixed_preprocessor_.EnableLiteral(lit);
-  return fixed_preprocessor_.Process();
+  Explanations explanations{};
+  for (const Literal &lit : fixed_literals) fixed_preprocessor_.EnableLiteral(lit, explanations);
+  fixed_preprocessor_.Process(explanations);
+  return explanations;
 }
 
 TheorySolver::Explanations TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {

@@ -355,9 +355,12 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
   // Add the theory literals in the predicate abstractor into the theory solver.
   theory_solver_->AddLiterals();
-  theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals());
-
-  // fmt::println("FIXED!!!\n{}", theory_solver_->fixed_theory_bounds());
+  const std::set<LiteralSet> explanations{theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals())};
+  if (!explanations.empty()) {
+    DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
+    LearnExplanations(explanations);
+    return SatResult::SAT_UNSATISFIABLE;
+  }
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.

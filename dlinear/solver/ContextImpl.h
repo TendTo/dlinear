@@ -211,8 +211,6 @@ class Context::Impl {
   bool is_max() const;
 
  private:
-  static const Config default_config_;  ///< Default configuration of the context if none is provided.
-
   /**
    * Get the correct theory solver subclass based on the configuration.
    * @return theory solver subclass
