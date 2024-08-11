@@ -475,18 +475,8 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Elementwise([this](const Expression& e) {
-    Formula implication{is_addition(e) && get_constant_in_addition(e) == 0 ? Formula::True() : Formula::False()};
-    if (is_addition(e) && get_constant_in_addition(e) == 0) {
-      for (const auto& [expr, coeff] : to_addition(e)->get_expr_to_coeff_map()) {
-        if (is_variable(expr) && to_variable(expr)->get_variable().get_name().starts_with("X")) {
-          implication = Formula::False();
-          break;
-        }
-        if (coeff > 0) implication = implication && expr == 0;
-      }
-    }
     const Expression new_expr = context_.AssertIte(if_then_else(e > 0, e, 0));
-    if (!implication.EqualTo(Formula::False())) context_.Assert(imply(implication, new_expr == 0));
+    context_.Assert(new_expr >= 0);
     return new_expr;
   });
   available_inputs_.emplace(output, relu);
