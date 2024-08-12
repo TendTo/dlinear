@@ -44,7 +44,11 @@ void PicosatSatSolver::MakeSatVar(const Variable &var) {
 }
 
 void PicosatSatSolver::AddLearnedClause(const LiteralSet &literals) {
-  for (const auto &[var, truth] : literals) AddLiteral({var, !truth}, true);
+  for (const Literal &lit : literals) AddLiteral(!lit, true);
+  picosat_add(sat_, 0);
+}
+void PicosatSatSolver::AddLearnedClause(const Literal &lit) {
+  AddLiteral(!lit, true);
   picosat_add(sat_, 0);
 }
 

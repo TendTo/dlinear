@@ -38,6 +38,7 @@ class PicosatSatSolver : public SatSolver {
   void AddLiteral(const Literal &l, bool learned) override;
 
   void AddLearnedClause(const LiteralSet &literals) override;
+  void AddLearnedClause(const Literal &lit) override;
 
   void MakeSatVar(const Variable &var) override;
 

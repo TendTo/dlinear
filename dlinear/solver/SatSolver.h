@@ -93,12 +93,17 @@ class SatSolver {
    */
   void AddClauses(const std::vector<Formula> &formulas);
   /**
-   * Given a clause = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to
-   * the solver.
+   * Given a clause = {f₁, ..., fₙ}, adds a clause (¬f₁ ∨ ... ∨ ¬ fₙ) to the solver.
    *
    * @param literals literals to add as the inverted clause
    */
   virtual void AddLearnedClause(const LiteralSet &literals) = 0;
+  /**
+   * Given a clause = {f}, adds a clause (¬f) to the solver.
+   *
+   * @param literals literals to add as the inverted clause
+   */
+  virtual void AddLearnedClause(const Literal &literals) = 0;
   /**
    * Get the theory literals that are fixed in the current configuration.
    *
@@ -119,7 +124,7 @@ class SatSolver {
   virtual void FixedTheoryLiterals(LiteralSet &fixed_literals) = 0;
 
   /**
-   * Assume a set of @p literals to be fixed for the next iteration.
+   * Assumption a set of @p literals to be fixed for the next iteration.
    *
    * The @p literals are temporarily added to the solver with the indicated value.
    * @note The solver will not remember the assumptions after the next call to @ref CheckSat.
@@ -127,7 +132,7 @@ class SatSolver {
    */
   void Assume(const LiteralSet &literals);
   /**
-   * Assume a literals to be fixed for the next iteration.
+   * Assumption a literals to be fixed for the next iteration.
    *
    * The @p lit is temporarily added to the solver with the indicated value.
    * @note The solver will not remember the assumption after the next call to @ref CheckSat.

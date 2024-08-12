@@ -34,7 +34,11 @@ void CadicalSatSolver::MakeSatVar(const Variable &var) {
 }
 
 void CadicalSatSolver::AddLearnedClause(const LiteralSet &literals) {
-  for (const auto &[var, truth] : literals) AddLiteral({var, !truth}, true);
+  for (const Literal &lit : literals) AddLiteral(!lit, true);
+  sat_.add(0);
+}
+void CadicalSatSolver::AddLearnedClause(const Literal &lit) {
+  AddLiteral(!lit, true);
   sat_.add(0);
 }
 

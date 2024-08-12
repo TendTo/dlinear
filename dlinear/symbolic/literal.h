@@ -32,6 +32,7 @@ using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;  ///< A mod
 
 bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
 std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
+Literal operator!(const Literal &l) { return {l.var, !l.truth}; }
 
 bool operator==(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs);
 std::strong_ordering operator<=>(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs);
