@@ -52,6 +52,7 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/libs:onnx",
         "//dlinear/parser:driver",
+        "//dlinear/solver:relu_constraint",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/util:concepts",

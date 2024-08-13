@@ -112,17 +112,14 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "relu_constraint",
-    srcs = [
-        "ReluConstraint.cpp",
-    ],
-    hdrs = [
-        "ReluConstraint.h",
-    ],
+    srcs = ["ReluConstraint.cpp"],
+    hdrs = ["ReluConstraint.h"],
     implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":guided_constraint",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
+        "//dlinear/util:infinity",
         "//dlinear/util:logging",
         "//dlinear/util:sorted_vector",
     ],

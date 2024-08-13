@@ -144,8 +144,11 @@ Expression Context::Impl::AssertRelu(const dlinear::drake::symbolic::Expression 
   AddToBox(to_variable(no_relu)->get_variable());
   stack_.push_back(assertion);
   sat_solver_->AddFormula(assertion);
-  guided_constraints_.emplace_back(std::make_unique<ReluConstraint>(predicate_abstractor_[assertion]));
   return no_relu;
+}
+
+GuidedConstraint &Context::Impl::AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint) {
+  return *guided_constraints_.emplace_back(std::move(constraint)).get();
 }
 
 void Context::Impl::Pop() {
@@ -282,19 +285,10 @@ void Context::Impl::SetOption(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
   if (key == ":precision") config_.m_precision().set_from_file(ParseDoubleOption(key, val));
-  if (key == ":polytope") return config_.m_use_polytope().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":forall-polytope") return config_.m_use_polytope_in_forall().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":local-optimization")
-    return config_.m_use_local_optimization().set_from_file(ParseBooleanOption(key, val));
-  if (key == ":worklist-fixpoint") return config_.m_use_worklist_fixpoint().set_from_file(ParseBooleanOption(key, val));
   if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
 }
 
 std::string Context::Impl::GetOption(const std::string &key) const {
-  if (key == ":polytope") return fmt::format("{}", config_.use_polytope());
-  if (key == ":forall-polytope") return fmt::format("{}", config_.use_polytope_in_forall());
-  if (key == ":local-optimization") return fmt::format("{}", config_.use_local_optimization());
-  if (key == ":worklist-fixpoint") return fmt::format("{}", config_.use_worklist_fixpoint());
   if (key == ":produce-models") return fmt::format("{}", config_.produce_models());
   if (key == ":precision") return fmt::format("{}", config_.precision());
   const auto it = option_.find(key);
@@ -349,11 +343,16 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_SATISFIABLE;
   }
 
-  // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
-  TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
-  propagator.Propagate();
+  // Temporarily disable to study the effect of guided constraints
+#if 0
+    if (!config_.disable_theory_preprocessing()) {
+      // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
+      TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
+      propagator.Propagate();
+    }
+#endif
 
-  // Add the theory literals in the predicate abstractor into the theory solver.
+  // Compute the fixed theory literals to avoid having to recompute them again and again.
   theory_solver_->AddLiterals();
   const std::set<LiteralSet> explanations{theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals())};
   if (!explanations.empty()) {
@@ -361,6 +360,28 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     LearnExplanations(explanations);
     return SatResult::SAT_UNSATISFIABLE;
   }
+  // Make sure the theory solver is in sync with the current box.
+  theory_solver_->Reset(box());
+
+  // Check the current constraints to see if there is anything that could be used to use for the guided constraints
+  for (const std::unique_ptr<GuidedConstraint> &constraint : guided_constraints_) {
+    theory_solver_->m_preprocessor().EnableLiterals(constraint->enabled_literals());
+  }
+  theory_solver_->m_preprocessor().Process();
+  for (std::unique_ptr<GuidedConstraint> &constraint : guided_constraints_) {
+    DLINEAR_ASSERT(dynamic_cast<ReluConstraint *>(constraint.get()) != nullptr,
+                   "Guided constraint must be a ReluConstraint");
+    ReluConstraint &relu_constraint = static_cast<ReluConstraint &>(*constraint.get());
+    const BoundVector &relu_bounds = theory_solver_->theory_bounds().at(relu_constraint.relu_var());
+    relu_constraint.SetLowerBound(relu_bounds.active_lower_bound() >= 0 ? relu_bounds.active_lower_bound()
+                                                                        : ReluConstraint::zero);
+    relu_constraint.SetUpperBound(relu_bounds.active_upper_bound() >= 0 ? relu_bounds.active_upper_bound()
+                                                                        : ReluConstraint::zero);
+    fmt::println("Guided Constraint: {}", relu_bounds.GetActiveBoundsValue());
+    DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Adding guided constraint = {}", constraint->Assumptions());
+    for (const Literal &learned_clause : constraint->LearnedClauses()) sat_solver_->AddLearnedClause(learned_clause);
+  }
+  theory_solver_->m_preprocessor().Clear(theory_solver_->fixed_preprocessor());
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.

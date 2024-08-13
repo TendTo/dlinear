@@ -15,6 +15,7 @@
 #include <string>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/GuidedConstraint.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"
@@ -118,6 +119,8 @@ class Context {
    */
   void DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub, bool is_model_variable = true);
 
+  GuidedConstraint &AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint);
+
   /**
    * Exit the context.
    *
@@ -210,6 +213,9 @@ class Context {
   [[nodiscard]] bool have_objective() const;
   [[nodiscard]] const SmtSolverOutput *solver_output() const;
   SmtSolverOutput *m_solver_output();
+  /** @getter{predicate_abstractor, context}*/
+  const PredicateAbstractor &predicate_abstractor() const;
+
   /**
    * Check whether or not the objective function (if present) is a maximization.
    * @return true if the original objective function is a maximization

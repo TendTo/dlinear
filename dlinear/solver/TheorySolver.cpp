@@ -36,7 +36,7 @@ TheorySolver::Explanations TheorySolver::AddFixedLiterals(const LiteralSet &fixe
   return explanations;
 }
 
-TheorySolver::Explanations TheorySolver::EnableLiterals(const std::vector<Literal> &theory_literals) {
+TheorySolver::Explanations TheorySolver::EnableLiterals(const std::span<const Literal> theory_literals) {
   Explanations explanations{};
   for (const Literal &lit : theory_literals) {
     const Explanations explanation{EnableLiteral(lit)};
@@ -61,140 +61,6 @@ void TheorySolver::Consolidate() {
   enabled_theory_rows_.reserve(theory_row_to_lit_.size());
   theory_rows_state_.resize(theory_row_to_lit_.size(), false);
 }
-#if 0
-bool TheorySolver::IsSimpleBound(const Formula &formula) {
-  // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
-  if (!is_relational(formula)) return false;
-  // The number of variables must be exactly one
-  if (formula.GetFreeVariables().size() != 1) return false;
-
-  // one between lhs and rhs must be a constant and the other must be a variable.
-  const Expression &lhs{get_lhs_expression(formula)};
-  const Expression &rhs{get_rhs_expression(formula)};
-  return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
-}
-
-bool TheorySolver::IsEqualTo(const Formula &formula, const bool truth) {
-  return truth ? is_equal_to(formula) : is_not_equal_to(formula);
-}
-
-bool TheorySolver::IsNotEqualTo(const Formula &formula, const bool truth) {
-  return truth ? is_not_equal_to(formula) : is_equal_to(formula);
-}
-
-bool TheorySolver::IsGreaterThan(const Formula &formula, const bool truth) {
-  return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
-}
-
-bool TheorySolver::IsLessThan(const Formula &formula, const bool truth) {
-  return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
-}
-
-bool TheorySolver::IsGreaterThanOrEqualTo(const Formula &formula, const bool truth) {
-  return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
-}
-
-bool TheorySolver::IsLessThanOrEqualTo(const Formula &formula, const bool truth) {
-  return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
-}
-
-TheorySolver::Bound TheorySolver::GetBound(const Formula &formula, const bool truth) {
-  DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
-  const Expression &lhs{get_lhs_expression(formula)};
-  const Expression &rhs{get_rhs_expression(formula)};
-  if (IsEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::B, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::B, get_constant_value(lhs)};
-  }
-  if (IsGreaterThan(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SL, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SU, get_constant_value(lhs)};
-  }
-  if (IsGreaterThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::L, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::U, get_constant_value(lhs)};
-  }
-  if (IsLessThan(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::SU, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::SL, get_constant_value(lhs)};
-  }
-  if (IsLessThanOrEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::U, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::L, get_constant_value(lhs)};
-  }
-  if (IsNotEqualTo(formula, truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {get_variable(lhs), LpColBound::D, get_constant_value(rhs)};
-    if (is_constant(lhs) && is_variable(rhs)) return {get_variable(rhs), LpColBound::D, get_constant_value(lhs)};
-  }
-  DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
-}
-
-TheorySolver::Explanations TheorySolver::TheoryBoundsToExplanations(Violation violation, const int theory_row) const {
-  Explanations explanations{};
-  TheoryBoundsToExplanations(violation, theory_row, explanations);
-  return explanations;
-}
-void TheorySolver::TheoryBoundsToExplanations(Violation violation, int theory_row, Explanations &explanations) const {
-  const Literal row_lit{theory_row_to_lit_[theory_row]};
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::TheoryBoundsToExplanations: {} violates {}", row_lit, violation);
-  if (violation.nq_bounds_empty() || violation.bounds_empty()) {
-    for (; violation; ++violation) explanations.insert({row_lit, theory_row_to_lit_[violation->idx]});
-  } else {
-    LiteralSet explanation{};
-    for (; violation; ++violation) explanation.insert(theory_row_to_lit_[violation->idx]);
-    explanations.insert(explanation);
-  }
-}
-void TheorySolver::TheoryBoundsToExplanation(const int theory_col, LiteralSet &explanation) {
-  if (!config_.disable_eq_propagation() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
-    preprocessor_.GetActiveExplanation(theory_col, explanation);
-  } else {
-    theory_bounds_.at(theory_col).GetActiveExplanation(theory_row_to_lit_, explanation);
-  }
-}
-void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const mpq_class &value,
-                                             LiteralSet &explanation) const {
-  for (auto it = theory_bounds_[theory_col].GetActiveBound(value); it; ++it) {
-    explanation.insert(theory_row_to_lit_[it->idx]);
-  }
-}
-void TheorySolver::TheoryBoundsToExplanation(const int theory_col, const TheorySolver::BoundViolationType type,
-                                             LiteralSet &explanation) const {
-  if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
-  const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
-  return TheoryBoundsToExplanation(
-      theory_col,
-      type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
-      explanation);
-}
-
-void TheorySolver::TheoryBoundsToBoundIdxs(TheorySolver::Violation violation, std::set<int> &bound_idxs) {
-  for (; violation; ++violation) bound_idxs.insert(violation->idx);
-}
-void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const bool active, std::set<int> &bound_idxs) const {
-  if (active) {
-    for (auto it = theory_bounds_[theory_col].GetActiveBound(); it; ++it) bound_idxs.insert(it->idx);
-  } else {
-    for (const auto &bound : theory_bounds_[theory_col].bounds()) bound_idxs.insert(bound.idx);
-  }
-}
-void TheorySolver::TheoryBoundsToBoundIdxs(const int theory_col, const mpq_class &value,
-                                           std::set<int> &bound_idxs) const {
-  for (auto it = theory_bounds_[theory_col].GetActiveBound(value); it; ++it) bound_idxs.insert(it->idx);
-}
-void TheorySolver::TheoryBoundsToBoundIdxs(int theory_col, const TheorySolver::BoundViolationType type,
-                                           std::set<int> &bound_idxs) {
-  if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
-  const TheorySolverBoundVector &bound = theory_bounds_[theory_col];
-  if (!config_.disable_eq_propagation() && preprocessor_.env().contains(theory_col_to_var_[theory_col])) {
-    return preprocessor_.GetActiveBoundIdxs(theory_col, bound_idxs);
-  }
-  return TheoryBoundsToBoundIdxs(
-      theory_col,
-      type == BoundViolationType::LOWER_BOUND_VIOLATION ? bound.active_lower_bound() : bound.active_upper_bound(),
-      bound_idxs);
-}
-#endif
 
 void TheorySolver::BoundsToTheoryRows(const Variable &var, BoundViolationType type, std::set<int> &theory_rows) const {
   if (type == BoundViolationType::NO_BOUND_VIOLATION) return;

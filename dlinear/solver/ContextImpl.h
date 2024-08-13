@@ -90,6 +90,8 @@ class Context::Impl {
    */
   Expression AssertRelu(const Expression &e);
 
+  GuidedConstraint &AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint);
+
   /** Pop the top of the stack of assertions. */
   void Pop();
   /** Push the current set of assertions to the stack. */
@@ -195,6 +197,8 @@ class Context::Impl {
    */
   const Box &get_model() { return model_; }
 
+  /** @getter{predicate_abstractor, context} */
+  const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
   [[nodiscard]] const SmtSolverOutput *solver_output() const { return output_; }
   SmtSolverOutput *m_solver_output() { return output_; }
   /**

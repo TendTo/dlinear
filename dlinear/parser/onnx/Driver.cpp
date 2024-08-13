@@ -10,6 +10,7 @@
 #include <fstream>
 
 #include "dlinear/parser/onnx/NodeOpType.h"
+#include "dlinear/solver/ReluConstraint.h"
 
 namespace dlinear::onnx {
 
@@ -475,8 +476,12 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Elementwise([this](const Expression& e) {
+    LinearFormulaFlattener lff{context_.config()};
     const Expression new_expr = context_.AssertIte(if_then_else(e > 0, e, 0));
-    context_.Assert(new_expr >= 0);
+    //    context_.Assert(new_expr >= 0);
+    DLINEAR_ASSERT(is_variable(new_expr), "Relu expression must be a variable");
+    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(
+        new_expr == 0, lff.Flatten(new_expr == e), get_variable(new_expr), context_.predicate_abstractor()));
     return new_expr;
   });
   available_inputs_.emplace(output, relu);
