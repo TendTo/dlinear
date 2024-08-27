@@ -160,10 +160,10 @@ bool Tensor::Equal(const Tensor &rhs) const {
 Tensor &Tensor::Flatten(const std::int64_t axis) {
   if (axis < 0 || axis >= static_cast<std::int64_t>(values_.size()))
     DLINEAR_OUT_OF_RANGE_FMT("Invalid axis. Must be in [{}, {}]", 0, values_.size());
-  const std::int64_t rows = std::reduce(std::execution::par_unseq, values_.shape().cbegin(),
-                                        values_.shape().cbegin() + axis, 1, std::multiplies<std::int64_t>{});
-  const std::int64_t cols = std::reduce(std::execution::par_unseq, values_.shape().cbegin() + axis,
-                                        values_.shape().cend(), 1, std::multiplies<std::int64_t>{});
+  const std::int64_t rows =
+      std::reduce(values_.shape().cbegin(), values_.shape().cbegin() + axis, 1, std::multiplies<std::int64_t>{});
+  const std::int64_t cols =
+      std::reduce(values_.shape().cbegin() + axis, values_.shape().cend(), 1, std::multiplies<std::int64_t>{});
   values_.reshape({rows, cols});
   return *this;
 }
