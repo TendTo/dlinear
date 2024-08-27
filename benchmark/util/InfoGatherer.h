@@ -19,6 +19,9 @@ struct shared_results {
   double actualPrecision;
   uint time;
   double smt_solver_time;
+  double theory_solver_time;
+  double bound_preprocessor_time;
+  double sat_solver_time;
   double parser_time;
 };
 
@@ -69,7 +72,7 @@ class InfoGatherer {
 
   void GatherInfo(shared_results *results);
   void StartIntermediateProcess(shared_results *results);
-  bool WaitChild() const;
+  [[nodiscard]] bool WaitChild() const;
   void ParseResults(shared_results *results);
 };
 

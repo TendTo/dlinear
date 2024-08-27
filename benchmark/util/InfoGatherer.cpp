@@ -81,6 +81,7 @@ void InfoGatherer::ParseResults(shared_results *results) {
   actualPrecision_ = results->actualPrecision;
   time_ = results->time;
   smt_solver_time_ = results->smt_solver_time;
+
   parser_time_ = results->parser_time;
 }
 
@@ -89,11 +90,14 @@ void InfoGatherer::GatherInfo(shared_results *results) {
   SmtSolver solver{config_};
   auto res = solver.CheckSat();
 
-  results->nAssertions = res.n_assertions();
+  results->nAssertions = res.n_assertions;
   results->isSat = res.is_sat();
-  results->actualPrecision = res.actual_precision().get_d();
-  results->parser_time = res.parser_time();
-  results->smt_solver_time = res.smt_solver_time();
+  results->actualPrecision = res.actual_precision.get_d();
+  results->parser_time = res.parser_stats.timer().seconds();
+  results->theory_solver_time = res.theory_stats.timer().seconds();
+  results->bound_preprocessor_time = res.preprocessor_stats.timer().seconds();
+  results->sat_solver_time = res.sat_stats.timer().seconds();
+  results->smt_solver_time = res.smt_solver_timer.seconds();
 
   auto end = std::chrono::high_resolution_clock::now();
   results->time = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
