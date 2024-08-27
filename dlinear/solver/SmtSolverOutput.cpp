@@ -174,6 +174,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
        << s.ite_stats << "\n"
        << s.cnfizer_stats << "\n"
        << s.predicate_abstractor_stats << "\n"
+       << s.preprocessor_stats << "\n"
        << s.sat_stats << "\n"
        << s.theory_stats;
   }

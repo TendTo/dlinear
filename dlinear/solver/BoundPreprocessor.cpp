@@ -89,7 +89,9 @@ bool check_explanation(const BoundPreprocessor& preprocessor, const LiteralSet& 
 }  // namespace
 
 BoundPreprocessor::BoundPreprocessor(const PredicateAbstractor& predicate_abstractor)
-    : config_{predicate_abstractor.config()}, predicate_abstractor_{predicate_abstractor} {}
+    : config_{predicate_abstractor.config()},
+      predicate_abstractor_{predicate_abstractor},
+      stats_{config_.with_timings(), "BoundPreprocessor", "Process"} {}
 
 void BoundPreprocessor::AddVariable(const Variable& var) {
   DLINEAR_TRACE_FMT("BoundPreprocessor::AddVariable({})", var);
@@ -160,6 +162,9 @@ BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& ena
 }
 void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
   if (config_.disable_eq_propagation()) return;
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
+
   DLINEAR_TRACE_FMT("BoundPreprocessor::Process({})", enabled_literals);
   std::list<Literal> mutable_enabled_formula_vars{enabled_literals.begin(), enabled_literals.end()};
 

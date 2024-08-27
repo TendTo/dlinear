@@ -17,6 +17,7 @@
 #ifdef DLINEAR_ENABLED_SOPLEX
 #include "dlinear/solver/CompleteSoplexTheorySolver.h"
 #include "dlinear/solver/DeltaSoplexTheorySolver.h"
+#include "dlinear/solver/NNSoplexTheorySolver.h"
 #endif
 #include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
@@ -128,26 +129,8 @@ Expression Context::Impl::AssertMax(const Expression &e) {
   AddToBox(to_variable(a2)->get_variable());
   return no_max;
 }
-Expression Context::Impl::AssertRelu(const dlinear::drake::symbolic::Expression &e) {
-  DLINEAR_ASSERT(is_if_then_else(e), "e must be an ITE expression");
-  DLINEAR_ASSERT(!get_then_expression(e).include_ite(), "'then' branch of e must not include ITE expression");
-  DLINEAR_ASSERT(!get_else_expression(e).include_ite(), "'else' branch of e must not include ITE expression");
-  DLINEAR_TRACE_FMT("ContextImpl::AssertRelu({})", e);
 
-  const auto [no_relu, assertion] = ite_eliminator_.Process(e);
-
-  if (Formula::True().EqualTo(assertion)) return no_relu;
-
-  DLINEAR_ASSERT(is_variable(no_relu), "no_relu must be a variable");
-
-  // Note that the following does not mark `no_relu` as a model variable.
-  AddToBox(to_variable(no_relu)->get_variable());
-  stack_.push_back(assertion);
-  sat_solver_->AddFormula(assertion);
-  return no_relu;
-}
-
-GuidedConstraint &Context::Impl::AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint) {
+const ReluConstraint &Context::Impl::AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint) {
   return *guided_constraints_.emplace_back(std::move(constraint)).get();
 }
 
@@ -363,25 +346,38 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   // Make sure the theory solver is in sync with the current box.
   theory_solver_->Reset(box());
 
+#ifdef NN
   // Check the current constraints to see if there is anything that could be used to use for the guided constraints
-  for (const std::unique_ptr<GuidedConstraint> &constraint : guided_constraints_) {
+  for (const std::unique_ptr<ReluConstraint> &constraint : guided_constraints_) {
     theory_solver_->m_preprocessor().EnableLiterals(constraint->enabled_literals());
   }
   theory_solver_->m_preprocessor().Process();
-  for (std::unique_ptr<GuidedConstraint> &constraint : guided_constraints_) {
-    DLINEAR_ASSERT(dynamic_cast<ReluConstraint *>(constraint.get()) != nullptr,
-                   "Guided constraint must be a ReluConstraint");
+
+  for (std::unique_ptr<ReluConstraint> &constraint : guided_constraints_) {
     ReluConstraint &relu_constraint = static_cast<ReluConstraint &>(*constraint.get());
     const BoundVector &relu_bounds = theory_solver_->theory_bounds().at(relu_constraint.relu_var());
     relu_constraint.SetLowerBound(relu_bounds.active_lower_bound() >= 0 ? relu_bounds.active_lower_bound()
                                                                         : ReluConstraint::zero);
     relu_constraint.SetUpperBound(relu_bounds.active_upper_bound() >= 0 ? relu_bounds.active_upper_bound()
                                                                         : ReluConstraint::zero);
-    fmt::println("Guided Constraint: {}", relu_bounds.GetActiveBoundsValue());
+    fmt::println("Guided Constraint: [{}, {}] - {} - {} | {}", relu_bounds.GetActiveBoundsValue().first.get_d(),
+                 relu_bounds.GetActiveBoundsValue().second.get_d(), relu_constraint.active_var(),
+                 relu_constraint.relu_var(), relu_constraint.fixed());
     DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Adding guided constraint = {}", constraint->Assumptions());
     for (const Literal &learned_clause : constraint->LearnedClauses()) sat_solver_->AddLearnedClause(learned_clause);
   }
+  std::remove_if(guided_constraints_.begin(), guided_constraints_.end(),
+                 [](const std::unique_ptr<ReluConstraint> &constraint) {
+                   if (constraint->fixed()) std::cout << *constraint << std::endl;
+                   return constraint->fixed();
+                 });
   theory_solver_->m_preprocessor().Clear(theory_solver_->fixed_preprocessor());
+
+  if (!config_.onnx_file().empty()) {
+    NNSoplexTheorySolver &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
+    nnSoplexTheorySolver.SetReluConstraints(guided_constraints_);
+  }
+#endif
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.
@@ -477,7 +473,9 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver() {
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
-      if (config_.complete())
+      if (!config_.onnx_file().empty())
+        return std::make_unique<NNSoplexTheorySolver>(predicate_abstractor_);
+      else if (config_.complete())
         return std::make_unique<CompleteSoplexTheorySolver>(predicate_abstractor_);
       else
         return std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_);
@@ -526,7 +524,9 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
   if (config_.with_timings()) {
     DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting timings");
     output_->sat_stats = sat_solver_->stats();
+    output_->ite_stats = ite_eliminator_.stats();
     output_->theory_stats = theory_solver_->stats();
+    output_->preprocessor_stats = theory_solver_->preprocessor().stats() + theory_solver_->fixed_preprocessor().stats();
     output_->predicate_abstractor_stats = predicate_abstractor_.stats();
     output_->cnfizer_stats = sat_solver_->cnfizer_stats();
   }

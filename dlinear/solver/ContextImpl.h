@@ -22,9 +22,9 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Context.h"
-#include "dlinear/solver/GuidedConstraint.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
@@ -81,16 +81,8 @@ class Context::Impl {
    * @return fresh variable introduced to represent the max expression or simple expression if a simplification happened
    */
   Expression AssertMax(const Expression &e);
-  /**
-   * Assert a ReLU expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
-   * @pre @p e is a ReLU expression
-   * @param e ReLU expression to be asserted
-   * @return fresh variable introduced to represent the ReLU expression
-   * @return simple expression if a simplification happened
-   */
-  Expression AssertRelu(const Expression &e);
 
-  GuidedConstraint &AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint);
+  const ReluConstraint &AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint);
 
   /** Pop the top of the stack of assertions. */
   void Pop();
@@ -326,7 +318,7 @@ class Context::Impl {
   bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
 
-  std::vector<std::unique_ptr<GuidedConstraint>>
+  std::vector<std::unique_ptr<ReluConstraint>>
       guided_constraints_;  ///< Special constraints that can be used to guide the SAT solver towards a possible SAT
                             ///< assignment.
 

@@ -101,6 +101,7 @@ struct SmtSolverOutput {
   IterationStats predicate_abstractor_stats{with_timings, ""};  ///< Statistics about the predicate abstractor
   IterationStats sat_stats{with_timings, ""};                   ///< Statistics about the satisfiability check
   IterationStats theory_stats{with_timings, ""};                ///< Statistics about the theory check
+  IterationStats preprocessor_stats{with_timings, ""};          ///< Statistics about the bound preprocessor
 
   Timer total_timer{};                    ///< Timer keeping track of the total time spent in the solver
   Timer smt_solver_timer{};               ///< Timer keeping track of the time spent in the SMT solver

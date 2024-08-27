@@ -69,6 +69,8 @@ class BoundPreprocessor {
   [[nodiscard]] const PredicateAbstractor& predicate_abstractor() const { return predicate_abstractor_; }
   /** @getter{propagated environment containing the variable's values, BoundPreprocessor} */
   [[nodiscard]] const Environment& env() const { return env_; }
+  /** @getter{statistics, BoundPreprocessor} */
+[[nodiscard]] const IterationStats& stats() const { return stats_; }
 
   /**
    * Check whether the formula is a simple relational bound.
@@ -225,6 +227,8 @@ class BoundPreprocessor {
 
   BoundVectorMap theory_bounds_;
   Environment env_;
+
+  IterationStats stats_;  ///< Statistics of the preprocessing.
 };
 
 std::ostream& operator<<(std::ostream& os, const BoundPreprocessor& preprocessor);

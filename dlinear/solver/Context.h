@@ -15,9 +15,9 @@
 #include <string>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/GuidedConstraint.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
+#include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/literal.h"
@@ -119,7 +119,7 @@ class Context {
    */
   void DeclareVariable(const Variable &v, const Expression &lb, const Expression &ub, bool is_model_variable = true);
 
-  GuidedConstraint &AddGuidedConstraint(std::unique_ptr<GuidedConstraint> &&constraint);
+  const ReluConstraint &AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint);
 
   /**
    * Exit the context.

@@ -224,6 +224,7 @@ dlinear_cc_library(
         "//tools:enabled_soplex": [
             "CompleteSoplexTheorySolver.cpp",
             "DeltaSoplexTheorySolver.cpp",
+            "NNSoplexTheorySolver.cpp",
             "SoplexTheorySolver.cpp",
         ],
         "//conditions:default": [],
@@ -240,6 +241,7 @@ dlinear_cc_library(
         "//tools:enabled_soplex": [
             "CompleteSoplexTheorySolver.h",
             "DeltaSoplexTheorySolver.h",
+            "NNSoplexTheorySolver.h",
             "SoplexTheorySolver.h",
         ],
         "//conditions:default": [],
@@ -254,6 +256,7 @@ dlinear_cc_library(
         ":bound_vector",
         ":lp_bound",
         ":lp_sense",
+        ":relu_constraint",
         ":sat_result",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
@@ -284,7 +287,6 @@ dlinear_cc_library(
         "Context.h",
     ],
     implementation_deps = [
-        ":relu_constraint",
         ":sat_solver",
         ":theory_propagator",
         ":theory_solver",
@@ -302,6 +304,7 @@ dlinear_cc_library(
         ":guided_constraint",
         ":logic",
         ":lp_result",
+        ":relu_constraint",
         ":sat_result",
         ":solver_output",
         "//dlinear/libs:gmp",
