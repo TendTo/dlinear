@@ -21,7 +21,6 @@
 #endif
 #include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
-#include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/TheoryPropagator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
@@ -130,8 +129,9 @@ Expression Context::Impl::AssertMax(const Expression &e) {
   return no_max;
 }
 
-const ReluConstraint &Context::Impl::AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint) {
-  return *guided_constraints_.emplace_back(std::move(constraint)).get();
+const PiecewiseLinearConstraint &Context::Impl::AddGuidedConstraint(
+    std::unique_ptr<PiecewiseLinearConstraint> &&constraint) {
+  return *pl_constraint_.emplace_back(std::move(constraint)).get();
 }
 
 void Context::Impl::Pop() {

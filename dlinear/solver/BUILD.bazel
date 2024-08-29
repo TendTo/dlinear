@@ -97,16 +97,19 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "guided_constraint",
-    srcs = ["GuidedConstraint.cpp"],
-    hdrs = ["GuidedConstraint.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    name = "piecewise_linear_constraint",
+    srcs = ["PiecewiseLinearConstraint.cpp"],
+    hdrs = ["PiecewiseLinearConstraint.h"],
+    implementation_deps = [
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
     deps = [
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:logging",
-        "//dlinear/util:sorted_vector",
     ],
 )
 

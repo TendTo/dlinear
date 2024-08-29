@@ -9,83 +9,71 @@
 
 #include <optional>
 
-#include "dlinear/solver/GuidedConstraint.h"
+#include "dlinear/solver/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
-class ReluConstraint : public GuidedConstraint {
+/**
+ * A ReLU constraint is a kind of piecewise linear constraint.
+ *
+ * It is used as an activation function in a Neural Network.
+ * The ReLU function is defined as:
+ * @f[
+ * y = \begin{cases}
+ * x & \text{if } x > 0 \\
+ * 0 & \text{otherwise}
+ * \end{cases}
+ * @f]
+ */
+class ReluConstraint : public PiecewiseLinearConstraint {
  public:
-  const static mpq_class zero;
+  const static mpq_class zero;  ///< Zero constant all the pointers to the default lower bound will point to
 
   /**
    * Construct a new Relu Constraint object
    *
-   * Given a ReLU formula
-   * @f[
-   * r = \begin{cases}
-   * 0 & \text{if } f < 0 \\
-   * f & \text{otherwise}
-   * \end{cases} @f]
-   * the three theory variables are:
-   * - `inactive_formula` is the formula @f$ r = 0 @f$
-   * - `active_formula` is the boolean variable associated with the formula @f$ r = f @f$
-   * - `relu_var` is the theory variable @f$ r @f$
-   * @param inactive_formula formula @f$ r = 0 @f$
-   * @param active_formula boolean variable associated with the formula @f$ r = f @f$
-   * @param relu_var theory variable @f$ r @f$
+   * Given the standard ReLU definition, the three theory variables are:
+   * - `inactive_formula` is the formula @f$ y = 0 @f$
+   * - `active_formula` is the boolean variable associated with the formula @f$ y = x @f$
+   * - `relu_var` is the theory variable @f$ y @f$
+   * @param inactive_formula formula @f$ y = 0 @f$
+   * @param active_formula formula @f$ y = x @f$
+   * @param relu_var theory variable @f$ y @f$
+   * @param active_soi sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
+   * It must be @f$ 0 @f$ for the constraint to be satisfied
    * @param pa predicate abstractor used to convert the formula to a boolean variable
    */
   ReluConstraint(const Formula& inactive_formula, const Formula& active_formula, Variable relu_var,
-                 const PredicateAbstractor& pa);
+                 Expression active_soi, const PredicateAbstractor& pa);
   /**
    * Construct a new Relu Constraint object
    *
-   * Given a ReLU formula
-   * @f[
-   * r = \begin{cases}
-   * 0 & \text{if } f < 0 \\
-   * f & \text{otherwise}
-   * \end{cases} @f]
-   * the three theory variables are:
-   * - `inactive_var` is the boolean variable associated with the formula @f$ r = 0 @f$
-   * - `active_var` is the boolean variable associated with the formula @f$ r = f @f$
-   * - `relu_var` is the theory variable @f$ r @f$
-   * @param inactive_var boolean variable associated with the formula @f$ r = 0 @f$
-   * @param active_var boolean variable associated with the formula @f$ r = f @f$
-   * @param relu_var theory variable @f$ r @f$
+   * Given the standard ReLU definition, the three theory variables are:
+   * - `inactive_var` is the boolean variable associated with the formula @f$ y = 0 @f$
+   * - `active_var` is the boolean variable associated with the formula @f$ y = x @f$
+   * - `relu_var` is the theory variable @f$ y @f$
+   * @param inactive_var boolean variable associated with the formula @f$ y = 0 @f$
+   * @param active_var boolean variable associated with the formula @f$ y = x @f$
+   * @param relu_var theory variable @f$ y @f$
+   * @param active_soi sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
+   * It must be @f$ 0 @f$ for the constraint to be satisfied
    */
-  ReluConstraint(Variable inactive_var, Variable active_var, Variable relu_var);
+  ReluConstraint(Variable inactive_var, Variable active_var, Variable relu_var, Expression active_soi);
 
-  void SetBounds(const mpq_class& lower_bound, const mpq_class& upper_bound);
-  void SetUpperBound(const mpq_class& upper_bound);
-  void SetLowerBound(const mpq_class& lower_bound);
-  void SetBounds(const mpq_class* lower_bound, const mpq_class* upper_bound);
-  void SetUpperBound(const mpq_class* upper_bound);
-  void SetLowerBound(const mpq_class* lower_bound);
+  void UpdateUpperBound(const mpq_class* upper_bound) override;
+  void UpdateLowerBound(const mpq_class* lower_bound) override;
 
-  [[nodiscard]] const mpq_class& lower_bound() const { return *lower_bound_; }
-  [[nodiscard]] const mpq_class& upper_bound() const { return *upper_bound_; }
-  [[nodiscard]] const Variable& inactive_var() const { return inactive_var_; }
-  [[nodiscard]] const Variable& active_var() const { return active_var_; }
-  [[nodiscard]] const Variable& relu_var() const { return relu_var_; }
+  void EnableLiteral(const Variable& var);
 
-  [[nodiscard]] bool fixed() const { return *lower_bound_ > 0 || *upper_bound_ == 0; }
+  [[nodiscard]] const Expression& soi() const;
 
   [[nodiscard]] LiteralSet Assumptions() const override;
 
   [[nodiscard]] LiteralSet LearnedClauses() const override;
 
   std::ostream& Print(std::ostream& os) const override;
-
- private:
-  const mpq_class* lower_bound_;
-  const mpq_class* upper_bound_;
-
-  const Variable inactive_var_;
-  const Variable active_var_;
-  const Variable relu_var_;
 };
 
 }  // namespace dlinear

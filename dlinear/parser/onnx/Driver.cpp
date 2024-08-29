@@ -476,13 +476,23 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Elementwise([this](const Expression& e) {
+    Formula condition{e > 0};
+    // Trivial cases for the ReLU function
+    if (is_true(condition)) {
+      return e;
+    } else if (is_false(condition)) {
+      return Expression{0};
+    }
+    const Expression relu_expr = context_.AssertIte(if_then_else(condition, e, 0));
+    DLINEAR_ASSERT(is_variable(relu_expr), "Relu expression must be a variable");
+    // Adding the fresh ITE variable as a guided constraint
+    context_.Assert(relu_expr >= 0);
+    context_.Assert(relu_expr >= e);
     LinearFormulaFlattener lff{context_.config()};
-    const Expression new_expr = context_.AssertIte(if_then_else(e > 0, e, 0));
-    //    context_.Assert(new_expr >= 0);
-    DLINEAR_ASSERT(is_variable(new_expr), "Relu expression must be a variable");
     context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(
-        new_expr == 0, lff.Flatten(new_expr == e), get_variable(new_expr), context_.predicate_abstractor()));
-    return new_expr;
+        relu_expr == 0, LinearFormulaFlattener{context_.config()}.Flatten(relu_expr == e), get_variable(relu_expr),
+        relu_expr - e, context_.predicate_abstractor()));
+    return relu_expr;
   });
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);
@@ -723,6 +733,14 @@ void OnnxDriver::AddValueInfoTensor(const ::onnx::ValueInfoProto& value_info, co
   for (const auto& exp : it->second) context_.DeclareVariable(get_variable(exp));
   DLINEAR_DEBUG_FMT("Added variables tensor: {} -> {}", it->first, it->second);
   if (is_input) DLINEAR_TRACE_FMT("Added input: {} -> {}", value_info.name(), it->second);
+}
+
+const Variable& OnnxDriver::ToEqualVar(const Expression& expr) {
+  if (is_variable(expr)) return get_variable(expr);
+  auto it = equal_vars_.find(expr);
+  if (it != equal_vars_.end()) return it->second;
+  const auto [ins, _] = equal_vars_.emplace(expr, Variable{"var/" + expr.to_string()});
+  return ins->second;
 }
 
 std::ostream& operator<<(std::ostream& os, const OnnxDriver& model) {

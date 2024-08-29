@@ -141,8 +141,19 @@ class OnnxDriver : public Driver {
   template <NodeOpType T>
   void AddNode(const ::onnx::NodeProto& node);
 
+  /**
+   * Associate to a linear expression a fresh variable.
+   *
+   * The variable is created and added to the @ref equal_vars_.
+   * If the same expression is passed again, the same variable is returned.
+   * @param expression expression to associate with a variable
+   * @return corresponding variable
+   */
+  const Variable& ToEqualVar(const Expression& expression);
+
   ::onnx::ModelProto model_{};                                ///< The onnx model obtained from the file.
   std::unordered_map<std::string, Tensor> variables_;         ///< Variables in the model.
   std::unordered_map<std::string, Tensor> available_inputs_;  ///< Available inputs in the model.
+  std::unordered_map<Expression, Variable> equal_vars_;       ///< Variables created to summarize linear constraints.
 };
 }  // namespace dlinear::onnx

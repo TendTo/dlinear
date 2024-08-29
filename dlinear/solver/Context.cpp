@@ -35,7 +35,7 @@ void Context::DeclareVariable(const Variable &v, const Expression &lb, const Exp
   impl_->DeclareVariable(v, is_model_variable);
   impl_->SetDomain(v, lb, ub);
 }
-const ReluConstraint &Context::AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint) {
+const PiecewiseLinearConstraint &Context::AddGuidedConstraint(std::unique_ptr<PiecewiseLinearConstraint> &&constraint) {
   return impl_->AddGuidedConstraint(std::move(constraint));
 }
 void Context::Exit() { DLINEAR_DEBUG("Context::Exit()"); }

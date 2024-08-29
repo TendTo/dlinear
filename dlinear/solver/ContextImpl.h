@@ -24,7 +24,7 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/Logic.h"
 #include "dlinear/solver/LpResult.h"
-#include "dlinear/solver/ReluConstraint.h"
+#include "dlinear/solver/PiecewiseLinearConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SatSolver.h"
 #include "dlinear/solver/SmtSolverOutput.h"
@@ -82,7 +82,7 @@ class Context::Impl {
    */
   Expression AssertMax(const Expression &e);
 
-  const ReluConstraint &AddGuidedConstraint(std::unique_ptr<ReluConstraint> &&constraint);
+  const PiecewiseLinearConstraint &AddGuidedConstraint(std::unique_ptr<PiecewiseLinearConstraint> &&constraint);
 
   /** Pop the top of the stack of assertions. */
   void Pop();
@@ -318,9 +318,9 @@ class Context::Impl {
   bool have_objective_;  ///< Keeps track of whether or not there is an objective function.
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
 
-  std::vector<std::unique_ptr<ReluConstraint>>
-      guided_constraints_;  ///< Special constraints that can be used to guide the SAT solver towards a possible SAT
-                            ///< assignment.
+  std::vector<std::unique_ptr<PiecewiseLinearConstraint>>
+      pl_constraint_;  ///< Special constraints that can be used to guide the SAT solver towards a possible
+                       ///< SAT assignment.
 
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   IfThenElseEliminator ite_eliminator_;       ///< Eliminates if-then-else expressions from the formula.
