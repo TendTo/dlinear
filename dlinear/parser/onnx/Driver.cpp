@@ -476,7 +476,8 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   Tensor relu = Tensor{available_inputs_.at(input)};
 
   relu.Elementwise([this](const Expression& e) {
-    Formula condition{e > 0};
+    LinearFormulaFlattener lf{context_.config()};
+    const Formula condition{lf.Flatten(e > 0)};
     // Trivial cases for the ReLU function
     if (is_true(condition)) {
       return e;
@@ -489,9 +490,9 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
     context_.Assert(relu_expr >= 0);
     context_.Assert(relu_expr >= e);
     LinearFormulaFlattener lff{context_.config()};
-    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(
-        relu_expr == 0, LinearFormulaFlattener{context_.config()}.Flatten(relu_expr == e), get_variable(relu_expr),
-        relu_expr - e, context_.predicate_abstractor()));
+    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(lf.Flatten(relu_expr == e), relu_expr == 0,
+                                                                  get_variable(relu_expr), relu_expr - e,
+                                                                  context_.predicate_abstractor()));
     return relu_expr;
   });
   available_inputs_.emplace(output, relu);

@@ -137,6 +137,8 @@ class TheorySolver {
   [[nodiscard]] BoundPreprocessor &m_preprocessor() { return preprocessor_; }
   /** @getter{fixed bound preprocessor, TheorySolver} */
   [[nodiscard]] const BoundPreprocessor &fixed_preprocessor() const { return fixed_preprocessor_; }
+  /** @getsetter{fixed bound preprocessor, TheorySolver} */
+  [[nodiscard]] BoundPreprocessor &m_fixed_preprocessor() { return fixed_preprocessor_; }
 
   /**
    * Check the satisfiability of the theory.

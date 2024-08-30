@@ -11,6 +11,7 @@
 #include <optional>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/BoundPreprocessor.h"
 #include "dlinear/solver/PiecewiseConstraintState.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -34,6 +35,8 @@ namespace dlinear {
  */
 class PiecewiseLinearConstraint {
  public:
+  static const Expression zero_soi;  ///< Expression @f$ 0 @f$ used as a soi if the constraint is not fixed yet
+
   /**
    * Construct a new Piecewise Linear Constraint object
    * @param lb lower bound of the constraint. If not specified, the constraint is unbounded from below (-inf)
@@ -50,6 +53,14 @@ class PiecewiseLinearConstraint {
                                      Expression active_soi = {0}, Expression inactive_soi = {0},
                                      PiecewiseConstraintState state = PiecewiseConstraintState::NOT_FIXED);
   virtual ~PiecewiseLinearConstraint() = default;
+
+
+  /**
+   * Use the @p preprocessor to tighten the bounds of the constraint and hopefully fix its state to either
+   * active or inactive.
+   * @param preprocessor preprocessor to use to tighten the bounds
+   */
+  virtual void TightenBounds(BoundPreprocessor& preprocessor) = 0;
 
   /**
    * Print the constraint on the standard output

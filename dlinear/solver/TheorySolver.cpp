@@ -33,6 +33,7 @@ TheorySolver::Explanations TheorySolver::AddFixedLiterals(const LiteralSet &fixe
   Explanations explanations{};
   for (const Literal &lit : fixed_literals) fixed_preprocessor_.EnableLiteral(lit, explanations);
   fixed_preprocessor_.Process(explanations);
+  preprocessor_.Clear(fixed_preprocessor_);
   return explanations;
 }
 

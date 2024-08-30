@@ -15,13 +15,12 @@ namespace dlinear {
 
 const mpq_class ReluConstraint::zero{0};
 
-ReluConstraint::ReluConstraint(const Formula& inactive_formula, const Formula& active_formula, Variable relu_var,
+ReluConstraint::ReluConstraint(const Formula& active_formula, const Formula& inactive_formula, Variable relu_var,
                                Expression active_soi, const PredicateAbstractor& pa)
-    : ReluConstraint(pa[inactive_formula], pa[active_formula], std::move(relu_var), std::move(active_soi)) {}
-ReluConstraint::ReluConstraint(Variable active_var, Variable inactive_var, Variable theory_var, Expression active_soi)
+    : ReluConstraint(pa[active_formula], pa[inactive_formula], std::move(relu_var), std::move(active_soi)) {}
+ReluConstraint::ReluConstraint(Variable active_var, Variable inactive_var, Variable relu_var, Expression active_soi)
     : PiecewiseLinearConstraint{
-          &zero,     nullptr, std::move(active_var), std::move(inactive_var), theory_var, std::move(active_soi),
-          theory_var} {}
+          &zero, nullptr, std::move(active_var), std::move(inactive_var), relu_var, std::move(active_soi), relu_var} {}
 
 void ReluConstraint::UpdateLowerBound(const mpq_class* const lower_bound) {
   PiecewiseLinearConstraint::UpdateLowerBound(lower_bound);
@@ -34,6 +33,14 @@ void ReluConstraint::UpdateUpperBound(const mpq_class* const upper_bound) {
 
 void ReluConstraint::EnableLiteral(const Variable& var) {
   DLINEAR_ASSERT(inactive_var_.equal_to(var) || active_var_.equal_to(var), "Invalid variable");
+}
+
+void ReluConstraint::TightenBounds(BoundPreprocessor& preprocessor) {
+  std::set<LiteralSet> explanations;
+  preprocessor.PropagateBoundsPolynomial({active_var_, true}, theory_var_, explanations);
+  DLINEAR_ASSERT(explanations.empty(), "ReluConstraint::TightenBounds() should not produce any conflict");
+  UpdateLowerBound(&preprocessor.theory_bounds().at(theory_var_).active_lower_bound());
+  UpdateUpperBound(&preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
 }
 
 LiteralSet ReluConstraint::Assumptions() const {
@@ -51,8 +58,9 @@ LiteralSet ReluConstraint::LearnedClauses() const {
 }
 
 std::ostream& ReluConstraint::Print(std::ostream& os) const {
-  os << "ReluConstraint(" << theory_var_ << " = " << active_var_ << " if " << active_var_ << " ["
-     << *lower_bound_ << ", " << *upper_bound_ << "])";
+  os << "ReluConstraint(" << active_var_ << " or " << inactive_var_ << " ["
+     << (lower_bound_ ? lower_bound_->get_str() : "-inf") << ", " << (upper_bound_ ? upper_bound_->get_str() : "+inf")
+     << "])";
   return os;
 }
 

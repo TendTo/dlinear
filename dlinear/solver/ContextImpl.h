@@ -319,7 +319,7 @@ class Context::Impl {
   bool is_max_;          ///< Keeps track of whether or not the objective function is being maximized.
 
   std::vector<std::unique_ptr<PiecewiseLinearConstraint>>
-      pl_constraint_;  ///< Special constraints that can be used to guide the SAT solver towards a possible
+      pl_constraints_;  ///< Special constraints that can be used to guide the SAT solver towards a possible
                        ///< SAT assignment.
 
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.

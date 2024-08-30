@@ -218,8 +218,8 @@ void BoundPreprocessor::Clear(const BoundPreprocessor& fixed_preprocessor) {
   enabled_literals_ = fixed_preprocessor.enabled_literals_;
 }
 
-BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(const Literal& lit,
-                                                                            Explanations& explanations) {
+bool BoundPreprocessor::PropagateEqPolynomial(const Literal& lit, const Variable& var_to_propagate,
+                                              Explanations& explanations) {
   DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateEqPolynomial({})", lit);
 
   const Formula& formula = predicate_abstractor_[lit.var];
@@ -227,25 +227,24 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(cons
   DLINEAR_ASSERT(IsEqualTo(formula, lit.truth), "Lit must encode an equal to relation");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   DLINEAR_ASSERT(ShouldPropagateEqPolynomial(lit), "The formula should be propagated");
+  DLINEAR_ASSERT(!env_.contains(var_to_propagate), "The variable must not be in the environment yet");
+  DLINEAR_ASSERT(!var_to_propagate.is_dummy(), "The variable must be valid");
 
   LiteralSet explanation{};
   std::vector<Variable> dependencies;
+  dependencies.reserve(formula.GetFreeVariables().size() - 1);
   mpq_class rhs{get_constant_value(get_rhs_expression(formula))};
   mpq_class var_coeff{};
-  Variable var_propagated{};
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     const Variable& var = get_variable(expr);
-    const auto env_it = env_.find(var);
-    if (env_it != env_.cend()) {
-      rhs -= env_it->second * coeff;
-      dependencies.emplace_back(var);
-    } else {
-      var_propagated = var;
+    if (var.equal_to(var_to_propagate)) {
       var_coeff = coeff;
+      continue;
     }
+    rhs -= env_.at(var) * coeff;
+    dependencies.emplace_back(var);
   }
-  DLINEAR_ASSERT(!var_propagated.is_dummy(), "There must be exactly a propagated variable");
   DLINEAR_ASSERT(var_coeff != 0, "The propagated variable coefficient cannot be 0");
 
   // Calculate the propagated value of the variable
@@ -257,12 +256,13 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(cons
     explanation.insert(dependency_explanation.begin(), dependency_explanation.end());
     //    if (var_propagated.get_name() == "x_11") fmt::println("{} => {}", dependency, theory_bounds_.at(dependency));
   }
-  const auto [env_it, inserted] = env_.insert(var_propagated, rhs);
+  const auto [env_it, inserted] = env_.insert(var_to_propagate, rhs);
   DLINEAR_ASSERT(inserted, "The variable was not in the environment before");
   //  fmt::println("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {} ({})",
   //  var_propagated,
   //               rhs, lit, dependencies, explanation);
-  BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(env_it->second, LpColBound::B, lit, explanation)};
+  BoundIterator violation{
+      theory_bounds_.at(var_to_propagate).AddBound(env_it->second, LpColBound::B, lit, explanation)};
   if (!violation.empty()) {
     explanation.insert(lit);
     violation.explanation(explanation);
@@ -271,54 +271,54 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateEqPolynomial(cons
     // Remove the propagated constraint from the environment
     env_.erase(env_it);
     //    fmt::println("BoundPreprocessor::PropagateConstraints: {} conflict found", explanation);
-    return PropagateResult::CONFLICT;
+    return false;
   }
-  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_propagated,
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = {} thanks to constraint {} and {}", var_to_propagate,
                     rhs, lit, dependencies);
-  return PropagateResult::PROPAGATED;
+  return true;
 }
 
-BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit,
-                                                                                Explanations& explanations) {
+bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate,
+                                                  Explanations& explanations) {
   DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateInPolynomial({})", lit);
 
   const Formula& formula = predicate_abstractor_[lit.var];
 
   DLINEAR_ASSERT(is_relational(formula), "Formula should be a relational relation other than = or !=");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
-  DLINEAR_ASSERT(ShouldPropagateBoundsPolynomial(lit), "The formula should be propagated");
+  DLINEAR_ASSERT(!var_to_propagate.is_dummy(), "The variable must be valid");
 
   LiteralSet l_explanation{};
   LiteralSet u_explanation{};
   std::vector<Variable> dependencies;
+  dependencies.reserve(formula.GetFreeVariables().size() - 1);
   mpq_class l_rhs{get_constant_value(get_rhs_expression(formula))};
   mpq_class u_rhs{get_constant_value(get_rhs_expression(formula))};
   mpq_class var_coeff{};
-  Variable var_propagated{};
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     const Variable& var = get_variable(expr);
-    if (theory_bounds_.at(var).IsBounded()) {
-      const mpq_class& lower_bound = theory_bounds_.at(var).active_lower_bound();
-      const mpq_class& upper_bound = theory_bounds_.at(var).active_upper_bound();
-      dependencies.emplace_back(var);
-      if (coeff > 0) {
-        l_rhs -= upper_bound * coeff;
-        u_rhs -= lower_bound * coeff;
-        theory_bounds_.at(var).GetActiveBound(upper_bound).explanation(l_explanation);
-        theory_bounds_.at(var).GetActiveBound(lower_bound).explanation(u_explanation);
-      } else {
-        l_rhs -= lower_bound * coeff;
-        u_rhs -= upper_bound * coeff;
-        theory_bounds_.at(var).GetActiveBound(lower_bound).explanation(l_explanation);
-        theory_bounds_.at(var).GetActiveBound(upper_bound).explanation(u_explanation);
-      }
-    } else {
-      var_propagated = var;
+    if (var.equal_to(var_to_propagate)) {
       var_coeff = coeff;
+      continue;
+    }
+    DLINEAR_ASSERT(theory_bounds_.at(var).IsBounded(),
+                   "All other variable, except the one being propagated, must be bounded");
+    const mpq_class& lower_bound = theory_bounds_.at(var).active_lower_bound();
+    const mpq_class& upper_bound = theory_bounds_.at(var).active_upper_bound();
+    dependencies.emplace_back(var);
+    if (coeff > 0) {
+      l_rhs -= upper_bound * coeff;
+      u_rhs -= lower_bound * coeff;
+      theory_bounds_.at(var).GetActiveBound(upper_bound).explanation(l_explanation);
+      theory_bounds_.at(var).GetActiveBound(lower_bound).explanation(u_explanation);
+    } else {
+      l_rhs -= lower_bound * coeff;
+      u_rhs -= upper_bound * coeff;
+      theory_bounds_.at(var).GetActiveBound(lower_bound).explanation(l_explanation);
+      theory_bounds_.at(var).GetActiveBound(upper_bound).explanation(u_explanation);
     }
   }
-  DLINEAR_ASSERT(!var_propagated.is_dummy(), "There must be exactly a propagated variable");
   DLINEAR_ASSERT(var_coeff != 0, "The propagated variable coefficient cannot be 0");
 
   // Calculate the propagated value of the bounds
@@ -339,50 +339,50 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
     if (l_rhs == u_rhs) {
       DLINEAR_ASSERT(l_explanation == u_explanation, "The explanations must be the same");
       const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::B, lit, l_explanation};
-      BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(bound)};
+      BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
       if (!violation.empty()) {
         l_explanation.insert(lit);
         violation.explanation(l_explanation);
         DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Eq bound {} conflict found", l_explanation);
         explanations.insert(l_explanation);
-        return PropagateResult::CONFLICT;
+        return false;
       }
-      DLINEAR_ASSERT(!env_.contains(var_propagated) ||
-                         env_[var_propagated] == *theory_bounds_.at(var_propagated).GetActiveEqualityBound(),
+      DLINEAR_ASSERT(!env_.contains(var_to_propagate) ||
+                         env_[var_to_propagate] == *theory_bounds_.at(var_to_propagate).GetActiveEqualityBound(),
                      "No conflict should arise from this assignment");
-      env_[var_propagated] = *theory_bounds_.at(var_propagated).GetActiveEqualityBound();
-      return PropagateResult::PROPAGATED;
+      env_[var_to_propagate] = *theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
+      return true;
     }
     // The two bounds are different. Add the lower and upper bounds to the variable
     const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, l_explanation};
-    BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(bound)};
+    BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
     if (!violation.empty()) {
       l_explanation.insert(lit);
       violation.explanation(l_explanation);
       DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Lower bound {} conflict found", l_explanation);
       explanations.insert(l_explanation);
-      return PropagateResult::CONFLICT;
+      return false;
     }
     const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, u_explanation};
-    BoundIterator violation2{theory_bounds_.at(var_propagated).AddBound(bound2)};
+    BoundIterator violation2{theory_bounds_.at(var_to_propagate).AddBound(bound2)};
     if (!violation2.empty()) {
       u_explanation.insert(lit);
       violation2.explanation(u_explanation);
       DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Upper bound {} conflict found", u_explanation);
       explanations.insert(u_explanation);
-      return PropagateResult::CONFLICT;
+      return false;
     }
     DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
-                      var_propagated, l_rhs, u_rhs, lit, dependencies);
+                      var_to_propagate, l_rhs, u_rhs, lit, dependencies);
     //    fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
     //                 var_propagated, l_rhs, u_rhs, lit, dependencies);
-    const mpq_class* const eq_bound = theory_bounds_.at(var_propagated).GetActiveEqualityBound();
+    const mpq_class* const eq_bound = theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
     if (eq_bound != nullptr) {
-      DLINEAR_ASSERT(!env_.contains(var_propagated) || env_[var_propagated] == *eq_bound,
+      DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *eq_bound,
                      "No conflict should arise from this assignment");
-      env_[var_propagated] = *eq_bound;
+      env_[var_to_propagate] = *eq_bound;
     }
-    return PropagateResult::PROPAGATED;
+    return true;
   }
 
   Bound bound;
@@ -414,23 +414,23 @@ BoundPreprocessor::PropagateResult BoundPreprocessor::PropagateBoundsPolynomial(
   //  fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
   //  var_propagated,
   //               l_rhs, u_rhs, lit, dependencies);
-  BoundIterator violation{theory_bounds_.at(var_propagated).AddBound(bound)};
+  BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
   if (!violation.empty()) {
     bound.explanation.insert(lit);
     violation.explanation(bound.explanation);
     DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", bound.explanation);
     explanations.insert(bound.explanation);
-    return PropagateResult::CONFLICT;
+    return false;
   }
   DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
-                    var_propagated, l_rhs, u_rhs, lit, dependencies);
-  const mpq_class* const eq_bound = theory_bounds_.at(var_propagated).GetActiveEqualityBound();
+                    var_to_propagate, l_rhs, u_rhs, lit, dependencies);
+  const mpq_class* const eq_bound = theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
   if (eq_bound != nullptr) {
-    DLINEAR_ASSERT(!env_.contains(var_propagated) || env_[var_propagated] == *eq_bound,
+    DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *eq_bound,
                    "No conflict should arise from this assignment");
-    env_[var_propagated] = *eq_bound;
+    env_[var_to_propagate] = *eq_bound;
   }
-  return PropagateResult::PROPAGATED;
+  return true;
 }
 
 void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
@@ -443,17 +443,16 @@ void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literal
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
-      if (!ShouldPropagateEqPolynomial(lit)) {
+      const Variable* const var_to_propagate = ShouldPropagateEqPolynomial(lit);
+      if (var_to_propagate == nullptr) {
         ++it;
         continue;
       }
       // Equality polynomial missing a single variable. Propagate it
-      const PropagateResult propagation_result = PropagateEqPolynomial(lit, explanations);
-      if (propagation_result == PropagateResult::PROPAGATED) {
+      if (PropagateEqPolynomial(lit, *var_to_propagate, explanations)) {
         continue_propagating = true;
         it = enabled_literals.erase(it);
       } else {
-        DLINEAR_ASSERT(propagation_result == PropagateResult::CONFLICT, "The propagation result must be a conflict");
         ++it;
       }
     }
@@ -464,18 +463,17 @@ void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literal
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
+      const Variable* const var_to_propagate = ShouldPropagateBoundsPolynomial(lit);
       //      fmt::println("BoundPreprocessor: propagating {} - {}\n{}", lit, ShouldPropagateBoundsPolynomial(lit),
       //                   theory_bounds_);
-      if (!ShouldPropagateBoundsPolynomial(lit)) {
+      if (var_to_propagate == nullptr) {
         ++it;
         continue;
       }
-      const PropagateResult propagation_result = PropagateBoundsPolynomial(lit, explanations);
-      if (propagation_result == PropagateResult::PROPAGATED) {
+      if (PropagateBoundsPolynomial(lit, *var_to_propagate, explanations)) {
         continue_propagating = true;
         it = enabled_literals.erase(it);
       } else {
-        DLINEAR_ASSERT(propagation_result == PropagateResult::CONFLICT, "The propagation result must be a conflict");
         ++it;
       }
     }
@@ -540,60 +538,63 @@ bool BoundPreprocessor::ShouldEvaluate(const Formula& formula) const {
                      [this](const Variable& v) { return env_.contains(v); });
 }
 
-bool BoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) const {
+const Variable* BoundPreprocessor::ShouldPropagateEqPolynomial(const Literal& lit) const {
   DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateEqPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
   // There must be exactly two free variables and an equality relation between them
-  if (!IsEqualTo(formula, truth)) return false;
+  if (!IsEqualTo(formula, truth)) return nullptr;
   return ShouldPropagateEqPolynomial(formula);
 }
-bool BoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formula) const {
+const Variable* BoundPreprocessor::ShouldPropagateEqPolynomial(const Formula& formula) const {
   DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateEqPolynomial({})", formula);
   // There must be exactly two free variables and an equality relation between them
-  if (!is_equal_to(formula) && !is_not_equal_to(formula)) return false;
-  if (formula.GetFreeVariables().size() < 2) return false;
+  if (!is_equal_to(formula) && !is_not_equal_to(formula)) return nullptr;
+  if (formula.GetFreeVariables().size() < 2) return nullptr;
   DLINEAR_ASSERT(is_addition(get_lhs_expression(formula)), "lhs expression must be an addition");
 
   // The formula must be of the form 'a1x1 + a2x2 + ... + anxn + c = b', with ai,b != 0
-  std::size_t missing_var_count{0};
+  const Variable* missing_var = nullptr;
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     if (env_.find(get_variable(expr)) != env_.cend()) continue;
-    if (++missing_var_count > 1) return false;
+    // There is more than one variable missing its value
+    if (missing_var != nullptr) return nullptr;
+    missing_var = &get_variable(expr);
   }
-  return missing_var_count == 1;
+  return missing_var;
 }
-bool BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Literal& lit) const {
+const Variable* BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Literal& lit) const {
   DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateInPolynomial({})", lit);
   const auto& [formula_var, truth] = lit;
   const Formula& formula = predicate_abstractor_[formula_var];
   // There must be exactly two free variables and an equality relation between them
-  if (!is_relational(formula)) return false;
-  if (IsNotEqualTo(formula, truth)) return false;
+  if (!is_relational(formula)) return nullptr;
+  if (IsNotEqualTo(formula, truth)) return nullptr;
   return ShouldPropagateBoundsPolynomial(formula);
 }
-bool BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& formula) const {
+const Variable* BoundPreprocessor::ShouldPropagateBoundsPolynomial(const Formula& formula) const {
   DLINEAR_TRACE_FMT("BoundPreprocessor::ShouldPropagateInPolynomial({})", formula);
   // There must be more than two free variables and an inequality relation between them
-  if (!is_relational(formula)) return false;
-  if (formula.GetFreeVariables().size() < 2) return false;
+  if (!is_relational(formula)) return nullptr;
+  if (formula.GetFreeVariables().size() < 2) return nullptr;
   DLINEAR_ASSERT(is_addition(get_lhs_expression(formula)), "lhs expression must be an addition");
 
   // TODO(tend): being naive, this approach will not propagate some bounds that could be propagated
   //  since it forces the dependency variables to be bounded both ways for propagation
   // The formula must be of the form 'a1x1 + a2x2 + ... + anxn + c <=> b', with ai,b != 0 and <=> in {<, <=, >, >=, !=}
-  std::size_t missing_var_count{0};
+  const Variable* missing_var = nullptr;
   for (const auto& [expr, coeff] : get_expr_to_coeff_map_in_addition(get_lhs_expression(formula))) {
     DLINEAR_ASSERT(is_variable(expr), "All expressions in lhs formula must be variables");
     const Variable& var = get_variable(expr);
     const auto it = theory_bounds_.find(var);
     if (it == theory_bounds_.end() || !it->second.IsBounded()) {
-      if (++missing_var_count > 1) return false;
-      continue;
+      // There is more than one variable missing its value
+      if (missing_var != nullptr) return nullptr;
+      missing_var = &var;
     }
   }
-  return missing_var_count == 1;
+  return missing_var;
 }
 
 std::pair<Variable, Variable> BoundPreprocessor::ExtractBoundEdge(const Formula& formula) const {

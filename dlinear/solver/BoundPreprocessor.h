@@ -70,7 +70,7 @@ class BoundPreprocessor {
   /** @getter{propagated environment containing the variable's values, BoundPreprocessor} */
   [[nodiscard]] const Environment& env() const { return env_; }
   /** @getter{statistics, BoundPreprocessor} */
-[[nodiscard]] const IterationStats& stats() const { return stats_; }
+  [[nodiscard]] const IterationStats& stats() const { return stats_; }
 
   /**
    * Check whether the formula is a simple relational bound.
@@ -145,19 +145,6 @@ class BoundPreprocessor {
    */
   static bool IsLessThanOrEqualTo(const Formula& formula, bool truth = true);
 
- protected:
-  enum class PropagateResult { NO_PROPAGATION, UNCHANGED, PROPAGATED, CONFLICT };
-
-  bool ShouldPropagateEqPolynomial(const Literal& lit) const;
-  bool ShouldPropagateEqPolynomial(const Formula& formula) const;
-  bool ShouldPropagateBoundsPolynomial(const Literal& lit) const;
-  bool ShouldPropagateBoundsPolynomial(const Formula& formula) const;
-  bool ShouldEvaluate(const Literal& lit) const;
-  bool ShouldEvaluate(const Formula& formula) const;
-
-  Bound GetSimpleBound(const dlinear::Literal& lit) const;
-  Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
-
   /**
    * Propagate the bounds of the variables in the given formula.
    *
@@ -170,11 +157,12 @@ class BoundPreprocessor {
    * @pre the formula is of the form @f$ \sum_{i = 1}^n a_i x_i = c @f$
    * @pre all but exactly one of the variables have a value assigned in the @ref env_
    * @param lit theory literal corresponding to the formula to propagate
+   * @param var_to_propagate the variable to propagate
    * @param explanations the explanations to be updated if a conflict is found
-   * @return CONFLICT if a conflict has been found
-   * @return PROPAGATED if the propagation took place
+   * @return true if the propagation was successful
+   * @return false if a conflict was detected
    */
-  PropagateResult PropagateEqPolynomial(const Literal& lit, Explanations& explanations);
+  bool PropagateEqPolynomial(const Literal& lit, const Variable& var_to_propagate, Explanations& explanations);
   /**
    * Propagate the bounds of the variables in the given formula.
    *
@@ -187,11 +175,24 @@ class BoundPreprocessor {
    * @pre the formula is of the form @f$ \sum_{i = 1}^n a_i x_i \bowtie c @f$
    * @pre all but exactly one of the variables are bounded
    * @param lit theory literal corresponding to the formula to propagate
+   * @param var_to_propagate the variable to propagate
    * @param explanations the explanations to be updated if a conflict is found
-   * @return CONFLICT if a conflict has been found
-   * @return PROPAGATED if the propagation took place
+   * @return true if the propagation was successful
+   * @return false if a conflict was detected
    */
-  PropagateResult PropagateBoundsPolynomial(const Literal& lit, Explanations& explanations);
+  bool PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate, Explanations& explanations);
+
+ protected:
+  const Variable* ShouldPropagateEqPolynomial(const Literal& lit) const;
+  const Variable* ShouldPropagateEqPolynomial(const Formula& formula) const;
+  const Variable* ShouldPropagateBoundsPolynomial(const Literal& lit) const;
+  const Variable* ShouldPropagateBoundsPolynomial(const Formula& formula) const;
+  bool ShouldEvaluate(const Literal& lit) const;
+  bool ShouldEvaluate(const Formula& formula) const;
+
+  Bound GetSimpleBound(const dlinear::Literal& lit) const;
+  Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
+
   void PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
   void EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);

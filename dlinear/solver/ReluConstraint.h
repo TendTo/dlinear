@@ -38,14 +38,14 @@ class ReluConstraint : public PiecewiseLinearConstraint {
    * - `inactive_formula` is the formula @f$ y = 0 @f$
    * - `active_formula` is the boolean variable associated with the formula @f$ y = x @f$
    * - `relu_var` is the theory variable @f$ y @f$
-   * @param inactive_formula formula @f$ y = 0 @f$
    * @param active_formula formula @f$ y = x @f$
+   * @param inactive_formula formula @f$ y = 0 @f$
    * @param relu_var theory variable @f$ y @f$
    * @param active_soi sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
    * It must be @f$ 0 @f$ for the constraint to be satisfied
    * @param pa predicate abstractor used to convert the formula to a boolean variable
    */
-  ReluConstraint(const Formula& inactive_formula, const Formula& active_formula, Variable relu_var,
+  ReluConstraint(const Formula& active_formula, const Formula& inactive_formula, Variable relu_var,
                  Expression active_soi, const PredicateAbstractor& pa);
   /**
    * Construct a new Relu Constraint object
@@ -54,20 +54,20 @@ class ReluConstraint : public PiecewiseLinearConstraint {
    * - `inactive_var` is the boolean variable associated with the formula @f$ y = 0 @f$
    * - `active_var` is the boolean variable associated with the formula @f$ y = x @f$
    * - `relu_var` is the theory variable @f$ y @f$
-   * @param inactive_var boolean variable associated with the formula @f$ y = 0 @f$
    * @param active_var boolean variable associated with the formula @f$ y = x @f$
+   * @param inactive_var boolean variable associated with the formula @f$ y = 0 @f$
    * @param relu_var theory variable @f$ y @f$
    * @param active_soi sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
    * It must be @f$ 0 @f$ for the constraint to be satisfied
    */
-  ReluConstraint(Variable inactive_var, Variable active_var, Variable relu_var, Expression active_soi);
+  ReluConstraint(Variable active_var, Variable inactive_var, Variable relu_var, Expression active_soi);
 
   void UpdateUpperBound(const mpq_class* upper_bound) override;
   void UpdateLowerBound(const mpq_class* lower_bound) override;
 
   void EnableLiteral(const Variable& var);
 
-  [[nodiscard]] const Expression& soi() const;
+  void TightenBounds(BoundPreprocessor& preprocessor) override;
 
   [[nodiscard]] LiteralSet Assumptions() const override;
 

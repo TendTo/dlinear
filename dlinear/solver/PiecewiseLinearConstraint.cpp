@@ -12,6 +12,8 @@
 
 namespace dlinear {
 
+const Expression PiecewiseLinearConstraint::zero_soi{0};
+
 PiecewiseLinearConstraint::PiecewiseLinearConstraint(const mpq_class* const lb, const mpq_class* const ub,
                                                      Variable active_var, Variable inactive_var, Variable theory_var,
                                                      Expression active_soi, Expression inactive_soi,
@@ -46,7 +48,7 @@ const Expression& PiecewiseLinearConstraint::soi() const {
     case PiecewiseConstraintState::INACTIVE:
       return inactive_soi_;
     default:
-      return Expression{0};
+      return zero_soi;
   }
 }
 
@@ -62,12 +64,16 @@ void PiecewiseLinearConstraint::UpdateBounds(const mpq_class* lb, const mpq_clas
 }
 void PiecewiseLinearConstraint::UpdateLowerBound(const mpq_class* lb) {
   DLINEAR_ASSERT(lb != nullptr, "Invalid lower bound");
-  DLINEAR_ASSERT(lower_bound_ == nullptr || *lb >= *upper_bound_, "Invalid lower bound");
+  DLINEAR_ASSERT(lower_bound_ == nullptr || *lb >= *lower_bound_,
+                 "New lower bound must be greater than or equal to the previous lower bound");
+  DLINEAR_ASSERT(upper_bound_ == nullptr || *lb <= *upper_bound_, "New lower bound must be less than or equal to the upper bound");
   lower_bound_ = lb;
 }
 void PiecewiseLinearConstraint::UpdateUpperBound(const mpq_class* ub) {
   DLINEAR_ASSERT(ub != nullptr, "Invalid upper bound");
-  DLINEAR_ASSERT(*ub <= *lower_bound_, "Invalid upper bound");
+  DLINEAR_ASSERT(upper_bound_ == nullptr || *ub <= *upper_bound_,
+                 "New upper bound must be less than or equal to the previous upper bound");
+  DLINEAR_ASSERT(lower_bound_ == nullptr || *ub >= *lower_bound_, "New upper bound must be greater than or equal to the lower bound");
   upper_bound_ = ub;
 }
 mpq_class PiecewiseLinearConstraint::Cost(const Environment& env) const {

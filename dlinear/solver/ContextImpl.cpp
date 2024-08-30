@@ -131,7 +131,7 @@ Expression Context::Impl::AssertMax(const Expression &e) {
 
 const PiecewiseLinearConstraint &Context::Impl::AddGuidedConstraint(
     std::unique_ptr<PiecewiseLinearConstraint> &&constraint) {
-  return *pl_constraint_.emplace_back(std::move(constraint)).get();
+  return *pl_constraints_.emplace_back(std::move(constraint)).get();
 }
 
 void Context::Impl::Pop() {
@@ -335,48 +335,46 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     }
 #endif
 
-  // Compute the fixed theory literals to avoid having to recompute them again and again.
+  // Add the theory literals from the SAT solver to the theory solver.
   theory_solver_->AddLiterals();
+
+  // Preprocess the fixed theory literals to avoid having to preprocess them again and again.
+  DLINEAR_TRACE_FMT("Fixed theory literals: {}", sat_solver_->FixedTheoryLiterals());
   const std::set<LiteralSet> explanations{theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals())};
   if (!explanations.empty()) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
     LearnExplanations(explanations);
     return SatResult::SAT_UNSATISFIABLE;
   }
-  // Make sure the theory solver is in sync with the current box.
+
+#if 1
+  // Check the current constraints to see if there is anything that could be used to use for the guided constraints
+  for (const std::unique_ptr<PiecewiseLinearConstraint> &constraint : pl_constraints_) {
+    constraint->TightenBounds(theory_solver_->m_fixed_preprocessor());
+  }
   theory_solver_->Reset(box());
 
-#ifdef NN
-  // Check the current constraints to see if there is anything that could be used to use for the guided constraints
-  for (const std::unique_ptr<ReluConstraint> &constraint : guided_constraints_) {
-    theory_solver_->m_preprocessor().EnableLiterals(constraint->enabled_literals());
-  }
-  theory_solver_->m_preprocessor().Process();
+  for (auto it = pl_constraints_.begin(); it != pl_constraints_.end();) {
+    const LiteralSet learned_clauses{it->get()->LearnedClauses()};
+    for (const Literal &learned_clause : learned_clauses) sat_solver_->AddLearnedClause(learned_clause);
 
-  for (std::unique_ptr<ReluConstraint> &constraint : guided_constraints_) {
-    ReluConstraint &relu_constraint = static_cast<ReluConstraint &>(*constraint.get());
-    const BoundVector &relu_bounds = theory_solver_->theory_bounds().at(relu_constraint.relu_var());
-    relu_constraint.SetLowerBound(relu_bounds.active_lower_bound() >= 0 ? relu_bounds.active_lower_bound()
-                                                                        : ReluConstraint::zero);
-    relu_constraint.SetUpperBound(relu_bounds.active_upper_bound() >= 0 ? relu_bounds.active_upper_bound()
-                                                                        : ReluConstraint::zero);
-    fmt::println("Guided Constraint: [{}, {}] - {} - {} | {}", relu_bounds.GetActiveBoundsValue().first.get_d(),
-                 relu_bounds.GetActiveBoundsValue().second.get_d(), relu_constraint.active_var(),
-                 relu_constraint.relu_var(), relu_constraint.fixed());
-    DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Adding guided constraint = {}", constraint->Assumptions());
-    for (const Literal &learned_clause : constraint->LearnedClauses()) sat_solver_->AddLearnedClause(learned_clause);
+#if 1
+    const Variable &var = it->get()->theory_var();
+    const auto &bound = theory_solver_->fixed_theory_bounds().at(var);
+    fmt::println("Fixed Bounds: {} = [{}, {}]", var, bound.active_lower_bound().get_d(),
+                 bound.active_upper_bound().get_d());
+#endif
+
+    it = learned_clauses.empty() ? std::next(it) : pl_constraints_.erase(it);
   }
-  std::remove_if(guided_constraints_.begin(), guided_constraints_.end(),
-                 [](const std::unique_ptr<ReluConstraint> &constraint) {
-                   if (constraint->fixed()) std::cout << *constraint << std::endl;
-                   return constraint->fixed();
-                 });
-  theory_solver_->m_preprocessor().Clear(theory_solver_->fixed_preprocessor());
+
+  exit(0);
 
   if (!config_.onnx_file().empty()) {
     NNSoplexTheorySolver &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
-    nnSoplexTheorySolver.SetReluConstraints(guided_constraints_);
+    nnSoplexTheorySolver.SetPiecewiseLinearConstraints(pl_constraints_);
   }
+
 #endif
 
 #ifdef DLINEAR_PYDLINEAR

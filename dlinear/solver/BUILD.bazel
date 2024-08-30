@@ -97,6 +97,12 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "piecewise_constraint_state",
+    srcs = ["PiecewiseConstraintState.cpp"],
+    hdrs = ["PiecewiseConstraintState.h"],
+)
+
+dlinear_cc_library(
     name = "piecewise_linear_constraint",
     srcs = ["PiecewiseLinearConstraint.cpp"],
     hdrs = ["PiecewiseLinearConstraint.h"],
@@ -106,6 +112,8 @@ dlinear_cc_library(
         "//dlinear/util:infinity",
     ],
     deps = [
+        ":bound_preprocessor",
+        ":piecewise_constraint_state",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
@@ -119,7 +127,8 @@ dlinear_cc_library(
     hdrs = ["ReluConstraint.h"],
     implementation_deps = ["//dlinear/util:exception"],
     deps = [
-        ":guided_constraint",
+        ":bound_preprocessor",
+        ":piecewise_linear_constraint",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/util:infinity",
@@ -259,6 +268,7 @@ dlinear_cc_library(
         ":bound_vector",
         ":lp_bound",
         ":lp_sense",
+        ":piecewise_linear_constraint",
         ":relu_constraint",
         ":sat_result",
         "//dlinear/libs:gmp",
@@ -304,10 +314,9 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        ":guided_constraint",
         ":logic",
         ":lp_result",
-        ":relu_constraint",
+        ":piecewise_linear_constraint",
         ":sat_result",
         ":solver_output",
         "//dlinear/libs:gmp",
