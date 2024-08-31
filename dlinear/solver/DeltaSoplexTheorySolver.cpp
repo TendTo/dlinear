@@ -30,7 +30,9 @@ using soplex::Rational;
 
 DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_abstractor,
                                                  const std::string &class_name)
-    : SoplexTheorySolver(predicate_abstractor, class_name) {}
+    : SoplexTheorySolver(predicate_abstractor, class_name) {
+  DLINEAR_ASSERT(config_.simplex_sat_phase() == 1, "DeltaSoplexTheorySolver must use phase 1");
+}
 
 void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula &formula) {
   if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
@@ -50,7 +52,6 @@ void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Form
   soplex::DSVectorRational coeffs{is_simple_bound ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
   if (is_simple_bound) spx_rhs_.emplace_back(0);
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
-  if (2 == config_.simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes
   lit_to_theory_row_.emplace(formula_var.get_id(), spx_row);
@@ -138,11 +139,8 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   status = spx_.optimize();
 
-  // If the simplex_sat_status is 2, we expect the status to be OPTIMAL
-  // Otherwise, the status must be OPTIMAL, UNBOUNDED, or INFEASIBLE
-  // Anything else is an error
-  if ((2 == config_.simplex_sat_phase() && status != SoplexStatus::OPTIMAL) ||
-      (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE)) {
+  // The status must be OPTIMAL, UNBOUNDED, or INFEASIBLE. Anything else is an error
+  if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
     *actual_precision = max_violation.convert_to<mpq_class>();
@@ -152,66 +150,20 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
     DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
   }
 
-  soplex::VectorRational x;
-  x.reDim(colcount);
-  bool has_sol = spx_.getPrimalRational(x);
-  if (has_sol && x.dim() != colcount) {
-    DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
-    DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {} after getPrimalRational()",
-                      colcount, x.dim());
-  }
-  DLINEAR_ASSERT(status != SoplexStatus::OPTIMAL || has_sol,
-                 "status must either be not OPTIMAL or a solution must be present");
-
-  if (1 == config_.simplex_sat_phase()) {
-    switch (status) {
-      case SoplexStatus::OPTIMAL:
-        sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-        break;
-      case SoplexStatus::INFEASIBLE:
-        sat_status = SatResult::SAT_UNSATISFIABLE;
-        UpdateExplanations(explanations);
-        break;
-      default:
-        DLINEAR_UNREACHABLE();
-    }
-  } else {
-    // The feasibility LP should always be feasible & bounded
-    DLINEAR_ASSERT(status == SoplexStatus::OPTIMAL, "status must be OPTIMAL");
-    soplex::VectorRational obj;
-    spx_.getObjRational(obj);
-    DLINEAR_ASSERT(obj.dim() == colcount, "obj.dim() must be == colcount");
-    bool ok = true;
-    // ok = std::ranges::all_of(0, colcount, [&] (int i) { return obj[i] == 0 || x[i] == 0; });
-    for (int i = 0; i < colcount; ++i) {
-      if (!(ok = (obj[i] == 0 || x[i] == 0))) {
-        break;
-      }
-    }
-    if (ok) {
+  switch (status) {
+    case SoplexStatus::OPTIMAL:
+      UpdateModelSolution();
       sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-    } else {
+      break;
+    case SoplexStatus::INFEASIBLE:
+      UpdateExplanations(explanations);
       sat_status = SatResult::SAT_UNSATISFIABLE;
-    }
-  }
-
-  switch (sat_status) {
-    case SatResult::SAT_DELTA_SATISFIABLE:
-      DLINEAR_ASSERT(has_sol, "has_sol must be true");
-      // Copy delta-feasible point from x into model_
-      for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-        const Variable &var{theory_col_to_var_[theory_col]};
-        DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                           gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
-                       "val must be in bounds");
-        model_[var] = x[theory_col].backend().data();
-      }
       break;
     default:
-      break;
+      DLINEAR_UNREACHABLE();
   }
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: returning {}", sat_status);
 
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: returning {}", sat_status);
   return sat_status;
 }
 

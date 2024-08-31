@@ -54,6 +54,7 @@ CompleteSoplexTheorySolver::CompleteSoplexTheorySolver(PredicateAbstractor &pred
       theory_rows_to_explanations_{},
       locked_solver_{false} {
   DLINEAR_ASSERT(config_.precision() == 0, "CompleteSoplexTheorySolver does not support a positive precision");
+  DLINEAR_ASSERT(config_.simplex_sat_phase() == 1, "CompleteSoplexTheorySolver must use phase 1");
 }
 
 void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
@@ -80,7 +81,6 @@ void CompleteSoplexTheorySolver::AddLiteral(const Variable &formula_var, const F
   // Add an inactive constraint with the right coefficients for the decisional variables
   soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
-  if (2 == config_.simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes
   lit_to_theory_row_.emplace(formula_var.get_id(), spx_row);
@@ -208,26 +208,9 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   } while (it);
 
   *actual_precision = 0;
-  soplex::VectorRational x;
-  [[maybe_unused]] bool has_sol;
-  const int colcount = spx_.numColsRational();
   switch (sat_status) {
     case SatResult::SAT_SATISFIABLE:
-      x.reDim(spx_.numColsRational());
-      has_sol = spx_.getPrimalRational(x);
-      DLINEAR_ASSERT(has_sol, "has_sol must be true");
-      DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
-      if (x.dim() > colcount) {
-        DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
-      }
-      // Copy delta-feasible point from x into model_
-      for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-        const Variable &var{theory_col_to_var_[theory_col]};
-        DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                           gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
-                       "val must be in bounds");
-        model_[var] = x[theory_col].backend().data();
-      }
+      UpdateModelSolution();
       DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: returning sat");
       return SatResult::SAT_SATISFIABLE;
     case SatResult::SAT_UNSATISFIABLE:
@@ -240,16 +223,14 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 }
 
 SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
-  int colcount = spx_.numColsRational();
+#if 0
   spx_.writeFile("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear/dump.lp");
+#endif
   SoplexStatus status = spx_.optimize();
   Rational max_violation, sum_violation;
 
-  // If the simplex_sat_status is 2, we expect the status to be OPTIMAL
-  // Otherwise, the status must be OPTIMAL, UNBOUNDED, or INFEASIBLE
-  // Anything else is an error
-  if ((2 == config_.simplex_sat_phase() && status != SoplexStatus::OPTIMAL) ||
-      (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE)) {
+  // The status must be OPTIMAL, UNBOUNDED, or INFEASIBLE. Anything else is an error
+  if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
     DLINEAR_ASSERT(max_violation.is_zero(), "max_violation must be 0");
@@ -258,36 +239,17 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
     DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: SoPlex has returned {}, but no precision", status);
   }
 
-  if (1 == config_.simplex_sat_phase()) {
-    switch (status) {
-      case SoplexStatus::OPTIMAL:
-        if (spx_.objValueRational() > 0)
-          return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
-        UpdateExplanationStrictInfeasible();
-        return SatResult::SAT_UNSATISFIABLE;
-      case SoplexStatus::INFEASIBLE:
-        UpdateExplanationInfeasible();
-        return SatResult::SAT_UNSATISFIABLE;
-      default:
-        DLINEAR_UNREACHABLE();
-    }
-  } else {
-    // The feasibility LP should always be feasible & bounded
-    DLINEAR_ASSERT(status == SoplexStatus::OPTIMAL, "status must be OPTIMAL");
-    [[maybe_unused]] soplex::VectorRational obj;
-    spx_.getObjRational(obj);
-    DLINEAR_ASSERT(obj.dim() == colcount, "obj.dim() must be == colcount");
-    soplex::VectorRational x{colcount};
-    [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(x);
-    DLINEAR_ASSERT(has_sol, "has_sol must be true");
-    DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
-    if (x.dim() > colcount) {
-      DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: colcount = {} but x.dim() = {}", colcount, x.dim());
-    }
-    // Check if the strict variable is positive (feasible) or 0 (infeasible)
-    DLINEAR_ASSERT(obj[colcount - 1] == 1, "The strict variable must have a coefficient of 1 in the objective");
-    if (x[colcount - 1].is_zero()) return SatResult::SAT_UNSATISFIABLE;
-    return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
+  switch (status) {
+    case SoplexStatus::OPTIMAL:
+      if (spx_.objValueRational() > 0)
+        return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
+      UpdateExplanationStrictInfeasible();
+      return SatResult::SAT_UNSATISFIABLE;
+    case SoplexStatus::INFEASIBLE:
+      UpdateExplanationInfeasible();
+      return SatResult::SAT_UNSATISFIABLE;
+    default:
+      DLINEAR_UNREACHABLE();
   }
 }
 

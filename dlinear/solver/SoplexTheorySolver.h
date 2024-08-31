@@ -48,6 +48,14 @@ class SoplexTheorySolver : public TheorySolver {
   void UpdateExplanation(LiteralSet& explanation) override;
 
   /**
+   * Update the model with the solution obtained from the LP solver.
+   *
+   * The model with show an assignment that satisfies all the theory literals.
+   * @pre the lp solver must have found a feasible solution
+   */
+  void UpdateModelSolution();
+
+  /**
    * Get all active rows in the current solution.
    *
    * An active row is a row where the sum of the coefficients times the current solution is equal to either the

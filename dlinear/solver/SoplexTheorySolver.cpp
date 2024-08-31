@@ -228,6 +228,21 @@ void SoplexTheorySolver::Reset(const Box &box) {
   }
 }
 
+void SoplexTheorySolver::UpdateModelSolution() {
+  const int colcount = spx_.numColsRational();
+  soplex::VectorRational x;
+  x.reDim(colcount);
+  const bool has_sol = spx_.getPrimalRational(x);
+  DLINEAR_ASSERT(has_sol, "has_sol must be true");
+  DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
+    DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
+                       gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
+                   "val must be in bounds");
+    model_[var] = x[theory_col].backend().data();
+  }
+}
 void SoplexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(spx_.numRowsRational() == 0, "There must be no rows in the LP solver");
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
