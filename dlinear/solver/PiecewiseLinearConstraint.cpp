@@ -66,14 +66,16 @@ void PiecewiseLinearConstraint::UpdateLowerBound(const mpq_class* lb) {
   DLINEAR_ASSERT(lb != nullptr, "Invalid lower bound");
   DLINEAR_ASSERT(lower_bound_ == nullptr || *lb >= *lower_bound_,
                  "New lower bound must be greater than or equal to the previous lower bound");
-  DLINEAR_ASSERT(upper_bound_ == nullptr || *lb <= *upper_bound_, "New lower bound must be less than or equal to the upper bound");
+  DLINEAR_ASSERT(upper_bound_ == nullptr || *lb <= *upper_bound_,
+                 "New lower bound must be less than or equal to the upper bound");
   lower_bound_ = lb;
 }
 void PiecewiseLinearConstraint::UpdateUpperBound(const mpq_class* ub) {
   DLINEAR_ASSERT(ub != nullptr, "Invalid upper bound");
   DLINEAR_ASSERT(upper_bound_ == nullptr || *ub <= *upper_bound_,
                  "New upper bound must be less than or equal to the previous upper bound");
-  DLINEAR_ASSERT(lower_bound_ == nullptr || *ub >= *lower_bound_, "New upper bound must be greater than or equal to the lower bound");
+  DLINEAR_ASSERT(lower_bound_ == nullptr || *ub >= *lower_bound_,
+                 "New upper bound must be greater than or equal to the lower bound");
   upper_bound_ = ub;
 }
 mpq_class PiecewiseLinearConstraint::Cost(const Environment& env) const {
@@ -85,6 +87,9 @@ mpq_class PiecewiseLinearConstraint::Cost(const Environment& env) const {
     default:
       return 0;
   }
+}
+mpq_class PiecewiseLinearConstraint::Cost(const Environment& env, const bool active) const {
+  return (active ? active_soi_ : inactive_soi_).Evaluate(env);
 }
 
 std::ostream& operator<<(std::ostream& os, const PiecewiseLinearConstraint& gc) { return gc.Print(os); }

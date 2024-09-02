@@ -141,6 +141,14 @@ class SatSolver {
   virtual void Assume(const Literal &lit) = 0;
 
   /**
+   * Mark @p var as a CNF variable.
+   *
+   * It won't be present in the model produced by the SAT solver.
+   * @param var variable to mark
+   */
+  void MarkAsCnfVariable(const Variable &var);
+
+  /**
    * Check the satisfiability of the current configuration.
    * @return a witness, satisfying model if the problem is SAT.
    * @return empty optional if UNSAT

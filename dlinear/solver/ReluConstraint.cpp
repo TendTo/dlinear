@@ -24,11 +24,17 @@ ReluConstraint::ReluConstraint(Variable active_var, Variable inactive_var, Varia
 
 void ReluConstraint::UpdateLowerBound(const mpq_class* const lower_bound) {
   PiecewiseLinearConstraint::UpdateLowerBound(lower_bound);
-  if (*lower_bound > 0) state_ = PiecewiseConstraintState::FIXED;
+  if (*lower_bound > 0) {
+    DLINEAR_ASSERT(state_ != PiecewiseConstraintState::INACTIVE, "constraint is already INACTIVE");
+    state_ = PiecewiseConstraintState::ACTIVE;
+  }
 }
 void ReluConstraint::UpdateUpperBound(const mpq_class* const upper_bound) {
   PiecewiseLinearConstraint::UpdateUpperBound(upper_bound);
-  if (*upper_bound <= 0) state_ = PiecewiseConstraintState::FIXED;
+  if (*upper_bound <= 0) {
+    DLINEAR_ASSERT(state_ != PiecewiseConstraintState::ACTIVE, "constraint is already ACTIVE");
+    state_ = PiecewiseConstraintState::INACTIVE;
+  }
 }
 
 void ReluConstraint::EnableLiteral(const Variable& var) {
@@ -38,7 +44,9 @@ void ReluConstraint::EnableLiteral(const Variable& var) {
 void ReluConstraint::TightenBounds(BoundPreprocessor& preprocessor) {
   std::set<LiteralSet> explanations;
   preprocessor.PropagateBoundsPolynomial({active_var_, true}, theory_var_, explanations);
-  DLINEAR_ASSERT(explanations.empty(), "ReluConstraint::TightenBounds() should not produce any conflict");
+  // The active assignment creates a conflict. Fix the constraint to the inactive state.
+  if (!explanations.empty()) preprocessor.EnableLiteral({inactive_var_, true});
+
   UpdateLowerBound(&preprocessor.theory_bounds().at(theory_var_).active_lower_bound());
   UpdateUpperBound(&preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
 }

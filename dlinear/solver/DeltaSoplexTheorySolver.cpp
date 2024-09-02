@@ -109,7 +109,6 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   SatResult sat_status = SatResult::SAT_NO_RESULT;
 
   int rowcount = spx_.numRowsRational();
-  int colcount = spx_.numColsRational();
 
   model_ = box;
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
@@ -143,7 +142,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
-    *actual_precision = max_violation.convert_to<mpq_class>();
+    *actual_precision = gmp::to_mpq_class(max_violation.backend().data());
     DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: SoPlex returned {}, precision = {}", status,
                       *actual_precision);
   } else {

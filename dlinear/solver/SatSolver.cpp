@@ -63,6 +63,8 @@ void SatSolver::AddLiteral(const Formula &f) {
   }
 }
 
+void SatSolver::MarkAsCnfVariable(const Variable &var) { cnf_variables_.insert(var.get_id()); }
+
 LiteralSet SatSolver::FixedTheoryLiterals() {
   LiteralSet fixed_literals;
   FixedTheoryLiterals(fixed_literals);

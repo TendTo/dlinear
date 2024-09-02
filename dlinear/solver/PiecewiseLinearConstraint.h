@@ -54,7 +54,6 @@ class PiecewiseLinearConstraint {
                                      PiecewiseConstraintState state = PiecewiseConstraintState::NOT_FIXED);
   virtual ~PiecewiseLinearConstraint() = default;
 
-
   /**
    * Use the @p preprocessor to tighten the bounds of the constraint and hopefully fix its state to either
    * active or inactive.
@@ -124,13 +123,25 @@ class PiecewiseLinearConstraint {
    * @return cost of the violation
    */
   [[nodiscard]] mpq_class Cost(const Environment& env) const;
+  /**
+   * Calculate the cost of the violation of the constraint forcing a specific state.
+   *
+   * Given a feasible solution of the LP problems where this constraint contributes to the objective function
+   * as a Sum Of Infeasibilities, calculate the amount of violation caused by its presence in the current state.
+   * @param env current assignment to all the theory variables
+   * @param active whether to consider the constraint as active or inactive
+   * @return cost of the violation
+   */
+  [[nodiscard]] mpq_class Cost(const Environment& env, bool active) const;
 
   /** @checker{lower bounded, constraint} */
   [[nodiscard]] bool has_lower_bound() const { return lower_bound_ != nullptr; }
   /** @checker{upper bounded, constraint} */
   [[nodiscard]] bool has_upper_bound() const { return upper_bound_ != nullptr; }
   /** @checker{fixed, constraint} */
-  [[nodiscard]] bool fixed() const { return state_ == PiecewiseConstraintState::FIXED; }
+  [[nodiscard]] bool fixed() const {
+    return state_ == PiecewiseConstraintState::ACTIVE || state_ == PiecewiseConstraintState::INACTIVE;
+  }
   /** @getter{lower bound, constraint, If the constraint does not have a lower bound, -inf value is returned} */
   [[nodiscard]] const mpq_class& lower_bound() const;
   /** @getter{upper bound, constraint, If the constraint does not have an upper bound, +inf value is returned} */

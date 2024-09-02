@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "dlinear/util/exception.h"
+
 namespace dlinear {
 
 std::ostream& operator<<(std::ostream& os, const PiecewiseConstraintState& status) {
@@ -15,9 +17,8 @@ std::ostream& operator<<(std::ostream& os, const PiecewiseConstraintState& statu
     case PiecewiseConstraintState::ACTIVE:
       os << "ACTIVE";
       break;
-    case PiecewiseConstraintState::FIXED:
-      os << "FIXED";
-      break;
+    default:
+      DLINEAR_UNREACHABLE();
   }
   return os;
 }

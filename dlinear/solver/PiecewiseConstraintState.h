@@ -8,10 +8,9 @@
 namespace dlinear {
 
 enum class PiecewiseConstraintState {
-  NOT_FIXED,
-  INACTIVE,
-  ACTIVE,
-  FIXED,
+  NOT_FIXED,  ///< The constraint is not fixed yet
+  INACTIVE,   ///< The constraint is inactive
+  ACTIVE,     ///< The constraint is active
 };
 
 std::ostream& operator<<(std::ostream& os, const PiecewiseConstraintState& status);
