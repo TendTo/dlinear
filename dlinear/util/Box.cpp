@@ -104,20 +104,20 @@ Interval &Box::operator[](const int i) {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-Interval &Box::operator[](const Variable &var) { return values_[(*var_to_idx_)[var]]; }
+Interval &Box::operator[](const Variable &var) { return values_[index(var)]; }
 const Interval &Box::operator[](const int i) const {
   DLINEAR_ASSERT(i < size(), "Index out of bound");
   return values_[i];
 }
-const Interval &Box::operator[](const Variable &var) const { return values_[(*var_to_idx_)[var]]; }
+const Interval &Box::operator[](const Variable &var) const { return values_[index(var)]; }
 
 const std::vector<Variable> &Box::variables() const { return *variables_; }
 
-const Variable &Box::variable(const int i) const { return (*idx_to_var_)[i]; }
+const Variable &Box::variable(const int i) const { return idx_to_var_->at(i); }
 
 bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(var) > 0; }
 
-int Box::index(const Variable &var) const { return (*var_to_idx_)[var]; }
+int Box::index(const Variable &var) const { return var_to_idx_->at(var); }
 
 const std::vector<Interval> &Box::interval_vector() const { return values_; }
 std::vector<Interval> &Box::m_interval_vector() { return values_; }
