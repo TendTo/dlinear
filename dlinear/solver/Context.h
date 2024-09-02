@@ -57,29 +57,26 @@ class Context {
    */
   void Assert(const Formula &f);
   /**
-   * Assert an ITE expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
-   * @pre @p e is an ITE expression
-   * @param e ITE expression to be asserted
-   * @return fresh variable introduced to represent the ITE expression or simple expression if a simplification happened
-   */
-  Expression AssertIte(const Expression &e);
-  /**
-   * Assert a max expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
+   * Create and assert a ReLU expression from the linear expression @p e.
    *
-   * If @p e is not a max expression, it will be returned unchanged.
-   * No recursion is performed.
-   * @param e max expression to be asserted
-   * @return fresh variable introduced to represent the max expression or simple expression if a simplification happened
-   */
-  Expression AssertMax(const Expression &e);
-  /**
-   * Assert a ReLU expression @p e in order to reuse it later and return the corresponding fresh variable introduced.
-   * @pre @p e is a ReLU expression
-   * @param e ReLU expression to be asserted
+   * Given a linear expression @p e, this method will use the theory variable @p relu_var
+   * and introduce the following formulas:
+   * @f[
+   * \begin{align*}
+   * A = (\text{relu_var} = 0) \newline
+   * B = (\text{relu_var} = e) \newline
+   * \end{align*}
+   * @f]
+   * The following clauses will be added:
+   * @f[
+   * (A \lor B) \land (\neg A \lor \neg B)
+   * @f]
+   * The variable @p relu_var is assigned the value of the ReLU expression and returned.
+   * @param e ITE expression to be asserted
+   * @param relu_var variable to represent the ReLU expression. If not provided, a new variable is created.
    * @return fresh variable introduced to represent the ReLU expression
-   * @return simple expression if a simplification happened
    */
-  Expression AssertRelu(const Expression &e);
+  Variable AssertRelu(const Expression &e, const Variable& relu_var);
 
   /**
    * Check the satisfiability of the asserted formulas, and sets

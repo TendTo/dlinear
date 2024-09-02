@@ -440,8 +440,8 @@ void OnnxDriver::AddNode<NodeOpType::Mul>(const ::onnx::NodeProto& node) {
   const std::string& input2 = node.input(1);
   const std::string& output = node.output(0);
   available_inputs_.emplace(output, available_inputs_.at(input1) * available_inputs_.at(input2));
-  DLINEAR_DEBUG_FMT("Add node: {} = {} + {}", output, input1, input2);
-  DLINEAR_TRACE_FMT("{} = {} + {}", available_inputs_.at(output), available_inputs_.at(input1),
+  DLINEAR_DEBUG_FMT("Mul node: {} = {} * {}", output, input1, input2);
+  DLINEAR_TRACE_FMT("{} = {} * {}", available_inputs_.at(output), available_inputs_.at(input1),
                     available_inputs_.at(input2));
   AddFormula(output);
 }
@@ -475,25 +475,32 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
   const std::string& output = node.output(0);
   Tensor relu = Tensor{available_inputs_.at(input)};
 
+#ifndef NDEBUG
+  std::size_t counter = 0;
+  relu.Elementwise([&counter, &input, this](const Expression& e) {
+#else
   relu.Elementwise([this](const Expression& e) {
-    LinearFormulaFlattener lf{context_.config()};
-    const Formula condition{lf.Flatten(e > 0)};
+#endif
+    const Formula condition{e > 0};
     // Trivial cases for the ReLU function
     if (is_true(condition)) {
       return e;
     } else if (is_false(condition)) {
       return Expression{0};
     }
-    const Expression relu_expr = context_.AssertIte(if_then_else(condition, e, 0));
-    DLINEAR_ASSERT(is_variable(relu_expr), "Relu expression must be a variable");
+#ifndef NDEBUG
+    const Variable relu_var{fmt::format("{}_relu_{}", input, ++counter)};
+#else
+    const Variable relu_var{"r"};
+#endif
+    context_.AssertRelu(e, relu_var);
     // Adding the fresh ITE variable as a guided constraint
-    context_.Assert(relu_expr >= 0);
-    context_.Assert(relu_expr >= e);
+    context_.Assert(relu_var >= 0);
+    context_.Assert(relu_var >= e);
     LinearFormulaFlattener lff{context_.config()};
-    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(lf.Flatten(relu_expr == e), relu_expr == 0,
-                                                                  get_variable(relu_expr), relu_expr - e,
-                                                                  context_.predicate_abstractor()));
-    return relu_expr;
+    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(lff.Flatten(relu_var == e), relu_var == 0, relu_var,
+                                                                  relu_var - e, context_.predicate_abstractor()));
+    return Expression{relu_var};
   });
   available_inputs_.emplace(output, relu);
   DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {}", output, input);

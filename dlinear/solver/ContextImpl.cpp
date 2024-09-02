@@ -81,52 +81,21 @@ void Context::Impl::Assert(const Formula &f) {
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
 }
-Expression Context::Impl::AssertIte(const Expression &e) {
-  if (!is_if_then_else(e)) return e;
+Variable Context::Impl::AssertRelu(const Expression &e, const Variable &relu_var) {
+  DLINEAR_TRACE_FMT("ContextImpl::AssertRelu({})", e);
 
-  DLINEAR_TRACE_FMT("ContextImpl::AssertIte({})", e);
-  const auto [no_ite, assertion] = ite_eliminator_.Process(e);
+  Variable relu_theory_var = relu_var.is_dummy() ? Variable{"relu_var | " + e.to_string()} : relu_var;
+  const Formula active{relu_theory_var == e};
+  const Formula inactive{relu_theory_var == 0};
+  const Formula clause_positive{active || inactive};
+  const Formula clause_negative{!active || !inactive};
 
-  if (Formula::True().EqualTo(assertion)) return no_ite;
-
-  DLINEAR_ASSERT(is_variable(no_ite), "e must be a variable");
-  // Note that the following does not mark `ite_var` as a model variable.
-  AddToBox(to_variable(no_ite)->get_variable());
-  stack_.push_back(assertion);
-  sat_solver_->AddFormula(assertion);
-  return no_ite;
-}
-Expression Context::Impl::AssertMax(const Expression &e) {
-  if (!drake::symbolic::is_max(e)) return e;
-
-  DLINEAR_TRACE_FMT("ContextImpl::AssertMax({})", e);
-  const auto [no_ite_max, assertion] = ite_eliminator_.Process(e);
-  DLINEAR_ASSERT(drake::symbolic::is_max(no_ite_max), "no_ite_max must be a max expression");
-
-  const Expression &lhs = drake::symbolic::get_first_argument(no_ite_max);
-  const Expression &rhs = drake::symbolic::get_second_argument(no_ite_max);
-
-  DLINEAR_ASSERT(!lhs.EqualTo(rhs), "lhs must be different from rhs");
-
-  if (!Formula::True().EqualTo(assertion)) {
-    stack_.push_back(assertion);
-    sat_solver_->AddFormula(assertion);
-  }
-
-  const Expression a1 = Expression(Variable{"a1 | " + e.to_string()});
-  const Expression a2 = Expression(Variable{"a2 | " + e.to_string()});
-  const Expression no_max = Expression(Variable{"no_max | " + e.to_string()});
-
-  Assert(no_max - lhs == a1);
-  Assert(no_max - rhs == a2);
-  Assert(a1 >= 0);
-  Assert(a2 >= 0);
-  Assert(a1 <= 0 || a2 <= 0);
-  // Note that the following does not mark the introduced variables as a model variable.
-  AddToBox(to_variable(no_max)->get_variable());
-  AddToBox(to_variable(a1)->get_variable());
-  AddToBox(to_variable(a2)->get_variable());
-  return no_max;
+  AddToBox(get_variable(relu_theory_var));
+  stack_.push_back(clause_positive);
+  stack_.push_back(clause_negative);
+  sat_solver_->AddFormula(clause_positive);
+  sat_solver_->AddFormula(clause_negative);
+  return relu_theory_var;
 }
 
 const PiecewiseLinearConstraint &Context::Impl::AddGuidedConstraint(
@@ -351,6 +320,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   // Check the current constraints to see if there is anything that could be used to use for the guided constraints
   for (const std::unique_ptr<PiecewiseLinearConstraint> &constraint : pl_constraints_) {
     constraint->TightenBounds(theory_solver_->m_fixed_preprocessor());
+    DLINEAR_TRACE_FMT("Tighten Bounds: {} - {}", constraint->theory_var(), *constraint);
   }
   theory_solver_->Reset(box());
 
@@ -364,11 +334,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     fmt::println("Fixed Bounds: {} = [{}, {}]", var, bound.active_lower_bound().get_d(),
                  bound.active_upper_bound().get_d());
 #endif
-
     it = learned_clauses.empty() ? std::next(it) : pl_constraints_.erase(it);
   }
-
-  exit(0);
 
   if (!config_.onnx_file().empty()) {
     NNSoplexTheorySolver &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
@@ -383,8 +350,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 #endif
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py,
-    // when we build dReal python package.
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py, when we build dReal python package.
 #ifdef DLINEAR_PYDLINEAR
     if (g_interrupted) {
       DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
@@ -499,7 +465,7 @@ std::unique_ptr<SatSolver> Context::Impl::GetSatSolver() {
 void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
-  DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
+  // DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG

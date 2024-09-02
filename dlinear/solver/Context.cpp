@@ -23,8 +23,7 @@ Context::~Context() = default;
 Context::Context(Config &config, SmtSolverOutput *const output) : impl_{std::make_unique<Impl>(config, output)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
-Expression Context::AssertIte(const Expression &e) { return impl_->AssertIte(e); }
-Expression Context::AssertMax(const Expression &e) { return impl_->AssertMax(e); }
+Variable Context::AssertRelu(const Expression &e, const Variable& relu_var) { return impl_->AssertRelu(e, relu_var); }
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
 LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
