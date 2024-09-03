@@ -503,7 +503,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
               << config_.precision() << ","                            //
               << output_->actual_precision << ","                      //
               << config_.simplex_sat_phase() << ","                    //
-              << config_.lp_mode() << ","                              //
+              << config_.actual_lp_mode() << ","                       //
               << "s" << ","                                            //
               << output_->parser_stats.timer().seconds() << ","        //
               << output_->sat_stats.timer().seconds() << ","           //

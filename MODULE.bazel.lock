@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "c4b77beaca4bf0c3ee60838919edcdcff38bc55bc33f616b7c95ce9f056fbb85",
+  "moduleFileHash": "773c7ec30ebcc322b2afdc7e1aa6be9dfeb9932844b9e469977cb79e57de2eea",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -43,6 +43,7 @@
             "picosat": "picosat",
             "xtl": "xtl",
             "xtensor": "xtensor",
+            "cadical": "cadical",
             "mpfr": "mpfr",
             "gmp": "gmp",
             "com_github_storypku_bazel_iwyu": "com_github_storypku_bazel_iwyu",
@@ -147,6 +148,22 @@
               }
             },
             {
+              "tagName": "//tools:git_archive.bzl%github_archive",
+              "attributeValues": {
+                "build_file": "//third_party:cadical.BUILD.bazel",
+                "commit": "rel-2.0.0",
+                "repository": "arminbiere/cadical",
+                "sha256": "9afe5f6439442d854e56fc1fac3244ce241dbb490735939def8fd03584f89331",
+                "name": "cadical"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 140,
+                "column": 15
+              }
+            },
+            {
               "tagName": "//tools:git_archive.bzl%gitlab_archive",
               "attributeValues": {
                 "build_file": "//third_party:mpfr.BUILD.bazel",
@@ -159,7 +176,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 153,
+                "line": 162,
                 "column": 15
               }
             },
@@ -175,7 +192,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 167,
+                "line": 176,
                 "column": 13
               }
             },
@@ -192,7 +209,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 175,
+                "line": 184,
                 "column": 13
               }
             },
@@ -206,7 +223,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 218,
+                "line": 227,
                 "column": 21
               }
             }
@@ -220,7 +237,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 186,
+            "line": 195,
             "column": 30
           },
           "imports": {
@@ -237,7 +254,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 187,
+                "line": 196,
                 "column": 22
               }
             }
@@ -251,7 +268,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 193,
+            "line": 202,
             "column": 34
           },
           "imports": {
@@ -268,7 +285,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 196,
+            "line": 205,
             "column": 21
           },
           "imports": {
@@ -288,7 +305,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 197,
+                "line": 206,
                 "column": 16
               }
             }
@@ -302,7 +319,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 206,
+            "line": 215,
             "column": 22
           },
           "imports": {
@@ -322,7 +339,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 207,
+                "line": 216,
                 "column": 17
               }
             }

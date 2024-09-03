@@ -100,9 +100,6 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
 
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  stats_.Increase();
-
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::CheckSat: Box = \n{}", box);
 
   SoplexStatus status = SoplexStatus::UNKNOWN;
@@ -125,6 +122,9 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   preprocessor_.Process(explanations);
   if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
   DLINEAR_ERROR("CompleteSoplexTheorySolver::CheckSat: running soplex");
+
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
 
   // Set the bounds for the variables
   EnableSPXVarBound();

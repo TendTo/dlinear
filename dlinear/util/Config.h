@@ -98,14 +98,27 @@ class Config {
   [[nodiscard]] std::string filename() const { return filename_.get(); }
   /** @getter{`filename` extension, configuration, Contains the @ref filename substring after the dot.}*/
   [[nodiscard]] std::string filename_extension() const;
+  /** @getsetter{`filename` extension, configuration, Contains the @ref filename substring after the dot.}*/
   OptionValue<std::string> &m_filename() { return filename_; }
+  /** @getter{`onnx_file` parameter, configuration, Default to ""}*/
   [[nodiscard]] std::string onnx_file() const { return onnx_file_.get(); }
+  /** @getsetter{`onnx_file` parameter, configuration, Default to ""}*/
   OptionValue<std::string> &m_onnx_file() { return onnx_file_; }
   /**
    * @getter{need for input expansion, configuration,
    * It is true when the input format is Format::SMT2 or Format::VNNLIB\, false if Format::MPS }
    */
   [[nodiscard]] bool needs_expansion() const;
+  /**
+   * @getter{actual `lp_mode` parameter, configuration,
+   * If the lp_mode is AUTO\, it will return return the appropriate mode based on the lp_solver}
+   */
+  [[nodiscard]] LPMode actual_lp_mode() const;
+  /**
+   * @getter{actual `format` parameter, configuration,
+   * If the format is AUTO\, it will return return the appropriate format based on the filename extension}
+   */
+  [[nodiscard]] Format actual_format() const;
 
  private:
   OptionValue<std::string> filename_{""};
@@ -115,7 +128,7 @@ class Config {
                     "Run the solver in complete mode.\n"
                     "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
-  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Includes --with-timings")
+  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the complete stats")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DLINEAR_PARAMETER(disable_eq_propagation, bool, false, "Disable the propagation of equality constraints")

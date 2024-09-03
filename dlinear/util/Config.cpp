@@ -21,6 +21,29 @@ bool Config::needs_expansion() const {
   return format() == Config::Format::SMT2 || format() == Config::Format::VNNLIB || filename_extension() == "smt2" ||
          filename_extension() == "vnnlib";
 }
+Config::LPMode Config::actual_lp_mode() const {
+  switch (lp_mode_.get()) {
+    case LPMode::AUTO:
+      return lp_solver_.get() == LPSolver::QSOPTEX ? LPMode::PURE_PRECISION_BOOSTING : LPMode::HYBRID;
+    default:
+      return lp_mode_.get();
+  }
+}
+Config::Format Config::actual_format() const {
+  switch (format_.get()) {
+    case Format::AUTO:
+      if (filename_extension() == "mps") {
+        return Format::MPS;
+      } else if (filename_extension() == "smt2") {
+        return Format::SMT2;
+      } else if (filename_extension() == "vnnlib") {
+        return Format::VNNLIB;
+      }
+      DLINEAR_UNREACHABLE();
+    default:
+      return format_.get();
+  }
+}
 
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
   switch (sat_default_phase) {
@@ -77,13 +100,13 @@ std::ostream &operator<<(std::ostream &os, const Config::Format &format) {
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
   switch (mode) {
     case Config::LPMode::AUTO:
-      return os << "auto";
+      return os << "A";
     case Config::LPMode::PURE_PRECISION_BOOSTING:
-      return os << "pure-precision-boosting";
+      return os << "P";
     case Config::LPMode::PURE_ITERATIVE_REFINEMENT:
-      return os << "pure-iterative-refinement";
+      return os << "I";
     case Config::LPMode::HYBRID:
-      return os << "hybrid";
+      return os << "H";
     default:
       DLINEAR_UNREACHABLE();
   }
