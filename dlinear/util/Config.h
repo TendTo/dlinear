@@ -115,6 +115,7 @@ class Config {
                     "Run the solver in complete mode.\n"
                     "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
+  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Includes --with-timings")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DLINEAR_PARAMETER(disable_eq_propagation, bool, false, "Disable the propagation of equality constraints")

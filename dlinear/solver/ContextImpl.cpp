@@ -494,7 +494,26 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     output_->predicate_abstractor_stats = predicate_abstractor_.stats();
     output_->cnfizer_stats = sat_solver_->cnfizer_stats();
   }
-  if (!config_.silent()) std::cout << *output_ << std::endl;
+  if (!config_.silent() && config_.csv()) {
+    std::cout << "file,solver,assertions,precision,actualPrecision,simplexPhase,lpMode,timeUnit,parserTime,"
+                 "satTime,preprocessorTime,theoryTime,smtTime,result\n";
+    std::cout << config_.filename() << ","                             //
+              << config_.lp_solver() << ","                            //
+              << output_->n_assertions << ","                          //
+              << config_.precision() << ","                            //
+              << output_->actual_precision << ","                      //
+              << config_.simplex_sat_phase() << ","                    //
+              << config_.lp_mode() << ","                              //
+              << "s" << ","                                            //
+              << output_->parser_stats.timer().seconds() << ","        //
+              << output_->sat_stats.timer().seconds() << ","           //
+              << output_->preprocessor_stats.timer().seconds() << ","  //
+              << output_->theory_stats.timer().seconds() << ","        //
+              << output_->smt_solver_timer.seconds() << ","            //
+              << output_->result << std::endl;
+  } else if (!config_.silent()) {
+    std::cout << *output_ << std::endl;
+  }
 }
 
 }  // namespace dlinear

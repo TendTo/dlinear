@@ -83,6 +83,7 @@ void ArgParser::addOptions() {
   parser_.add_argument("file").help("input file").default_value("");
   parser_.add_argument("--onnx-file").help("ONNX file name").default_value("").nargs(1);
 
+  DLINEAR_PARSE_PARAM_BOOL(parser_, csv, "--csv");
   DLINEAR_PARSE_PARAM_BOOL(parser_, continuous_output, "--continuous-output");
   DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
@@ -188,6 +189,7 @@ Config ArgParser::toConfig() const {
     config.m_complete().set_from_command_line(parser_.get<bool>("complete"));
     config.m_precision().set_from_command_line(0.0);
   }
+  DLINEAR_PARAM_TO_CONFIG("csv", csv, bool);
   DLINEAR_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);

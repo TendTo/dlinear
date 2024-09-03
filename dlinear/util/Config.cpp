@@ -91,6 +91,7 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
 
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
+            << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
             << "debug_parsing = " << config.debug_parsing() << ",\n"
