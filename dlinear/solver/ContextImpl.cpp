@@ -328,7 +328,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     const LiteralSet learned_clauses{it->get()->LearnedClauses()};
     for (const Literal &learned_clause : learned_clauses) sat_solver_->AddLearnedClause(learned_clause);
 
-#if 1
+#ifndef NDEBUG
     const Variable &var = it->get()->theory_var();
     const auto &bound = theory_solver_->fixed_theory_bounds().at(var);
     fmt::println("Fixed Bounds: {} = [{}, {}]", var, bound.active_lower_bound().get_d(),

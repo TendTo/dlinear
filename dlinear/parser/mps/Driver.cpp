@@ -77,7 +77,8 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
   if (columns_.find(column) == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
-    const Variable var = Variable{column};
+    // TODO(tend): choose if the name of the variable should be the column name or index
+    const Variable var{"x" + std::to_string(columns_.size())};
     columns_[column] = var;  // If not already in the map, add the variable
     context_.DeclareVariable(var);
   }
@@ -232,19 +233,19 @@ void MpsDriver::End() {
 }
 
 void MpsDriver::ToSmt2(std::ostream &os) const {
-  os << "( set-logic QF_LRA )\n";
-  if (!context_.GetInfo(":status").empty()) os << "( set-info :status " << context_.GetInfo(":status") << " )\n";
+  os << "(set-logic QF_LRA)\n";
+  if (!context_.GetInfo(":status").empty()) os << "(set-info :status " << context_.GetInfo(":status") << ")\n";
   for (const auto &[name, column] : columns_) {
-    os << "( declare-fun " << column << " () Real )\n";
+    os << "(declare-const " << column << " Real)\n";
   }
   for (const auto &[name, bound] : bounds_) {
-    os << "( assert " << bound.to_smt2_string() << " )\n";
+    os << "(assert " << bound.to_smt2_string() << ")\n";
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
-    os << "( assert " <<  row.to_smt2_string() << " )\n";
+    os << "(assert " << row.to_smt2_string() << ")\n";
   }
-  os << "( check-sat )\n";
+  os << "(check-sat)\n";
 }
 
 }  // namespace dlinear::mps

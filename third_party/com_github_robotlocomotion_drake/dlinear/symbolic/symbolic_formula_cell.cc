@@ -147,7 +147,7 @@ Formula FormulaTrue::Substitute(const ExpressionSubstitution &,
 }
 
 ostream &FormulaTrue::Display(ostream &os) const { return os << "True"; }
-std::string FormulaTrue::to_smt2_string() const { return "( true )"; }
+std::string FormulaTrue::to_smt2_string() const { return "(true)"; }
 
 FormulaFalse::FormulaFalse()
     : FormulaCell{FormulaKind::False, hash<string>{}("False"), false} {}
@@ -173,7 +173,7 @@ Formula FormulaFalse::Substitute(const ExpressionSubstitution &,
 }
 
 ostream &FormulaFalse::Display(ostream &os) const { return os << "False"; }
-std::string FormulaFalse::to_smt2_string() const { return "( false )"; }
+std::string FormulaFalse::to_smt2_string() const { return "(false)"; }
 
 FormulaVar::FormulaVar(const Variable &v)
     : FormulaCell{FormulaKind::Var, hash_value < Variable > {}(v), false},
@@ -282,8 +282,8 @@ ostream &FormulaEq::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaEq::to_smt2_string() const {
-  return "( = " + get_lhs_expression().to_smt2_string() + " " +
-      get_rhs_expression().to_smt2_string() + " )";
+  return "(= " + get_lhs_expression().to_smt2_string() + " " +
+      get_rhs_expression().to_smt2_string() + ")";
 }
 
 FormulaNeq::FormulaNeq(const Expression &e1, const Expression &e2)
@@ -312,8 +312,8 @@ ostream &FormulaNeq::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaNeq::to_smt2_string() const {
-  return "( not ( = " + get_lhs_expression().to_smt2_string() + " " +
-         get_rhs_expression().to_smt2_string() + " ) )";
+  return "(not (= " + get_lhs_expression().to_smt2_string() + " " +
+         get_rhs_expression().to_smt2_string() + "))";
 }
 
 FormulaGt::FormulaGt(const Expression &e1, const Expression &e2)
@@ -342,8 +342,8 @@ ostream &FormulaGt::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaGt::to_smt2_string() const {
-  return "( > " + get_lhs_expression().to_smt2_string() + " " +
-         get_rhs_expression().to_smt2_string() + " )";
+  return "(> " + get_lhs_expression().to_smt2_string() + " " +
+         get_rhs_expression().to_smt2_string() + ")";
 }
 
 FormulaGeq::FormulaGeq(const Expression &e1, const Expression &e2)
@@ -372,8 +372,8 @@ ostream &FormulaGeq::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaGeq::to_smt2_string() const {
-  return "( >= " + get_lhs_expression().to_smt2_string() + " " +
-         get_rhs_expression().to_smt2_string() + " )";
+  return "(>= " + get_lhs_expression().to_smt2_string() + " " +
+         get_rhs_expression().to_smt2_string() + ")";
 }
 
 FormulaLt::FormulaLt(const Expression &e1, const Expression &e2)
@@ -402,8 +402,8 @@ ostream &FormulaLt::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaLt::to_smt2_string() const {
-  return "( < " + get_lhs_expression().to_smt2_string() + " " +
-         get_rhs_expression().to_smt2_string() + " )";
+  return "(< " + get_lhs_expression().to_smt2_string() + " " +
+         get_rhs_expression().to_smt2_string() + ")";
 }
 
 FormulaLeq::FormulaLeq(const Expression &e1, const Expression &e2)
@@ -432,8 +432,8 @@ ostream &FormulaLeq::Display(ostream &os) const {
             << ")";
 }
 std::string FormulaLeq::to_smt2_string() const {
-  return "( <= " + get_lhs_expression().to_smt2_string() + " " +
-         get_rhs_expression().to_smt2_string() + " )";
+  return "(<= " + get_lhs_expression().to_smt2_string() + " " +
+         get_rhs_expression().to_smt2_string() + ")";
 }
 
 FormulaAnd::FormulaAnd(set<Formula> formulas)
@@ -482,11 +482,11 @@ ostream &FormulaAnd::Display(ostream &os) const {
 }
 std::string FormulaAnd::to_smt2_string() const {
   ostringstream oss;
-  oss << "( and";
+  oss << "(and";
   for (const auto &f : get_operands()) {
     oss << " " << f.to_smt2_string();
   }
-  oss << " )";
+  oss << ")";
   return oss.str();
 }
 
@@ -536,11 +536,11 @@ ostream &FormulaOr::Display(ostream &os) const {
 }
 std::string FormulaOr::to_smt2_string() const {
   ostringstream oss;
-  oss << "( or";
+  oss << "(or";
   for (const auto &f : get_operands()) {
     oss << " " << f.to_smt2_string();
   }
-  oss << " )";
+  oss << ")";
   return oss.str();
 }
 
@@ -585,7 +585,7 @@ ostream &FormulaNot::Display(ostream &os) const {
   return os << "!(" << f_ << ")";
 }
 std::string FormulaNot::to_smt2_string() const {
-  return "( not " + f_.to_smt2_string() + " )";
+  return "(not " + f_.to_smt2_string() + ")";
 }
 
 FormulaForall::FormulaForall(const Variables &vars, Formula f)
@@ -654,11 +654,11 @@ ostream &FormulaForall::Display(ostream &os) const {
 }
 std::string FormulaForall::to_smt2_string() const {
   ostringstream oss;
-  oss << "( forall (";
+  oss << "(forall(";
   for (const Variable &var : vars_) {
     oss << " " << var.get_name();
   }
-  oss << " ) " << f_.to_smt2_string() << " )";
+  oss << ") " << f_.to_smt2_string() << ")";
   return oss.str();
 }
 

@@ -232,7 +232,7 @@ void SoplexTheorySolver::UpdateModelSolution() {
   const int colcount = spx_.numColsRational();
   soplex::VectorRational x;
   x.reDim(colcount);
-  const bool has_sol = spx_.getPrimalRational(x);
+  [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(x);
   DLINEAR_ASSERT(has_sol, "has_sol must be true");
   DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
