@@ -59,6 +59,7 @@ class FormulaCell {
                              const FormulaSubstitution &formula_subst) = 0;
   /** Outputs string representation of formula into output stream @p os. */
   virtual std::ostream &Display(std::ostream &os) const = 0;
+  virtual std::string to_smt2_string() const = 0;
 
   /** Returns the reference count of this cell. */
   unsigned use_count() const {
@@ -184,6 +185,7 @@ class FormulaTrue : public FormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing false. */
@@ -197,6 +199,7 @@ class FormulaFalse : public FormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing a Boolean variable. */
@@ -212,6 +215,7 @@ class FormulaVar : public FormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_substubst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
   const Variable &get_variable() const;
 
  protected:
@@ -230,6 +234,7 @@ class FormulaEq : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing disequality (e1 ≠ e2). */
@@ -241,6 +246,7 @@ class FormulaNeq : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing 'greater-than' (e1 > e2). */
@@ -252,6 +258,7 @@ class FormulaGt : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing 'greater-than-or-equal-to' (e1 ≥ e2). */
@@ -263,6 +270,7 @@ class FormulaGeq : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing 'less-than' (e1 < e2). */
@@ -274,6 +282,7 @@ class FormulaLt : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing 'less-than-or-equal-to' (e1 ≤ e2). */
@@ -285,6 +294,7 @@ class FormulaLeq : public RelationalFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing conjunctions (f1 ∧ ... ∧ fn). */
@@ -298,6 +308,7 @@ class FormulaAnd : public NaryFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing disjunctions (f1 ∨ ... ∨ fn). */
@@ -311,6 +322,7 @@ class FormulaOr : public NaryFormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
 };
 
 /** Symbolic formula representing negations (¬f). */
@@ -324,6 +336,7 @@ class FormulaNot : public FormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
   /** Returns the operand. */
   const Formula &get_operand() const { return f_; }
 
@@ -347,6 +360,7 @@ class FormulaForall : public FormulaCell {
   Formula Substitute(const ExpressionSubstitution &expr_subst,
                      const FormulaSubstitution &formula_subst) override;
   std::ostream &Display(std::ostream &os) const override;
+  std::string to_smt2_string() const override;
   /** Returns the quantified variables. */
   const Variables &get_quantified_variables() const { return vars_; }
   /** Returns the quantified formula. */

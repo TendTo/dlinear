@@ -231,4 +231,20 @@ void MpsDriver::End() {
   }
 }
 
+void MpsDriver::ToSmt2(std::ostream &os) const {
+  os << "( set-logic QF_LRA )\n";
+  if (!context_.GetInfo(":status").empty()) os << "( set-info :status " << context_.GetInfo(":status") << " )\n";
+  for (const auto &[name, column] : columns_) {
+    os << "( declare-fun " << column << " () Real )\n";
+  }
+  for (const auto &[name, bound] : bounds_) {
+    os << "( assert " << bound.to_smt2_string() << " )\n";
+  }
+  for (const auto &[name, row] : rhs_) {
+    if (row.EqualTo(Formula::True())) continue;
+    os << "( assert " <<  row.to_smt2_string() << " )\n";
+  }
+  os << "( check-sat )\n";
+}
+
 }  // namespace dlinear::mps

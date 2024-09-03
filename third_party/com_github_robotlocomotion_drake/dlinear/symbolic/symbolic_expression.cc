@@ -321,6 +321,10 @@ string Expression::to_string() const {
   oss << *this;
   return oss.str();
 }
+string Expression::to_smt2_string() const {
+  assert(ptr_ != nullptr);
+  return ptr_->to_smt2_string();
+}
 
 Expression operator+(const Expression &lhs, const Expression &rhs) {
   Expression lhs_copy{lhs};

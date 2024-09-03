@@ -205,6 +205,8 @@ class Formula {
   /** Returns string representation of Formula. */
   std::string to_string() const;
 
+  std::string to_smt2_string() const;
+
   static Formula True();
   static Formula False();
 

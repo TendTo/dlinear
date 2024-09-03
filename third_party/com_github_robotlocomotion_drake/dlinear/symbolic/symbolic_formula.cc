@@ -169,6 +169,11 @@ string Formula::to_string() const {
   return oss.str();
 }
 
+std::string Formula::to_smt2_string() const {
+    assert(ptr_ != nullptr);
+    return ptr_->to_smt2_string();
+}
+
 Formula Formula::True() {
   static const Formula tt{new FormulaTrue()};
   return tt;

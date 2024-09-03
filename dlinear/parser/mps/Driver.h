@@ -189,15 +189,17 @@ class MpsDriver : public Driver {
    */
   void End();
 
-  const std::string &problem_name() const { return problem_name_; }
+  [[nodiscard]] const std::string &problem_name() const { return problem_name_; }
   std::string &m_problem_name() { return problem_name_; }
-  bool strict_mps() const { return strict_mps_; }
+  [[nodiscard]] bool strict_mps() const { return strict_mps_; }
   void set_strict_mps(bool b) { strict_mps_ = b; }
-  std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
-  bool is_min() const { return is_min_; }
-  const std::string &obj_row() const { return obj_row_; }
+  [[nodiscard]] std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
+  [[nodiscard]] bool is_min() const { return is_min_; }
+  [[nodiscard]] const std::string &obj_row() const { return obj_row_; }
 
   MpsScanner *scanner() { return scanner_; }
+
+  void ToSmt2(std::ostream &os) const;
 
  private:
   /**

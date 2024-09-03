@@ -302,6 +302,7 @@ class Expression {
 
   /** Returns string representation of Expression. */
   std::string to_string() const;
+  std::string to_smt2_string() const;
 
   /** Returns zero. */
   static Expression Zero();
