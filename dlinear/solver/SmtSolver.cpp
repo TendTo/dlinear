@@ -50,7 +50,7 @@ void SmtSolver::Exit() { guard_.DeInit(); }
 
 const SmtSolverOutput &SmtSolver::CheckSat() {
   DLINEAR_TRACE("SmtSolver::CheckSat");
-  TimerGuard timer_guard{&output_.total_timer, true};
+  TimerGuard timer_guard{&output_.smt_solver_timer, true};
 
   if (config_.skip_check_sat()) {
     output_.result = SmtResult::SKIP_SAT;
@@ -101,7 +101,7 @@ bool SmtSolver::ParseInput() {
   } else {
     DLINEAR_INFO_FMT("SmtSolver::ParseInput: Reading from file: {}", config_.filename());
   }
-  TimerGuard timer_guard{&output_.total_timer, true};
+  TimerGuard timer_guard{&output_.smt_solver_timer, true};
 
   switch (config_.format()) {
     case Config::Format::AUTO:

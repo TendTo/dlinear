@@ -84,7 +84,7 @@ class Context::Impl {
    * @param relu_var variable to represent the ReLU expression. If not provided, a new variable is created.
    * @return fresh variable introduced to represent the ReLU expression
    */
-  Variable AssertRelu(const Expression &e, const Variable& relu_var = {});
+  Variable AssertRelu(const Expression &e, const Variable &relu_var = {});
 
   const PiecewiseLinearConstraint &AddGuidedConstraint(std::unique_ptr<PiecewiseLinearConstraint> &&constraint);
 
@@ -324,7 +324,7 @@ class Context::Impl {
 
   std::vector<std::unique_ptr<PiecewiseLinearConstraint>>
       pl_constraints_;  ///< Special constraints that can be used to guide the SAT solver towards a possible
-                       ///< SAT assignment.
+                        ///< SAT assignment.
 
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   IfThenElseEliminator ite_eliminator_;       ///< Eliminates if-then-else expressions from the formula.

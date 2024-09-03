@@ -169,7 +169,7 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
       DLINEAR_UNREACHABLE();
   }
   if (s.with_timings) {
-    os << " after " << s.total_timer.seconds() << " seconds\n"
+    os << " after " << s.smt_solver_timer.seconds() << " seconds\n"
        << s.parser_stats << "\n"
        << s.ite_stats << "\n"
        << s.cnfizer_stats << "\n"

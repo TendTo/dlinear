@@ -103,7 +103,6 @@ struct SmtSolverOutput {
   IterationStats theory_stats{with_timings, ""};                ///< Statistics about the theory check
   IterationStats preprocessor_stats{with_timings, ""};          ///< Statistics about the bound preprocessor
 
-  Timer total_timer{};                    ///< Timer keeping track of the total time spent in the solver
   Timer smt_solver_timer{};               ///< Timer keeping track of the time spent in the SMT solver
   unsigned int n_assertions{0};           ///< Number of assertions in the input
   SmtResult result{SmtResult::UNSOLVED};  ///< Result of the computation
