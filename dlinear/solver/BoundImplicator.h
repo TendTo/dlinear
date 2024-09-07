@@ -1,9 +1,9 @@
 /**
- * @file TheoryPropagator.h
+ * @file BoundImplicator.h
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * TheoryPropagator class.
+ * BoundImplicator class.
  *
  * This class is used to propagate some simple theory inferences in the SAT solver.
  * E.g.
@@ -29,20 +29,21 @@
 namespace dlinear {
 
 /**
- * Use theory reasoning to propagate some simple theory inferences.
+ * Use theory reasoning to add relations between literals using some simple theory inferences.
  *
- * It will help the SAT solver to prune trivially unsatisfiable branches, improving the chances of finding a solution.
+ * It will help the SAT solver to prune trivially unsatisfiable branches,
+ * improving the chances of finding a feasible solution faster.
  * @pre All the assertions in the predicate_abstractor are flattered.
  */
-class TheoryPropagator {
+class BoundImplicator {
  public:
   /**
-   * Construct a TheoryPropagator.
+   * Construct a BoundImplicator.
    * @param config configuration
    * @param assert assertion function. It adds assertions to the context
    * @param predicate_abstractor predicate abstractor containing the assertions
    */
-  TheoryPropagator(const Config& config, std::function<void(const Formula&)> assert,
+  BoundImplicator(const Config& config, std::function<void(const Formula&)> assert,
                    const PredicateAbstractor& predicate_abstractor);
 
   /** Use theory reasoning to propagate some simple theory inferences. */

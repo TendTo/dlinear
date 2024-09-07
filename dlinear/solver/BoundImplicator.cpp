@@ -1,10 +1,10 @@
 /**
- * @file TheoryPropagator.cpp
+ * @file BoundImplicator.cpp
  * @author dlinear (https://github.com/TendTo/dlinear)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "TheoryPropagator.h"
+#include "BoundImplicator.h"
 
 #include <ranges>
 
@@ -12,12 +12,12 @@
 
 namespace dlinear {
 
-TheoryPropagator::TheoryPropagator(const Config& config, std::function<void(const Formula&)> assert,
+BoundImplicator::BoundImplicator(const Config& config, std::function<void(const Formula&)> assert,
                                    const PredicateAbstractor& predicate_abstractor)
     : config_{config}, assert_{std::move(assert)}, predicate_abstractor_{predicate_abstractor} {}
 
 template <>
-void TheoryPropagator::AddAssertion<1>(const Formula& assertion) {
+void BoundImplicator::AddAssertion<1>(const Formula& assertion) {
   DLINEAR_ASSERT(assertion.GetFreeVariables().size() == 1u, "Assertion must have exactly one free variable");
   DLINEAR_ASSERT(is_relational(assertion), "Assertion must be relational");
   const Expression& lhs = get_lhs_expression(assertion);
@@ -46,7 +46,7 @@ void TheoryPropagator::AddAssertion<1>(const Formula& assertion) {
   }
 }
 
-void TheoryPropagator::Propagate() {
+void BoundImplicator::Propagate() {
   if (config_.disable_eq_propagation()) return;
   for (const auto& [var, assertion] : predicate_abstractor_.var_to_formula_map()) {
     if (!is_relational(assertion)) {
@@ -65,7 +65,7 @@ void TheoryPropagator::Propagate() {
   PropagateAssertions();
 }
 
-void TheoryPropagator::PropagateAssertions() {
+void BoundImplicator::PropagateAssertions() {
   for (const auto& [var, constraints] : constraints_) {
     if (constraints.size() <= 1) continue;
     // Propagate simple < and <= constraints
@@ -77,7 +77,7 @@ void TheoryPropagator::PropagateAssertions() {
       const auto& [value, sense, bool_var] = constraint;
       if (sense == LpRowSense::LE || sense == LpRowSense::LT) {
         if (last_l_constraint != nullptr) {
-          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+          DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} => {}",
                             predicate_abstractor_[*last_l_constraint->variable], predicate_abstractor_[*bool_var]);
           assert_(imply(*last_l_constraint->variable, *bool_var));
         }
@@ -87,7 +87,7 @@ void TheoryPropagator::PropagateAssertions() {
       DLINEAR_ASSERT(sense == LpRowSense::EQ, "Unexpected sense");
       if (last_l_constraint == nullptr) continue;
       assert_(imply(*last_l_constraint->variable, !(*bool_var)));
-      DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+      DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} => {}",
                         predicate_abstractor_[*last_l_constraint->variable], !predicate_abstractor_[*bool_var]);
     }
     // Propagate simple > and >= constraints
@@ -99,7 +99,7 @@ void TheoryPropagator::PropagateAssertions() {
       const auto& [value, sense, bool_var] = constraint;
       if (sense == LpRowSense::LE || sense == LpRowSense::LT) {
         if (last_g_constraint != nullptr) {
-          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+          DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} => {}",
                             !predicate_abstractor_[*last_g_constraint->variable], !predicate_abstractor_[*bool_var]);
           assert_(imply(!*last_g_constraint->variable, !*bool_var));
         }
@@ -109,7 +109,7 @@ void TheoryPropagator::PropagateAssertions() {
       DLINEAR_ASSERT(sense == LpRowSense::EQ, "Unexpected sense");
       if (last_g_constraint == nullptr) continue;
       assert_(imply(!*last_g_constraint->variable, !(*bool_var)));
-      DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} => {}",
+      DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} => {}",
                         !predicate_abstractor_[*last_g_constraint->variable], !predicate_abstractor_[*bool_var]);
     }
     // Propagate simple = constraints
@@ -122,12 +122,12 @@ void TheoryPropagator::PropagateAssertions() {
       if (sense != LpRowSense::EQ) continue;
       if (last_eq_constraint != nullptr) {
         if (value == last_eq_constraint->value) {
-          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} <=> {}",
+          DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} <=> {}",
                             predicate_abstractor_[*last_eq_constraint->variable], predicate_abstractor_[*bool_var]);
           assert_(iff(*last_eq_constraint->variable, *bool_var));
         } else {
           assert_(!*last_eq_constraint->variable || !*bool_var);
-          DLINEAR_TRACE_FMT("TheoryPropagator::PropagateAssertions: {} || {}",
+          DLINEAR_TRACE_FMT("BoundImplicator::PropagateAssertions: {} || {}",
                             predicate_abstractor_[*last_eq_constraint->variable], predicate_abstractor_[*bool_var]);
         }
       }
@@ -136,10 +136,10 @@ void TheoryPropagator::PropagateAssertions() {
   }
 }
 
-bool TheoryPropagator::Constraint::operator==(const TheoryPropagator::Constraint& o) const {
+bool BoundImplicator::Constraint::operator==(const BoundImplicator::Constraint& o) const {
   return value == o.value && row_sense == o.row_sense && variable->equal_to(*o.variable);
 }
-std::strong_ordering TheoryPropagator::Constraint::operator<=>(const TheoryPropagator::Constraint& o) const {
+std::strong_ordering BoundImplicator::Constraint::operator<=>(const BoundImplicator::Constraint& o) const {
   const auto& [value_l, type_l, bool_var_l] = *this;
   const auto& [value_r, type_r, bool_var_r] = o;
   if (value_l < value_r) return std::strong_ordering::less;

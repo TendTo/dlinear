@@ -179,12 +179,10 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "theory_propagator",
-    srcs = ["TheoryPropagator.cpp"],
-    hdrs = ["TheoryPropagator.h"],
-    implementation_deps = [
-        "//dlinear/util:exception",
-    ],
+    name = "bound_propagator",
+    srcs = ["BoundImplicator.cpp"],
+    hdrs = ["BoundImplicator.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":lp_sense",
         "//dlinear/libs:gmp",

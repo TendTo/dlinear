@@ -19,10 +19,10 @@
 #include "dlinear/solver/DeltaSoplexTheorySolver.h"
 #include "dlinear/solver/NNSoplexTheorySolver.h"
 #endif
+#include "dlinear/solver/BoundImplicator.h"
 #include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
-#include "dlinear/solver/TheoryPropagator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
@@ -299,7 +299,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 #if 0
     if (!config_.disable_theory_preprocessing()) {
       // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
-      TheoryPropagator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
+      BoundImplicator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
       propagator.Propagate();
     }
 #endif
@@ -501,7 +501,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
               << config_.lp_solver() << ","                            //
               << output_->n_assertions << ","                          //
               << config_.precision() << ","                            //
-              << output_->actual_precision << ","                      //
+              << output_->actual_precision.get_d() << ","              //
               << config_.simplex_sat_phase() << ","                    //
               << config_.actual_lp_mode() << ","                       //
               << "s" << ","                                            //
