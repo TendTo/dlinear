@@ -179,7 +179,7 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "bound_propagator",
+    name = "bound_implicator",
     srcs = ["BoundImplicator.cpp"],
     hdrs = ["BoundImplicator.h"],
     implementation_deps = ["//dlinear/util:exception"],
@@ -299,8 +299,8 @@ dlinear_cc_library(
         "Context.h",
     ],
     implementation_deps = [
+        ":bound_implicator",
         ":sat_solver",
-        ":theory_propagator",
         ":theory_solver",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/symbolic:predicate_abstractor",

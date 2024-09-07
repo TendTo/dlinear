@@ -60,7 +60,7 @@ class ArgParser {
    * @return value of the parameter
    * @throw std::invalid_argument if the key is not found
    */
-  template <typename T = std::string>
+  template <class T>
   [[nodiscard]] T get(const std::string &key) const {
     return parser_.get<T>(key);
   }

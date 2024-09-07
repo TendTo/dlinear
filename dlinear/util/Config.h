@@ -38,28 +38,22 @@ namespace dlinear {
  */
 class Config {
  public:
-  /**
-   * Underlying LP solver used by the theory solver.
-   * @see Config::lp_solver
-   */
+  /** Underlying LP solver used by the theory solver. */
   enum class LPSolver {
     SOPLEX = 0,   ///< Soplex Solver. Default option
     QSOPTEX = 1,  ///< Qsoptex Solver
   };
-  /**
-   * Underlying SAT solver used by the abstract SAT solver.
-   * @see Config::sat_solver
-   */
+  /** Underlying SAT solver used by the abstract SAT solver. */
   enum class SatSolver {
     CADICAL = 0,  ///< Cadical Solver. Default option
     PICOSAT = 1,  ///< Picosat Solver
   };
-  /** Default phase for the SAT solver. */
+  /** Phase for the SAT solver. */
   enum class SatDefaultPhase {
-    False = 0,
-    True = 1,
-    JeroslowWang = 2,  ///< Default option
-    RandomInitialPhase = 3
+    False = 0,              ///< Assign false to non fixed decision literals
+    True = 1,               ///< Assign true to non fixed decision literals
+    JeroslowWang = 2,       ///< Default option
+    RandomInitialPhase = 3  ///< Randomly assign a value to non fixed decision literals
   };
   /** Format of the input file. */
   enum class Format {
@@ -71,9 +65,24 @@ class Config {
   /** LP mode used by the LP solver. */
   enum class LPMode {
     AUTO = 0,                       ///< Let the LP solver choose the mode. Default option
-    PURE_PRECISION_BOOSTING = 1,    ///< Use the precision boosting mode
-    PURE_ITERATIVE_REFINEMENT = 2,  ///< Use the iterative refinement mode
+    PURE_PRECISION_BOOSTING = 1,    ///< Use the precision boosting mode, if available
+    PURE_ITERATIVE_REFINEMENT = 2,  ///< Use the iterative refinement mode, if available
     HYBRID = 3,                     ///< Use both modes, if available
+  };
+  /** Types of bound propagation supported by the bound propagator */
+  enum class BoundPropagationType {
+    AUTO = 0,           ///< Automatically select the best configuration based on expected performance. Default option
+    EQ_BINOMIAL = 1,    ///< Only propagate bounds in theory formulas in the form @f$ a x_1 + b x_2 = c @f$
+    EQ_POLYNOMIAL = 2,  ///< Only propagate bound in theory formulae in the form @f$ \sum a_i x_i = c @f$
+    BOUND_POLYNOMIAL = 3,  ///< Propagate all possible constraints
+  };
+  /** Frequency at which the preprocessors will run */
+  enum class PreprocessingRunningFrequency {
+    AUTO,          ///< Automatically select the best configuration based on expected performance. Default option
+    NEVER,         ///< Never run this preprocess, effectively disabling it
+    ON_FIXED,      ///< Run this preprocess only once, on fixed literals, before all iterations
+    ON_ITERATION,  ///< Run this preprocess only at every iteration
+    ALWAYS         /// Run this preprocess at every chance it gets. Usually combines ON_FIXED and ON_ITERATION
   };
 
   /** @constructor{Config} */
@@ -110,14 +119,32 @@ class Config {
   [[nodiscard]] bool needs_expansion() const;
   /**
    * @getter{actual `lp_mode` parameter, configuration,
-   * If the lp_mode is AUTO\, it will return return the appropriate mode based on the lp_solver}
+   * If the lp_mode is AUTO\, it will return the appropriate mode based on the lp_solver}
    */
   [[nodiscard]] LPMode actual_lp_mode() const;
   /**
    * @getter{actual `format` parameter, configuration,
-   * If the format is AUTO\, it will return return the appropriate format based on the filename extension}
+   * If the format is AUTO\, it will return the appropriate format based on the filename extension}
    */
   [[nodiscard]] Format actual_format() const;
+  /**
+   * @getter{actual `actual_bound_propagation_type` parameter, configuration,
+   * If the actual_bound_propagation_type is AUTO\,
+   * it will return the appropriate bound propagation type based on the actual format}
+   */
+  [[nodiscard]] BoundPropagationType actual_bound_propagation_type() const;
+  /**
+   * @getter{actual `bound_propagation_frequency` parameter, configuration,
+   * If the bound_propagation_frequency is AUTO\,
+   * it will return the appropriate preprocessing running frequency based on the actual format}
+   */
+  [[nodiscard]] PreprocessingRunningFrequency actual_bound_propagation_frequency() const;
+  /**
+   * @getter{actual `bound_implication_frequency` parameter, configuration,
+   * If the bound_implication_frequency is AUTO\,
+   * it will return the appropriate preprocessing running frequency based on the actual format}
+   */
+  [[nodiscard]] PreprocessingRunningFrequency actual_bound_implication_frequency() const;
 
  private:
   OptionValue<std::string> filename_{""};
@@ -125,18 +152,24 @@ class Config {
 
   DLINEAR_PARAMETER(complete, bool, false,
                     "Run the solver in complete mode.\n"
-                    "\t\tThe precision will be set to 0 and strict inequalities will be used taken into account")
+                    "\t\tThe precision will be set to 0 and strict inequalities will be taken into account")
   DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
-  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the complete stats")
+  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
-  DLINEAR_PARAMETER(disable_eq_propagation, bool, false, "Disable the propagation of equality constraints")
-  DLINEAR_PARAMETER(disable_bound_propagation, bool, false, "Disable the propagation of bounds among constraints")
-  DLINEAR_PARAMETER(disable_theory_preprocessing, bool, false,
-                    "Disable the addition of constraints based on theory propagation")
+  DLINEAR_PARAMETER(bound_propagation_type, BoundPropagationType, BoundPropagationType::AUTO,
+                    "The type of bound propagation to apply in the preprocessing phase.\n"
+                    "\t\tEach of the options is more complete and expensive than the previous one.\n"
+                    "\t\tOne of: auto (1), eq-binomial (2), eq-polynomial (3), bound-polynomial (4)")
+  DLINEAR_PARAMETER(bound_propagation_frequency, PreprocessingRunningFrequency, PreprocessingRunningFrequency::AUTO,
+                    "How often to run the generic bound propagation preprocessing.\n"
+                    "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
+  DLINEAR_PARAMETER(bound_implication_frequency, PreprocessingRunningFrequency, PreprocessingRunningFrequency::AUTO,
+                    "How often to run the bound implication preprocessing.\n"
+                    "\t\tOne of: auto (1), never (2), always (3)")
   DLINEAR_PARAMETER(
       enforce_check_sat, bool, false,
-      "Perform a satisfiability check at the end of the parsing if the input does not contain a (check-sat) directive")
+      "Perform a satisfiability check at the end of parsing if the input does not contain a (check-sat) directive")
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
                     "Input file format\n"
                     "\t\tOne of: auto (1), smt2 (2), mps (3), vnnlib (4)")
@@ -153,14 +186,16 @@ class Config {
                     "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
                     "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
                     "\t\tUse the --complete flag if you are looking for a complete solution")
-  DLINEAR_PARAMETER(produce_models, bool, false, "Produce models")
+  DLINEAR_PARAMETER(produce_models, bool, false,
+                    "Produce models, showing a valid assignment.\n"
+                    "\t\tOnly applicable if the result is sat or delta-sat")
   DLINEAR_PARAMETER(random_seed, unsigned int, 0u,
                     "Set the random seed. 0 means that the seed will be generated on the fly")
   DLINEAR_PARAMETER(read_from_stdin, bool, false, "Read the input from the standard input")
   DLINEAR_PARAMETER(sat_default_phase, SatDefaultPhase, dlinear::Config::SatDefaultPhase::JeroslowWang,
                     "set default initial phase for SAT solver.\n"
                     "\t\tOne of: false (0), true (1), Jeroslow-Wang (2), random initial phase (3)")
-  DLINEAR_PARAMETER(sat_solver, SatSolver, dlinear::Config::SatSolver::CADICAL,
+  DLINEAR_PARAMETER(sat_solver, SatSolver, dlinear::Config::SatSolver::PICOSAT,
                     "Underlying SAT solver used by the SAT solver.\n"
                     "\t\tOne of: cadical (1), picosat (2)")
   DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
@@ -177,5 +212,21 @@ std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 std::ostream &operator<<(std::ostream &os, const Config::SatSolver &mode);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
+std::ostream &operator<<(std::ostream &os, const Config::BoundPropagationType &type);
+std::ostream &operator<<(std::ostream &os, const Config::PreprocessingRunningFrequency &frequency);
 
 }  // namespace dlinear
+
+#ifdef DLINEAR_INCLUDE_FMT
+#include "dlinear/util/logging.h"
+
+OSTREAM_FORMATTER(dlinear::Config);
+OSTREAM_FORMATTER(dlinear::Config::SatDefaultPhase);
+OSTREAM_FORMATTER(dlinear::Config::LPSolver);
+OSTREAM_FORMATTER(dlinear::Config::SatSolver);
+OSTREAM_FORMATTER(dlinear::Config::Format);
+OSTREAM_FORMATTER(dlinear::Config::LPMode);
+OSTREAM_FORMATTER(dlinear::Config::BoundPropagationType);
+OSTREAM_FORMATTER(dlinear::Config::PreprocessingRunningFrequency);
+
+#endif

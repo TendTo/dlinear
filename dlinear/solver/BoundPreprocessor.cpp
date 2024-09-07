@@ -161,7 +161,8 @@ BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& ena
   return explanations;
 }
 void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
-  if (config_.disable_eq_propagation()) return;
+  DLINEAR_ASSERT(config_.actual_bound_propagation_frequency() != Config::PreprocessingRunningFrequency::NEVER,
+                 "Method Process should not be called with a frequency of NEVER");
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
@@ -174,25 +175,9 @@ void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations
     return formula.GetFreeVariables().size() <= 1 || IsNotEqualTo(formula, lit.truth);
   });
 
-  //  fmt::println("------------------------------");
-  //  for (const auto& [var, bounds] : theory_bounds_) {
-  //    if (var.get_name() != "x_6" && var.get_name() != "ITE10" && var.get_name() != "x_11") continue;
-  //    fmt::println("BoundPreprocessor::EnableLiteral: {} -> bounds [{}, {}]\n{}", var,
-  //                 theory_bounds_.at(var).active_lower_bound(), theory_bounds_.at(var).active_upper_bound(),
-  //                 theory_bounds_.at(var).GetActiveExplanation());
-  //  }
-
   PropagateConstraints(mutable_enabled_formula_vars, explanations);
   DLINEAR_DEBUG_FMT("BoundPreprocessor::Process: {} conflict found in propagation", explanations.size());
   if (!explanations.empty()) return;
-
-  //  fmt::println("------------------------------");
-  //  for (const auto& [var, bounds] : theory_bounds_) {
-  //    if (var.get_name() != "x_6" && var.get_name() != "ITE10" && var.get_name() != "x_11") continue;
-  //    fmt::println("BoundPreprocessor::EnableLiteral: {} -> bounds [{}, {}]\n{}", var,
-  //                 theory_bounds_.at(var).active_lower_bound(), theory_bounds_.at(var).active_upper_bound(),
-  //                 theory_bounds_.at(var).GetActiveExplanation());
-  //  }
 
   // Add back all not equal to relations
   for (const Literal& lit : enabled_literals) {
@@ -435,11 +420,18 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
 
 void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
   DLINEAR_TRACE("BoundPreprocessor::PropagateConstraints()");
-  //  fmt::println("BoundPreprocessor::PropagateConstraints({})", enabled_literals);
+  // TODO(tend): reintroduce PropagateEqBinConstraints();
+  if (config_.actual_bound_propagation_type() < Config::BoundPropagationType::EQ_POLYNOMIAL) return;
+  PropagateEqConstraints(enabled_literals, explanations);
+  if (!explanations.empty() || config_.actual_bound_propagation_type() < Config::BoundPropagationType::BOUND_POLYNOMIAL)
+    return;
+  PropagateBoundConstraints(enabled_literals, explanations);
+}
+void BoundPreprocessor::PropagateEqConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateEqConstraints({})", enabled_literals);
   bool continue_propagating;
   // While we still have constraints to propagate...
   do {
-    if (config_.disable_eq_propagation()) break;
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
@@ -448,36 +440,39 @@ void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literal
         ++it;
         continue;
       }
-      // Equality polynomial missing a single variable. Propagate it
-      if (PropagateEqPolynomial(lit, *var_to_propagate, explanations)) {
-        continue_propagating = true;
-        it = enabled_literals.erase(it);
-      } else {
-        ++it;
-      }
+      // Try to propagate the bounds to the variable. If a conflict is detected, update the explanation
+      PropagateEqPolynomial(lit, *var_to_propagate, explanations);
+      // Since we did a propagation (with a violation or not), delete the literal.
+      // Also signal that the other literals could have been updated. Therefore, continue the propagation
+      continue_propagating = true;
+      it = enabled_literals.erase(it);
     }
   } while (continue_propagating && explanations.empty());
-  if (!explanations.empty()) return;
-  if (config_.disable_bound_propagation()) return;
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateEqConstraints: explanation -> {}", explanations);
+}
+void BoundPreprocessor::PropagateBoundConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateBoundConstraints({})", enabled_literals);
+  bool continue_propagating;
+  // While we still have constraints to propagate...
   do {
     continue_propagating = false;
     for (auto it = enabled_literals.begin(); it != enabled_literals.end();) {
       const Literal& lit = *it;
+      // Check if there is a variable candidate for the propagation
       const Variable* const var_to_propagate = ShouldPropagateBoundsPolynomial(lit);
-      //      fmt::println("BoundPreprocessor: propagating {} - {}\n{}", lit, ShouldPropagateBoundsPolynomial(lit),
-      //                   theory_bounds_);
       if (var_to_propagate == nullptr) {
         ++it;
         continue;
       }
-      if (PropagateBoundsPolynomial(lit, *var_to_propagate, explanations)) {
-        continue_propagating = true;
-        it = enabled_literals.erase(it);
-      } else {
-        ++it;
-      }
+      // Try to propagate the bounds to the variable. If a conflict is detected, update the explanation
+      PropagateBoundsPolynomial(lit, *var_to_propagate, explanations);
+      // Since we did a propagation (with a violation or not), delete the literal.
+      // Also signal that the other literals could have been updated. Therefore, continue the propagation
+      continue_propagating = true;
+      it = enabled_literals.erase(it);
     }
   } while (continue_propagating && explanations.empty());
+  DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateBoundConstraints: explanation -> {}", explanations);
 }
 
 void BoundPreprocessor::EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations) {

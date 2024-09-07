@@ -194,6 +194,8 @@ class BoundPreprocessor {
   Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
 
   void PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
+  void PropagateEqConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
+  void PropagateBoundConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
   void EvaluateFormulas(std::list<Literal>& enabled_literals, Explanations& explanations);
   void FormulaViolationExplanation(const Literal& lit, const Formula& formula, Explanations& explanations);
 

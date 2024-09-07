@@ -4,6 +4,7 @@
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
  */
+#define DLINEAR_INCLUDE_FMT
 // IWYU pragma: no_include "argparse/argparse.hpp" // Already included in the header
 #include "ArgParser.h"
 
@@ -41,6 +42,18 @@ namespace dlinear {
         .default_value(dlinear::Config::default_##name)                   \
         .nargs(1)                                                         \
         .scan<scan_char, scan_type>();                                    \
+  } while (false)
+
+#define DLINEAR_PARSE_PARAM_ENUM(parser, name, cmd_name, invalid_prompt, ...) \
+  do {                                                                        \
+    parser.add_argument(cmd_name)                                             \
+        .help(dlinear::Config::help_##name)                                   \
+        .default_value(dlinear::Config::default_##name)                       \
+        .action([](const std::string &value) {                                \
+          __VA_ARGS__                                                         \
+          DLINEAR_INVALID_ARGUMENT_EXPECTED(cmd_name, value, invalid_prompt); \
+        })                                                                    \
+        .nargs(1);                                                            \
   } while (false)
 
 #define DLINEAR_PARAM_TO_CONFIG(param_name, config_name, type)                                                      \
@@ -88,9 +101,6 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
-  DLINEAR_PARSE_PARAM_BOOL(parser_, disable_eq_propagation, "--disable-eq-propagation");
-  DLINEAR_PARSE_PARAM_BOOL(parser_, disable_bound_propagation, "--disable-bound-propagation");
-  DLINEAR_PARSE_PARAM_BOOL(parser_, disable_theory_preprocessing, "--disable-theory-preprocessing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce-check-sat");
   DLINEAR_PARSE_PARAM_BOOL(parser_, optimize, "-o", "--optimize");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
@@ -120,61 +130,52 @@ void ArgParser::addOptions() {
       .append()
       .nargs(0);
 
-  parser_.add_argument("--format")
-      .help(Config::help_format)
-      .nargs(1)
-      .default_value(Config::default_format)
-      .action([](const std::string &value) {
-        if (value == "auto" || value == "1") return Config::Format::AUTO;
-        if (value == "smt2" || value == "2") return Config::Format::SMT2;
-        if (value == "mps" || value == "3") return Config::Format::MPS;
-        if (value == "vnnlib" || value == "4") return Config::Format::VNNLIB;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED("--format", value, "[ auto | smt2 | mps  | vnnlib ] or [ 1 | 2 | 3 | 4 ]");
-      })
-      .nargs(1);
-  parser_.add_argument("--lp-solver")
-      .help(Config::help_lp_solver)
-      .default_value(Config::default_lp_solver)
-      .action([](const std::string &value) {
-        if (value == "soplex" || value == "1") return Config::LPSolver::SOPLEX;
-        if (value == "qsoptex" || value == "2") return Config::LPSolver::QSOPTEX;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED("--lp-solver", value, "[ soplex | qsoptex ] or [ 1 | 2 ]");
-      })
-      .nargs(1);
-  parser_.add_argument("--sat-solver")
-      .help(Config::help_sat_solver)
-      .default_value(Config::default_sat_solver)
-      .action([](const std::string &value) {
-        if (value == "cadical" || value == "1") return Config::SatSolver::CADICAL;
-        if (value == "picosat" || value == "2") return Config::SatSolver::PICOSAT;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED("--lp-solver", value, "[ cadical | picosat ] or [ 1 | 2 ]");
-      })
-      .nargs(1);
-  parser_.add_argument("--lp-mode")
-      .help(Config::help_lp_mode)
-      .default_value(Config::default_lp_mode)
-      .action([](const std::string &value) {
-        if (value == "auto" || value == "1") return Config::LPMode::AUTO;
-        if (value == "pure-precision-boosting" || value == "2") return Config::LPMode::PURE_PRECISION_BOOSTING;
-        if (value == "pure-iterative-refinement" || value == "3") return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
-        if (value == "hybrid" || value == "4") return Config::LPMode::HYBRID;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED(
-            "--lp-mode", value,
-            "[ auto | pure-precision-boosting | pure-iterative-refinement | hybrid ] or [ 1 | 2 | 3 | 4 ]");
-      })
-      .nargs(1);
-  parser_.add_argument("--sat-default-phase")
-      .help(Config::help_sat_default_phase)
-      .default_value(Config::default_sat_default_phase)
-      .action([](const std::string &value) {
-        if (value == "false" || value == "1") return Config::SatDefaultPhase::False;
-        if (value == "true" || value == "2") return Config::SatDefaultPhase::True;
-        if (value == "jeroslow-wang" || value == "3") return Config::SatDefaultPhase::JeroslowWang;
-        if (value == "random" || value == "4") return Config::SatDefaultPhase::RandomInitialPhase;
-        DLINEAR_INVALID_ARGUMENT_EXPECTED("--sat-default-phase", value,
-                                          "[ false | true | jeroslow-wang | random ] or [ 1 | 2 | 3 | 4 ]");
-      })
-      .nargs(1);
+  DLINEAR_PARSE_PARAM_ENUM(
+      parser_, lp_mode, "--lp-mode",
+      "[ auto | pure-precision-boosting | pure-iterative-refinement | hybrid ] or [ 1 | 2 | 3 | 4 ]",
+      if (value == "auto" || value == "1") return Config::LPMode::AUTO;
+      if (value == "pure-precision-boosting" || value == "2") return Config::LPMode::PURE_PRECISION_BOOSTING;
+      if (value == "pure-iterative-refinement" || value == "3") return Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+      if (value == "hybrid" || value == "4") return Config::LPMode::HYBRID;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, format, "--format", "[ auto | smt2 | mps  | vnnlib ] or [ 1 | 2 | 3 | 4 ]",
+                           if (value == "auto" || value == "1") return Config::Format::AUTO;
+                           if (value == "smt2" || value == "2") return Config::Format::SMT2;
+                           if (value == "mps" || value == "3") return Config::Format::MPS;
+                           if (value == "vnnlib" || value == "4") return Config::Format::VNNLIB;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, lp_solver, "--lp-solver", "[ soplex | qsoptex ] or [ 1 | 2 ]",
+                           if (value == "soplex" || value == "1") return Config::LPSolver::SOPLEX;
+                           if (value == "qsoptex" || value == "2") return Config::LPSolver::QSOPTEX;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, sat_solver, "--sat-solver", "[ cadical | picosat ] or [ 1 | 2 ]",
+                           if (value == "cadical" || value == "1") return Config::SatSolver::CADICAL;
+                           if (value == "picosat" || value == "2") return Config::SatSolver::PICOSAT;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, sat_default_phase, "--sat-default-phase",
+                           "[ false | true | jeroslow-wang | random ] or [ 1 | 2 | 3 | 4 ]",
+                           if (value == "false" || value == "1") return Config::SatDefaultPhase::False;
+                           if (value == "true" || value == "2") return Config::SatDefaultPhase::True;
+                           if (value == "jeroslow-wang" || value == "3") return Config::SatDefaultPhase::JeroslowWang;
+                           if (value == "random" || value == "4") return Config::SatDefaultPhase::RandomInitialPhase;);
+  DLINEAR_PARSE_PARAM_ENUM(
+      parser_, bound_propagation_type, "--bound-propagation-type",
+      "[ auto | eq-binomial | eq-polynomial | bound-polynomial ] or [ 1 | 2 | 3 | 4 ]",
+      if (value == "auto" || value == "1") return Config::BoundPropagationType::AUTO;
+      if (value == "eq-binomial" || value == "2") return Config::BoundPropagationType::EQ_BINOMIAL;
+      if (value == "eq-polynomial" || value == "3") return Config::BoundPropagationType::EQ_POLYNOMIAL;
+      if (value == "bound-polynomial" || value == "4") return Config::BoundPropagationType::BOUND_POLYNOMIAL;);
+  DLINEAR_PARSE_PARAM_ENUM(
+      parser_, bound_propagation_frequency, "--bound-propagation-frequency",
+      "[ auto | never | on-fixed | on-iteration | always ] or [ 1 | 2 | 3 | 4 | 5 ]",
+      if (value == "auto" || value == "1") return Config::PreprocessingRunningFrequency::AUTO;
+      if (value == "never" || value == "2") return Config::PreprocessingRunningFrequency::NEVER;
+      if (value == "on-fixed" || value == "3") return Config::PreprocessingRunningFrequency::ON_FIXED;
+      if (value == "on-iteration" || value == "4") return Config::PreprocessingRunningFrequency::ON_ITERATION;
+      if (value == "always" || value == "5") return Config::PreprocessingRunningFrequency::ALWAYS;);
+  DLINEAR_PARSE_PARAM_ENUM(
+      parser_, bound_implication_frequency, "--bound-implication-frequency",
+      "[ auto | never | always ] or [ 1 | 2 | 3 ]",
+      if (value == "auto" || value == "1") return Config::PreprocessingRunningFrequency::AUTO;
+      if (value == "never" || value == "2") return Config::PreprocessingRunningFrequency::NEVER;
+      if (value == "always" || value == "3") return Config::PreprocessingRunningFrequency::ALWAYS;);
+
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
 
@@ -189,13 +190,15 @@ Config ArgParser::toConfig() const {
     config.m_complete().set_from_command_line(parser_.get<bool>("complete"));
     config.m_precision().set_from_command_line(0.0);
   }
+  DLINEAR_PARAM_TO_CONFIG("bound-implication-frequency", bound_implication_frequency,
+                          Config::PreprocessingRunningFrequency);
+  DLINEAR_PARAM_TO_CONFIG("bound-propagation-frequency", bound_propagation_frequency,
+                          Config::PreprocessingRunningFrequency);
   DLINEAR_PARAM_TO_CONFIG("csv", csv, bool);
   DLINEAR_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
-  DLINEAR_PARAM_TO_CONFIG("disable-eq-propagation", disable_eq_propagation, bool);
-  DLINEAR_PARAM_TO_CONFIG("disable-bound-propagation", disable_bound_propagation, bool);
-  DLINEAR_PARAM_TO_CONFIG("disable-theory-preprocessing", disable_theory_preprocessing, bool);
+  DLINEAR_PARAM_TO_CONFIG("bound-propagation-type", bound_propagation_type, Config::BoundPropagationType);
   DLINEAR_PARAM_TO_CONFIG("enforce-check-sat", enforce_check_sat, bool);
   config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);

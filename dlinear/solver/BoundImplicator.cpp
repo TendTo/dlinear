@@ -13,7 +13,7 @@
 namespace dlinear {
 
 BoundImplicator::BoundImplicator(const Config& config, std::function<void(const Formula&)> assert,
-                                   const PredicateAbstractor& predicate_abstractor)
+                                 const PredicateAbstractor& predicate_abstractor)
     : config_{config}, assert_{std::move(assert)}, predicate_abstractor_{predicate_abstractor} {}
 
 template <>
@@ -47,7 +47,8 @@ void BoundImplicator::AddAssertion<1>(const Formula& assertion) {
 }
 
 void BoundImplicator::Propagate() {
-  if (config_.disable_eq_propagation()) return;
+  DLINEAR_ASSERT(config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER,
+                 "Method Propagate should not be called with a frequency of NEVER");
   for (const auto& [var, assertion] : predicate_abstractor_.var_to_formula_map()) {
     if (!is_relational(assertion)) {
       fmt::println("Assertion must be relational. Skipping.");
