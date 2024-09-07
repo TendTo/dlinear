@@ -29,5 +29,5 @@ INSTANTIATE_TEST_SUITE_P(TestSolver, TestSolver, enabled_test_solvers);
 
 TEST_P(TestSolver, CheckSatWrongFilename) {
   SmtSolver s{"test.err"};
-  EXPECT_DEATH(s.Parse(), "");
+  EXPECT_THROW(s.Parse(), std::runtime_error);
 }

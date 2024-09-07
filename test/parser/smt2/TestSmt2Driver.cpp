@@ -18,6 +18,7 @@ using dlinear::smt2::Term;
 
 class TestSmt2Driver : public ::testing::Test {
  protected:
+  TestSmt2Driver() { config_.m_format() = Config::Format::SMT2; }
   Config config_;
   Context context_{config_};
 };

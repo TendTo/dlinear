@@ -47,7 +47,7 @@ class MockContextBoundPreprocessor : public BoundPreprocessor {
 
 class TestBoundPreprocessor : public ::testing::Test {
  protected:
-  const Config config_{std::string{"input.smt2"}};
+  Config config_{std::string{"input.smt2"}};
   PredicateAbstractor pa_{config_};
   MockContextBoundPreprocessor bound_preprocessor_{pa_};
   BoundVectorMap &theory_bounds_{const_cast<BoundVectorMap &>(bound_preprocessor_.theory_bounds())};
@@ -58,7 +58,10 @@ class TestBoundPreprocessor : public ::testing::Test {
   std::vector<Literal> active_constraints_;
   LiteralSet enabled_literals_;
 
-  TestBoundPreprocessor() : bound_preprocessor_{pa_} { DLINEAR_LOG_INIT_VERBOSITY(0); }
+  TestBoundPreprocessor() : bound_preprocessor_{pa_} {
+    DLINEAR_LOG_INIT_VERBOSITY(0);
+    config_.m_bound_propagation_type() = Config::BoundPropagationType::BOUND_POLYNOMIAL;
+  }
 
   void AddConstraints(std::initializer_list<Formula> formulas) {
     for (const auto &formula : formulas) {

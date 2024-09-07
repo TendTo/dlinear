@@ -25,7 +25,6 @@ class TestOnnxDriver : public ::testing::Test {
   TestOnnxDriver() : config_{GetConfig()}, context_{config_}, driver_{context_} {}
 
   static Config GetConfig() {
-    DLINEAR_LOG_INIT_VERBOSITY(2);
     Config config;
     config.m_format() = Config::Format::VNNLIB;
     return config;

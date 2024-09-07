@@ -17,6 +17,8 @@ class TestPredicateAbstractor : public ::testing::Test {
   Config config_;
 
  protected:
+  TestPredicateAbstractor() { config_.m_format() = Config::Format::SMT2; }
+
   const Variable x_{"x", Variable::Type::CONTINUOUS};
   const Variable y_{"y", Variable::Type::CONTINUOUS};
   const Variable z_{"z", Variable::Type::CONTINUOUS};

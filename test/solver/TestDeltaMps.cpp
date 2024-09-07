@@ -19,27 +19,30 @@ using dlinear::SmtResult;
 using dlinear::SmtSolver;
 using std::unique_ptr;
 
-class TestMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double, bool>> {
+class TestMps : public ::testing::TestWithParam<
+                    std::tuple<Config::LPSolver, std::string, double, Config::PreprocessingRunningFrequency>> {
  protected:
   Config config_;
 
   TestMps() {
-    const auto& [lp_solver, filename, precision, preprocessor] = GetParam();
+    const auto& [lp_solver, filename, precision, frequency] = GetParam();
     config_.m_precision() = precision;
     config_.m_complete() = false;
     config_.m_format() = Config::Format::MPS;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
-    config_.m_disable_eq_propagation() = preprocessor;
-    config_.m_disable_bound_propagation() = preprocessor;
-    config_.m_disable_theory_preprocessing() = preprocessor;
+    config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
+    config_.m_bound_propagation_frequency() = frequency;
+    config_.m_bound_implication_frequency() = frequency;
     std::cout << "Testing " << filename << std::endl;
   }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/mps")),
-                                            ::testing::Values(0.0, 0.1), ::testing::Values(true, false)));
+                                            ::testing::Values(0.0, 0.1),
+                                            ::testing::Values(Config::PreprocessingRunningFrequency::NEVER,
+                                                              Config::PreprocessingRunningFrequency::ALWAYS)));
 
 TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   SmtSolver s{config_};
