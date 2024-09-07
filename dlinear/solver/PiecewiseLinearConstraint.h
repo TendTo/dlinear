@@ -183,4 +183,10 @@ std::ostream& operator<<(std::ostream& os, const PiecewiseLinearConstraint& gc);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::PiecewiseLinearConstraint)
+
+#endif

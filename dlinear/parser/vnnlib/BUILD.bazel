@@ -59,11 +59,11 @@ dlinear_cc_library(
     name = "function_definition",
     srcs = ["FunctionDefinition.cpp"],
     hdrs = ["FunctionDefinition.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":sort",
         ":term",
         "//dlinear/symbolic:literal",
-        "//dlinear/util:exception",
     ],
 )
 

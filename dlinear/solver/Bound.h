@@ -5,7 +5,6 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -33,4 +32,10 @@ std::ostream& operator<<(std::ostream& os, const Bound& bound);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Bound)
+
+#endif

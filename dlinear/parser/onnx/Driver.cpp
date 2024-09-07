@@ -11,6 +11,7 @@
 
 #include "dlinear/parser/onnx/NodeOpType.h"
 #include "dlinear/solver/ReluConstraint.h"
+#include "dlinear/util/exception.h"
 
 namespace dlinear::onnx {
 

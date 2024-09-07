@@ -13,7 +13,6 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/util/definitions.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -72,4 +71,10 @@ std::ostream &operator<<(std::ostream &os, const Interval &iv);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Interval);
+
+#endif

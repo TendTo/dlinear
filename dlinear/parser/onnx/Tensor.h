@@ -15,7 +15,6 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/concepts.h"
 #include "dlinear/util/definitions.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear::onnx {
 

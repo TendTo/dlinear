@@ -19,8 +19,6 @@
 #include <iosfwd>
 #include <string>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear::mps {
 
 /**
@@ -85,4 +83,10 @@ std::ostream &operator<<(std::ostream &os, const BoundType &bound);
 
 }  // namespace dlinear::mps
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::mps::BoundType)
+
+#endif

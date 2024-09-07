@@ -21,7 +21,6 @@
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/SortedVector.hpp"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -362,7 +361,13 @@ std::ostream& operator<<(std::ostream& os, const BoundVectorVector& bounds_vecto
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::BoundIterator)
 OSTREAM_FORMATTER(dlinear::BoundVector)
 OSTREAM_FORMATTER(dlinear::BoundVectorMap)
 OSTREAM_FORMATTER(dlinear::BoundVectorVector)
+
+#endif

@@ -22,9 +22,6 @@
 #include <string>
 #include <string_view>
 
-#include "dlinear/util/exception.h"
-#include "dlinear/util/logging.h"
-
 namespace std {
 
 template <>
@@ -153,7 +150,8 @@ inline mpq_class string_to_mpq(std::string_view str) {
   if (symbol_pos == std::string::npos) {
     const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
     if (start_pos == std::string_view::npos) return {0};
-    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
+    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), is_digit_or_sign), "Invalid number: {}",
+    //    str);
     return is_negative ? -mpq_class{str.data() + start_pos} : mpq_class{str.data() + start_pos};
   }
 
@@ -186,7 +184,8 @@ inline mpq_class string_to_mpq(std::string_view str) {
   // case 3b: string does not contain a . , only an exponent E
   if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
     int plus_pos = str[0] == '+' ? 1 : 0;
-    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
+    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), is_digit_or_sign), "Invalid number: {}",
+    //    str);
 
     char *const str_number = new char[len - plus_pos + 1];
     memcpy(str_number, str.data() + plus_pos, len - plus_pos);
@@ -216,9 +215,10 @@ inline mpq_class string_to_mpq(std::string_view str) {
   }
 
   const size_t n_decimals = len - dot_pos - 1;
-  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, is_digit_or_sign),
-                     "Invalid number: {}", str);
-  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), is_digit_or_sign), "Invalid number: {}", str);
+  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, is_digit_or_sign),
+  //                     "Invalid number: {}", str);
+  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), is_digit_or_sign), "Invalid number: {}",
+  //  str);
   char *const str_number = new char[digits + n_decimals + 3];
 
   if (digits > n_decimals) {
@@ -241,4 +241,10 @@ inline mpq_class string_to_mpq(std::string_view str) {
 
 }  // namespace dlinear::gmp
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(mpq_class)
+
+#endif

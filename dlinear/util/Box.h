@@ -18,7 +18,6 @@
 #include "dlinear/symbolic/symbolic.h"  // IWYU pragma: keep for hash_value
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Interval.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -190,4 +189,10 @@ std::ostream &DisplayDiff(std::ostream &os, const std::vector<Variable> &variabl
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Box)
+
+#endif

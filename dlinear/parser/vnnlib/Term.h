@@ -19,7 +19,6 @@
 #include "dlinear/parser/vnnlib/Sort.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear::vnnlib {
 
@@ -99,4 +98,10 @@ std::ostream &operator<<(std::ostream &os, const Term &t);
 
 }  // namespace dlinear::vnnlib
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::vnnlib::Term)
+
+#endif

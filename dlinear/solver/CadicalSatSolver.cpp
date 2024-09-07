@@ -6,6 +6,9 @@
  */
 #include "CadicalSatSolver.h"
 
+#include "dlinear/util/exception.h"
+#include "dlinear/util/logging.h"
+
 namespace dlinear {
 
 CadicalSatSolver::CadicalSatSolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)

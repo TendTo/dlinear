@@ -13,7 +13,6 @@
 #include <string>
 
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear::vnnlib {
 
@@ -33,4 +32,10 @@ Variable::Type SortToType(Sort sort);
 
 }  // namespace dlinear::vnnlib
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::vnnlib::Sort)
+
+#endif

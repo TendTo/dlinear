@@ -8,6 +8,8 @@
 
 #include <utility>
 
+#include "dlinear/util/exception.h"
+
 namespace dlinear::smt2 {
 
 FunctionDefinition::FunctionDefinition(std::vector<Variable> parameters, Sort return_type, Term body)

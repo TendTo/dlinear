@@ -16,8 +16,6 @@
 
 #include <ostream>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear {
 
 /**
@@ -36,4 +34,10 @@ std::ostream &operator<<(std::ostream &os, const SatResult &sat_result);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::SatResult)
+
+#endif

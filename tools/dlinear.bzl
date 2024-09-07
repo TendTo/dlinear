@@ -47,7 +47,7 @@ GCC_FLAGS = CXX_FLAGS + [
 GCC_CC_TEST_FLAGS = []
 
 # Default defines for all C++ rules in the project.
-DLINEAR_DEFINES = []
+DLINEAR_DEFINES = ["DLINEAR_INCLUDE_FMT"]
 
 def _get_copts(rule_copts, cc_test = False):
     """Alter the provided rule specific copts, adding the platform-specific ones.

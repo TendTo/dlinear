@@ -28,7 +28,6 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -256,4 +255,10 @@ class TheorySolver {
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::TheorySolver::Bound)
+
+#endif

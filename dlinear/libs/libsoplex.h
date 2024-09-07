@@ -18,6 +18,8 @@
 
 #include <soplex.h>  // IWYU pragma: export
 
+#ifdef DLINEAR_INCLUDE_FMT
+
 #include "dlinear/util/logging.h"
 
 OSTREAM_FORMATTER(soplex::VectorRational)
@@ -25,3 +27,5 @@ OSTREAM_FORMATTER(soplex::Rational)
 OSTREAM_FORMATTER(soplex::SPxSolver::Status)
 OSTREAM_FORMATTER(soplex::DSVectorRational)
 OSTREAM_FORMATTER(soplex::SVectorRational)
+
+#endif

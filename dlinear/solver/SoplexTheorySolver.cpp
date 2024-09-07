@@ -4,7 +4,6 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#define DLINEAR_INCLUDE_FMT
 #include "SoplexTheorySolver.h"
 
 #include <algorithm>

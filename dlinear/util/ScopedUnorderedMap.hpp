@@ -18,8 +18,6 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/util/exception.h"
-
 namespace dlinear {
 
 template <class Key, class T, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
@@ -97,7 +95,7 @@ class ScopedUnorderedMap {
   const T &operator[](const Key &key) const {
     const auto it = map_.find(key);
     if (it == map_.end()) {
-      DLINEAR_RUNTIME_ERROR_FMT("ScopedUnorderedMap has no entry for the key {}.", key);
+      throw std::runtime_error("ScopedUnorderedMap has no entry for the key {}" + std::to_string(key));
     }
     return it->second;
   }
@@ -118,7 +116,7 @@ class ScopedUnorderedMap {
   void push() { stack_.push_back(actions_.size()); }
   void pop() {
     if (stack_.empty()) {
-      DLINEAR_RUNTIME_ERROR("ScopedUnorderedMap cannot be popped because it's scope is empty.");
+      throw std::runtime_error("ScopedUnorderedMap cannot be popped because it's scope is empty.");
     }
     size_type idx = stack_.back();
     while (idx < actions_.size()) {

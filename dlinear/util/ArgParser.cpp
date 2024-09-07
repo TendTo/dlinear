@@ -4,7 +4,6 @@
  * @date 07 Aug 2023
  * @copyright 2023 dlinear
  */
-#define DLINEAR_INCLUDE_FMT
 // IWYU pragma: no_include "argparse/argparse.hpp" // Already included in the header
 #include "ArgParser.h"
 

@@ -152,7 +152,6 @@ dlinear_cc_library(
         "ScopedUnorderedSet.hpp",
         "ScopedVector.hpp",
     ],
-    deps = [":exception"],
 )
 
 dlinear_cc_library(

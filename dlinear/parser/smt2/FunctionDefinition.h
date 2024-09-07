@@ -17,7 +17,6 @@
 #include "dlinear/parser/smt2/Sort.h"
 #include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/exception.h"
 
 namespace dlinear::smt2 {
 
@@ -63,8 +62,8 @@ class FunctionDefinition {
    */
   Term operator()(std::same_as<Term> auto... arguments) const {
     if (parameters_.size() != sizeof...(arguments)) {
-      DLINEAR_RUNTIME_ERROR_FMT("This function definition expects #{} arguments ({}). Provided #{} arguments.",
-                                parameters_.size(), parameters_, sizeof...(arguments));
+      throw std::runtime_error("This function definition expects #" + std::to_string(parameters_.size()) +
+                               " arguments ({}). Provided #" + std::to_string(sizeof...(arguments)) + " arguments.");
     }
     Term t = body_;
 

@@ -12,8 +12,6 @@
 #include <ostream>
 #include <string>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear {
 
 /** Describe the logic the SMT2 file is using. */
@@ -36,4 +34,10 @@ std::ostream &operator<<(std::ostream &os, const Logic &logic);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Logic)
+
+#endif

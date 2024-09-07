@@ -15,8 +15,6 @@
 #include <iterator>
 #include <vector>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear {
 
 /**
@@ -207,4 +205,10 @@ std::ostream &operator<<(std::ostream &os, const BitIncrementIterator &it);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::BitIncrementIterator)
+
+#endif

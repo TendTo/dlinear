@@ -33,7 +33,6 @@
 // From dlinear
 #include "dlinear/symbolic/hash.h"
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -214,9 +213,15 @@ std::ostream &operator<<(std::ostream &os, const ExpressionKind &kind);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Expression)
 OSTREAM_FORMATTER(dlinear::Formula)
 OSTREAM_FORMATTER(dlinear::Variables)
 OSTREAM_FORMATTER(dlinear::RelationalOperator)
 OSTREAM_FORMATTER(dlinear::FormulaKind)
 OSTREAM_FORMATTER(dlinear::ExpressionKind)
+
+#endif

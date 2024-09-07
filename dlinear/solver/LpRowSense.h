@@ -23,7 +23,6 @@
 #include <ostream>
 
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -96,4 +95,10 @@ std::ostream &operator<<(std::ostream &os, const LpRowSense &lp_result);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::LpRowSense)
+
+#endif

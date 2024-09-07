@@ -17,8 +17,6 @@
 
 #include <ostream>
 
-#include "dlinear/util/logging.h"
-
 namespace dlinear {
 
 /** Result of running the LP solver over the input problem. */
@@ -41,4 +39,10 @@ std::ostream &operator<<(std::ostream &os, const LpResult &lp_result);
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::LpResult)
+
+#endif

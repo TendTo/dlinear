@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "dlinear/symbolic/symbolic_variable.h"  // IWYU pragma: export
-#include "dlinear/util/logging.h"
 
 namespace dlinear {
 
@@ -45,8 +44,14 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &variables
 
 }  // namespace dlinear
 
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
 OSTREAM_FORMATTER(dlinear::Variable)
 OSTREAM_FORMATTER(dlinear::Variable::Type)
 OSTREAM_FORMATTER(dlinear::Literal)
 OSTREAM_FORMATTER(dlinear::LiteralSet)
 OSTREAM_FORMATTER(dlinear::Model)
+
+#endif

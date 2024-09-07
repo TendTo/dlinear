@@ -17,8 +17,6 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/util/exception.h"
-
 namespace dlinear {
 
 template <typename T>
@@ -77,22 +75,10 @@ class ScopedVector {
   [[nodiscard]] vector const &get_vector() const { return vector_; }
   [[nodiscard]] vector get_vector() { return vector_; }
 
-  reference first() {
-    DLINEAR_ASSERT(!vector_.empty(), "ScopedVector must not be empty.");
-    return vector_[0];
-  }
-  const_reference first() const {
-    DLINEAR_ASSERT(!vector_.empty(), "ScopedVector must not be empty.");
-    return vector_[0];
-  }
-  reference last() {
-    DLINEAR_ASSERT(!vector_.empty(), "ScopedVector must not be empty.");
-    return vector_[size() - 1];
-  }
-  const_reference last() const {
-    DLINEAR_ASSERT(!vector_.empty(), "ScopedVector must not be empty.");
-    return vector_[size() - 1];
-  }
+  reference first() { return vector_.at(0); }
+  const_reference first() const { return vector_.at(0); }
+  reference last() { return vector_.at(size() - 1); }
+  const_reference last() const { return vector_.at(size() - 1); }
   reference operator[](size_type n) { return vector_[n]; }
   const_reference operator[](size_type n) const { return vector_[n]; }
   bool operator<(ScopedVector<T> const &v) const {
