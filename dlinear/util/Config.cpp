@@ -18,8 +18,8 @@ Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
 bool Config::needs_expansion() const {
-  return format() == Config::Format::SMT2 || format() == Config::Format::VNNLIB || filename_extension() == "smt2" ||
-         filename_extension() == "vnnlib";
+  const Format format = actual_format();
+  return format == Format::VNNLIB || format == Format::SMT2;
 }
 Config::LPMode Config::actual_lp_mode() const {
   switch (lp_mode_.get()) {
@@ -39,9 +39,59 @@ Config::Format Config::actual_format() const {
       } else if (filename_extension() == "vnnlib") {
         return Format::VNNLIB;
       }
-      DLINEAR_UNREACHABLE();
+      DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin or unknown file extension");
     default:
       return format_.get();
+  }
+}
+Config::BoundPropagationType Config::actual_bound_propagation_type() const {
+  switch (bound_propagation_type_.get()) {
+    case BoundPropagationType::AUTO:
+      switch (actual_format()) {
+        case Format::SMT2:
+          return BoundPropagationType::EQ_POLYNOMIAL;
+        case Format::MPS:
+          return BoundPropagationType::EQ_BINOMIAL;
+        case Format::VNNLIB:
+          return BoundPropagationType::BOUND_POLYNOMIAL;
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    default:
+      return bound_propagation_type_.get();
+  }
+}
+Config::PreprocessingRunningFrequency Config::actual_bound_propagation_frequency() const {
+  switch (bound_propagation_frequency_.get()) {
+    case PreprocessingRunningFrequency::AUTO:
+      switch (actual_format()) {
+        case Format::SMT2:
+          return PreprocessingRunningFrequency::ON_FIXED;
+        case Format::MPS:
+          return PreprocessingRunningFrequency::NEVER;
+        case Format::VNNLIB:
+          return PreprocessingRunningFrequency::ALWAYS;
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    default:
+      return bound_propagation_frequency_.get();
+  }
+}
+Config::PreprocessingRunningFrequency Config::actual_bound_implication_frequency() const {
+  switch (bound_implication_frequency_.get()) {
+    case PreprocessingRunningFrequency::AUTO:
+      switch (actual_format()) {
+        case Format::SMT2:
+          return PreprocessingRunningFrequency::ALWAYS;
+        case Format::MPS:
+        case Format::VNNLIB:
+          return PreprocessingRunningFrequency::NEVER;
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    default:
+      return bound_implication_frequency_.get();
   }
 }
 
@@ -112,16 +162,48 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
   }
 }
 
+std::ostream &operator<<(std::ostream &os, const Config::BoundPropagationType &type) {
+  switch (type) {
+    case Config::BoundPropagationType::AUTO:
+      return os << "auto";
+    case Config::BoundPropagationType::EQ_BINOMIAL:
+      return os << "eq-binomial";
+    case Config::BoundPropagationType::EQ_POLYNOMIAL:
+      return os << "eq-polynomial";
+    case Config::BoundPropagationType::BOUND_POLYNOMIAL:
+      return os << "bound-polynomial";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
+std::ostream &operator<<(std::ostream &os, const Config::PreprocessingRunningFrequency &frequency) {
+  switch (frequency) {
+    case Config::PreprocessingRunningFrequency::AUTO:
+      return os << "auto";
+    case Config::PreprocessingRunningFrequency::NEVER:
+      return os << "never";
+    case Config::PreprocessingRunningFrequency::ON_FIXED:
+      return os << "on-fixed";
+    case Config::PreprocessingRunningFrequency::ON_ITERATION:
+      return os << "on-iteration";
+    case Config::PreprocessingRunningFrequency::ALWAYS:
+      return os << "always";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
+            << "bound_implication_frequency = " << config.bound_implication_frequency() << ",\n"
+            << "bound_propagation_frequency = " << config.bound_propagation_frequency() << ",\n"
+            << "bound_propagation_type = " << config.bound_propagation_type() << ",\n"
             << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
             << "debug_parsing = " << config.debug_parsing() << ",\n"
             << "debug_scanning = " << config.debug_scanning() << ",\n"
-            << "disable_eq_propagation = " << config.disable_eq_propagation() << ",\n"
-            << "disable_bound_propagation = " << config.disable_bound_propagation() << ",\n"
-            << "disable_theory_preprocessing = " << config.disable_theory_preprocessing() << ",\n"
             << "enforce_check_sat = " << config.enforce_check_sat() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"

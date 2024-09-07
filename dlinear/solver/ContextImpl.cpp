@@ -297,11 +297,11 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
   // Temporarily disable to study the effect of guided constraints
 #if 0
-    if (!config_.disable_theory_preprocessing()) {
-      // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
-      BoundImplicator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
-      propagator.Propagate();
-    }
+  if (config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER) {
+    // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
+    BoundImplicator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
+    propagator.Propagate();
+  }
 #endif
 
   // Add the theory literals from the SAT solver to the theory solver.
@@ -465,7 +465,7 @@ std::unique_ptr<SatSolver> Context::Impl::GetSatSolver() {
 void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
-  // DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
+  DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG

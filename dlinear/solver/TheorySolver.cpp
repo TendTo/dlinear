@@ -32,7 +32,10 @@ void TheorySolver::AddLiterals() {
 TheorySolver::Explanations TheorySolver::AddFixedLiterals(const LiteralSet &fixed_literals) {
   Explanations explanations{};
   for (const Literal &lit : fixed_literals) fixed_preprocessor_.EnableLiteral(lit, explanations);
-  fixed_preprocessor_.Process(explanations);
+  if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
+      config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ON_FIXED) {
+    fixed_preprocessor_.Process(explanations);
+  }
   preprocessor_.Clear(fixed_preprocessor_);
   return explanations;
 }
