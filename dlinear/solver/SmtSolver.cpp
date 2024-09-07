@@ -103,16 +103,7 @@ bool SmtSolver::ParseInput() {
   }
   TimerGuard timer_guard{&output_.smt_solver_timer, true};
 
-  switch (config_.format()) {
-    case Config::Format::AUTO:
-      if (config_.read_from_stdin()) DLINEAR_RUNTIME_ERROR("Cannot determine format from stdin");
-      if (config_.filename_extension() == "smt2") return ParseInputCore<smt2::Smt2Driver>(config_, context_);
-      if (config_.filename_extension() == "mps") return ParseInputCore<mps::MpsDriver>(config_, context_);
-      if (config_.filename_extension() == "vnnlib") {
-        if (!ParseInputCore<onnx::OnnxDriver>(config_, context_)) return false;
-        return ParseInputCore<vnnlib::VnnlibDriver>(config_, context_);
-      }
-      DLINEAR_UNREACHABLE();
+  switch (config_.actual_format()) {
     case Config::Format::SMT2:
       return ParseInputCore<smt2::Smt2Driver>(config_, context_);
     case Config::Format::MPS:
