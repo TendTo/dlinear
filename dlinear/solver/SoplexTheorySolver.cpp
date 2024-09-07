@@ -4,6 +4,7 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
+#define DLINEAR_INCLUDE_FMT
 #include "SoplexTheorySolver.h"
 
 #include <algorithm>
@@ -304,6 +305,35 @@ void SoplexTheorySolver::EnableSPXVarBound() {
 void SoplexTheorySolver::EnableSpxRow(const int spx_row) {
   const auto &[var, truth] = theory_row_to_lit_[spx_row];
   EnableSpxRow(spx_row, truth);
+}
+
+SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *, std::set<LiteralSet> &explanations) {
+  Consolidate();
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+
+  DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
+
+  model_ = box;
+  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
+                             [&box](const Variable &var) { return box.has_variable(var); }),
+                 "All theory variables must be present in the box");
+
+  // If we can immediately return SAT afterward
+  if (spx_.numRowsRational() == 0) {
+    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: no need to call LP solver");
+    UpdateModelBounds();
+    return SatResult::SAT_SATISFIABLE;
+  }
+
+  if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
+      config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ON_ITERATION) {
+    preprocessor_.Process(explanations);
+    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: conflict detected in preprocessing");
+    if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
+  }
+
+  DLINEAR_ERROR("SoplexTheorySolver::CheckSat: running soplex");
+  return SatResult::SAT_NO_RESULT;
 }
 
 }  // namespace dlinear

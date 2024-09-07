@@ -129,26 +129,9 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
 
 SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision,
                                                Explanations &explanations) {
-  Consolidate();
-  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
-
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: Box = \n{}", box);
-
-  model_ = box;
-  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
-                             [&box](const Variable &var) { return box.has_variable(var); }),
-                 "All theory variables must be present in the box");
-
-  // If we can immediately return SAT afterward
-  if (spx_.numRowsRational() == 0) {
-    DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: no need to call LP solver");
-    UpdateModelBounds();
-    return SatResult::SAT_SATISFIABLE;
-  }
-
-  preprocessor_.Process(explanations);
-  if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
-  DLINEAR_ERROR("CompleteSoplexTheorySolver::CheckSat: running soplex");
+  SatResult sat_status = SoplexTheorySolver::CheckSat(box, actual_precision, explanations);
+  // The base checksat has found a result, no need to invoke the LP solver
+  if (sat_status != SatResult::SAT_NO_RESULT) return sat_status;
 
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
@@ -160,8 +143,6 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
-
-  SatResult sat_status;
 
   // First, check the sat result without taking into account nq constraints
   sat_status = SpxCheckSat();

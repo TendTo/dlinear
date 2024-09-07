@@ -97,31 +97,10 @@ DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(con
 }
 
 SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, Explanations &explanations) {
-  Consolidate();
-  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+  SatResult sat_status = SoplexTheorySolver::CheckSat(box, actual_precision, explanations);
 
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::CheckSat: Box = \n{}", box);
-
-  SoplexStatus status = SoplexStatus::UNKNOWN;
-  SatResult sat_status = SatResult::SAT_NO_RESULT;
-
-  int rowcount = spx_.numRowsRational();
-
-  model_ = box;
-  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
-                             [&box](const Variable &var) { return box.has_variable(var); }),
-                 "All theory variables must be present in the box");
-
-  // If we can immediately return SAT afterward
-  if (rowcount == 0) {
-    DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: no need to call LP solver");
-    UpdateModelBounds();
-    return SatResult::SAT_DELTA_SATISFIABLE;
-  }
-
-  preprocessor_.Process(explanations);
-  if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
-  DLINEAR_ERROR("CompleteSoplexTheorySolver::CheckSat: running soplex");
+  // The base checksat has found a result, no need to invoke the LP solver
+  if (sat_status != SatResult::SAT_NO_RESULT) return sat_status;
 
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
@@ -136,7 +115,7 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
 
   Rational max_violation, sum_violation;
 
-  status = spx_.optimize();
+  SoplexStatus status = spx_.optimize();
 
   // The status must be OPTIMAL, UNBOUNDED, or INFEASIBLE. Anything else is an error
   if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {

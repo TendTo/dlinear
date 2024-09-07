@@ -46,6 +46,7 @@ class SoplexTheorySolver : public TheorySolver {
 
   void UpdateModelBounds() override;
   void UpdateExplanation(LiteralSet& explanation) override;
+  SatResult CheckSat(const Box& box, mpq_class* actual_precision, std::set<LiteralSet>& explanations) override;
 
   /**
    * Update the model with the solution obtained from the LP solver.
