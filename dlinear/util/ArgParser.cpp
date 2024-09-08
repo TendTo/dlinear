@@ -107,6 +107,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, silent, "-s", "--silent");
   DLINEAR_PARSE_PARAM_BOOL(parser_, with_timings, "-t", "--timings");
   DLINEAR_PARSE_PARAM_BOOL(parser_, read_from_stdin, "--in");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, verify, "--verify");
 
   DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', unsigned int, "-j", "--jobs");
   DLINEAR_PARSE_PARAM_SCAN(parser_, precision, 'g', double, "-p", "--precision");
@@ -217,6 +218,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_PARAM_TO_CONFIG("skip-check-sat", skip_check_sat, bool);
   config.m_verbose_dlinear().set_from_command_line(verbosity_);
   DLINEAR_PARAM_TO_CONFIG("verbose-simplex", verbose_simplex, int);
+  DLINEAR_PARAM_TO_CONFIG("verify", verify, bool);
   DLINEAR_PARAM_TO_CONFIG("timings", with_timings, bool);
 
   DLINEAR_TRACE_FMT("ArgParser::toConfig: {}", config);

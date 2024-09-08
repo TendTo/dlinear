@@ -203,6 +203,7 @@ class Config {
   DLINEAR_PARAMETER(skip_check_sat, bool, false, "Parse the input, but does not run the solver")
   DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
   DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
+  DLINEAR_PARAMETER(verify, bool, false, "If the input produces a SAT output, verify the assignment against the input")
   DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
 };
 
