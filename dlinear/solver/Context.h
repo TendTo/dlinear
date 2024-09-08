@@ -221,6 +221,16 @@ class Context {
    */
   [[nodiscard]] bool is_max() const;
 
+  /**
+   * Check whether the @p model satisfies all the assertions loaded in the context.
+   *
+   * In other words, verifies if it is a SAT assignment for the input variables.
+   * @param model assignment to check
+   * @return true if the @p model satisfies all assignments
+   * @return false if there is at leas an assignment not satisfied by the @p model
+   */
+  [[nodiscard]] bool verify(const Box& model) const;
+
  private:
   /**
    * This header is exposed to external users as a part of API.

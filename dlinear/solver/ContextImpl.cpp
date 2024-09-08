@@ -274,6 +274,23 @@ bool Context::Impl::have_objective() const { return have_objective_; }
 
 bool Context::Impl::is_max() const { return is_max_; }
 
+[[nodiscard]] bool Context::Impl::verify(const Box &model) const {
+  Environment env;
+  for (int i = 0; i < model.size(); i++) {
+    const Variable &var = model.variable(i);
+    const Interval &val = model.interval_vector()[i];
+    DLINEAR_ASSERT(!val.is_empty(), "Variable cannot have an empy value interval");
+    env.insert(var, val.ub());
+  }
+  for (const auto &[var, formula] : assertions())) {
+    if (!formula.Evaluate(env)) {
+      DLINEAR_ERROR_FMT("Not satisfied constraint: {} - model {}", formula, model);
+      return false;
+    }
+  }
+  return true;
+}
+
 SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
@@ -484,7 +501,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
   DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting output");
   output_->result = smt_result;
   output_->n_assertions = assertions().size();
-  if (config_.produce_models()) output_->model = model_;
+  if (config_.produce_models() || config_.verify()) output_->model = model_;
   if (config_.with_timings()) {
     DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting timings");
     output_->sat_stats = sat_solver_->stats();

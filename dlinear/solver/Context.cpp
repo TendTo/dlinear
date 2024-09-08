@@ -23,7 +23,7 @@ Context::~Context() = default;
 Context::Context(Config &config, SmtSolverOutput *const output) : impl_{std::make_unique<Impl>(config, output)} {}
 
 void Context::Assert(const Formula &f) { impl_->Assert(f); }
-Variable Context::AssertRelu(const Expression &e, const Variable& relu_var) { return impl_->AssertRelu(e, relu_var); }
+Variable Context::AssertRelu(const Expression &e, const Variable &relu_var) { return impl_->AssertRelu(e, relu_var); }
 SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
 LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
@@ -69,5 +69,6 @@ const PredicateAbstractor &Context::predicate_abstractor() const { return impl_-
 const ScopedVector<Formula> &Context::assertions() const { return impl_->assertions(); }
 bool Context::have_objective() const { return impl_->have_objective(); }
 bool Context::is_max() const { return impl_->is_max(); }
+bool Context::verify(const Box &model) const { return impl_->verify(model); }
 
 }  // namespace dlinear

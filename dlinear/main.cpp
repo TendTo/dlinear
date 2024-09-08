@@ -32,6 +32,12 @@ int main(int argc, const char* argv[]) {
   if (!config.silent() && !result.matches_expectation(solver.GetExpected())) {
     std::cerr << "WARNING: Expected " << solver.GetExpected() << " but got " << result.result << std::endl;
   }
+  if (!config.silent() && config.verify() && result.is_sat()) {
+    if (solver.Verify(result.model))
+      std::cout << "Model correctly satisfies the input" << std::endl;
+    else
+      std::cerr << "WARNING: Model does not satisfy the input" << std::endl;
+  }
 
   return result.exit_code();
 }

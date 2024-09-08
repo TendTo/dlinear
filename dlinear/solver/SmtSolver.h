@@ -17,6 +17,7 @@
 #include "dlinear/solver/Context.h"
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 
 namespace dlinear {
@@ -105,6 +106,16 @@ class SmtSolver {
    */
   const SmtSolverOutput &CheckSat();
 
+  /**
+   * Check whether the @p model satisfies all the assertions loaded in the context.
+   *
+   * In other words, verifies if it is a SAT assignment for the input variables.
+   * @param model assignment to check
+   * @return true if the @p model satisfies all assignments
+   * @return false if there is at leas an assignment not satisfied by the @p model
+   */
+  [[nodiscard]] bool Verify(const Box &model) const;
+
 #ifdef DLINEAR_PYDLINEAR
   /**
    * Enter the solver.
@@ -136,9 +147,9 @@ class SmtSolver {
    */
   bool ParseInput();
 
-  Config config_;            ///< Configuration of the solver.
-  SmtSolverOutput output_;   ///< Output of the solver.
-  Context context_;          ///< Context obtained from the input file and passed to the SAT and SMT solvers.
+  Config config_;           ///< Configuration of the solver.
+  SmtSolverOutput output_;  ///< Output of the solver.
+  Context context_;         ///< Context obtained from the input file and passed to the SAT and SMT solvers.
 };
 
 }  // namespace dlinear

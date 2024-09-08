@@ -358,6 +358,7 @@ dlinear_cc_library(
         "//dlinear/parser/onnx",
         "//dlinear/parser/smt2",
         "//dlinear/parser/vnnlib",
+        "//dlinear/util:box",
         "//dlinear/util:concepts",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
