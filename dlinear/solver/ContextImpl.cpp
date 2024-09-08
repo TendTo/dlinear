@@ -495,14 +495,21 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     output_->cnfizer_stats = sat_solver_->cnfizer_stats();
   }
   if (!config_.silent() && config_.csv()) {
-    std::cout << "file,solver,assertions,precision,actualPrecision,simplexPhase,lpMode,timeUnit,parserTime,"
-                 "satTime,preprocessorTime,theoryTime,smtTime,result\n";
+    std::cout << "file,complete,satSolver,lpSolver,assertions,precision,actualPrecision,simplexPhase,"
+                 "boundPropagationType,boundPropagationFrequency,boundImplicationFrequency,satDefaultPhase,lpMode,"
+                 "timeUnit,parserTime,satTime,preprocessorTime,theoryTime,smtTime,result\n";
     std::cout << config_.filename() << ","                             //
+              << config_.complete() << ","                             //
+              << config_.sat_solver() << ","                           //
               << config_.lp_solver() << ","                            //
               << output_->n_assertions << ","                          //
               << config_.precision() << ","                            //
               << output_->actual_precision.get_d() << ","              //
               << config_.simplex_sat_phase() << ","                    //
+              << config_.actual_bound_propagation_type() << ","        //
+              << config_.actual_bound_propagation_frequency() << ","   //
+              << config_.actual_bound_implication_frequency() << ","   //
+              << config_.sat_default_phase() << ","                    //
               << config_.actual_lp_mode() << ","                       //
               << "s" << ","                                            //
               << output_->parser_stats.timer().seconds() << ","        //
