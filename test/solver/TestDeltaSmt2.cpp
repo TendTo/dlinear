@@ -15,8 +15,8 @@
 
 using dlinear::Config;
 using dlinear::get_files;
-using dlinear::SmtResult;
 using dlinear::SmtSolver;
+using dlinear::SmtSolverOutput;
 
 class TestDeltaSmt2 : public ::testing::TestWithParam<
                           std::tuple<Config::LPSolver, std::string, double, Config::PreprocessingRunningFrequency>> {
@@ -46,6 +46,6 @@ INSTANTIATE_TEST_SUITE_P(TestDeltaSmt2, TestDeltaSmt2,
 
 TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
   SmtSolver s{config_};
-  const SmtResult result = s.Parse().result;
-  EXPECT_THAT(delta_result(s.GetExpected()), ::testing::Contains(result));
+  const SmtSolverOutput& result = s.Parse();
+  ASSERT_TRUE(delta_match_expected(result, s.GetExpected()));
 }

@@ -8,7 +8,6 @@
 
 #include "TestSymbolicUtils.h"
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
-#include "dlinear/util/exception.h"
 
 using dlinear::Formula;
 using dlinear::is_cnf;
@@ -27,7 +26,7 @@ bool IsSatisfiable(const Formula &f) {
     return false;
   }
   const Variables &vars{f.GetFreeVariables()};
-  DLINEAR_ASSERT(!vars.empty(), "Vars should not be empty.");
+  if (vars.empty()) throw std::runtime_error("Vars should not be empty.");
   const Variable &first_var{*vars.begin()};
   return IsSatisfiable(f.Substitute(first_var, Formula::True())) ||
          IsSatisfiable(f.Substitute(first_var, Formula::False()));

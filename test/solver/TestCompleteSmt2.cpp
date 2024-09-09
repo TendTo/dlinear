@@ -15,8 +15,8 @@
 
 using dlinear::Config;
 using dlinear::get_files;
-using dlinear::SmtResult;
 using dlinear::SmtSolver;
+using dlinear::SmtSolverOutput;
 
 class TestCompleteSmt2 : public ::testing::TestWithParam<
                              std::tuple<Config::LPSolver, std::string, Config::PreprocessingRunningFrequency>> {
@@ -30,6 +30,7 @@ class TestCompleteSmt2 : public ::testing::TestWithParam<
     config_.m_format() = Config::Format::SMT2;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
+    config_.m_verify() = true;
     config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
     config_.m_bound_propagation_frequency() = frequency;
     config_.m_bound_implication_frequency() = frequency;
@@ -45,6 +46,9 @@ INSTANTIATE_TEST_SUITE_P(TestCompleteSmt2, TestCompleteSmt2,
 
 TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
   SmtSolver s{config_};
-  const SmtResult result = s.Parse().result;
-  EXPECT_EQ(s.GetExpected(), result);
+  const SmtSolverOutput result = s.Parse();
+  ASSERT_EQ(s.GetExpected(), result.result);
+  if (result.is_sat()) {
+    ASSERT_TRUE(s.Verify(result.complete_model));
+  }
 }

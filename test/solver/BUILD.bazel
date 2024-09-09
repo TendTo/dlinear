@@ -95,7 +95,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_delta_mps",
-    size = "medium",
+    size = "large",
     data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [

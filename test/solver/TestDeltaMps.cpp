@@ -15,9 +15,8 @@
 
 using dlinear::Config;
 using dlinear::get_files;
-using dlinear::SmtResult;
 using dlinear::SmtSolver;
-using std::unique_ptr;
+using dlinear::SmtSolverOutput;
 
 class TestMps : public ::testing::TestWithParam<
                     std::tuple<Config::LPSolver, std::string, double, Config::PreprocessingRunningFrequency>> {
@@ -31,6 +30,7 @@ class TestMps : public ::testing::TestWithParam<
     config_.m_format() = Config::Format::MPS;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
+    config_.m_verify() = true;
     config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
     config_.m_bound_propagation_frequency() = frequency;
     config_.m_bound_implication_frequency() = frequency;
@@ -47,6 +47,9 @@ INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
 TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   SmtSolver s{config_};
   s.Parse();
-  const SmtResult result = s.CheckSat().result;
-  EXPECT_THAT(delta_result(s.GetExpected()), ::testing::Contains(result));
+  const SmtSolverOutput result = s.CheckSat();
+  ASSERT_TRUE(delta_match_expected(result, s.GetExpected()));
+  if (result.is_sat() && config_.precision() == 0) {
+    ASSERT_TRUE(s.Verify(result.complete_model));
+  }
 }
