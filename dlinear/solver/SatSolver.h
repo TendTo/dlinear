@@ -161,6 +161,8 @@ class SatSolver {
   /** @getter{predicate abstractor, SAT solver} */
   [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
 
+  [[nodiscard]] std::vector<std::vector<Literal>> clauses() const;
+
  protected:
   /**
    * Add a clause @p f to the internal SAT solver.

@@ -24,6 +24,22 @@ SatSolver::SatSolver(PredicateAbstractor &predicate_abstractor, const std::strin
 
 const IterationStats &SatSolver::cnfizer_stats() const { return cnfizer_.stats(); }
 
+std::vector<std::vector<Literal>> SatSolver::clauses() const {
+  std::vector<std::vector<Literal>> clauses{std::vector<Literal>{}};
+  for (int sat_lit : main_clauses_copy_) {
+    if (sat_lit == 0) {
+      if (!clauses.back().empty()) clauses.emplace_back();
+      continue;
+    }
+    const Variable &var = sat_to_var_[std::abs(sat_lit)];
+    // The variable was introduced with some cnf conversion. It is not part of the model
+    if (cnf_variables_.count(var.get_id()) > 0) continue;
+    clauses.back().emplace_back(var, sat_lit > 0);
+  }
+  clauses.pop_back();
+  return clauses;
+}
+
 void SatSolver::AddFormula(const Formula &f) {
   DLINEAR_DEBUG_FMT("SatSolver::AddFormula({})", f);
   std::vector<Formula> clauses{cnfizer_.Convert(f)};
@@ -124,8 +140,7 @@ Model SatSolver::OnSatResult() {
     }
     const Variable &var{it_var->second};
     const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
-    const auto it = var_to_formula_map.find(var);
-    if (it != var_to_formula_map.end()) {  // The variable is a theory literal
+    if (var_to_formula_map.contains(var)) {  // The variable is a theory literal
       DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);
       model.second.emplace_back(var, i > 0);
     } else if (cnf_variables_.count(var.get_id()) == 0) {  // The variable wasn't introduced by CNF transformations
