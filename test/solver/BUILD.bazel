@@ -8,6 +8,7 @@ dlinear_cc_library(
     deps = [
         "//dlinear/solver",
         "//dlinear/util:config",
+        "//dlinear/util:exception",
         "//dlinear/util:filesystem",
         "@googletest//:gtest",
     ],

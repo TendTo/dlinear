@@ -282,14 +282,9 @@ bool Context::Impl::is_max() const { return is_max_; }
     DLINEAR_ASSERT(!val.is_empty(), "Variable cannot have an empy value interval");
     env.insert(var, val.ub());
   }
-  for (const std::vector<Literal> &clause : sat_solver_->clauses()) {
-    const bool sat_clause = std::any_of(clause.begin(), clause.end(), [this, &env](const Literal &lit) {
-      const auto it = predicate_abstractor_.var_to_formula_map().find(lit.var);
-      const Formula &formula = it == predicate_abstractor_.var_to_formula_map().end() ? Formula(lit.var) : it->second;
-      return formula.Evaluate(env) == lit.truth;
-    });
-    if (!sat_clause) {
-      DLINEAR_ERROR_FMT("Not satisfied clause: {} - model {}", clause, model);
+  for (const Formula &assertion : stack_) {
+    if (!assertion.Evaluate(env)) {
+      DLINEAR_ERROR_FMT("Not satisfied clause: {} - model {}", assertion, model);
       return false;
     }
   }
@@ -506,7 +501,8 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
   DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting output");
   output_->result = smt_result;
   output_->n_assertions = assertions().size();
-  if (config_.produce_models() || config_.verify()) output_->model = model_;
+  if (config_.produce_models()) output_->model = model_;
+  if (config_.verify()) output_->complete_model = box();
   if (config_.with_timings()) {
     DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting timings");
     output_->sat_stats = sat_solver_->stats();

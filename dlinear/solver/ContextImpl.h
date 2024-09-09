@@ -188,6 +188,11 @@ class Context::Impl {
    */
   Box &box() { return boxes_.last(); }
   /**
+   * Get the current active box from the top of the @ref stack_ of boxes.
+   * @return the active box of the context
+   */
+  const Box &box() const { return boxes_.last(); }
+  /**
    * Get a representation of a model computed by the solver in response to the last invocation of the check-sat.
    * @return the model computed by the solver
    */

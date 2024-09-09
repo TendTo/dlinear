@@ -753,12 +753,28 @@ Expression pow(const Expression &e1, const Expression &e2) {
   if (is_constant(e2)) {
     const mpq_class &v2{get_constant_value(e2)};
     if (is_constant(e1)) {
-      throw runtime_error("Not implemented");  // Because of mpq_class
+      // which might contain 0/0 problems.
+      if (v2 == 0) {
+        return Expression::One();
+      }
+      // pow(E, 1) => E
+      if (v2 == 1) {
+        return e1;
+      }
 #if 0
       // Constant folding
       const mpq_class& v1{get_constant_value(e1)};
       ExpressionPow::check_domain(v1, v2);
       return Expression{std::pow(v1, v2)};
+#else
+      if (get_constant_value(e2).get_den() == 1) {
+        mpq_class base{get_constant_value(e1)};
+        const mpq_class& exponent = get_constant_value(e2);
+        mpz_pow_ui(base.get_den_mpz_t(), base.get_den_mpz_t(), exponent.get_num().get_ui());
+        mpz_pow_ui(base.get_num_mpz_t(), base.get_num_mpz_t(), exponent.get_num().get_ui());
+        return Expression{base};
+      }
+      throw runtime_error("Not implemented");  // Because of mpq_class
 #endif
     }
     // pow(E, 0) => 1
