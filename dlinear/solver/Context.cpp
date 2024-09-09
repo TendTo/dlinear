@@ -69,6 +69,6 @@ const PredicateAbstractor &Context::predicate_abstractor() const { return impl_-
 const ScopedVector<Formula> &Context::assertions() const { return impl_->assertions(); }
 bool Context::have_objective() const { return impl_->have_objective(); }
 bool Context::is_max() const { return impl_->is_max(); }
-bool Context::verify(const Box &model) const { return impl_->verify(model); }
+bool Context::Verify(const Box &model) const { return impl_->Verify(model); }
 
 }  // namespace dlinear

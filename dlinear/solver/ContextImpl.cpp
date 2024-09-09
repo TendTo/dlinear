@@ -274,7 +274,7 @@ bool Context::Impl::have_objective() const { return have_objective_; }
 
 bool Context::Impl::is_max() const { return is_max_; }
 
-[[nodiscard]] bool Context::Impl::verify(const Box &model) const {
+[[nodiscard]] bool Context::Impl::Verify(const Box &model) const {
   Environment env;
   for (int i = 0; i < model.size(); i++) {
     const Variable &var = model.variable(i);
@@ -282,9 +282,14 @@ bool Context::Impl::is_max() const { return is_max_; }
     DLINEAR_ASSERT(!val.is_empty(), "Variable cannot have an empy value interval");
     env.insert(var, val.ub());
   }
-  for (const auto &[var, formula] : assertions())) {
-    if (!formula.Evaluate(env)) {
-      DLINEAR_ERROR_FMT("Not satisfied constraint: {} - model {}", formula, model);
+  for (const std::vector<Literal> &clause : sat_solver_->clauses()) {
+    const bool sat_clause = std::any_of(clause.begin(), clause.end(), [this, &env](const Literal &lit) {
+      const auto it = predicate_abstractor_.var_to_formula_map().find(lit.var);
+      const Formula &formula = it == predicate_abstractor_.var_to_formula_map().end() ? Formula(lit.var) : it->second;
+      return formula.Evaluate(env) == lit.truth;
+    });
+    if (!sat_clause) {
+      DLINEAR_ERROR_FMT("Not satisfied clause: {} - model {}", clause, model);
       return false;
     }
   }

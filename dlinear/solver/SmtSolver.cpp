@@ -65,7 +65,7 @@ const SmtSolverOutput &SmtSolver::CheckSat() {
   return output_;
 }
 
-bool SmtSolver::Verify(const Box &model) const { return context_.verify(model); }
+bool SmtSolver::Verify(const Box &model) const { return context_.Verify(model); }
 
 const SmtSolverOutput &SmtSolver::Parse(const std::string &filename) {
   config_.m_filename() = filename;

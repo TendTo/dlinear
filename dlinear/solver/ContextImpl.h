@@ -217,7 +217,7 @@ class Context::Impl {
    * @return true if the @p model satisfies all assignments
    * @return false if there is at leas an assignment not satisfied by the @p model
    */
-  [[nodiscard]] bool verify(const Box& model) const;
+  [[nodiscard]] bool Verify(const Box& model) const;
 
  private:
   /**
