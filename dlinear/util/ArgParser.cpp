@@ -100,6 +100,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, complete, "-c", "--complete");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_parsing, "--debug-parsing");
   DLINEAR_PARSE_PARAM_BOOL(parser_, debug_scanning, "--debug-scanning");
+  DLINEAR_PARSE_PARAM_BOOL(parser_, disable_expansion, "--disable-expansion");
   DLINEAR_PARSE_PARAM_BOOL(parser_, enforce_check_sat, "--enforce-check-sat");
   DLINEAR_PARSE_PARAM_BOOL(parser_, optimize, "-o", "--optimize");
   DLINEAR_PARSE_PARAM_BOOL(parser_, produce_models, "-m", "--produce-models");
@@ -198,6 +199,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
+  DLINEAR_PARAM_TO_CONFIG("disable-expansion", disable_expansion, bool);
   DLINEAR_PARAM_TO_CONFIG("bound-propagation-type", bound_propagation_type, Config::BoundPropagationType);
   DLINEAR_PARAM_TO_CONFIG("enforce-check-sat", enforce_check_sat, bool);
   config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<std::string>("file") : "");

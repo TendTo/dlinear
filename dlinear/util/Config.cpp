@@ -18,6 +18,7 @@ Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 std::string Config::filename_extension() const { return get_extension(filename_.get()); }
 
 bool Config::needs_expansion() const {
+  if (disable_expansion_.get()) return false;
   const Format format = actual_format();
   return format == Format::VNNLIB || format == Format::SMT2;
 }
@@ -204,6 +205,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "continuous_output = " << config.continuous_output() << ",\n"
             << "debug_parsing = " << config.debug_parsing() << ",\n"
             << "debug_scanning = " << config.debug_scanning() << ",\n"
+            << "disable_expansion = " << config.disable_expansion() << ",\n"
             << "enforce_check_sat = " << config.enforce_check_sat() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"

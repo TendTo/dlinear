@@ -150,13 +150,6 @@ class Config {
   OptionValue<std::string> filename_{""};
   OptionValue<std::string> onnx_file_{""};
 
-  DLINEAR_PARAMETER(complete, bool, false,
-                    "Run the solver in complete mode.\n"
-                    "\t\tThe precision will be set to 0 and strict inequalities will be taken into account")
-  DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
-  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
-  DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
-  DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
   DLINEAR_PARAMETER(bound_propagation_type, BoundPropagationType, BoundPropagationType::AUTO,
                     "The type of bound propagation to apply in the preprocessing phase.\n"
                     "\t\tEach of the options is more complete and expensive than the previous one.\n"
@@ -167,6 +160,16 @@ class Config {
   DLINEAR_PARAMETER(bound_implication_frequency, PreprocessingRunningFrequency, PreprocessingRunningFrequency::AUTO,
                     "How often to run the bound implication preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), always (3)")
+  DLINEAR_PARAMETER(complete, bool, false,
+                    "Run the solver in complete mode.\n"
+                    "\t\tThe precision will be set to 0 and strict inequalities will be taken into account")
+  DLINEAR_PARAMETER(continuous_output, bool, false, "Continuous output")
+  DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
+  DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
+  DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
+  DLINEAR_PARAMETER(disable_expansion, bool, false, "Disable formula expansion.\n"
+                    "\t\tMakes the parser faster, "
+                    "but may create issues if an intermediate formula of the input becomes non linear")
   DLINEAR_PARAMETER(
       enforce_check_sat, bool, false,
       "Perform a satisfiability check at the end of parsing if the input does not contain a (check-sat) directive")
