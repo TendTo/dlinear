@@ -318,8 +318,8 @@ command_pop:    '(' TK_POP INT ')' {
                 }
                 ;
 
-term_list:      term { $$ = std::vector<Term>(1, $1); }
-        |       term_list term { $1.push_back($2); $$ = $1;  }
+term_list:      term { $$ = std::vector<Term>{$1}; }
+        |       term_list term { $$ = std::move($1); $$.push_back ($2);;  }
         ;
 
 term:           TK_TRUE { $$ = Formula::True(); }
