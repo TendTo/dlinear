@@ -206,15 +206,20 @@ Expression ExpandPow(const Expression &base, const Expression &exponent) {
 
 ExpressionCell::ExpressionCell(const ExpressionKind k, const size_t hash, const bool is_poly, const bool include_ite,
                                Variables variables)
-    : kind_{k},
+    : variables_{std::move(variables)},
+      kind_{k},
       hash_{hash_combine(static_cast<size_t>(kind_), hash)},
       is_polynomial_{is_poly},
-      include_ite_{include_ite},
-      variables_{std::move(variables)} {}
+      include_ite_{include_ite} {}
 
 Expression ExpressionCell::GetExpression() { return Expression{this}; }
 
-const Variables &ExpressionCell::GetVariables() const { return variables_; }
+const Variables &ExpressionCell::GetVariables() const {
+  if (variables_.empty()) UpdateVariables();
+  return variables_;
+}
+
+void ExpressionCell::UpdateVariables() const {}
 
 UnaryExpressionCell::UnaryExpressionCell(const ExpressionKind k, const Expression &e, const bool is_poly)
     : ExpressionCell{k, e.get_hash(), is_poly, e.include_ite(), e.GetVariables()}, e_{e} {}
@@ -437,18 +442,17 @@ std::string ExpressionInfty::to_smt2_string() const { return (sign_ == -1 ? "-in
 ExpressionAdd::ExpressionAdd(const mpq_class &constant, map<Expression, mpq_class> expr_to_coeff_map)
     : ExpressionCell{ExpressionKind::Add, hash_combine(hash<mpq_class>{}(constant), expr_to_coeff_map),
                      determine_polynomial(expr_to_coeff_map), determine_include_ite(expr_to_coeff_map),
-                     ExtractVariables(expr_to_coeff_map)},
+                     {}},
       constant_(constant),
       expr_to_coeff_map_{std::move(expr_to_coeff_map)} {
   assert(!expr_to_coeff_map_.empty());
 }
 
-Variables ExpressionAdd::ExtractVariables(const std::map<Expression, mpq_class> &expr_to_coeff_map) {
-  Variables ret{};
-  for (const auto &p : expr_to_coeff_map) {
-    ret.insert(p.first.GetVariables());
+void ExpressionAdd::UpdateVariables() const {
+  assert(variables_.empty());
+  for (const auto &p : expr_to_coeff_map_) {
+    variables_.insert(p.first.GetVariables());
   }
-  return ret;
 }
 
 bool ExpressionAdd::EqualTo(const ExpressionCell &e) const {
@@ -693,19 +697,18 @@ ExpressionAddFactory &ExpressionAddFactory::AddMap(const map<Expression, mpq_cla
 ExpressionMul::ExpressionMul(const mpq_class &constant, map<Expression, Expression> base_to_exponent_map)
     : ExpressionCell{ExpressionKind::Mul, hash_combine(hash<mpq_class>{}(constant), base_to_exponent_map),
                      determine_polynomial(base_to_exponent_map), determine_include_ite(base_to_exponent_map),
-                     ExtractVariables(base_to_exponent_map)},
+                     {}},
       constant_(constant),
       base_to_exponent_map_{std::move(base_to_exponent_map)} {
   assert(!base_to_exponent_map_.empty());
 }
 
-Variables ExpressionMul::ExtractVariables(const std::map<Expression, Expression> &base_to_exponent_map) {
-  Variables ret{};
-  for (const auto &p : base_to_exponent_map) {
-    ret.insert(p.first.GetVariables());
-    ret.insert(p.second.GetVariables());
+void ExpressionMul::UpdateVariables() const {
+  assert(variables_.empty());
+  for (const auto &[base, exponent] : base_to_exponent_map_) {
+    variables_.insert(base.GetVariables());
+    variables_.insert(exponent.GetVariables());
   }
-  return ret;
 }
 
 bool ExpressionMul::EqualTo(const ExpressionCell &e) const {
@@ -1856,17 +1859,16 @@ mpq_class ExpressionMax::DoEvaluate(const mpq_class &v1, const mpq_class &v2) co
 // --------------------
 ExpressionIfThenElse::ExpressionIfThenElse(const Formula &f_cond, const Expression &e_then, const Expression &e_else)
     : ExpressionCell{ExpressionKind::IfThenElse, hash_combine(hash_value<Formula>{}(f_cond), e_then, e_else), false,
-                     true, ExtractVariables(f_cond, e_then, e_else)},
+                     true, {}},
       f_cond_{f_cond},
       e_then_{e_then},
       e_else_{e_else} {}
 
-Variables ExpressionIfThenElse::ExtractVariables(const Formula &f_cond, const Expression &e_then,
-                                                 const Expression &e_else) {
-  Variables ret{f_cond.GetFreeVariables()};
-  ret.insert(e_then.GetVariables());
-  ret.insert(e_else.GetVariables());
-  return ret;
+void ExpressionIfThenElse::UpdateVariables() const {
+  assert(variables_.empty());
+  variables_.insert(f_cond_.GetFreeVariables());
+  variables_.insert(e_then_.GetVariables());
+  variables_.insert(e_else_.GetVariables());
 }
 
 bool ExpressionIfThenElse::EqualTo(const ExpressionCell &e) const {

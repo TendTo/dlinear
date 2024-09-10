@@ -100,12 +100,14 @@ class ExpressionCell {
   /** Returns an expression pointing to this ExpressionCell. */
   Expression GetExpression();
 
+  virtual void UpdateVariables() const;
+
+  mutable Variables variables_; ///< Cached variables contained in the expression
  private:
   const ExpressionKind kind_{};
   const size_t hash_{};
   const bool is_polynomial_{false};
   const bool include_ite_{false};
-  const Variables variables_;
 
   // Reference counter.
   mutable std::atomic<unsigned> rc_{0};
@@ -309,7 +311,7 @@ class ExpressionAdd : public ExpressionCell {
   std::map<Expression, mpq_class> &get_mutable_expr_to_coeff_map() { return expr_to_coeff_map_; }
 
  private:
-  static Variables ExtractVariables(const std::map<Expression, mpq_class> &expr_to_coeff_map);
+  void UpdateVariables() const override;
   std::ostream &DisplayTerm(std::ostream &os, bool print_plus, const mpq_class &coeff, const Expression &term) const;
 
   mpq_class constant_{};
@@ -421,7 +423,7 @@ class ExpressionMul : public ExpressionCell {
   std::map<Expression, Expression> &get_mutable_base_to_exponent_map() { return base_to_exponent_map_; }
 
  private:
-  static Variables ExtractVariables(const std::map<Expression, Expression> &base_to_exponent_map);
+  void UpdateVariables() const override;
   std::ostream &DisplayTerm(std::ostream &os, bool print_mul, const Expression &base, const Expression &exponent) const;
 
   mpq_class constant_{};
@@ -795,7 +797,7 @@ class ExpressionIfThenElse : public ExpressionCell {
   const Expression &get_else_expression() const { return e_else_; }
 
  private:
-  static Variables ExtractVariables(const Formula &f_cond, const Expression &e_then, const Expression &e_else);
+  void UpdateVariables() const override;
 
   const Formula f_cond_;
   const Expression e_then_;
