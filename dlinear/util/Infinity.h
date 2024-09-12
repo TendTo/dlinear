@@ -13,13 +13,16 @@ class Infinity {
   static const mpq_class& ninfinity(Config::LPSolver lp_solver);
 
  private:
+  static void Initialise();
+
+  static bool initialised_;
 #ifdef DLINEAR_ENABLED_QSOPTEX
-  const static mpq_class qsoptex_ninfinity_;
-  const static mpq_class qsoptex_infinity_;
+  static mpq_class qsoptex_ninfinity_;
+  static mpq_class qsoptex_infinity_;
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-  const static mpq_class soplex_ninfinity_;
-  const static mpq_class soplex_infinity_;
+  static mpq_class soplex_ninfinity_;
+  static mpq_class soplex_infinity_;
 #endif
 };
 

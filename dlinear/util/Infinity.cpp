@@ -11,19 +11,31 @@
 
 namespace dlinear {
 
+bool Infinity::initialised_{false};
+
 #ifdef DLINEAR_ENABLED_QSOPTEX
-const mpq_class Infinity::qsoptex_ninfinity_{mpq_NINFTY};
-const mpq_class Infinity::qsoptex_infinity_{mpq_INFTY};
+mpq_class Infinity::qsoptex_ninfinity_{0};
+mpq_class Infinity::qsoptex_infinity_{0};
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-const mpq_class Infinity::soplex_ninfinity_{-soplex::infinity};
-const mpq_class Infinity::soplex_infinity_{soplex::infinity};
+mpq_class Infinity::soplex_ninfinity_{-soplex::infinity};
+mpq_class Infinity::soplex_infinity_{soplex::infinity};
 #endif
 
 const mpq_class& Infinity::infinity(const Config& config) { return infinity(config.lp_solver()); }
 const mpq_class& Infinity::ninfinity(const Config& config) { return ninfinity(config.lp_solver()); }
 
+inline void Infinity::Initialise() {
+  if (initialised_) return;
+  Infinity::qsoptex_ninfinity_ = gmp::to_mpq_class(mpq_NINFTY);
+  Infinity::qsoptex_infinity_ = gmp::to_mpq_class(mpq_INFTY);
+  Infinity::soplex_ninfinity_ = -soplex::infinity;
+  Infinity::soplex_infinity_ = soplex::infinity;
+  initialised_ = true;
+}
+
 const mpq_class& Infinity::infinity(const Config::LPSolver lp_solver) {
+  Initialise();
   switch (lp_solver) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
@@ -39,6 +51,7 @@ const mpq_class& Infinity::infinity(const Config::LPSolver lp_solver) {
 }
 
 const mpq_class& Infinity::ninfinity(const Config::LPSolver lp_solver) {
+  Initialise();
   switch (lp_solver) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
