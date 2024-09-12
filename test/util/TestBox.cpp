@@ -36,7 +36,7 @@ class TestBox : public ::testing::TestWithParam<Config::LPSolver> {
   const Variable w_{"w"};
   mpq_class inf_{
 #ifdef DLINEAR_ENABLED_QSOPTEX
-      GetParam() == Config::LPSolver::QSOPTEX ? qsopt_ex::infinity :
+      GetParam() == Config::LPSolver::QSOPTEX ? mpq_class{mpq_INFTY} :
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
       GetParam() == Config::LPSolver::SOPLEX ? soplex::infinity

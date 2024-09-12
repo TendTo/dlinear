@@ -73,7 +73,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_delta_smt2",
-    size = "medium",
+    size = "large",
     data = glob(["smt2/*.smt2"]),
     tags = ["solver"],
     deps = [
@@ -84,7 +84,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_complete_smt2",
-    size = "medium",
+    size = "large",
     data = glob(["smt2/*.smt2"]),
     tags = ["solver"],
     deps = [
@@ -95,7 +95,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_delta_mps",
-    size = "large",
+    size = "enormous",
     data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [

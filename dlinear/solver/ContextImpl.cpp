@@ -121,7 +121,7 @@ void Context::Impl::Push() {
 SatResult Context::Impl::CheckSat(mpq_class *precision) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
   if (config_.skip_check_sat()) {
-    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Skipping SAT check");
+    DLINEAR_DEBUG("ContextImpl::CheckSat() - Skipping SAT check");
     UpdateAndPrintOutput(SmtResult::SKIP_SAT);
     return SatResult::SAT_NO_RESULT;
   }
@@ -323,10 +323,11 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
   // Add the theory literals from the SAT solver to the theory solver.
   theory_solver_->AddLiterals();
+  theory_solver_->Consolidate(box());
 
   // Preprocess the fixed theory literals to avoid having to preprocess them again and again.
   DLINEAR_TRACE_FMT("Fixed theory literals: {}", sat_solver_->FixedTheoryLiterals());
-  const std::set<LiteralSet> explanations{theory_solver_->AddFixedLiterals(sat_solver_->FixedTheoryLiterals())};
+  const std::set<LiteralSet> explanations{theory_solver_->PreprocessFixedLiterals(sat_solver_->FixedTheoryLiterals())};
   if (!explanations.empty()) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
     LearnExplanations(explanations);
@@ -339,7 +340,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     constraint->TightenBounds(theory_solver_->m_fixed_preprocessor());
     DLINEAR_TRACE_FMT("Tighten Bounds: {} - {}", constraint->theory_var(), *constraint);
   }
-  theory_solver_->Reset(box());
+  theory_solver_->Reset();
 
   for (auto it = pl_constraints_.begin(); it != pl_constraints_.end();) {
     const LiteralSet learned_clauses{it->get()->LearnedClauses()};
@@ -355,7 +356,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   }
 
   if (!config_.onnx_file().empty()) {
-    NNSoplexTheorySolver &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
+    auto &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
     nnSoplexTheorySolver.SetPiecewiseLinearConstraints(pl_constraints_);
   }
 
@@ -406,7 +407,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
 
-    theory_solver_->Reset(box());
+    theory_solver_->Reset();
     const TheorySolver::Explanations bound_explanations{theory_solver_->EnableLiterals(theory_model)};
     if (!bound_explanations.empty()) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
@@ -447,10 +448,9 @@ std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver() {
   switch (config_.lp_solver()) {
 #ifdef DLINEAR_ENABLED_QSOPTEX
     case Config::LPSolver::QSOPTEX:
-      if (config_.complete())  // TODO: add support for complete QSOPTEX
+      if (!config_.complete())  // TODO: add support for complete QSOPTEX
         return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_);
-      else
-        return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_);
+      DLINEAR_RUNTIME_ERROR("Only delta-complete mode is supported for qsoptex");
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
     case Config::LPSolver::SOPLEX:
@@ -498,13 +498,13 @@ void Context::Impl::LearnExplanations(const TheorySolver::Explanations &explanat
 
 void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
   if (output_ == nullptr) return;
-  DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting output");
+  DLINEAR_DEBUG("ContextImpl::UpdateAndPrintOutput() - Setting output");
   output_->result = smt_result;
   output_->n_assertions = assertions().size();
   if (config_.produce_models()) output_->model = model_;
   if (config_.verify()) output_->complete_model = box();
   if (config_.with_timings()) {
-    DLINEAR_DEBUG("ContextImpl::CheckOpt() - Setting timings");
+    DLINEAR_DEBUG("ContextImpl::UpdateAndPrintOutput() - Setting timings");
     output_->sat_stats = sat_solver_->stats();
     output_->ite_stats = ite_eliminator_.stats();
     output_->theory_stats = theory_solver_->stats();

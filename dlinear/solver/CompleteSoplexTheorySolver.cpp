@@ -65,16 +65,16 @@ void CompleteSoplexTheorySolver::AddVariable(const Variable &var) {
 }
 
 void CompleteSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula &formula) {
-  if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
-  const auto it = lit_to_theory_row_.find(formula_var.get_id());
+  DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
   // Literal is already present
-  if (it != lit_to_theory_row_.end()) return;
+  if (lit_to_theory_row_.contains(formula_var.get_id())) return;
+
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLiteral({})", formula);
 
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
 
   spx_sense_.emplace_back(parseLpSense(formula));
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::AddLinearLiteral: {} -> {}", formula_var, spx_sense_.back());
 
   const int spx_row{spx_.numRowsRational()};
 
@@ -91,16 +91,18 @@ void CompleteSoplexTheorySolver::AddLiteral(const Variable &formula_var, const F
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(static_cast<size_t>(spx_row) == last_nq_status_.size() - 1, "incorrect spx_rhs_.size()");
-  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLinearLiteral({} ↦ {})", formula_var, spx_row);
+  DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::AddLiteral: {} ↦ {}", formula_var, spx_row);
 }
 
 CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiteral(const Literal &lit) {
-  Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
+  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
+
+  Explanations explanations{preprocessor_.EnableLiteral(lit)};
+  if (!explanations.empty()) return explanations;
 
   const auto &[var, truth] = lit;
   const auto it_row = lit_to_theory_row_.find(var.get_id());
-
   // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
   if (it_row == lit_to_theory_row_.end()) {
     DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral: ignoring ({})", lit);
@@ -111,15 +113,9 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   const int spx_row = it_row->second;
   // Update the truth value for the current iteration with the last SAT solver assignment
   theory_row_to_lit_[spx_row].truth = truth;
-  // Add the row to the list of enabled theory rows
-  enabled_theory_rows_.push_back(spx_row);
 
-  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
   const Formula &formula = predicate_abstractor_[var];
-  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
-
-  Explanations explanations{preprocessor_.EnableLiteral(lit)};
-  if (!explanations.empty()) return explanations;
+  DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::EnableLinearLiteral({})", lit);
 
   // If it is not a simple bound, we need to enable the row in the soplex solver
   // Later, active strict bounds will also appear in the LP problem as strict rows
@@ -127,17 +123,11 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   return explanations;
 }
 
-SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision,
-                                               Explanations &explanations) {
-  SatResult sat_status = SoplexTheorySolver::CheckSat(box, actual_precision, explanations);
-  // The base checksat has found a result, no need to invoke the LP solver
-  if (sat_status != SatResult::SAT_NO_RESULT) return sat_status;
-
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  stats_.Increase();
+SatResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   // Set the bounds for the variables
-  EnableSPXVarBound();
+  EnableSpxVarBound();
   // Remove all the disabled rows from the LP solver
   DisableSpxRows();
 
@@ -145,7 +135,7 @@ SatResult CompleteSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
 
   // First, check the sat result without taking into account nq constraints
-  sat_status = SpxCheckSat();
+  SatResult sat_status = SpxCheckSat();
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: no nq constraints sat_status = {}", sat_status);
   if (sat_status != SatResult::SAT_SATISFIABLE) {
     theory_rows_to_explanations_.insert(last_theory_rows_to_explanation_);
@@ -234,8 +224,8 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
   }
 }
 
-void CompleteSoplexTheorySolver::Reset(const Box &box) {
-  SoplexTheorySolver::Reset(box);
+void CompleteSoplexTheorySolver::Reset() {
+  SoplexTheorySolver::Reset();
   nq_row_to_theory_rows_.clear();
   theory_rows_to_explanations_.clear();
   nq_explanations_.clear();
@@ -244,9 +234,8 @@ void CompleteSoplexTheorySolver::Reset(const Box &box) {
   single_nq_rows_.clear();
 }
 
-void CompleteSoplexTheorySolver::Consolidate() {
+void CompleteSoplexTheorySolver::Consolidate(const Box &box) {
   if (is_consolidated_) return;
-  SoplexTheorySolver::Consolidate();
   const int spx_col = spx_.numColsRational();
   // Column of the strict auxiliary variable t bound between 0 and 1
   spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), 1, 0));
@@ -260,6 +249,7 @@ void CompleteSoplexTheorySolver::Consolidate() {
   DLINEAR_ASSERT(rowcount == spx_rhs_.size(), "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(rowcount == last_nq_status_.size(), "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(rowcount == theory_row_to_lit_.size(), "incorrect theory_row_to_lit_.size()");
+  SoplexTheorySolver::Consolidate(box);
   DLINEAR_DEBUG("CompleteSoplexTheorySolver::Consolidate: consolidated");
 }
 
@@ -441,8 +431,8 @@ bool CompleteSoplexTheorySolver::UpdateBitIncrementIteratorBasedOnExplanation(Bi
   return true;
 }
 
-void CompleteSoplexTheorySolver::EnableSPXVarBound() {
-  SoplexTheorySolver::EnableSPXVarBound();
+void CompleteSoplexTheorySolver::EnableSpxVarBound() {
+  SoplexTheorySolver::EnableSpxVarBound();
   // For all columns...
   for (const auto &[var, theory_bound] : preprocessor_.theory_bounds()) {
     // ... for each active bound of that column...

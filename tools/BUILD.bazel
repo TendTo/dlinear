@@ -34,7 +34,7 @@ bool_flag(
 
 bool_flag(
     name = "enable_qsoptex",
-    build_setting_default = False,
+    build_setting_default = True,
 )
 
 bool_flag(

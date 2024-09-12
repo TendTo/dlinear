@@ -16,15 +16,8 @@
 
 namespace dlinear {
 
-const mpq_class QsoptexTheorySolver::infinity{mpq_INFTY};
-const mpq_class QsoptexTheorySolver::ninfinity{mpq_NINFTY};
-
 QsoptexTheorySolver::QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : TheorySolver(predicate_abstractor, class_name),
-      continuous_output_{config_.continuous_output()},
-      with_timings_{config_.with_timings()},
-      qsx_{nullptr},
-      ray_{1} {
+    : TheorySolver(predicate_abstractor, class_name), qsx_{nullptr}, ray_{0}, x_{0} {
   qsopt_ex::QSXStart();
   qsx_ = mpq_QScreate_prob(nullptr, QS_MIN);
   DLINEAR_ASSERT(qsx_, "Failed to create QSopt_ex problem");
@@ -50,10 +43,38 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!status, "Invalid status");
   var_to_theory_col_.emplace(var.get_id(), qsx_col);
   theory_col_to_var_.emplace_back(var);
-  theory_bounds_.emplace_back(mpq_class{mpq_NINFTY}, mpq_class{mpq_INFTY});
+  fixed_preprocessor_.AddVariable(var);
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
+void QsoptexTheorySolver::Consolidate(const Box &box) {
+  if (is_consolidated_) return;
+  TheorySolver::Consolidate(box);
+  // Clear variable bounds
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
+    DLINEAR_ASSERT(theory_col < mpq_QSget_colcount(qsx_), "theory_col must be in bounds");
+    if (box.has_variable(var)) {
+      DLINEAR_ASSERT(mpq_NINFTY <= box[var].lb(), "Lower bound too low");
+      DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "Lower bound must be smaller than upper bound");
+      DLINEAR_ASSERT(box[var].ub() <= mpq_INFTY, "Upper bound too high");
+      fixed_preprocessor_.SetInfinityBounds(var, box[var].lb(), box[var].ub());
+    }
+  }
+  preprocessor_.Clear(fixed_preprocessor_);
+}
+
+void QsoptexTheorySolver::UpdateModelSolution() {
+  const int colcount = mpq_QSget_rowcount(qsx_);
+  DLINEAR_ASSERT(x_.size() >= static_cast<std::size_t>(colcount), "x.dim() must be >= colcount");
+  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
+    const Variable &var{theory_col_to_var_[theory_col]};
+    DLINEAR_ASSERT(
+        model_[var].lb() <= gmp::to_mpq_class(x_[theory_col]) && gmp::to_mpq_class(x_[theory_col]) <= model_[var].ub(),
+        "val must be in bounds");
+    model_[var] = x_[theory_col];
+  }
+}
 void QsoptexTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(mpq_QSget_rowcount(qsx_) == 0, "There must be no rows in the LP solver");
   DLINEAR_ASSERT(std::all_of(theory_col_to_var_.cbegin(), theory_col_to_var_.cend(),
@@ -86,9 +107,9 @@ void QsoptexTheorySolver::UpdateModelBounds() {
     DLINEAR_ASSERT(!res, "Invalid res");
     mpq_class ub{temp};
     mpq_class val;
-    if (QsoptexTheorySolver::ninfinity < lb) {
+    if (mpq_NINFTY < lb) {
       val = lb;
-    } else if (ub < QsoptexTheorySolver::infinity) {
+    } else if (ub < mpq_INFTY) {
       val = ub;
     } else {
       val = 0;
@@ -97,35 +118,6 @@ void QsoptexTheorySolver::UpdateModelBounds() {
     model_[var] = val;
   }
   mpq_clear(temp);
-}
-
-void QsoptexTheorySolver::Reset(const Box &box) {
-  DLINEAR_TRACE_FMT("QsoptexTheorySolver::Reset(): Box =\n{}", box);
-  Consolidate();
-  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
-
-  // Clear constraint bounds
-  for (auto &bound : theory_bounds_) bound.Clear();
-  const int qsx_rows{mpq_QSget_rowcount(qsx_)};
-  DLINEAR_ASSERT(static_cast<size_t>(qsx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
-  for (int i = 0; i < qsx_rows; i++) {
-    mpq_QSchange_sense(qsx_, i, 'G');
-    mpq_QSchange_rhscoef(qsx_, i, mpq_NINFTY);
-  }
-  // Clear variable bounds
-  [[maybe_unused]] const int qsx_cols{mpq_QSget_colcount(qsx_)};
-  for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
-    const Variable &var{theory_col_to_var_[theory_col]};
-    DLINEAR_ASSERT(0 <= theory_col && theory_col < qsx_cols, "theory_col must be in bounds");
-    if (box.has_variable(var)) {
-      DLINEAR_ASSERT(QsoptexTheorySolver::ninfinity <= box[var].lb(), "Lower bound too low");
-      DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "Lower bound must be smaller than upper bound");
-      DLINEAR_ASSERT(box[var].ub() <= QsoptexTheorySolver::infinity, "Upper bound too high");
-      theory_bounds_[theory_col].SetBounds(box[var].lb(), box[var].ub());
-    }
-    mpq_QSchange_bound(qsx_, theory_col, 'L', mpq_NINFTY);
-    mpq_QSchange_bound(qsx_, theory_col, 'U', mpq_INFTY);
-  }
 }
 
 void QsoptexTheorySolver::ClearLinearObjective() {
@@ -138,6 +130,42 @@ void QsoptexTheorySolver::ClearLinearObjective() {
   mpq_clear(c_value);
 }
 
+void QsoptexTheorySolver::SetRowCoeff(const Formula &formula, const int qsx_row) {
+  DLINEAR_ASSERT_FMT(formula.IsFlattened(), "The formula {} must be flattened", formula);
+
+  const Expression &lhs = get_lhs_expression(formula);
+  const Expression &rhs = get_rhs_expression(formula);
+  DLINEAR_ASSERT(is_variable(lhs) || is_multiplication(lhs) || is_addition(lhs), "Unsupported expression");
+  DLINEAR_ASSERT(is_constant(rhs), "Unsupported expression");
+
+  qsx_rhs_.emplace_back(get_constant_value(rhs));
+
+  if (is_variable(lhs)) {
+    SetQsxVarCoeff(qsx_row, get_variable(lhs), 1);
+  } else if (is_addition(lhs)) {
+    DLINEAR_ASSERT(get_constant_in_addition(lhs) == 0, "The addition constant must be 0");
+    const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(lhs);
+    for (const auto &[var, coeff] : map) {
+      DLINEAR_ASSERT_FMT(is_variable(var), "Only variables are supported in the addition, got {}", var);
+      SetQsxVarCoeff(qsx_row, get_variable(var), coeff);
+    }
+  } else if (is_multiplication(lhs)) {
+    DLINEAR_ASSERT(get_base_to_exponent_map_in_multiplication(lhs).size() == 1, "Only one variable is supported");
+    DLINEAR_ASSERT(is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
+                   "Base must be a variable");
+    DLINEAR_ASSERT(is_constant(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) &&
+                       get_constant_value(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) == 1,
+                   "Only exp == 1 is supported");
+    SetQsxVarCoeff(qsx_row, get_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
+                   get_constant_in_multiplication(lhs));
+  } else {
+    DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
+  }
+  if (qsx_rhs_.back() <= mpq_NINFTY || qsx_rhs_.back() >= mpq_INFTY) {
+    DLINEAR_RUNTIME_ERROR_FMT("LP RHS value too large: {}", qsx_rhs_.back());
+  }
+}
+
 void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
   ClearLinearObjective();
   if (is_constant(expr)) {
@@ -145,7 +173,7 @@ void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
       DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
     }
   } else if (is_variable(expr)) {
-    SetQSXVarObjCoef(get_variable(expr), 1);
+    SetQsxVarObjCoeff(get_variable(expr), 1);
   } else if (is_addition(expr)) {
     const std::map<Expression, mpq_class> &map = get_expr_to_coeff_map_in_addition(expr);
     if (0 != get_constant_in_addition(expr)) {
@@ -155,28 +183,29 @@ void QsoptexTheorySolver::SetLinearObjective(const Expression &expr) {
       if (!is_variable(var)) {
         DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
       }
-      SetQSXVarObjCoef(get_variable(var), coeff);
+      SetQsxVarObjCoeff(get_variable(var), coeff);
     }
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported in objective", expr);
   }
 }
 
-void QsoptexTheorySolver::SetQPXVarBound() {
-  for (int theory_col = 0; theory_col < static_cast<int>(theory_bounds_.size()); theory_col++) {
-    mpq_QSchange_bound(qsx_, theory_col, 'L', theory_bounds_[theory_col].active_lower_bound().get_mpq_t());
-    mpq_QSchange_bound(qsx_, theory_col, 'U', theory_bounds_[theory_col].active_upper_bound().get_mpq_t());
+void QsoptexTheorySolver::EnableQsxVarBound() {
+  for (const auto &[var, bounds] : preprocessor_.theory_bounds()) {
+    const int theory_col = var_to_theory_col_.at(var.get_id());
+    mpq_QSchange_bound(qsx_, theory_col, 'L', bounds.active_lower_bound().get_mpq_t());
+    mpq_QSchange_bound(qsx_, theory_col, 'U', bounds.active_upper_bound().get_mpq_t());
+    DLINEAR_TRACE_FMT("EnableQsxVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(),
+                      bounds.active_upper_bound());
   }
 }
 
-void QsoptexTheorySolver::SetQSXVarCoef(int qsx_row, const Variable &var, const mpq_class &value) {
+void QsoptexTheorySolver::SetQsxVarCoeff(int qsx_row, const Variable &var, const mpq_class &value) {
   const auto it = var_to_theory_col_.find(var.get_id());
   // Variable is not present in the LP solver
   if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR("Variable undefined: {}");
   // Variable has the coefficients too large
-  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
-    DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
-  }
+  if (value <= mpq_NINFTY || value >= mpq_INFTY) DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
 
   mpq_t c_value;
   mpq_init(c_value);
@@ -185,57 +214,18 @@ void QsoptexTheorySolver::SetQSXVarCoef(int qsx_row, const Variable &var, const 
   mpq_clear(c_value);
 }
 
-void QsoptexTheorySolver::SetQSXVarObjCoef(const Variable &var, const mpq_class &value) {
+void QsoptexTheorySolver::SetQsxVarObjCoeff(const Variable &var, const mpq_class &value) {
   const auto it = var_to_theory_col_.find(var.get_id());
   // Variable is not present in the LP solver
   if (it == var_to_theory_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Variable undefined: {}", var);
 
-  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
-    DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
-  }
+  if (value <= mpq_NINFTY || value >= mpq_INFTY) DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
+
   mpq_t c_value;
   mpq_init(c_value);
   mpq_set(c_value, value.get_mpq_t());
   mpq_QSchange_objcoef(qsx_, it->second, c_value);
   mpq_clear(c_value);
-}
-
-bool QsoptexTheorySolver::SetQSXVarBound(const Bound &bound, int qsx_col) {
-  const auto &[var, type, value] = bound;
-  DLINEAR_ASSERT_FMT(type == LpColBound::L || type == LpColBound::U || type == LpColBound::B || type == LpColBound::F,
-                     "type must be 'L', 'U', 'B' or 'N', received {}", type);
-
-  // Add both bounds
-  if (type == LpColBound::B) {
-    return SetQSXVarBound({var, LpColBound::L, value}, qsx_col) && SetQSXVarBound({var, LpColBound::U, value}, qsx_col);
-  }
-
-  DLINEAR_ASSERT(type == LpColBound::L || type == LpColBound::U, "Type must be '<=' or '>='");
-  if (value <= QsoptexTheorySolver::ninfinity || value >= QsoptexTheorySolver::infinity) {
-    DLINEAR_RUNTIME_ERROR_FMT("Simple bound too large: {}", value);
-  }
-
-  mpq_t c_value;
-  mpq_init(c_value);
-
-  mpq_QSget_bound(qsx_, qsx_col, toChar(type), &c_value);
-  mpq_class existing{c_value};
-  if ((type == LpColBound::L && value > existing) || (type == LpColBound::U && value < existing)) {
-    mpq_set(c_value, value.get_mpq_t());
-    mpq_QSchange_bound(qsx_, qsx_col, toChar(type), c_value);
-  }
-
-  // Make sure there are no inverted bounds
-  mpq_QSget_bound(qsx_, qsx_col, toChar(-type), &c_value);
-  mpq_class opposite_bound{c_value};
-  if ((type == LpColBound::L && opposite_bound < value) || (type == LpColBound::U && opposite_bound > value)) {
-    DLINEAR_DEBUG_FMT("SoplexSatSolver::EnableSPXVarBound: variable {} has invalid bounds [{}, {}]", var,
-                      type == LpColBound::L ? value : opposite_bound, type == LpColBound::L ? opposite_bound : value);
-    return false;
-  }
-
-  mpq_clear(c_value);
-  return true;
 }
 
 extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_t *const /*x*/, const mpq_t infeas,
@@ -247,8 +237,8 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
   double infeas_gt = nextafter(mpq_get_d(infeas), std::numeric_limits<double>::infinity());
   // fmt::print uses shortest round-trip format for doubles, by default
   fmt::print("PARTIAL: delta-sat with delta = {} ( > {})", infeas_gt, mpq_class(infeas));
-  if (theory_solver->with_timings_) {
-    fmt::print(" after {} seconds", theory_solver->stats_.timer().seconds());
+  if (theory_solver->config().with_timings()) {
+    fmt::print(" after {} seconds", theory_solver->stats().timer().seconds());
   }
   fmt::print("\n");
 }
@@ -275,10 +265,22 @@ void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explana
     explanation.insert(lit);
     // For each free variable in the literal, add their bounds to the explanation
     for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
-      const int theory_col = var_to_theory_col_.at(col_var.get_id());
-      TheoryBoundsToExplanation(theory_col, explanation);
+      preprocessor_.theory_bounds().at(col_var).GetActiveExplanation(explanation);
     }
   }
+}
+void QsoptexTheorySolver::DisableQsxRows() {
+  const int rowcount = mpq_QSget_rowcount(qsx_);
+  for (int theory_row = 0; theory_row < rowcount; theory_row++) {
+    if (!theory_rows_state_.at(theory_row)) {
+      mpq_QSchange_sense(qsx_, theory_row, 'G');
+      mpq_QSchange_rhscoef(qsx_, theory_row, mpq_NINFTY);
+    }
+  }
+}
+void QsoptexTheorySolver::EnableQsxRow(const int qsx_row) {
+  const auto &[var, truth] = theory_row_to_lit_[qsx_row];
+  EnableQsxRow(qsx_row, truth);
 }
 
 }  // namespace dlinear

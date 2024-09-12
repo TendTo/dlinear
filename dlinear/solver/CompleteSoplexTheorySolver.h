@@ -49,15 +49,15 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision, Explanations& explanations) override;
+  SatResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
 
-  void Reset(const Box& box) override;
+  void Reset() override;
 
  private:
   static const mpq_class strict_col_lb_;  ///< Zero. Used for the strict variable lower bound
   static const mpq_class strict_col_ub_;  ///< One. Used for the strict variable upper bound
 
-  void EnableSPXVarBound() override;
+  void EnableSpxVarBound() override;
   void EnableSpxRow(int spx_row, bool truth) override;
 
   /**
@@ -82,7 +82,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
   /** Update the explanation with the infeasible core. */
   void UpdateExplanationInfeasible();
 
-  void Consolidate() override;
+  void Consolidate(const Box& box) override;
 
   /**
    * Enable the non-equal constraint at row @p spx_row based on the given @p truth.

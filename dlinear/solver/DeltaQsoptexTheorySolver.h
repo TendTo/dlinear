@@ -35,7 +35,10 @@ class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision, Explanations& explanations) override;
+  SatResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
+
+ private:
+  void EnableQsxRow(int spx_row, bool truth) override;
 };
 
 }  // namespace dlinear

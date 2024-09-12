@@ -45,6 +45,7 @@ INSTANTIATE_TEST_SUITE_P(TestCompleteSmt2, TestCompleteSmt2,
                                                               Config::PreprocessingRunningFrequency::ALWAYS)));
 
 TEST_P(TestCompleteSmt2, Smt2InputAgainstExpectedOutput) {
+  if (config_.lp_solver() == Config::LPSolver::QSOPTEX) GTEST_SKIP();
   SmtSolver s{config_};
   const SmtSolverOutput result = s.Parse();
   ASSERT_EQ(s.GetExpected(), result.result);

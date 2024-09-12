@@ -37,24 +37,92 @@ class SoplexTheorySolver : public TheorySolver {
                               const std::string& class_name = "SoplexTheorySolver");
 
   void AddVariable(const Variable& var) override;
-
-  void Reset(const Box& box) override;
+  void Consolidate(const Box& box) override;
+  void Reset() override;
 
  protected:
   static const mpq_class infinity_;   ///< Positive infinity
   static const mpq_class ninfinity_;  ///< Negative infinity
 
   void UpdateModelBounds() override;
+  void UpdateModelSolution() override;
   void UpdateExplanation(LiteralSet& explanation) override;
-  SatResult CheckSat(const Box& box, mpq_class* actual_precision, std::set<LiteralSet>& explanations) override;
+
+  /** Set the bounds of the variables in the LP solver.  */
+  virtual void EnableSpxVarBound();
 
   /**
-   * Update the model with the solution obtained from the LP solver.
+   * Enable the @p spx_row row for the LP solver.
    *
-   * The model with show an assignment that satisfies all the theory literals.
-   * @pre the lp solver must have found a feasible solution
+   * The truth value and the free variables are collected from the state of the solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @pre The row's truth value must have been updated correctly
+   * @pre The row's free variables must have been updated correctly
+   * @param spx_row index of the row to enable
    */
-  void UpdateModelSolution();
+  void EnableSpxRow(int spx_row);
+  /**
+   * Enable the @p spx_row row for the LP solver.
+   * @pre The row's coefficients must have been set correctly before calling this function
+   * @param spx_row index of the row to enable
+   * @param truth truth value of the row
+   */
+  virtual void EnableSpxRow(int spx_row, bool truth) = 0;
+
+  /**
+   * Disable all disabled spx rows from the LP solver.
+   *
+   * Whether a row is disabled or not is determined by the @ref theory_row_state_ field,
+   * where a true value means the row is enabled and a false value means the row is disabled.
+   */
+  void DisableSpxRows();
+
+  /**
+   * Parse a @p formula and return the vector of coefficients to apply to the decisional variables.
+   *
+   * It will store the rhs term in @ref spx_rhs_ and create a vector of coefficients for the row.
+   * @param formula symbolic formula representing the row
+   * @return vector of coefficients to apply to the decisional variables in the row
+   */
+  soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
+  /**
+   * Set the coefficients to apply to @p var on a specific row.
+   * @param coeffs vector of coefficients to apply to the decisional variables
+   * @param var variable to set the coefficients for
+   * @param value value to set the coefficients to
+   */
+  void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
+  void CreateArtificials(int spx_row);
+
+  /**
+   * Get the infeasibility ray of the LP problem.
+   *
+   * This will return the Farkas ray, which can be used to find the infeasible core.
+   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
+   * @note The infeasible core is not guaranteed to be minimal
+   * @pre The LP problem must be infeasible
+   * @pre @code farkas_ray.size() == num_rows @endcode
+   * @param[out] farkas_ray Farkas ray
+   */
+  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray);
+  /**
+   * Get the infeasibility rays of the LP problem.
+   *
+   * This will return the Farkas ray and use it to compute the bounds ray.
+   * Combinind both it is possible to to find an even more precise infeasible core.
+   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
+   * Furthermore, given the Farkas ray @f$y@f$, we get an infeasible linear inequality @f$y^T A x \le y^T b@f$.
+   * Therefore, even setting @f$x_i@f$ to the bound that minimises @f$y^T A x@f$, that minimum is still @f$> y^T b@f$,
+   * but tells which bound to include in the explanation.
+   * @note The infeasible core is not guaranteed to be minimal
+   * @pre The LP problem must be infeasible
+   * @pre @code farkas_ray.size() == num_rows @endcode
+   * @pre @code bounds_ray.size() == num_cols - 1 @endcode
+   * @pre All the element in @p bounds_ray must be @ref BoundViolationType::NO_BOUND_VIOLATION
+   * @param[out] farkas_ray Farkas ray
+   * @param[out] bounds_ray information about the bounds that are violated
+   */
+  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray, std::vector<BoundViolationType>& bounds_ray);
 
   /**
    * Get all active rows in the current solution.
@@ -99,83 +167,6 @@ class SoplexTheorySolver : public TheorySolver {
    * @return false if the row is not active or if the value is not equal to @p value
    */
   bool IsRowActive(int spx_row, const soplex::Rational& value);
-
-  /** Set the bounds of the variables in the LP solver.  */
-  virtual void EnableSPXVarBound();
-
-  /**
-   * Enable the @p spx_row row for the LP solver.
-   *
-   * The truth value and the free variables are collected from the state of the solver.
-   * @pre The row's coefficients must have been set correctly before calling this function
-   * @pre The row's truth value must have been updated correctly
-   * @pre The row's free variables must have been updated correctly
-   * @param spx_row index of the row to enable
-   */
-  void EnableSpxRow(int spx_row);
-  /**
-   * Enable the @p spx_row row for the LP solver.
-   * @pre The row's coefficients must have been set correctly before calling this function
-   * @param spx_row index of the row to enable
-   * @param truth truth value of the row
-   */
-  virtual void EnableSpxRow(int spx_row, bool truth) = 0;
-
-  /**
-   * Disable all disabled spx rows from the LP solver.
-   *
-   * Whether a row is disabled or not is determined by the @ref theory_row_state_ field,
-   * where a true value means the row is enabled and a false value means the row is disabled.
-   */
-  void DisableSpxRows();
-
-  /**
-   * Parse a row and return the vector of coefficients to apply to the decisional variables.
-   *
-   * Parse an formula representing a row in order to produce store the rhs term in @ref spx_rhs_ and create a
-   * vector of coefficients for the row to pass to the LP solver
-   * @param formula symbolic formula representing the row
-   * @return vector of coefficients to apply to the decisional variables in the row
-   */
-  soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
-  /**
-   * Set the coefficients to apply to @p var on a specific row.
-   * @param coeffs vector of coefficients to apply to the decisional variables
-   * @param var variable to set the coefficients for
-   * @param value value to set the coefficients to
-   */
-  void SetSPXVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
-  void CreateArtificials(int spx_row);
-
-  /**
-   * Get the infeasibility ray of the LP problem.
-   *
-   * This will return the Farkas ray, which can be used to find the infeasible core.
-   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
-   * @note The infeasible core is not guaranteed to be minimal
-   * @pre The LP problem must be infeasible
-   * @pre @code farkas_ray.size() == num_rows @endcode
-   * @param[out] farkas_ray Farkas ray
-   */
-  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray);
-  /**
-   * Get the infeasibility rays of the LP problem.
-   *
-   * This will return the Farkas ray and use it to compute the bounds ray.
-   * Combinind both it is possible to to find an even more precise infeasible core.
-   * The infeasible constraints will have the same indexes as the non-zero elements in the Farkas ray.
-   * Furthermore, given the Farkas ray @f$y@f$, we get an infeasible linear inequality @f$y^T A x \le y^T b@f$.
-   * Therefore, even setting @f$x_i@f$ to the bound that minimises @f$y^T A x@f$, that minimum is still @f$> y^T b@f$,
-   * but tells which bound to include in the explanation.
-   * @note The infeasible core is not guaranteed to be minimal
-   * @pre The LP problem must be infeasible
-   * @pre @code farkas_ray.size() == num_rows @endcode
-   * @pre @code bounds_ray.size() == num_cols - 1 @endcode
-   * @pre All the element in @p bounds_ray must be @ref BoundViolationType::NO_BOUND_VIOLATION
-   * @param[out] farkas_ray Farkas ray
-   * @param[out] bounds_ray information about the bounds that are violated
-   */
-  void GetSpxInfeasibilityRay(soplex::VectorRational& farkas_ray, std::vector<BoundViolationType>& bounds_ray);
 
   soplex::SoPlex spx_;  ///< SoPlex exact LP solver
 

@@ -49,6 +49,7 @@ SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor
 }
 
 void SoplexTheorySolver::AddVariable(const Variable &var) {
+  DLINEAR_ASSERT(!is_consolidated_, "Cannot add variables after consolidation");
   auto it = var_to_theory_col_.find(var.get_id());
   // The variable is already present
   if (it != var_to_theory_col_.end()) return;
@@ -59,7 +60,6 @@ void SoplexTheorySolver::AddVariable(const Variable &var) {
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
   fixed_preprocessor_.AddVariable(var);
-  preprocessor_.AddVariable(var);
   DLINEAR_DEBUG_FMT("SoplexTheorySolver::AddVariable({} ↦ {})", var, spx_col);
 }
 
@@ -118,6 +118,8 @@ soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formul
 
   const Expression &lhs = get_lhs_expression(formula);
   const Expression &rhs = get_rhs_expression(formula);
+  DLINEAR_ASSERT(is_variable(lhs) || is_multiplication(lhs) || is_addition(lhs), "Unsupported expression");
+  DLINEAR_ASSERT(is_constant(rhs), "Unsupported expression");
 
   soplex::DSVectorRational coeffs;
   spx_rhs_.emplace_back(get_constant_value(rhs));
@@ -132,6 +134,15 @@ soplex::DSVectorRational SoplexTheorySolver::ParseRowCoeff(const Formula &formul
       if (!is_variable(var)) DLINEAR_RUNTIME_ERROR_FMT("Expression {} not supported", lhs);
       SetSPXVarCoeff(coeffs, get_variable(var), coeff);
     }
+  } else if (is_multiplication(lhs)) {
+    DLINEAR_ASSERT(get_base_to_exponent_map_in_multiplication(lhs).size() == 1, "Only one variable is supported");
+    DLINEAR_ASSERT(is_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
+                   "Base must be a variable");
+    DLINEAR_ASSERT(is_constant(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) &&
+                       get_constant_value(get_base_to_exponent_map_in_multiplication(lhs).begin()->second) == 1,
+                   "Only exp == 1 is supported");
+    SetSPXVarCoeff(coeffs, get_variable(get_base_to_exponent_map_in_multiplication(lhs).begin()->first),
+                   get_constant_in_multiplication(lhs));
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
   }
@@ -196,36 +207,28 @@ void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_r
   }
 }
 
-void SoplexTheorySolver::Reset(const Box &box) {
-  DLINEAR_TRACE_FMT("SoplexTheorySolver::Reset(): Box =\n{}", box);
-  Consolidate();
-  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before resetting it");
-
-  // Omitting to do this seems to cause problems in soplex
-  // https://github.com/scipopt/soplex/issues/38
-  spx_.clearBasis();
-  // Clear enabled theory rows
-  enabled_theory_rows_.clear();
-
-  preprocessor_.Clear(fixed_preprocessor_);
-
-  // Clear constraint bounds
-  const int spx_rows = spx_.numRowsRational();
-  DLINEAR_ASSERT(static_cast<std::size_t>(spx_rows) == theory_row_to_lit_.size(), "Row count mismatch");
-  theory_rows_state_.assign(spx_rows, false);
-
+void SoplexTheorySolver::Consolidate(const Box &box) {
+  if (is_consolidated_) return;
   // Clear variable bounds
-  [[maybe_unused]] const int spx_cols{spx_.numColsRational()};
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
-    DLINEAR_ASSERT(0 <= theory_col && theory_col < spx_cols, "theory_col must be in bounds");
+    DLINEAR_ASSERT(theory_col < spx_.numColsRational(), "theory_col must be in bounds");
     if (box.has_variable(var)) {
       DLINEAR_ASSERT(ninfinity_ <= box[var].lb(), "lower bound must be >= -infinity");
       DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "lower bound must be <= upper bound");
       DLINEAR_ASSERT(box[var].ub() <= infinity_, "upper bound must be <= infinity");
-      const_cast<BoundVectorMap &>(preprocessor_.theory_bounds()).at(var).SetBounds(box[var].lb(), box[var].ub());
+      fixed_preprocessor_.SetInfinityBounds(var, box[var].lb(), box[var].ub());
     }
   }
+  preprocessor_.Clear(fixed_preprocessor_);
+  TheorySolver::Consolidate(box);
+}
+
+void SoplexTheorySolver::Reset() {
+  TheorySolver::Reset();
+  // Omitting to do this seems to cause problems in soplex
+  // https://github.com/scipopt/soplex/issues/38
+  spx_.clearBasis();
 }
 
 void SoplexTheorySolver::UpdateModelSolution() {
@@ -276,11 +279,11 @@ void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   for (int i = 0; i < spx_.numRowsRational(); ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexTheorySolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
-    const auto &[var, truth] = theory_row_to_lit_[i];
+    const Literal &lit = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.emplace(var, truth);
+    explanation.insert(lit);
     // Add all the active bounds for the free variables in the row to the explanation
-    for (const auto &col_var : predicate_abstractor_[var].GetFreeVariables()) {
+    for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
       preprocessor_.theory_bounds().at(col_var).GetActiveExplanation(explanation);
     }
   }
@@ -292,11 +295,11 @@ void SoplexTheorySolver::DisableSpxRows() {
   }
 }
 
-void SoplexTheorySolver::EnableSPXVarBound() {
+void SoplexTheorySolver::EnableSpxVarBound() {
   for (const auto &[var, bounds] : preprocessor_.theory_bounds()) {
     spx_.changeBoundsRational(var_to_theory_col_.at(var.get_id()), bounds.active_lower_bound().get_mpq_t(),
                               bounds.active_upper_bound().get_mpq_t());
-    DLINEAR_TRACE_FMT("EnableSPXVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(),
+    DLINEAR_TRACE_FMT("EnableSpxVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(),
                       bounds.active_upper_bound());
   }
 }
@@ -304,35 +307,6 @@ void SoplexTheorySolver::EnableSPXVarBound() {
 void SoplexTheorySolver::EnableSpxRow(const int spx_row) {
   const auto &[var, truth] = theory_row_to_lit_[spx_row];
   EnableSpxRow(spx_row, truth);
-}
-
-SatResult SoplexTheorySolver::CheckSat(const Box &box, mpq_class *, std::set<LiteralSet> &explanations) {
-  Consolidate();
-  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
-
-  DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
-
-  model_ = box;
-  DLINEAR_ASSERT(std::all_of(theory_col_to_var_.begin(), theory_col_to_var_.end(),
-                             [&box](const Variable &var) { return box.has_variable(var); }),
-                 "All theory variables must be present in the box");
-
-  // If we can immediately return SAT afterward
-  if (spx_.numRowsRational() == 0) {
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: no need to call LP solver");
-    UpdateModelBounds();
-    return SatResult::SAT_SATISFIABLE;
-  }
-
-  if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
-      config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ON_ITERATION) {
-    preprocessor_.Process(explanations);
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: conflict detected in preprocessing");
-    if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
-  }
-
-  DLINEAR_ERROR("SoplexTheorySolver::CheckSat: running soplex");
-  return SatResult::SAT_NO_RESULT;
 }
 
 }  // namespace dlinear

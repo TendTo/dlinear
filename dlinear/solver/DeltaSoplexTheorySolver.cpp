@@ -35,23 +35,20 @@ DeltaSoplexTheorySolver::DeltaSoplexTheorySolver(PredicateAbstractor &predicate_
 }
 
 void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula &formula) {
-  if (is_consolidated_) DLINEAR_RUNTIME_ERROR("Cannot add literals after consolidation");
-  const auto it = lit_to_theory_row_.find(formula_var.get_id());
+  DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
   // Literal is already present
-  if (it != lit_to_theory_row_.end()) return;
+  if (lit_to_theory_row_.contains(formula_var.get_id())) return;
+
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLiteral({})", formula);
 
   // Create the LP solver variables
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
-
-  spx_sense_.emplace_back(~parseLpSense(formula));
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::AddLinearLiteral: {} -> {}", formula_var, spx_sense_.back());
+  if (BoundPreprocessor::IsSimpleBound(formula)) return;
 
   const int spx_row{spx_.numRowsRational()};
-
-  const bool is_simple_bound = BoundPreprocessor::IsSimpleBound(formula);
-  soplex::DSVectorRational coeffs{is_simple_bound ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
-  if (is_simple_bound) spx_rhs_.emplace_back(0);
+  soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
   spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  spx_sense_.emplace_back(~parseLpSense(formula));
 
   // Update indexes
   lit_to_theory_row_.emplace(formula_var.get_id(), spx_row);
@@ -61,60 +58,46 @@ void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Form
                  "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_sense_.size() - 1, "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(spx_row) == spx_rhs_.size() - 1, "incorrect spx_rhs_.size()");
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLinearLiteral({} ↦ {})", formula_var, spx_row);
+  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::AddLiteral: {} ↦ {}", formula, spx_row);
 }
 
 DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(const Literal &lit) {
-  Consolidate();
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
-
-  const auto &[var, truth] = lit;
-  const auto it_row = lit_to_theory_row_.find(var.get_id());
-
-  // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
-  if (it_row == lit_to_theory_row_.end()) {
-    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({}{})", truth ? "" : "¬", var);
-    return {};
-  }
-
-  // A non-trivial linear literal from the input problem
-  const int spx_row = it_row->second;
-  // Update the truth value for the current iteration with the last SAT solver assignment
-  theory_row_to_lit_[spx_row].truth = truth;
-  // Add the row to the list of enabled theory rows
-  enabled_theory_rows_.push_back(spx_row);
-
-  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().count(var) != 0, "var must map to a theory literal");
-  const Formula &formula = predicate_abstractor_[var];
-  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", formula);
+  DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
 
   Explanations explanations{preprocessor_.EnableLiteral(lit)};
   if (!explanations.empty()) return explanations;
 
-  // If it is not a simple bound, we need to enable the row in the soplex solver
-  if (!BoundPreprocessor::IsSimpleBound(formula)) EnableSpxRow(spx_row, truth);
+  const auto &[var, truth] = lit;
+  const auto it = lit_to_theory_row_.find(var.get_id());
+  // If the literal was not already among the constraints (rows) of the LP, it must be a learned literal.
+  if (it == lit_to_theory_row_.end()) {
+    DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral: ignoring ({})", lit);
+    return {};
+  }
+
+  // A non-trivial linear literal from the input problem
+  const int spx_row = it->second;
+  // Update the truth value for the current iteration with the last SAT solver assignment
+  theory_row_to_lit_[spx_row].truth = truth;
+
+  DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({})", lit);
+
+  EnableSpxRow(spx_row, truth);
   return explanations;
 }
 
-SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, Explanations &explanations) {
-  SatResult sat_status = SoplexTheorySolver::CheckSat(box, actual_precision, explanations);
-
-  // The base checksat has found a result, no need to invoke the LP solver
-  if (sat_status != SatResult::SAT_NO_RESULT) return sat_status;
-
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
-  stats_.Increase();
+SatResult DeltaSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
+  DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   // Set the bounds for the variables
-  EnableSPXVarBound();
+  EnableSpxVarBound();
   // Remove all the disabled rows from the LP solver
   DisableSpxRows();
 
   // Now we call the solver
   DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
-
   Rational max_violation, sum_violation;
-
   SoplexStatus status = spx_.optimize();
 
   // The status must be OPTIMAL, UNBOUNDED, or INFEASIBLE. Anything else is an error
@@ -131,18 +114,15 @@ SatResult DeltaSoplexTheorySolver::CheckSat(const Box &box, mpq_class *actual_pr
   switch (status) {
     case SoplexStatus::OPTIMAL:
       UpdateModelSolution();
-      sat_status = SatResult::SAT_DELTA_SATISFIABLE;
-      break;
+      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning SAT_DELTA_SATISFIABLE");
+      return SatResult::SAT_DELTA_SATISFIABLE;
     case SoplexStatus::INFEASIBLE:
       UpdateExplanations(explanations);
-      sat_status = SatResult::SAT_UNSATISFIABLE;
-      break;
+      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning SAT_UNSATISFIABLE");
+      return SatResult::SAT_UNSATISFIABLE;
     default:
       DLINEAR_UNREACHABLE();
   }
-
-  DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: returning {}", sat_status);
-  return sat_status;
 }
 
 void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {

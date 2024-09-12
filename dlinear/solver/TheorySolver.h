@@ -83,7 +83,7 @@ class TheorySolver {
    * (e.g. their bound can be computed once, at the beginning of the run instead of at each iteration)
    * @param fixed_literals set of fixed literals
    */
-  virtual Explanations AddFixedLiterals(const LiteralSet &fixed_literals);
+  virtual Explanations PreprocessFixedLiterals(const LiteralSet &fixed_literals);
   /**
    * Add a variable (column) to the theory solver.
    * @param var variable to add
@@ -138,6 +138,10 @@ class TheorySolver {
   [[nodiscard]] const BoundPreprocessor &fixed_preprocessor() const { return fixed_preprocessor_; }
   /** @getsetter{fixed bound preprocessor, TheorySolver} */
   [[nodiscard]] BoundPreprocessor &m_fixed_preprocessor() { return fixed_preprocessor_; }
+  /** @getter{number of rows, TheorySolver} */
+  [[nodiscard]] std::size_t theory_row_count() const { return theory_row_to_lit_.size(); }
+  /** @getter{number of columns, TheorySolver} */
+  [[nodiscard]] std::size_t theory_col_count() const { return theory_col_to_var_.size(); }
 
   /**
    * Check the satisfiability of the theory.
@@ -146,25 +150,51 @@ class TheorySolver {
    * If it is, SAT will be returned, along with the actual precision required to obtain that result.
    * Otherwise, UNSAT will be returned, along with an explanation of the conflict.
    * In that case, the precision will remain the same as the one passed as input.
-   * @param[in,out] box current box with the bounds for the variables. It will be updated with the model if SAT is
-   * returned
+   * @param box current box with the bounds for the variables, including the boolean ones
    * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
    * @param[out] explanation set of literals that explain the conflict if UNSAT is returned
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
    */
-  virtual SatResult CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations) = 0;
+  SatResult CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations);
+  /**
+   * Check the satisfiability of the theory.
+   *
+   * Called by @ref CheckSat.
+   * Run the internal LP solver to check whether the underlying linear programming problem is feasible.
+   * If it is, SAT will be returned, along with the actual precision required to obtain that result.
+   * Otherwise, UNSAT will be returned, along with an explanation of the conflict.
+   * In that case, the precision will remain the same as the one passed as input.
+   * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
+   * @param[out] explanation set of literals that explain the conflict if UNSAT is returned
+   * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
+   * model
+   * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
+   */
+  virtual SatResult CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) = 0;
+
+  /**
+   * Consolidate the solver.
+   *
+   * This method must be called after all the literals have been added to the solver and before calling
+   * any other method.
+   * Once the solver has been consolidated, no more literals can be added to it.
+   * A previously added literal can be enabled using the @ref EnableLiteral method and disabled with @ref Reset.
+   * @note A solver can be consolidated only once.
+   * If you need to change the variables or constraints, you must create a new theory solver.
+   * @param box box with the bounds for the variables
+   */
+  virtual void Consolidate(const Box &box);
 
   /**
    * Reset the linear problem.
    *
-   * All constraints will be disabled and the bounds will be set to the ones in the box.
-   * @note The variables and constraints will not be modified.
-   * If you need to change the variables or constraints, you must create a new theory solver.
-   * @param box cox containing the bounds for the variables that will be applied to the theory solver
+   * All constraints' state will be set to @p disabled and the bounds for each variable will be cleared.
+   * @note The variables and constraints themselves will not be modified.
+   * If you need to change them, you must create a new theory solver.
    */
-  virtual void Reset(const Box &box) = 0;
+  virtual void Reset();
 
   /**
    * Get the statistics of the theory solver.
@@ -183,8 +213,16 @@ class TheorySolver {
   void BoundsToTheoryRows(const Variable &var, const mpq_class &value, std::set<int> &theory_rows) const;
   void BoundsToTheoryRows(const Variable &var, BoundViolationType type, std::set<int> &bound_idxs) const;
   /**
+   * Update the model with the solution obtained from the LP solver.
+   *
+   * The model with show an assignment that satisfies all the theory literals.
+   * @pre the lp solver must have found a feasible solution
+   */
+  virtual void UpdateModelSolution() = 0;
+  /**
    * Update each variable in the model with the bounds passed to the theory solver.
-   * @note there is no check in place on whether the bounds are inverted or the constraints satisfied.
+   * @note there is no check in place on whether the bounds are inverted or the constraints
+   * satisfied.
    */
   virtual void UpdateModelBounds() = 0;
   /**
@@ -203,18 +241,6 @@ class TheorySolver {
    * @param explanations set of explanations the new conflicting clauses will be added to
    */
   void UpdateExplanations(Explanations &explanations);
-
-  /**
-   * Consolidate the solver.
-   *
-   * This method must be called after all the literals have been added to the solver and before calling
-   * any other method.
-   * Once the solver has been consolidated, no more literals can be added to it.
-   * A previously added literal can be enabled using the @ref EnableLiteral method and disabled with @ref Reset.
-   * @note A solver can be consolidated only once.
-   * If you need to change the variables or constraints, you must create a new theory solver.
-   */
-  virtual void Consolidate();
 
   const Config &config_;  ///< Configuration of the theory solver
 
@@ -236,10 +262,7 @@ class TheorySolver {
                                                    ///< The row is the constraint used by the theory solver.
                                                    ///< The literal is the one created by the PredicateAbstractor.
                                                    ///< It may not contain simple bounds
-  std::vector<int> enabled_theory_rows_;           ///< Enabled theory rows.
-                                                   ///< Rows that have been enabled in the current problem instance.
-                                                   ///< The bounds are the constraints on the values of the variables.
-  std::vector<bool> theory_rows_state_;            ///< Whether each theory row is active or not.
+  std::vector<bool> theory_rows_state_;            ///< Whether each theory row is enabled or not.
 
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
