@@ -190,6 +190,10 @@ void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations
   DLINEAR_DEBUG_FMT("BoundPreprocessor::Process: {} conflict found in evaluation", explanations.size());
 }
 
+void BoundPreprocessor::SetInfinityBounds(const Variable& var, const mpq_class& lb, const mpq_class& ub) {
+  theory_bounds_.insert_or_assign(var, BoundVector{lb, ub});
+}
+
 void BoundPreprocessor::Clear() {
   env_ = Environment{};
   for (auto& [var, bounds] : theory_bounds_) bounds.Clear();

@@ -57,6 +57,16 @@ class BoundPreprocessor {
 
   void GetActiveExplanation(const Variable& var, LiteralSet& explanation);
 
+  /**
+   * Set the lower and upper infinity bounds (@p lb, ub) of the variable @p var.
+   *
+   * All bounds currently assigned to @p var will be removed.
+   * @param var variable to fix the bounds for
+   * @param lb lower infinity bound
+   * @param ub upper infinity bound
+   */
+  void SetInfinityBounds(const Variable& var, const mpq_class& lb, const mpq_class& ub);
+
   void Clear();
   void Clear(const BoundPreprocessor& fixed_preprocessor);
 

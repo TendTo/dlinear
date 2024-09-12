@@ -346,8 +346,8 @@ class BoundVector {
   int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
   Bounds bounds_;                        ///< Equality and inequality bounds
   Bounds nq_bounds_;                     ///< Non-equality bounds
-  const mpq_class* const inf_l_;         ///< Starting lower bound
-  const mpq_class* const inf_u_;         ///< Starting upper bound
+  const mpq_class* inf_l_;               ///< Starting lower bound
+  const mpq_class* inf_u_;               ///< Starting upper bound
   const mpq_class* active_lower_bound_;  ///< Active lower bound
   const mpq_class* active_upper_bound_;  ///< Active upper bound
 };
