@@ -27,7 +27,22 @@ size_t hash<mpq_class>::operator()(const mpq_class &val) const {
 
 }  // namespace std
 
-namespace dlinear::gmp {
+namespace dlinear {
+
+std::strong_ordering operator<=>(const mpq_class &lhs, const mpq_t &rhs) {
+  const mpq_class &rhs_class = gmp::to_mpq_class(rhs);
+  return lhs < rhs_class   ? std::strong_ordering::less
+         : lhs > rhs_class ? std::strong_ordering::greater
+                           : std::strong_ordering::equal;
+}
+std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs) {
+  const mpq_class &lhs_class = gmp::to_mpq_class(lhs);
+  return lhs_class < rhs   ? std::strong_ordering::less
+         : lhs_class > rhs ? std::strong_ordering::greater
+                           : std::strong_ordering::equal;
+}
+
+namespace gmp {
 
 mpz_class floor(const mpq_class &val) {
   // This rounds towards zero
@@ -51,4 +66,6 @@ mpz_class ceil(const mpq_class &val) {
   }
 }
 
-}  // namespace dlinear::gmp
+}  // namespace gmp
+
+}  // namespace dlinear

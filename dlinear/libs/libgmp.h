@@ -30,7 +30,12 @@ struct hash<mpq_class> {
 };
 }  // namespace std
 
-namespace dlinear::gmp {
+namespace dlinear {
+
+std::strong_ordering operator<=>(const mpq_class &lhs, const mpq_t &rhs);
+std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs);
+
+namespace gmp {
 
 /**
  * Calculate the floor of a rational number.
@@ -239,7 +244,9 @@ inline mpq_class string_to_mpq(std::string_view str) {
   return is_exp_positive ? mpq_class{res * mult} : res / mult;
 }
 
-}  // namespace dlinear::gmp
+}  // namespace gmp
+
+}  // namespace dlinear
 
 #ifdef DLINEAR_INCLUDE_FMT
 
