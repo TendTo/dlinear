@@ -16,7 +16,11 @@
 #error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
 #endif
 
-#include <soplex.h>  // IWYU pragma: export
+#pragma GCC system_header
+
+#include <soplex/soplex.h>  // IWYU pragma: export
+
+extern template class soplex::SoPlexBase<soplex::Real>;
 
 #ifdef DLINEAR_INCLUDE_FMT
 

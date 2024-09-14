@@ -1,11 +1,12 @@
 """Include the soplex LP solver library in the build."""
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 licenses(["notice"])  # Apache 2.0 License
 
 cmake(
-    name = "soplex",
+    name = "soplex_cmake",
     lib_source = ":all_srcs",
     lib_name = "libsoplex",
     cache_entries = {
@@ -33,10 +34,38 @@ cmake(
     visibility = ["//visibility:public"],
     defines = ["SOPLEX_WITH_GMP", "SOPLEX_EXTERNAL_FMT"],
     postfix_script = """find $INSTALLDIR -type l -exec sh -c 'for i in "$@"; do cp --preserve --remove-destination "$(readlink -f "$i")" "$i"; done' sh {} +
-                        cp -L $INSTALLDIR/lib/libsoplexshared.so.7.1.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
+                       cp -L $INSTALLDIR/lib/libsoplex.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
         "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
         "//conditions:default": "",
     }),
+)
+
+cc_library(
+    visibility = ["//visibility:public"],
+    name = "soplex",
+    srcs = glob(["src/**/*.cpp"], exclude = ["src/example.cpp", "src/soplexmain.cpp"]),
+    hdrs = glob(["src/**/*.h", "src/**/*.hpp"]),
+    defines = [
+        "SOPLEX_WITH_GMP",
+        "SOPLEX_EXTERNAL_FMT",
+        "SOPLEX_WITH_MPFR",
+        "SOPLEX_WITH_BOOST",
+        "SOPLEX_NO_CONFIG_HEADER",
+        'SPX_GITHASH=\\"8.0.0.0\\"',
+        "SOPLEX_VERSION_MAJOR=8",
+        "SOPLEX_VERSION_MINOR=0",
+        "SOPLEX_VERSION_PATCH=0",
+        "SOPLEX_VERSION_SUB=0",
+    ],
+    linkstatic = select({
+        "@dlinear//tools:dynamic_build": False,
+        "//conditions:default": True,
+    }),
+    strip_include_prefix = "src",
+    copts = ["-Wno-error"],
+    includes = ["src"],
+    include_prefix = "soplex",
+    deps = ["@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr", "@fmt"],
 )
 
 filegroup(

@@ -27,6 +27,7 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "soplex",
+    srcs = ["libsoplex.cpp"],
     hdrs = ["libsoplex.h"],
     deps = [
         "//dlinear/util:logging",

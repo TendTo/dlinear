@@ -72,6 +72,10 @@ class MpqArray {
    * @param nElements The number of elements in the array.
    */
   explicit MpqArray(size_t nElements);
+  MpqArray(const MpqArray &) = delete;
+  MpqArray(MpqArray &&) = delete;
+  MpqArray &operator=(const MpqArray &) = delete;
+  MpqArray &operator=(MpqArray &&) = delete;
   /** Destroy the MpqArray object, freeing the array */
   ~MpqArray();
   /**

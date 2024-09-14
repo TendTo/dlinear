@@ -9,10 +9,13 @@ module(
 bazel_dep(name = "rules_cc", version = "0.0.9")
 
 # Apache License 2.0 | rules_foreign_cc for building C++ libraries with other build systems
-bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
+bazel_dep(name = "rules_foreign_cc", version = "0.12.0")
 
 # Apache License 2.0 | rules_python for building python targets
 bazel_dep(name = "rules_python", version = "0.33.1")
+
+# Apache License 2.0 | bazel rules to gather system information
+bazel_dep(name = "platforms", version = "0.0.9")
 
 # https://github.com/madler/zlib/blob/develop/LICENSE | zlib compression library
 bazel_dep(name = "zlib", version = "1.3.1")
@@ -94,9 +97,9 @@ github_archive(
 github_archive(
     name = "soplex",
     build_file = "//third_party:soplex.BUILD.bazel",
-    commit = "cb7693ad618ead60bfe8d07c21f7e55665d83b6c",
+    commit = "91f8c2a8b92fd67d474c9195917f1ff527f05aca",
     repository = "TendTo/soplex",
-    sha256 = "0e0b596fc517abccdc1924b05d128759803e6eba8af38276c0d9ea4d23e8920f",
+    sha256 = "09cef69536bdb11af9d148c28a36289d7a7a196052c46fbfa7e049ca6b005d14",
 )
 
 # GNU General Public License v3.0 | delta-complete linear programming solver
