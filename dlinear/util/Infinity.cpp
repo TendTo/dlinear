@@ -27,10 +27,14 @@ const mpq_class& Infinity::ninfinity(const Config& config) { return ninfinity(co
 
 inline void Infinity::Initialise() {
   if (initialised_) return;
+#ifdef DLINEAR_ENABLED_QSOPTEX
   Infinity::qsoptex_ninfinity_ = gmp::to_mpq_class(mpq_NINFTY);
   Infinity::qsoptex_infinity_ = gmp::to_mpq_class(mpq_INFTY);
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
   Infinity::soplex_ninfinity_ = -soplex::infinity;
   Infinity::soplex_infinity_ = soplex::infinity;
+#endif
   initialised_ = true;
 }
 

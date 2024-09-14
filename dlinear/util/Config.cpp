@@ -225,7 +225,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "skip_check_sat = " << config.skip_check_sat() << ",\n"
             << "verbose_dlinear = " << config.verbose_dlinear() << ",\n"
             << "verbose_simplex = " << config.verbose_simplex() << ",\n"
-            << "verifyx = " << config.verify() << ",\n"
+            << "verify = " << config.verify() << ",\n"
             << "with_timings = " << config.with_timings() << ",\n"
             << '}';
 }
