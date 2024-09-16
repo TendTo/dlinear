@@ -51,6 +51,11 @@ const SmtSolverOutput &SmtSolver::CheckSat() {
     return output_;
   }
 
+  if (output_.result != SmtResult::UNSOLVED) {
+    DLINEAR_INFO("SmtSolver::CheckSat: Already solved");
+    return output_;
+  }
+
   if (context_.have_objective())
     context_.CheckOpt(&output_.lower_bound, &output_.upper_bound);
   else
@@ -68,6 +73,11 @@ const SmtSolverOutput &SmtSolver::Parse(const std::string &filename) {
 }
 const SmtSolverOutput &SmtSolver::Parse() {
   DLINEAR_TRACE("SmtSolver::Parse");
+
+  if (output_.result != SmtResult::UNSOLVED) {
+    DLINEAR_INFO("SmtSolver::CheckSat: Already solved");
+    return output_;
+  }
 
   if (!ParseInput()) DLINEAR_RUNTIME_ERROR("Error parsing the input");
   return output_;
@@ -87,6 +97,7 @@ void SmtSolver::Assert(const Formula &f) {
   output_.result = SmtResult::UNSOLVED;
   context_.Assert(f);
 }
+
 bool SmtSolver::ParseInput() {
   DLINEAR_TRACE("SmtSolver::ParseInput");
   if (!config_.read_from_stdin() && config_.filename().empty()) {
