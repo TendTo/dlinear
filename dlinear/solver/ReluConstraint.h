@@ -29,7 +29,7 @@ namespace dlinear {
  */
 class ReluConstraint : public PiecewiseLinearConstraint {
  public:
-  const static mpq_class zero;  ///< Zero constant all the pointers to the default lower bound will point to
+  static const mpq_class zero;  ///< Zero constant all the pointers to the default lower bound will point to
 
   /**
    * Construct a new Relu Constraint object

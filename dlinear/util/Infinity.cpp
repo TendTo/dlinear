@@ -1,3 +1,9 @@
+/**
+* @file Infinity.cpp
+* @author dlinear (https://github.com/TendTo/dlinear)
+* @copyright 2024 dlinear
+* @licence Apache-2.0 license
+*/
 #include "Infinity.h"
 
 #include "exception.h"

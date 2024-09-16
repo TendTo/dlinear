@@ -29,6 +29,7 @@ dlinear_cc_library(
         "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
         "//conditions:default": [],
     }),
+    tags = ["no-cpplint"],
     deps = [
         ":config",
         "@argparse",

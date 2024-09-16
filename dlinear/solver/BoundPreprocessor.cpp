@@ -139,7 +139,7 @@ void BoundPreprocessor::EnableLiteral(const Literal& lit, std::set<LiteralSet>& 
       DLINEAR_ASSERT(!env_.contains(var) || env_[var] == *eq_bound, "No conflict should arise from this assignment");
       env_[var] = *eq_bound;
     }
-  };
+  }
   enabled_literals_.insert(lit);
   DLINEAR_TRACE_FMT("BoundPreprocessor::EnableLiteral: added constraint {}", lit);
 }
