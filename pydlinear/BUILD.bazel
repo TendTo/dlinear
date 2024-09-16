@@ -1,39 +1,137 @@
-load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
+load("//tools:dlinear.bzl", "DLINEAR_VERSION", "dlinear_pybind_extension")
 
-pybind_extension(
+dlinear_pybind_extension(
     name = "_pydlinear",
-    srcs = ["pydlinear.cpp"],
-    linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
-    linkstatic = False,
+    srcs = [
+        "lib.cpp",
+        "pydlinear.cpp",
+        "pydlinear.h",
+        "solver.cpp",
+        "symbolic.cpp",
+        "util.cpp",
+    ],
+    #    linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
+    linkstatic = select({
+        "//tools:static_build": True,
+        "//conditions:default": False,
+    }),
     deps = [
         "//dlinear:version",
         "//dlinear/libs:gmp",
-        "//dlinear/libs:qsopt_ex",
-        "//dlinear/libs:soplex",
         "//dlinear/solver",
+        "//dlinear/solver:solver_output",
         "//dlinear/symbolic",
         "//dlinear/util:argparser",
-        "//dlinear/util:box",
         "//dlinear/util:config",
-        "//dlinear/util:logging",
     ],
 )
 
 py_library(
-    name = "pydlinear",
-    srcs = ["__init__.py"],
+    name = "pydlinear_lib",
+    srcs = [
+        "__init__.py",
+        "__main__.py",
+    ],
     data = [":_pydlinear.so"],
     imports = ["."],
     srcs_version = "PY3",
-    visibility = ["//visibility:public"],
 )
 
 py_binary(
-    name = "pydlinear_main",
+    name = "pydlinear",
     srcs = ["__main__.py"],
     imports = ["."],
     main = "__main__.py",
     python_version = "PY3",
-    deps = [":pydlinear"],
+    deps = [
+        ":pydlinear_lib",
+    ],
+)
+
+py_binary(
+    name = "stubgen_bin",
+    srcs = ["stubgen.py"],
+    imports = ["."],
+    main = "stubgen.py",
+    python_version = "PY3",
+    deps = [
+        requirement("pybind11_stubgen"),
+        ":pydlinear_lib",
+    ],
+)
+
+genrule(
+    name = "stubgen",
+    outs = [
+        "_pydlinear.pyi",
+        "__init__.pyi",
+    ],
+    cmd = "$(location :stubgen_bin) $(OUTS)",
+    tools = [":stubgen_bin"],
+)
+
+py_package(
+    name = "pydlinear_pkg",
+    deps = [
+        ":pydlinear_lib",
+        ":stubgen",
+    ],
+)
+
+filegroup(
+    name = "pydlinear_files",
+    srcs = [
+        "py.typed",
+        ":_pydlinear",
+        ":pydlinear_lib",
+        ":stubgen",
+    ],
+)
+
+py_wheel(
+    name = "pydlinear_wheel",
+    author = "Ernesto Casablanca",
+    author_email = "casablancaernesto@gmail.com",
+    classifiers = [
+        "Development Status :: 1 - Planning",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: C++",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    description_content_type = "text/markdown",
+    description_file = "//:README.md",
+    distribution = "pydlinear",
+    entry_points = {
+        "console_scripts": ["pydlinear = pydlinear.__main__:main"],
+    },
+    homepage = "https://github.com/TendTo/dlinear",
+    license = "Apache Software License",
+    platform = select(
+        {
+            "@platforms//os:linux": "linux_x86_64",
+        },
+        "Unsupported platform",
+    ),
+    project_urls = {
+        "Source": "https://github.com/TendTo/dlinear5",
+        "Tracker": "https://github.com/TendTo/dlinear5/issues",
+    },
+    python_tag = "py3",
+    summary = "delta-complete SMT solver for linear theories over the reals",
+    version = "%s" % DLINEAR_VERSION,
+    deps = select({
+        "//tools:static_build": [":pydlinear_files"],
+        "//conditions:default": [":pydlinear_pkg"],
+    }),
 )
