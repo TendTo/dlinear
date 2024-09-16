@@ -308,10 +308,6 @@ dlinear_cc_library(
         "//dlinear/util:logging",
         "//dlinear/util:stats",
     ],
-    local_defines = select({
-        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     deps = [
         ":logic",
         ":lp_result",
@@ -338,6 +334,12 @@ dlinear_cc_library(
     srcs = ["SmtSolverOutput.cpp"],
     hdrs = ["SmtSolverOutput.h"],
     implementation_deps = ["//dlinear/util:exception"],
+    visibility = [
+        "//benchmark:__subpackages__",
+        "//dlinear:__subpackages__",
+        "//pydlinear:__subpackages__",
+        "//test:__subpackages__",
+    ],
     deps = [
         ":lp_result",
         ":sat_result",

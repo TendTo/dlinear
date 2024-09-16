@@ -126,13 +126,13 @@ ostream &NaryFormulaCell::DisplayWithOp(ostream &os, const string &op) const {
 FormulaTrue::FormulaTrue()
     : FormulaCell{FormulaKind::True, hash<string>{}("True"), false} {}
 
-bool FormulaTrue::EqualTo(const FormulaCell &f) const {
+bool FormulaTrue::EqualTo([[maybe_unused]] const FormulaCell &f) const {
   // Formula::EqualTo guarantees the following assertion.
   assert(get_kind() == f.get_kind());
   return true;  // There is only one instance of this kind.
 }
 
-bool FormulaTrue::Less(const FormulaCell &f) const {
+bool FormulaTrue::Less([[maybe_unused]] const FormulaCell &f) const {
   // Formula::Less guarantees the following assertion.
   assert(get_kind() == f.get_kind());
   // True < True ==> false
@@ -152,13 +152,13 @@ std::string FormulaTrue::to_smt2_string() const { return "(true)"; }
 FormulaFalse::FormulaFalse()
     : FormulaCell{FormulaKind::False, hash<string>{}("False"), false} {}
 
-bool FormulaFalse::EqualTo(const FormulaCell &f) const {
+bool FormulaFalse::EqualTo([[maybe_unused]] const FormulaCell &f) const {
   // Formula::EqualTo guarantees the following assertion.
   assert(get_kind() == f.get_kind());
   return true;  // There is only one instance of this kind.
 }
 
-bool FormulaFalse::Less(const FormulaCell &f) const {
+bool FormulaFalse::Less([[maybe_unused]] const FormulaCell &f) const {
   // Formula::Less guarantees the following assertion.
   assert(get_kind() == f.get_kind());
   // False < False ==> false

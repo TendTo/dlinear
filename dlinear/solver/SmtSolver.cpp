@@ -42,12 +42,6 @@ inline bool ParseInputCore<onnx::OnnxDriver>(const Config &config, Context &cont
 SmtSolver::SmtSolver(const std::string &filename) : SmtSolver{Config{filename}} {}
 SmtSolver::SmtSolver(Config config) : config_{std::move(config)}, output_{config_}, context_{config_, &output_} {}
 
-#ifdef DLINEAR_PYDLINEAR
-SmtSolver &SmtSolver::Enter() { return *this; }
-
-void SmtSolver::Exit() { guard_.DeInit(); }
-#endif
-
 const SmtSolverOutput &SmtSolver::CheckSat() {
   DLINEAR_TRACE("SmtSolver::CheckSat");
   TimerGuard timer_guard{&output_.smt_solver_timer, true};

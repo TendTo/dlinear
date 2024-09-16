@@ -57,10 +57,6 @@ dlinear_cc_library(
         "//dlinear/util:exception",
         "//dlinear/util:logging",
     ],
-    local_defines = select({
-        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     tags = [
         "no-dwyu",
         "no-iwyu",

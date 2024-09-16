@@ -11,14 +11,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/solver/DeltaQsoptexTheorySolver.h"
-#endif
-#ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/solver/CompleteSoplexTheorySolver.h"
-#include "dlinear/solver/DeltaSoplexTheorySolver.h"
-#include "dlinear/solver/NNSoplexTheorySolver.h"
-#endif
 #include "dlinear/solver/BoundImplicator.h"
 #include "dlinear/solver/CadicalSatSolver.h"
 #include "dlinear/solver/PicosatSatSolver.h"
@@ -29,6 +21,19 @@
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
+
+#ifdef DLINEAR_PYDLINEAR
+#include "dlinear/util/SignalHandlerGuard.h"
+#include "dlinear/util/interrupt.h"
+#endif
+#ifdef DLINEAR_ENABLED_QSOPTEX
+#include "dlinear/solver/DeltaQsoptexTheorySolver.h"
+#endif
+#ifdef DLINEAR_ENABLED_SOPLEX
+#include "dlinear/solver/CompleteSoplexTheorySolver.h"
+#include "dlinear/solver/DeltaSoplexTheorySolver.h"
+#include "dlinear/solver/NNSoplexTheorySolver.h"
+#endif
 
 namespace {
 
@@ -364,7 +369,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
 #ifdef DLINEAR_PYDLINEAR
   // install a signal handler for sigint for this scope.
-  signalhandlerguard guard{sigint, interrupt_handler, &g_interrupted};
+  SignalHandlerGuard guard{SIGINT, interrupt_handler, &g_interrupted};
 #endif
   bool have_unsolved = false;
   while (true) {

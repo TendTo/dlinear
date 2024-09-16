@@ -1,3 +1,5 @@
+load("//tools:dlinear.bzl", "dlinear_cc_library")
+
 licenses(["notice"])  # BSD 3-Clause License
 
 package(default_visibility = ["//visibility:public"])
@@ -18,7 +20,7 @@ filegroup(
     ],
 )
 
-cc_library(
+dlinear_cc_library(
     name = "drake_symbolic",
     srcs = [
         "dlinear/symbolic/never_destroyed.h",
@@ -36,6 +38,5 @@ cc_library(
     ],
     hdrs = [":hdrs"],
     includes = ["."],
-    linkstatic = 1,
     deps = ["//dlinear/libs:gmp"],
 )

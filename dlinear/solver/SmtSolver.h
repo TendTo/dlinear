@@ -116,24 +116,6 @@ class SmtSolver {
    */
   [[nodiscard]] bool Verify(const Box &model) const;
 
-#ifdef DLINEAR_PYDLINEAR
-  /**
-   * Enter the solver.
-   * Allows to use the with statement in python.
-   * @return SmtSolver reference
-   */
-  SmtSolver &Enter();
-
-  /**
-   * Cleanup the infinity values forcefully.
-   * It is not necessary to call this function, as the destructor will take care of it.
-   * However, it is useful for the python bindings, since the garbage collector
-   * might not call the destructor in time.
-   * It is idempotent, so it can be called multiple times without any problem.
-   */
-  void Exit();
-#endif
-
  private:
   /**
    * Parse the problem from the input indicated in the configuration.

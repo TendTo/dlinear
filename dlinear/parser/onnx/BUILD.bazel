@@ -44,10 +44,6 @@ dlinear_cc_library(
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],
     implementation_deps = ["//dlinear/util:exception"],
-    local_defines = select({
-        "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
-        "//conditions:default": [],
-    }),
     deps = [
         ":node_op_type",
         ":tensor",

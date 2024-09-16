@@ -371,13 +371,13 @@ ExpressionNaN::ExpressionNaN() : ExpressionCell{ExpressionKind::NaN, 41, false, 
   // meaning.
 }
 
-bool ExpressionNaN::EqualTo(const ExpressionCell &e) const {
+bool ExpressionNaN::EqualTo([[maybe_unused]] const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.
   assert(get_kind() == e.get_kind());
   return true;
 }
 
-bool ExpressionNaN::Less(const ExpressionCell &e) const {
+bool ExpressionNaN::Less([[maybe_unused]] const ExpressionCell &e) const {
   // Expression::Less guarantees the following assertion.
   assert(get_kind() == e.get_kind());
   return false;
@@ -413,13 +413,13 @@ ExpressionInfty::ExpressionInfty(int sign)
 bool ExpressionInfty::EqualTo(const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.
   assert(get_kind() == e.get_kind());
-  return sign_ == ((ExpressionInfty &)e).sign_;
+  return sign_ == static_cast<const ExpressionInfty &>(e).sign_;
 }
 
 bool ExpressionInfty::Less(const ExpressionCell &e) const {
   // Expression::Less guarantees the following assertion.
   assert(get_kind() == e.get_kind());
-  return sign_ == -1 && ((ExpressionInfty &)e).sign_ == 1;
+  return sign_ == -1 && static_cast<const ExpressionInfty &>(e).sign_ == 1;
 }
 
 mpq_class ExpressionInfty::Evaluate(const Environment &) const {
@@ -1176,7 +1176,7 @@ Expression ExpressionLog::Differentiate(const Variable &x) const {
 ostream &ExpressionLog::Display(ostream &os) const { return os << "log(" << get_argument() << ")"; }
 std::string ExpressionLog::to_smt2_string() const { return "(log " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionLog::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionLog::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
 #if 0
   check_domain(v);
@@ -1254,7 +1254,7 @@ Expression ExpressionExp::Differentiate(const Variable &x) const {
 ostream &ExpressionExp::Display(ostream &os) const { return os << "exp(" << get_argument() << ")"; }
 std::string ExpressionExp::to_smt2_string() const { return "(exp " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionExp::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionExp::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::exp(v);
 }
@@ -1299,7 +1299,7 @@ Expression ExpressionSqrt::Differentiate(const Variable &x) const {
 ostream &ExpressionSqrt::Display(ostream &os) const { return os << "sqrt(" << get_argument() << ")"; }
 std::string ExpressionSqrt::to_smt2_string() const { return "(sqrt " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionSqrt::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionSqrt::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
 #if 0
   check_domain(v);
@@ -1351,7 +1351,7 @@ std::string ExpressionPow::to_smt2_string() const {
   return "(pow " + get_first_argument().to_smt2_string() + " " + get_second_argument().to_smt2_string() + ")";
 }
 
-mpq_class ExpressionPow::DoEvaluate(const mpq_class &v1, const mpq_class &v2) const {
+mpq_class ExpressionPow::DoEvaluate(const mpq_class &, const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
 #if 0
   check_domain(v1, v2);
@@ -1391,7 +1391,7 @@ Expression ExpressionSin::Differentiate(const Variable &x) const {
 ostream &ExpressionSin::Display(ostream &os) const { return os << "sin(" << get_argument() << ")"; }
 std::string ExpressionSin::to_smt2_string() const { return "(sin " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionSin::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionSin::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::sin(v);
 }
@@ -1428,7 +1428,7 @@ Expression ExpressionCos::Differentiate(const Variable &x) const {
 ostream &ExpressionCos::Display(ostream &os) const { return os << "cos(" << get_argument() << ")"; }
 std::string ExpressionCos::to_smt2_string() const { return "(cos " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionCos::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionCos::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::cos(v);
 }
@@ -1465,7 +1465,7 @@ Expression ExpressionTan::Differentiate(const Variable &x) const {
 ostream &ExpressionTan::Display(ostream &os) const { return os << "tan(" << get_argument() << ")"; }
 std::string ExpressionTan::to_smt2_string() const { return "(tan " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionTan::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionTan::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::tan(v);
 }
@@ -1510,7 +1510,7 @@ Expression ExpressionAsin::Differentiate(const Variable &x) const {
 ostream &ExpressionAsin::Display(ostream &os) const { return os << "asin(" << get_argument() << ")"; }
 std::string ExpressionAsin::to_smt2_string() const { return "(asin " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionAsin::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionAsin::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
 #if 0
   check_domain(v);
@@ -1558,7 +1558,7 @@ Expression ExpressionAcos::Differentiate(const Variable &x) const {
 ostream &ExpressionAcos::Display(ostream &os) const { return os << "acos(" << get_argument() << ")"; }
 std::string ExpressionAcos::to_smt2_string() const { return "(acos " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionAcos::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionAcos::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
 #if 0
   check_domain(v);
@@ -1598,7 +1598,7 @@ Expression ExpressionAtan::Differentiate(const Variable &x) const {
 ostream &ExpressionAtan::Display(ostream &os) const { return os << "atan(" << get_argument() << ")"; }
 std::string ExpressionAtan::to_smt2_string() const { return "(atan " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionAtan::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionAtan::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::atan(v);
 }
@@ -1645,7 +1645,7 @@ std::string ExpressionAtan2::to_smt2_string() const {
   return "(atan2 " + get_first_argument().to_smt2_string() + " " + get_second_argument().to_smt2_string() + ")";
 }
 
-mpq_class ExpressionAtan2::DoEvaluate(const mpq_class &v1, const mpq_class &v2) const {
+mpq_class ExpressionAtan2::DoEvaluate(const mpq_class &, const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::atan2(v1, v2);
 }
@@ -1682,7 +1682,7 @@ Expression ExpressionSinh::Differentiate(const Variable &x) const {
 ostream &ExpressionSinh::Display(ostream &os) const { return os << "sinh(" << get_argument() << ")"; }
 std::string ExpressionSinh::to_smt2_string() const { return "(sinh " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionSinh::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionSinh::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::sinh(v);
 }
@@ -1719,7 +1719,7 @@ Expression ExpressionCosh::Differentiate(const Variable &x) const {
 ostream &ExpressionCosh::Display(ostream &os) const { return os << "cosh(" << get_argument() << ")"; }
 std::string ExpressionCosh::to_smt2_string() const { return "(cosh " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionCosh::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionCosh::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::cosh(v);
 }
@@ -1756,7 +1756,7 @@ Expression ExpressionTanh::Differentiate(const Variable &x) const {
 ostream &ExpressionTanh::Display(ostream &os) const { return os << "tanh(" << get_argument() << ")"; }
 std::string ExpressionTanh::to_smt2_string() const { return "(tanh " + get_argument().to_smt2_string() + ")"; }
 
-mpq_class ExpressionTanh::DoEvaluate(const mpq_class &v) const {
+mpq_class ExpressionTanh::DoEvaluate(const mpq_class &) const {
   throw runtime_error("Not implemented");  // Because of mpq_class
   // return std::tanh(v);
 }
