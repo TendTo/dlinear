@@ -1,7 +1,7 @@
 load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
-load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
-load("//tools:dlinear.bzl", "DLINEAR_VERSION", "dlinear_pybind_extension")
+load("@rules_python//python:packaging.bzl", "py_wheel")
+load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_CLASSIFIERS", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_LICENSE", "DLINEAR_SOURCE", "DLINEAR_TRACKER", "DLINEAR_VERSION", "dlinear_pybind_extension")
 
 dlinear_pybind_extension(
     name = "_pydlinear",
@@ -13,7 +13,6 @@ dlinear_pybind_extension(
         "symbolic.cpp",
         "util.cpp",
     ],
-    #    linkopts = ["-Wl,-rpath,'$$ORIGIN'"],
     linkstatic = select({
         "//tools:static_build": True,
         "//conditions:default": False,
@@ -73,14 +72,6 @@ genrule(
     tools = [":stubgen_bin"],
 )
 
-py_package(
-    name = "pydlinear_pkg",
-    deps = [
-        ":pydlinear_lib",
-        ":stubgen",
-    ],
-)
-
 filegroup(
     name = "pydlinear_files",
     srcs = [
@@ -93,45 +84,33 @@ filegroup(
 
 py_wheel(
     name = "pydlinear_wheel",
-    author = "Ernesto Casablanca",
-    author_email = "casablancaernesto@gmail.com",
-    classifiers = [
-        "Development Status :: 1 - Planning",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: Apache Software License",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: C++",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Topic :: Scientific/Engineering :: Mathematics",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
+    abi = "$(PYTHON_ABI_TAG)",
+    author = DLINEAR_AUTHOR,
+    author_email = DLINEAR_AUTHOR_EMAIL,
+    classifiers = DLINEAR_CLASSIFIERS,
     description_content_type = "text/markdown",
     description_file = "//:README.md",
     distribution = "pydlinear",
     entry_points = {
         "console_scripts": ["pydlinear = pydlinear.__main__:main"],
     },
-    homepage = "https://github.com/TendTo/dlinear",
-    license = "Apache Software License",
-    platform = select(
-        {
-            "@platforms//os:linux": "linux_x86_64",
-        },
-        "Unsupported platform",
-    ),
-    project_urls = {
-        "Source": "https://github.com/TendTo/dlinear5",
-        "Tracker": "https://github.com/TendTo/dlinear5/issues",
-    },
-    python_tag = "py3",
-    summary = "delta-complete SMT solver for linear theories over the reals",
-    version = "%s" % DLINEAR_VERSION,
-    deps = select({
-        "//tools:static_build": [":pydlinear_files"],
-        "//conditions:default": [":pydlinear_pkg"],
+    homepage = DLINEAR_HOMEPAGE,
+    license = DLINEAR_LICENSE,
+    platform = select({
+        "@bazel_tools//src/conditions:windows_x64": "win_amd64",
+        "@bazel_tools//src/conditions:windows_arm64": "win_arm64",
+        "@bazel_tools//src/conditions:darwin_x86_64": "macosx_12_0_x86_64",
+        "@bazel_tools//src/conditions:darwin_arm64": "macosx_12_0_arm64",
+        "@bazel_tools//src/conditions:linux_x86_64": "linux_x86_64",
+        "@bazel_tools//src/conditions:linux_aarch64": "linux_aarch64",
     }),
+    project_urls = {
+        "Source": DLINEAR_SOURCE,
+        "Tracker": DLINEAR_TRACKER,
+    },
+    python_tag = "$(PYTHON_TAG)",
+    summary = DLINEAR_DESCRIPTION,
+    toolchains = ["//tools:make_var_substitution"],
+    version = DLINEAR_VERSION,
+    deps = [":pydlinear_files"],
 )

@@ -4,8 +4,32 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
+# GLOBAL VARIABLES
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"
+DLINEAR_AUTHOR = "Ernesto Casablanca"
+DLINEAR_AUTHOR_EMAIL = "casablancaernesto@gmail.com"
+DLINEAR_DESCRIPTION = "delta-complete SMT solver for linear theories over the reals"
+DLINEAR_HOMEPAGE = "https://github.com/TendTo/dlinear"
+DLINEAR_SOURCE = "https://github.com/TendTo/dlinear"
+DLINEAR_TRACKER = "https://github.com/TendTo/dlinear5/issues"
+DLINEAR_LICENSE = "Apache Software License"
+# END GLOBAL VARIABLES
+# Can't parse the list
+DLINEAR_CLASSIFIERS = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 # The CXX_FLAGS will be enabled for all C++ rules in the project
 # building with any compiler.

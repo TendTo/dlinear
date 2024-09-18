@@ -1,5 +1,5 @@
 # Workspace status command
-build --workspace_status_command=script/workspace_status.sh
+build --workspace_status_command=tools/workspace_status.sh
 build --experimental_cc_shared_library
 
 # Flag aliases
@@ -8,6 +8,7 @@ build --flag_alias=enable_dynamic_build=//tools:enable_dynamic_build
 build --flag_alias=enable_pydlinear_build=//tools:enable_pydlinear_build
 build --flag_alias=enable_fpic_build=//tools:enable_fpic_build
 build --flag_alias=static_boost=@boost//:use_linkstatic
+build --flag_alias=python_version=@rules_python//python/config_settings:python_version
 
 # Default build
 build --cxxopt=-std=c++20

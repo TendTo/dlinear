@@ -32,7 +32,7 @@ dlinear --help
 # Compile dlinear
 bazel build //dlinear
 # Run dlinear
-bazel-bin/dlinear/dlinear
+./bazel-bin/dlinear/dlinear
 ```
 
 ```bash
@@ -54,16 +54,6 @@ bazel test --test_tag_filters=solver //test/...
 ```bash
 # Run linting
 bazel test --test_tag_filters=cpplint //dlinear/...
-```
-
-```bash
-# Run pydlinear tests
-bazel test --test_tag_filters=pydlinear //pydlinear/...
-```
-
-```bash
-# Run benchmarks
-bazel run //benchmark
 ```
 
 ### Enabling autocompletion on Ubuntu
