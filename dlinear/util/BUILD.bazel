@@ -73,10 +73,7 @@ dlinear_cc_library(
     name = "stats",
     srcs = ["Stats.cpp"],
     hdrs = ["Stats.h"],
-    implementation_deps = [
-        ":logging",
-        "@fmt",
-    ],
+    implementation_deps = [":logging"],
     deps = [":timer"],
 )
 

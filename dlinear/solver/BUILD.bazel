@@ -118,7 +118,7 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:logging",
     ],
 )
 
@@ -126,15 +126,14 @@ dlinear_cc_library(
     name = "relu_constraint",
     srcs = ["ReluConstraint.cpp"],
     hdrs = ["ReluConstraint.h"],
-    implementation_deps = ["//dlinear/util:exception"],
-    deps = [
-        ":bound_preprocessor",
-        ":piecewise_linear_constraint",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic",
+    implementation_deps = [
+        "//dlinear/util:exception",
         "//dlinear/util:infinity",
-        "//dlinear/util:logging",
-        "//dlinear/util:sorted_vector",
+    ],
+    deps = [
+        ":piecewise_linear_constraint",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:predicate_abstractor",
     ],
 )
 
@@ -155,12 +154,7 @@ dlinear_cc_library(
     srcs = ["BoundIterator.cpp"],
     hdrs = ["BoundIterator.h"],
     implementation_deps = ["//dlinear/util:exception"],
-    deps = [
-        ":bound",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic:literal",
-        "//dlinear/util:logging",
-    ],
+    deps = [":bound"],
 )
 
 dlinear_cc_library(
@@ -169,8 +163,8 @@ dlinear_cc_library(
     hdrs = ["BoundVector.h"],
     implementation_deps = ["//dlinear/util:exception"],
     deps = [
-        ":bound",
         ":bound_iterator",
+        ":lp_bound",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic:literal",
         "//dlinear/util:logging",
@@ -199,16 +193,10 @@ dlinear_cc_library(
     srcs = ["BoundPreprocessor.cpp"],
     hdrs = ["BoundPreprocessor.h"],
     implementation_deps = [
-        ":lp_bound",
-        ":sat_result",
-        "//dlinear/util:box",
         "//dlinear/util:exception",
         "//dlinear/util:infinity",
-        "//dlinear/util:stats",
     ],
     deps = [
-        ":bound",
-        ":bound_iterator",
         ":bound_vector",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
@@ -216,7 +204,6 @@ dlinear_cc_library(
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:config",
-        "//dlinear/util:graph",
         "//dlinear/util:logging",
     ],
 )
@@ -264,11 +251,9 @@ dlinear_cc_library(
     deps = [
         ":bound_iterator",
         ":bound_preprocessor",
-        ":bound_vector",
         ":lp_bound",
         ":lp_sense",
         ":piecewise_linear_constraint",
-        ":relu_constraint",
         ":sat_result",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
@@ -300,10 +285,10 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":bound_implicator",
+        ":relu_constraint",
         ":sat_solver",
         ":theory_solver",
         "//dlinear/symbolic:if_then_else_eliminator",
-        "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
@@ -317,6 +302,7 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:scoped_structures",
@@ -360,7 +346,6 @@ dlinear_cc_library(
         "//dlinear/parser/onnx",
         "//dlinear/parser/smt2",
         "//dlinear/parser/vnnlib",
-        "//dlinear/util:box",
         "//dlinear/util:concepts",
         "//dlinear/util:exception",
         "//dlinear/util:logging",
@@ -376,6 +361,7 @@ dlinear_cc_library(
         ":context",
         ":solver_output",
         "//dlinear/symbolic",
+        "//dlinear/util:box",
         "//dlinear/util:config",
     ],
 )

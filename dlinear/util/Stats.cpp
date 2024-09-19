@@ -6,8 +6,6 @@
  */
 #include "Stats.h"
 
-#include <fmt/core.h>
-
 #include <chrono>
 #include <utility>
 

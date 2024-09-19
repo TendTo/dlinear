@@ -29,16 +29,16 @@ namespace dlinear {
  * It allows to iterate over the two types of bounds: standard and non-equal as if they were a single container.
  * @code
  * std::vector<Bound> bounds, nq_bounds;
- * bounds.push_back(Bound{0, BoundType::U, 4});
- * bounds.push_back(Bound{1, BoundType::L, 2});
- * bounds.push_back(Bound{2, BoundType::B, 1});
- * nq_bounds.push_back(Bound{3, BoundType::D, 3});
+ * bounds.push_back(Bound{0, BoundType::U, ...});
+ * bounds.push_back(Bound{1, BoundType::L, ...});
+ * bounds.push_back(Bound{2, BoundType::B, ...});
+ * nq_bounds.push_back(Bound{3, BoundType::D, ...});
  * BoundIterator<std::vector<Bound>> it{bounds.begin(), bounds.end(), nq_bounds.begin(), nq_bounds.end()};
  * for (; it; ++it) {
  *  std::cout << *it << std::endl;
  * }
  * // Output:
- * // Bound{0, BoundType::U, 4}, Bound{1, BoundType::L, 2}, Bound{2, BoundType::B, 1}, Bound{3, BoundType::D, 3}
+ * // Bound{0, BoundType::U, ...}, Bound{1, BoundType::L, ...}, Bound{2, BoundType::B, ...}, Bound{3, BoundType::D, ...}
  * @endcode
  */
 class BoundIterator {
