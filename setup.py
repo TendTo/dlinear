@@ -73,7 +73,9 @@ class BuildBazelExtension(build_ext.build_ext):
 
     def bazel_build(self, ext):
         if shutil.which("bazel") is None:
-            raise setuptools.errors.CompileError("Bazel not found (https://bazel.build/). It is required to install this package from source.")
+            raise setuptools.errors.CompileError(
+                "Bazel not found (https://bazel.build/). It is required to install this package from source."
+            )
 
         bazel_argv = [*get_bazel_target_args("build"), ext.bazel_target]
         self.spawn(bazel_argv)
@@ -109,6 +111,7 @@ setuptools.setup(
     author_email=config_vars.DLINEAR_AUTHOR_EMAIL,
     url=config_vars.DLINEAR_HOMEPAGE,
     license=config_vars.DLINEAR_LICENSE,
+    keywords=["smt", "delta-complete", "qf_lra", "neural network"],
     entry_points={"console_scripts": ["pydlinear=pydlinear.__main__:main"]},
     classifiers=[
         "Development Status :: 1 - Planning",

@@ -102,8 +102,8 @@ py_wheel(
         "@bazel_tools//src/conditions:windows_arm64": "win_arm64",
         "@bazel_tools//src/conditions:darwin_x86_64": "macosx_12_0_x86_64",
         "@bazel_tools//src/conditions:darwin_arm64": "macosx_12_0_arm64",
-        "@bazel_tools//src/conditions:linux_x86_64": "linux_x86_64",
-        "@bazel_tools//src/conditions:linux_aarch64": "linux_aarch64",
+        "@bazel_tools//src/conditions:linux_x86_64": "manylinux_2_34_x86_64",
+        "@bazel_tools//src/conditions:linux_aarch64": "manylinux_2_34_aarch64",
     }),
     project_urls = {
         "Source": DLINEAR_SOURCE,

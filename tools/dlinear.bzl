@@ -6,7 +6,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 # GLOBAL VARIABLES
 DLINEAR_NAME = "dlinear"
-DLINEAR_VERSION = "0.0.4"
+DLINEAR_VERSION = "0.0.1"
 DLINEAR_AUTHOR = "Ernesto Casablanca"
 DLINEAR_AUTHOR_EMAIL = "casablancaernesto@gmail.com"
 DLINEAR_DESCRIPTION = "delta-complete SMT solver for linear theories over the reals"
