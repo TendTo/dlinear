@@ -2,15 +2,9 @@ name: dlinear CI
 
 on:
   push:
-    branches: [main, feat/nn-verification]
-    paths:
-      - "dlinear/**"
-      - "pydlinear/**"
-  pull_request:
-    branches: [main, feat/nn-verification]
-    paths:
-      - "dlinear/**"
-      - "pydlinear/**"
+    tags: 
+      - "v*.*.*"
+      - "*.*.*"
 
 env:
   PACKAGES: "build-essential automake libtool flex bison"
