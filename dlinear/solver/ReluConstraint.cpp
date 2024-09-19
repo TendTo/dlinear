@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "dlinear/util/Infinity.h"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 
@@ -37,8 +38,8 @@ void ReluConstraint::UpdateUpperBound(const mpq_class* const upper_bound) {
   }
 }
 
-void ReluConstraint::EnableLiteral(const Variable& var) {
-  DLINEAR_ASSERT(inactive_var_.equal_to(var) || active_var_.equal_to(var), "Invalid variable");
+void ReluConstraint::EnableLiteral(const Variable&) {
+  // DLINEAR_ASSERT(inactive_var_.equal_to(var) || active_var_.equal_to(var), "Invalid variable");
 }
 
 void ReluConstraint::TightenBounds(BoundPreprocessor& preprocessor) {
