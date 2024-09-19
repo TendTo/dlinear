@@ -56,7 +56,7 @@ jobs:
           mkdir -p dist
           for py_version in 3.8 3.9 3.10 3.11 3.12; do
             bazel build --config=pydlinear --python_version=$py_version //pydlinear:pydlinear_wheel
-            mv $(bazel cquery --output=files --python_version=$py_version //pydlinear:pydlinear_wheel) dist/
+            cp $(bazel cquery --output=files --config=pydlinear --python_version=$py_version //pydlinear:pydlinear_wheel) dist/
           done
 
       - name: Build source distribution

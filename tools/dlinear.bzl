@@ -15,6 +15,7 @@ DLINEAR_SOURCE = "https://github.com/TendTo/dlinear"
 DLINEAR_TRACKER = "https://github.com/TendTo/dlinear5/issues"
 DLINEAR_LICENSE = "Apache Software License"
 # END GLOBAL VARIABLES
+
 # Can't parse the list
 DLINEAR_CLASSIFIERS = [
     "Development Status :: 1 - Planning",
