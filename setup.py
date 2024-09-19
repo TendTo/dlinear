@@ -8,6 +8,7 @@ import glob
 
 import setuptools
 from setuptools.command import build_ext
+import setuptools.errors
 
 PACKAGE_NAME = "pydlinear"
 
@@ -49,6 +50,19 @@ class BazelExtension(setuptools.Extension):
         setuptools.Extension.__init__(self, ext_name, sources=src_files)
 
 
+def get_bazel_target_args(command):
+    if command == "build":
+        return ["bazel", "build", "--config=pydlinear", "--python_version=" + sysconfig.get_python_version()]
+    if command == "cquery":
+        return [
+            "bazel",
+            "cquery",
+            "--output=files",
+            "--config=pydlinear",
+            "--python_version=" + sysconfig.get_python_version(),
+        ]
+
+
 class BuildBazelExtension(build_ext.build_ext):
     """A command that runs Bazel to build a C/C++ extension."""
 
@@ -58,20 +72,32 @@ class BuildBazelExtension(build_ext.build_ext):
         build_ext.build_ext.run(self)
 
     def bazel_build(self, ext):
-        bazel_argv = [
-            "bazel",
-            "build",
-            "--config=pydlinear",
-            "--python_version=" + sysconfig.get_python_version(),
-            ext.bazel_target,
-        ]
+        if shutil.which("bazel") is None:
+            raise setuptools.errors.CompileError("Bazel not found (https://bazel.build/). It is required to install this package from source.")
+
+        bazel_argv = [*get_bazel_target_args("build"), ext.bazel_target]
         self.spawn(bazel_argv)
-        path = subprocess.check_output(["bazel", "cquery", "--output=files", ext.bazel_target]).decode("utf-8").strip()
+        path = subprocess.check_output([*get_bazel_target_args("cquery"), ext.bazel_target]).decode("utf-8").strip()
 
         ext_dest_path = self.get_ext_fullpath(ext.name)
         ext_dest_dir = os.path.dirname(ext_dest_path)
         os.makedirs(ext_dest_dir, exist_ok=True)
         shutil.copyfile(path, ext_dest_path)
+
+        # Add python stubs for type checking
+        bazel_argv = [*get_bazel_target_args("build"), "//pydlinear:stubgen"]
+        self.spawn(bazel_argv)
+        paths = (
+            subprocess.check_output([*get_bazel_target_args("cquery"), "//pydlinear:stubgen"])
+            .decode("utf-8")
+            .strip()
+            .split("\n")
+        )
+        for path in paths:
+            file = os.path.basename(path)
+            ext_dest_dir = os.path.dirname(self.get_ext_fullpath(ext.name))
+            os.makedirs(ext_dest_dir, exist_ok=True)
+            shutil.copyfile(path, os.path.join(ext_dest_dir, file))
 
 
 config_vars = GlobalVariables()
@@ -83,6 +109,7 @@ setuptools.setup(
     author_email=config_vars.DLINEAR_AUTHOR_EMAIL,
     url=config_vars.DLINEAR_HOMEPAGE,
     license=config_vars.DLINEAR_LICENSE,
+    entry_points={"console_scripts": ["pydlinear=pydlinear.__main__:main"]},
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
