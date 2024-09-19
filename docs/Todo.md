@@ -9,7 +9,7 @@
     - It can be done only for mps files, since the structure of the formula is not always plain otherwise
 - [x] Add inequality support
 - [ ] Clean up benchmarking suite
-- [ ] Clean up `pydlinear`
+- [x] Clean up `pydlinear`
 - [ ] Remove unused Config parameters
 - [ ] Improve nolog options
 - [x] Make the sat return type a struct
@@ -36,7 +36,7 @@
 - [ ] Investigate out of memory
 - [x] Handle conflicting constraints in preprocessor
 - [x] Fix Invalidly reported constraints in bound processor
-- [ ] Add support for `max` and `min` functions redefinitions
+- [x] Add support for `max` and `min` functions redefinitions
 - [x] Update `smt2` parser
 - [x] Use lazy cache for Formula's GetFreeVariables
 - [ ] Custom symbolic implementation
@@ -62,5 +62,4 @@
 - [ ] At the end of the introduction add a paragraph on the structure of the paper
 - [ ] Add a survey of the state of the art SMT solvers
 - [ ] Move current technical introduction to another section (Preliminaries)
-- [ ] QF_LRA or just LRA?
 
