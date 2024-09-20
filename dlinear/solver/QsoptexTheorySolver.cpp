@@ -47,9 +47,15 @@ void QsoptexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_DEBUG_FMT("QsoptexTheorySolver::AddVariable({} ↦ {})", var, qsx_col);
 }
 
+void QsoptexTheorySolver::AddLiterals() {
+  qsx_rhs_.reserve(predicate_abstractor_.var_to_formula_map().size());
+  qsx_sense_.reserve(predicate_abstractor_.var_to_formula_map().size());
+  TheorySolver::AddLiterals();
+}
+
 void QsoptexTheorySolver::Consolidate(const Box &box) {
   if (is_consolidated_) return;
-  TheorySolver::Consolidate(box);
+
   // Clear variable bounds
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
@@ -62,6 +68,8 @@ void QsoptexTheorySolver::Consolidate(const Box &box) {
     }
   }
   preprocessor_.Clear(fixed_preprocessor_);
+
+  TheorySolver::Consolidate(box);
 }
 
 void QsoptexTheorySolver::UpdateModelSolution() {

@@ -23,7 +23,7 @@ const mpq_class SoplexTheorySolver::infinity_{soplex::infinity};
 const mpq_class SoplexTheorySolver::ninfinity_{-soplex::infinity};
 
 SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : TheorySolver(predicate_abstractor, class_name) {
+    : TheorySolver(predicate_abstractor, class_name), spx_{}, spx_cols_{}, spx_rows_{}, spx_rhs_{}, spx_sense_{} {
   // Default SoPlex parameters
   spx_.setRealParam(soplex::SoPlex::FEASTOL, config_.precision());
   spx_.setBoolParam(soplex::SoPlex::RATREC, false);
@@ -48,15 +48,24 @@ SoplexTheorySolver::SoplexTheorySolver(PredicateAbstractor &predicate_abstractor
       config_.precision(), enable_precision_boosting, enable_iterative_refinement);
 }
 
+void SoplexTheorySolver::AddLiterals() {
+  const int num_literals = static_cast<int>(predicate_abstractor_.var_to_formula_map().size());
+  spx_rhs_.reserve(num_literals);
+  spx_sense_.reserve(num_literals);
+  spx_cols_ = soplex::LPColSetRational(num_literals, num_literals);
+  spx_rows_ = soplex::LPRowSetRational(num_literals, num_literals);
+  TheorySolver::AddLiterals();
+}
+
 void SoplexTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add variables after consolidation");
   auto it = var_to_theory_col_.find(var.get_id());
   // The variable is already present
   if (it != var_to_theory_col_.end()) return;
 
-  const int spx_col{spx_.numColsRational()};
+  const int spx_col{spx_cols_.num()};
   // obj, coeffs, upper, lower
-  spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
+  spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), soplex::infinity, -soplex::infinity));
   var_to_theory_col_.emplace(var.get_id(), spx_col);
   theory_col_to_var_.emplace_back(var);
   fixed_preprocessor_.AddVariable(var);
@@ -209,7 +218,12 @@ void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_r
 
 void SoplexTheorySolver::Consolidate(const Box &box) {
   if (is_consolidated_) return;
-  // Clear variable bounds
+
+  // Add columns and rows to the LP
+  spx_.addColsRational(spx_cols_);
+  spx_.addRowsRational(spx_rows_);
+
+  // Clear or set variable bounds
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(theory_col < spx_.numColsRational(), "theory_col must be in bounds");
@@ -220,7 +234,10 @@ void SoplexTheorySolver::Consolidate(const Box &box) {
       fixed_preprocessor_.SetInfinityBounds(var, box[var].lb(), box[var].ub());
     }
   }
+
+  // Reset preprocessor to the fixed bounds
   preprocessor_.Clear(fixed_preprocessor_);
+
   TheorySolver::Consolidate(box);
 }
 

@@ -37,6 +37,7 @@ class SoplexTheorySolver : public TheorySolver {
                               const std::string& class_name = "SoplexTheorySolver");
 
   void AddVariable(const Variable& var) override;
+  void AddLiterals() override;
   void Consolidate(const Box& box) override;
   void Reset() override;
 
@@ -169,6 +170,9 @@ class SoplexTheorySolver : public TheorySolver {
   bool IsRowActive(int spx_row, const soplex::Rational& value);
 
   soplex::SoPlex spx_;  ///< SoPlex exact LP solver
+
+  soplex::LPColSetRational spx_cols_;  ///< Columns of the LP problem
+  soplex::LPRowSetRational spx_rows_;  ///< Rows of the LP problem
 
   std::vector<mpq_class> spx_rhs_;     ///< Right-hand side of the rows
   std::vector<LpRowSense> spx_sense_;  ///< Sense of the rows

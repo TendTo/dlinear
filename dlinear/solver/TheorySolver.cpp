@@ -23,6 +23,7 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
 const Box &TheorySolver::model() const { return model_; }
 
 void TheorySolver::AddLiterals() {
+  theory_row_to_lit_.reserve(predicate_abstractor_.var_to_formula_map().size());
   for (const auto &[var, f] : predicate_abstractor_.var_to_formula_map()) AddLiteral(var, f);
 }
 

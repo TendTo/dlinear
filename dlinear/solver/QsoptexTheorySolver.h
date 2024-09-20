@@ -35,6 +35,7 @@ class QsoptexTheorySolver : public TheorySolver {
   ~QsoptexTheorySolver() override;
 
   void AddVariable(const Variable &var) override;
+  void AddLiterals() override;
   void Consolidate(const Box &box) override;
 
  protected:

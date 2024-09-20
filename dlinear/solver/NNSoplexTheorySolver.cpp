@@ -36,12 +36,12 @@ void NNSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula
 
   spx_sense_.emplace_back(~parseLpSense(formula));
 
-  const int spx_row{spx_.numRowsRational()};
+  const int spx_row{spx_rows_.num()};
 
   const bool is_simple_bound = BoundPreprocessor::IsSimpleBound(formula);
   soplex::DSVectorRational coeffs{is_simple_bound ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
   if (is_simple_bound) spx_rhs_.emplace_back(0);
-  spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  spx_rows_.add(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
   if (2 == config_.simplex_sat_phase()) CreateArtificials(spx_row);
 
   // Update indexes

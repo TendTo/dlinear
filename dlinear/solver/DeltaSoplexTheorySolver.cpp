@@ -9,17 +9,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <map>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 #include "dlinear/libs/libsoplex.h"
-#include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/LpRowSense.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Config.h"
-#include "dlinear/util/Stats.h"
-#include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
@@ -45,9 +38,9 @@ void DeltaSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Form
   for (const Variable &var : formula.GetFreeVariables()) AddVariable(var);
   if (BoundPreprocessor::IsSimpleBound(formula)) return;
 
-  const int spx_row{spx_.numRowsRational()};
+  const int spx_row{spx_rows_.num()};
   soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
-  spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  spx_rows_.add(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
   spx_sense_.emplace_back(~parseLpSense(formula));
 
   // Update indexes

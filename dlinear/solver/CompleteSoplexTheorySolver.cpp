@@ -9,15 +9,12 @@
 
 #include <algorithm>
 #include <map>
-#include <unordered_map>
 #include <utility>
 
 #include "dlinear/libs/libsoplex.h"
 #include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/LpRowSense.h"
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Config.h"
-#include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
@@ -76,11 +73,11 @@ void CompleteSoplexTheorySolver::AddLiteral(const Variable &formula_var, const F
 
   spx_sense_.emplace_back(parseLpSense(formula));
 
-  const int spx_row{spx_.numRowsRational()};
+  const int spx_row{spx_rows_.num()};
 
   // Add an inactive constraint with the right coefficients for the decisional variables
   soplex::DSVectorRational coeffs{ParseRowCoeff(formula)};
-  spx_.addRowRational(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
+  spx_rows_.add(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));
 
   // Update indexes
   lit_to_theory_row_.emplace(formula_var.get_id(), spx_row);
@@ -236,21 +233,22 @@ void CompleteSoplexTheorySolver::Reset() {
 
 void CompleteSoplexTheorySolver::Consolidate(const Box &box) {
   if (is_consolidated_) return;
-  const int spx_col = spx_.numColsRational();
-  // Column of the strict auxiliary variable t bound between 0 and 1
-  spx_.addColRational(soplex::LPColRational(0, soplex::DSVectorRational(), 1, 0));
-  spx_.changeObjRational(spx_col, 1);
 
-  [[maybe_unused]] const auto rowcount = static_cast<size_t>(spx_.numRowsRational());
-  [[maybe_unused]] const auto colcount = static_cast<size_t>(spx_.numColsRational());
-  DLINEAR_ASSERT(colcount == theory_col_to_var_.size() + 1, "incorrect theory_col_to_var_.size()");
+  // Column of the strict auxiliary variable t bound between 0 and 1
+  spx_cols_.add(soplex::LPColRational(1, soplex::DSVectorRational(), 1, 0));
+
+  [[maybe_unused]] const auto rowcount = static_cast<size_t>(spx_rows_.num());
+  [[maybe_unused]] const auto colcount = static_cast<size_t>(spx_cols_.num());
+  DLINEAR_ASSERT_FMT(colcount == theory_col_to_var_.size() + 1, "incorrect theory_col_to_var_.size(): {} vs {}",
+                     colcount, theory_col_to_var_.size());
   DLINEAR_ASSERT(colcount == var_to_theory_col_.size() + 1, "incorrect var_to_theory_col_.size()");
   DLINEAR_ASSERT(rowcount == spx_sense_.size(), "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(rowcount == spx_rhs_.size(), "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(rowcount == last_nq_status_.size(), "incorrect spx_rhs_.size()");
   DLINEAR_ASSERT(rowcount == theory_row_to_lit_.size(), "incorrect theory_row_to_lit_.size()");
-  SoplexTheorySolver::Consolidate(box);
   DLINEAR_DEBUG("CompleteSoplexTheorySolver::Consolidate: consolidated");
+
+  SoplexTheorySolver::Consolidate(box);
 }
 
 void CompleteSoplexTheorySolver::EnableNqLiteral(const int spx_row, const bool truth) {

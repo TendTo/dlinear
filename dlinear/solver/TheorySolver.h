@@ -65,7 +65,7 @@ class TheorySolver {
    *
    * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
    */
-  void AddLiterals();
+  virtual void AddLiterals();
   /**
    * Add a Literal to the theory solver.
    *
