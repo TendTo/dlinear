@@ -219,6 +219,9 @@ const Variables &ExpressionCell::GetVariables() const {
   return variables_;
 }
 
+void ExpressionCell::UpdateHash() {}
+void ExpressionCell::UpdateHash(const size_t hash)  { hash_ = hash_combine(static_cast<size_t>(kind_), hash); }
+
 void ExpressionCell::UpdateVariables() const {}
 
 UnaryExpressionCell::UnaryExpressionCell(const ExpressionKind k, const Expression &e, const bool is_poly)
@@ -346,6 +349,10 @@ bool ExpressionConstant::Less(const ExpressionCell &e) const {
   return v_ < static_cast<const ExpressionConstant &>(e).v_;
 }
 
+void ExpressionConstant::UpdateHash() {
+  ExpressionCell::UpdateHash(hash<mpq_class>{}(v_));
+}
+
 mpq_class ExpressionConstant::Evaluate(const Environment &) const { return v_; }
 
 Expression ExpressionConstant::Expand() { return GetExpression(); }
@@ -446,6 +453,10 @@ ExpressionAdd::ExpressionAdd(const mpq_class &constant, map<Expression, mpq_clas
       constant_(constant),
       expr_to_coeff_map_{std::move(expr_to_coeff_map)} {
   assert(!expr_to_coeff_map_.empty());
+}
+
+void ExpressionAdd::UpdateHash() {
+  ExpressionCell::UpdateHash(hash_combine(hash<mpq_class>{}(constant_), expr_to_coeff_map_));
 }
 
 void ExpressionAdd::UpdateVariables() const {
@@ -595,9 +606,10 @@ ostream &ExpressionAdd::DisplayTerm(ostream &os, const bool print_plus, const mp
   os << term;
   return os;
 }
-
-ExpressionAddFactory::ExpressionAddFactory(const mpq_class &constant, map<Expression, mpq_class> expr_to_coeff_map)
-    : get_expression_is_called_{false}, constant_{constant}, expr_to_coeff_map_{std::move(expr_to_coeff_map)} {}
+ExpressionAddFactory::ExpressionAddFactory(const mpq_class &constant, const map<Expression, mpq_class>& expr_to_coeff_map)
+    : get_expression_is_called_{false}, constant_{constant}, expr_to_coeff_map_{expr_to_coeff_map} {}
+ExpressionAddFactory::ExpressionAddFactory(mpq_class &&constant, map<Expression, mpq_class>&& expr_to_coeff_map)
+    : get_expression_is_called_{false}, constant_{std::move(constant)}, expr_to_coeff_map_{std::move(expr_to_coeff_map)} {}
 
 ExpressionAddFactory::ExpressionAddFactory(const ExpressionAdd *const ptr)
     : ExpressionAddFactory{ptr->get_constant(), ptr->get_expr_to_coeff_map()} {}
@@ -882,8 +894,11 @@ ostream &ExpressionMul::DisplayTerm(ostream &os, const bool print_mul, const Exp
   return os;
 }
 
-ExpressionMulFactory::ExpressionMulFactory(const mpq_class &constant, map<Expression, Expression> base_to_exponent_map)
-    : get_expression_is_called_{false}, constant_{constant}, base_to_exponent_map_{std::move(base_to_exponent_map)} {}
+ExpressionMulFactory::ExpressionMulFactory(const mpq_class &constant, const map<Expression, Expression>& base_to_exponent_map)
+    : get_expression_is_called_{false}, constant_{constant}, base_to_exponent_map_{base_to_exponent_map} {}
+
+ExpressionMulFactory::ExpressionMulFactory(mpq_class &&constant, map<Expression, Expression>&& base_to_exponent_map)
+    : get_expression_is_called_{false}, constant_{std::move(constant)}, base_to_exponent_map_{std::move(base_to_exponent_map)} {}
 
 ExpressionMulFactory::ExpressionMulFactory(const ExpressionMul *const ptr)
     : ExpressionMulFactory{ptr->get_constant(), ptr->get_base_to_exponent_map()} {}

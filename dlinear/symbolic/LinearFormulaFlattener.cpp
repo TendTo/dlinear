@@ -25,7 +25,7 @@ Formula LinearFormulaFlattener::Flatten(const Formula& formula) {
   const Expression& lhs = get_lhs_expression(formula);
   const Expression& rhs = get_rhs_expression(formula);
   const Expression expr{needs_expansion_ ? (lhs - rhs).Expand() : lhs - rhs};
-  DLINEAR_ASSERT_FMT(expr.EqualTo(expr.Expand()), "Expression {} must be expanded", formula);
+  DLINEAR_ASSERT_FMT(expr.EqualTo(expr.Expand()), "Expression {} must be expanded to {}", expr, expr.Expand());
   DLINEAR_ASSERT_FMT(is_addition(expr) || is_multiplication(expr) || is_variable(expr),
                      "Expression must be an addition, multiplication or a variable. Instead found {}", expr);
 

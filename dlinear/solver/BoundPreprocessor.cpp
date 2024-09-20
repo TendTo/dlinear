@@ -213,8 +213,8 @@ bool BoundPreprocessor::PropagateEqPolynomial(const Literal& lit, const Variable
 
   const Formula& formula = predicate_abstractor_[lit.var];
 
-  DLINEAR_ASSERT(IsEqualTo(formula, lit.truth), "Lit must encode an equal to relation");
-  DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
+  DLINEAR_ASSERT_FMT(IsEqualTo(formula, lit.truth), "Lit must encode an equal to relation. Got {}", lit);
+  DLINEAR_ASSERT_FMT(formula.IsFlattened(), "The formula must be flattened. Got {}", formula);
   DLINEAR_ASSERT(ShouldPropagateEqPolynomial(lit), "The formula should be propagated");
   DLINEAR_ASSERT(!env_.contains(var_to_propagate), "The variable must not be in the environment yet");
   DLINEAR_ASSERT(!var_to_propagate.is_dummy(), "The variable must be valid");

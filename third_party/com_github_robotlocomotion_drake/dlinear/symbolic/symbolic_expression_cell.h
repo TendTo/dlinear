@@ -89,6 +89,9 @@ class ExpressionCell {
   /** Copy-assigns (DELETED). */
   ExpressionCell &operator=(const ExpressionCell &e) = delete;
 
+  /** Update the cached hash value. */
+  virtual void UpdateHash();
+
  protected:
   /** Default constructor. */
   ExpressionCell() = default;
@@ -102,10 +105,12 @@ class ExpressionCell {
 
   virtual void UpdateVariables() const;
 
+  void UpdateHash(const size_t hash);
+
   mutable Variables variables_; ///< Cached variables contained in the expression
  private:
   const ExpressionKind kind_{};
-  const size_t hash_{};
+  size_t hash_{};
   const bool is_polynomial_{false};
   const bool include_ite_{false};
 
@@ -237,6 +242,7 @@ class ExpressionConstant : public ExpressionCell {
   Expression Differentiate(const Variable &x) const override;
   std::ostream &Display(std::ostream &os) const override;
   std::string to_smt2_string() const override;
+  void UpdateHash() override;
 
  private:
   const mpq_class v_{};
@@ -307,8 +313,11 @@ class ExpressionAdd : public ExpressionCell {
 
   // TODO(soonho): Make the following private and allow
   // only selected functions/method to use them.
+  mpq_class &get_mutable_constant() { return constant_; }
   /** Returns map from an expression to its coefficient. */
   std::map<Expression, mpq_class> &get_mutable_expr_to_coeff_map() { return expr_to_coeff_map_; }
+
+  void UpdateHash() override;
 
  private:
   void UpdateVariables() const override;
@@ -339,7 +348,8 @@ class ExpressionAddFactory {
 
   /** Constructs ExpressionAddFactory with @p constant and @p
    * expr_to_coeff_map. */
-  ExpressionAddFactory(const mpq_class &constant, std::map<Expression, mpq_class> expr_to_coeff_map);
+  ExpressionAddFactory(const mpq_class& constant, const std::map<Expression, mpq_class>& expr_to_coeff_map);
+  ExpressionAddFactory(mpq_class&& constant, std::map<Expression, mpq_class>&& expr_to_coeff_map);
 
   /** Constructs ExpressionAddFactory from @p ptr. */
   explicit ExpressionAddFactory(const ExpressionAdd *ptr);
@@ -419,6 +429,7 @@ class ExpressionMul : public ExpressionCell {
 
   // TODO(soonho): Make the following private and allow
   // only selected functions/method to use them.
+  mpq_class &get_mutable_constant() { return constant_; }
   /** Returns map from a term to its exponent. */
   std::map<Expression, Expression> &get_mutable_base_to_exponent_map() { return base_to_exponent_map_; }
 
@@ -451,7 +462,10 @@ class ExpressionMulFactory {
 
   /** Constructs ExpressionMulFactory with @p constant and @p
    * base_to_exponent_map. */
-  ExpressionMulFactory(const mpq_class &constant, std::map<Expression, Expression> base_to_exponent_map);
+  ExpressionMulFactory(const mpq_class &constant, const std::map<Expression, Expression>& base_to_exponent_map);
+  /** Constructs ExpressionMulFactory with @p constant and @p
+   * base_to_exponent_map. */
+  ExpressionMulFactory(mpq_class &&constant, std::map<Expression, Expression>&& base_to_exponent_map);
 
   /** Constructs ExpressionMulFactory from @p ptr. */
   explicit ExpressionMulFactory(const ExpressionMul *ptr);

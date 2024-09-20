@@ -364,6 +364,11 @@ Expression &operator+=(Expression &lhs, const Expression &rhs) {
   }
   // Simplification: Expression(c1) + Expression(c2) => Expression(c1 + c2)
   if (is_constant(lhs) && is_constant(rhs)) {
+    if (lhs.ptr_->use_count() == 1) {
+      const_cast<mpq_class &>(to_constant(lhs)->get_value()) += get_constant_value(rhs);
+      lhs.ptr_->UpdateHash();
+      return lhs;
+    }
     return lhs = Expression(get_constant_value(lhs) + get_constant_value(rhs));
   }
 
@@ -374,8 +379,8 @@ Expression &operator+=(Expression &lhs, const Expression &rhs) {
     if (lhs.ptr_->use_count() == 1) {
       return lhs =
                  ExpressionAddFactory{
-                     get_constant_in_addition(lhs),
-                     to_addition(lhs)->get_mutable_expr_to_coeff_map()}
+                     std::move(to_addition(lhs)->get_mutable_constant()),
+                     std::move(to_addition(lhs)->get_mutable_expr_to_coeff_map())}
                      .AddExpression(rhs)
                      .GetExpression();
     } else {
@@ -454,10 +459,16 @@ Expression operator-(const Expression &e) {
 Expression operator-(Expression &&e) {
   if (e.ptr_->use_count() == 1) {
     if (is_addition(e)) {
-      return NegateAddition(to_addition(e));
+      return ExpressionAddFactory{std::move(to_addition(e)->get_mutable_constant()),
+                                  std::move(to_addition(e)->get_mutable_expr_to_coeff_map())}
+          .Negate()
+          .GetExpression();
     }
     if (is_multiplication(e)) {
-      return NegateMultiplication(to_multiplication(e));
+      return ExpressionMulFactory{std::move(to_multiplication(e)->get_mutable_constant()),
+                                  std::move(to_multiplication(e)->get_mutable_base_to_exponent_map())}
+          .Negate()
+          .GetExpression();
     }
   }
   return -e;
@@ -606,8 +617,8 @@ Expression &operator*=(Expression &lhs, const Expression &rhs) {
     if (lhs.ptr_->use_count() == 1) {
       return lhs =
                  ExpressionMulFactory{
-                     get_constant_in_multiplication(lhs),
-                     to_multiplication(lhs)->get_mutable_base_to_exponent_map()}
+                     std::move(to_multiplication(lhs)->get_mutable_constant()),
+                     std::move(to_multiplication(lhs)->get_mutable_base_to_exponent_map())}
                      .AddExpression(rhs)
                      .GetExpression();
     } else {
