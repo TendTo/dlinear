@@ -15,6 +15,7 @@
 #include <utility>
 
 #include "dlinear/symbolic/hash.h"
+#include "dlinear/util/exception.h"
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_expression_visitor.h"
@@ -204,28 +205,90 @@ Expression ExpandPow(const Expression &base, const Expression &exponent) {
 }
 }  // anonymous namespace
 
-ExpressionCell::ExpressionCell(const ExpressionKind k, const size_t hash, const bool is_poly, const bool include_ite,
-                               Variables variables)
-    : variables_{std::move(variables)},
-      kind_{k},
+ExpressionCell::ExpressionCell(const ExpressionKind k)
+    : kind_{k},
+      variables_{},
+      hash_{},
+      is_polynomial_{},
+      include_ite_{} {}
+ExpressionCell::ExpressionCell(const ExpressionKind k, const bool is_poly)
+    : kind_{k},
+      variables_{},
+      hash_{},
+      is_polynomial_{is_poly},
+      include_ite_{} {}
+ExpressionCell::ExpressionCell(const ExpressionKind k, const bool is_poly, const bool include_ite)
+    : kind_{k},
+      variables_{},
+      hash_{},
+      is_polynomial_{is_poly},
+      include_ite_{include_ite} {}
+ExpressionCell::ExpressionCell(const ExpressionKind k, const bool is_poly, const bool include_ite, Variables variables)
+    : kind_{k},
+      variables_{std::move(variables)},
+      hash_{},
+      is_polynomial_{is_poly},
+      include_ite_{include_ite} {}
+ExpressionCell::ExpressionCell(const ExpressionKind k, const bool is_poly, const bool include_ite, Variables variables, const size_t hash)
+    : kind_{k},
+      variables_{std::move(variables)},
       hash_{hash_combine(static_cast<size_t>(kind_), hash)},
       is_polynomial_{is_poly},
       include_ite_{include_ite} {}
 
 Expression ExpressionCell::GetExpression() { return Expression{this}; }
 
-const Variables &ExpressionCell::GetVariables() const {
-  if (variables_.empty()) UpdateVariables();
-  return variables_;
+size_t ExpressionCell::get_hash() const {
+  if (!hash_.has_value()) {
+    ComputeHash(hash_);
+    hash_.value() = hash_combine(static_cast<size_t>(kind_), hash_.value());
+  }
+  DLINEAR_ASSERT(hash_.has_value(), "hash_ must have a value.");
+  return hash_.value();
 }
 
-void ExpressionCell::UpdateHash() {}
-void ExpressionCell::UpdateHash(const size_t hash)  { hash_ = hash_combine(static_cast<size_t>(kind_), hash); }
+bool ExpressionCell::is_polynomial() const {
+  if (!is_polynomial_.has_value()) ComputeIsPolynomial(is_polynomial_);
+  DLINEAR_ASSERT(is_polynomial_.has_value(), "is_polynomial_ must have a value.");
+  return is_polynomial_.value();
+}
 
-void ExpressionCell::UpdateVariables() const {}
+bool ExpressionCell::include_ite() const {
+  if (!include_ite_.has_value()) ComputeIncludeIte(include_ite_);
+  DLINEAR_ASSERT(include_ite_.has_value(), "include_ite_ must have a value.");
+  return include_ite_.value();
+}
+
+const Variables &ExpressionCell::GetVariables() const {
+  if (!variables_.has_value()) ComputeVariables(variables_);
+  DLINEAR_ASSERT(variables_.has_value(), "variables_ must have a value.");
+  return variables_.value();
+}
+
+void ExpressionCell::UpdateHash() { hash_.reset(); }
+void ExpressionCell::UpdateHash(const size_t hash) { hash_ = hash_combine(static_cast<size_t>(kind_), hash); }
+
+void ExpressionCell::ComputeVariables(std::optional<Variables>&) const { DLINEAR_UNREACHABLE(); }
+void ExpressionCell::ComputeHash(std::optional<size_t>&) const { DLINEAR_UNREACHABLE(); }
+void ExpressionCell::ComputeIsPolynomial(std::optional<bool>&) const { DLINEAR_UNREACHABLE(); }
+void ExpressionCell::ComputeIncludeIte(std::optional<bool>&) const { DLINEAR_UNREACHABLE(); }
 
 UnaryExpressionCell::UnaryExpressionCell(const ExpressionKind k, const Expression &e, const bool is_poly)
-    : ExpressionCell{k, e.get_hash(), is_poly, e.include_ite(), e.GetVariables()}, e_{e} {}
+    : ExpressionCell{k, is_poly}, e_{e} {}
+
+void UnaryExpressionCell::ComputeHash(std::optional<size_t> &hash) const {
+  assert(!hash.has_value());
+  hash = e_.get_hash();
+}
+void UnaryExpressionCell::ComputeVariables(std::optional<Variables>& variables) const {
+  assert(!variables.has_value());
+  variables = e_.GetVariables();
+}
+void UnaryExpressionCell::ComputeIncludeIte(std::optional<bool>& include_ite) const {
+  assert(!include_ite.has_value());
+  include_ite = e_.include_ite();
+}
+
 
 bool UnaryExpressionCell::EqualTo(const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.
@@ -246,12 +309,23 @@ mpq_class UnaryExpressionCell::Evaluate(const Environment &env) const {
   return DoEvaluate(v);
 }
 
-BinaryExpressionCell::BinaryExpressionCell(const ExpressionKind k, const Expression &e1, const Expression &e2,
-                                           const bool is_poly)
-    : ExpressionCell{k, hash_combine(e1.get_hash(), e2), is_poly, e1.include_ite() || e2.include_ite(),
-                     e1.GetVariables() + e2.GetVariables()},
+BinaryExpressionCell::BinaryExpressionCell(const ExpressionKind k, const Expression &e1, const Expression &e2, const bool is_poly)
+    : ExpressionCell{k, is_poly},
       e1_{e1},
       e2_{e2} {}
+
+void BinaryExpressionCell::ComputeHash(std::optional<size_t> &hash) const {
+  assert(!hash.has_value());
+  hash = hash_combine(e1_.get_hash(), e2_);
+}
+void BinaryExpressionCell::ComputeVariables(std::optional<Variables>& variables) const {
+  assert(!variables.has_value());
+  variables = e1_.GetVariables() + e2_.GetVariables();
+}
+void BinaryExpressionCell::ComputeIncludeIte(std::optional<bool>& include_ite) const {
+  assert(!include_ite.has_value());
+  include_ite = e1_.include_ite() || e2_.include_ite();
+}
 
 bool BinaryExpressionCell::EqualTo(const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.
@@ -281,7 +355,7 @@ mpq_class BinaryExpressionCell::Evaluate(const Environment &env) const {
 }
 
 ExpressionVar::ExpressionVar(const Variable &v)
-    : ExpressionCell{ExpressionKind::Var, hash_value<Variable>{}(v), true, false, {v}}, var_{v} {
+    : ExpressionCell{ExpressionKind::Var, true, false, {v}}, var_{v} {
   // Dummy symbolic variable (ID = 0) should not be used in constructing
   // symbolic expressions.
   if (var_.is_dummy()) {
@@ -296,6 +370,11 @@ ExpressionVar::ExpressionVar(const Variable &v)
            "symbolic expression.";
     throw runtime_error(oss.str());
   }
+}
+
+void ExpressionVar::ComputeHash(std::optional<size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = std::hash<Variable>{}(var_);
 }
 
 bool ExpressionVar::EqualTo(const ExpressionCell &e) const {
@@ -335,7 +414,12 @@ ostream &ExpressionVar::Display(ostream &os) const { return os << var_; }
 std::string ExpressionVar::to_smt2_string() const { return var_.to_string(); }
 
 ExpressionConstant::ExpressionConstant(const mpq_class &v)
-    : ExpressionCell{ExpressionKind::Constant, hash<mpq_class>{}(v), true, false, Variables{}}, v_{v} {}
+    : ExpressionCell{ExpressionKind::Constant, true, false, Variables{}}, v_{v} {}
+
+void ExpressionConstant::ComputeHash(std::optional<size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = std::hash<mpq_class>{}(v_);
+}
 
 bool ExpressionConstant::EqualTo(const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.
@@ -372,7 +456,7 @@ std::string ExpressionConstant::to_smt2_string() const {
   return mpq_to_string(v_);
 }
 
-ExpressionNaN::ExpressionNaN() : ExpressionCell{ExpressionKind::NaN, 41, false, false, Variables{}} {
+ExpressionNaN::ExpressionNaN() : ExpressionCell{ExpressionKind::NaN, false, false, Variables{}, 41} {
   // ExpressionCell constructor calls hash_combine(ExpressionKind::NaN, 41) to
   // compute the hash of ExpressionNaN. Here 41 does not have any special
   // meaning.
@@ -408,9 +492,9 @@ ostream &ExpressionNaN::Display(ostream &os) const { return os << "NaN"; }
 std::string ExpressionNaN::to_smt2_string() const { return "NaN"; }
 
 ExpressionInfty::ExpressionInfty(int sign)
-    : ExpressionCell{ExpressionKind::Infty, 41, false, false, Variables{}}, sign_(sign) {
-  // ExpressionCell constructor calls hash_combine(ExpressionKind::Infty, 41) to
-  // compute the hash of ExpressionInfty. Here 41 does not have any special
+    : ExpressionCell{ExpressionKind::Infty, false, false, Variables{}, 42}, sign_(sign) {
+  // ExpressionCell constructor calls hash_combine(ExpressionKind::Infty, 42) to
+  // compute the hash of ExpressionInfty. Here 42 does not have any special
   // meaning.
   if (sign_ != 1 && sign_ != -1) {
     throw runtime_error("Invalid sign when constructing ExpressionInfty.");
@@ -447,9 +531,7 @@ ostream &ExpressionInfty::Display(ostream &os) const { return os << (sign_ == -1
 std::string ExpressionInfty::to_smt2_string() const { return (sign_ == -1 ? "-infinity" : "infinity"); }
 
 ExpressionAdd::ExpressionAdd(const mpq_class &constant, map<Expression, mpq_class> expr_to_coeff_map)
-    : ExpressionCell{ExpressionKind::Add, hash_combine(hash<mpq_class>{}(constant), expr_to_coeff_map),
-                     determine_polynomial(expr_to_coeff_map), determine_include_ite(expr_to_coeff_map),
-                     {}},
+    : ExpressionCell{ExpressionKind::Add},
       constant_(constant),
       expr_to_coeff_map_{std::move(expr_to_coeff_map)} {
   assert(!expr_to_coeff_map_.empty());
@@ -459,11 +541,24 @@ void ExpressionAdd::UpdateHash() {
   ExpressionCell::UpdateHash(hash_combine(hash<mpq_class>{}(constant_), expr_to_coeff_map_));
 }
 
-void ExpressionAdd::UpdateVariables() const {
-  assert(variables_.empty());
+void ExpressionAdd::ComputeVariables(std::optional<Variables>& variables) const {
+  assert(!variables.has_value());
+  variables = Variables{};
   for (const auto &p : expr_to_coeff_map_) {
-    variables_.insert(p.first.GetVariables());
+    variables.value().insert(p.first.GetVariables());
   }
+}
+void ExpressionAdd::ComputeHash(std::optional<size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = hash_combine(std::hash<mpq_class>{}(constant_), expr_to_coeff_map_);
+}
+void ExpressionAdd::ComputeIsPolynomial(std::optional<bool>& is_polynomial) const {
+    assert(!is_polynomial.has_value());
+    is_polynomial = determine_polynomial(expr_to_coeff_map_);
+}
+void ExpressionAdd::ComputeIncludeIte(std::optional<bool>& include_ite) const {
+  assert(!include_ite.has_value());
+  include_ite = determine_include_ite(expr_to_coeff_map_);
 }
 
 bool ExpressionAdd::EqualTo(const ExpressionCell &e) const {
@@ -707,20 +802,31 @@ ExpressionAddFactory &ExpressionAddFactory::AddMap(const map<Expression, mpq_cla
 }
 
 ExpressionMul::ExpressionMul(const mpq_class &constant, map<Expression, Expression> base_to_exponent_map)
-    : ExpressionCell{ExpressionKind::Mul, hash_combine(hash<mpq_class>{}(constant), base_to_exponent_map),
-                     determine_polynomial(base_to_exponent_map), determine_include_ite(base_to_exponent_map),
-                     {}},
+    : ExpressionCell{ExpressionKind::Mul},
       constant_(constant),
       base_to_exponent_map_{std::move(base_to_exponent_map)} {
   assert(!base_to_exponent_map_.empty());
 }
 
-void ExpressionMul::UpdateVariables() const {
-  assert(variables_.empty());
+void ExpressionMul::ComputeVariables(std::optional<Variables>& variables) const {
+  assert(!variables.has_value());
+  variables = Variables{};
   for (const auto &[base, exponent] : base_to_exponent_map_) {
-    variables_.insert(base.GetVariables());
-    variables_.insert(exponent.GetVariables());
+    variables.value().insert(base.GetVariables());
+    variables.value().insert(exponent.GetVariables());
   }
+}
+void ExpressionMul::ComputeHash(std::optional<size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = hash_combine(std::hash<mpq_class>{}(constant_), base_to_exponent_map_);
+}
+void ExpressionMul::ComputeIsPolynomial(std::optional<bool>& is_polynomial) const {
+  assert(!is_polynomial.has_value());
+  is_polynomial = determine_polynomial(base_to_exponent_map_);
+}
+void ExpressionMul::ComputeIncludeIte(std::optional<bool>& include_ite) const {
+  assert(!include_ite.has_value());
+  include_ite = determine_include_ite(base_to_exponent_map_);
 }
 
 bool ExpressionMul::EqualTo(const ExpressionCell &e) const {
@@ -1873,17 +1979,21 @@ mpq_class ExpressionMax::DoEvaluate(const mpq_class &v1, const mpq_class &v2) co
 // ExpressionIfThenElse
 // --------------------
 ExpressionIfThenElse::ExpressionIfThenElse(const Formula &f_cond, const Expression &e_then, const Expression &e_else)
-    : ExpressionCell{ExpressionKind::IfThenElse, hash_combine(hash_value<Formula>{}(f_cond), e_then, e_else), false,
-                     true, {}},
+    : ExpressionCell{ExpressionKind::IfThenElse, false, true},
       f_cond_{f_cond},
       e_then_{e_then},
       e_else_{e_else} {}
 
-void ExpressionIfThenElse::UpdateVariables() const {
-  assert(variables_.empty());
-  variables_.insert(f_cond_.GetFreeVariables());
-  variables_.insert(e_then_.GetVariables());
-  variables_.insert(e_else_.GetVariables());
+void ExpressionIfThenElse::ComputeVariables(std::optional<Variables>& variables) const {
+  assert(!variables.has_value());
+  variables = Variables{};
+  variables.value().insert(f_cond_.GetFreeVariables());
+  variables.value().insert(e_then_.GetVariables());
+  variables.value().insert(e_else_.GetVariables());
+}
+void ExpressionIfThenElse::ComputeHash(std::optional<std::size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = hash_combine(hash_value<Formula>{}(f_cond_), e_then_, e_else_);
 }
 
 bool ExpressionIfThenElse::EqualTo(const ExpressionCell &e) const {
@@ -1957,10 +2067,14 @@ std::string ExpressionIfThenElse::to_smt2_string() const {
 // ExpressionUninterpretedFunction
 // --------------------
 ExpressionUninterpretedFunction::ExpressionUninterpretedFunction(const string &name, const Variables &vars)
-    : ExpressionCell{ExpressionKind::UninterpretedFunction, hash_combine(hash_value<string>{}(name), vars), false,
-                     false, vars},
+    : ExpressionCell{ExpressionKind::UninterpretedFunction, false, false, vars},
       name_{name},
       variables_{vars} {}
+
+void ExpressionUninterpretedFunction::ComputeHash(std::optional<size_t>& hash) const {
+  assert(!hash.has_value());
+  hash = hash_combine(hash_value<string>{}(name_), variables_);
+}
 
 bool ExpressionUninterpretedFunction::EqualTo(const ExpressionCell &e) const {
   // Expression::EqualTo guarantees the following assertion.

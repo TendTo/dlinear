@@ -6,6 +6,7 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <optional>
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/symbolic_environment.h"
@@ -28,7 +29,7 @@ class ExpressionCell {
   ExpressionKind get_kind() const { return kind_; }
 
   /** Returns hash value. */
-  size_t get_hash() const { return hash_; }
+  size_t get_hash() const;
 
   /** Collects variables in expression. */
   const Variables &GetVariables() const;
@@ -40,11 +41,11 @@ class ExpressionCell {
   virtual bool Less(const ExpressionCell &c) const = 0;
 
   /** Checks if this symbolic expression is convertible to Polynomial. */
-  bool is_polynomial() const { return is_polynomial_; }
+  bool is_polynomial() const;
 
   /// Returns true if this symbolic expression includes an ITE (If-Then-Else)
   /// expression.
-  bool include_ite() const { return include_ite_; }
+  bool include_ite() const;
 
   /** Evaluates under a given environment (by default, an empty environment).
    *  @throw std::runtime_error if NaN is detected during evaluation.
@@ -93,26 +94,38 @@ class ExpressionCell {
   virtual void UpdateHash();
 
  protected:
-  /** Default constructor. */
-  ExpressionCell() = default;
+  /** Constructs ExpressionCell of kind @p k */
+  explicit ExpressionCell(ExpressionKind k);
   /** Constructs ExpressionCell of kind @p k with @p hash, @p is_poly, and @p
    * include_ite. */
-  ExpressionCell(ExpressionKind k, size_t hash, bool is_poly, bool include_ite, Variables variables);
+  ExpressionCell(ExpressionKind k, bool is_poly);
+  /** Constructs ExpressionCell of kind @p k with @p hash, @p is_poly, and @p
+   * include_ite. */
+  ExpressionCell(ExpressionKind k, bool is_poly, bool include_ite);
+  /** Constructs ExpressionCell of kind @p k with @p hash, @p is_poly, and @p
+   * include_ite. */
+  ExpressionCell(ExpressionKind k, bool is_poly, bool include_ite, Variables variables);
+  /** Constructs ExpressionCell of kind @p k with @p hash, @p is_poly, and @p
+   * include_ite. */
+  ExpressionCell(ExpressionKind k, bool is_poly, bool include_ite, Variables variables, size_t hash);
   /** Default destructor. */
   virtual ~ExpressionCell() = default;
   /** Returns an expression pointing to this ExpressionCell. */
   Expression GetExpression();
 
-  virtual void UpdateVariables() const;
+  virtual void ComputeVariables(std::optional<Variables>& variables) const;
+  virtual void ComputeHash(std::optional<size_t>& hash) const;
+  virtual void ComputeIsPolynomial(std::optional<bool>& is_polynomial) const;
+  virtual void ComputeIncludeIte(std::optional<bool>& include_ite) const;
 
-  void UpdateHash(const size_t hash);
+  void UpdateHash(size_t hash);
 
-  mutable Variables variables_; ///< Cached variables contained in the expression
  private:
   const ExpressionKind kind_{};
-  size_t hash_{};
-  const bool is_polynomial_{false};
-  const bool include_ite_{false};
+  mutable std::optional<Variables> variables_; ///< Cached variables contained in the expression
+  mutable std::optional<size_t> hash_{};
+  mutable std::optional<bool> is_polynomial_{false};
+  mutable std::optional<bool> include_ite_{false};
 
   // Reference counter.
   mutable std::atomic<unsigned> rc_{0};
@@ -163,6 +176,10 @@ class UnaryExpressionCell : public ExpressionCell {
 
  private:
   const Expression e_;
+
+  void ComputeHash(std::optional<size_t>& hash) const override;
+  void ComputeVariables(std::optional<Variables>& variables) const override;
+  void ComputeIncludeIte(std::optional<bool>& include_ite) const override;
 };
 
 /** Represents the base class for binary expressions.
@@ -206,6 +223,10 @@ class BinaryExpressionCell : public ExpressionCell {
  private:
   const Expression e1_;
   const Expression e2_;
+
+  void ComputeHash(std::optional<size_t>& hash) const override;
+  void ComputeVariables(std::optional<Variables>& variables) const override;
+  void ComputeIncludeIte(std::optional<bool>& include_ite) const override;
 };
 
 /** Symbolic expression representing a variable. */
@@ -226,6 +247,8 @@ class ExpressionVar : public ExpressionCell {
 
  private:
   const Variable var_;
+
+  void ComputeHash(std::optional<size_t>& hash) const override;
   std::string to_smt2_string() const override;
 };
 
@@ -246,6 +269,8 @@ class ExpressionConstant : public ExpressionCell {
 
  private:
   const mpq_class v_{};
+
+  virtual void ComputeHash(std::optional<size_t>& hash) const;
 };
 
 /** Symbolic expression representing NaN (not-a-number). */
@@ -320,7 +345,10 @@ class ExpressionAdd : public ExpressionCell {
   void UpdateHash() override;
 
  private:
-  void UpdateVariables() const override;
+  void ComputeVariables(std::optional<Variables>& variables) const override;
+  void ComputeHash(std::optional<size_t>& hash) const override;
+  void ComputeIsPolynomial(std::optional<bool>& is_polynomial) const override;
+  void ComputeIncludeIte(std::optional<bool>& include_ite) const override;
   std::ostream &DisplayTerm(std::ostream &os, bool print_plus, const mpq_class &coeff, const Expression &term) const;
 
   mpq_class constant_{};
@@ -337,7 +365,7 @@ class ExpressionAddFactory {
  public:
   ExpressionAddFactory(const ExpressionAddFactory &) = default;
   ExpressionAddFactory &operator=(const ExpressionAddFactory &) = default;
-  ExpressionAddFactory(ExpressionAddFactory &&) = default;
+  ExpressionAddFactory(ExpressionAddFactory &&) noexcept = default;
   ExpressionAddFactory &operator=(ExpressionAddFactory &&) = default;
 
   /** Default constructor. */
@@ -434,7 +462,11 @@ class ExpressionMul : public ExpressionCell {
   std::map<Expression, Expression> &get_mutable_base_to_exponent_map() { return base_to_exponent_map_; }
 
  private:
-  void UpdateVariables() const override;
+  void ComputeVariables(std::optional<Variables>& variables) const override;
+  void ComputeHash(std::optional<size_t>& hash) const override;
+  void ComputeIsPolynomial(std::optional<bool>& is_polynomial) const override;
+  void ComputeIncludeIte(std::optional<bool>& include_ite) const override;
+
   std::ostream &DisplayTerm(std::ostream &os, bool print_mul, const Expression &base, const Expression &exponent) const;
 
   mpq_class constant_{};
@@ -451,7 +483,7 @@ class ExpressionMulFactory {
  public:
   ExpressionMulFactory(const ExpressionMulFactory &) = default;
   ExpressionMulFactory &operator=(const ExpressionMulFactory &) = default;
-  ExpressionMulFactory(ExpressionMulFactory &&) = default;
+  ExpressionMulFactory(ExpressionMulFactory &&) noexcept = default;
   ExpressionMulFactory &operator=(ExpressionMulFactory &&) = default;
 
   /** Default constructor. It constructs. */
@@ -811,7 +843,8 @@ class ExpressionIfThenElse : public ExpressionCell {
   const Expression &get_else_expression() const { return e_else_; }
 
  private:
-  void UpdateVariables() const override;
+  void ComputeVariables(std::optional<Variables>& variables) const override;
+  void ComputeHash(std::optional<size_t>& hash) const override;
 
   const Formula f_cond_;
   const Expression e_then_;
@@ -839,6 +872,8 @@ class ExpressionUninterpretedFunction : public ExpressionCell {
  private:
   const std::string name_;
   const Variables variables_;
+
+  void ComputeHash(std::optional<size_t>& hash) const override;
 };
 
 /** Checks if @p c is a rational constant expression. */
