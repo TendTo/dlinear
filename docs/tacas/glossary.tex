@@ -1,0 +1,163 @@
+\newglossaryentry{oop}{
+    name={Object-Oriented Programming},
+    first={Object-Oriented Programming (OOP)},
+    text={OOP},
+    description={
+            Object-Oriented Programming is a programming paradigm based on the concept of objects, which can hold a state in the form of fields, and methods, in the form of function with access to the object's state.
+        }
+}
+\newglossaryentry{api}{
+    name = {Application Programming Interface},
+    first = {Application Programming Interface (API)},
+    text = {API},
+    plural={APIs},
+    firstplural={Application Programming Interfaces (APIs)},
+    description = {
+            An application programming interface (API) defines a way for two software components to communicate with each other.
+        }
+}
+\newglossaryentry{smt}
+{
+    name={Satisfiability Modulo Theories},
+    first={Satisfiability Modulo Theories (SMT)},
+    text={SMT},
+    description={
+            A decision problem for logical formulas with respect to combinations of background theories
+            expressed in classical first-order logic with equality.
+        }
+}
+\newglossaryentry{fol}{
+    name={First-order logic},
+    first={first-order logic (FOL)},
+    text={fol},
+    description={
+            Expressive formal system that allows the following statements:
+            \begin{itemize}
+                \item Constants ($x, y$)
+                \item Functions ($f(x)$)
+                \item Relationships ($x > y$)
+                \item Connectives ($\land, \lor, \lnot, \implies, \iff$)
+                \item Quantifiers ($\forall, \exists$)
+            \end{itemize}
+        }
+}
+\newglossaryentry{smtp}{
+    name={SMT problem},
+    text={SMT problem},
+    plural={SMT problems},
+    description={
+            Decision problems that are true or false depending on whether a given \gls{fol} formula
+            is true or false in respect to a given background theory. \\
+            In the context of computer science, the background theories are usually include
+            arithmetic, bitvectors, arrays, etc.
+        }
+}
+\newglossaryentry{sat}{
+    first={Satisfiability (SAT)},
+    name={Satisfiability},
+    text={SAT},
+    description={
+            A formula is satisfiable if it is possible to find a set of values for its variables
+            that makes the formula true.
+            On the other hand, a formula is unsatisfiable if such set does not exists.
+            \begin{multline*}
+                \text{Example} \\
+                (a \lor c) \land (b \lor c) \land (\neg a \lor \neg c) \\
+                \text{is satisfiable with the assignment } a = 1, b = 1, c = 0 \\
+            \end{multline*}
+        }
+}
+\newglossaryentry{convopt}{
+    name={Convex optimization},
+    text={convex optimization},
+    description={
+            A convex optimization problem is a problem where the objective function and the constraints
+            are convex functions. \\
+            A convex function is a function whose domain is a convex set and that satisfies the following
+            property:
+            \begin{equation*}
+                f(\lambda x + (1 - \lambda)y) \leq \lambda f(x) + (1 - \lambda)f(y)
+            \end{equation*}
+            for all $x, y \in \text{dom}(f)$ and $\lambda \in [0, 1]$.
+        }
+}
+\newglossaryentry{cnf}{
+    first={Conjunctive Normal Form (CNF)},
+    name={Conjunctive Normal Form},
+    text={CNF},
+    description={
+            A formula is in \gls{cnf} if it is a conjunction of clauses, where a clause is a
+            disjunction of literals. \\
+            A literal can be a boolean variable or its negation. \\
+            \\
+            \begin{equation*}
+                \bigwedge_{i=1}^n \bigvee_{j=1}^{m_i} l_{ij}
+            \end{equation*}
+        }
+}
+\newglossaryentry{lp}{
+    first={Lienar Programming (LP)},
+    name={Linear Programming},
+    text={LP},
+    description={
+            A Linear Programming problem is an optimization problem where the objective function and the constraints
+            are linear functions. \\
+            A typical Linear Programming problem has the following form:
+            \begin{equation*}
+                \begin{aligned}
+                     & \text{maximize}   & c^T x      \\
+                     & \text{subject to} & A x \leq b \\
+                     &                   & x \geq 0
+                \end{aligned}
+            \end{equation*}
+            where $x \in \mathbb{R}^d$ is the vector of variables to be determined, $c \in \mathbb{R}^d$ and $b \in \mathbb{R}^n$ are vectors of coefficients, and $A \in \mathbb{R}^{n \times d}$ is a matrix of coefficients.
+        }
+}
+\newglossaryentry{qf-lia}{
+    name={QF\_LIA},
+    text={QF\_LIA},
+    description={
+            Quantifier-free linear integer arithmetic. In essence, Boolean combinations of inequations between linear polynomials over integer variables.
+        }
+}
+\newglossaryentry{qf-lra}{
+    name={QF\_LRA},
+    text={QF\_LRA},
+    description={
+            Quantifier-free linear real arithmetic. In essence, Boolean combinations of inequations between linear polynomials over real variables.
+        }
+}
+\newglossaryentry{nnf}{
+    name={Negation Normal Form},
+    text={NNF},
+    first={Negation Normal Form (NNF)},
+    description={
+            A formula where the negation operator $\neg$ is only applied to variables. \\
+            $\neg a$ is a NNF formula, while $\neg (a \lor b)$ is not.
+        }
+}
+\newglossaryentry{dpll}{
+    name={DPLL algorithm},
+    text={DPLL},
+    first={Davis-Putnam-Logemann-Loveland (DPLL)},
+    description={
+            A complete \gls{sat} backtracking algorithm for deciding the satisfiability of propositional logic formulae in \gls{cnf}.
+        }
+}
+\newglossaryentry{dp}{
+    name={DP algorithm},
+    text={DP},
+    first={Davis-Putnam (DP)},
+    description={
+            A complete \gls{sat} algorithms that uses the resolution inference rule to decide the satisfiability of propositional logic formulae in \gls{cnf}.
+        }
+}
+\newglossaryentry{mps}{
+    name={Mathematical Programming System},
+    text={MPS},
+    first={Mathematical Programming System (MPS)},
+    description={
+            A common file format for representing \gls{lp} problems.
+            Developed by IBM, it is supported by most commercial \gls{lp} solvers.
+        }
+}
