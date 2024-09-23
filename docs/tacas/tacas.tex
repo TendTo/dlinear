@@ -1,3 +1,23 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Inspired by last year's TACAS paper
+%
+%
+% DEADLINE 
+% Submission deadline for TACAS, FoSSaCS, FASE: October 10, 2024, 23:59 AoE
+% TACAS mandatory artifact submission deadline: October 24, 2024
+% Rebuttal (ESOP, FoSSaCS, partially TACAS): December 3–5, 2024
+% Paper notification and TACAS mandatory artifact notification: December 20, 2024
+%
+% REQUIREMENTS:
+% Info: https://etaps.org/2025/conferences/tacas/
+% Formatting formatting guidelines must follow Springer’s LNCS (use the llncs.cls class)
+% The review process of TACAS 2025 is single-blind.
+% The length of regular research papers, case study papers, and regular tool papers is limited to 16 pp 
+% excluding the bibliography and appendices.
+% Additional material can be placed in a clearly marked appendix, at the end of the paper. 
+% The reviewers are not obliged to read such appendices. 
+% If the paper is accepted, a full version including the appendix should be made publicly available via arXiv or a similar platform.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[runningheads]{llncs}
 
 \input{setup}
@@ -56,7 +76,7 @@
 \section{Introduction}
 
 \gls{smt} has a notoriously vast variety of applications, ranging from software formal verification to planning and optimization just to name a few.
-As expected, \gls{smt} solvers have received a lot of attention over the years, with some of the most notable being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
+As expected, \gls{smt} solvers have received a lot of attention over the years, with some of the most well-known being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
 Another field that is getting a lot of attention as of lately is Neural Networks.
 Being an ever more pervasive presence in our everyday life, formal verification of Neural Networks (NN) is quickly becoming a hot topic.
 For this reason, multiple NN reasoners have been developed, including $\alpha$-$\beta$-CROWN~\cite{ref:a-crown,ref:b-crown,ref:crown,ref:lirpa}, Marabou~\cite{ref:marabou}, nnenum~\cite{ref:nnenum} and VeriNet~\cite{ref:verinet}.
@@ -67,7 +87,7 @@ While not as feature-rich as some of the other more mature \gls{smt} solvers yet
 
 In \autoref{sec:preliminaries} we provides an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory.
 In \autoref{sec:architecture} we give a technical description of the software architecture of the tool.
-The details of the algorithms used are analyzed more in depth in \autoref{sec:lra-theory-solver}, which describes the approach used to adapt the \gls{lp} solver for \gls{smt} solving, and \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally and \autoref{sec:nn-verification}, which explains how the tool can be used to verify Neural Networks.
+The details of the algorithms used are analyzed more in depth in \autoref{sec:lra-theory-solver}, which describes the approach used to adapt the exact \gls{lp} solvers for \gls{smt} solving, \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally and \autoref{sec:nn-verification}, which explains how the tool can be used to verify Neural Networks.
 Lastly, in \autoref{sec:benchmarks} we present the results of the experiments conducted to evaluate the performance of the tool.
 
 \section{Preliminaries}
@@ -75,12 +95,10 @@ Lastly, in \autoref{sec:benchmarks} we present the results of the experiments co
 
 \subsection{SAT and SMT}
 
-A propositional formula is a construct that uses \textit{variables} (or \textit{unknowns}), which are to be assigned a semantic value \{\textbf{true}, \textbf{false}\}, and \textit{logical connectives}, such as $\lor$ (or), $\land$ (and) and $\neg$ (not).
-A literal is a variable $x$ or its negation $\neg x$.
-Propositional formulae are usually expressed in the \gls{cnf}, which is to say as a conjunction of clauses, where a clause is a disjunction of literals (see Eq.~\ref{eq:cnf-notations}).
+A propositional formula is a construct that uses \textit{variables} (or \textit{unknowns}), which are to be assigned a semantic value (i.e. \{\textbf{true}, \textbf{false}\}) and linked together by \textit{logical connectives} (i.e. $\lor$ (or), $\land$ (and) and $\neg$ (not)).
+A literal is a variable (e.g. $x$) or its negation (e.g. $\neg x$).
+Propositional formulae are usually expressed in the \gls{cnf}, which is to say as a conjunction of clauses, where a clause is a disjunction of literals \eqref{eq:cnf-notations}.
 A generic propositional formula can be converted into an equisatisfiable \gls{cnf} formulation through the Tseitin encoding~\cite{ref:handbook-sat}.
-A clause containing exactly one literal is called a unit clause.
-Lastly, an empty clause, a clause with no literals, corresponds to the formula $\bot$.
 \begin{equation}
     \label{eq:cnf-notations}
     \begin{gathered}
@@ -96,60 +114,60 @@ Although the problem is generally \textbf{NP-complete}~\cite{ref:np-sat}, over t
 CDCL is employed in most recent state-of-the-art \gls{sat} solvers, such as the version of \textit{Minisat} in cvc5~\cite{ref:cvc5-smt-comp-2022} and \textit{Glucose}~\cite{ref:glucose}.
 
 Satisfiability for propositional formulae can be extended to Satisfiability Modulo Theories (\textbf{SMT}).
-Let $\Sigma$ be a signature containing predicate and function symbols, with their arity, where $\Sigma^F$ is the set of functions and $\Sigma^P$ is the set of predicates.
-Furthermore, let the 0-arity symbols of $\Sigma^F$ be constants and the 0-arity symbols of $\Sigma^P$ propositions.
-A ground ($\Sigma$-)term $t$ is defined as a constant or the application of a function symbol to a list of terms compatible with its arity.
-A ground ($\Sigma$-)formula $\varphi$ can be a proposition, a predicate over a list of terms, an equality between terms, the symbols $\top$ or $\bot$ or any logical connectives $\land$, $\lor$, $\neg$, $\implies$ and $\iff$ applied to other $\Sigma$-formulae.
-Lastly, the term $ite$, known as the if-then-else operator, is defined in terms of three elements: a formula and two terms.
+Let $\Sigma$ be a signature containing predicate and function symbols, with an assigned arity.
+Furthermore, 0-arity functions are constants, while 0-arity predicates are propositions.
+A term $t$ is defined as a constant or the application of a function symbol to a list of terms compatible with its arity.
+A formula $\varphi$ can be a proposition, a predicate over a list of terms or any logical connectives $\land$, $\lor$, $\neg$, $\implies$ and $\iff$ between formulae.
+We also consider the term $ite$, known as the if-then-else operator, comprised of three elements: a formula and two terms.
 \begin{equation}
     \label{eq:smt-notations}
     \begin{gathered}
         \begin{array}{lll}
-            A \in \Sigma^P & \text{arity } 0   & \text{proposition} \\
-            c \in \Sigma^F & \text{arity } 0   & \text{constant}    \\
-            p \in \Sigma^P & \text{arity } > 0 & \text{predicate}   \\
-            f \in \Sigma^F & \text{arity } > 0 & \text{function}    \\
+            \Sigma^F         & \text{ functions } \in \Sigma                       \\
+            \Sigma^P         & \text{ predicates } \in \Sigma                      \\
+            \\
+            c \in \Sigma^F   & \text{arity } 0                & \text{constant}    \\
+            A \in \Sigma^P   & \text{arity } 0                & \text{proposition} \\
+            f_n \in \Sigma^F & \text{arity } n > 0            & \text{function}    \\
+            p_n \in \Sigma^P & \text{arity } n > 0            & \text{predicate}   \\
         \end{array}
         \\
         \begin{array}{lrll}
-            t       & \coloneqq & c                                                          & \text{ground term}    \\
-                    & \mid      & f(t_1, \ldots, t_n)                                                                \\
-                    & \mid      & ite(\varphi, t_1, t_2)                                                             \\
+            t       & \coloneqq & c                                                                           & \text{term}    \\
+                    & \mid      & f(t_1, \ldots, t_n)                                                                          \\
+                    & \mid      & ite(\varphi, t_1, t_2)                                                                       \\
             \\
-            \varphi & \coloneqq & A                                                          & \text{ground formula} \\
-                    & \mid      & p(t_1, \ldots, t_n)                                                                \\
-                    & \mid      & t_1 = t_2 \mid \top \mid \bot \mid \neg\varphi                                     \\
-                    & \mid      & \varphi_1 \land \varphi_2 \mid \varphi_1 \lor \varphi_2                            \\
-                    & \mid      & \varphi_1 \implies \varphi_2 \mid \varphi_1 \iff \varphi_2                         \\
+            \varphi & \coloneqq & A                                                                           & \text{formula} \\
+                    & \mid      & p(t_1, \ldots, t_n)                                                                          \\
+                    & \mid      & \neg\varphi    \mid \varphi_1 \land \varphi_2 \mid \varphi_1 \lor \varphi_2                  \\
+                    & \mid      & \varphi_1 \implies \varphi_2 \mid \varphi_1 \iff \varphi_2                                   \\
         \end{array}
     \end{gathered}
 \end{equation}
 \eqcaption{Notations used to represent an SMT formula}
-Literals in \gls{smt} formulae represent an \textbf{atom}, that is to say, a proposition, a predicate, an equality between terms or the symbols $\top$ or $\bot$.
-Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, by applying a \textbf{model} $\mathcal{A}$, which is a pair consisting of a non empty set $A$ and a mapping from all constant symbol $c \in \Sigma^F$ to an element $a^\mathcal{A} \in A$, from each function symbol $f \in \Sigma^F$ of arity $n > 0$ to a total function $f^\mathcal{A} : A^n \to A$, from each proposition $B \in \Sigma^{P}$ to a boolean value $b \in \{\textbf{true}, \textbf{false}\}$ and finally from each predicate symbol $p \in \Sigma^P$ of arity $n > 0$ to a total function $p^\mathcal{A} : A^n \to \{ \textbf{true}, \textbf{false} \}$.
-The mapping in the model determines the \textit{interpretation} of the formula.
-Following the expected conversions, for any $\mathcal{A}$
+Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, by introducing a \textbf{model} $\mathcal{M}$, which is a pair $\{M, \mathcal{I}\}$ consisting of a non empty set $M$ and a mapping $\mathcal{I}$ described as follows:
 \begin{gather*}
-    f(t_1, \dots, t_n)^{\mathcal{A}} = f^{\mathcal{A}}(t_1^{\mathcal{A}}, \dots, t_n^{\mathcal{A}}) \\
-    p(t_1, \dots, t_n)^{\mathcal{A}} = p^{\mathcal{A}}(t_1^{\mathcal{A}}, \dots, t_n^{\mathcal{A}}) \\
-    ite(\varphi, t_1, t_2)^{\mathcal{A}} = \begin{cases}
-        t_1^{\mathcal{A}} & \text{if } \varphi^{\mathcal{A}} = \textbf{true}  \\
-        t_2^{\mathcal{A}} & \text{if } \varphi^{\mathcal{A}} = \textbf{false}
-    \end{cases} \\
-    \bot = \textbf{false} \quad \top = \textbf{true}
+    \begin{array}{ll}
+        \mathcal{I}(c)                                & = m \in M                                                               \\
+        \mathcal{I}(A)                                & = \{\textbf{true}, \textbf{false}\}                                     \\
+        \mathcal{I}(p_n)                              & = p^{\mathcal{M}} : M^n \rightarrow \{\textbf{true}, \textbf{false}\}   \\
+        \mathcal{I}(f_n(t_1, \dots, t_n))             & = \mathcal{I}(f)(\mathcal{I}(t_1), \dots, \mathcal{I}(t_n))             \\
+        \mathcal{I}(p_n(\varphi_1, \dots, \varphi_n)) & = \mathcal{I}(p)(\mathcal{I}(\varphi_1), \dots, \mathcal{I}(\varphi_n)) \\
+        \mathcal{I}(ite(\varphi, t_1, t_2))           & = \begin{cases}
+                                                              \mathcal{I}(t_1) & \text{if } \mathcal{I}(\varphi) = \textbf{true}  \\
+                                                              \mathcal{I}(t_2) & \text{if } \mathcal{I}(\varphi) = \textbf{false}
+                                                          \end{cases}
+    \end{array}
 \end{gather*}
-If follows that a model $\mathcal{A}$ \textbf{satisfies} a formula $\varphi$ if $\varphi^{\mathcal{A}} = \textbf{true}$.
-To conclude with some definitions, we say that a set $\Gamma$ of ground formulae \textbf{entails} a ground formula $\varphi$, denoted $\Gamma \models \varphi$, iff every model $\mathcal{A}$ that satisfies all formulae in $\Gamma$ satisfies $\varphi$ as well.
-$\Gamma$ is \textbf{consistent} iff $\Gamma \not\models \bot$ and it is \textbf{valid} iff $\emptyset \models \Gamma$.
+A model $\mathcal{M}$ \textbf{satisfies} a formula $\varphi$ if $\mathcal{I}(\varphi) = \textbf{true}$.
 
 While these definitions are highly generic, it is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier free integer arithmetic (\textbf{QF\_NIA}) and many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
-Then, the problem of satisfiability is the problem of determining whether an interpretation within the chosen theory exists that satisfies the formula $\varphi$.
-The same problem can also be formulated as a validity problem, for to satisfy $\varphi$ means that $\neg\varphi$ must be valid and vice versa.
+Then, the problem of satisfiability is the problem of determining whether there exists an model that satisfies the formula $\varphi$ within the chosen theory.
 
 The tool presented in this paper will focus on the \gls{qf-lra} theory.
 The interpretation uses the domain $\bbbr$ of real numbers.
-Furthermore, only $+, -, \times,$ arithmetic operators are allowed, with $\times$ being restricted to multiply a variable only by a constant.
-Therefore, each atom can be expressed in the form $a_1x_1 + \ldots + a_nx_n \bowtie b$, where $x_i \in \bbbr \forall i \in \{1, 2, \dots, n\}$ are the variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
+Furthermore, only $+, -, \cdot,$ arithmetic operators are allowed, with the restriction that a variable can only be multiplied ($\cdot$) by a constant.
+Therefore, each atom can be expressed in the form $a_1 \cdot x_1 + \ldots + a_n \cdot  x_n \bowtie b$, where $x_i \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
 With these restrictions in place, the \gls{qf-lra} theory is decidable.
 
 \subsection{LP}
@@ -157,9 +175,9 @@ With these restrictions in place, the \gls{qf-lra} theory is decidable.
 
 It is easy to see how the \gls{qf-lra} theory is very closely related to the \gls{lp} problem.
 A linear program is a mathematical optimisation problem where the objective function is to maximize, and the constraints the solution is subject to are linear.
-Adopting a very common notation, consider a system of $m$ linear inequalities with unknown $x \in \bbbr^n$ and known constant values $A \in \bbbr^{m \times n}$, $b \in \bbbr^m$ and $c \in \bbbr^n$.
+Adopting a very common notation, consider a system of $m$ linear inequalities with unknown $x \in \bbbr^n$ and constant values $A \in \bbbr^{m \times n}$, $b \in \bbbr^m$ and $c \in \bbbr^n$.
 The variables can also present bounds, $l \in \bbbr^n$ and $u \in \bbbr^n$, such that $l_i \le x_i \le u_i \quad \forall i \in \{1, 2, \ldots, n\}$.
-\gls{lp} problems are often presented in the \textit{standard form} (Eq.~\ref{eq:lp-standard}), where the objective function is to be maximized, the constraints are all $\le$ inequalities and the variables are non-negative.
+\gls{lp} problems are often presented in the \textit{standard form} \eqref{eq:lp-standard}, where the objective function is to be maximized, the constraints are all $\le$ inequalities and the variables are non-negative.
 The conversion to the standard form is always possible and can be done in polynomial time.
 \begin{equation}
     \label{eq:lp-standard}
@@ -176,15 +194,15 @@ While having a worst-case exponential time complexity, it is often very efficien
 Unfortunately, most out-of-the-shelf implementations do not handle strict inequalities, which are standard in \gls{smt} problems.
 We will discuss how we approached the issue in Section~\ref{sec:lra-theory-solver}.
 
-State-of-the-art \gls{smt} solvers such as Z3~\cite{ref:z3}, CVC5~\cite{ref:cvc5} and Yices~\ref{ref:yices} already fully support the \gls{qf-lra} theory.
+State-of-the-art \gls{smt} solvers such as Z3~\cite{ref:z3}, CVC5~\cite{ref:cvc5} and Yices~\cite{ref:yices} already fully support the \gls{qf-lra} theory.
 They use a rational numerical representation applied to a specialised Simplex-based~\cite{ref:simplex} solver to guarantee an exact solution and support strict inequalities.
 Unfortunately, rational arithmetic operations do not offer a constant time complexity. % TODO: find a better source or add empirical evidence
-Unlike floating point arithmetic, the time required to complete the computation grows based on the size of the rational representation, which is not fixed, and the algorithm used~\cite{ref:fft-mult} can slow down the calculation significantly.
-While in the \gls{lp} community, a tradeoff between precision and speed of the tool usually favours the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi}, this is not considered a viable option in the context of SMTs.
+Unlike floating point arithmetic, the time required to complete the computation grows based on the size of the rational representation, which is only limited by the hardware's resources.
+While in the \gls{lp} community, a tradeoff between precision and speed of the tool usually favours the former, with many commercial tools utilising floating point arithmetic~\cite{ref:gurobi} to achieve faster computations, this is not considered a viable option in the context of SMTs.
 Inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
 
 Some alternative methods have been developed over the years.
-The \textit{QSoptex} solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
+The \qsoptex solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
 Working with floating-point numbers with variable precision, the algorithm increments the number of bits used in their representation until the solution is found, then checks it using a rational number representation only to confirm its correctness.
 A different approach is to utilize an \textbf{iterative refinement algorithm}~\cite{ref:iterative-refinement} such as the one implemented in \soplex \footnote{SoPlex: \url{https://soplex.zib.de/}}.
 This variation starts by solving the original problem with a fixed precision before considering a sequence of related \gls{lp} instances that only differ in the variables' bounds, the constraints' sides and the objective function coefficients.
@@ -196,14 +214,17 @@ Some subroutines are in place to check for unsoundness and infeasibility in the 
 \section{Architecture}
 \label{sec:architecture}
 
-\dlinear implements the standard DPLL(T)-based~\cite{ref:dpll-t} \gls{smt} solver structure utilized in most other state-of-the-art solvers~\cite{ref:z3-dpll-t}.
-DPLL(T)-based solvers follow the lazy approach to \gls{smt} solving, being comprised of two main components interacting with each other (see Figure~\ref{dg:dpll}): a boolean \textbf{\gls{sat} solver} and a specialised \textbf{Theory solver}.
-The \gls{sat} solver aims to satisfy the initial formula by assigning a $true$ or $false$ value to each theory-literal, while the theory solver checks the consistency of the literals that have been assigned a value.
-If no conflicts are found, a model is returned, terminating the process.
-Otherwise, it is the theory solver's responsibility to generate an explanation, which takes the form of one or more learned clauses to add to the formula, to force the \gls{sat} solver to backtrack and try a different assignment.
-If the \gls{sat} solver cannot find a satisfying assignment, the formula is declared unsatisfiable.
+\dlinear implements the standard CDCL(T)-based~\cite{ref:dpll-t} \gls{smt} solver structure utilized in most other state-of-the-art solvers~\cite{ref:cvc5}.
+CDCL(T)-based solvers follow the lazy approach to \gls{smt} solving, being comprised of two main components interacting with each other (see Figure~\ref{dg:dpll}): a boolean \textbf{\gls{sat} solver} and a specialised \textbf{Theory solver}.
+All non-boolean formulae are first hidden behind a fresh corresponding boolean \textbf{theory-literal}.
+The \gls{sat} solver aims to satisfy the problem by assigning a $true$ or $false$ value to each literal.
+If no assignment is possible, we have determined the unsatisfiability of the input (I).
+On the other hand, if a model is returned, the theory solver checks the consistency of the theory-literals that have been assigned a value by building a \gls{lp} problem from the corresponding linear constraints and checking its feasibility.
+If the problem is feasible, meaning the assignment is consistent with the theory, the model is returned, terminating the process (II).
+Otherwise, the theory solver is responsible for generating an explanation, which takes the form of one or more learned clauses to add to the formula, to force the \gls{sat} solver to backtrack and try a different assignment, while ensuring the same model will not be selected again.
+This process is repeated until one of the two exit conditions (I), (II) is met.
 
-\plantuml[0.7]{diagrams/dpll}{DPLL(T)-based SMT solver}{dpll}
+\plantuml[0.6]{diagrams/dpll}{CDCL(T)-based SMT solver}{dpll}
 
 More formally, given an input boolean formula, usually in \gls{cnf}, the \gls{sat} solver is prompted to produce an assignment over the input formula
 \begin{equation} % Taken from Martin's thesis
@@ -215,15 +236,14 @@ where
     t_i(x) = a_{i1}x_1 + \ldots + a_{in}x_n - b_i, \quad 1 \le i \le m
 \end{equation*}
 with $A \in \bbbr^{m \times n}, b \in \bbbr^m$ and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
-To satisfy $\varphi$ means verifying that
+To satisfy $\varphi$ means finding $x \in \bbbr^n $ such that that
 \begin{equation*}
-    \exists x \in \bbbr^n : t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0
+    t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0
 \end{equation*}
-which can be seen as an \gls{lp} problem where we do not care about the objective function but only the feasibility of the constraints.
+which can be seen as an \gls{lp} problem where we are only interested in the feasibility of the constraints and bounds.
 
-In the case of \dlinear, the theory solver converts the linear constraints of the assigned literals into constraints of an \gls{lp} problem fed to the \gls{lp} solver.
-\dlinear offers the option to utilize an elementary theory preprocessor that can cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without calling the \gls{lp} solver.
-\dlinear can also parse MPS files, a standard format for \gls{lp} problems, by implicitly creating a single assertion the solver will try to satisfy.
+\dlinear includes some elementary preprocessing techniques that can guide the SAT solver and cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without calling the \gls{lp} solver.
+\dlinear supports MPS files, a standard format for \gls{lp} problems, by implicitly creating a single assertion the solver will try to satisfy, as well as ONNX and VNNLIB files for Neural Networks verification.
 
 % ---- Linear Real Arithmetic theory ----
 \section{Linear Real Arithmetic theory solver}
@@ -233,10 +253,12 @@ In the case of \dlinear, the theory solver converts the linear constraints of th
 \label{sec:preprocessing}
 
 \dlinear implements some of the common preprocessing strategies when it comes to optimising the performance solver for the \gls{qf-lra} theory.
-All simple equality bounds are propagated using the problem's constraints in a graph-like structure (Figure~\ref{dg:preprocessor}).
+The first step is to add some inexpensive implications between the bounds on the same variable, such as $x \ge 1 \implies x \ge 0 \implies x \ge -10$, potentially avoiding pointless assignments from the SAT solver.
+Then, all simple equality bounds are propagated using the problem's constraints, in a process that can be visualised as a graph-like structure (Figure~\ref{dg:preprocessor}).
 If one or more conflicts are detected, the original atoms are traced back and used to generate the explanations.
-This further guides the theory solver by considering the additional bounds to the variables, which can reduce the search space significantly.
-The user can still disable the preprocessing if its contribution is deemed to be negligible, if not detrimental, to the overall performance on the given instance.
+If no conflict is detected, the bounds are propagated to the variables, potentially inducing stronger bounds.
+This approach is vital in Neural Networks verification (see Section~\ref{sec:nn-verification}).
+The user can limit the preprocessing engine to only run once, on the fixed theory literals, instead of at every iteration, or they can disable it completely if its contribution is deemed to be negligible or even detrimental to the overall performance on the given instance.
 
 \begin{figure}[h]
     \begin{tikzpicture}
@@ -265,7 +287,7 @@ The user can still disable the preprocessing if its contribution is deemed to be
     \caption{Example of a preprocessor graph. The given bounds (the nodes on the left) propagate using the constraints, inducing additional bounds (the blue nodes) that can be used to guide the solver.
         If a conflict is detected (red node), the edges responsible (red edges) are traced back to the origin to formulate an explanation to add to the SAT solver.
         In this case, the explanation adds the clause $(\neg l_1 \lor \neg l_2 \lor \neg l_3 \lor \neg l_4 \lor \neg l_5)$ where $l_1 \coloneqq x_2 = 2, l_2 \coloneqq x_3 = 3, l_3 \coloneqq -3x_2 + x_6 = 0, l_4 \coloneqq x_3 + 2x_5 = 13, l_5 \coloneqq -7x_5 + x_6 = -28$.
-        Graphically, at least one of the red edges or the nodes from which they originate must be absent.}
+        All new valid assignments will not have all three red edges.}
     \label{dg:preprocessor}
 \end{figure}
 
@@ -273,12 +295,11 @@ The user can still disable the preprocessing if its contribution is deemed to be
 
 \dlinear uses \soplex as its default \gls{lp} solver.
 It implements both the incremental precision boosting and the iterative refinement algorithms.
-The user can choose between the two or even try a hybrid approach.
-Because we are not interested in the optimal solution but in finding any solution, setting the objective function to $0$ to avoid pointless computations is a low-hanging fruit in terms of optimisation.
-This is not the case in our implementations for reasons that will become clear in section~\ref{sec:strict-bounds}.
+The user can choose between the two or try a hybrid approach.
+\qsoptex can be used as an alternative solver, but it is limited to precision boosting and tends to produces less compact explanations, leading to more conflicts and slower convergence.
 
 If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
-Note that the solution's uniqueness is not guaranteed, so adding an artificial clause with the negation of the solution found will lead to another solution being found or the formula being declared unsatisfiable.
+Note that the solution's uniqueness is not guaranteed, so adding an artificial clause with the negation of the solution found will force the solver to find another assignment or for the formula to be declared unsatisfiable.
 On the other hand, if the \gls{lp} problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, corresponding to the last feasible solution of the dual problem before its unboundness or infeasibility was detected.
 Given the initial $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimizes $y^T A$, the result will still be $y^T A x > y^T b$.
 Collecting the constraints corresponding to the indexes where the Farkas proof is non-zero and the minimizing bounds makes it possible to determine a small infeasible subsystem of the original problem, albeit not necessarily an irreducible one, and use it to produce an explanation.
@@ -287,14 +308,16 @@ Collecting the constraints corresponding to the indexes where the Farkas proof i
 \label{sec:strict-bounds}
 
 To use out-of-the-box \gls{lp} solvers as theory solvers, some adjustments in the formulation of the input may be required.
-Strict inequalities are common in \gls{smt} formulae, but they are usually not supported by \gls{lp} solvers. They would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
+Strict inequalities are common in \gls{smt} formulae, but they are usually not supported by \gls{lp} solvers.
+They would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
 Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}}, use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
-Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function.
+Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function, which is not relevant in this context anyway.
 We introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$ since they can always be converted to $<$ by multiplying both sides by $-1$.
-The same applies to $\ge$ and $=$, which can be converted to $\le$ as discussed in Section~\ref{sec:lp}.
+The same applies to $\ge$ and $=$, which can be converted to $\le$ by using the standard form of the problem, as discussed in Section~\ref{sec:lp}.
 Note that we are excluding \nqcs for now, as they will be discussed next.
 Let $K$ indicate the set of indexes of strict inequality constraints ($<$) and with $J$ the set of indexes for all other constraints ($\le$).
+Note that $K$ and $J$ are disjoint sets.
 Without loss of generality, assume that all the indices in $K$ are less than those in $J$ ($\max(J) < \min(K)$).
 Using intuitive indexing over vector and matrix elements, start by replacing each strict inequality
 \begin{align*}
@@ -354,7 +377,7 @@ The extended relaxed problem is defined as
 
 Two strict inequalities are needed to check whether the constraint is satisfied.
 Since checking both simultaneously with an OR conjunction is impossible, the original problem must be split into two subproblems.
-Hence, given $|D|$ \nqcs, $2^{|D|}$ problems must be solved (Eq.~\ref{eq:nq}).
+Hence, given $|D|$ \nqcs, $2^{|D|}$ problems must be solved \eqref{eq:nq}.
 \begin{equation}
     \label{eq:nq}
     \begin{gathered}
@@ -404,7 +427,7 @@ If any of the subproblems is feasible, then it is possible to conclude that the 
 On the other hand, in the worst case, all $2^{|D|}$ problems must be solved to prove infeasibility.
 Some smarter heuristics can improve the average performance of the solver.
 For instance, there is no need to continue solving subproblems if none of the \nqcs are involved in the infeasibility.
-Furthermore, if only precisely one of them appears in the explanation, we can skip all other subproblems where it appears with the same sense, for they will surely be infeasible, too.
+Furthermore, if only precisely one of them appears in the explanation, we can skip all other subproblems where it appears with the same sense, for they will surely be infeasible too.
 Also, we often only need to explore part of the tree to determine infeasibility.
 If we find a subset of the \nqc that makes the problem infeasible on its own, we can immediately terminate the exploration.
 We can obtain this early termination by enumerating the number of times a unique configuration of such a subset is solved.
@@ -413,9 +436,10 @@ Lastly, it is possible to \textit{hot start} the solver by starting in a configu
 
 \subsection{Theory solver algorithm}
 
-Let $\text{LpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the constraints ($\le, <, \ne$), solves the extended relaxed problem (Eq. \eqref{eq:lp-extended}) and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
-To simplify the algorithm, only the essential heuristics are included in the pseudocode.
-Keep in mind that $\odot$ represents an element-wise multiplication between two vectors or a vector and a scalar, with the scalar repeated to match the size of the vector.
+Let $\text{LpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the constraints ($\le, <, \ne$), solves the extended relaxed problem \eqref{eq:lp-extended} and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
+$\odot$ represents an element-wise multiplication between two vectors or a vector and a scalar, with the scalar repeated to match the size of the vector.
+We adapt the \gls{lp} solver to the \gls{smt} context using the Algorithm~\ref{alg:theory-solver}.
+To simplify the presentation, only the essential heuristics are included in the pseudocode.
 \begin{algorithm}
     \caption{SMT adapted LP solver}\label{alg:theory-solver}
     \begin{algorithmic}
@@ -465,9 +489,9 @@ Keep in mind that $\odot$ represents an element-wise multiplication between two 
 
 % Taken from Martin's thesis
 \begin{definition}
-    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t(x) \bowtie 0$ is an arbitrary term, then the $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$ relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
+    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t(x) \bowtie 0$ is an arbitrary term, then the $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$, relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
 \end{definition}
-Denoting with $J'$ the set of indexes of those that were equality constraints in $\varphi$ and with $K'$ the one with every other constraint except for \nqcs, then $\varphi^{-\delta}$ can be written as
+Denoting with $J'$ the set of indexes of those that were equality constraints in $\varphi$ and with $K'$ the set with every other constraint except for \nqcs, then $\varphi^{-\delta}$ can be written as
 \begin{equation*}
     \varphi^{-\delta} = \bigwedge_{j \in J'} |t_j(x)| \le \delta \wedge \bigwedge_{k \in K'} t_k(x) \le \delta
 \end{equation*}
@@ -497,7 +521,7 @@ Whether this tradeoff between speed and completeness is acceptable is up to the 
 To implement delta-completeness in \dlinear, the user can set the $\delta$ parameter to a positive value, then given to the \gls{lp} solver.
 The precision boosting or iterative refinement algorithms can stop once the desired precision has been reached, returning the solution found at that point.
 
-Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem (Eq. \eqref{eq:delta-lp}) and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
+Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
 We can define the delta-complete theory solver algorithm as in Algorithm~\ref{alg:delta-theory-solver}.
 
 % Inspired by Martin's thesis. I'm not sure this contributes anything useful to the explanation
@@ -518,53 +542,76 @@ We can define the delta-complete theory solver algorithm as in Algorithm~\ref{al
 \section{Neural network verification}
 \label{sec:nn-verification}
 
-\dlinear can be used to verify neural networks that utilize ReLU activation functions.
-Given a description of the network that utilizes the Open Neural Network Exchange (ONNX) format~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph that describes all the layers of the network gets parsed, from inputs to outputs (\autoref{fig:netron}).
+\dlinear can verify neural networks that utilize ReLU activation functions out-of-the-box.
+Given a description of the network in the \gls{onnx} format~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph that describes all the layers of the network gets parsed, from inputs to outputs.
 
-\begin{wrapfigure}{r}{.25\textwidth} %this figure will be at the right
-    \centering
-    \begin{adjustbox}{width=.1\textwidth,center}
-        \includegraphics[width=.1\textwidth]{img/netron.eps}
-    \end{adjustbox}
-    \caption{ONNX visualization by Netron}\label{fig:netron}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{.25\textwidth} %this figure will be at the right
+%     \centering
+%     \begin{adjustbox}{width=.1\textwidth,center}
+%         \includegraphics[width=.1\textwidth,clip]{img/netron.eps}
+%     \end{adjustbox}
+%     \caption{ONNX visualization by Netron}\label{fig:netron}
+%     \vspace{-7cm}
+% \end{wrapfigure}
 
 Exploring the graph, most of the network layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
-Upon encountering a piecewise linear activation function, we introduce a fresh variable $y'$ and as many linear constraints as there are cases in the function by encoding an equality between the fresh variable and the output of the activation function.
-All the linear constraints are then added to the set of assertions in a "at most one" encoding.
-The fresh variable replaces the corresponding linear constraint for all the dependent nodes of the graph from that point on.
+Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
+These new formulae are then added to the set of assertions in a "at most one" encoding.
+The $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph from that point on.
 For instance, the ReLU activation function can be represented as
-
-$$
+\begin{equation*}
     y' = \begin{cases}
         x & \text{if } x \ge 0 \\
         0 & \text{otherwise}
     \end{cases}
-$$
-
-Given the two formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0)$, the clauses $(A \lor B) \land (\neg A \lor \neg B)$ are added to the set of assertions.
+\end{equation*}
+Given the two new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0)$, the clauses $(A \lor B) \land (\neg A \lor \neg B)$ are added to the set of assertions.
 
 Even limiting ourselves to the common ReLU layer, the number of subproblems grows exponentially, making the verification process computationally intractable even for medium sized networks.
 To mitigate this issue, we can try to exploit the structure of the problem.
-The bound propagation mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each layer.
-In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, reducing the search space.
-
-The piecewise functions are encoded as a Sum of Infeasibilities (SoI), which becomes the objective function to minimize while the other linear expression create the constraints the problem is subject to.
-% TODO
-
+The bound propagation mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
+In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
+Furthermore, constraints coming from activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize while the other linear expression create the constraints the problem is subject to.
+If the solver find a solution where the objective value is equal to $0$, then the network is verified to be correct, although some additional constraints may be needed to ensure the two formulation are equivalent.
+In the case of ReLUs we must also enforce that the output of the activation function is greater than or equal to the input, which can be done by adding the constraints $y' \ge x$.
+If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
 % ---- Benchmarks ----
 \section{Benchmarks}
 \label{sec:benchmarks}
 \subsection*{Specifications}
 
-We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2).
+We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2) and yices~\cite{ref:yices} (version 2.6.5).
 The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache, and a memory limit of 2.9GB (DDR4 RDIMMs).
-The timeout was set to 6 hours.
+The timeout was set to 12 hours.
 
 \subsection*{Result}
 
-TODO
+To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}}, the Netlib LP tests~\footnote{\url{http://www.netlib.org/lp/data/}}, and Csaba Mészáros' LP collection~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}, relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
+All the solvers were launched with the same timeout and the same set of inputs on completely independent nodes.
+The results are shown in~\autoref{fig:results1} and \autoref{fig:results2}.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/on_file.png}
+        \caption{Results considering only the problems that were solved by all the solvers}
+        \label{fig:results1}
+    \end{subfigure}%
+    \hspace{1cm}
+    \begin{subfigure}{.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/total.png}
+        \caption{Results considering all the problems each solver completed}
+        \label{fig:results2}
+    \end{subfigure}
+\end{figure}
+
+\dlinear in the $\delta$-complete approach is able to solve the most instances, going over the 1210 problem marks in all configurations and dropping to 1202 when in complete mode.
+Yices performs the best among the well-known solvers, solving 1119 problems, followed by cvc5 with 963 and Z3 with 941.
+It is worth noting that for smaller instances, where the absolute difference in performance is not as significant, z3 tends to perform better than cvc5 and \dlinear, but all solvers fall behind yices.
+
 
 \begin{credits}
     \subsubsection{\ackname} This study was funded by EPSRC
