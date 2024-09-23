@@ -5,6 +5,7 @@
 \definecolor{plantucolor0003}{RGB}{226,226,240}
 \definecolor{plantucolor0004}{RGB}{238,238,238}
 \begin{tikzpicture}[yscale=-1
+,every node/.style={scale=1.5}
 ,pstyle0/.style={color=plantucolor0001,fill=white,line width=1.0pt}
 ,pstyle1/.style={color=black,line width=1.5pt}
 ,pstyle2/.style={color=plantucolor0001,line width=0.5pt,dash pattern=on 5.0pt off 5.0pt}
@@ -39,7 +40,7 @@
 \draw[pstyle6] (3pt,82.4297pt) -- (84pt,82.4297pt) -- (84pt,89.7021pt) -- (74pt,99.7021pt) -- (3pt,99.7021pt) -- (3pt,82.4297pt);
 \draw[pstyle1] (3pt,82.4297pt) rectangle (443.2197pt,396.0225pt);
 \node at (18pt,83.4297pt)[below right,color=black]{\textbf{loop}};
-\node at (186pt,84.4297pt)[below right,color=black]{\textbf{[until SAT or UNSAT returned to the User]}};
+\node at (120pt,84.4297pt)[below right,color=black]{\textbf{[until SAT or UNSAT returned to the User]}};
 \draw[pstyle4] (229.6698pt,116.835pt) -- (239.6698pt,120.835pt) -- (229.6698pt,124.835pt) -- (233.6698pt,120.835pt) -- cycle;
 \draw[pstyle5] (120.4pt,120.835pt) -- (235.6698pt,120.835pt);
 \node at (127.4pt,103.7021pt)[below right,color=black]{CheckSat()};
