@@ -215,7 +215,7 @@ Some subroutines are in place to check for unsoundness and infeasibility in the 
 \label{sec:architecture}
 
 \dlinear implements the standard CDCL(T)-based~\cite{ref:dpll-t} \gls{smt} solver structure utilized in most other state-of-the-art solvers~\cite{ref:cvc5}.
-CDCL(T)-based solvers follow the lazy approach to \gls{smt} solving, being comprised of two main components interacting with each other (see Figure~\ref{dg:dpll}): a boolean \textbf{\gls{sat} solver} and a specialised \textbf{Theory solver}.
+CDCL(T)-based solvers follow the lazy approach to \gls{smt} solving, being comprised of two main components interacting with each other (see~\autoref{dg:dpll}): a boolean \textbf{\gls{sat} solver} and a specialised \textbf{Theory solver}.
 All non-boolean formulae are first hidden behind a fresh corresponding boolean \textbf{theory-literal}.
 The \gls{sat} solver aims to satisfy the problem by assigning a $true$ or $false$ value to each literal.
 If no assignment is possible, we have determined the unsatisfiability of the input (I).
@@ -254,7 +254,7 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 
 \dlinear implements some of the common preprocessing strategies when it comes to optimising the performance solver for the \gls{qf-lra} theory.
 The first step is to add some inexpensive implications between the bounds on the same variable, such as $x \ge 1 \implies x \ge 0 \implies x \ge -10$, potentially avoiding pointless assignments from the SAT solver.
-Then, all simple equality bounds are propagated using the problem's constraints, in a process that can be visualised as a graph-like structure (Figure~\ref{dg:preprocessor}).
+Then, all simple equality bounds are propagated using the problem's constraints, in a process that can be visualised as a graph-like structure (\autoref{dg:preprocessor}).
 If one or more conflicts are detected, the original atoms are traced back and used to generate the explanations.
 If no conflict is detected, the bounds are propagated to the variables, potentially inducing stronger bounds.
 This approach is vital in Neural Networks verification (see Section~\ref{sec:nn-verification}).
@@ -444,8 +444,8 @@ To simplify the presentation, only the essential heuristics are included in the 
     \caption{SMT adapted LP solver}\label{alg:theory-solver}
     \begin{algorithmic}
         \Require $A \in \bbbr^{(|J| + |K| + |D|) \times n}, b \in \bbbr^{|J| + |K| + |D|}, l \in \bbbr^n, u \in \bbbr^n$ \\
-        \qquad as defined in Section~\ref{sec:lp} over the extended relaxed problem~\eqref{eq:lp-extended}
-        \Require $J, K, D$ as defined in this Section \\
+        \qquad as defined in~\autoref{sec:lp} over the extended relaxed problem~\eqref{eq:lp-extended}
+        \Require $J, K, D$ as defined in~\autoref{sec:strict-bounds} \\
         \qquad note that $\max(J) < \min(K) \le \max(K) < \min(D)$
         \Ensure Set of indexes of infeasible constraints $E$ or $\emptyset$
         \State $E \gets \text{LpSolve}(A, b, l, u, J, K, \emptyset)$ \Comment{Solve the LP problem without $\ne$ constraints}
@@ -458,7 +458,7 @@ To simplify the presentation, only the essential heuristics are included in the 
         \EndFor
         \State $c \gets 0$ \Comment{Initialize the binary counter}
         \While{$c \le 2^{|D|}$}
-        \State Let $C \in \{-1, 1\}^{|D|}$ be the binary representation of $c$ with $0$ replaced by $1$
+        \State Let $C \in \{-1, 1\}^{|D|}$ be the binary representation of $c$ with $0$ replaced by $-1$
         \State $C' \in \{-1, 1\}^{|J|+|K|+|D|} \gets \begin{bmatrix} 1^{|J|} & 1^{|K|} & C\end{bmatrix}$
         \State $A' \gets \begin{bmatrix}A_1 \odot C'_1 \\ \vdots \\ A_{|J|+|K|+|D|} \odot C'_{|J|+|K|+|D|}\end{bmatrix}$
         \State $E \gets \text{LpSolve}(A', b \odot C', l, u, J, K, D)$
@@ -466,7 +466,10 @@ To simplify the presentation, only the essential heuristics are included in the 
         \State \Return $\emptyset$
         \EndIf
         \State $T \gets E \cap D$
-        \State $l \gets (C'_{|J| + |K| + t}) \quad \forall t \in T$ % I want to construct a vector where each element is defined by the corresponding element in C' if the index is in T
+        \If{$T = \emptyset$} \Comment{No \nqcs are involved in the infeasibility, the problem is infeasible}
+        \State \Return $E$
+        \EndIf
+        \State $l \gets \{ C'_{|J| + |K| + t} \mid \forall t \in T\}$ % I want to construct a vector where each element is defined by the corresponding element in C' if the index is in T
         \If{$l \in V_T$} \Comment{Avoid adding redundant explanations for the same infeasibility}
         \State \textbf{Continue}
         \EndIf
@@ -542,17 +545,17 @@ We can define the delta-complete theory solver algorithm as in Algorithm~\ref{al
 \section{Neural network verification}
 \label{sec:nn-verification}
 
-\dlinear can verify neural networks that utilize ReLU activation functions out-of-the-box.
-Given a description of the network in the \gls{onnx} format~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph that describes all the layers of the network gets parsed, from inputs to outputs.
+\begin{wrapfigure}[20]{R}{3cm}
+    \captionsetup{font=small}
+    \resizebox{1.04\linewidth}{!}{%
+        \input{diagrams/onnx.tex}
+    }
+    \caption{ONNX graph.}
+    \label{dg:onnx}
+\end{wrapfigure}
 
-% \begin{wrapfigure}{r}{.25\textwidth} %this figure will be at the right
-%     \centering
-%     \begin{adjustbox}{width=.1\textwidth,center}
-%         \includegraphics[width=.1\textwidth,clip]{img/netron.eps}
-%     \end{adjustbox}
-%     \caption{ONNX visualization by Netron}\label{fig:netron}
-%     \vspace{-7cm}
-% \end{wrapfigure}
+\dlinear can verify neural networks that utilize ReLU activation functions out-of-the-box.
+Given a description of the network in the \gls{onnx} format~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph that describes all the layers of the network gets parsed, from inputs to outputs~(\autoref{dg:onnx}).
 
 Exploring the graph, most of the network layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
@@ -608,10 +611,19 @@ The results are shown in~\autoref{fig:results1} and \autoref{fig:results2}.
     \end{subfigure}
 \end{figure}
 
-\dlinear in the $\delta$-complete approach is able to solve the most instances, going over the 1210 problem marks in all configurations and dropping to 1202 when in complete mode.
-Yices performs the best among the well-known solvers, solving 1119 problems, followed by cvc5 with 963 and Z3 with 941.
+\dlinear in the $\delta$-complete approach is able to solve the most instances, going over the 1200 problem marks in all configurations and dropping to 1194 when in complete mode.
+Yices performs the best among the well-known solvers, solving 1111 problems, followed by cvc5 with 955 and Z3 with 934.
 It is worth noting that for smaller instances, where the absolute difference in performance is not as significant, z3 tends to perform better than cvc5 and \dlinear, but all solvers fall behind yices.
 
+\section{Conclusion}
+
+\dlinear novelty comes from the adoption of exact but not purely rational linear programming solvers adapted for the \gls{smt} context, improving the average performance when dealing with instances where determining the feasibility of the linear constraints is the bottleneck.
+It is able to provide complete verification for problems within the \gls{qf-lra} logic and extends its capabilities to verify neural networks with piecewise activation functions.
+The $\delta$-complete approach can further speed up the verification process at the cost of relaxing the constraints by a user-defined value.
+Future developments will focus on improving the performance of the software by introducing a specialised and efficient symbolic representation of the constraints and improving the heuristics used during the preprocessing phase and the exploration of the search space, especially for neural networks verification.
+
+The latest version of the tool is available at \url{https://github.com/TendTo/dlinear}, along with the source code and the technical documentation.
+We also provide a corresponding Python API in the form of the \textit{pydlinear} package, to facilitate the integration of \dlinear in existing projects.
 
 \begin{credits}
     \subsubsection{\ackname} This study was funded by EPSRC
