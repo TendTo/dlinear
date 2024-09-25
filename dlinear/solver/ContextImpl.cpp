@@ -1,6 +1,5 @@
 /**
- * @file ContextImpl.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
@@ -318,13 +317,11 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   }
 
   // Temporarily disable to study the effect of guided constraints
-#if 0
   if (config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER) {
     // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
     BoundImplicator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
     propagator.Propagate();
   }
-#endif
 
   // Add the theory literals from the SAT solver to the theory solver.
   theory_solver_->AddLiterals();

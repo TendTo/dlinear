@@ -1,9 +1,8 @@
 /**
- * @file SmtSolverOutput.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Simple class that holds the output of the solver.
+ * Simple class that holds the output of the solver.
  */
 #pragma once
 

@@ -1,9 +1,8 @@
 /**
- * @file Driver.h
- * @author dlinear
- * @date 22 Aug 2023
- * @copyright 2023 dlinear
- * @brief Driver form the parsing and execution of vnnlib files.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Driver form the parsing and execution of vnnlib files.
  *
  * The driver puts in communication the parser and the scanner.
  * In the end, it produces a context that can be used to solve the

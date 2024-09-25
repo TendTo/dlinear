@@ -1,9 +1,8 @@
 /**
- * @file symbolic.h
- * @author dlinear
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
- * @brief This is the header file that we consolidate Drake's symbolic
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * This is the header file that we consolidate Drake's symbolic
  * classes and expose them inside of dlinear namespace.
  *
  * Other files in dlinear should include this file and should NOT
@@ -50,7 +49,7 @@ using drake::symbolic::VisitFormula;
 /**
  * Change the kind of the formula by multiplying all the expressions by a negative number.
  *
- * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f $ \leq @f$ to @f$ \geq @f$ and vice versa.
+ * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f$ \leq @f$ to @f$ \geq @f$ and vice versa.
  * @param kind kind of the formula
  * @return the negated kind
  */

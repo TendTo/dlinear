@@ -1,9 +1,8 @@
 /**
- * @file sort.h
- * @author dlinear
- * @date 22 Aug 2023
- * @copyright 2023 dlinear
- * @brief Sort of a term.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Sort of a term.
  *
  * Indicates the type of a term.
  */

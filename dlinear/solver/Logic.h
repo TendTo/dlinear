@@ -1,9 +1,8 @@
 /**
- * @file Logic.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Describes the logic of the SMT2 file using an enum class.
+ * Describes the logic of the SMT2 file using an enum class.
  *
  * dlinear supports only QL_LRA logic for now.
  */

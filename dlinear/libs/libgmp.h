@@ -1,8 +1,7 @@
 /**
- * @file gmp.h
- * @author dlinear
- * @date 09 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * GMP wrapper.
  *
  * This header includes the GMP library and provides a various helpers.

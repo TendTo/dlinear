@@ -1,9 +1,8 @@
 /**
- * @file exception.h
- * @author dlinear
- * @date 07 Aug 2023
- * @copyright 2023 dlinear
- * @brief Utilities that verify assumptions made by the program and aborts
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Utilities that verify assumptions made by the program and aborts
  * the program if those assumptions are not true.
  *
  * If NDEBUG is defined, most of the macro do nothing and give no explanation.

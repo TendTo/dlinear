@@ -1,12 +1,11 @@
 /**
- * @file concepts.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Collection of concepts used in the dlinear library.
+ * Collection of concepts used in the dlinear library.
  *
- * Utility file that contains c++20 concepts used in the dlinear library
- * in order to make the code more readable and to provide better error messages.
+ * Concepts have been introduced in the c++20 standard and are used in the dlinear library
+ * in order to make the code more readable and to provide better error messages in templated code.
  */
 #pragma once
 

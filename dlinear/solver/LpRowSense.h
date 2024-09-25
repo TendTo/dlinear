@@ -1,9 +1,8 @@
 /**
- * @file LpRowSense.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Sense of a linear programming row.
+ * Sense of a linear programming row.
  *
  * This is a simple enum class that describes the sense of a linear programming row.
  * Each row can have one of the following senses:

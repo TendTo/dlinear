@@ -1,9 +1,8 @@
 /**
- * @file DeltaQsoptexTheorySolver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Delta complete version of QsoptexTheorySolver.
+ * Delta complete version of QsoptexTheorySolver.
  *
  * The LP solver used is Qsoptex.
  * This solver is delta complete. It means that it will always solve the delta-weakened linear problem,

@@ -1,9 +1,8 @@
 /**
- * @file FormulaVisitor.h
- * @author dlinear
- * @date 19 Aug 2023
- * @copyright 2023 dlinear
- * @brief Base class for visitors of symbolic formulas.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Base class for visitors of symbolic formulas.
  *
  * The class provides all the methods expected to visit the underlying
  * formula and return a modified version.

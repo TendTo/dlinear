@@ -1,9 +1,8 @@
 /**
- * @file SoplexTheorySolver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Theory solver using SoPlex.
+ * Theory solver using SoPlex.
  *
  * SoPlex is an exact LP solver written in C++.
  * It uses a mixture of techniques, from iterative refinement to precision boosting, in order to efficiently solve LPs

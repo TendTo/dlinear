@@ -38,6 +38,7 @@ doxygen(
         "BUILTIN_STL_SUPPORT = YES",
         "EXTRACT_PRIVATE = YES",
         "HIDE_UNDOC_MEMBERS = YES",
+        "SOURCE_BROWSER = YES",
         "HIDE_IN_BODY_DOCS = YES",
         "EXCLUDE_SYMBOLS = EdgeHash_ EdgeHash_",
         "EXAMPLE_PATH = example",

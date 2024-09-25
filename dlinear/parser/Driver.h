@@ -1,9 +1,8 @@
 /**
- * @file Driver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Driver class
+ * Driver class
  *
  * The Driver is the base class for all the parsers.
  * It contains the common logic to allow the parsed data to be saved in the context.

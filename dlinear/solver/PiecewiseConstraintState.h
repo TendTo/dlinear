@@ -1,10 +1,9 @@
 /**
-* @file PiecewiseConstraintState.h
-* @author dlinear (https://github.com/TendTo/dlinear)
-* @copyright 2024 dlinear
-* @licence Apache-2.0 license
-* PiecewiseConstraintState class
-*/
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * PiecewiseConstraintState class
+ */
 #pragma once
 
 #include <iosfwd>

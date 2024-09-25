@@ -1,9 +1,8 @@
 /**
- * @file IfThenElseEliminator.h
- * @author dlinear
- * @date 16 Aug 2023
- * @copyright 2023 dlinear
- * @brief File containing IfThenElseEliminator class.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * File containing IfThenElseEliminator class.
  *
  * Removes the If-Then-Else expressions from a formula.
  */
@@ -37,7 +36,7 @@ class IfThenElseEliminator {
    * @return Processed formula.
    */
   Formula Process(const Formula &f);
-  std::pair<Expression, Formula> Process(const Expression& e);
+  std::pair<Expression, Formula> Process(const Expression &e);
   const std::unordered_map<Expression, Variable, hash_value<Expression>> &variables() const;
   const IterationStats &stats() const { return stats_; }
 

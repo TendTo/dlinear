@@ -1,9 +1,8 @@
 /**
- * @file dlinear.h
- * @author dlinear
- * @date 27 Aug 2023
- * @copyright 2023 dlinear
- * @brief File containing the main header for the dlinear library.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * File containing the main header for the dlinear library.
  */
 #pragma once
 

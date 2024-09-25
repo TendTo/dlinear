@@ -1,6 +1,5 @@
 /**
- * @file BoundImplicator.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * BoundImplicator class.
@@ -44,7 +43,7 @@ class BoundImplicator {
    * @param predicate_abstractor predicate abstractor containing the assertions
    */
   BoundImplicator(const Config& config, std::function<void(const Formula&)> assert,
-                   const PredicateAbstractor& predicate_abstractor);
+                  const PredicateAbstractor& predicate_abstractor);
 
   /** Use theory reasoning to propagate some simple theory inferences. */
   void Propagate();

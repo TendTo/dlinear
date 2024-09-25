@@ -1,10 +1,8 @@
 /**
- * @file BoundType.h
- * @author dlinear
- * @date 16 Sep 2023
- * @copyright 2023 dlinear
- *
- * @brief Bound type.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Bound type.
  *
  * The bound type is used to specify the type of a variable bound.
  * It is indicated in the MPS file format.

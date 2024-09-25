@@ -1,11 +1,8 @@
 /**
- * @file PredicateAbstractor.h
- * @author dlinear
- * @date 17 Aug 2023
- * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * PredicateAbstractor class.
  */
 #pragma once
 

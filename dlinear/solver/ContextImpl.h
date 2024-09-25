@@ -1,9 +1,8 @@
 /**
- * @file ContextImpl.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Implementation of Context.
+ * Implementation of Context.
  *
  * The context juggles between the SAT solver and the theory solver, in order to produce a model.
  * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
@@ -222,7 +221,7 @@ class Context::Impl {
    * @return true if the @p model satisfies all assignments
    * @return false if there is at leas an assignment not satisfied by the @p model
    */
-  [[nodiscard]] bool Verify(const Box& model) const;
+  [[nodiscard]] bool Verify(const Box &model) const;
 
  private:
   /**

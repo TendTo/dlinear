@@ -1,7 +1,7 @@
 /**
- * @file OptionValue.hpp
- * @author dlinear
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * OptionValue class.
  *
  * It is used to wrap a value that can be set from multiple sources.

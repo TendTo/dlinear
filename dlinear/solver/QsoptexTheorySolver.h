@@ -1,9 +1,8 @@
 /**
- * @file QsoptexTheorySolver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence GPL-3.0 license
- * @brief Theory solver using QSopt_ex.
+ * @licence Apache-2.0 license
+ * Theory solver using QSopt_ex.
  *
  * QSopt_ex is an exact LP solver written in C.
  * It uses the technique of precision boosting to efficiently solve LPs exactly.

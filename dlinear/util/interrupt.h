@@ -1,9 +1,8 @@
 /**
- * @file interrupt.h
- * @author dlinear
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
- * @brief Interrupt handler used by pydlinear to handle SIGINT.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Interrupt handler used by pydlinear to handle SIGINT.
  */
 #pragma once
 

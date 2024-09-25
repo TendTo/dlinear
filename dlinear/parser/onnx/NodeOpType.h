@@ -1,9 +1,8 @@
 /**
- * @file NodeOpType.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Type of node operation.
+ * Type of node operation.
  */
 #pragma once
 

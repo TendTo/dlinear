@@ -1,8 +1,7 @@
 /**
- * @file Timer.cpp
- * @author dlinear
- * @date 16 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
 
 #include "Timer.h"
@@ -61,7 +60,7 @@ std::chrono::duration<double>::rep TimerBase<T>::seconds() const {
 
 user_clock::time_point user_clock::now() {
   DLINEAR_TRACE("user_clock::now");
-  struct rusage usage {};
+  struct rusage usage{};
   if (0 != getrusage(RUSAGE_SELF, &usage)) throw std::runtime_error("Failed to get current resource usage (getrusage)");
   return time_point(duration(uint64_t(usage.ru_utime.tv_sec) * std::micro::den + uint64_t(usage.ru_utime.tv_usec)));
 }

@@ -1,11 +1,8 @@
 /**
- * @file Timer.h
- * @author dlinear
- * @date 16 Aug 2023
- * @copyright 2023 dlinear
- * @brief Brief description
- *
- * Long Description
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Timer class.
  */
 #pragma once
 
@@ -19,9 +16,10 @@ namespace dlinear {
 struct user_clock;
 
 /**
- * Timer class.
- *
  * Simple timer class to evaluate the performance of the software.
+ *
+ * The timer can be started, paused, and resumed.
+ * The elapsed time is returned in seconds or as a duration.
  */
 template <typename T>
 class TimerBase {
@@ -30,6 +28,7 @@ class TimerBase {
   typedef typename clock::duration duration;
   typedef typename clock::time_point time_point;
 
+  /** @constructor{TimerBase} */
   TimerBase();
 
   /**
@@ -91,6 +90,7 @@ using chosen_steady_clock = std::conditional<std::chrono::high_resolution_clock:
                                              std::chrono::high_resolution_clock, std::chrono::steady_clock>::type;
 
 extern template class TimerBase<chosen_steady_clock>;
+/** Timer class using the a steady clock. */
 class Timer : public TimerBase<chosen_steady_clock> {};
 
 struct user_clock {  // Implements the Clock interface of std::chrono
@@ -103,23 +103,38 @@ struct user_clock {  // Implements the Clock interface of std::chrono
 };
 
 extern template class TimerBase<user_clock>;
+/** Timer class using the user_clock. */
 class UserTimer : public TimerBase<user_clock> {};
 
 /**
- * TimerGuard class.
+ * The TimeGuard wraps a timer object and pauses it when the guard object is destructed.
  *
- * Wraps a timer object and pauses it when the guard object is destructed.
+ * Useful for measuring the exact time spent in a block of code.
+ * @code
+ * // Example usage
+ * class MyClass {
+ *  private:
+ *   Timer timer_;
+ *  public:
+ *   void function_to_measure() {
+ *    TimerGuard guard(&timer_, true);
+ *    // Code to measure
+ *   }
+ *   // Return the total time elapsed, even across multiple calls
+ *   double time_elapsed() { return timer_.seconds(); }
+ * };
+ * @endcode
  */
 class TimerGuard {
  public:
   /**
-   * TimerGuard constructor.
+   * Construct a new TimeGuard object.
    *
    * If @p enabled is false or @p timer is a nullptr, this class does not do anything.
    * If @p start_timer is true, starts the @p timer in the constructor.
    * Otherwise, it does not start it and a user has to call `resume()` to start it.
-   * @param timer the timer to be guarded
-   * @param enabled whether the timer is enabled and will run
+   * @param timer a pointer to the timer object to be guarded
+   * @param enabled whether the timer is enabled and should run
    * @param start_timer whether the timer should be started as soon as the guard is created
    */
   TimerGuard(Timer *timer, bool enabled, bool start_timer = true);

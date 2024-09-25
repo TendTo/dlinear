@@ -1,9 +1,8 @@
 /**
- * @file SatSolver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief SatSolver class.
+ * SatSolver class.
  *
  * Base class for SAT solvers.
  * The SAT solver's role is to convert a generic formula into a CNF of boolean clauses,

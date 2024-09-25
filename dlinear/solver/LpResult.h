@@ -1,9 +1,8 @@
 /**
- * @file LpResult.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Result obtained from the LP solver.
+ * Result obtained from the LP solver.
  *
  * The output of the LP solver can be:
  * - LP_NO_RESULT: no result has been obtained yet.

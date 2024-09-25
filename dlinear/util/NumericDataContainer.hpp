@@ -1,9 +1,8 @@
 /**
- * @file NumericDataContainer.hpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief NumericDataContainer class.
+ * NumericDataContainer class.
  *
  * Simple class that holds a numeric value and a data value.
  * It is used to take advantage of the strong ordering and equality operators of the numeric value,

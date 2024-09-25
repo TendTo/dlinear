@@ -1,9 +1,8 @@
 /**
- * @file Context.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Context holding the information about the resolution of the problem.
+ * Context holding the information about the resolution of the problem.
  *
  * While the solver is running, the context holds the information about the
  * problem being solved. It also holds the information about the
@@ -76,7 +75,7 @@ class Context {
    * @param relu_var variable to represent the ReLU expression. If not provided, a new variable is created.
    * @return fresh variable introduced to represent the ReLU expression
    */
-  Variable AssertRelu(const Expression &e, const Variable& relu_var);
+  Variable AssertRelu(const Expression &e, const Variable &relu_var);
 
   /**
    * Check the satisfiability of the asserted formulas, and sets
@@ -229,7 +228,7 @@ class Context {
    * @return true if the @p model satisfies all assignments
    * @return false if there is at leas an assignment not satisfied by the @p model
    */
-  [[nodiscard]] bool Verify(const Box& model) const;
+  [[nodiscard]] bool Verify(const Box &model) const;
 
  private:
   /**

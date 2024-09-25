@@ -1,9 +1,8 @@
 /**
- * @file ScopedUnorderedMap.hpp
- * @author dlinear
- * @date 17 Aug 2023
- * @copyright 2023 dlinear
- * @brief Backtrackable scoped unordered_map.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Backtrackable scoped unordered_map.
  *
  * This is a unordered_map that supports backtracking. It is used to store
  * intermediate results.

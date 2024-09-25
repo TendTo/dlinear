@@ -1,8 +1,7 @@
 /**
- * @file Config.h
- * @author dlinear
- * @date 07 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * Config class.
  * Used to store the configuration of the program.
  *
@@ -167,7 +166,8 @@ class Config {
   DLINEAR_PARAMETER(csv, bool, false, "Produce CSV output. Must also specify --with-timings to get the time stats")
   DLINEAR_PARAMETER(debug_parsing, bool, false, "Debug parsing")
   DLINEAR_PARAMETER(debug_scanning, bool, false, "Debug scanning/lexing")
-  DLINEAR_PARAMETER(disable_expansion, bool, false, "Disable formula expansion.\n"
+  DLINEAR_PARAMETER(disable_expansion, bool, false,
+                    "Disable formula expansion.\n"
                     "\t\tMakes the parser faster, "
                     "but may create issues if an intermediate formula of the input becomes non linear")
   DLINEAR_PARAMETER(

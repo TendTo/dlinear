@@ -1,10 +1,8 @@
 /**
- * @file Sense.h
- * @author dlinear
- * @date 16 Sep 2023
- * @copyright 2023 dlinear
- *
- * @brief Sense of a constraint row.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Sense of a constraint row.
  *
  * The sense indicates the type or relation a contraint row has with
  * respect to its right-hand side.

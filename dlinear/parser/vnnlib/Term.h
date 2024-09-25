@@ -1,9 +1,8 @@
 /**
- * @file Term.h
- * @author dlinear
- * @date 22 Aug 2023
- * @copyright 2023 dlinear
- * @brief Term class.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Term class.
  *
  * Terms are the building blocks of a smt problem.
  * They can take many forms, such as:

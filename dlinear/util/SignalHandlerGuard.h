@@ -1,10 +1,8 @@
 /**
- * @file SignalHandlerGuard.h
- * @author dlinear
- * @version 0.1
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
- * @brief Signal handler guard.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * SignalHandlerGuard class.
  *
  * It sets a new signal handler and restores the old one when it goes
  * out of scope. If the flag is set, its destructor clears it out.

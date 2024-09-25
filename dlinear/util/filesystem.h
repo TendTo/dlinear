@@ -1,9 +1,8 @@
 /**
- * @file filesystem.h
- * @author dlinear
- * @date 15 Aug 2023
- * @copyright 2023 dlinear
- * @brief Utilities for filesystem operations.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Utilities for filesystem operations.
  *
  * Simple utilities that make operations on the filesystem easier.
  */

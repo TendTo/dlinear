@@ -1,9 +1,8 @@
 /**
- * @file ScopedVector.hpp
- * @author dlinear
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
- * @brief Backtrackable scoped vector.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Backtrackable scoped vector.
  *
  * This is a vector that supports backtracking. It is used to store
  * intermediate results.

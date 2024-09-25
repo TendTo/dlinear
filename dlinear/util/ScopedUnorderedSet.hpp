@@ -1,9 +1,8 @@
 /**
- * @file ScopedUnorderedSet.hpp
- * @author dlinear
- * @date 18 Aug 2023
- * @copyright 2023 dlinear
- * @brief Backtrackable unordered set.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Backtrackable unordered set.
  *
  * This is a unordered_set that supports backtracking. It is used to store
  * intermediate results.

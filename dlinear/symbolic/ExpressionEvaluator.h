@@ -1,9 +1,8 @@
 /**
- * @file ExpressionEvaluator.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Expression evaluator class.
+ * Expression evaluator class.
  *
  * The ExpressionEvaluator is used to evaluate an expression with a given box.
  * The box provides the values of the variables in the expression with intervals.

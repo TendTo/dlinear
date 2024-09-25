@@ -1,8 +1,7 @@
 /**
- * @file ArgParser.cpp
- * @author dlinear
- * @date 07 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
 // IWYU pragma: no_include "argparse/argparse.hpp" // Already included in the header
 #include "ArgParser.h"

@@ -1,9 +1,8 @@
 /**
- * @file FunctionDefinition.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Function definition class
+ * Function definition class
  *
  * In the SMT2 language, a function definition is a way to define a function in terms of its parameters and body.
  * A function defined in this way can be called with the operator() method by providing the required arguments.

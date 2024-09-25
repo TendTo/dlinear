@@ -1,9 +1,8 @@
 /**
- * @file BoundPreprocessor.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief BoundPreprocessor class.
+ * BoundPreprocessor class.
  *
  * This class uses some basic algebraic operations to preprocess the constraints
  * and identify violations before invoking the solver.

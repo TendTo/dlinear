@@ -1,8 +1,7 @@
 /**
- * @file soplex.h
- * @author dlinear
- * @date 09 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  * Soplex wrapper.
  *
  * This header includes the Soplex library and provides a various helpers.

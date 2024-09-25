@@ -1,9 +1,8 @@
 /**
- * @file definition.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Contains the definition of some useful macros.
+ * Useful macros for defining arithmetic operators for classes.
  */
 #pragma once
 

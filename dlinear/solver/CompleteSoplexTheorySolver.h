@@ -1,9 +1,8 @@
 /**
- * @file CompleteSoplexTheorySolver.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Complete version of SoplexTheorySolver.
+ * Complete version of SoplexTheorySolver.
  *
  * The LP solver used is Soplex.
  * This solver is complete. It means that it will always solve the linear problem exactly.

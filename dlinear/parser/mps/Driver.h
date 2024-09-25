@@ -1,13 +1,11 @@
 /**
- * @file Driver.h
- * @author dlinear
- * @date 15 Sep 2023
- * @copyright 2023 dlinear
- * @brief Driver form the parsing and execution of mps files.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Driver for the parsing and execution of mps files.
  *
  * The driver puts in communication the parser and the scanner.
- * In the end, it produces a context that can be used to solve the
- * problem.
+ * In the end, it produces a context that can be used to solve the problem.
  */
 #pragma once
 

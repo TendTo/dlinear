@@ -1,9 +1,8 @@
 /**
- * @file SatResult.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Describes the result of the SAT solver using an enum class.
+ * Describes the result of the SAT solver using an enum class.
  *
  * The SAT solver can return the following results:
  * - SAT_NO_RESULT: no result has been obtained yet.

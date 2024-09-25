@@ -1,9 +1,8 @@
 /**
- * @file Driver.h
- * @author dlinear
- * @date 22 Aug 2023
- * @copyright 2023 dlinear
- * @brief Driver form the parsing and execution of onnx files.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * Driver form the parsing and execution of onnx files.
  *
  * The drivers reads the onnx file and uses the information in it to update the context by running all the nodes
  * from the input to the output of the graph.

@@ -1,11 +1,8 @@
 /**
- * @file SortedVector.hpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Simple sorted vector implementation.
- *
- * This class is implemented as a wrapper around std::vector to provide a sorted list of elements.
+ * SortedVector class.
  */
 #pragma once
 
@@ -19,7 +16,7 @@
 namespace dlinear {
 
 /**
- * SortedVector class.
+ * Vector that maintains its elements sorted.
  *
  * This class is implemented as a wrapper around std::vector to provide a sorted list of elements.
  * Each time an element is inserted, it is placed in the correct position to maintain the sorted order.
@@ -64,17 +61,15 @@ class SortedVector {
   using const_reverse_iterator =
       typename std::vector<T>::const_reverse_iterator;  ///< Type of the const reverse iterator to the sorted list
 
-  /**
-   * Default constructor.
-   */
+  /** @constructor{SortedVector} */
   SortedVector() = default;
   /**
-   * Constructor with a given @p size.
+   * Construct a new SortedVector object with the giver @p size.
    * @param size size of the sorted list.
    */
   explicit SortedVector(size_t size) : vector_(size) {}
   /**
-   * Constructor with using an initializer @p list.
+   * Construct a new SortedVector object using an initializer @p list.
    *
    * The elements are placed in the correct position to maintain the sorted order.
    * @param list initializer list of elements
@@ -89,6 +84,7 @@ class SortedVector {
    *
    * The element is placed in the correct position to maintain the sorted order.
    * It returns an iterator to the inserted element.
+   * @tparam V type of the element to insert
    * @param value value of the element to insert
    * @return iterator to the inserted element
    */
@@ -104,6 +100,7 @@ class SortedVector {
    * The element is placed in the correct position to maintain the sorted order.
    * It returns an iterator to the inserted element.
    * This version allows to specify if the element should be inserted in the lower or upper bound.
+   * @tparam V type of the element to insert
    * @param value value of the element to insert
    * @param insert_lower if true, the element is inserted in the lower bound, otherwise in the upper bound
    * @return iterator to the inserted element
@@ -141,17 +138,10 @@ class SortedVector {
     return insert(T(std::forward<Args>(args)...), insert_lower);
   }
 
-  /**
-   * Size of the sorted list.
-   * @return size of the sorted list
-   */
+  /** @getter{size, vector} */
   [[nodiscard]] size_t size() const { return vector_.size(); }
 
-  /**
-   * Check if the sorted list is empty.
-   * @return true if the sorted list is empty
-   * @return false if the sorted list is not empty
-   */
+  /** @checker{emtpy, vector} */
   [[nodiscard]] bool empty() const { return vector_.empty(); }
 
   /**
@@ -337,9 +327,7 @@ class SortedVector {
     return it;
   }
 
-  /**
-   * Clear the sorted list.
-   */
+  /** Clear the sorted list, removing all elements. */
   void clear() { vector_.clear(); }
 
   iterator begin() { return vector_.begin(); }

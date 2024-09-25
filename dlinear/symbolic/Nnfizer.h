@@ -1,9 +1,8 @@
 /**
- * @file Nnfizer.h
- * @author dlinear
- * @date 15 Aug 2023
- * @copyright 2023 dlinear
- * @brief NNF (Negation Normal Form) conversion.
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ * NNF (Negation Normal Form) conversion.
  *
  * NNFizer class converts a formula into an equivalent formula in NNF.
  * @see https://en.wikipedia.org/wiki/Negation_normal_form

@@ -1,9 +1,7 @@
 /**
- * @file SignalHandlerGuard.cpp
- * @author dlinear
- * @version 0.1
- * @date 14 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
  */
 #include "SignalHandlerGuard.h"
 
@@ -14,7 +12,7 @@ namespace dlinear {
 SignalHandlerGuard::SignalHandlerGuard(const int sig, handler_t handler, volatile std::atomic_bool* flag)
     : sig_{sig}, flag_{flag}, old_action_{} {
   // Register the new handler and save the current one.
-  struct sigaction new_action {};
+  struct sigaction new_action{};
   new_action.sa_handler = handler;
   sigemptyset(&new_action.sa_mask);
   new_action.sa_flags = SA_RESTART;

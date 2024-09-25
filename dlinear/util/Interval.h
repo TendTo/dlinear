@@ -1,9 +1,8 @@
 /**
- * @file Interval.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * @brief Interval class
+ * Interval class.
  *
  * An interval assigned to a variable describes the range of values it can assume.
  */
