@@ -6,7 +6,7 @@ def main():
     config = pdl.Config.from_args(sys.argv)
     solver = pdl.SmtSolver(config)
     result = solver.Parse()
-    if result.result == pdl.SmtResult.UNSOLVED and config.enforce_check_sat():
+    if result.result == pdl.SmtResult.UNSOLVED and config.enforce_check_sat:
         result = solver.CheckSat()
     if not config.silent and not result.matched_expectation(solver.GetExpected()):
         print(f"WARNING: Expected {solver.GetExpected()} but got {result.result}")
