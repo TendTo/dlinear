@@ -1,6 +1,6 @@
 """Based on Drake's drake.bzl file https://github.com/RobotLocomotion/drake/blob/master/tools/drake.bzl"""
 
-load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension", "pybind_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
@@ -222,7 +222,38 @@ def dlinear_cc_binary(
         **kwargs
     )
 
-def dlinear_pybind_extension(name, srcs, deps, copts = [], linkstatic = None, defines = [], features = [], **kwargs):
+def dlinear_pyblind_library(
+        name,
+        srcs = None,
+        deps = [],
+        copts = [],
+        linkstatic = None,
+        defines = [],
+        features = [],
+        **kwargs):
+    """Creates a rule to declare a pybind11 library.
+
+    Args:
+        name: The name of the library.
+        srcs: A list of source files to compile.
+        deps: A list of dependencies.
+        copts: A list of compiler options.
+        linkstatic: Whether to link statically.
+        defines: A list of defines to add to the library.
+        features: A list of features to add to the library.
+        **kwargs: Additional arguments to pass to pybind_library.
+    """
+    pybind_library(
+        name = name,
+        srcs = srcs,
+        deps = deps,
+        copts = _get_copts(copts),
+        linkstatic = _get_static(linkstatic),
+        defines = _get_defines(defines),
+        **kwargs
+    )
+
+def dlinear_pybind_extension(name, srcs, deps = [], copts = [], linkstatic = None, defines = [], features = [], **kwargs):
     """Creates a rule to declare a pybind11 extension.
 
     Args:

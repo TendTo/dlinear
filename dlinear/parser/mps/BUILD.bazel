@@ -68,7 +68,10 @@ dlinear_cc_library(
         "//dlinear/solver:context",
         "//dlinear/symbolic",
         "@rules_flex//flex:current_flex_toolchain",
-    ],
+    ] + select({
+        "//tools:pydlinear_build": ["//pydlinear:interrupt"],
+        "//conditions:default": [],
+    }),
 )
 
 cpplint()

@@ -1,7 +1,14 @@
 load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load("@rules_python//python:packaging.bzl", "py_wheel")
-load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_CLASSIFIERS", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_LICENSE", "DLINEAR_SOURCE", "DLINEAR_TRACKER", "DLINEAR_VERSION", "dlinear_pybind_extension")
+load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_CLASSIFIERS", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_LICENSE", "DLINEAR_SOURCE", "DLINEAR_TRACKER", "DLINEAR_VERSION", "dlinear_pybind_extension", "dlinear_pyblind_library")
+
+dlinear_pyblind_library(
+    name = "interrupt",
+    srcs = ["interrupt.cpp"],
+    hdrs = ["interrupt.h"],
+    visibility = ["//dlinear:__subpackages__"],
+)
 
 dlinear_pybind_extension(
     name = "_pydlinear",

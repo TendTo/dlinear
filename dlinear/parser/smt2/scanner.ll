@@ -74,7 +74,7 @@ int smt2_yycolumn = 1;
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = smt2_yycolumn; yylloc->end.column = smt2_yycolumn+yyleng-1; \
 smt2_yycolumn += yyleng; \
-if (g_interrupted) { throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected."); } 
+py_check_signals();
 #elif !defined(NDEBUG)
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = smt2_yycolumn; yylloc->end.column = smt2_yycolumn+yyleng-1; \

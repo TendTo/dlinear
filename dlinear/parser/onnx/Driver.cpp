@@ -12,6 +12,10 @@
 #include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/util/exception.h"
 
+#ifdef DLINEAR_PYDLINEAR
+#include "pydlinear/interrupt.h"
+#endif
+
 namespace dlinear::onnx {
 
 static_assert(std::endian::native == std::endian::little, "Only little-endian systems are supported for onnx parsing");
@@ -675,6 +679,9 @@ void OnnxDriver::AddNode<NodeOpType::Unsqueeze>(const ::onnx::NodeProto& node) {
 
 bool OnnxDriver::AddNode(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.has_op_type(), "NodeProto must have an op_type");
+#ifdef DLINEAR_PYDLINEAR
+  py_check_signals();
+#endif
 
   DLINEAR_TRACE_FMT("AddNode({})", node.name());
   if (DLINEAR_TRACE_ENABLED) {
@@ -722,6 +729,9 @@ void OnnxDriver::AddNodes() {
 void OnnxDriver::AddValueInfo(const ::onnx::ValueInfoProto& value_info, const bool is_input) {
   DLINEAR_ASSERT(value_info.has_type(), "ValueInfoProto must have a type");
   DLINEAR_ASSERT(value_info.has_name(), "ValueInfoProto must have a name");
+#ifdef DLINEAR_PYDLINEAR
+  py_check_signals();
+#endif
   DLINEAR_TRACE_FMT("AddValueInfo({})", value_info.name());
   switch (value_info.type().value_case()) {
     case ::onnx::TypeProto::kTensorType:

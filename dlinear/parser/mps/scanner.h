@@ -19,8 +19,7 @@
 #endif
 
 #ifdef DLINEAR_PYDLINEAR
-#include "dlinear/util/SignalHandlerGuard.h"
-#include "dlinear/util/interrupt.h"
+#include "pydlinear/interrupt.h"
 #endif
 
 #include "dlinear/parser/mps/BoundType.h"
@@ -64,11 +63,6 @@ class MpsScanner : public MpsFlexLexer {
 
   /** Enable debug output (via arg_yyout) if compiled into the scanner. */
   void set_debug(bool b);
-
- private:
-#ifdef DLINEAR_PYDLINEAR
-  SignalHandlerGuard guard{SIGINT, interrupt_handler, &g_interrupted};
-#endif
 };
 
 }  // namespace dlinear::mps

@@ -56,7 +56,10 @@ dlinear_cc_library(
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/util:concepts",
-    ],
+    ] + select({
+        "//tools:pydlinear_build": ["//pydlinear:interrupt"],
+        "//conditions:default": [],
+    }),
 )
 
 cpplint()

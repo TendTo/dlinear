@@ -307,10 +307,7 @@ dlinear_cc_library(
         "//dlinear/util:config",
         "//dlinear/util:scoped_structures",
     ] + select({
-        "//tools:pydlinear_build": [
-            "//dlinear/util:interrupt",
-            "//dlinear/util:signal_handler_guard",
-        ],
+        "//tools:pydlinear_build": ["//pydlinear:interrupt"],
         "//conditions:default": [],
     }),
 )

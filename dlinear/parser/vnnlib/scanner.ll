@@ -74,7 +74,7 @@ int vnnlib_yycolumn = 1;
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = vnnlib_yycolumn; yylloc->end.column = vnnlib_yycolumn+yyleng-1; \
 vnnlib_yycolumn += yyleng; \
-if (g_interrupted) { throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected."); } 
+py_check_signals();
 #elif !defined(NDEBUG)
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = vnnlib_yycolumn; yylloc->end.column = vnnlib_yycolumn+yyleng-1; \

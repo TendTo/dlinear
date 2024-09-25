@@ -22,8 +22,7 @@
 #include "dlinear/util/logging.h"
 
 #ifdef DLINEAR_PYDLINEAR
-#include "dlinear/util/SignalHandlerGuard.h"
-#include "dlinear/util/interrupt.h"
+#include "pydlinear/interrupt.h"
 #endif
 #ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/solver/DeltaQsoptexTheorySolver.h"
@@ -364,18 +363,11 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
 #endif
 
-#ifdef DLINEAR_PYDLINEAR
-  // install a signal handler for sigint for this scope.
-  SignalHandlerGuard guard{SIGINT, interrupt_handler, &g_interrupted};
-#endif
   bool have_unsolved = false;
   while (true) {
     // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py, when we build dReal python package.
 #ifdef DLINEAR_PYDLINEAR
-    if (g_interrupted) {
-      DLINEAR_DEBUG("KeyboardInterrupt(SIGINT) Detected.");
-      throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected.");
-    }
+    py_check_signals();
 #endif
 
     DLINEAR_WARN("New iteration");

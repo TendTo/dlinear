@@ -69,7 +69,7 @@ int mps_yycolumn = 1;
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = mps_yycolumn; yylloc->end.column = mps_yycolumn+yyleng-1; \
 mps_yycolumn += yyleng; \
-if (g_interrupted) { throw std::runtime_error("KeyboardInterrupt(SIGINT) Detected."); } 
+py_check_signals();
 #elif !defined(NDEBUG)
 #define YY_USER_ACTION yylloc->begin.line = yylloc->end.line = yylineno; \
 yylloc->begin.column = mps_yycolumn; yylloc->end.column = mps_yycolumn+yyleng-1; \
