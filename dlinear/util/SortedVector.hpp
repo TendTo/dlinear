@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace dlinear {
+struct Bound;  // Forward declaration
 
 /**
  * Vector that maintains its elements sorted.
@@ -364,5 +365,9 @@ std::ostream& operator<<(std::ostream& os, const SortedVector<T>& it) {
   std::copy(it.cbegin(), std::prev(it.cend()), std::ostream_iterator<T>(os, ", "));
   return os << *(it.crbegin());
 }
+
+extern template class SortedVector<Bound>;
+extern template class SortedVector<int>;
+extern template class SortedVector<double>;
 
 }  // namespace dlinear
