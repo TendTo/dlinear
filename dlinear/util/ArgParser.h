@@ -3,11 +3,6 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * ArgParser class.
- *
- * Used to parse command line arguments.
- * Parse the command line arguments and convert them to Config.
- * The config object will then be used throughout the program.
- * The default values are defined in the configuration of the parser.
  */
 #pragma once
 
@@ -22,8 +17,12 @@
 namespace dlinear {
 
 /**
- * Class used to parse command line arguments using the argparse library.
- * After parsing, a validation step is performed.
+ * Used to parse command line arguments and produce a corresponding Config object to be used throughout the execution.
+ *
+ * The default values of each parameter are defined in the Config class.
+ * Besides parsing, a validation step is performed to ensure the correctness of the parameters.
+ * If an inconsistency is found, an explication of the error is printed to the console.
+ * Under the hood, it uses the argparse library.
  */
 class ArgParser {
  public:
@@ -46,8 +45,7 @@ class ArgParser {
   /**
    * Convert the parser to a @ref Config.
    *
-   * The @ref Config object will be used throughout the program to pass the configuration
-   * to all the components.
+   * The @ref Config object will be used throughout the program to pass the configuration to all the components.
    * @return configuration object
    */
   [[nodiscard]] Config toConfig() const;

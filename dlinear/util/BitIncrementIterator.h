@@ -39,7 +39,6 @@ namespace dlinear {
  * configuration the bit vector can be in will be explored.
  * Using any @ref Learn method will continue to maintain the guarantee over the now halved configuration space, but
  * some previously visited configuration may appear again.
- * @warning Any manual alteration of the vector invalidates the guarantee.
  * @code
  * // Example learn:
  * BitIncrementIterator it(3);
@@ -54,6 +53,7 @@ namespace dlinear {
  * // Output:
  * // 010, 011, 110, 111,
  * @endcode
+ * @warning Any manual alteration of the vector invalidates the guarantee.
  */
 class BitIncrementIterator {
  public:

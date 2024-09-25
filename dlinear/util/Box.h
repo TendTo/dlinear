@@ -21,14 +21,24 @@
 
 namespace dlinear {
 
+/**
+ * Collection of variables with associated intervals.
+ *
+ * The Box class is used throughout the tool to keep track of the variables that will eventually populate the model.
+ * When a model is produced, the bounds on each variable will match a single value.
+ */
 class Box {
  public:
-  /** Constructs an empty box. */
+  /**
+   * Construct a new Box object associated with the given @p lp_solver.
+   * @param lp_solver LP solver to use. It will determine the values for the unbounded intervals
+   */
   explicit Box(Config::LPSolver lp_solver);
 
   /**
-   * Construct a box from @p variables.
+   * Construct a box from @p variables associated with the given @p lp_solver.
    * @param variables variables contained in the box
+   * @param lp_solver LP solver to use. It will determine the values for the unbounded intervals
    */
   explicit Box(const std::vector<Variable> &variables, Config::LPSolver lp_solver);
 
@@ -53,7 +63,7 @@ class Box {
   [[nodiscard]] bool empty() const;
 
   /**
-   * Set the box to be empty.
+   * Clear the box, making it empty.
    * @see empty
    */
   void set_empty();
