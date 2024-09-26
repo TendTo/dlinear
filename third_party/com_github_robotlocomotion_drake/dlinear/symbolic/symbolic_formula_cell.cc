@@ -176,7 +176,7 @@ ostream &FormulaFalse::Display(ostream &os) const { return os << "False"; }
 std::string FormulaFalse::to_smt2_string() const { return "(false)"; }
 
 FormulaVar::FormulaVar(const Variable &v)
-    : FormulaCell{FormulaKind::Var, hash_value < Variable > {}(v), false},
+    : FormulaCell{FormulaKind::Var, std::hash<Variable>{}(v), false},
       var_{v} {
   // Dummy symbolic variable (ID = 0) should not be used in constructing
   // symbolic formulas.

@@ -33,9 +33,6 @@ Variable::Variable(string name, const Type type)
   assert(id_ > 0);
 }
 
-Variable::Variable(string name, const Type type, bool)
-    : Variable{std::move(name), type} {}
-
 Variable::Id Variable::get_id() const { return id_; }
 Variable::Type Variable::get_type() const { return type_; }
 string Variable::get_name() const { return *name_; }

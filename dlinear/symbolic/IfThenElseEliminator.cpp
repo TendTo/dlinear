@@ -39,7 +39,7 @@ std::pair<Expression, Formula> IfThenElseEliminator::Process(const Expression &e
   return {new_e, make_conjunction(added_formulas_)};
 }
 
-const std::unordered_map<Expression, Variable, hash_value<Expression>> &IfThenElseEliminator::variables() const {
+const std::unordered_map<Expression, Variable> &IfThenElseEliminator::variables() const {
   return ite_to_var_;
 }
 

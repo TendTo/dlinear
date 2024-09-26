@@ -19,7 +19,6 @@
 #include "dlinear/util/Config.h"
 
 using dlinear::Config;
-using dlinear::drake::hash_value;
 using dlinear::drake::symbolic::Environment;
 using dlinear::drake::symbolic::Expression;
 using dlinear::drake::symbolic::Formula;

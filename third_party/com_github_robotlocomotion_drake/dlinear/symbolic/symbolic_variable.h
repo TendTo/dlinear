@@ -39,10 +39,7 @@ class Variable {
    *  It is allowed to construct a dummy variable but it should not be used to
    *  construct a symbolic expression.
    */
-  Variable()
-      : id_{0},
-        type_{Type::CONTINUOUS},
-        name_{std::make_shared<std::string>()} {}
+  Variable() : id_{0}, type_{Type::CONTINUOUS}, name_{std::make_shared<std::string>()} {}
 
   /** Default destructor. */
   ~Variable() = default;
@@ -50,10 +47,6 @@ class Variable {
   /** Constructs a variable with a string. If not specified, it has CONTINUOUS
    * type by default.*/
   explicit Variable(std::string name, Type type = Type::CONTINUOUS);
-
-  /** Constructs a variable with @p name and @p type. @p model_variable is ignored. */
-  [[deprecated("This is only for backward-compatibility.")]]
-  Variable(std::string name, Type type, bool model_variable);
 
   /** Checks if this is a dummy variable (ID = 0) which is created by
    *  the default constructor. */
@@ -75,53 +68,37 @@ class Variable {
  private:
   // Produces a unique ID for a variable.
   static Id get_next_id();
-  Id id_{};  // Unique identifier.
-  Type type_{Type::CONTINUOUS};
-
-  // Variable class has shared_ptr<string> instead of string to be
-  // drake::test::IsMemcpyMovable.
-  // Please check https://github.com/RobotLocomotion/drake/issues/5974
-  // for more information.
-  std::shared_ptr<std::string> name_;  // Name of variable.
+  Id id_{};                            ///< Unique identifier.
+  Type type_{Type::CONTINUOUS};        ///< Type of variable.
+  std::shared_ptr<std::string> name_;  ///< Name of variable.
 };
 
 std::ostream &operator<<(std::ostream &os, Variable::Type type);
 
 }  // namespace symbolic
 
-/** Computes the hash value of a variable. */
-template<>
-struct hash_value<symbolic::Variable> {
-  size_t operator()(const symbolic::Variable &v) const { return v.get_hash(); }
-};
-
-} // namespace dlinear::drake
-
+}  // namespace dlinear::drake
 
 namespace std {
 /* Provides std::less<dlinear::drake::symbolic::Variable>. */
-template<>
+template <>
 struct less<dlinear::drake::symbolic::Variable> {
-  bool operator()(const dlinear::drake::symbolic::Variable &lhs,
-                  const dlinear::drake::symbolic::Variable &rhs) const {
+  bool operator()(const dlinear::drake::symbolic::Variable &lhs, const dlinear::drake::symbolic::Variable &rhs) const {
     return lhs.less(rhs);
   }
 };
 
 /* Provides std::equal_to<dlinear::drake::symbolic::Variable>. */
-template<>
+template <>
 struct equal_to<dlinear::drake::symbolic::Variable> {
-  bool operator()(const dlinear::drake::symbolic::Variable &lhs,
-                  const dlinear::drake::symbolic::Variable &rhs) const {
+  bool operator()(const dlinear::drake::symbolic::Variable &lhs, const dlinear::drake::symbolic::Variable &rhs) const {
     return lhs.equal_to(rhs);
   }
 };
 
-template<>
+template <>
 struct hash<dlinear::drake::symbolic::Variable> {
-  size_t operator()(const dlinear::drake::symbolic::Variable &v) const {
-    return v.get_hash();
-  }
+  size_t operator()(const dlinear::drake::symbolic::Variable &v) const { return v.get_hash(); }
 };
 
 }  // namespace std

@@ -449,11 +449,6 @@ inline Formula logic_and(const Formula &f1, const Formula &f2) {
 }  // namespace detail
 }  // namespace symbolic
 
-/** Computes the hash value of a symbolic formula. */
-template<>
-struct hash_value<symbolic::Formula> {
-  size_t operator()(const symbolic::Formula &f) const { return f.get_hash(); }
-};
 } // namespace dlinear::drake
 
 

@@ -282,7 +282,7 @@ bool Context::Impl::is_max() const { return is_max_; }
   for (int i = 0; i < model.size(); i++) {
     const Variable &var = model.variable(i);
     const Interval &val = model.interval_vector()[i];
-    DLINEAR_ASSERT(!val.is_empty(), "Variable cannot have an empy value interval");
+    DLINEAR_ASSERT(!val.is_empty(), "Variable cannot have an empty value interval");
     env.insert(var, val.ub());
   }
   for (const Formula &assertion : stack_) {
@@ -318,7 +318,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   // Temporarily disable to study the effect of guided constraints
   if (config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER) {
     // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
-    BoundImplicator propagator{config_, [this](const Formula &f) { Assert(f); }, predicate_abstractor_};
+    BoundImplicator propagator{config_, [this](const Formula &f) { sat_solver_->AddFormula(f); },
+                               predicate_abstractor_};
     propagator.Propagate();
   }
 

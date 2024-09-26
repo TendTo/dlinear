@@ -35,7 +35,6 @@
 
 namespace dlinear {
 
-using drake::hash_value;
 using drake::symbolic::Environment;
 using drake::symbolic::Expression;
 using drake::symbolic::ExpressionAddFactory;

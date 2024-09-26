@@ -179,11 +179,11 @@ class Box {
    */
   [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
 
-  Config::LPSolver lp_solver_;                                                           ///< LP solver
-  std::vector<Interval> values_;                                                         ///< Interval vector of the box
-  std::shared_ptr<std::vector<Variable>> variables_;                                     ///< Variables in the box
-  std::shared_ptr<std::unordered_map<Variable, int, hash_value<Variable>>> var_to_idx_;  ///< Variable to index map
-  std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;                        ///< Index to variable map
+  Config::LPSolver lp_solver_;                                     ///< LP solver
+  std::vector<Interval> values_;                                   ///< Interval vector of the box
+  std::shared_ptr<std::vector<Variable>> variables_;               ///< Variables in the box
+  std::shared_ptr<std::unordered_map<Variable, int>> var_to_idx_;  ///< Variable to index map
+  std::shared_ptr<std::unordered_map<int, Variable>> idx_to_var_;  ///< Index to variable map
 
   friend std::ostream &operator<<(std::ostream &os, const Box &box);
 };

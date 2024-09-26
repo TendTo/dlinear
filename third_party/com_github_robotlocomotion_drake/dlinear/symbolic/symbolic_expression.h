@@ -711,14 +711,6 @@ Expression operator-(const Variable &var);
 
 }  // namespace symbolic
 
-/** Computes the hash value of a symbolic expression. */
-template<>
-struct hash_value<symbolic::Expression> {
-  size_t operator()(const symbolic::Expression &e) const {
-    return e.get_hash();
-  }
-};
-
 } // namespace dlinear::drake
 
 

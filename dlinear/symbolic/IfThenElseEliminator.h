@@ -37,7 +37,7 @@ class IfThenElseEliminator {
    */
   Formula Process(const Formula &f);
   std::pair<Expression, Formula> Process(const Expression &e);
-  const std::unordered_map<Expression, Variable, hash_value<Expression>> &variables() const;
+  const std::unordered_map<Expression, Variable> &variables() const;
   const IterationStats &stats() const { return stats_; }
 
  private:
@@ -90,11 +90,10 @@ class IfThenElseEliminator {
 
   std::vector<Formula> added_formulas_;  ///< The added formulas introduced by the elimination process. Resets after
                                          ///< each call to Process.
-  std::unordered_set<Variable, hash_value<Variable>>
-      ite_variables_;  ///< The variables introduced by the elimination process.
-  std::unordered_map<Expression, Variable, hash_value<Expression>>
+  std::unordered_set<Variable> ite_variables_;  ///< The variables introduced by the elimination process.
+  std::unordered_map<Expression, Variable>
       ite_to_var_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
-  std::unordered_map<Variable, Formula, hash_value<Variable>>
+  std::unordered_map<Variable, Formula>
       ite_var_to_formulas_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
 
   std::size_t counter_;   ///< Counter for the number of introduced variables.

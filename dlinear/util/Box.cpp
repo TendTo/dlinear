@@ -27,7 +27,7 @@ Box::Box(const Config::LPSolver lp_solver)
     : lp_solver_{lp_solver},
       values_{},
       variables_{std::make_shared<std::vector<Variable>>()},
-      var_to_idx_{std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>()},
+      var_to_idx_{std::make_shared<std::unordered_map<Variable, int>>()},
       idx_to_var_{std::make_shared<std::unordered_map<int, Variable>>()} {}
 
 Box::Box(const std::vector<Variable> &variables, const Config::LPSolver lp_solver) : Box{lp_solver} {
@@ -51,7 +51,7 @@ void Box::Add(const Variable &v) {
     // entity, we need to clone this before adding the variable `v`
     // so that these changes remain local.
     variables_ = std::make_shared<std::vector<Variable>>(*variables_);
-    var_to_idx_ = std::make_shared<std::unordered_map<Variable, int, hash_value<Variable>>>(*var_to_idx_);
+    var_to_idx_ = std::make_shared<std::unordered_map<Variable, int>>(*var_to_idx_);
     idx_to_var_ = std::make_shared<std::unordered_map<int, Variable>>(*idx_to_var_);
   }
   const int n{size()};
