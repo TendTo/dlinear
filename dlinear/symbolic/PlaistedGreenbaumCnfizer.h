@@ -2,7 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * PlaistedGreenbaumCnfizer class
+ * PlaistedGreenbaumCnfizer class.
  */
 #pragma once
 
@@ -17,8 +17,18 @@
 
 namespace dlinear {
 
+/**
+ * Plaisted-Greenbaum transformation is a method to convert a formula into an equi-satisfiable vector of formulae in CNF.
+ *
+ * The method can introduce extra Boolean variables.
+ * Check [Wikipedia](https://en.wikipedia.org/wiki/Plaisted-Greenbaum_transformation) for more information.
+ */
 class PlaistedGreenbaumCnfizer : public FormulaVisitor {
  public:
+  /**
+   * Construct a new PlaistedGreenbaumCnfizer object with the given @p config.
+   * @param config configuration
+   */
   explicit PlaistedGreenbaumCnfizer(const Config &config) : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"} {}
 
   /**

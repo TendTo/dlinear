@@ -14,14 +14,16 @@
 namespace dlinear {
 
 /**
- * This class is used to print expressions and formulas in prefix-form.
+ * Print expressions and formulas in prefix-form.
+ *
  * It is mainly used for debugging purposes.
  */
 class PrefixPrinter {
  public:
   /**
-   * Constructs a PrefixPrinter with @p os. It temporarily sets the precision of
-   * @p os to the maximum precision.
+   * Constructs a new PrefixPrinter object with @p os.
+   *
+   * It temporarily sets the precision of @p os to the maximum precision.
    * @param os stream to print to.
    */
   explicit PrefixPrinter(std::ostream &os);
@@ -31,14 +33,21 @@ class PrefixPrinter {
   PrefixPrinter &operator=(const PrefixPrinter &) = delete;
   PrefixPrinter &operator=(PrefixPrinter &&) = delete;
 
-  /// Destroys this. It restores the original precision of the ostream.
-  /** Destructor */
+  /** Restore the original precision of the ostream. */
   ~PrefixPrinter();
 
-  /// Prints the prefix form of the expression @p e to the ostream.
+  /**
+   * Print the prefix form of the expression @p e to the ostream.
+   * @param e expression to print
+   * @return updated ostream
+   */
   std::ostream &Print(const Expression &e);
 
-  /// Prints the prefix form of the formula @p f to the ostream.
+  /**
+   * Print the prefix form of the formula @p f to the ostream.
+   * @param f formula to print
+   * @return updated ostream
+   */
   std::ostream &Print(const Formula &f);
 
  private:
@@ -92,14 +101,22 @@ class PrefixPrinter {
   // operator()s.
   friend std::ostream &drake::symbolic::VisitFormula<std::ostream &>(PrefixPrinter *, const Formula &f);
 
-  std::ostream &os_;
-  std::streamsize old_precision_{};
+  std::ostream &os_;                 ///< Stream to print to.
+  std::streamsize old_precision_{};  ///< Original precision of the stream.
 };
 
-/// Returns the prefix-string representation of the expression @p e.
+/**
+ * Produce the prefix-string representation of the expression @p e.
+ * @param e expression to convert
+ * @return prefix-string representation of the expression
+ */
 std::string ToPrefix(const Expression &e);
 
-/// Returns the prefix-string representation of the formula @p e.
+/**
+ * Produce the prefix-string representation of the formula @p f.
+ * @param f formula to convert
+ * @return prefix-string representation of the formula
+ */
 std::string ToPrefix(const Formula &f);
 
 }  // namespace dlinear

@@ -2,10 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * NNF (Negation Normal Form) conversion.
- *
- * NNFizer class converts a formula into an equivalent formula in NNF.
- * @see https://en.wikipedia.org/wiki/Negation_normal_form
+ * Nnfizer class.
  */
 #pragma once
 
@@ -14,23 +11,20 @@
 namespace dlinear {
 
 /**
- * NNFizer class
- *
  * Implementation of NNF (Negation Normal Form) conversion.
- * When @code push_negation_into_relationals @endcode is true, it pushed
- * negations into relational formulas by flipping relational
+ *
+ * When `push_negation_into_relationals` is true, it pushes negations into relational formulas by flipping relational
  * @par Example:
  *   @f$ ¬(x \ge 10) @f$ becomes @f$ (x < 10) @f$
- *
- * @see https://en.wikipedia.org/wiki/Negation_normal_form
+ * @see [Wikipedia](https://en.wikipedia.org/wiki/Negation_normal_form)
  */
 class Nnfizer {
  public:
   /**
    * Convert a @p f into an equivalent formula @c f' in NNF.
-   * @param f Formula to be converted.
-   * @param push_negation_into_relationals Push negation into relational formulas.
-   * @return Converted formula.
+   * @param f formula to be converted
+   * @param push_negation_into_relationals whether to push negation into relational formulas
+   * @return nnf converted formula
    */
   [[nodiscard]] Formula Convert(const Formula &f, bool push_negation_into_relationals = false) const;
 
@@ -38,10 +32,10 @@ class Nnfizer {
   /**
    * Convert @p f into an equivalent formula @c f' in NNF. The parameter @p polarity
    * is to indicate whether it processes @c f (if @p polarity is true) or @c ¬f (if @p polarity is false).
-   * @param f Formula to be converted.
-   * @param polarity Polarity.
-   * @param push_negation_into_relationals Push negation into relational formulas.
-   * @return Converted formula.
+   * @param f formula to be converted
+   * @param polarity whether to process @c f or @c ¬f
+   * @param push_negation_into_relationals whether to push negation into relational formulas
+   * @return nnf converted formula
    */
   [[nodiscard]] Formula Visit(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
 

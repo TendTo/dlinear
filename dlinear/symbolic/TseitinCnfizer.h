@@ -18,25 +18,28 @@
 namespace dlinear {
 
 /**
- * Tsietin transformation is a method to convert a formula into an
- * equi-satisfiable formula in CNF. The method introduces extra Boolean
- * variables (Tseitin transformation).
+ * Tsietin transformation is a method to convert a formula into an equi-satisfiable vector of formulae in CNF.
+ *
+ * The method can introduce extra Boolean variables.
+ * Check [Wikipedia](https://en.wikipedia.org/wiki/Tseytin_transformation) for more information.
  */
 class TseitinCnfizer : public FormulaVisitor {
  public:
+  /**
+   * Construct a new TseitinCnfizer object with the given @p config.
+   * @param config configuration
+   */
   explicit TseitinCnfizer(const Config &config) : FormulaVisitor{config, "TseitinCnfizer"} {}
 
   /**
-   * Convert @p f into an equi-satisfiable formula @c f' in CNF.
+   * Convert @p f into an equi-satisfiable formula in CNF.
    * @param f formula to convert
-   * @return equi-satisfiable formula in CNF
+   * @return vector of equi-satisfiable formulae in CNF
    */
   std::vector<Formula> Convert(const Formula &f);
 
   /**
-   * Return a const reference of `map_` member.
-   * @note map_ is cleared at the beginning of `Convert` call.
-   * @return const reference of `map_` member.n
+   * @getter{map of temporary variables, TseitinCnfizer, @note @ref map_ is cleared at the beginning of @ref Convert }
    */
   [[nodiscard]] const std::map<Variable, Formula> &map() const { return map_; }
 
@@ -48,11 +51,8 @@ class TseitinCnfizer : public FormulaVisitor {
   Formula VisitForall(const Formula &f) override;
 
   /**
-   * Map a temporary variable, which is introduced by a Tseitin
-   * transformation, to a corresponding Formula.
-   *
-   * @note that this map_ is cleared at the beginning of `Convert`
-   * call.
+   * Map a temporary variable, which is introduced by a Tseitin transformation, to a corresponding Formula.
+   * @note that this map_ is cleared at the beginning of @ref Convert call.
    */
   std::map<Variable, Formula> map_;
 

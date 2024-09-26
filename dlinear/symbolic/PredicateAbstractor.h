@@ -17,40 +17,47 @@
 
 namespace dlinear {
 
+/**
+ * Predicate abstraction is a method to convert a first-order logic formula into a Boolean formula.
+ *
+ * The boolean formula will be a boolean variable or a conjunction of boolean variables.
+ * The object keeps a bijective map between newly introduced the boolean variables and the first-order logic formulae.
+ */
 class PredicateAbstractor : public FormulaVisitor {
  public:
+  /**
+   * Construct a new PredicateAbstractor object with the given @p config.
+   * @param config configuration
+   */
   explicit PredicateAbstractor(const Config &config)
       : FormulaVisitor{config, "PredicateAbstractor"}, flattener_{config} {}
   /**
-   * Convert a first-order logic formula @p f into a Boolean formula
-   * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
-   * 0)` will be converted into `b₁ ∧ b₂` while `b₁` corresponds with
-   * `x > 0` and `b₂` corresponds with `y < 0`. The class provides
-   * `operator[b]` which looks up the corresponding formula for a
-   * Boolean variable `b`.
-   * @param f formula to be converted.
+   * Convert a first-order logic formula @p f into a Boolean formula by predicate abstraction.
+   *
+   * For example, a formula @f$ (x > 0) \land (y < 0) @f$ will be converted into @f$ b_1 \land b_2 @f$
+   * while @f$ b_1 @f$ corresponds with @f$ x > 0 @f$ and  @f$ b_2 @f$ corresponds with @f$ y < 0 @f$.
+   * The class provides `operator[b]` which looks up the corresponding formula for a Boolean variable @f$ b @f$.
+   * @param f formula to be converted
    * @return boolean formula
    */
   Formula Convert(const Formula &f);
 
   /**
-   * Convert a first-order logic formula @p f into a Boolean formula
-   * by predicate abstraction. For example, a formula `(x > 0) ∧ (y <
-   * 0)` will be converted into `b₁ ∧ b₂` while `b₁` corresponds with
-   * `x > 0` and `b₂` corresponds with `y < 0`. The class provides
-   * `operator[b]` which looks up the corresponding formula for a
-   * Boolean variable `b`.
-   * @param formulas formulas to be converted.
+   * Convert a vector first-order logic formula @p formulas into a Boolean formula
+   * by creating a single conjunction through predicate abstraction.
+   *
+   * For example, a formula @f$ (x > 0) \land (y < 0) @f$ will be converted into @f$ b_1 \land b_2 @f$
+   * while @f$ b_1 @f$ corresponds with @f$ x > 0 @f$ and  @f$ b_2 @f$ corresponds with @f$ y < 0 @f$.
+   * The class provides `operator[b]` which looks up the corresponding formula for a Boolean variable @f$ b @f$.
+   * @param f formula to be converted
    * @return boolean formula
    */
   Formula Convert(const std::vector<Formula> &formulas);
 
-  const std::unordered_map<Variable, Formula, hash_value<Variable>> &var_to_formula_map() const {
-    return var_to_formula_map_;
-  }
+  /** @getter{map of previously converted formulae to variable, PredicateAbstractor} */
+  const std::unordered_map<Variable, Formula> &var_to_formula_map() const { return var_to_formula_map_; }
 
   const Variable &operator[](const Formula &f) const { return formula_to_var_map_.at(f); }
-
   const Formula &operator[](const Variable &var) const { return var_to_formula_map_.at(var); }
 
  private:
@@ -76,9 +83,11 @@ class PredicateAbstractor : public FormulaVisitor {
   Formula VisitNegation(const Formula &f) override;
   Formula VisitForall(const Formula &f) override;
 
-  std::unordered_map<Variable, Formula, hash_value<Variable>> var_to_formula_map_;
-  std::unordered_map<Formula, Variable> formula_to_var_map_;
-  LinearFormulaFlattener flattener_;
+  std::unordered_map<Variable, Formula>
+      var_to_formula_map_;  ///< Map from Boolean variable to previously converted formula.
+  std::unordered_map<Formula, Variable>
+      formula_to_var_map_;            ///< Map from previously converted formula to Boolean variable.
+  LinearFormulaFlattener flattener_;  ///< Linear formula flattener.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.

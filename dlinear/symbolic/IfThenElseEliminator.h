@@ -2,9 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * File containing IfThenElseEliminator class.
- *
- * Removes the If-Then-Else expressions from a formula.
+ * IfThenElseEliminator class.
  */
 #pragma once
 

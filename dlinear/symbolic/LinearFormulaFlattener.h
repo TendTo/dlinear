@@ -16,14 +16,13 @@
 namespace dlinear {
 
 /**
- * Used by the @ref PredicateAbstractor to ensure that all the theory literals are
- * in the flattened standard form.
+ * Used by the @ref PredicateAbstractor to ensure that all the theory literals are in the flattened standard form.
  * @see LinearFormulaFlattener::Flatten
  */
 class LinearFormulaFlattener {
  public:
   /**
-   * Construct a new LinearFormulaFlattener object.
+   * Construct a new LinearFormulaFlattener object with the given @p config.
    * @param config configuration
    */
   explicit LinearFormulaFlattener(const Config& config) : config_{config}, flattened_formulas_{} {}

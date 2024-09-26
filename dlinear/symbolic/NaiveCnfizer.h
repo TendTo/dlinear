@@ -11,15 +11,20 @@
 
 namespace dlinear {
 
-/// Transforms a symbolic formula @p f into a CNF formula by
-/// preserving its semantics.
-///
-/// @note This transform can increase the size exponentially. We are
-/// using this transformation in TseitinCnfizer when we process the
-/// nested formula in a universally quantified formula.
+/**
+ * Transforms a symbolic formula @p f into a CNF formula by preserving its semantics.
+ *
+ * @note This transform can increase the size exponentially.
+ * We are using this transformation in TseitinCnfizer
+ * when we process the nested formula in a universally quantified formula.
+ */
 class NaiveCnfizer {
  public:
-  /// Convert @p f into its CNF form.
+  /**
+   * Convert a @p f into an equivalent formula @c f' in CNF.
+   * @param f formula to be converted
+   * @return cnf converted formula
+   */
   [[nodiscard]] Formula Convert(const Formula &f) const;
 
  private:
@@ -38,7 +43,7 @@ class NaiveCnfizer {
   [[nodiscard]] Formula VisitNegation(const Formula &f) const;
   [[nodiscard]] Formula VisitForall(const Formula &f) const;
 
-  const Nnfizer nnfizer_{};
+  const Nnfizer nnfizer_{};  ///< NNFizer. Used to convert the formula into NNF.
 
   // Makes VisitFormula a friend of this class so that it can use private
   // operator()s.
