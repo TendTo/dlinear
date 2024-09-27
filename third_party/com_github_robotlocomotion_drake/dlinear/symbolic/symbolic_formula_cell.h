@@ -62,9 +62,13 @@ class FormulaCell {
   virtual std::string to_smt2_string() const = 0;
 
   /** Returns the reference count of this cell. */
+#ifdef DLINEAR_NCONCURRENT
+  unsigned use_count() const { return rc_; }
+#else
   unsigned use_count() const {
     return atomic_load_explicit(&rc_, std::memory_order_acquire);
   }
+#endif
 
   /// Returns true if this symbolic formula includes an ITE (If-Then-Else)
   /// expression.
@@ -88,6 +92,15 @@ class FormulaCell {
   const bool include_ite_{false};
 
   // Reference counter.
+#if DLINEAR_NCONCURRENT
+  mutable unsigned rc_{0};
+  void increase_rc() const { ++rc_; }
+  void decrease_rc() const {
+      if (--rc_ == 0) {
+          delete this;
+      }
+  }
+#else
   mutable std::atomic<unsigned> rc_{0};
   void increase_rc() const {
     atomic_fetch_add_explicit(&rc_, 1U, std::memory_order_relaxed);
@@ -97,6 +110,7 @@ class FormulaCell {
       delete this;
     }
   }
+#endif
 
   // So that Expression can call {increase,decrease}_rc.
   friend Formula;

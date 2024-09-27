@@ -66,7 +66,7 @@ Config::PreprocessingRunningFrequency Config::actual_bound_propagation_frequency
     case PreprocessingRunningFrequency::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return PreprocessingRunningFrequency::ON_FIXED;
+          return PreprocessingRunningFrequency::ALWAYS;
         case Format::MPS:
           return PreprocessingRunningFrequency::NEVER;
         case Format::VNNLIB:
