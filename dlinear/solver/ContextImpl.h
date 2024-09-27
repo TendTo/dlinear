@@ -2,11 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Implementation of Context.
- *
- * The context juggles between the SAT solver and the theory solver, in order to produce a model.
- * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
- * This structure is based on the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
+ * Context::Impl class.
  */
 #pragma once
 
@@ -41,7 +37,7 @@ namespace dlinear {
 /**
  * The context juggles between the SAT solver and the theory solver, in order to produce a model.
  * Using a forward declaration of ContextImpl in Context.h, we can avoid including this file in Context.h.
- * This structure is based on the pimpl idiom (https://en.cppreference.com/w/cpp/language/pimpl).
+ * This structure is based on the [pimpl idiom](https://en.cppreference.com/w/cpp/language/pimpl).
  */
 class Context::Impl {
  public:

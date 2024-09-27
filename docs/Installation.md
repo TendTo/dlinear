@@ -12,8 +12,8 @@ Tested toolchains:
 ### Requirements
 
 - [Bazel](https://bazel.build/)
-  - The version used for development is 7.1.1. It is suggested to
-    use [bazelisk](https://github.com/bazelbuild/bazelisk) to manage Bazel's version.
+    - The version used for development is 7.1.1. It is suggested to
+      use [bazelisk](https://github.com/bazelbuild/bazelisk) to manage Bazel's version.
 - [gcc](https://gcc.gnu.org/) for the standard c++ toolchain
 - [autoreconf](https://www.gnu.org/software/autoconf/autoconf.html) to compile [qsopt_ex](https://gmplib.org/)
   and [mpfr](https://www.mpfr.org/)
@@ -68,9 +68,31 @@ The soplex library, unfortunately, must be compiled from source.
 Follow the instructions [installation file](https://github.com/scipopt/soplex/blob/master/INSTALL.md).
 
 The shared library expects to find a shared library for each of the dependencies in the system's library path.
-If any of those is missing, but a versioned library is present, it is sufficient to create a symbolic link to the versioned library.
+If any of those is missing, but a versioned library is present, it is sufficient to create a symbolic link to the
+versioned library.
 
 ```bash
 # Example for libmpfr
 sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so
+```
+
+## From Docker
+
+A pre-build Docker image is available on
+the [GitHub repository](https://github.com/TendTo/dlinear/pkgs/container/dlinear).
+To use it, run the following command:
+
+```bash
+# Pull the image
+docker pull ghcr.io/tendto/dlinear:main
+# Run the image
+docker run -it ghcr.io/tendto/dlinear:main -i
+```
+
+Notice that this will run the software in interactive mode, meaning it will wait for user input.
+To run the binary over a file, mount the file into the container and pass it as an argument to the binary.
+
+```bash
+# Run the image with a file
+docker run -it -v /path/to/file:/file ghcr.io/tendto/dlinear:main /file
 ```

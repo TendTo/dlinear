@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include "dlinear/symbolic/FormulaVisitor.h"
 #include "dlinear/symbolic/Nnfizer.h"
 #include "dlinear/symbolic/symbolic.h"
 
@@ -18,36 +19,30 @@ namespace dlinear {
  * We are using this transformation in TseitinCnfizer
  * when we process the nested formula in a universally quantified formula.
  */
-class NaiveCnfizer {
+class NaiveCnfizer : public FormulaVisitor {
  public:
+  /**
+   * Construct a new NaiveCnfizer object with the given @p config.
+   * @param config configuration
+   */
+  explicit NaiveCnfizer(const Config &config) : FormulaVisitor{config, "NaiveCnfizer"} {}
+
   /**
    * Convert a @p f into an equivalent formula @c f' in CNF.
    * @param f formula to be converted
    * @return cnf converted formula
    */
-  [[nodiscard]] Formula Convert(const Formula &f) const;
+  [[nodiscard]] Formula Convert(const Formula &f);
 
  private:
-  [[nodiscard]] Formula Visit(const Formula &f) const;
-  [[nodiscard]] Formula VisitFalse(const Formula &f) const;
-  [[nodiscard]] Formula VisitTrue(const Formula &f) const;
-  [[nodiscard]] Formula VisitVariable(const Formula &f) const;
-  [[nodiscard]] Formula VisitEqualTo(const Formula &f) const;
-  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f) const;
-  [[nodiscard]] Formula VisitGreaterThan(const Formula &f) const;
-  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f) const;
-  [[nodiscard]] Formula VisitLessThan(const Formula &f) const;
-  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f) const;
-  [[nodiscard]] Formula VisitConjunction(const Formula &f) const;
-  [[nodiscard]] Formula VisitDisjunction(const Formula &f) const;
-  [[nodiscard]] Formula VisitNegation(const Formula &f) const;
-  [[nodiscard]] Formula VisitForall(const Formula &f) const;
+  [[nodiscard]] Formula VisitEqualTo(const Formula &f) override;
+  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f) override;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f) override;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f) override;
+  [[nodiscard]] Formula VisitNegation(const Formula &f) override;
+  [[nodiscard]] Formula VisitForall(const Formula &f) override;
 
-  const Nnfizer nnfizer_{};  ///< NNFizer. Used to convert the formula into NNF.
-
-  // Makes VisitFormula a friend of this class so that it can use private
-  // operator()s.
-  friend Formula drake::symbolic::VisitFormula<Formula>(const NaiveCnfizer *, const Formula &);
+  Nnfizer nnfizer_{};  ///< NNFizer. Used to convert the formula into NNF.
 };
 
 }  // namespace dlinear

@@ -2,10 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Theory solver using QSopt_ex.
- *
- * QSopt_ex is an exact LP solver written in C.
- * It uses the technique of precision boosting to efficiently solve LPs exactly.
+ * QsoptexTheorySolver class.
  */
 #pragma once
 
@@ -26,7 +23,10 @@ namespace dlinear {
 
 extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const *prob, mpq_t *x, const mpq_t infeas, const mpq_t delta,
                                                void *data);
-
+/**
+ * QSopt_ex is an exact LP solver written in C.
+ * It uses the technique of precision boosting to efficiently solve LPs exactly.
+ */
 class QsoptexTheorySolver : public TheorySolver {
  public:
   explicit QsoptexTheorySolver(PredicateAbstractor &predicate_abstractor,

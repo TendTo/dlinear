@@ -118,30 +118,30 @@ class Config {
   [[nodiscard]] bool needs_expansion() const;
   /**
    * @getter{actual `lp_mode` parameter, configuration,
-   * If the lp_mode is LPMode::AUTO\, it will return the appropriate mode based on the lp_solver}
+     If the lp_mode is LPMode::AUTO\, it will return the appropriate mode based on the lp_solver}
    */
   [[nodiscard]] LPMode actual_lp_mode() const;
   /**
    * @getter{actual `format` parameter, configuration,
-   * If the format is Format::AUTO\, it will return the appropriate format based on the filename extension}
+     If the format is Format::AUTO\, it will return the appropriate format based on the filename extension}
    */
   [[nodiscard]] Format actual_format() const;
   /**
    * @getter{actual `actual_bound_propagation_type` parameter, configuration,
-   * If the actual_bound_propagation_type is BoundPropagationType::AUTO\,
-   * it will return the appropriate bound propagation type based on the actual format}
+     If the actual_bound_propagation_type is BoundPropagationType::AUTO\,
+     it will return the appropriate bound propagation type based on the actual format}
    */
   [[nodiscard]] BoundPropagationType actual_bound_propagation_type() const;
   /**
    * @getter{actual `bound_propagation_frequency` parameter, configuration,
-   * If the bound_propagation_frequency is PreprocessingRunningFrequency::AUTO\,
-   * it will return the appropriate preprocessing running frequency based on the actual format}
+     If the bound_propagation_frequency is PreprocessingRunningFrequency::AUTO\,
+     it will return the appropriate preprocessing running frequency based on the actual format}
    */
   [[nodiscard]] PreprocessingRunningFrequency actual_bound_propagation_frequency() const;
   /**
    * @getter{actual `bound_implication_frequency` parameter, configuration,
-   * If the bound_implication_frequency is PreprocessingRunningFrequency::AUTO\,
-   * it will return the appropriate preprocessing running frequency based on the actual format}
+     If the bound_implication_frequency is PreprocessingRunningFrequency::AUTO\,
+     it will return the appropriate preprocessing running frequency based on the actual format}
    */
   [[nodiscard]] PreprocessingRunningFrequency actual_bound_implication_frequency() const;
 

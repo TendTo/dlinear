@@ -61,7 +61,6 @@ class PredicateAbstractor : public FormulaVisitor {
   const Formula &operator[](const Variable &var) const { return var_to_formula_map_.at(var); }
 
  private:
-  Formula Visit(const Formula &f) override;
   /**
    * Visit an atomic formula.
    *
@@ -71,6 +70,7 @@ class PredicateAbstractor : public FormulaVisitor {
    * @return newly created Boolean variable in the map @ref var_to_formula_map_ if the formula is not present
    * @return existing Boolean variable in the map @ref var_to_formula_map_ if the formula was already present
    */
+  Formula Visit(const Formula &f) override;
   Formula VisitAtomic(const Formula &f);
   Formula VisitEqualTo(const Formula &f) override;
   Formula VisitNotEqualTo(const Formula &f) override;
@@ -88,10 +88,6 @@ class PredicateAbstractor : public FormulaVisitor {
   std::unordered_map<Formula, Variable>
       formula_to_var_map_;            ///< Map from previously converted formula to Boolean variable.
   LinearFormulaFlattener flattener_;  ///< Linear formula flattener.
-
-  // Makes VisitFormula a friend of this class so that it can use private
-  // operator()s.
-  friend Formula drake::symbolic::VisitFormula<Formula, PredicateAbstractor>(PredicateAbstractor *, const Formula &);
 };
 
 }  // namespace dlinear

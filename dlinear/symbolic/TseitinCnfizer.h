@@ -29,7 +29,7 @@ class TseitinCnfizer : public FormulaVisitor {
    * Construct a new TseitinCnfizer object with the given @p config.
    * @param config configuration
    */
-  explicit TseitinCnfizer(const Config &config) : FormulaVisitor{config, "TseitinCnfizer"} {}
+  explicit TseitinCnfizer(const Config &config) : FormulaVisitor{config, "TseitinCnfizer"}, naive_cnfizer_{config_} {}
 
   /**
    * Convert @p f into an equi-satisfiable formula in CNF.
@@ -44,7 +44,6 @@ class TseitinCnfizer : public FormulaVisitor {
   [[nodiscard]] const std::map<Variable, Formula> &map() const { return map_; }
 
  private:
-  Formula Visit(const Formula &f) override;
   Formula VisitConjunction(const Formula &f) override;
   Formula VisitDisjunction(const Formula &f) override;
   Formula VisitNegation(const Formula &f) override;
@@ -56,11 +55,7 @@ class TseitinCnfizer : public FormulaVisitor {
    */
   std::map<Variable, Formula> map_;
 
-  const NaiveCnfizer naive_cnfizer_{};  ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
-
-  // Makes VisitFormula a friend of this class so that it can use private
-  // operator()s.
-  friend Formula drake::symbolic::VisitFormula<Formula, TseitinCnfizer>(TseitinCnfizer *, const Formula &);
+  NaiveCnfizer naive_cnfizer_;  ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
 };
 
 }  // namespace dlinear

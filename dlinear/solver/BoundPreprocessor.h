@@ -221,6 +221,7 @@ class BoundPreprocessor {
 
   void GetExplanation(const Variable& var, LiteralSet& explanation);
 
+  /** Vector used to store the mpq_class elements obtained from more complex constraints */
   const mpq_class* StoreTemporaryMpq(const mpq_class& value);
 
 #if DEBUGGING_PREPROCESSOR
@@ -232,12 +233,13 @@ class BoundPreprocessor {
       temporary_mpq_vector_;  ///< Vector used to store temporary mpq values obtained from more complex constraints
 
   const Config& config_;  ///< Configuration of the preprocessor
-  const PredicateAbstractor& predicate_abstractor_;
+  const PredicateAbstractor&
+      predicate_abstractor_;  ///< Predicate abstractor used to get the constraints from the literals
 
   LiteralSet enabled_literals_;
 
-  BoundVectorMap theory_bounds_;
-  Environment env_;
+  BoundVectorMap theory_bounds_;  ///< Theory bounds for each theory variable
+  Environment env_;               ///< Environment storing the values of all the variables with a fixed value
 
   IterationStats stats_;  ///< Statistics of the preprocessing.
 };

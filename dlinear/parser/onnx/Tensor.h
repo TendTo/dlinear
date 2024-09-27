@@ -127,10 +127,10 @@ class Tensor {
    * Insert single-dimensional entries to the shape of an input tensor.
    *
    * [ONNX documentation](https://onnx.ai/onnx/operators/onnx__Unsqueeze.html).
-   * @param shape shape to expand the tensor
+   * @param axes axes along which the tensor will be unsqueezed
    * @return reference to the tensor
    */
-  Tensor &Unsqueeze(const Tensor &tensor);
+  Tensor &Unsqueeze(const Tensor &axes);
   /**
    * Apply the Abs function to the tensor.
    *
@@ -248,9 +248,9 @@ class Tensor {
    * [ONNX documentation](https://onnx.ai/onnx/operators/onnx__Conv.html).
    * @param image input tensor
    * @param kernel convolution kernel
+   * @param new_shape shape of the output tensor
    * @param dilations dilation value along each spatial axis of the filter
    * @param group number of groups input channels and output channels are divided into
-   * @param kernel_shape shape of the convolution kernel. If not present, should be inferred from input W
    * @param pads padding for the beginning and ending along each spatial axis,
    * it can take any value greater than or equal to 0.
    * The value represent the number of pixels added to the beginning and end part of the corresponding axis.

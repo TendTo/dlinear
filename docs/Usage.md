@@ -1,6 +1,6 @@
 # Usage
 
-After [compilation](./Installation.md), the binary, called `dlinear` will be located in the `bazel-bin/dlinear` directory.
+After [compilation](./Installation.md), the `dlinear` binary will be located in the `bazel-bin/dlinear` directory.
 There are several options to run it:
 
 - run `./bazel-bin/dlinear/dlinear` in the terminal
@@ -45,3 +45,14 @@ dlinear --in --format mps
 When the stdin mode is used, the problem must be typed directly in the terminal.
 To signal dlinear the end of the input, press `Ctrl+D` two times.
 This will start the solver.
+
+## Neural network verification
+
+_dlinear_ can be used to verify the robustness of a neural network.
+The network must be in the [ONNX](https://onnx.ai/) format, while the property must be in the [VNN-LIB](https://www.vnnlib.org/) format.
+To run the verification, use the following command:
+
+```bash
+# Invoke dlinear with a neural network and a property
+dlinear --onnx path/to/network.onnx path/to/property.vnnlib
+```

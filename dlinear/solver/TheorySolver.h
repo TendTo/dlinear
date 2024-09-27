@@ -2,11 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Base class for theory solvers.
- *
- * Theory solvers are used to solve the theory of a given logic.
- * When given an assignment from the SAT solver, they will check whether the assignment is satisfiable.
- * If that is not the case, they will produce an explanation to guide the SAT solver and find a new assignment.
+ * TheorySolver class.
  */
 #pragma once
 
@@ -31,11 +27,10 @@
 namespace dlinear {
 
 /**
- * Theory solver class.
- *
  * Base class for theory solvers.
- * Theory solvers pick up the literals from the SAT solver and check whether the assignment is satisfiable within
- * the theory.
+ *
+ * Theory solvers pick up the literals assignments from the SAT solver
+ * and check whether the assignment is satisfiable within the theory.
  * If that is not the case, they will produce an explanation to guide the SAT solver and find a new assignment.
  * This class has to be inherited and implemented by the specific theory solvers.
  */
@@ -151,7 +146,7 @@ class TheorySolver {
    * In that case, the precision will remain the same as the one passed as input.
    * @param box current box with the bounds for the variables, including the boolean ones
    * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
-   * @param[out] explanation set of literals that explain the conflict if UNSAT is returned
+   * @param[out] explanations set of sets of literals that explain the conflict if UNSAT is returned
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
@@ -166,7 +161,7 @@ class TheorySolver {
    * Otherwise, UNSAT will be returned, along with an explanation of the conflict.
    * In that case, the precision will remain the same as the one passed as input.
    * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
-   * @param[out] explanation set of literals that explain the conflict if UNSAT is returned
+   * @param[out] explanations set of sets of literals that explain the conflict if UNSAT is returned
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
@@ -265,10 +260,11 @@ class TheorySolver {
 
   ///< It also verifies that the bounds are consistent every time a new one is added.
 
-  BoundPreprocessor fixed_preprocessor_;  ///< Preprocessor for the bounds.
+  BoundPreprocessor fixed_preprocessor_;  ///< Preprocessor for the bounds. Only computed on fixed literal theories.
   BoundPreprocessor preprocessor_;        ///< Preprocessor for the bounds.
   ///< Propagates the bounds through simple expressions to produce a precise explanation of the conflict
   ///< without invoking the LP solver.
+  //< It will be reset to the @ref fixed_preprocessor_ at every iteration.
 
   Box model_;  ///< Model produced by the theory solver
 

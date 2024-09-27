@@ -2,11 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Driver class
- *
- * The Driver is the base class for all the parsers.
- * It contains the common logic to allow the parsed data to be saved in the context.
- * It coordinates the communication between the parser (bison) and the scanner (flex).
+ * Driver class.
  */
 #pragma once
 
@@ -64,7 +60,19 @@ class Driver {
   /** General error handling. */
   static void Error(const std::string &m);
 
+  /**
+   * Push the current context to the stack.
+   *
+   * The current state of the context can be restored by calling Pop.
+   * @param n number of stacks to push
+   */
   void Push(int n) { context_.Push(n); }
+  /**
+   * Restore a previously pushed context from the stack.
+   *
+   * The current state of the context can be stored by calling Push.
+   * @param n number of stacks to pop
+   */
   void Pop(int n) { context_.Pop(n); }
 
   void Assert(const Formula &f) { context_.Assert(f); }
@@ -77,30 +85,43 @@ class Driver {
 
   /**
    * @smtcommand{get-assertions, Print all the assertions currently in the context.
-   * If the mode is set to silent\, it does not print anything.}
+     If the mode is set to silent\, it does not print anything.}
    */
   void GetAssertions() const;
 
   /**
-   * @smtcommand{get-option, Print the value of and option or an empty string if the option is not set
-   * @param key key of the option}
+   * @smtcommand{get-option, Print the value of and option or an empty string if the option is not set.
+     @param key key of the option}
    */
   void GetOption(const std::string &key) const;
 
   /**
    * @smtcommand{get-info, Print information about the solver or the current context.
-   * @param key key of the information to print}
+     @param key key of the information to print}
    */
   void GetInfo(const std::string &key) const;
-
+  /**
+   * @smtcommand{set-info, Set the @p value of the information identified by @p key.
+     @param key key of the information to set
+     @param value value of the information}
+   */
   void SetInfo(const std::string &key, const std::string &value) { context_.SetInfo(key, value); }
+  /**
+   * @smtcommand{set-option, Set the @p value of the option identified by @p key.
+     @param key key of the option to set
+     @param value value of the option}
+   */
   void SetOption(const std::string &key, const std::string &value) { context_.SetOption(key, value); }
+  /**
+   * @smtcommand{set-logic, Set the @p logic used through the input.
+     @param logic smt-lib logic}
+   */
   void SetLogic(const Logic logic) { context_.SetLogic(logic); }
 
   /**
    * Maximize the objective function @p f. The objective function is
    * added to the context as a constraint.
-   * @param f expression to maximize
+   * @param f expression to maximize}
    */
   void Maximize(const Expression &f);
 
@@ -111,12 +132,18 @@ class Driver {
    */
   void Minimize(const Expression &f);
 
+  /** @smtcommand{exit, Terminate the parsing} */
   void Exit() { context_.Exit(); }
 
+  /** @checker{enabled, scanner debugger} */
   [[nodiscard]] bool trace_scanning() const { return debug_scanning_; }
+  /** @checker{enabled, trace debugger} */
   [[nodiscard]] bool trace_parsing() const { return debug_parsing_; }
+  /** @getter{enabled, Driver} */
   [[nodiscard]] const Context &context() const { return context_; }
+  /** @getter{stream name, input being parsed} */
   [[nodiscard]] const std::string &stream_name() const { return stream_name_; }
+  /** @getsetter{stream name, input being parsed} */
   std::string &m_stream_name() { return stream_name_; }
 
   /**

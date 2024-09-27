@@ -3,9 +3,6 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * Expression evaluator class.
- *
- * The ExpressionEvaluator is used to evaluate an expression with a given box.
- * The box provides the values of the variables in the expression with intervals.
  */
 #pragma once
 

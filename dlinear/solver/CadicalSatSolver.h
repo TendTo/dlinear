@@ -2,9 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * SAT solver based on CaDiCal.
- *
- * CaDiCal is a SAT solver written in C++. It is used as a library in dlinear.
+ * CadicalSatSolver class.
  */
 #pragma once
 
@@ -24,6 +22,11 @@
 
 namespace dlinear {
 
+/**
+ * SAT solver based on CaDiCal.
+ *
+ * CaDiCal is a SAT solver written in C++.
+ */
 class CadicalSatSolver : public SatSolver {
  public:
   using SatSolver::Assume;

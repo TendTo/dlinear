@@ -26,11 +26,6 @@ std::vector<Formula> PlaistedGreenbaumCnfizer::Convert(const Formula &f) {
   return aux_;
 }
 
-Formula PlaistedGreenbaumCnfizer::Visit(const Formula &f) {
-  // TODO(soonho): use cache.
-  return VisitFormula<Formula>(this, f);
-}
-
 Formula PlaistedGreenbaumCnfizer::VisitForall(const Formula &f) {
   // We always need a variable
   static std::size_t id{0};

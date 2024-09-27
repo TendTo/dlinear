@@ -17,12 +17,6 @@ pip install .
 pip install -e .
 ```
 
-### Upload to PyPI
-
-```bash
-script/upload_pydlinear.sh
-```
-
 ## From PyPI
 
 ```bash
@@ -31,7 +25,7 @@ pip install pydlinear
 
 ## Usage
 
-If the package has been installed, either locally or from PyPI, it can be invoked with the same command as the binary.
+If the package has been installed, either locally or from PyPI, it can be invoked with the same options as the binary.
 
 ```bash
 pydlinear --help
@@ -44,12 +38,9 @@ import sys
 import pydlinear as pdl
 
 
-def main():
-    config = pdl.Config.from_command_line(sys.argv)
-    with pdl.Solver(config) as s:
-        print(s.CheckSat())
-
-
-if __name__ == "__main__":
-    main()
+config = pdl.Config.from_args(sys.argv)
+solver = pdl.SmtSolver(config)
+solver.Parse()
+result = solver.CheckSat()
+sys.exit(result.exit_code)
 ```

@@ -2,9 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * SAT solver based on PicoSAT.
- *
- * PicoSAT is a SAT solver written in C. It is used as a library in dlinear.
+ * PicosatSatSolver class.
  */
 #pragma once
 
@@ -25,6 +23,11 @@
 
 namespace dlinear {
 
+/**
+ * PicoSAT is a SAT solver written in C.
+ *
+ * It is able to solve SAT problems in CNF format.
+ */
 class PicosatSatSolver : public SatSolver {
  public:
   using SatSolver::Assume;

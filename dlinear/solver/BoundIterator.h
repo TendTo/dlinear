@@ -149,7 +149,9 @@ class BoundIterator {
    */
   [[nodiscard]] inline std::size_t size() const { return bounds_size() + nq_bounds_size(); }
 
+  /** @getter{begin iterator, BoundIterator} */
   [[nodiscard]] internal_iterator begin() const { return bounds_it_; }
+  /** @getter{end iterator, BoundIterator} */
   [[nodiscard]] internal_iterator end() const { return end_nq_bounds_it_; }
 
   /**

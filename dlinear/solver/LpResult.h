@@ -2,15 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Result obtained from the LP solver.
- *
- * The output of the LP solver can be:
- * - LP_NO_RESULT: no result has been obtained yet.
- * - LP_UNSOLVED: the problem has not been solved. An error may have occurred.
- * - LP_INFEASIBLE: the problem is infeasible.
- * - LP_UNBOUNDED: the problem is unbounded.
- * - LP_OPTIMAL: the problem has been solved optimally.
- * - LP_DELTA_OPTIMAL: the problem has been solved optimally, but with a delta.
+ * LpResult enum.
  */
 #pragma once
 

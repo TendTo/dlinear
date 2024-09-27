@@ -2,7 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Simple class that holds the output of the solver.
+ * SmtSolverOutput struct.
  */
 #pragma once
 
@@ -39,9 +39,7 @@ SmtResult parse_smt_result(SatResult sat_result);
 SmtResult parse_smt_result(LpResult lp_result);
 
 /**
- * SmtSolverOutput struct.
- *
- * Contains the output of the solver, such as the result of the computation as well as some statistics.
+ * Data struct containing the output of the solver, such as the result of the computation as well as some statistics.
  */
 struct SmtSolverOutput {
   SmtSolverOutput() = delete;

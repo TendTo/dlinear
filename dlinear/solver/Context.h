@@ -2,11 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Context holding the information about the resolution of the problem.
- *
- * While the solver is running, the context holds the information about the
- * problem being solved. It also holds the information about the
- * program version.
+ * Context class.
  */
 #pragma once
 
@@ -29,9 +25,8 @@
 namespace dlinear {
 
 /**
- * Context class that holds a set of constraints and provide
- * Assert/Push/Pop/CheckSat functionalities.
- * @note The implementation details are in context_impl.h file.
+ * Context class that holds the set of constraints and provide Assert/Push/Pop/CheckSat functionalities.
+ * @note The implementation is hidden in the Context::Impl class.
  */
 class Context {
  public:

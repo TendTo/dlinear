@@ -1,15 +1,5 @@
 # Compilation
 
-## Compilation flags
-
-When compiling any of the bazel's compilation target, the following flags can be used:
-
-- `--enable_static_build` to use fully static linking between all the submodules and the binary. Default is `False`
-- `--enable_dynamic_build` to use dynamic linking between all the submodules and the binary. Default is `False`
-- `--enable_pydlinear_build` to build the python bindings. Default is `False`
-- `--enable_fpic_build` to enable position independent code. Default is `False`
-- `--static_boost` build boost statically. Default is `False`
-
 ## Configurations
 
 Configurations are used to specify the build type, as they usually group a set of flags.
@@ -20,6 +10,17 @@ The following configurations are available:
 - `--config=pydlinear` to build the python bindings
 - `--config=iwyu` to run the include-what-you-use check
 - `--config=dwyu` to run the depend-on-what-you-use check
+
+### Low-level compilation flags
+
+It not advisable to use these flags directly, as the configurations already group them in a predefined way.
+But if you need more control when compiling, the following flags can be used:
+
+- `--enable_static_build` to use fully static linking between all the submodules and the binary. Default is `False`
+- `--enable_dynamic_build` to use dynamic linking between all the submodules and the binary. Default is `False`
+- `--enable_pydlinear_build` to build the python bindings. Default is `False`
+- `--enable_fpic_build` to enable position independent code. Default is `False`
+- `--static_boost` build boost statically. Default is `True`
 
 ## DWYU
 

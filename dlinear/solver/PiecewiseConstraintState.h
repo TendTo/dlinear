@@ -2,7 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * PiecewiseConstraintState class
+ * PiecewiseConstraintState enum.
  */
 #pragma once
 
@@ -10,6 +10,7 @@
 
 namespace dlinear {
 
+/** State a piecewise constraint can be in */
 enum class PiecewiseConstraintState {
   NOT_FIXED,  ///< The constraint is not fixed yet
   INACTIVE,   ///< The constraint is inactive

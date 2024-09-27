@@ -2,12 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Delta complete version of SoplexTheorySolver.
- *
- * The LP solver used is SoPlex.
- * This solver is delta complete. It means that it will always solve the delta-weakened linear problem,
- * with a positive delta.
- * This translates to a faster approach, for strict inequalities can be immediately discarded or relaxed.
+ * DeltaSoplexTheorySolver class.
  */
 #pragma once
 
@@ -27,11 +22,11 @@
 namespace dlinear {
 
 /**
- * DeltaSoplexTheorySolver class.
- *
  * Delta complete solver using SoPlex.
+ *
  * The LP problem is solver exactly, within a given precision, delta.
- * Since the value of delta is considered strictly positive, strict inequalities will be relaxed and ignored.
+ * Since the value of delta is considered strictly positive, strict inequalities will be relaxed
+ * and not-equal-to constraints ignored.
  */
 class DeltaSoplexTheorySolver : public SoplexTheorySolver {
  public:

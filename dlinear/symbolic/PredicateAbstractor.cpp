@@ -34,7 +34,7 @@ Formula PredicateAbstractor::Visit(const Formula &f) {
   const auto it = formula_to_var_map_.find(unary_f);
   if (it == formula_to_var_map_.cend()) {
     // No, we haven't processed it before.
-    return VisitFormula<Formula>(this, flattened_f);
+    return FormulaVisitor::Visit(flattened_f);
   } else {
     // Yes, we have processed this formula before.
     return is_negated ? !Formula{it->second} : Formula{it->second};

@@ -57,11 +57,6 @@ std::vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
   return ret;
 }
 
-Formula TseitinCnfizer::Visit(const Formula &f) {
-  // TODO(soonho): use cache.
-  return VisitFormula<Formula>(this, f);
-}
-
 Formula TseitinCnfizer::VisitForall(const Formula &f) {
   // Given: f := ∀y. φ(x, y), this process CNFizes φ(x, y) and push the
   // universal quantifier over conjunctions:

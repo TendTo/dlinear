@@ -2,9 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Bounds vector used by the theory solver.
- *
- * It keeps track of the bounds in the LP solver in a sorted vector.
+ * BoundVector class.
  */
 #pragma once
 
@@ -24,10 +22,9 @@
 namespace dlinear {
 
 /**
- * BoundVector class.
- *
- * It keeps track of the bounds in the LP solver in a sorted vector
+ * Data structure to store the LP solver bounds in a sorted vector
  * to determine the active lower and upper bound for the column.
+ *
  * Every time a new bound is added, it checks if it violates any of the existing bounds.
  * If a violation is detected, it returns the iterator to the first and last violated bound.
  * The violating bound is not added and the vector remains unchanged.
@@ -197,39 +194,17 @@ class BoundVector {
    * @return active lower and upper bound
    */
   [[nodiscard]] std::pair<const mpq_class&, const mpq_class&> GetActiveBoundsValue() const;
-  /**
-   * Return the bounds vector.
-   *
-   * It contains all the bounds, both equality and inequality, except for the non-equality bounds.
-   * @return bounds vector
-   */
+  /** @getter{bounds vector, BoundVector} */
   [[nodiscard]] const Bounds& bounds() const { return bounds_; }
-  /**
-   * Return the non-equality bounds vector.
-   *
-   * It only contains the non-equality bounds.
-   * @return non-equality bounds vector
-   */
+  /** @getter{non-equal-to bounds vector, BoundVector} */
   [[nodiscard]] const Bounds& nq_bounds() const { return nq_bounds_; }
-  /**
-   * Return the starting lower bound.
-   * @return starting lower bound
-   */
+  /** @getter{negative lower bound, BoundVector} */
   [[nodiscard]] const mpq_class& inf_l() const { return *inf_l_; }
-  /**
-   * Return the starting upper bound.
-   * @return starting upper bound
-   */
+  /** @getter{positive infinity bound, BoundVector} */
   [[nodiscard]] const mpq_class& inf_u() const { return *inf_u_; }
-  /**
-   * Return the active lower bound.
-   * @return active lower bound
-   */
+  /** @getter{active_lower_bound, BoundVector} */
   [[nodiscard]] const mpq_class& active_lower_bound() const { return *active_lower_bound_; }
-  /**
-   * Return the active upper bound.
-   * @return active upper bound
-   */
+  /** @getter{active_upper_bound, BoundVector} */
   [[nodiscard]] const mpq_class& active_upper_bound() const { return *active_upper_bound_; }
 
   /**

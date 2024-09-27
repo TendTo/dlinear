@@ -44,7 +44,9 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "formula_visitor",
+    srcs = ["FormulaVisitor.cpp"],
     hdrs = ["FormulaVisitor.h"],
+    implementation_deps = ["//dlinear/util:exception"],
     deps = [
         ":symbolic",
         "//dlinear/util:config",
@@ -111,6 +113,7 @@ dlinear_cc_library(
     hdrs = ["NaiveCnfizer.h"],
     implementation_deps = ["//dlinear/util:exception"],
     deps = [
+        ":formula_visitor",
         ":nnfizier",
         ":symbolic",
     ],

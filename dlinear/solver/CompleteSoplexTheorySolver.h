@@ -30,9 +30,8 @@
 namespace dlinear {
 
 /**
- * CompleteSoPlexTheorySolver class.
- *
  * Complete solver using SoPlex.
+ * 
  * The linear is problem exactly, also dealing with strict inequalities.
  * As a tradeoff, the objective function is used internally, so it is not possible to maximise or minimise an
  * arbitrary expression.

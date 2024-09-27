@@ -32,6 +32,7 @@ doxygen(
         "hash{1}=\"Compute the hash of this \\1 using the given @p hasher^^@tparam InvocableHashAlgorithm type of the hash algorithm to use^^@param hasher hash algorithm to use^^\"",
         "hash{2}=\"Compute the hash of this \\1 using the given @p hasher.^^^^\\2^^@tparam InvocableHashAlgorithm type of the hash algorithm to use^^@param hasher hash algorithm to use^^\"",
         "hash{3}=\"Compute the hash of this \\1 using the given @p hasher.^^^^\\2^^@tparam InvocableHashAlgorithm type of the hash algorithm to use^^@param hasher hash algorithm to use^^@see \\3^^\"",
+        "smtcommand{2}=\"Callback for the command `\\1`.^^^^\\2^^\"",
     ],
     configurations = [
         "JAVADOC_AUTOBRIEF = YES",

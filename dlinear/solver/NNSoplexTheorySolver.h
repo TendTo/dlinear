@@ -17,6 +17,15 @@
 
 namespace dlinear {
 
+/**
+ * Specialised theory solver for neural networks using SoPlex.
+ *
+ * The solver will use special care when dealing with piecewise linear constraints.
+ * Instead of encoding them as a set of linear constraints, they will create a new objective function
+ * representing the sum of infeasibilities to minimise.
+ * If the problem is feasible, but the objective value is not 0, the solver will try to invert the greatest
+ * violation to attempt making the problem feasible.
+ */
 class NNSoplexTheorySolver : public SoplexTheorySolver {
  public:
   explicit NNSoplexTheorySolver(PredicateAbstractor &predicate_abstractor,
@@ -57,8 +66,10 @@ class NNSoplexTheorySolver : public SoplexTheorySolver {
 
   void UpdateExplanationsWithCurrentPiecewiseLinearLiterals(std::set<LiteralSet> &explanations);
 
+  /** Convert the @ref soi_ expression to an objective function inside soplex */
   void SoiToObjFunction();
 
+  /** Invert the greatest violation found in the objective function */
   bool InvertGreatestViolation();
 
   std::unordered_map<Variable, const PiecewiseLinearConstraint *> pl_theory_lit_;

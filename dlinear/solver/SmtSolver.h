@@ -3,11 +3,6 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  * SmtSolver class.
- *
- * This class provides an easy interface for using the underling solver.
- * Once the correct configuration is set, the user can simply call
- * `SmtSolver::CheckSat()` to get the result.
- * It will handle the parsing of the input.
  */
 #pragma once
 

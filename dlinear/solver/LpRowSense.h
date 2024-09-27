@@ -2,20 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Sense of a linear programming row.
- *
- * This is a simple enum class that describes the sense of a linear programming row.
- * Each row can have one of the following senses:
- * - GT: Greater than (>)
- * - GE: Greater than or equal to (>=)
- * - EQ: Equal to (=)
- * - NQ: Not equal to (!=)
- * - LE: Less than or equal to (<=)
- * - LT: Less than (<)
- * - IN: Inactive (not used)
- *
- * If the sense is strict, it means that the variable cannot assume the right-hand-side value.
- * When using delta complete solvers, strict senses can be relaxed to non-strict senses.
+ * LpRowSense enum.
  */
 #pragma once
 
@@ -27,6 +14,9 @@ namespace dlinear {
 
 /**
  * Sense of a linear programming row describing a constraint.
+ *
+ * If the sense is strict, it means that the variable cannot assume the right-hand-side value.
+ * When using delta complete solvers, strict senses can be relaxed to non-strict senses.
  * @warning The order of the enum is important and should not be changed.
  * It is used to compare the senses.
  */

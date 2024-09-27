@@ -2,12 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
- * Delta complete version of QsoptexTheorySolver.
- *
- * The LP solver used is Qsoptex.
- * This solver is delta complete. It means that it will always solve the delta-weakened linear problem,
- * with a positive delta.
- * This translates to a faster approach, for strict inequalities can be immediately discarded or relaxed.
+ * DeltaQsoptexTheorySolver class.
  */
 #pragma once
 
@@ -25,6 +20,13 @@
 
 namespace dlinear {
 
+/**
+ * Delta complete solver using QSopt_ex.
+ *
+ * The LP problem is solver exactly, within a given precision, delta.
+ * Since the value of delta is considered strictly positive, strict inequalities will be relaxed
+ * and not-equal-to constraints ignored.
+ */
 class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
  public:
   explicit DeltaQsoptexTheorySolver(PredicateAbstractor& predicate_abstractor,
