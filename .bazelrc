@@ -7,6 +7,7 @@ build --flag_alias=enable_static_build=//tools:enable_static_build
 build --flag_alias=enable_dynamic_build=//tools:enable_dynamic_build
 build --flag_alias=enable_pydlinear_build=//tools:enable_pydlinear_build
 build --flag_alias=enable_fpic_build=//tools:enable_fpic_build
+build --flag_alias=enable_threads_build=//tools:enable_threads_build
 build --flag_alias=static_boost=@boost//:use_linkstatic
 build --flag_alias=python_version=@rules_python//python/config_settings:python_version
 

@@ -119,6 +119,9 @@ def _get_defines(rule_defines):
     }) + select({
         "//tools:pydlinear_build": ["DLINEAR_PYDLINEAR"],
         "//conditions:default": [],
+    }) + select({
+        "//tools:threads_build": ["DLINEAR_ENABLED_THREADS"],
+        "//conditions:default": [],
     })
 
 def _get_static(rule_linkstatic):

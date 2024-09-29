@@ -76,10 +76,10 @@ class ExpressionCell {
   virtual std::string to_smt2_string() const = 0;
 
   /** Returns the reference count of this cell. */
-#ifdef DLINEAR_NCONCURRENT
-  unsigned use_count() const { return rc_; }
-#else
+#ifdef DLINEAR_ENABLED_THREADS
   unsigned use_count() const { return atomic_load_explicit(&rc_, std::memory_order_acquire); }
+#else
+  unsigned use_count() const { return rc_; }
 #endif
 
   /** Copy-constructs an ExpressionCell from an lvalue. (DELETED) */
@@ -132,19 +132,19 @@ class ExpressionCell {
   mutable std::optional<bool> include_ite_{false};
 
   // Reference counter.
-#if DLINEAR_NCONCURRENT
-  mutable unsigned rc_{0};
-  void increase_rc() const { ++rc_; }
-  void decrease_rc() const {
-    if (--rc_ == 0) {
-      delete this;
-    }
-  }
-#else
+#ifdef DLINEAR_ENABLED_THREADS
   mutable std::atomic<unsigned> rc_{0};
   void increase_rc() const { atomic_fetch_add_explicit(&rc_, 1U, std::memory_order_relaxed); }
   void decrease_rc() const {
     if (atomic_fetch_sub_explicit(&rc_, 1U, std::memory_order_acq_rel) == 1U) {
+      delete this;
+    }
+  }
+#else
+  mutable unsigned rc_{0};
+  void increase_rc() const { ++rc_; }
+  void decrease_rc() const {
+    if (--rc_ == 0) {
       delete this;
     }
   }

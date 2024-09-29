@@ -20,6 +20,7 @@ But if you need more control when compiling, the following flags can be used:
 - `--enable_dynamic_build` to use dynamic linking between all the submodules and the binary. Default is `False`
 - `--enable_pydlinear_build` to build the python bindings. Default is `False`
 - `--enable_fpic_build` to enable position independent code. Default is `False`
+- `--enable_threads_build` to enable threading support. Default is `False`
 - `--static_boost` build boost statically. Default is `True`
 
 ## DWYU
