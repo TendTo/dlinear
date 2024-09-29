@@ -75,19 +75,19 @@
 % ---- Introduction ----
 \section{Introduction}
 
-\gls{smt} has a notoriously vast variety of applications, ranging from software formal verification to planning and optimization just to name a few.
+\gls{smt} has a notoriously vast variety of applications, ranging from formal software verification to planning and optimization just to name a few.
 As expected, \gls{smt} solvers have received a lot of attention over the years, with some of the most well-known being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
-Another field that is getting a lot of attention as of lately is Neural Networks.
-Being an ever more pervasive presence in our everyday life, formal verification of Neural Networks (NN) is quickly becoming a hot topic.
+Another field that is getting a lot of attention lately is Neural Networks.
+Being an ever more pervasive presence in our everyday lives, formal verification of Neural Networks (NN) is quickly becoming a hot topic.
 For this reason, multiple NN reasoners have been developed, including $\alpha$-$\beta$-CROWN~\cite{ref:a-crown,ref:b-crown,ref:crown,ref:lirpa}, Marabou~\cite{ref:marabou}, nnenum~\cite{ref:nnenum} and VeriNet~\cite{ref:verinet}.
 
 The tool presented in this paper, \dlinear, is a \gls{qf-lra} supporting \gls{smt} solver able produce both complete and $\delta$-complete outputs on standard \gls{smt} problems,
 as well as tackling the verification of Neural Networks with piecewise linear activation functions.
 While not as feature-rich as some of the other more mature \gls{smt} solvers yet, \dlinear is a first step in offering a different approach to \gls{smt} solving that can result in a significant speedup in some cases, especially when the linear programming solver is the major performance bottleneck.
 
-In \autoref{sec:preliminaries} we provides an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory.
+In \autoref{sec:preliminaries} we provide an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory.
 In \autoref{sec:architecture} we give a technical description of the software architecture of the tool.
-The details of the algorithms used are analyzed more in depth in \autoref{sec:lra-theory-solver}, which describes the approach used to adapt the exact \gls{lp} solvers for \gls{smt} solving, \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally and \autoref{sec:nn-verification}, which explains how the tool can be used to verify Neural Networks.
+The details of the algorithms used are analyzed more in-depth in \autoref{sec:lra-theory-solver}, which describes the approach used to adapt the exact \gls{lp} solvers for \gls{smt} solving, \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally and \autoref{sec:nn-verification}, which explains how the tool can be used to verify Neural Networks.
 Lastly, in \autoref{sec:benchmarks} we present the results of the experiments conducted to evaluate the performance of the tool.
 
 \section{Preliminaries}
@@ -161,13 +161,13 @@ Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, 
 \end{gather*}
 A model $\mathcal{M}$ \textbf{satisfies} a formula $\varphi$ if $\mathcal{I}(\varphi) = \textbf{true}$.
 
-While these definitions are highly generic, it is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier free integer arithmetic (\textbf{QF\_NIA}) and many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
-Then, the problem of satisfiability is the problem of determining whether there exists an model that satisfies the formula $\varphi$ within the chosen theory.
+While these definitions are highly generic, it is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}) and many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+Then, the problem of satisfiability is the problem of determining whether there exists a model that satisfies the formula $\varphi$ within the chosen theory.
 
 The tool presented in this paper will focus on the \gls{qf-lra} theory.
 The interpretation uses the domain $\bbbr$ of real numbers.
 Furthermore, only $+, -, \cdot,$ arithmetic operators are allowed, with the restriction that a variable can only be multiplied ($\cdot$) by a constant.
-Therefore, each atom can be expressed in the form $a_1 \cdot x_1 + \ldots + a_n \cdot  x_n \bowtie b$, where $x_i \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
+Therefore, each atom can be expressed in the form $a_1 \cdot x_1 + \ldots + a_n \cdot x_n \bowtie b$, where $x_i \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are the constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
 With these restrictions in place, the \gls{qf-lra} theory is decidable.
 
 \subsection{LP}
@@ -178,7 +178,7 @@ A linear program is a mathematical optimisation problem where the objective func
 Adopting a very common notation, consider a system of $m$ linear inequalities with unknown $x \in \bbbr^n$ and constant values $A \in \bbbr^{m \times n}$, $b \in \bbbr^m$ and $c \in \bbbr^n$.
 The variables can also present bounds, $l \in \bbbr^n$ and $u \in \bbbr^n$, such that $l_i \le x_i \le u_i \quad \forall i \in \{1, 2, \ldots, n\}$.
 \gls{lp} problems are often presented in the \textit{standard form} \eqref{eq:lp-standard}, where the objective function is to be maximized, the constraints are all $\le$ inequalities and the variables are non-negative.
-The conversion to the standard form is always possible and can be done in polynomial time.
+The conversion to the standard form is always possible and can be achieved in polynomial time.
 \begin{equation}
     \label{eq:lp-standard}
     \begin{split}
@@ -296,11 +296,11 @@ The user can limit the preprocessing engine to only run once, on the fixed theor
 \dlinear uses \soplex as its default \gls{lp} solver.
 It implements both the incremental precision boosting and the iterative refinement algorithms.
 The user can choose between the two or try a hybrid approach.
-\qsoptex can be used as an alternative solver, but it is limited to precision boosting and tends to produces less compact explanations, leading to more conflicts and slower convergence.
+\qsoptex can be used as an alternative solver, but it is limited to precision boosting and tends to produce less compact explanations, leading to more conflicts and slower convergence.
 
 If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
-Note that the solution's uniqueness is not guaranteed, so adding an artificial clause with the negation of the solution found will force the solver to find another assignment or for the formula to be declared unsatisfiable.
-On the other hand, if the \gls{lp} problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, corresponding to the last feasible solution of the dual problem before its unboundness or infeasibility was detected.
+Note that the solution's uniqueness is not guaranteed, so adding an artificial clause with the negation of the solution found will force the solver to find another assignment, if possible.
+On the other hand, if the \gls{lp} problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, corresponding to the last feasible solution of the dual problem before its unboundedness or infeasibility was detected.
 Given the initial $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimizes $y^T A$, the result will still be $y^T A x > y^T b$.
 Collecting the constraints corresponding to the indexes where the Farkas proof is non-zero and the minimizing bounds makes it possible to determine a small infeasible subsystem of the original problem, albeit not necessarily an irreducible one, and use it to produce an explanation.
 
@@ -492,7 +492,7 @@ To simplify the presentation, only the essential heuristics are included in the 
 
 % Taken from Martin's thesis
 \begin{definition}
-    If $\varphi$ is a Boolean formula in which every atomic formula is of one the forms $t(x) \bowtie 0$ is an arbitrary term, then the $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$, relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
+    If $\varphi$ is a Boolean formula in which every atomic formula is in the form $t(x) \bowtie 0$, the $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$, relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
 \end{definition}
 Denoting with $J'$ the set of indexes of those that were equality constraints in $\varphi$ and with $K'$ the set with every other constraint except for \nqcs, then $\varphi^{-\delta}$ can be written as
 \begin{equation*}
@@ -521,10 +521,10 @@ The advantage of this approach is that the \gls{lp} solver can stop refining the
 Leaving out the \nqcs also removes the potentially most computationally expensive part of the problem, as discussed in Section~\ref{sec:lra-theory-solver}.
 Whether this tradeoff between speed and completeness is acceptable is up to the user to decide.
 
-To implement delta-completeness in \dlinear, the user can set the $\delta$ parameter to a positive value, then given to the \gls{lp} solver.
-The precision boosting or iterative refinement algorithms can stop once the desired precision has been reached, returning the solution found at that point.
+To employ delta-completeness in \dlinear, the user can set the $\delta$ parameter to a positive value when launching the tool.
+The precision boosting or iterative refinement algorithms will stop once the desired precision has been reached, returning the feasible solution found at that point.
 
-Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
+Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints, if any are present.
 We can define the delta-complete theory solver algorithm as in Algorithm~\ref{alg:delta-theory-solver}.
 
 % Inspired by Martin's thesis. I'm not sure this contributes anything useful to the explanation
@@ -559,7 +559,7 @@ Given a description of the network in the \gls{onnx} format~\footnote{\url{https
 
 Exploring the graph, most of the network layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
-These new formulae are then added to the set of assertions in a "at most one" encoding.
+These new formulae are then added to the set of assertions in an "at most one" encoding.
 The $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph from that point on.
 For instance, the ReLU activation function can be represented as
 \begin{equation*}
@@ -570,13 +570,13 @@ For instance, the ReLU activation function can be represented as
 \end{equation*}
 Given the two new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0)$, the clauses $(A \lor B) \land (\neg A \lor \neg B)$ are added to the set of assertions.
 
-Even limiting ourselves to the common ReLU layer, the number of subproblems grows exponentially, making the verification process computationally intractable even for medium sized networks.
+Even limiting ourselves to the common ReLU layer, the number of subproblems grows exponentially, making the verification process computationally intractable even for medium-sized networks.
 To mitigate this issue, we can try to exploit the structure of the problem.
 The bound propagation mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
 In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
-Furthermore, constraints coming from activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize while the other linear expression create the constraints the problem is subject to.
-If the solver find a solution where the objective value is equal to $0$, then the network is verified to be correct, although some additional constraints may be needed to ensure the two formulation are equivalent.
-In the case of ReLUs we must also enforce that the output of the activation function is greater than or equal to the input, which can be done by adding the constraints $y' \ge x$.
+Furthermore, constraints coming from activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize while the other linear expression creates the constraints the problem is subject to.
+If the solver finds a solution where the objective value is equal to $0$, then the network is verified to be correct, although some additional constraints may be needed to ensure the two formulations are equivalent.
+In the case of ReLUs, we must also enforce that the output of the activation function is greater than or equal to the input, which can be achieved by adding the constraints $y' \ge x$.
 If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
 % ---- Benchmarks ----
@@ -588,42 +588,80 @@ We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:c
 The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache, and a memory limit of 2.9GB (DDR4 RDIMMs).
 The timeout was set to 12 hours.
 
-\subsection*{Result}
+\subsection*{LP Result}
 
 To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}}, the Netlib LP tests~\footnote{\url{http://www.netlib.org/lp/data/}}, and Csaba Mészáros' LP collection~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}, relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
 All the solvers were launched with the same timeout and the same set of inputs on completely independent nodes.
-The results are shown in~\autoref{fig:results1} and \autoref{fig:results2}.
+The results are shown in~\autoref{fig:results1} and \autoref{fig:results2} and summarised in~\autoref{tab:results-lp-complete} and \autoref{tab:results-lp-delta}.
+\dlinear in the $\delta$-complete approach is able to solve most instances, going over the 1200 problem marks in all configurations and dropping to 1194 when in complete mode.
+Yices performs the best in terms of average speed but solves only 1111 problems before timeout, followed by cvc5 with 955 and Z3 with 934.
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{.45\textwidth}
+    \begin{subfigure}{.46\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/on_file.png}
-        \caption{Results considering only the problems that were solved by all the solvers}
+        \caption{Results over problems completed by all solvers}
         \label{fig:results1}
     \end{subfigure}%
     \hspace{1cm}
     \begin{subfigure}{.45\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/total.png}
-        \caption{Results considering all the problems each solver completed}
+        \caption{Results over all problems}
         \label{fig:results2}
     \end{subfigure}
 \end{figure}
 
-\dlinear in the $\delta$-complete approach is able to solve the most instances, going over the 1200 problem marks in all configurations and dropping to 1194 when in complete mode.
-Yices performs the best among the well-known solvers, solving 1111 problems, followed by cvc5 with 955 and Z3 with 934.
-It is worth noting that for smaller instances, where the absolute difference in performance is not as significant, z3 tends to perform better than cvc5 and \dlinear, but all solvers fall behind yices.
+\begin{table}
+    \scriptsize
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
+        \toprule
+        &        & \multicolumn{2}{c}{$\text{dlinear}_{\text{c}}$} & \multicolumn{2}{c}{z3} & \multicolumn{2}{c}{cvc5} & \multicolumn{2}{c}{yices} \\
+        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-10}
+        Test set & \numinstcol & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime \\
+        \midrule
+        all                           & 1237 & 1194 & 1.21 & 934 & 1.35 & 955 & 3.79 & 1111   & 0.31  \\
+        common                        & 847  & 847  & 0.62 & 847 & 0.94 & 847 & 2.35 & 847    & 0.10  \\
+        \bottomrule
+    \end{tabular*}
+    \medskip
+    \caption{Comparison between all complete solvers over the \gls{lp} problems. $\approx t$ represents the geometric mean of the time to solve each instance, in seconds.}
+    \label{tab:results-lp-complete}
+\end{table}
+
+\begin{table}
+    \scriptsize
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
+        \toprule
+        &        & \multicolumn{2}{c}{$\text{dlinear}_{\text{c}}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} \\
+        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-10}
+        Test set & \numinstcol & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime & \hspace*{1.5em}\numsolved & \avgtime \\
+        \midrule
+        all                           & 1237 & 1194 & 1.21 & 1203 & 0.75 & 1209 & 0.72 & 1202   & 0.68  \\
+        common                        & 847  & 847  & 0.62 & 847 & 0.38 & 847 & 0.36 & 847    & 0.36  \\
+        \bottomrule
+    \end{tabular*}
+    \medskip
+    \caption{Comparison between \dlinear over the \gls{lp} problems with different $\delta$. $\approx t$ represents the geometric mean of the time to solve each instance, in seconds.}
+    \label{tab:results-lp-delta}
+\end{table}
+
+\subsection*{SMT Result}
+
+A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}.
+The results are shown in TODO
+While still not as fast as the more established solvers, \dlinear proves its correctness in complete mode and showcases some notable performance gains when producing a $\delta$-complete output.
 
 \section{Conclusion}
 
 \dlinear novelty comes from the adoption of exact but not purely rational linear programming solvers adapted for the \gls{smt} context, improving the average performance when dealing with instances where determining the feasibility of the linear constraints is the bottleneck.
 It is able to provide complete verification for problems within the \gls{qf-lra} logic and extends its capabilities to verify neural networks with piecewise activation functions.
 The $\delta$-complete approach can further speed up the verification process at the cost of relaxing the constraints by a user-defined value.
-Future developments will focus on improving the performance of the software by introducing a specialised and efficient symbolic representation of the constraints and improving the heuristics used during the preprocessing phase and the exploration of the search space, especially for neural networks verification.
+Future developments will focus on improving the performance of the software by introducing a specialised and efficient symbolic representation of the constraints and improving the heuristics used during the preprocessing phase and the exploration of the search space, especially for neural network verification.
 
 The latest version of the tool is available at \url{https://github.com/TendTo/dlinear}, along with the source code and the technical documentation.
-We also provide a corresponding Python API in the form of the \textit{pydlinear} package, to facilitate the integration of \dlinear in existing projects.
+We also provide a corresponding Python API in the form of the \textit{pydlinear} package, to facilitate its installation and use as a library.
 
 \begin{credits}
     \subsubsection{\ackname} This study was funded by EPSRC
