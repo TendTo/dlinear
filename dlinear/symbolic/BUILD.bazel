@@ -104,7 +104,10 @@ dlinear_cc_library(
     srcs = ["Nnfizer.cpp"],
     hdrs = ["Nnfizer.h"],
     implementation_deps = ["//dlinear/util:logging"],
-    deps = [":symbolic"],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:config",
+    ],
 )
 
 dlinear_cc_library(

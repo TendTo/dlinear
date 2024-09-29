@@ -253,12 +253,12 @@ Formula IfThenElseEliminator::VisitForall(const Formula &f, const Formula &) {
   // variables). In this way, we can use the existing ITE-elim routine.
   Variables quantified_variables{get_quantified_variables(f)};
   const Formula &quantified_formula{get_quantified_formula(f)};
-  IfThenElseEliminator ite_eliminator_forall{false};
+  IfThenElseEliminator ite_eliminator_forall{config_};
   const Formula eliminated{ite_eliminator_forall.Process(!quantified_formula)};
   for (const auto &[_, v] : ite_eliminator_forall.variables()) {
     quantified_variables.insert(v);
   }
-  return forall(quantified_variables, Nnfizer{}.Convert(!eliminated));
+  return forall(quantified_variables, Nnfizer{config_}.Convert(!eliminated));
 }
 
 }  // namespace dlinear

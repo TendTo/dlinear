@@ -31,7 +31,7 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
    * @param config configuration
    */
   explicit PlaistedGreenbaumCnfizer(const Config &config)
-      : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"}, nnfizer_{}, naive_cnfizer_{config} {}
+      : FormulaVisitor{config, "PlaistedGreenbaumCnfizer"}, nnfizer_{config}, naive_cnfizer_{config} {}
 
   /**
    * Convert a @p f into an equi-satisfiable formula @c f' in CNF.

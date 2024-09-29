@@ -42,7 +42,7 @@ class NaiveCnfizer : public FormulaVisitor {
   [[nodiscard]] Formula VisitNegation(const Formula &f) override;
   [[nodiscard]] Formula VisitForall(const Formula &f) override;
 
-  Nnfizer nnfizer_{};  ///< NNFizer. Used to convert the formula into NNF.
+  Nnfizer nnfizer_{config_};  ///< NNFizer. Used to convert the formula into NNF.
 };
 
 }  // namespace dlinear

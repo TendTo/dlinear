@@ -25,9 +25,7 @@ namespace dlinear {
 class IfThenElseEliminator {
  public:
   explicit IfThenElseEliminator(const Config &config)
-      : counter_{0}, stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
-  explicit IfThenElseEliminator(const bool with_timings)
-      : counter_{0}, stats_{with_timings, "IfThenElseEliminator", "Process"} {}
+      : counter_{0}, config_{config}, stats_{config.with_timings(), "IfThenElseEliminator", "Process"} {}
   /**
    * Returns a equisatisfiable formula by eliminating if-then-expressions in @p f by introducing new variables.
    * @param f Formula to be processed.
@@ -95,6 +93,7 @@ class IfThenElseEliminator {
       ite_var_to_formulas_;  ///< Mapping from ITE to the corresponding variable obtained by ITE elimination.
 
   std::size_t counter_;   ///< Counter for the number of introduced variables.
+  const Config& config_;  ///< Configuration of the elimination process.
   IterationStats stats_;  ///< Statistics of the elimination process.
 
   // Makes VisitFormula a friend of this class so that it can use private

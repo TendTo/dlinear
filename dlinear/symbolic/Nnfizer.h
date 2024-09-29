@@ -7,6 +7,7 @@
 #pragma once
 
 #include "dlinear/symbolic/symbolic.h"
+#include "dlinear/util/Config.h"
 
 namespace dlinear {
 
@@ -20,6 +21,7 @@ namespace dlinear {
  */
 class Nnfizer {
  public:
+  explicit Nnfizer(const Config &config) : config_{config} {}
   /**
    * Convert a @p f into an equivalent formula @c f' in NNF.
    * @param f formula to be converted
@@ -54,6 +56,8 @@ class Nnfizer {
   [[nodiscard]] Formula VisitDisjunction(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitNegation(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
   [[nodiscard]] Formula VisitForall(const Formula &f, bool polarity, bool push_negation_into_relationals) const;
+
+  const Config &config_;
 
   // Makes VisitFormula a friend of this class so that it can use private
   // methods.

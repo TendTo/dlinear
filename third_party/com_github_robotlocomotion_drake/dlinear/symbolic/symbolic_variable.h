@@ -68,9 +68,9 @@ class Variable {
  private:
   // Produces a unique ID for a variable.
   static Id get_next_id();
-  Id id_{};                            ///< Unique identifier.
-  Type type_{Type::CONTINUOUS};        ///< Type of variable.
-  std::shared_ptr<std::string> name_;  ///< Name of variable.
+  Id id_{};                                  ///< Unique identifier.
+  Type type_{Type::CONTINUOUS};              ///< Type of variable.
+  std::shared_ptr<const std::string> name_;  ///< Name of variable.
 };
 
 std::ostream &operator<<(std::ostream &os, Variable::Type type);
