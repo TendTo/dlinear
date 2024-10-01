@@ -17,7 +17,6 @@ class Variable {
   typedef size_t Id;
 
   /** Supported types of symbolic variables. */
-  // TODO(soonho-tri): refines the following descriptions.
   enum class Type {
     CONTINUOUS,  ///< A CONTINUOUS variable takes a `mpq_class` value.
     INTEGER,     ///< An INTEGER variable takes an `int` value.
@@ -39,7 +38,7 @@ class Variable {
    *  It is allowed to construct a dummy variable but it should not be used to
    *  construct a symbolic expression.
    */
-  Variable() : id_{0}, type_{Type::CONTINUOUS}, name_{std::make_shared<std::string>()} {}
+  Variable() : id_{0}, type_{Type::CONTINUOUS} {}
 
   /** Default destructor. */
   ~Variable() = default;
@@ -58,19 +57,19 @@ class Variable {
   std::string to_string() const;
 
   /// Checks the equality of two variables based on their ID values.
-  bool equal_to(const Variable &v) const { return get_id() == v.get_id(); }
+  bool equal_to(const Variable &v) const { return id_ == v.id_; }
 
   /// Compares two variables based on their ID values.
-  bool less(const Variable &v) const { return get_id() < v.get_id(); }
+  bool less(const Variable &v) const { return id_ < v.id_; }
 
   friend std::ostream &operator<<(std::ostream &os, const Variable &var);
 
  private:
+  static std::vector<std::string> names_;  ///< Names of variables.
   // Produces a unique ID for a variable.
   static Id get_next_id();
-  Id id_{};                                  ///< Unique identifier.
-  Type type_{Type::CONTINUOUS};              ///< Type of variable.
-  std::shared_ptr<const std::string> name_;  ///< Name of variable.
+  Id id_{};                                      ///< Unique identifier.
+  Type type_{Type::CONTINUOUS};                  ///< Type of variable.
 };
 
 std::ostream &operator<<(std::ostream &os, Variable::Type type);

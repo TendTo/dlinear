@@ -10,8 +10,8 @@
 - [x] Add inequality support
 - [ ] Clean up benchmarking suite
 - [x] Clean up `pydlinear`
-- [ ] Remove unused Config parameters
-- [ ] Improve nolog options
+- [x] Remove unused Config parameters
+- [x] Improve nolog options
 - [x] Make the sat return type a struct
 - [x] Separate smt time between sat and theory
 - [x] Sort bounds by value so that it is possible to invalidate just the ones on one side
@@ -52,14 +52,15 @@
 - [x] Improve theory propagation (simple bounds could imply other bounds, in a chain fashion)
 - [ ] Improve theory propagation even more
 - [ ] Add support for LRA
+- [x] Use a static array in the Variable class to store the name (and bounds?) of the variable. Use the variable id to access it. The position 0 can be reserved for "dummy".
 
 ## TACAS
 
 - [x] Fix references
 - [ ] Use american english
-- [ ] Expand the abstract. Why you'd want to use this tool?
+- [x] Expand the abstract. Why you'd want to use this tool?
 - [ ] Start the introduction with the importance of SAT/SMT solvers (and LP?)
-- [ ] At the end of the introduction add a paragraph on the structure of the paper
+- [x] At the end of the introduction add a paragraph on the structure of the paper
 - [ ] Add a survey of the state of the art SMT solvers
-- [ ] Move current technical introduction to another section (Preliminaries)
+- [x] Move current technical introduction to another section (Preliminaries)
 
