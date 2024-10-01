@@ -5,6 +5,7 @@
  */
 #include "Config.h"
 
+#include <iostream>
 #include <utility>
 
 #include "dlinear/util/exception.h"

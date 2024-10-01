@@ -6,6 +6,7 @@
 #include "Stats.h"
 
 #include <chrono>
+#include <iostream>
 #include <utility>
 
 #include "dlinear/util/logging.h"

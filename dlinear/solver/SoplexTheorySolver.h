@@ -42,8 +42,8 @@ class SoplexTheorySolver : public TheorySolver {
   void Reset() override;
 
  protected:
-  static const mpq_class infinity_;   ///< Positive infinity
-  static const mpq_class ninfinity_;  ///< Negative infinity
+  static mpq_class infinity_;   ///< Positive infinity
+  static mpq_class ninfinity_;  ///< Negative infinity
 
   void UpdateModelBounds() override;
   void UpdateModelSolution() override;

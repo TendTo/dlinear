@@ -8,6 +8,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 
 #ifdef DLINEAR_ENABLED_QSOPTEX

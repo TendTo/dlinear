@@ -12,7 +12,7 @@
  */
 #pragma once
 
-#include <iostream>
+#include <iosfwd>
 #include <variant>
 
 #include "dlinear/parser/smt2/Sort.h"

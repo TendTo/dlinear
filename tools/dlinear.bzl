@@ -4,6 +4,7 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension", "pybind_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
+# Warning: The following comment is used to extract metadata from this file. Do not remove it.
 # GLOBAL VARIABLES
 DLINEAR_NAME = "dlinear"
 DLINEAR_VERSION = "0.0.1"

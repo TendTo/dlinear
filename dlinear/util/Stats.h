@@ -7,7 +7,7 @@
 #pragma once
 
 #include <atomic>
-#include <iostream>
+#include <iosfwd>
 #include <string>
 
 #include "dlinear/util/Timer.h"

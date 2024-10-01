@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 
 // Argparse library is used to parse the command line arguments.
