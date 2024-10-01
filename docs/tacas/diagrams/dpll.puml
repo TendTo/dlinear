@@ -13,7 +13,7 @@ loop until SAT or UNSAT returned to the User
     return model
 
     alt model == null
-       [<-- SmtSolver: UNSAT
+       [<-- SmtSolver: UNSAT (I)
     else model != null
         SmtSolver -> TheorySolver ++: CheckSat(model)
         return expl
@@ -21,7 +21,7 @@ loop until SAT or UNSAT returned to the User
         alt expl != null
             SmtSolver -> SatSolver: Learn(expl)
         else expl == null
-            return SAT
+            return SAT (II)
         end
     end
 end
