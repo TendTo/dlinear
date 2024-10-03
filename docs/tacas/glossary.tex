@@ -163,7 +163,7 @@
 }
 \newglossaryentry{soi}{
     name={Sum of Infeasibilities},
-    text={SoI}
+    text={SoI},
     first={Sum of Infeasibilities (SoI)},
     description={
             A metric used to evaluate the quality of an \gls{lp} relaxation.
@@ -172,10 +172,19 @@
 }
 \newglossaryentry{onnx}{
     name={Open Neural Network Exchange},
-    text={ONNX}
+    text={ONNX},
     first={Open Neural Network Exchange (ONNX)},
     description={
             An open-source format for representing deep learning models.
             It is supported by a wide range of tools and libraries.
+        }
+}
+\newglossaryentry{cdlc}{
+    name={Conflict Driven Learning Clause},
+    text={CDLC},
+    first={Conflict Driven Learning Clause (CDLC)},
+    description={
+            A clause that is added to the \gls{cnf} formula after a conflict is detected during the \gls{sat} solving process.
+            It is used to prevent the solver from exploring the same path that led to the conflict.
         }
 }
