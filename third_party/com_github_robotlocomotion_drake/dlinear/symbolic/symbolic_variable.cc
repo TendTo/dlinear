@@ -8,8 +8,6 @@
 #include <string>
 #include <utility>
 
-#include "dlinear/symbolic/never_destroyed.h"
-
 using std::atomic;
 using std::make_shared;
 using std::ostream;
@@ -24,8 +22,8 @@ Variable::Id Variable::get_next_id() {
   // Note that id 0 is reserved for anonymous variable which is created by the
   // default constructor, Variable(). As a result, we have an invariant
   // "get_next_id() > 0".
-  static never_destroyed<atomic<Id>> next_id(1);
-  return next_id.access()++;
+  static atomic<Id> next_id(1);
+  return next_id++;
 }
 
 Variable::Variable(string name, const Type type) : id_{get_next_id()}, type_{type} {

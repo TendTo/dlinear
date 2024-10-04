@@ -23,7 +23,6 @@ filegroup(
 dlinear_cc_library(
     name = "drake_symbolic",
     srcs = [
-        "dlinear/symbolic/never_destroyed.h",
         "dlinear/symbolic/symbolic_environment.cc",
         "dlinear/symbolic/symbolic_expression.cc",
         "dlinear/symbolic/symbolic_expression_cell.cc",
