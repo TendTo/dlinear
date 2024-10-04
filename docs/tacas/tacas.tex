@@ -245,7 +245,7 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 \dlinear includes some elementary preprocessing techniques that can guide the SAT solver and cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without calling the \gls{lp} solver.
 \dlinear supports MPS files, a standard format for \gls{lp} problems, by implicitly creating a single assertion the solver will try to satisfy.
 
-\subsection{Simple Neural network verification}
+\subsection{Integrated Neural network verification}
 \label{sec:nn-verification}
 
 \begin{wrapfigure}[21]{R}{3cm}
@@ -258,7 +258,7 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
     \label{dg:onnx}
 \end{wrapfigure}
 
-\dlinear supports a naive algorithm to verify neural networks that utilize ReLU activation functions.
+\dlinear implements a naive algorithm to verify neural networks that utilize piecewise linear activation functions.
 Given an \gls{onnx} file~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
 Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
@@ -274,7 +274,7 @@ For instance, the ReLU activation function can be represented as
 Given the two new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0)$, the clauses $(A \lor B) \land (\neg A \lor \neg B)$ are added to the set of assertions.
 
 Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally intractable even for medium-sized networks.
-To mitigate this issue, we can try to exploit the structure of the problem.
+To mitigate this issue, we exploit the structure of the problem.
 The bound propagation mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
 In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
 Furthermore, constraints coming from activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize while the other linear expression creates the constraints the problem is subject to.
@@ -587,6 +587,7 @@ We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref
 We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2) and yices~\cite{ref:yices} (version 2.6.5).
 The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache, and a memory limit of 2.9GB (DDR4 RDIMMs).
 The timeout was set to 12 hours.
+Note that $dlinear_{\delta = 0}$ is used to indicate \dlinear in $\delta$-complete mode using an infinitesimal positive value as the precision parameter.
 
 \subsection*{LP Result}
 
@@ -654,8 +655,8 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
 
 A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}.
 The results are shown in~\autoref{fig:results-smt1} and \autoref{fig:results-smt2} and summarised in~\autoref{tab:results-smt-complete} and \autoref{tab:results-smt-delta}.
-Needless to say, in complete mode the outputs are consistent among all four solvers.
-While still not as fast as the more established tools, \dlinear shows some notable performance gains when producing a $\delta$-complete output, managing to outperform Z3.
+Needless to say, the outputs are consistent among all four complete solvers.
+Although not as fast as the more established tools, \dlinear shows some notable performance gains when producing a $\delta$-complete output, managing to outperform Z3 in terms of the number of solved instances.
 
 \begin{figure}[H]
     \centering
@@ -729,105 +730,105 @@ We also provide a corresponding Python API in the form of the \textit{pydlinear}
 \bibliography{resources}
 
 % ---- Appendices ----
-% \newpage
-% \begin{subappendices}
-%     \renewcommand{\thesection}{\Alph{section}}%
-%     \section{Proof of~\autoref{thm:lp-relaxed}}
-%     \begin{proof}
-%         Without loss of generality, assume that both linear programming problems are in standard form.
-%         Let $K$ be the set of indexes of strict inequality constraints.
-%         \\
-%         \framedtext{\eqref{eq:lp-original} feasible $\implies$~\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$} \\
+\newpage
+\begin{subappendices}
+    \renewcommand{\thesection}{\Alph{section}}%
+    \section{Proof of~\autoref{thm:lp-relaxed}}
+    \begin{proof}
+        Without loss of generality, assume that both linear programming problems are in standard form.
+        Let $K$ be the set of indexes of strict inequality constraints.
+        \\
+        \framedtext{\eqref{eq:lp-original} feasible $\implies$~\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$} \\
 
-%         If the original problem is feasible, then there exists a solution, a set of values to be assigned to the decision variables $x_1, x_2, \ldots, x_n$, that satisfies all the constraints.
-%         For each strict inequality constraint to be satisfied, it means that there exists a value $\delta_k > 0, \quad k \in K$ such that
-%         \begin{align*}
-%             \sum_{i=1}^{n} a_{ki}x_{i} + \delta_k = b_k, \quad \forall k \in K
-%         \end{align*}
-%         Let $\bar{t} = \min(\delta_k), \quad k \in K$.
-%         Then we know that
-%         \begin{align*}
-%             \sum_{i=1}^{n} a_{ki}x_{i} + \bar{t} \le b_k, \quad \forall k \in K \\
-%             \bar{t} > 0
-%         \end{align*}
-%         which is the formulation of the strict constraints used in the relaxed problem.
-%         All other constraints have been left unchanged, therefore the solution to the original problem can be used to satisfy the constraints of the relaxed problem by setting $t = \bar{t}$, which is greater than $0$.
-%         Hence, the objective value of the relaxed problem is $> 0$.
-%         \\
-%         \framedtext{\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$ $\implies$ \eqref{eq:lp-original} feasible} \\
+        If the original problem is feasible, then there exists a solution, a set of values to be assigned to the decision variables $x_1, x_2, \ldots, x_n$, that satisfies all the constraints.
+        For each strict inequality constraint to be satisfied, it means that there exists a value $\delta_k > 0, \quad k \in K$ such that
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + \delta_k = b_k, \quad \forall k \in K
+        \end{align*}
+        Let $\bar{t} = \min(\delta_k), \quad k \in K$.
+        Then we know that
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + \bar{t} \le b_k, \quad \forall k \in K \\
+            \bar{t} > 0
+        \end{align*}
+        which is the formulation of the strict constraints used in the relaxed problem.
+        All other constraints have been left unchanged, therefore the solution to the original problem can be used to satisfy the constraints of the relaxed problem by setting $t = \bar{t}$, which is greater than $0$.
+        Hence, the objective value of the relaxed problem is $> 0$.
+        \\
+        \framedtext{\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$ $\implies$ \eqref{eq:lp-original} feasible} \\
 
-%         The solution to the relaxed problem already satisfies all the non-strict constraints of the original problem.
-%         The objective value is greater than $0$; therefore, $t > 0$.
-%         Since all relaxed constraints in the form
-%         \begin{align*}
-%             \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
-%             t > 0
-%         \end{align*}
-%         are satisfied the original strict inequality constraints
-%         \begin{align*}
-%             \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
-%         \end{align*}
-%         are also satisfied.
-%         Hence, the original problem is feasible.
-%     \end{proof}
+        The solution to the relaxed problem already satisfies all the non-strict constraints of the original problem.
+        The objective value is greater than $0$; therefore, $t > 0$.
+        Since all relaxed constraints in the form
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
+            t > 0
+        \end{align*}
+        are satisfied the original strict inequality constraints
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
+        \end{align*}
+        are also satisfied.
+        Hence, the original problem is feasible.
+    \end{proof}
 
-%     % ---- Extended benchmark results (LP) ----
-%     \newpage
-%     \section{Extended benchmark results}
-%     \setlength\LTleft{0pt}
-%     \setlength\LTright{0pt}
-%     \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
-%         \caption{
-%             Extended benchmark results over the \gls{lp} problems in alphabetical order.
-%             \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
-%             The \deltaresult column indicates whether a $\delta$-complete model was found.
-%             Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
-%         }                                                                                                                                                                                                                                                                                                     \\
-%         \toprule
-%               &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-%         \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-%         File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-%         \midrule
-%         \endfirsthead
-%         \toprule
-%               &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-%         \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-%         File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-%         \midrule
-%         \endhead
-%         \csvreader[head to column names]{data/lp.csv}{}
-%         {                                                                                                                                                                                                                                                                                                     \\
-%         \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
-%     \end{longtable}
-%     \newpage
-%     \setlength\LTleft{-2cm}
-%     \setlength\LTright{0pt}
-%     \begin{landscape}
-%         \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
-%             \caption{
-%                 Extended benchmark results over the \gls{smt} problems in alphabetical order.
-%                 \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
-%                 The \deltaresult column indicates whether a $\delta$-complete model was found.
-%                 Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
-%             }                                                                                                                                                                                                                                                                                                     \\
-%             \toprule
-%                   &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-%             \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-%             File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-%             \midrule
-%             \endfirsthead
-%             \toprule
-%                   &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-%             \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-%             File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-%             \midrule
-%             \endhead
-%             \csvreader[head to column names]{data/smt.csv}{}
-%             {                                                                                                                                                                                                                                                                                                     \\
-%             \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
-%         \end{longtable}
-%     \end{landscape}
+    % ---- Extended benchmark results (LP) ----
+    \newpage
+    \section{Extended benchmark results}
+    \setlength\LTleft{0pt}
+    \setlength\LTright{0pt}
+    \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
+        \caption{
+            Extended benchmark results over the \gls{lp} problems in alphabetical order.
+            \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
+            The \deltaresult column indicates whether a $\delta$-complete model was found.
+            Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
+        }                                                                                                                                                                                                                                                                                                     \\
+        \toprule
+              &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+        File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+        \midrule
+        \endfirsthead
+        \toprule
+              &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+        File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+        \midrule
+        \endhead
+        \csvreader[head to column names]{data/lp.csv}{}
+        {                                                                                                                                                                                                                                                                                                     \\
+        \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
+    \end{longtable}
+    \newpage
+    \setlength\LTleft{-2cm}
+    \setlength\LTright{0pt}
+    \begin{landscape}
+        \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
+            \caption{
+                Extended benchmark results over the \gls{smt} problems in alphabetical order.
+                \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
+                The \deltaresult column indicates whether a $\delta$-complete model was found.
+                Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
+            }                                                                                                                                                                                                                                                                                                     \\
+            \toprule
+                  &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+            \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+            File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+            \midrule
+            \endfirsthead
+            \toprule
+                  &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+            \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+            File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+            \midrule
+            \endhead
+            \csvreader[head to column names]{data/smt.csv}{}
+            {                                                                                                                                                                                                                                                                                                     \\
+            \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
+        \end{longtable}
+    \end{landscape}
 
-% \end{subappendices}
+\end{subappendices}
 
 \end{document}
