@@ -1,7 +1,7 @@
 """Macro with some preconfigurations for testing with pytest."""
 
+load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_test")
-# load("@pip//:requirements.bzl", "requirement")
 
 def pytest_test(name, srcs, deps = [], args = [], **kwargs):
     """Call pytest from a py_test rule, taking care of the common arguments and dependencies.
@@ -20,7 +20,7 @@ def pytest_test(name, srcs, deps = [], args = [], **kwargs):
         args = ["--capture=no"] + args + ["$(location :%s)" % x for x in srcs],
         python_version = "PY3",
         srcs_version = "PY3",
-        deps = deps,  # + [requirement("pytest")],
+        deps = deps + [requirement("pytest")],
         **kwargs
     )
 

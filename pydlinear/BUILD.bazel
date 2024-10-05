@@ -3,6 +3,10 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load("@rules_python//python:packaging.bzl", "py_wheel")
 load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_CLASSIFIERS", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_LICENSE", "DLINEAR_SOURCE", "DLINEAR_TRACKER", "DLINEAR_VERSION", "dlinear_pybind_extension", "dlinear_pyblind_library")
 
+package(default_visibility = [
+    "//pydlinear:__subpackages__",
+])
+
 dlinear_pyblind_library(
     name = "interrupt",
     srcs = ["interrupt.cpp"],
@@ -83,7 +87,6 @@ genrule(
 filegroup(
     name = "pydlinear_files",
     srcs = [
-        "py.typed",
         ":_pydlinear",
         ":pydlinear_lib",
         ":stubgen",

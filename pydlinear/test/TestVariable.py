@@ -6,6 +6,7 @@ class TestVariable:
         a = pdl.Variable("a")
         assert a.get_id() == 1
         assert a.get_type() == pdl.VariableType.Real
+        assert str(a) == "a"
 
     def test_variable_constructor_with_type(self):
         a = pdl.Variable("a", pdl.VariableType.Int)

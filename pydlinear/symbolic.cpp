@@ -115,7 +115,7 @@ void init_symbolic(py::module_ &m) {
              return (std::stringstream{} << "<Variables '" << self.to_string() << "'>").str();
            })
       .def("to_string", &Variables::to_string)
-      .def("__hash__", [](const Variables &self) { return std::hash<Variables>{}(self); })
+      .def("__hash__", [](const Variables &self) { return self.get_hash(); })
       .def("insert", [](Variables &self, const Variable &var) { self.insert(var); })
       .def("insert", [](Variables &self, const Variables &vars) { self.insert(vars); })
       .def("erase", [](Variables &self, const Variable &var) { return self.erase(var); })

@@ -10,8 +10,41 @@ env:
   PACKAGES: "build-essential automake libtool flex bison"
 
 jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install apt dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ${{ env.PACKAGES }}
+          version: 1.0
+
+      - name: Cache Bazel
+        uses: actions/cache@v4
+        if: always()
+        with:
+          path: |
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+
+      - name: Run tests
+        run: |
+          mkdir -p dist
+          for py_version in 3.8 3.9 3.10 3.11 3.12; do
+            bazel test --config=pydlinear --python_version=$py_version --test_tag_filters=pydlinear //pydlinear/...
+          done
+
   build:
     runs-on: ${{ matrix.os }}
+    needs: test
     strategy:
       matrix:
         os: [ubuntu-latest]

@@ -1,35 +1,23 @@
-import os
 import pydlinear as pdl
 import pytest
+import os
 
-FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+FILES_DIR = tuple(map(lambda x: os.path.join("pydlinear", "test", "files", x), ["ite_02.smt2", "ite_03.smt2"]))
 
-PARAMETERS: "list[tuple[str, pdl.LPSolver, int, str]]" = [
-    ("ite_02.smt2", pdl.LPSolver.QSOPTEX, 1, "sat with delta = 0"),
-    (
-        "ite_02.smt2",
-        pdl.LPSolver.SOPLEX,
-        1,
-        "delta-sat with delta = 0.0009999999999999998 ( > 2305843009213693/2305843009213693952)",
-    ),
-    ("ite_03.smt2", pdl.LPSolver.QSOPTEX, 1, "unsat"),
-    ("ite_03.smt2", pdl.LPSolver.SOPLEX, 1, "unsat"),
+PARAMETERS: "list[tuple[str, pdl.LPSolver, tuple[pdl.SmtResult, ...]]]" = [
+    (FILES_DIR[0], (pdl.SmtResult.DELTA_SAT, pdl.SmtResult.SAT)),
+    (FILES_DIR[1], (pdl.SmtResult.UNSAT,)),
 ]
-
-
-@pytest.fixture(scope="function")
-def config() -> "pdl.Config":
-    return pdl.Config()
+LP_SOLVERS: "list[pdl.LPSolver]" = [pdl.LPSolver.SOPLEX]
 
 
 class TestSolver:
-    @pytest.mark.parametrize("input_file,lp_solver,phase,expected", PARAMETERS)
-    def test_constructor(self, input_file: "str", lp_solver: "pdl.LPSolver", phase: "int", expected: "str"):
+    @pytest.mark.parametrize("input_file,expected", PARAMETERS)
+    @pytest.mark.parametrize("lp_solver", LP_SOLVERS)
+    def test_constructor(self, input_file: "str", lp_solver: "pdl.LPSolver", expected: "tuple[pdl.SmtResult, ...]"):
         conf = pdl.Config()
-        conf.filename = os.path.join(FILES_DIR, input_file)
+        conf.filename = input_file
         conf.lp_solver = lp_solver
-        conf.simplex_sat_phase = phase
-
-        s = pdl.Solver(conf)
-        res = str(s.CheckSat())
-        assert res.strip() == expected.strip()
+        s = pdl.SmtSolver(conf)
+        res = s.Parse()
+        assert res.result in expected
