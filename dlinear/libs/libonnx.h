@@ -8,6 +8,8 @@
 
 #include <istream>
 
+#pragma GCC system_header
+
 #include "onnx/onnx-data.pb.h"
 #include "onnx/onnx-ml.pb.h"
 #include "onnx/onnx-operators-ml.pb.h"

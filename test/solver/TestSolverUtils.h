@@ -29,7 +29,6 @@ std::set<dlinear::SmtResult> delta_result(dlinear::SmtResult res) {
     case dlinear::SmtResult::DELTA_SAT:
       return {dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::UNSAT:
-      // return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
       return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::UNKNOWN:
       return {dlinear::SmtResult::UNKNOWN};
