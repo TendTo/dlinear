@@ -73,8 +73,9 @@ coverage.xml
 *.cover
 
 # Benchmark
-benchmark/smt2/*
-benchmark/*.csv
+benchmark/**/*.csv
+benchmark/**/*.smt2
+benchmark/**/*.mps
 
 # Docs
 docs/out/
