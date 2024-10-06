@@ -13,7 +13,10 @@ configure_make(
     autogen = True,
     autogen_command = "bootstrap",
     env = {"ac_cv_func_malloc_0_nonnull": "yes", "ac_cv_func_realloc_0_nonnull": "yes"},
-    configure_options = ["CFLAGS='-Dredacted=\"redacted\" -DEG_LPNUM_MEMSLAB=0'"],
+    configure_options = ["CFLAGS='-Dredacted=\"redacted\" -DEG_LPNUM_MEMSLAB=0'"] + select({
+        "@dlinear//tools:fpic_build": ["--with-pic"],
+        "//conditions:default": [],
+    }),
     args = ["-j4"],
     deps = ["@zlib", "@bzip2//:bz2", "@gmp"],
     postfix_script = select({
