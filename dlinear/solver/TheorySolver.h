@@ -136,6 +136,8 @@ class TheorySolver {
   [[nodiscard]] std::size_t theory_row_count() const { return theory_row_to_lit_.size(); }
   /** @getter{number of columns, TheorySolver} */
   [[nodiscard]] std::size_t theory_col_count() const { return theory_col_to_var_.size(); }
+  /** @getter{vector of enabled literals, TheorySolver} */
+  [[nodiscard]] std::set<Literal> enabled_literals() const;
 
   /**
    * Check the satisfiability of the theory.
@@ -195,6 +197,10 @@ class TheorySolver {
    * @return statistics of the theory solver
    */
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
+
+#ifndef NDEBUG
+  void DumpEnabledLiterals();
+#endif
 
  protected:
   /** Enum used to describe how the bounds on a variable participate in the infeasibility result of an LP problem */

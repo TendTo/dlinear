@@ -20,6 +20,17 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"} {}
 
 const Box &TheorySolver::model() const { return model_; }
+std::set<Literal> TheorySolver::enabled_literals() const {
+  std::set<Literal> enabled_lits{};
+  for (std::size_t i = 0; i < theory_row_to_lit_.size(); ++i) {
+    if (theory_rows_state_[i]) enabled_lits.insert(theory_row_to_lit_[i]);
+  }
+  for (const auto &[var, bound] : preprocessor_.theory_bounds()) {
+    const BoundIterator it = bound.GetActiveBounds();
+    it.explanation(enabled_lits);
+  }
+  return enabled_lits;
+}
 
 void TheorySolver::AddLiterals() {
   theory_row_to_lit_.reserve(predicate_abstractor_.var_to_formula_map().size());
@@ -73,6 +84,21 @@ void TheorySolver::Reset() {
   // Disable all rows
   theory_rows_state_.assign(theory_rows_state_.size(), false);
 }
+
+#ifndef NDEBUG
+void TheorySolver::DumpEnabledLiterals() {
+  fmt::println("(set-logic QF_LRA)");
+  for (const auto &[var, bound] : preprocessor_.theory_bounds()) {
+    fmt::println("(declare-const {} Real)", var);
+  }
+  for (const auto &lit : enabled_literals()) {
+    fmt::println("(assert {})", lit.truth ? predicate_abstractor_[lit.var].to_smt2_string()
+                                          : (!predicate_abstractor_[lit.var]).to_smt2_string());
+  }
+  fmt::println("(check-sat)");
+  fmt::println("(exit)");
+}
+#endif
 
 void TheorySolver::BoundsToTheoryRows(const Variable &var, BoundViolationType type, std::set<int> &theory_rows) const {
   if (type == BoundViolationType::NO_BOUND_VIOLATION) return;
