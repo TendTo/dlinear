@@ -2,6 +2,5 @@
 /bazel-*
 .clwb
 .vscode
-README.md
 script
 example
