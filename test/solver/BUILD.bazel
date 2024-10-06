@@ -73,7 +73,7 @@ dlinear_cc_googletest(
 
 dlinear_cc_googletest(
     name = "test_delta_smt2",
-    size = "large",
+    size = "enormous",
     data = glob(["smt2/*.smt2"]),
     tags = ["solver"],
     deps = [

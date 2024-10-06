@@ -72,8 +72,7 @@ void QsoptexTheorySolver::Consolidate(const Box &box) {
 }
 
 void QsoptexTheorySolver::UpdateModelSolution() {
-  const int colcount = mpq_QSget_rowcount(qsx_);
-  DLINEAR_ASSERT(x_.size() >= static_cast<std::size_t>(colcount), "x.dim() must be >= colcount");
+  DLINEAR_ASSERT(x_.size() >= static_cast<std::size_t>(mpq_QSget_rowcount(qsx_)), "x.dim() must be >= colcount");
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(
@@ -242,7 +241,6 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
   auto *theory_solver = static_cast<QsoptexTheorySolver *>(data);
   // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
   double infeas_gt = nextafter(mpq_get_d(infeas), std::numeric_limits<double>::infinity());
-  // fmt::print uses shortest round-trip format for doubles, by default
   fmt::print("PARTIAL: delta-sat with delta = {} ( > {})", infeas_gt, mpq_class(infeas));
   if (theory_solver->config().with_timings()) {
     fmt::print(" after {} seconds", theory_solver->stats().timer().seconds());
@@ -250,7 +248,7 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
   fmt::print("\n");
 }
 
-void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explanation) {
+void QsoptexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   // TODO: the ray is not minimal in the slightest. It should be possible to improve it
   explanation.clear();
   // For each row in the ray
@@ -270,10 +268,25 @@ void QsoptexTheorySolver::UpdateExplanation([[maybe_unused]] LiteralSet &explana
     const Literal &lit = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
     explanation.insert(lit);
-    // For each free variable in the literal, add their bounds to the explanation
-    for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
-      preprocessor_.theory_bounds().at(col_var).GetActiveExplanation(explanation);
+  }
+  mpq_class col_violation{0};
+  for (int i = 0; i < static_cast<int>(theory_col_to_var_.size()); i++) {
+    col_violation = 0;
+    for (int j = 0; j < mpq_QSget_rowcount(qsx_); j++) {
+      if (mpq_sgn(ray_[j]) == 0) continue;
+      mpq_t temp;
+      mpq_init(temp);
+      mpq_QSget_coef(qsx_, j, i, &temp);
+      mpq_mul(temp, temp, ray_[j]);
+      mpq_add(col_violation.get_mpq_t(), col_violation.get_mpq_t(), temp);
+      mpq_clear(temp);
     }
+    if (col_violation == 0) continue;
+    DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: {}[{}] = {}", theory_col_to_var_[i], i,
+                      col_violation);
+    const BoundVector &bounds = preprocessor_.theory_bounds().at(theory_col_to_var_[i]);
+    bounds.GetActiveBounds(col_violation < 0 ? bounds.active_lower_bound() : bounds.active_upper_bound())
+        .explanation(explanation);
   }
 }
 void QsoptexTheorySolver::DisableQsxRows() {

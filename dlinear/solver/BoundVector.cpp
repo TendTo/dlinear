@@ -212,10 +212,6 @@ bool BoundVector::IsBounded() const { return IsLowerBounded() && IsUpperBounded(
 
 BoundIterator BoundVector::GetActiveBound() const { return GetActiveBound(*active_lower_bound_, *active_upper_bound_); }
 BoundIterator BoundVector::GetActiveBound(const mpq_class& value) const { return GetActiveBound(value, value); }
-BoundIterator BoundVector::GetActiveBounds() const {
-  return GetActiveBounds(*active_lower_bound_, *active_upper_bound_);
-}
-BoundIterator BoundVector::GetActiveBounds(const mpq_class& value) const { return GetActiveBounds(value, value); }
 BoundIterator BoundVector::GetActiveBound(const mpq_class& lb, const mpq_class& ub) const {
   DLINEAR_ASSERT(lb == ub || (lb == *active_lower_bound_ && ub == *active_upper_bound_), "Bounds must be == or active");
   DLINEAR_ASSERT(lb <= ub, "Lower bound must be less or equal to upper bound");
@@ -230,6 +226,11 @@ BoundIterator BoundVector::GetActiveBound(const mpq_class& lb, const mpq_class& 
       lb_it == ub_it || (std::prev(ub_it))->lp_bound != LpColBound::SU ? FindUpperNqBoundValue(&ub)
                                                                        : FindLowerNqBoundValue(&ub)};
 }
+
+BoundIterator BoundVector::GetActiveBounds() const {
+  return GetActiveBounds(*active_lower_bound_, *active_upper_bound_);
+}
+BoundIterator BoundVector::GetActiveBounds(const mpq_class& value) const { return GetActiveBounds(value, value); }
 BoundIterator BoundVector::GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const {
   DLINEAR_ASSERT(lb == ub || (lb == *active_lower_bound_ && ub == *active_upper_bound_), "Bounds must be == or active");
   DLINEAR_ASSERT(lb <= ub, "Lower bound must be less or equal to upper bound");

@@ -196,15 +196,14 @@ void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_r
                                                 std::vector<BoundViolationType> &bounds_ray) {
   GetSpxInfeasibilityRay(farkas_ray);
 
-  DLINEAR_ASSERT(static_cast<int>(bounds_ray.size()) == spx_.numColsRational() - 1,
-                 "bounds_ray must have the same dimension as the cols");
+  DLINEAR_ASSERT(bounds_ray.size() == theory_col_to_var_.size(), "bounds_ray must have the same dimension as the cols");
   DLINEAR_ASSERT(std::all_of(bounds_ray.cbegin(), bounds_ray.cend(),
                              [](const BoundViolationType &it) { return it == BoundViolationType::NO_BOUND_VIOLATION; }),
                  "bounds_ray must be initialized to NO_BOUND_VIOLATION");
   //  Multiply the Farkas ray by the row coefficients to get the column violations: ray * A
   //  If the result is non-zero, the sign indicates the bound that caused the violation.
   Rational col_violation{0};
-  for (int i = 0; i < spx_.numColsRational() - 1; i++) {
+  for (int i = 0; i < static_cast<int>(theory_col_to_var_.size()); i++) {
     col_violation = 0;
     for (int j = 0; j < spx_.numRowsRational(); j++) {
       col_violation += farkas_ray[j] * spx_.rowVectorRational(j)[i];
@@ -212,7 +211,7 @@ void SoplexTheorySolver::GetSpxInfeasibilityRay(soplex::VectorRational &farkas_r
     if (col_violation.is_zero()) continue;
     DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::UpdateExplanationInfeasible: {}[{}] = {}", theory_col_to_var_[i], i,
                       col_violation);
-    bounds_ray[i] =
+    bounds_ray.at(i) =
         col_violation > 0 ? BoundViolationType::LOWER_BOUND_VIOLATION : BoundViolationType::UPPER_BOUND_VIOLATION;
   }
 }
@@ -290,20 +289,28 @@ void SoplexTheorySolver::UpdateModelBounds() {
 }
 void SoplexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
   soplex::VectorRational ray{spx_.numRowsRational()};
-  GetSpxInfeasibilityRay(ray);
+  std::vector<BoundViolationType> bounds_ray(theory_col_to_var_.size(), BoundViolationType::NO_BOUND_VIOLATION);
+  GetSpxInfeasibilityRay(ray, bounds_ray);
 
   explanation.clear();
   // For each row in the ray
   for (int i = 0; i < spx_.numRowsRational(); ++i) {
     if (ray[i] == 0) continue;  // The row did not participate in the conflict, ignore it
     DLINEAR_TRACE_FMT("SoplexTheorySolver::UpdateExplanation: ray[{}] = {}", i, ray[i]);
-    const Literal &lit = theory_row_to_lit_[i];
     // Insert the conflicting row literal to the explanation. Use the latest truth value from the SAT solver
-    explanation.insert(lit);
-    // Add all the active bounds for the free variables in the row to the explanation
-    for (const auto &col_var : predicate_abstractor_[lit.var].GetFreeVariables()) {
-      preprocessor_.theory_bounds().at(col_var).GetActiveExplanation(explanation);
-    }
+    explanation.insert(theory_row_to_lit_[i]);
+  }
+  DLINEAR_ASSERT(!explanation.empty(), "explanation must have at least one literal");
+  DLINEAR_ASSERT(bounds_ray.size() == theory_col_to_var_.size(), "bounds_ray must have the same size as the variables");
+  // Add all the active bounds for the variables responsible for the infeasibility
+  for (std::size_t theory_col = 0; theory_col < theory_col_to_var_.size(); theory_col++) {
+    const BoundViolationType bound_violation = bounds_ray[theory_col];
+    if (bound_violation == BoundViolationType::NO_BOUND_VIOLATION) continue;
+    const BoundVector &bounds = preprocessor_.theory_bounds().at(theory_col_to_var_[theory_col]);
+    bounds
+        .GetActiveBounds(bound_violation == BoundViolationType::LOWER_BOUND_VIOLATION ? bounds.active_lower_bound()
+                                                                                      : bounds.active_upper_bound())
+        .explanation(explanation);
   }
 }
 
