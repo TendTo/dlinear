@@ -164,7 +164,10 @@ dlinear_cc_library(
     name = "timer",
     srcs = ["Timer.cpp"],
     hdrs = ["Timer.h"],
-    implementation_deps = [":logging"],
+    implementation_deps = [
+        ":logging",
+        "@fmt",
+    ],
 )
 
 dlinear_cc_library(

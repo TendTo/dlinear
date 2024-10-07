@@ -88,7 +88,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #define DLINEAR_DEV_TRACE(msg) DLINEAR_TRACE(msg)
 #define DLINEAR_DEV_TRACE_FMT(msg, ...) DLINEAR_TRACE_FMT(msg, __VA_ARGS__)
 #define DLINEAR_DEV_DEBUG(msg) DLINEAR_DEBUG(msg)
-#define DLINEAR_DEV_DEBUG_FMT(msg, ...) DLINEAR_DEBUG_FMT(msg, __VA_ARGS)
+#define DLINEAR_DEV_DEBUG_FMT(msg, ...) DLINEAR_DEBUG_FMT(msg, __VA_ARGS__)
 #endif
 
 #else

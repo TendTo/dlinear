@@ -31,14 +31,20 @@ build:debug --cxxopt=-ggdb3
 build:opt --disk_cache=~/.cache/dlinear_bazel_opt
 build:opt --compilation_mode=opt
 build:opt --cxxopt=-O3
-build:opt --cxxopt=-DNLOG
+
+# Build for benchmarking
+build:bench --disk_cache=~/.cache/dlinear_bazel_bench
+build:bench --compilation_mode=opt
+build:bench --cxxopt=-O3
+build:bench --cxxopt=-DNLOG
+build:bench --//tools:enable_static_build=True
 
 # Building python bindings
 build:pydlinear --disk_cache=~/.cache/dlinear_bazel_pybind
+build:pydlinear --compilation_mode=opt
 build:pydlinear --//tools:enable_static_build=True
 build:pydlinear --//tools:enable_fpic_build=True
 build:pydlinear --//tools:enable_pydlinear_build=True
-build:pydlinear --compilation_mode=opt
 
 # IWYU
 build:iwyu --@bazel_iwyu//:iwyu_mappings=@dlinear//tools:iwyu_mappings
