@@ -73,10 +73,10 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #define DLINEAR_DEV(msg)                                                                 \
   fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "", \
-               std::chrono::system_clock::now(), (std::stringstream{} << std::this_thread::get_id()).str());
-#define DLINEAR_DEV_FMT(msg, ...)                                                                           \
-  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                    \
-               std::chrono::system_clock::now(), (std::stringstream{} << std::this_thread::get_id()).str(), \
+               std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()));
+#define DLINEAR_DEV_FMT(msg, ...)                                                                          \
+  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                   \
+               std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()), \
                __VA_ARGS__);
 #define DLINEAR_DEV_TRACE(msg) DLINEAR_DEV(msg)
 #define DLINEAR_DEV_TRACE_FMT(msg, ...) DLINEAR_DEV_FMT(msg, __VA_ARGS__)
@@ -85,10 +85,10 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #else
 #define DLINEAR_DEV(msg) void(0)
 #define DLINEAR_DEV_FMT(msg, ...) void(0)
-#define DLINEAR_DEV_TRACE(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg)
-#define DLINEAR_DEV_TRACE_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg, __VA_ARGS__)
-#define DLINEAR_DEV_DEBUG(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg)
-#define DLINEAR_DEV_DEBUG_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg, __VA_ARGS__)
+#define DLINEAR_DEV_TRACE(msg) DLINEAR_TRACE(msg)
+#define DLINEAR_DEV_TRACE_FMT(msg, ...) DLINEAR_TRACE_FMT(msg, __VA_ARGS__)
+#define DLINEAR_DEV_DEBUG(msg) DLINEAR_DEBUG(msg)
+#define DLINEAR_DEV_DEBUG_FMT(msg, ...) DLINEAR_DEBUG_FMT(msg, __VA_ARGS)
 #endif
 
 #else

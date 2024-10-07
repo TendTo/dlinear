@@ -42,39 +42,68 @@ const std::map<std::string, NodeOpType> string_to_node_op_type{
     {"Transpose", NodeOpType::Transpose},
     {"Unsqueeze", NodeOpType::Unsqueeze},
 };
-const std::map<NodeOpType, std::string> node_op_type_to_string{
-    {NodeOpType::Abs, "Abs"},
-    {NodeOpType::Add, "Add"},
-    {NodeOpType::AveragePool, "AveragePool"},
-    {NodeOpType::BatchNormalization, "BatchNormalization"},
-    {NodeOpType::Concat, "Concat"},
-    {NodeOpType::Constant, "Constant"},
-    {NodeOpType::Conv, "Conv"},
-    {NodeOpType::Dropout, "Dropout"},
-    {NodeOpType::Flatten, "Flatten"},
-    {NodeOpType::Gather, "Gather"},
-    {NodeOpType::Gemm, "Gemm"},
-    {NodeOpType::GlobalAveragePool, "GlobalAveragePool"},
-    {NodeOpType::Identity, "Identity"},
-    {NodeOpType::LeakyRelu, "LeakyRelu"},
-    {NodeOpType::LRN, "LRN"},
-    {NodeOpType::MatMul, "MatMul"},
-    {NodeOpType::MaxPool, "MaxPool"},
-    {NodeOpType::Mul, "Mul"},
-    {NodeOpType::Relu, "Relu"},
-    {NodeOpType::Reshape, "Reshape"},
-    {NodeOpType::Slice, "Slice"},
-    {NodeOpType::Sign, "Sign"},
-    {NodeOpType::Sigmoid, "Sigmoid"},
-    {NodeOpType::Softmax, "Softmax"},
-    {NodeOpType::Squeeze, "Squeeze"},
-    {NodeOpType::Sub, "Sub"},
-    {NodeOpType::Transpose, "Transpose"},
-    {NodeOpType::Unsqueeze, "Unsqueeze"},
-};
 
 std::ostream& operator<<(std::ostream& os, const NodeOpType& op_type) {
-  return os << node_op_type_to_string.at(op_type);
+  switch (op_type) {
+    case NodeOpType::Abs:
+      return os << "Abs";
+    case NodeOpType::Add:
+      return os << "Add";
+    case NodeOpType::AveragePool:
+      return os << "AveragePool";
+    case NodeOpType::BatchNormalization:
+      return os << "BatchNormalization";
+    case NodeOpType::Concat:
+      return os << "Concat";
+    case NodeOpType::Constant:
+      return os << "Constant";
+    case NodeOpType::Conv:
+      return os << "Conv";
+    case NodeOpType::Dropout:
+      return os << "Dropout";
+    case NodeOpType::Flatten:
+      return os << "Flatten";
+    case NodeOpType::Gather:
+      return os << "Gather";
+    case NodeOpType::Gemm:
+      return os << "Gemm";
+    case NodeOpType::GlobalAveragePool:
+      return os << "GlobalAveragePool";
+    case NodeOpType::Identity:
+      return os << "Identity";
+    case NodeOpType::LeakyRelu:
+      return os << "LeakyRelu";
+    case NodeOpType::LRN:
+      return os << "LRN";
+    case NodeOpType::MatMul:
+      return os << "MatMul";
+    case NodeOpType::MaxPool:
+      return os << "MaxPool";
+    case NodeOpType::Mul:
+      return os << "Mul";
+    case NodeOpType::Relu:
+      return os << "Relu";
+    case NodeOpType::Reshape:
+      return os << "Reshape";
+    case NodeOpType::Slice:
+      return os << "Slice";
+    case NodeOpType::Sign:
+      return os << "Sign";
+    case NodeOpType::Sigmoid:
+      return os << "Sigmoid";
+    case NodeOpType::Softmax:
+      return os << "Softmax";
+    case NodeOpType::Squeeze:
+      return os << "Squeeze";
+    case NodeOpType::Sub:
+      return os << "Sub";
+    case NodeOpType::Transpose:
+      return os << "Transpose";
+    case NodeOpType::Unsqueeze:
+      return os << "Unsqueeze";
+    default:
+      DLINEAR_UNREACHABLE();
+  }
 }
 
 NodeOpType parseNodeOpType(const std::string& op_type) { return string_to_node_op_type.at(op_type); }
