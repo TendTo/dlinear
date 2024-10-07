@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include <fmt/core.h>
+
 #include <stdexcept>
 
 #ifdef NDEBUG
@@ -22,11 +24,11 @@
 #define DLINEAR_OUT_OF_RANGE(msg) throw std::out_of_range(msg)
 #define DLINEAR_OUT_OF_RANGE_FMT(msg, ...) throw std::out_of_range(msg)
 #define DLINEAR_INVALID_ARGUMENT(argument, actual) throw std::runtime_error(argument)
-#define DLINEAR_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) throw std::runtime_error(argument)
+#define DLINEAR_INVALID_ARGUMENT_EXPECTED(argument, actual, expected) \
+  throw std::invalid_argument(                                        \
+      fmt::format("Invalid argument for {}: received '{}', expected '{}'", argument, actual, expected))
 
 #else
-
-#include <fmt/core.h>
 
 #include "dlinear/util/logging.h"
 
