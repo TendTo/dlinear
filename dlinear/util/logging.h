@@ -112,5 +112,11 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #define DLINEAR_CRITICAL_FMT(msg, ...) void(0)
 #define DLINEAR_INFO_ENABLED false
 #define DLINEAR_TRACE_ENABLED false
+#define DLINEAR_DEV(msg) void(0)
+#define DLINEAR_DEV_FMT(msg, ...) void(0)
+#define DLINEAR_DEV_TRACE(msg) void(0)
+#define DLINEAR_DEV_TRACE_FMT(msg, ...) void(0)
+#define DLINEAR_DEV_DEBUG(msg) void(0)
+#define DLINEAR_DEV_DEBUG_FMT(msg, ...) void(0)
 
 #endif
