@@ -241,11 +241,11 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const * /*prob*/, mpq_
   auto *theory_solver = static_cast<QsoptexTheorySolver *>(data);
   // mpq_get_d() rounds towards 0.  This code guarantees infeas_gt > infeas.
   double infeas_gt = nextafter(mpq_get_d(infeas), std::numeric_limits<double>::infinity());
-  fmt::print("PARTIAL: delta-sat with delta = {} ( > {})", infeas_gt, mpq_class(infeas));
+  std::cout << "PARTIAL: delta-sat with delta = " << infeas_gt << " ( > " << mpq_class{infeas} << ")";
   if (theory_solver->config().with_timings()) {
-    fmt::print(" after {} seconds", theory_solver->stats().timer().seconds());
+    std::cout << " after " << theory_solver->stats().timer().seconds() << " seconds";
   }
-  fmt::print("\n");
+  std::cout << std::endl;
 }
 
 void QsoptexTheorySolver::UpdateExplanation(LiteralSet &explanation) {
