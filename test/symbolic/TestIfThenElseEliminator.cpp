@@ -1,8 +1,7 @@
 /**
- * @file TestIfThenElseEliminator.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
 #include <gtest/gtest.h>
 
@@ -112,7 +111,7 @@ TEST_F(TestIfThenElseEliminator, ITEsInForall) {
 }
 
 // TODO: Add theory propagation to ITE eliminator
-//TEST_F(TestIfThenElseEliminator, ITEPropagateFalse) {
+// TEST_F(TestIfThenElseEliminator, ITEPropagateFalse) {
 //  const Expression e1{if_then_else(Formula{b1_}, 1, 2)};
 //  const Expression e2{if_then_else(Formula{b2_}, 3, 4)};
 //  const Formula f{e1 == e2};
@@ -172,7 +171,7 @@ TEST_F(TestIfThenElseEliminator, ITESimplifyNestedFalse) {
 }
 
 // TODO: Add theory propagation to ITE eliminator
-//TEST_F(TestIfThenElseEliminator, ITESimplifyNestedConstantsFalse) {
+// TEST_F(TestIfThenElseEliminator, ITESimplifyNestedConstantsFalse) {
 //  const Expression e1{if_then_else(Formula{b2_}, 1, 2)};
 //  const Expression e2{if_then_else(!Formula{b2_}, e1, 3)};
 //  const Formula f{e2 == 4};

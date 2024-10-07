@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Function definition class
  *
  * In the SMT2 language, a function definition is a way to define a function in terms of its parameters and body.

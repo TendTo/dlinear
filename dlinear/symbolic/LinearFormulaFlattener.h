@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * LinearFormulaFlattener class
  *
  * Used by the @ref dlinear::PredicateAbstractor to ensure that all the theory literals are

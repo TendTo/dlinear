@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Graph class.
  *
  * Generic graph implementation that can be used to represent a graph with vertices of type @p T.

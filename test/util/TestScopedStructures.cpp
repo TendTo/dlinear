@@ -1,20 +1,20 @@
 /**
- * @file TestScopedStructures.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/util/ScopedVector.hpp"
-#include "dlinear/util/ScopedUnorderedMap.hpp"
-#include "dlinear/util/ScopedUnorderedSet.hpp"
-
 #include <gtest/gtest.h>
+
 #include <vector>
 
-using std::vector;
-using dlinear::ScopedVector;
+#include "dlinear/util/ScopedUnorderedMap.hpp"
+#include "dlinear/util/ScopedUnorderedSet.hpp"
+#include "dlinear/util/ScopedVector.hpp"
+
 using dlinear::ScopedUnorderedMap;
 using dlinear::ScopedUnorderedSet;
+using dlinear::ScopedVector;
+using std::vector;
 
 // Push each element of vector<int> to scoped_vector<int> and check if
 // the two have the same elements.
@@ -56,8 +56,7 @@ TEST(TestScopedVector, Push) {
 
   // It should include {1,2,3,4,5,6,7,8,9}.
   EXPECT_EQ(scoped_vector.size(), 9U);
-  EXPECT_EQ(scoped_vector.get_vector(),
-            vector<int>({1, 2, 3, 4, 5, 6, 7, 8, 9}));
+  EXPECT_EQ(scoped_vector.get_vector(), vector<int>({1, 2, 3, 4, 5, 6, 7, 8, 9}));
 
   // After pop, it should include {1,2,3,4,5,6}.
   scoped_vector.pop();
@@ -184,7 +183,7 @@ GTEST_TEST(ScopedUnorderedMapTest, PushPop) {
   map.pop();
 
   EXPECT_EQ(map.size(), 1u);
-  EXPECT_EQ(map[1], 2);        // Old value should be restored.
+  EXPECT_EQ(map[1], 2);         // Old value should be restored.
   EXPECT_EQ(map.count(2), 0u);  // the entry for '2' is deleted.
   EXPECT_FALSE(map.empty());
 

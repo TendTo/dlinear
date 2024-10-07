@@ -1,12 +1,11 @@
 /**
- * @file TestTimer.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/util/Timer.h"
-
 #include <gtest/gtest.h>
+
+#include "dlinear/util/Timer.h"
 
 using dlinear::Timer;
 using dlinear::TimerGuard;

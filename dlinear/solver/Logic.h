@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Logic enum.
  */
 #pragma once
@@ -11,7 +11,9 @@
 
 namespace dlinear {
 
-/** The [SMT-LIB logic](https://smt-lib.org/logics.shtml) the SMT2 file is using. */
+/**
+ * The [SMT-LIB logic](https://smt-lib.org/logics.shtml) the SMT2 file is using.
+ */
 enum class Logic {
   QF_NRA,      ///< Quantifier free non-linear real arithmetic
   QF_NRA_ODE,  ///< Quantifier free non-linear real arithmetic with ODEs

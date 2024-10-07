@@ -1,8 +1,8 @@
 /**
- * @file TestSolverUtils.h
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
+ * Solvers utilities for testing.
  */
 #pragma once
 
@@ -10,8 +10,8 @@
 
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/filesystem.h"
 #include "dlinear/util/exception.h"
+#include "dlinear/util/filesystem.h"
 
 const auto enabled_test_solvers = ::testing::Values(
 #ifdef DLINEAR_ENABLED_QSOPTEX

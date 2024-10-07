@@ -1,21 +1,20 @@
 /**
- * @file TestSymbolic.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
+#include <gtest/gtest.h>
+
 #include "TestSymbolicUtils.h"
 #include "dlinear/symbolic/symbolic.h"
 
-#include <gtest/gtest.h>
-
+using dlinear::CreateVector;
+using dlinear::iff;
+using dlinear::imply;
+using dlinear::drake::symbolic::Prod;
+using dlinear::drake::symbolic::Sum;
 using std::to_string;
 using std::vector;
-using dlinear::imply;
-using dlinear::iff;
-using dlinear::CreateVector;
-using dlinear::drake::symbolic::Sum;
-using dlinear::drake::symbolic::Prod;
 
 class TestSymbolic : public ::testing::Test {
  protected:
@@ -54,25 +53,13 @@ TEST_F(TestSymbolic, Imply) {
   const Formula f{imply(f1, f2)};
 
   //  T ⇒ T  =  T
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::True()),
-      Formula::True());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::True()), Formula::True());
   //  T ⇒ F  =  F
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::False()),
-      Formula::False());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::False()), Formula::False());
   //  F ⇒ T  =  T
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::True()),
-      Formula::True());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::True()), Formula::True());
   //  F ⇒ F  =  T
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::False()),
-      Formula::True());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::False()), Formula::True());
 
   EXPECT_PRED2(FormulaEqual, f, imply(b1_, b2_));
   EXPECT_PRED2(FormulaEqual, f, imply(Formula{b1_}, b2_));
@@ -84,25 +71,13 @@ TEST_F(TestSymbolic, Iff) {
   const Formula f{iff(Formula{b1_}, Formula{b2_})};
 
   //  T ⇔ T  =  T
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::True()),
-      Formula::True());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::True()), Formula::True());
   //  T ⇔ F  =  F
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::False()),
-      Formula::False());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::True()).Substitute(b2_, Formula::False()), Formula::False());
   //  F ⇔ T  =  F
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::True()),
-      Formula::False());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::True()), Formula::False());
   //  F ⇔ F  =  T
-  EXPECT_PRED2(
-      FormulaEqual,
-      f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::False()),
-      Formula::True());
+  EXPECT_PRED2(FormulaEqual, f.Substitute(b1_, Formula::False()).Substitute(b2_, Formula::False()), Formula::True());
 }
 
 TEST_F(TestSymbolic, Equality) {
@@ -428,10 +403,8 @@ TEST_F(TestSymbolic, DestructiveUpdateOr2) {
 }
 
 TEST(TestSymbolicConstructors, IsNothrowMoveConstructible) {
-  static_assert(std::is_nothrow_move_constructible<Variable>::value,
-                "Variable should be nothrow_move_constructible.");
+  static_assert(std::is_nothrow_move_constructible<Variable>::value, "Variable should be nothrow_move_constructible.");
   static_assert(std::is_nothrow_move_constructible<Expression>::value,
                 "Expression should be nothrow_move_constructible.");
-  static_assert(std::is_nothrow_move_constructible<Formula>::value,
-                "Formula should be nothrow_move_constructible.");
+  static_assert(std::is_nothrow_move_constructible<Formula>::value, "Formula should be nothrow_move_constructible.");
 }

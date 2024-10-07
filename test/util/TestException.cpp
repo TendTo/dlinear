@@ -1,16 +1,16 @@
 /**
- * @file TestException.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/util/exception.h"
-
 #include <gtest/gtest.h>
+
 #include <stdexcept>
 
-using std::runtime_error;
+#include "dlinear/util/exception.h"
+
 using std::invalid_argument;
+using std::runtime_error;
 
 class TestException : public ::testing::Test {
  protected:
@@ -18,26 +18,14 @@ class TestException : public ::testing::Test {
   void TearDown() override { DLINEAR_LOG_INIT_VERBOSITY(-1); }
 };
 
-TEST_F(TestException, AssertFail) {
-  EXPECT_DEATH(DLINEAR_ASSERT(false, "Message"), "Assertion `false` failed");
-}
+TEST_F(TestException, AssertFail) { EXPECT_DEATH(DLINEAR_ASSERT(false, "Message"), "Assertion `false` failed"); }
 
-TEST_F(TestException, AssertFailReport) {
-  EXPECT_DEATH(DLINEAR_ASSERT(1 + 1 == 3, "Message"), "Message");
-}
+TEST_F(TestException, AssertFailReport) { EXPECT_DEATH(DLINEAR_ASSERT(1 + 1 == 3, "Message"), "Message"); }
 
-TEST_F(TestException, AssertSuccess) {
-  EXPECT_NO_THROW(DLINEAR_ASSERT(true, "Message"));
-}
+TEST_F(TestException, AssertSuccess) { EXPECT_NO_THROW(DLINEAR_ASSERT(true, "Message")); }
 
-TEST_F(TestException, Unreachable) {
-  EXPECT_DEATH(DLINEAR_UNREACHABLE(), "Should not be reachable");
-}
+TEST_F(TestException, Unreachable) { EXPECT_DEATH(DLINEAR_UNREACHABLE(), "Should not be reachable"); }
 
-TEST_F(TestException, RuntimeError) {
-  EXPECT_THROW(DLINEAR_RUNTIME_ERROR("Message"), runtime_error);
-}
+TEST_F(TestException, RuntimeError) { EXPECT_THROW(DLINEAR_RUNTIME_ERROR("Message"), runtime_error); }
 
-TEST(TestLogging, RuntimeErrorFmt) {
-  EXPECT_THROW(DLINEAR_RUNTIME_ERROR_FMT("Message: {}", "format"), runtime_error);
-}
+TEST(TestLogging, RuntimeErrorFmt) { EXPECT_THROW(DLINEAR_RUNTIME_ERROR_FMT("Message: {}", "format"), runtime_error); }

@@ -1,4 +1,4 @@
-licenses(["notice"])  # Apache v2
+licenses(["notice"])  # BSD 3-Clause License
 
 exports_files([
     "CPPLINT.cfg",

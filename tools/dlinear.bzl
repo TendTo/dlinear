@@ -14,7 +14,7 @@ DLINEAR_DESCRIPTION = "delta-complete SMT solver for linear theories over the re
 DLINEAR_HOMEPAGE = "https://github.com/TendTo/dlinear"
 DLINEAR_SOURCE = "https://github.com/TendTo/dlinear"
 DLINEAR_TRACKER = "https://github.com/TendTo/dlinear5/issues"
-DLINEAR_LICENSE = "Apache Software License"
+DLINEAR_LICENSE = "BSD 3-Clause License"
 # END GLOBAL VARIABLES
 
 # Can't parse the list
@@ -22,7 +22,7 @@ DLINEAR_CLASSIFIERS = [
     "Development Status :: 1 - Planning",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",

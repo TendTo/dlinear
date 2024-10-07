@@ -1,13 +1,12 @@
 /**
- * @file TestPrefixPrinter.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/symbolic/PrefixPrinter.h"
-#include "TestSymbolicUtils.h"
-
 #include <gtest/gtest.h>
+
+#include "TestSymbolicUtils.h"
+#include "dlinear/symbolic/PrefixPrinter.h"
 
 using dlinear::ToPrefix;
 
@@ -150,15 +149,11 @@ TEST_F(TestPrefixPrinter, False) { EXPECT_EQ(ToPrefix(x_ != x_), "false"); }
 
 TEST_F(TestPrefixPrinter, True) { EXPECT_EQ(ToPrefix(x_ == x_), "true"); }
 
-TEST_F(TestPrefixPrinter, FormulaVariable) {
-  EXPECT_EQ(ToPrefix(Formula{b1_}), "b1");
-}
+TEST_F(TestPrefixPrinter, FormulaVariable) { EXPECT_EQ(ToPrefix(Formula{b1_}), "b1"); }
 
 TEST_F(TestPrefixPrinter, EqualTo) { EXPECT_EQ(ToPrefix(x_ == y_), "(= x y)"); }
 
-TEST_F(TestPrefixPrinter, NotEqualTo) {
-  EXPECT_EQ(ToPrefix(x_ != y_), "(not (= x y))");
-}
+TEST_F(TestPrefixPrinter, NotEqualTo) { EXPECT_EQ(ToPrefix(x_ != y_), "(not (= x y))"); }
 
 TEST_F(TestPrefixPrinter, GT) { EXPECT_EQ(ToPrefix(x_ > y_), "(> x y)"); }
 
@@ -169,15 +164,11 @@ TEST_F(TestPrefixPrinter, LT) { EXPECT_EQ(ToPrefix(x_ < y_), "(< x y)"); }
 TEST_F(TestPrefixPrinter, LTE) { EXPECT_EQ(ToPrefix(x_ <= y_), "(<= x y)"); }
 
 TEST_F(TestPrefixPrinter, And) {
-  EXPECT_EQ(ToPrefix(x_ <= y_ && y_ <= z_ && z_ <= x_),
-            "(and (<= x y) (<= y z) (<= z x))");
+  EXPECT_EQ(ToPrefix(x_ <= y_ && y_ <= z_ && z_ <= x_), "(and (<= x y) (<= y z) (<= z x))");
 }
 
 TEST_F(TestPrefixPrinter, Or) {
-  EXPECT_EQ(ToPrefix(x_ <= y_ || y_ <= z_ || z_ <= x_),
-            "(or (<= x y) (<= y z) (<= z x))");
+  EXPECT_EQ(ToPrefix(x_ <= y_ || y_ <= z_ || z_ <= x_), "(or (<= x y) (<= y z) (<= z x))");
 }
 
-TEST_F(TestPrefixPrinter, Negation) {
-  EXPECT_EQ(ToPrefix(!(x_ <= y_)), "(not (<= x y))");
-}
+TEST_F(TestPrefixPrinter, Negation) { EXPECT_EQ(ToPrefix(!(x_ <= y_)), "(not (<= x y))"); }

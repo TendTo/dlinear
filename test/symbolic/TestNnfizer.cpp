@@ -1,13 +1,12 @@
 /**
- * @file TestNnfizer.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/symbolic/Nnfizer.h"
-#include "TestSymbolicUtils.h"
-
 #include <gtest/gtest.h>
+
+#include "TestSymbolicUtils.h"
+#include "dlinear/symbolic/Nnfizer.h"
 
 using dlinear::Nnfizer;
 
@@ -26,70 +25,60 @@ class NnfizerTest : public ::testing::Test {
 };
 
 TEST_F(NnfizerTest, NNFNoChanges) {
-// No Changes: True
+  // No Changes: True
   EXPECT_PRED2(FormulaEqual, converter_.Convert(Formula::True()), Formula::True());
 
-// No Changes: False
+  // No Changes: False
   EXPECT_PRED2(FormulaEqual, converter_.Convert(Formula::False()), Formula::False());
 
-// No Changes: Variables
+  // No Changes: Variables
   EXPECT_PRED2(FormulaEqual, converter_.Convert(Formula{b1_}), Formula{b1_});
   EXPECT_PRED2(FormulaEqual, converter_.Convert(!b1_), !b1_);
 
-// No Changes: x ≥ y ∧ y ≤ z
+  // No Changes: x ≥ y ∧ y ≤ z
   const Formula f1{x_ >= y_ && y_ <= z_};
   EXPECT_PRED2(FormulaEqual, converter_.Convert(f1), f1);
 
-// No Changes.: x > y ∨ y < z
+  // No Changes.: x > y ∨ y < z
   const Formula f2{x_ > y_ || y_ < z_};
   EXPECT_PRED2(FormulaEqual, converter_.Convert(f2), f2);
 
-// No Changes: ∀x. x + y ≥ x
+  // No Changes: ∀x. x + y ≥ x
   const Formula f4{forall({x_}, x_ + y_ >= x_)};
   EXPECT_PRED2(FormulaEqual, converter_.Convert(f4), f4);
   EXPECT_PRED2(FormulaEqual, converter_.Convert(!f4), !f4);
 }
 
 TEST_F(NnfizerTest, NNFRelational) {
-// ¬(x ≥ y) ∧ ¬(y ≤ z)  ==>  ¬(x ≥ y) ∧ ¬(y ≤ z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ >= y_) && !(y_ <= z_)),
-               !(x_ >= y_) && !(y_ <= z_));
+  // ¬(x ≥ y) ∧ ¬(y ≤ z)  ==>  ¬(x ≥ y) ∧ ¬(y ≤ z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ >= y_) && !(y_ <= z_)), !(x_ >= y_) && !(y_ <= z_));
 
-// ¬(x ≥ y ∧ y ≤ z)  ==>  ¬(x ≥ y) ∨ ¬(y ≤ z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ >= y_ && y_ <= z_)),
-               !(x_ >= y_) || !(y_ <= z_));
+  // ¬(x ≥ y ∧ y ≤ z)  ==>  ¬(x ≥ y) ∨ ¬(y ≤ z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ >= y_ && y_ <= z_)), !(x_ >= y_) || !(y_ <= z_));
 
-// ¬(x > y) ∨ ¬(y < z)  ==>  ¬(x > y) ∨ ¬(y < z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ > y_) || !(y_ < z_)),
-               !(x_ > y_) || !(y_ < z_));
+  // ¬(x > y) ∨ ¬(y < z)  ==>  ¬(x > y) ∨ ¬(y < z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ > y_) || !(y_ < z_)), !(x_ > y_) || !(y_ < z_));
 
-// ¬(x > y ∨ y < z)  ==>  ¬(x > y) ∧ ¬(y < z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ > y_ || y_ < z_)),
-               !(x_ > y_) && !(y_ < z_));
+  // ¬(x > y ∨ y < z)  ==>  ¬(x > y) ∧ ¬(y < z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ > y_ || y_ < z_)), !(x_ > y_) && !(y_ < z_));
 
-// ¬(x ≠ y) ∧ ¬(y = z)  ==>  ¬(x ≠ y) ∧ ¬(y = z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ != y_) && !(y_ == z_)),
-               !(x_ != y_) && !(y_ == z_));
+  // ¬(x ≠ y) ∧ ¬(y = z)  ==>  ¬(x ≠ y) ∧ ¬(y = z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ != y_) && !(y_ == z_)), !(x_ != y_) && !(y_ == z_));
 
-// ¬(x ≠ y ∧ y = z)  ==>  ¬(x ≠ y) ∧ ¬(y = z)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ != y_ && y_ == z_)),
-               !(x_ != y_) || !(y_ == z_));
+  // ¬(x ≠ y ∧ y = z)  ==>  ¬(x ≠ y) ∧ ¬(y = z)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(x_ != y_ && y_ == z_)), !(x_ != y_) || !(y_ == z_));
 }
 
 TEST_F(NnfizerTest, NNFBoolean) {
-// ¬(b₁ ∨ ¬(b₂ ∧ b₃))  ==>  ¬b₁ ∧ b₂ ∧ b₃
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ || !(b2_ && b3_))),
-               !b1_ && b2_ && b3_);
+  // ¬(b₁ ∨ ¬(b₂ ∧ b₃))  ==>  ¬b₁ ∧ b₂ ∧ b₃
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ || !(b2_ && b3_))), !b1_ && b2_ && b3_);
 
-// ¬(b₁ ∨ ¬(b₂ ∨ b₃))  ==>  ¬b₁ ∧ (b₂ ∨ b₃)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ || !(b2_ || b3_))),
-               !b1_ && (b2_ || b3_));
+  // ¬(b₁ ∨ ¬(b₂ ∨ b₃))  ==>  ¬b₁ ∧ (b₂ ∨ b₃)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ || !(b2_ || b3_))), !b1_ && (b2_ || b3_));
 
-// ¬(b₁ ∧ ¬(b₂ ∨ b₃))  ==>  ¬b₁ ∨ b₂ ∨ b₃
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ && !(b2_ || b3_))),
-               !b1_ || b2_ || b3_);
+  // ¬(b₁ ∧ ¬(b₂ ∨ b₃))  ==>  ¬b₁ ∨ b₂ ∨ b₃
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ && !(b2_ || b3_))), !b1_ || b2_ || b3_);
 
-// ¬(b₁ ∧ ¬(b₂ ∧ b₃))  ==>  ¬b₁ ∨ (b₂ ∧ b₃)
-  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ && !(b2_ && b3_))),
-               !b1_ || (b2_ && b3_));
+  // ¬(b₁ ∧ ¬(b₂ ∧ b₃))  ==>  ¬b₁ ∨ (b₂ ∧ b₃)
+  EXPECT_PRED2(FormulaEqual, converter_.Convert(!(b1_ && !(b2_ && b3_))), !b1_ || (b2_ && b3_));
 }

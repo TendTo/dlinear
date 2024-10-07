@@ -1,8 +1,7 @@
 /**
- * @file TestGmp.cpp
- * @author dlinear
- * @date 19 Aug 2023
- * @copyright 2023 dlinear
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence BSD 3-Clause License
  */
 #include <gtest/gtest.h>
 

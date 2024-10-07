@@ -1,15 +1,14 @@
 /**
- * @file TestTerm.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/parser/smt2/Term.h"
-
 #include <gtest/gtest.h>
 
-using dlinear::Formula;
+#include "dlinear/parser/smt2/Term.h"
+
 using dlinear::Expression;
+using dlinear::Formula;
 using dlinear::smt2::Term;
 
 class TestTerm : public ::testing::Test {
@@ -31,4 +30,3 @@ TEST_F(TestTerm, ExpressionConstructor) {
   EXPECT_TRUE(term.expression().EqualTo(e_));
   EXPECT_THROW(Formula f = term.formula(), std::bad_variant_access);
 }
-

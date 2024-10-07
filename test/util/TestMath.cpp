@@ -1,21 +1,21 @@
 /**
- * @file TestMath.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
-#include "dlinear/util/math.h"
-
 #include <gtest/gtest.h>
+
 #include <limits>
 #include <stdexcept>
 
-using std::int64_t;
-using std::numeric_limits;
-using std::runtime_error;
+#include "dlinear/util/math.h"
+
 using dlinear::convert_int64_to_double;
 using dlinear::convert_int64_to_int;
 using dlinear::is_integer;
+using std::int64_t;
+using std::numeric_limits;
+using std::runtime_error;
 
 TEST(TestMath, IsInteger) {
   EXPECT_TRUE(is_integer(3.0));
@@ -24,10 +24,8 @@ TEST(TestMath, IsInteger) {
 
 TEST(TestMath, ConvertInt64ToInt) {
   EXPECT_EQ(convert_int64_to_int(3017294L), 3017294);
-  EXPECT_THROW(convert_int64_to_int(numeric_limits<int>::max() + 1L),
-               runtime_error);
-  EXPECT_THROW(convert_int64_to_int(numeric_limits<int>::min() - 1L),
-               runtime_error);
+  EXPECT_THROW(convert_int64_to_int(numeric_limits<int>::max() + 1L), runtime_error);
+  EXPECT_THROW(convert_int64_to_int(numeric_limits<int>::min() - 1L), runtime_error);
 }
 
 TEST(TestMath, ConvertInt64ToDouble) {

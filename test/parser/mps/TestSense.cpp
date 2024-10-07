@@ -1,15 +1,14 @@
 /**
- * @file TestSense.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
 #include <gtest/gtest.h>
 
 #include "dlinear/parser/mps/Sense.h"
 
-using dlinear::mps::Sense;
 using dlinear::mps::ParseSense;
+using dlinear::mps::Sense;
 
 TEST(TestSense, ParseSense) {
   EXPECT_EQ(ParseSense("L"), Sense::L);

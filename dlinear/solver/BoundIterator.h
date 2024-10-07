@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * @brief BoundIterator class.
  *
  * It is used to iterate over the bounds of a theory solver without copying each @ref

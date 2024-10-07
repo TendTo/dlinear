@@ -1,8 +1,7 @@
 /**
- * @file TestTensor.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
 #include <gtest/gtest.h>
 
@@ -380,7 +379,7 @@ TEST_F(TestTensor, TransposeRowVector) {
 }
 
 // Disabled by the numpy Transpose implementation
-//TEST_F(TestTensor, TransposeColumnVector) {
+// TEST_F(TestTensor, TransposeColumnVector) {
 //  Tensor rectangleMatrix{9};
 //  for (std::size_t i = 0; i < rectangleMatrix.size(); i++) rectangleMatrix[i] = i;
 //  rectangleMatrix.Transpose();

@@ -1,8 +1,7 @@
 /**
- * @file TestFilesystem.cpp
- * @author dlinear (https://github.com/TendTo/dlinear)
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  */
 #include <gtest/gtest.h>
 

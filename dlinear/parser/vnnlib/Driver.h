@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Driver form the parsing and execution of vnnlib files.
  *
  * The driver puts in communication the parser and the scanner.

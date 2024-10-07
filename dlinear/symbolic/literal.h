@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Collection of data structures and functions for working with literals.
  *
  * Literals are a pair formed by a boolean variable and a truth value indicating whether the variable is negated or not.

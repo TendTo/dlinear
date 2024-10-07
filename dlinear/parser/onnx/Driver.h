@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @licence Apache-2.0 license
+ * @licence BSD 3-Clause License
  * Driver form the parsing and execution of onnx files.
  *
  * The drivers reads the onnx file and uses the information in it to update the context by running all the nodes
