@@ -17,8 +17,8 @@ build-stamp:
 
 binary-arch:
 	mkdir -p $(TMP_DIR)/DEBIAN
-	mkdir -p $(TMP_DIR)/usr
-	tar -xzf package.tar.gz -C $(TMP_DIR)/usr
+	mkdir -p $(TMP_DIR)
+	tar -xzf package.tar.gz -C $(TMP_DIR)
 	dpkg-gencontrol -pdlinear
 	dpkg-deb --build debian/tmp ../dlinear_$(DEB_VERSION)_$(DEB_TARGET_ARCH).deb
 

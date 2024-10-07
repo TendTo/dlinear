@@ -1,19 +1,22 @@
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
-load("//tools:dlinear.bzl", "DLINEAR_NAME", "DLINEAR_VERSION")
+load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_NAME", "DLINEAR_VERSION")
 
 pkg_tar(
     name = "package_bin",
     srcs = ["//dlinear"],
     extension = "tar.gz",
     mode = "0755",
-    package_dir = "bin",
+    package_dir = "usr/bin",
 )
 
 pkg_tar(
     name = "package_headers",
-    srcs = ["//dlinear:hdrs"],
+    srcs = [
+        "//dlinear:generate_version_header",
+        "//dlinear:hdrs",
+    ],
     extension = "tar.gz",
-    package_dir = "include/dlinear",
+    package_dir = "usr/include/dlinear",
     deps = [
         "//dlinear/libs:hdrs_tar",
         "//dlinear/parser:hdrs_tar",
@@ -27,7 +30,7 @@ pkg_tar(
     name = "package_sharedlib",
     srcs = ["//dlinear:libdlinear.so"],
     extension = "tar.gz",
-    package_dir = "lib",
+    package_dir = "usr/lib",
 )
 
 pkg_tar(
@@ -43,7 +46,7 @@ pkg_tar(
 pkg_deb(
     name = "debian",
     architecture = "amd64",
-    built_using = "bazel (7.1.1)",
+    built_using = "bazel (7.3.2)",
     changelog = "debian/changelog",
     data = ":package",
     depends = select({
@@ -74,12 +77,11 @@ pkg_deb(
             "libbz2-dev",
             "libgmp-dev",
             "libmpfr-dev",
-            "libspdlog-dev",
         ],
     }),
-    description = "SMT solver for linear rational theories",
-    homepage = "http://tendto.github.io/dlinear",
-    maintainer = "TendTo <casablanca.ernesto@gmail.com>",
+    description = DLINEAR_DESCRIPTION,
+    homepage = DLINEAR_HOMEPAGE,
+    maintainer = "%s <%s>" % (DLINEAR_AUTHOR, DLINEAR_AUTHOR_EMAIL),
     package = DLINEAR_NAME,
     version = "%s" % DLINEAR_VERSION,
 )

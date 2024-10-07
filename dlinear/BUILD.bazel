@@ -9,7 +9,7 @@ genrule(
     cmd = "$(location //tools:generate_version_header) %s %s > $@" % (DLINEAR_NAME, DLINEAR_VERSION),
     stamp = True,
     tools = ["//tools:generate_version_header"],
-    visibility = ["//visibility:private"],
+    visibility = ["//package:__subpackages__"],
 )
 
 dlinear_cc_library(

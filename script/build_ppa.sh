@@ -6,10 +6,10 @@ readonly build=${1:-source}
 
 pushd "$script_path/.." > /dev/null || exit 1
 
-readonly package_path=$(bazel cquery --output=files --enable_fpic_build //package 2> /dev/null)
+readonly package_path=$(bazel cquery --output=files --config=opt --enable_fpic_build //package 2> /dev/null)
 rm -rf "${dist_dir}"/*
 mkdir -p "${dist_dir}"
-bazel build --enable_fpic_build //package
+bazel build --config=opt --enable_fpic_build //package
 cp "${package_path}" "${dist_dir}"
 cp -r package/debian "${dist_dir}"
 
