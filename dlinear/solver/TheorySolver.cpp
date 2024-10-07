@@ -122,7 +122,7 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
-  DLINEAR_TRACE_FMT("SoplexTheorySolver::CheckSat: Box = \n{}", box);
+  DLINEAR_TRACE_FMT("TheorySolver::CheckSat: Box = \n{}", box);
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before CheckSat");
 
   model_ = box;
@@ -132,7 +132,7 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
 
   // If we can immediately return SAT afterward
   if (theory_row_to_lit_.empty()) {
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: no need to call LP solver");
+    DLINEAR_DEBUG("TheorySolver::CheckSat: no need to call LP solver");
     UpdateModelBounds();
     return SatResult::SAT_SATISFIABLE;
   }
@@ -142,11 +142,11 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
     timer_guard.pause();  // Pause the timer to measure the time spent in the preprocessor
     preprocessor_.Process(explanations);
     timer_guard.resume();
-    DLINEAR_DEBUG("SoplexTheorySolver::CheckSat: conflict detected in preprocessing");
+    DLINEAR_DEBUG("TheorySolver::CheckSat: conflict detected in preprocessing");
     if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
   }
 
-  DLINEAR_ERROR("SoplexTheorySolver::CheckSat: running soplex");
+  DLINEAR_DEV_DEBUG_FMT("TheorySolver::CheckSat: running {}", config_.lp_solver());
   return CheckSatCore(actual_precision, explanations);
 }
 

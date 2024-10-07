@@ -371,7 +371,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     py_check_signals();
 #endif
 
-    DLINEAR_WARN("New iteration");
+    DLINEAR_DEV_DEBUG("New iteration");
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
     const auto optional_model = sat_solver_->CheckSat();
@@ -424,7 +424,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
     } else {
       DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
-      DLINEAR_ERROR("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
+      DLINEAR_WARN("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
       have_unsolved = true;  // Will prevent return of UNSAT
       theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
     }
@@ -477,7 +477,7 @@ std::unique_ptr<SatSolver> Context::Impl::GetSatSolver() {
 void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
-  DLINEAR_CRITICAL_FMT("ContextImpl::LearnExplanation({})", explanation);
+  DLINEAR_DEV_FMT("ContextImpl::LearnExplanation({})", explanation);
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG

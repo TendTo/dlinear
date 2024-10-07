@@ -233,7 +233,7 @@ void NNSoplexTheorySolver::UpdateExplanationsWithCurrentPiecewiseLinearLiterals(
 }
 
 void NNSoplexTheorySolver::SoiToObjFunction() {
-  DLINEAR_ERROR_FMT("NNSoplexTheorySolver::SoiToObjFunction: soi_ = {}", soi_);
+  DLINEAR_DEBUG_FMT("NNSoplexTheorySolver::SoiToObjFunction: soi_ = {}", soi_);
   if (is_variable(soi_)) {
     for (std::size_t i = 0; i < theory_col_to_var_.size(); i++) {
       const Variable &var{theory_col_to_var_[i]};
@@ -256,11 +256,6 @@ void NNSoplexTheorySolver::SoiToObjFunction() {
                                                       : Rational(it->second.get_mpq_t()));
     }
   }
-  DLINEAR_ERROR_FMT("NNSoplexTheorySolver::SoiToObjFunction: obj = {}", [this]() {
-    soplex::VectorRational obj;
-    spx_.getObjRational(obj);
-    return obj;
-  }());
 }
 
 void NNSoplexTheorySolver::Reset() {

@@ -204,8 +204,6 @@ Tensor &Tensor::Reshape(const Tensor &tensor_dim, const bool allow_zero) {
     }
     new_dims.push_back(dim);
   }
-  DLINEAR_ERROR_FMT("Dimension: {} - Original: {}", new_dims,
-                    std::vector<std::size_t>(values_.shape().begin(), values_.shape().end()));
   values_.reshape(new_dims);
   return *this;
 }

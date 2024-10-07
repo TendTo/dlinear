@@ -5,10 +5,10 @@
  * Logging macros.
  * Allows logging with different verbosity levels using spdlog.
  *
- * The verbosity level is set with the --verbosity flag.
- * The verbosity level is an integer between 0 and 5.
- * The higher the verbosity level, the more information is logged.
- * If another value is provided, the logging is turned off.
+ * The verbosity level is set with the -V flag.
+ * The verbosity level is an integer between 0 and 5 and it increases with each -V flag.
+ * It can be reduced with the -q flag.
+ * It starts at 2 (warning).
  */
 #pragma once
 
@@ -65,6 +65,31 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #define DLINEAR_CRITICAL_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::ERR)->critical(msg, __VA_ARGS__)
 #define DLINEAR_INFO_ENABLED (::dlinear::get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::info))
 #define DLINEAR_TRACE_ENABLED (::dlinear::get_logger(::dlinear::LoggerType::OUT)->should_log(spdlog::level::trace))
+
+#ifndef NDEBUG
+
+#include <sstream>
+#include <thread>
+
+#define DLINEAR_DEV(msg)                                                                 \
+  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "", \
+               std::chrono::system_clock::now(), (std::stringstream{} << std::this_thread::get_id()).str());
+#define DLINEAR_DEV_FMT(msg, ...)                                                                           \
+  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                    \
+               std::chrono::system_clock::now(), (std::stringstream{} << std::this_thread::get_id()).str(), \
+               __VA_ARGS__);
+#define DLINEAR_DEV_TRACE(msg) DLINEAR_DEV(msg)
+#define DLINEAR_DEV_TRACE_FMT(msg, ...) DLINEAR_DEV_FMT(msg, __VA_ARGS__)
+#define DLINEAR_DEV_DEBUG(msg) DLINEAR_DEV(msg)
+#define DLINEAR_DEV_DEBUG_FMT(msg, ...) DLINEAR_DEV_FMT(msg, __VA_ARGS__)
+#else
+#define DLINEAR_DEV(msg) void(0)
+#define DLINEAR_DEV_FMT(msg, ...) void(0)
+#define DLINEAR_DEV_TRACE(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg)
+#define DLINEAR_DEV_TRACE_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->trace(msg, __VA_ARGS__)
+#define DLINEAR_DEV_DEBUG(msg) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg)
+#define DLINEAR_DEV_DEBUG_FMT(msg, ...) ::dlinear::get_logger(::dlinear::LoggerType::OUT)->debug(msg, __VA_ARGS__)
+#endif
 
 #else
 

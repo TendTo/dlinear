@@ -97,11 +97,9 @@ bool is_clause(const Formula &f) {
 
 std::set<Formula> get_clauses(const Formula &f) {
   if (is_conjunction(f)) {
-#ifndef NDEBUG
-    for (const Formula &clause : get_operands(f)) {
-      DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
-    }
-#endif
+    DLINEAR_ASSERT(std::all_of(get_operands(f).begin(), get_operands(f).end(),
+                               [](const Formula &clause) { return is_clause(clause); }),
+                   "All operands must be clauses");
     return get_operands(f);
   } else {
     DLINEAR_ASSERT(is_clause(f), "Must be a clause");
