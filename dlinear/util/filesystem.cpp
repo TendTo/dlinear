@@ -32,9 +32,12 @@ std::vector<std::string> split_string_by_whitespace(const char *in) {
   return r;
 }
 
-std::vector<std::string> get_files(const std::string &path) {
+std::vector<std::string> get_files(const std::string &path, const std::string &extension) {
   std::vector<std::string> files;
-  for (const auto &entry : std::filesystem::directory_iterator(path)) files.emplace_back(entry.path());
+  for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(path)) {
+    if (!extension.empty() && entry.path().extension() != extension) continue;
+    files.emplace_back(entry.path());
+  }
   return files;
 }
 
