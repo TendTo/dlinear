@@ -5,6 +5,8 @@
  */
 #include "Interval.h"
 
+#include <iostream>
+
 #include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/exception.h"
 

@@ -5,6 +5,4 @@
  */
 #include "dlinear/libs/libxtensor.h"
 
-#include <gmpxx.h>
-
 namespace xt {}  // namespace xt

@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include <iosfwd>
 #include <string>
 
 #include "dlinear/libs/libgmp.h"
