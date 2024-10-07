@@ -3,8 +3,11 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "BAZELISK_VERSION": "v1.18.0",
-            "ADDITIONAL_PACKAGES": "libgmp-dev libtool autoconf flex bison"
+            "BAZELISK_VERSION": "v1.22.0",
+            "BAZELISK_DOWNLOAD_SHA": "a110a613ac57081482348b9fa1719ede1fc9bb45a010f82f15eaeb1e9b657e29", // Use "dev-mode" to skip SHA verification
+            "BUILDIFIER_VERSION": "v7.3.1",
+            "BUILDIFIER_DOWNLOAD_SHA": "5474cc5128a74e806783d54081f581662c4be8ae65022f557e9281ed5dc88009", // Use "dev-mode" to skip SHA verification
+            "ADDITIONAL_PACKAGES": "git python3 build-essential automake libtool"
         }
     },
     // Configure tool-specific properties.
