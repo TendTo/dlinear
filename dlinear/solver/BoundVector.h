@@ -87,6 +87,14 @@ class BoundVector {
   BoundIterator AddBound(const mpq_class& value, LpColBound lp_bound, const Literal& theory_lit,
                          const LiteralSet& explanation = {});
   /**
+   * Remove @p bound from the vector if it is present.
+   * @param bound bound to remove
+   * @return true if the bound has been removed
+   * @return false if the bound has not been found
+   */
+   // TODO: ensure correctness of bound removal when there are multiple equal bounds
+  bool RemoveBound(const Bound& bound);
+  /**
    * Manually set the active lower bound to @p value.
    *
    * The method won't have any effect if @p value is less than the active lower bound.
@@ -317,7 +325,7 @@ class BoundVector {
    */
   [[nodiscard]] BoundIterator GetActiveBounds(const mpq_class& lb, const mpq_class& ub) const;
 
-  int n_lower_bounds_;                   ///< Number of lower bounds, both strict and non-strict
+  std::size_t n_lower_bounds_;           ///< Number of lower bounds, both strict and non-strict
   Bounds bounds_;                        ///< Equality and inequality bounds
   Bounds nq_bounds_;                     ///< Non-equality bounds
   const mpq_class* inf_l_;               ///< Starting lower bound
