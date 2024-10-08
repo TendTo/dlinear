@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/exception.h"
 
@@ -14,9 +15,9 @@ namespace dlinear {
 
 const mpq_class ReluConstraint::zero{0};
 
-ReluConstraint::ReluConstraint(const Formula& active_formula, const Formula& inactive_formula, Variable relu_var,
-                               Expression active_soi, const PredicateAbstractor& pa)
-    : ReluConstraint(pa[active_formula], pa[inactive_formula], std::move(relu_var), std::move(active_soi)) {}
+ReluConstraint::ReluConstraint(const Variable& relu_var, const Expression& e, const PredicateAbstractor& pa)
+    : ReluConstraint(pa[LinearFormulaFlattener{pa.config()}.Flatten(relu_var - e == 0)], pa[relu_var == 0], relu_var,
+                     relu_var - e) {}
 ReluConstraint::ReluConstraint(Variable active_var, Variable inactive_var, Variable relu_var, Expression active_soi)
     : PiecewiseLinearConstraint{
           &zero, nullptr, std::move(active_var), std::move(inactive_var), relu_var, std::move(active_soi), relu_var} {}
@@ -50,7 +51,7 @@ std::set<LiteralSet> ReluConstraint::TightenBounds(BoundPreprocessor& preprocess
   }
   // Both active and inactive assignments are unsat. Return the explanation for the latter.
   if (!explanations.empty()) return explanations;
-  
+
   UpdateLowerBound(&preprocessor.theory_bounds().at(theory_var_).active_lower_bound());
   UpdateUpperBound(&preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
   return {};

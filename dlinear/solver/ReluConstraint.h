@@ -33,19 +33,15 @@ class ReluConstraint : public PiecewiseLinearConstraint {
   /**
    * Construct a new Relu Constraint object
    *
-   * Given the standard ReLU definition, the three theory variables are:
+   * Given the standard ReLU definition, where @p relu_var is @f$ y @f$ and @p e is @f$ x @f$, we store the following:
    * - `inactive_formula` is the formula @f$ y = 0 @f$
-   * - `active_formula` is the boolean variable associated with the formula @f$ y = x @f$
-   * - `relu_var` is the theory variable @f$ y @f$
-   * @param active_formula formula @f$ y = x @f$
-   * @param inactive_formula formula @f$ y = 0 @f$
+   * - `active_formula` is the formula @f$ y = x @f$
+   * - `active_soi` is the sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
    * @param relu_var theory variable @f$ y @f$
-   * @param active_soi sum of infeasibility  @f$ y - x @f$ used if the constraint is active.
-   * It must be @f$ 0 @f$ for the constraint to be satisfied
+   * @param e expression @f$ x @f$
    * @param pa predicate abstractor used to convert the formula to a boolean variable
    */
-  ReluConstraint(const Formula& active_formula, const Formula& inactive_formula, Variable relu_var,
-                 Expression active_soi, const PredicateAbstractor& pa);
+  ReluConstraint(const Variable& relu_var, const Expression& e, const PredicateAbstractor& pa);
   /**
    * Construct a new Relu Constraint object
    *
