@@ -71,13 +71,20 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 #include <sstream>
 #include <thread>
 
-#define DLINEAR_DEV(msg)                                                                 \
-  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "", \
-               std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()));
-#define DLINEAR_DEV_FMT(msg, ...)                                                                          \
-  fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                   \
-               std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()), \
-               __VA_ARGS__);
+#define DLINEAR_DEV(msg)                                                                                        \
+  do {                                                                                                          \
+    if (::dlinear::get_logger(::dlinear::LoggerType::ERR)->should_log(spdlog::level::err))                      \
+      fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                    \
+                   std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id())); \
+  } while (0)
+#define DLINEAR_DEV_FMT(msg, ...)                                                                              \
+  do {                                                                                                         \
+    if (::dlinear::get_logger(::dlinear::LoggerType::ERR)->should_log(spdlog::level::err))                     \
+      fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                   \
+                   std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()), \
+                   __VA_ARGS__);                                                                               \
+  } while (0)
+
 #define DLINEAR_DEV_TRACE(msg) DLINEAR_DEV(msg)
 #define DLINEAR_DEV_TRACE_FMT(msg, ...) DLINEAR_DEV_FMT(msg, __VA_ARGS__)
 #define DLINEAR_DEV_DEBUG(msg) DLINEAR_DEV(msg)
