@@ -51,26 +51,29 @@ class Context {
    */
   void Assert(const Formula &f);
   /**
-   * Create and assert a ReLU expression from the linear expression @p e.
+   * Assert a piecewise linear function with two possible branches.
    *
-   * Given a linear expression @p e, this method will use the theory variable @p relu_var
-   * and introduce the following formulas:
+   * Consider a piecewise linear function that assigns either @p active or @p inactive to @p var depending on @p cond
    * @f[
-   * \begin{align*}
-   * A = (\text{relu_var} = 0) \newline
-   * B = (\text{relu_var} = e) \newline
-   * \end{align*}
+   * \text{var} =\begin{cases}
+   * \text{active} & \text{if } cond \newline
+   * \text{inactive} & \text{otherwise}
+   * \end{cases}
    * @f]
-   * The following clauses will be added:
+   * Assigning @f$ \mathcal{A} = (\text{active} = \text{var}) @f$ and
+   * @f$ \mathcal{B} = (\text{var} = \text{inactive}) @f$, we introduce the following assertions:
    * @f[
-   * (A \lor B) \land (\neg A \lor \neg B)
+   * (\mathcal{A} \lor \neg cond) \land (\mathcal{B} \lor cond) \land (cond \lor \neg cond)
    * @f]
-   * The variable @p relu_var is assigned the value of the ReLU expression and returned.
-   * @param e ITE expression to be asserted
-   * @param relu_var variable to represent the ReLU expression. If not provided, a new variable is created.
-   * @return fresh variable introduced to represent the ReLU expression
+   * Note that the last clause is a tautology, but it forces the sat solver to assign a boolean value to cond and
+   * hopefully skip either @f$ \mathcal{A} @f$ or @f$ \mathcal{B} @f$.
+   * @param var the variable to be assigned
+   * @param cond the condition to be checked
+   * @param active the value of the variable if the condition is true
+   * @param inactive the value of the variable if the condition is false
    */
-  Variable AssertRelu(const Expression &e, const Variable &relu_var);
+  void AssertPiecewiseLinearFunction(const Variable &var, const Formula &cond, const Expression &active,
+                                     const Expression &inactive);
 
   /**
    * Check the satisfiability of the asserted formulas, and sets

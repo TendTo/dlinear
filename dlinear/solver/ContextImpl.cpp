@@ -84,21 +84,27 @@ void Context::Impl::Assert(const Formula &f) {
   stack_.push_back(no_ite);
   sat_solver_->AddFormula(no_ite);
 }
-Variable Context::Impl::AssertRelu(const Expression &e, const Variable &relu_var) {
-  DLINEAR_TRACE_FMT("ContextImpl::AssertRelu({})", e);
+void Context::Impl::AssertPiecewiseLinearFunction(const Variable &var, const Formula &cond, const Expression &active,
+                                                  const Expression &inactive) {
+  DLINEAR_TRACE_FMT("ContextImpl::AssertPiecewiseLinearFunction({})", var);
+  DLINEAR_ASSERT(!var.is_dummy() && var.get_type() == Variable::Type::CONTINUOUS, "Variable must be a real variable");
+  DLINEAR_ASSERT(is_relational(cond), "Condition must be a relational formula");
 
-  Variable relu_theory_var = relu_var.is_dummy() ? Variable{"relu_var | " + e.to_string()} : relu_var;
-  const Formula active{relu_theory_var == e};
-  const Formula inactive{relu_theory_var == 0};
-  const Formula clause_positive{active || inactive};
-  const Formula clause_negative{!active || !inactive};
+  const Formula condition_lit = predicate_abstractor_.Convert(cond);
+  const Formula active_lit = predicate_abstractor_.Convert(var - active == 0);
+  const Formula inactive_lit = predicate_abstractor_.Convert(var - inactive == 0);
+  // Make sure the cond is assigned a value (true or false) in the SAT solver
+  const Formula force_assignment(condition_lit || !condition_lit);
+  const Formula active_assertion{active_lit || !condition_lit};
+  const Formula inactive_assertion{inactive_lit || condition_lit};
 
-  AddToBox(get_variable(relu_theory_var));
-  stack_.push_back(clause_positive);
-  stack_.push_back(clause_negative);
-  sat_solver_->AddFormula(clause_positive);
-  sat_solver_->AddFormula(clause_negative);
-  return relu_theory_var;
+  DeclareVariable(var, false);
+  stack_.push_back(force_assignment);
+  stack_.push_back(active_assertion);
+  stack_.push_back(inactive_assertion);
+  sat_solver_->AddClause(force_assignment);
+  sat_solver_->AddClause(active_assertion);
+  sat_solver_->AddClause(inactive_assertion);
 }
 
 const PiecewiseLinearConstraint &Context::Impl::AddGuidedConstraint(
@@ -315,6 +321,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_SATISFIABLE;
   }
 
+  DLINEAR_DEV_FMT("STATE: {}", fmt::join(assertions(), "\n"));
+
   // Temporarily disable to study the effect of guided constraints
   if (config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER) {
     // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
@@ -336,11 +344,14 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_UNSATISFIABLE;
   }
 
-#if 1
   // Check the current constraints to see if there is anything that could be used to use for the guided constraints
   for (const std::unique_ptr<PiecewiseLinearConstraint> &constraint : pl_constraints_) {
-    constraint->TightenBounds(theory_solver_->m_fixed_preprocessor());
-    DLINEAR_TRACE_FMT("Tighten Bounds: {} - {}", constraint->theory_var(), *constraint);
+    const std::set<LiteralSet> tight_explanations{constraint->TightenBounds(theory_solver_->m_fixed_preprocessor())};
+    DLINEAR_DEV_TRACE_FMT("Tighten Bounds: {} - {}", constraint->theory_var(), *constraint);
+    if (tight_explanations.empty()) continue;
+    DLINEAR_DEV_DEBUG("ContextImpl::CheckSatCore() - Tightening bounds check = UNSAT");
+    LearnExplanations(tight_explanations);
+    return SatResult::SAT_UNSATISFIABLE;
   }
   theory_solver_->Reset();
 
@@ -361,8 +372,6 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     auto &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
     nnSoplexTheorySolver.SetPiecewiseLinearConstraints(pl_constraints_);
   }
-
-#endif
 
   bool have_unsolved = false;
   while (true) {
@@ -478,6 +487,7 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_DEV_FMT("ContextImpl::LearnExplanation({})", explanation);
+  std::cout << std::endl;
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG
