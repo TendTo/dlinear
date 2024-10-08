@@ -103,3 +103,17 @@ dlinear_cc_googletest(
         "//dlinear/solver",
     ],
 )
+
+dlinear_cc_googletest(
+    name = "test_delta_vnnlib",
+    size = "enormous",
+    data = glob([
+        "vnnlib/*.vnnlib",
+        "vnnlib/*.onnx",
+    ]),
+    tags = ["solver"],
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver",
+    ],
+)

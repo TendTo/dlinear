@@ -92,8 +92,8 @@ tests/
 *.out
 /mps/
 /smt2/
-*.onnx
-*.vnnlib
+/*.onnx
+/*.vnnlib
 
 # Checks
 valgrind-out.txt

@@ -38,9 +38,7 @@ class TestCompleteSmt2 : public ::testing::TestWithParam<
 };
 
 INSTANTIATE_TEST_SUITE_P(TestCompleteSmt2, TestCompleteSmt2,
-                         //                         ::testing::Combine(enabled_test_solvers,
-                         ::testing::Combine(::testing::Values(Config::LPSolver::SOPLEX),
-                                            ::testing::ValuesIn(get_files("test/solver/smt2")),
+                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/smt2")),
                                             ::testing::Values(Config::PreprocessingRunningFrequency::NEVER,
                                                               Config::PreprocessingRunningFrequency::ON_FIXED,
                                                               Config::PreprocessingRunningFrequency::ALWAYS)));

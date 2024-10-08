@@ -1,0 +1,20 @@
+(set-info :status sat)
+
+(declare-const X_0 Real)
+(declare-const X_1 Real)
+(declare-const Y_0 Real)
+(declare-const Y_1 Real)
+
+(assert (>= X_0 -100))
+(assert (<= X_0 100))
+(assert (>= X_1 0))
+(assert (<= X_1 4))
+
+
+(assert (>= Y_0 -10))
+(assert (<= Y_0 1000))
+(assert (>= Y_1 -1))
+(assert (<= Y_1 100))
+
+(check-sat)
+
