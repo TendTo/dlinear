@@ -349,11 +349,12 @@ def dlinear_cc_googletest(
         deps = []
     if type(deps) == "select":
         if use_default_main:
-            deps += select({"//conditions:default": ["@googletest//:gtest_main"]})
+            deps += select({"//conditions:default": ["//test:test_main", "@googletest//:gtest"]})
         else:
             deps += select({"//conditions:default": ["@googletest//:gtest"]})
     elif use_default_main:
-        deps.append("@googletest//:gtest_main")
+        deps.append("//test:test_main")
+        deps.append("@googletest//:gtest")
     else:
         deps.append("@googletest//:gtest")
     dlinear_cc_test(

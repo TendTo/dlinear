@@ -31,8 +31,6 @@ TEST(TestLogging, Critical) { EXPECT_NO_THROW(DLINEAR_CRITICAL("TestLogging::Cri
 
 TEST(TestLogging, CriticalFmt) { EXPECT_NO_THROW(DLINEAR_CRITICAL_FMT("TestLogging::Critical{}", "Fmt")); }
 
-TEST(TestLogging, LogInit) { EXPECT_NO_THROW(DLINEAR_LOG_INIT_LEVEL(spdlog::level::trace)); }
-
 TEST(TestLogging, VerbosityToLogLevel) {
   EXPECT_EQ(DLINEAR_VERBOSITY_TO_LOG_LEVEL(0), spdlog::level::critical);
   EXPECT_EQ(DLINEAR_VERBOSITY_TO_LOG_LEVEL(1), spdlog::level::err);

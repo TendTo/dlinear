@@ -15,7 +15,7 @@ using std::runtime_error;
 class TestException : public ::testing::Test {
  protected:
   void SetUp() override { DLINEAR_LOG_INIT_VERBOSITY(5); }
-  void TearDown() override { DLINEAR_LOG_INIT_VERBOSITY(-1); }
+  void TearDown() override { DLINEAR_LOG_INIT_VERBOSITY(0); }
 };
 
 TEST_F(TestException, AssertFail) { EXPECT_DEATH(DLINEAR_ASSERT(false, "Message"), "Assertion `false` failed"); }

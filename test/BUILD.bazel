@@ -1,0 +1,11 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "test_main",
+    srcs = ["TestMain.cpp"],
+    visibility = ["//test:__subpackages__"],
+    deps = [
+        "//dlinear/util:logging",
+        "@googletest//:gtest",
+    ],
+)
