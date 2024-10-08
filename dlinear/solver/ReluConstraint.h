@@ -66,7 +66,7 @@ class ReluConstraint : public PiecewiseLinearConstraint {
 
   void EnableLiteral(const Variable& var);
 
-  void TightenBounds(BoundPreprocessor& preprocessor) override;
+  std::set<LiteralSet> TightenBounds(BoundPreprocessor& preprocessor) override;
 
   [[nodiscard]] LiteralSet Assumptions() const override;
 
