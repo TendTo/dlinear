@@ -190,6 +190,9 @@ class BoundPreprocessor {
    */
   bool PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate, Explanations& explanations);
 
+  bool PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate,
+                                 const std::vector<Bound>& assumptions, Explanations& explanations);
+
  protected:
   const Variable* ShouldPropagateEqPolynomial(const Literal& lit) const;
   const Variable* ShouldPropagateEqPolynomial(const Formula& formula) const;

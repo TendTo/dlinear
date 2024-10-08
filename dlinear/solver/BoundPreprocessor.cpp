@@ -266,6 +266,29 @@ bool BoundPreprocessor::PropagateEqPolynomial(const Literal& lit, const Variable
   return true;
 }
 
+bool BoundPreprocessor::PropagateBoundsPolynomial(const dlinear::Literal& lit,
+                                                  const dlinear::drake::symbolic::Variable& var_to_propagate,
+                                                  const std::vector<Bound>& assumptions,
+                                                  dlinear::BoundPreprocessor::Explanations& explanations) {
+  BoundVector& bounds = theory_bounds_.at(var_to_propagate);
+  DLINEAR_DEV_FMT("Bounds initial: {}", bounds);
+  for (auto assumption = assumptions.begin(); assumption != assumptions.end(); ++assumption) {
+    BoundIterator violation{bounds.AddBound(*assumption)};
+    if (!violation.empty()) {
+      for (auto added_assumption = assumptions.begin(); added_assumption != assumption; ++added_assumption) {
+        bounds.RemoveBound(*added_assumption);
+      }
+      return false;
+    }
+  }
+  DLINEAR_DEV_FMT("Bounds assumptions: {}", bounds);
+
+  const bool res = PropagateBoundsPolynomial(lit, var_to_propagate, explanations);
+  for (const Bound& assumption : assumptions) bounds.RemoveBound(assumption);
+  DLINEAR_DEV_FMT("Bounds after: {}", bounds);
+  return res;
+}
+
 bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate,
                                                   Explanations& explanations) {
   DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateInPolynomial({})", lit);
@@ -276,6 +299,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   DLINEAR_ASSERT(!var_to_propagate.is_dummy(), "The variable must be valid");
 
+  BoundVector& var_bounds = theory_bounds_.at(var_to_propagate);
   LiteralSet l_explanation{};
   LiteralSet u_explanation{};
   std::vector<Variable> dependencies;
@@ -327,7 +351,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
     if (l_rhs == u_rhs) {
       DLINEAR_ASSERT(l_explanation == u_explanation, "The explanations must be the same");
       const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::B, lit, l_explanation};
-      BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
+      BoundIterator violation{var_bounds.AddBound(bound)};
       if (!violation.empty()) {
         l_explanation.insert(lit);
         violation.explanation(l_explanation);
@@ -335,15 +359,14 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
         explanations.insert(l_explanation);
         return false;
       }
-      DLINEAR_ASSERT(!env_.contains(var_to_propagate) ||
-                         env_[var_to_propagate] == *theory_bounds_.at(var_to_propagate).GetActiveEqualityBound(),
+      DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *var_bounds.GetActiveEqualityBound(),
                      "No conflict should arise from this assignment");
-      env_[var_to_propagate] = *theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
+      env_[var_to_propagate] = *var_bounds.GetActiveEqualityBound();
       return true;
     }
     // The two bounds are different. Add the lower and upper bounds to the variable
     const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, l_explanation};
-    BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
+    BoundIterator violation{var_bounds.AddBound(bound)};
     if (!violation.empty()) {
       l_explanation.insert(lit);
       violation.explanation(l_explanation);
@@ -352,8 +375,9 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
       return false;
     }
     const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, u_explanation};
-    BoundIterator violation2{theory_bounds_.at(var_to_propagate).AddBound(bound2)};
+    BoundIterator violation2{var_bounds.AddBound(bound2)};
     if (!violation2.empty()) {
+      var_bounds.RemoveBound(bound);  // Remove the lower bound too
       u_explanation.insert(lit);
       violation2.explanation(u_explanation);
       DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Upper bound {} conflict found", u_explanation);
@@ -364,7 +388,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
                       var_to_propagate, l_rhs, u_rhs, lit, dependencies);
     //    fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
     //                 var_propagated, l_rhs, u_rhs, lit, dependencies);
-    const mpq_class* const eq_bound = theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
+    const mpq_class* const eq_bound = var_bounds.GetActiveEqualityBound();
     if (eq_bound != nullptr) {
       DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *eq_bound,
                      "No conflict should arise from this assignment");
@@ -402,7 +426,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
   //  fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
   //  var_propagated,
   //               l_rhs, u_rhs, lit, dependencies);
-  BoundIterator violation{theory_bounds_.at(var_to_propagate).AddBound(bound)};
+  BoundIterator violation{var_bounds.AddBound(bound)};
   if (!violation.empty()) {
     bound.explanation.insert(lit);
     violation.explanation(bound.explanation);
@@ -412,7 +436,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
   }
   DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
                     var_to_propagate, l_rhs, u_rhs, lit, dependencies);
-  const mpq_class* const eq_bound = theory_bounds_.at(var_to_propagate).GetActiveEqualityBound();
+  const mpq_class* const eq_bound = var_bounds.GetActiveEqualityBound();
   if (eq_bound != nullptr) {
     DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *eq_bound,
                    "No conflict should arise from this assignment");
