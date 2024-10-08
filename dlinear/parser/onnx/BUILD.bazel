@@ -44,6 +44,7 @@ dlinear_cc_library(
     srcs = ["Driver.cpp"],
     hdrs = ["Driver.h"],
     implementation_deps = [
+        "//dlinear/solver:leaky_relu_constraint",
         "//dlinear/solver:relu_constraint",
         "//dlinear/util:exception",
     ],

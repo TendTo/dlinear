@@ -31,14 +31,7 @@ class NNSoplexTheorySolver : public SoplexTheorySolver {
   explicit NNSoplexTheorySolver(PredicateAbstractor &predicate_abstractor,
                                 const std::string &class_name = "NNSoplexTheorySolver");
 
-  void SetPiecewiseLinearConstraints(const std::vector<std::unique_ptr<PiecewiseLinearConstraint>> &relu_constraints) {
-    for (const auto &relu_constraint : relu_constraints) {
-      pl_theory_lit_.emplace(relu_constraint->active_var(), relu_constraint.get());
-      pl_theory_lit_.emplace(relu_constraint->inactive_var(), relu_constraint.get());
-      // fmt::println("Adding relu constraint: {} - {}", relu_constraint->active_var(),
-      // relu_constraint->inactive_var());
-    }
-  }
+  void SetPiecewiseLinearConstraints(const std::vector<std::unique_ptr<PiecewiseLinearConstraint>> &relu_constraints);
 
   void AddLiteral(const Variable &formula_var, const Formula &formula) override;
   Explanations EnableLiteral(const Literal &lit) override;

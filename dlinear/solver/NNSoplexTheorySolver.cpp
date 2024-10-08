@@ -22,6 +22,16 @@ NNSoplexTheorySolver::NNSoplexTheorySolver(PredicateAbstractor &predicate_abstra
   spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MINIMIZE);
 }
 
+void NNSoplexTheorySolver::SetPiecewiseLinearConstraints(
+    const std::vector<std::unique_ptr<PiecewiseLinearConstraint>> &relu_constraints) {
+  for (const auto &relu_constraint : relu_constraints) {
+    pl_theory_lit_.emplace(relu_constraint->active_var(), relu_constraint.get());
+    pl_theory_lit_.emplace(relu_constraint->inactive_var(), relu_constraint.get());
+    // fmt::println("Adding relu constraint: {} - {}", relu_constraint->active_var(),
+    // relu_constraint->inactive_var());
+  }
+}
+
 void NNSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula &formula) {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
   // Literal is already present
@@ -63,6 +73,7 @@ TheorySolver::Explanations NNSoplexTheorySolver::EnableLiteral(const Literal &li
   // Literal will be handled by the ReLU SOI
   if (pl_theory_lit_.contains(var)) {
     const PiecewiseLinearConstraint &constraint = *pl_theory_lit_.at(var);
+    DLINEAR_DEV_FMT("ENABLED {} = fixed? {}\n{}", lit, constraint.fixed(), constraint);
     // No point in adding both sides of the piecewise constraint. Just consider the true one
     if (!truth) return {};
     // fmt::println("Enabled ReLU literal: ({}) {} -> {}", constraint.fixed(), lit, constraint);
@@ -224,8 +235,10 @@ bool NNSoplexTheorySolver::InvertGreatestViolation() {
 
 void NNSoplexTheorySolver::UpdateExplanationsWithCurrentPiecewiseLinearLiterals(std::set<LiteralSet> &explanations) {
   LiteralSet explanation;
-  for (auto &enabled_pl_constraint : enabled_pl_constraints_) {
-    explanation.emplace(enabled_pl_constraint.constraint->active_var(), enabled_pl_constraint.active);
+  for (const PlConstraint &enabled_pl_constraint : enabled_pl_constraints_) {
+    explanation.emplace(enabled_pl_constraint.active ? enabled_pl_constraint.constraint->active_var()
+                                                     : enabled_pl_constraint.constraint->inactive_var(),
+                        true);
   }
   if (explanations.contains(explanation)) return;
   pl_explanations_.emplace(explanation);

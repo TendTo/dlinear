@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include "dlinear/parser/onnx/NodeOpType.h"
+#include "dlinear/solver/LeakyReluConstraint.h"
 #include "dlinear/solver/ReluConstraint.h"
 #include "dlinear/util/exception.h"
 
@@ -419,6 +420,47 @@ void OnnxDriver::AddNode<NodeOpType::Identity>(const ::onnx::NodeProto& node) {
 }
 
 template <>
+void OnnxDriver::AddNode<NodeOpType::LeakyRelu>(const ::onnx::NodeProto& node) {
+  DLINEAR_ASSERT(node.op_type() == "LeakyRelu", "NodeProto must have an op_type of LeakyRelu");
+  DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
+  EnsureInput(node, 1);
+  const float alpha = GetAttribute<float>(node, "alpha", 0.01);
+
+  const std::string& input = node.input(0);
+  const std::string& output = node.output(0);
+  Tensor relu = Tensor{available_inputs_.at(input)};
+
+#ifndef NDEBUG
+  std::size_t counter = 0;
+  relu.Elementwise([alpha, &counter, &input, this](const Expression& e) {
+#else
+  relu.Elementwise([alpha, this](const Expression& e) {
+#endif
+    const Formula condition{e > 0};
+    // Trivial cases for the ReLU function
+    if (is_true(condition)) {
+      return e;
+    } else if (is_false(condition)) {
+      return alpha * e;
+    }
+#ifndef NDEBUG
+    const Variable relu_var{fmt::format("{}_leaky_relu_{}", input, ++counter)};
+#else
+    const Variable relu_var{"lr"};
+#endif
+    // Adding the fresh ITE variable as a guided constraint
+    context_.AssertPiecewiseLinearFunction(relu_var, e >= 0, e, alpha * e);
+    context_.AddGuidedConstraint(
+        std::make_unique<LeakyReluConstraint>(relu_var, e, alpha, context_.predicate_abstractor()));
+    return Expression{relu_var};
+  });
+  available_inputs_.emplace(output, relu);
+  DLINEAR_DEBUG_FMT("Relu node: {} = 0 if input < 0 else {} * {}", output, alpha, input);
+  DLINEAR_TRACE_FMT("{}", relu);
+  AddFormula(output);
+}
+
+template <>
 void OnnxDriver::AddNode<NodeOpType::MatMul>(const ::onnx::NodeProto& node) {
   DLINEAR_ASSERT(node.op_type() == "MatMul", "NodeProto must have an op_type of MatMul");
   DLINEAR_ASSERT(node.output_size() == 1, "NodeProto must have exactly 1 output");
@@ -497,13 +539,10 @@ void OnnxDriver::AddNode<NodeOpType::Relu>(const ::onnx::NodeProto& node) {
 #else
     const Variable relu_var{"r"};
 #endif
-    context_.AssertRelu(e, relu_var);
     // Adding the fresh ITE variable as a guided constraint
+    context_.AssertPiecewiseLinearFunction(relu_var, e >= 0, e, 0);
     context_.Assert(relu_var >= 0);
-    context_.Assert(relu_var >= e);
-    LinearFormulaFlattener lff{context_.config()};
-    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(lff.Flatten(relu_var == e), relu_var == 0, relu_var,
-                                                                  relu_var - e, context_.predicate_abstractor()));
+    context_.AddGuidedConstraint(std::make_unique<ReluConstraint>(relu_var, e, context_.predicate_abstractor()));
     return Expression{relu_var};
   });
   available_inputs_.emplace(output, relu);
@@ -788,7 +827,7 @@ const std::map<std::string, std::function<void(OnnxDriver&, const ::onnx::NodePr
     {"Gemm", &OnnxDriver::AddNode<NodeOpType::Gemm>},
     //    {"GlobalAveragePool", &OnnxDriver::AddNode<NodeOpType::GlobalAveragePool>},
     {"Identity", &OnnxDriver::AddNode<NodeOpType::Identity>},
-    //    {"LeakyRelu", &OnnxDriver::AddNode<NodeOpType::LeakyRelu>},
+    {"LeakyRelu", &OnnxDriver::AddNode<NodeOpType::LeakyRelu>},
     //    {"LRN", &OnnxDriver::AddNode<NodeOpType::LRN>},
     {"MatMul", &OnnxDriver::AddNode<NodeOpType::MatMul>},
     //    {"MaxPool", &OnnxDriver::AddNode<NodeOpType::MaxPool>},

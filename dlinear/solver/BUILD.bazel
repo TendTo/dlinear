@@ -138,6 +138,21 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "leaky_relu_constraint",
+    srcs = ["LeakyReluConstraint.cpp"],
+    hdrs = ["LeakyReluConstraint.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
+    deps = [
+        ":piecewise_linear_constraint",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:predicate_abstractor",
+    ],
+)
+
+dlinear_cc_library(
     name = "bound",
     srcs = ["Bound.cpp"],
     hdrs = ["Bound.h"],
