@@ -28,7 +28,8 @@
 \begin{document}
 
 % ---- Metadata ----
-\title{\dlinear: an SMT QF\_LRA Solver Supporting Floating Point Arithmetic and Delta-Completeness}
+\title{\dlinear: An SMT Solver Supporting Floating Point Linear Real Arithmetic and Delta-Completeness}
+% \title{\dlinear: an SMT QF\_LRA Solver Supporting Floating Point Arithmetic and Delta-Completeness}
 \titlerunning{\dlinear}
 
 \author{Ernesto Casablanca\inst{1}
@@ -46,7 +47,7 @@
 \authorrunning{E. Casablanca et al.}
 
 \institute{Newcastle University, Newcastle upon Tyne, United Kindgom\\
-    \email{\{e.casablanca2,?martin?\}@newcastle.ac.uk} \and % TODO: add Martin's email and ensure orcidID
+    \email{e.casablanca2@newcastle.ac.uk, martin.sidaway@icloud.com} \and % TODO: add Martin's email and ensure orcidID
     Max Planck Institute for Software Systems, Kaiserslautern, Germany\\
     \email{sadegh@mpi-sws.org} \and
     La Sapienza University, Rome, Italy\\
@@ -61,40 +62,47 @@
 
 % ---- Abstract ----
 \begin{abstract}
-    This paper presents the first release of \dlinear, an open-source SMT solver for the QF\_LRA theory.
+    This paper presents the first release of \dlinear, an open-source SMT solver for the quantifier-free fragment of the linear real arithmetic theory.
     Instead of relying on rational arithmetic to verify or disprove the linear constraints like most state-of-the-art SMT solvers, \dlinear uses cheaper floating-point arithmetic whenever possible while still guaranteeing an exact solution, ensuring the completeness of the solver.
-    The tool also allows for $\delta$-complete reasoning, which relaxes the constraints by an arbitrary amount aiming to quicken the search for a model while ensuring that such a model, if it exists, will satisfy the original constraints within the given delta.
-    This approach is extended to Neural Networks verification where the activation functions are piecewise linear.
-    \dlinear is developed in C++ and can be used as a standalone tool or as a library.
-    For ease of use, a Docker image and a Python interface, \textit{pydlinear}, are provided.
-    We showcase the strengths of the tool on a set of benchmarks, comparing it to other well-known SMT solvers.
+    The tool also allows for delta-complete reasoning, which relaxes the constraints by an arbitrary amount aiming to quicken the search for a model while ensuring that such a model, if it exists, will satisfy the original constraints within the given delta.
+    This approach is extended to neural networks verification where the activation functions are piecewise linear.
+    \dlinear is developed in C++ and can be used as a standalone tool or as a library. We also provide a Docker image and a Python interface, \textit{pydlinear}, for ease of use.
+    We demonstrate the strengths of the tool on a set of standard benchmarks, comparing it to other well-known SMT solvers.
+    The results show how \dlinear significantly outperforms the competition on problems with numerous complex linear constraints.
 
-    \keywords{SMT \and Delta-complete \and Floating point arithmetic \and Neural Networks verification}
+    \keywords{SMT \and Delta-complete \and Floating point arithmetic \and Linear real arithmetic}
 \end{abstract}
 
 % ---- Introduction ----
 \section{Introduction}
 
-\gls{smt} has a notoriously vast variety of applications, ranging from formal software verification to planning and optimization just to name a few.
-As expected, \gls{smt} solvers have received a lot of attention over the years, with some of the most well-known being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
-Another field that is getting a lot of attention lately is Neural Networks.
-Being an ever more pervasive presence in our everyday lives, formal verification of Neural Networks (NN) is quickly becoming a hot topic.
-For this reason, multiple NN reasoners have been developed, including $\alpha$-$\beta$-CROWN~\cite{ref:a-crown,ref:b-crown,ref:crown,ref:lirpa}, Marabou~\cite{ref:marabou}, nnenum~\cite{ref:nnenum} and VeriNet~\cite{ref:verinet}.
+\gls{smt} solvers are tools designed to determine the satisfiability of logical formulas with respect to certain background theories.
+They extend the capabilities of \gls{sat} solvers by incorporating additional mathematical structures, allowing for more expressive problem formulations.
+\gls{smt} solvers are widely used in model checking, automated reasoning and formal verification.
+Formal verification applied to neural networks, in particular, has recently received considerable attention, as it can certify the safety and correctness of the network's output.
+Multiple neural network reasoners have been developed with this goal, including $\alpha$-$\beta$-CROWN~\cite{ref:a-crown,ref:b-crown,ref:crown,ref:lirpa}, Marabou~\cite{ref:marabou}, nnenum~\cite{ref:nnenum} and VeriNet~\cite{ref:verinet}.
+The \gls{qf-lra} logic is a subset of SMT problems where the formulas are quantifier-free, meaning they do not involve existential or universal quantifiers (e.g., $\forall, \exists$) and the non-boolean constraints consist of linear equations or inequalities over real numbers.
+\gls{smt} solvers often use a specialized implementation of the Simplex method to verify the feasibility of sets of linear constraints.
+Numerical operations using floating-point arithmetic are prone to rounding errors or numerical instability; thus, techniques such as interval arithmetic and exact rational computations are required to ensure that the results are correct and complete.
+Given their relevance, \gls{smt} solvers have received a lot of attention over the years, with some of the most well-known being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
 
-The tool presented in this paper, \dlinear, is a \gls{qf-lra} \gls{smt} solver able produce both complete and $\delta$-complete outputs on standard \gls{smt} problems,
-as well as tackling the verification of Neural Networks with piecewise linear activation functions.
-While not as feature-rich as some of the other more mature \gls{smt} solvers yet, \dlinear is a first step in offering a different approach to \gls{smt} solving that can result in a significant speedup in some cases, especially when the theory solver constitutes the major performance bottleneck.
+This paper presents a tool called \dlinear, a solver for \gls{qf-lra} formulas, capable of producing both complete and $\delta$-complete outputs on standard \gls{smt} problems, as well as tackling the verification of Neural Networks with piecewise linear activation functions.
+Instead of relying on the slower rational arithmetic throughout all its computations, \dlinear encodes the problem in a way that allows the use of off-the-shelf fast exact \gls{lp} solvers, obtaining a significant speedup in instances when the linear constraints constitute the major performance bottleneck.
+\dlinear can account for an arbitrary perturbation $\delta$ to the constraints, often leading to a faster solution when formal completeness is not required.
 
-The paper is structured as follows: in \autoref{sec:preliminaries} we provide an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory, and \gls{lp}.
-In \autoref{sec:architecture} we give a technical description of the software architecture of the tool, with some details on the current support for neural network verification in \autoref{sec:nn-verification}.
-The details of the algorithms used are analyzed more in-depth in \autoref{sec:lra-theory-solver}, which describes the approach we exploit to adapt the exact \gls{lp} solvers for \gls{smt} solving, and \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally.
-Lastly, in \autoref{sec:benchmarks} we present the results of the experiments conducted to evaluate the performance of the tool.
+The paper is structured as follows.
+\autoref{sec:preliminaries} provides an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory, and \gls{lp}.
+\autoref{sec:architecture} gives a technical description of the software architecture of the tool with some details on the current support for neural network verification.
+The employed algorithms are analyzed in more depth in \autoref{sec:lra-theory-solver}, which describes the approach we exploit to adapt the exact \gls{lp} solvers for \gls{smt} solving, and in \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally.
+Lastly, \autoref{sec:benchmarks} presents the results of the experiments conducted to evaluate the tool's performance.
 
 \section{Preliminaries}
 \label{sec:preliminaries}
 
 \subsection{SAT and SMT}
-
+We assume the reader is familiar with the fundamental concepts of \gls{sat} and \gls{smt}.
+For more information on the subject, please refer to~\cite{ref:handbook-sat,paper:survey-smt}.
+\begin{comment}
 A propositional formula is a construct that uses \textit{variables}, which are to be assigned a semantic value (i.e. \{\textbf{true}, \textbf{false}\}) and linked together by \textit{logical connectives} (i.e. $\lor$ (or), $\land$ (and) and $\neg$ (not)).
 A literal is a variable (e.g. $x$) or its negation (e.g. $\neg x$).
 Propositional formulae are usually expressed in the \gls{cnf}, which is to say as a conjunction of clauses, where a clause is a disjunction of literals \eqref{eq:cnf-notations}.
@@ -164,7 +172,7 @@ A model $\mathcal{M}$ \textbf{satisfies} a formula $\varphi$ if $\mathcal{I}(\va
 
 It is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}), among many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
 Then, the problem of \gls{smt} satisfiability is the problem of determining whether there exists a model that satisfies the formula $\varphi$ within the chosen theory.
-
+\end{comment}
 The tool presented in this paper will focus on the \gls{qf-lra} theory.
 The interpretation uses the domain $\bbbr$ of real numbers.
 Only $+, -, \cdot,$ arithmetic operators are allowed, with the restriction that a variable can only be multiplied ($\cdot$) by a constant.
@@ -360,13 +368,12 @@ Using intuitive indexing over vector and matrix elements, start by replacing eac
 \end{align*}
 with equivalent non-strict inequalities using the strict variable $t$:
 \begin{align*}
-    \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
-    t > 0
+    \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad t > 0, \quad \forall k \in K
 \end{align*}
 This change would only move the strict inequality problem to the bound on $t$.
 However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to maximize $t$.
 The original problem we want to verify the feasibility of
-\begin{equation}
+\begin{align}
     \label{eq:lp-original}
     \begin{split}
         \text{Maximize }   \quad & 0                                                          \\
@@ -374,18 +381,17 @@ The original problem we want to verify the feasibility of
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} < b_k,   \quad \forall k \in K  \\
         & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
     \end{split}
-\end{equation}
+\end{align}
 can be relaxed to
-\begin{equation}
+\begin{align}
     \label{eq:lp-relaxed}
     \begin{split}
         \text{Maximize }   \quad & t                                                             \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
-        & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\},        \\
-        & t \ge 0
+        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
     \end{split}
-\end{equation}
+\end{align}
 
 \begin{theorem}
     \label{thm:lp-relaxed}
@@ -398,22 +404,21 @@ Not equal to ($\ne$) constraints (\nqcs for short) pose a more significant chall
 Let $D$ be the set of indexes of the \nqcs.
 Again, without loss of generality, assume that all the indices in $D$ are greater than those in $K$ ($\max(K) < \min(D)$).
 The extended relaxed problem is defined as
-\begin{equation}
+\begin{align}
     \label{eq:lp-extended}
     \begin{split}
         \text{Maximize }   \quad & t                                                             \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
         \quad                    & \sum_{i=1}^{n} a_{di}x_{i} + t \le b_d, \quad \forall d \in D \\
-        & l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}         \\
-        & t \ge 0
+        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
     \end{split}
-\end{equation}
+\end{align}
 
 Two strict inequalities are needed to check whether the constraint is satisfied.
 Since checking both simultaneously with an OR disjunction is not supported by the \gls{lp} solver, the original problem must be split into two subproblems.
-Hence, given $|D|$ \nqcs, $2^{|D|}$ sub-problems are produced~\eqref{eq:nq}.
-\begin{equation}
+Hence, given $|D|$ \nqcs, $2^{|D|}$ sub-problems are produced.
+\begin{align}
     \label{eq:nq}
     \begin{gathered}
         \begin{cases}
@@ -455,7 +460,7 @@ Hence, given $|D|$ \nqcs, $2^{|D|}$ sub-problems are produced~\eqref{eq:nq}.
             \end{cases}
         \end{pmatrix}
     \end{gathered}
-\end{equation}
+\end{align}
 \eqcaption{Splitting an LP problem with 2 \nqcs into 4 subproblems. Note that the \nqcs appear in $4$ configurations: $\{<, <\}, \{<, >\}, \{>, <\}, \{>, >\}$.}
 
 If any of the subproblems is feasible, then it is possible to conclude that the original problem is feasible.
@@ -560,7 +565,7 @@ Whether this tradeoff between speed and completeness is acceptable is up to the 
 
 When in $\delta$-complete mode, \dlinear uses the $\delta$ parameter to inform the underlying \gls{lp} solver that the precision boosting or iterative refinement algorithms can stop once the desired precision has been reached, returning the feasible solution found at that point.
 
-Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the delta weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if any are present.
+Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the $\delta$ weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if any are present.
 We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref{alg:delta-theory-solver}.
 
 % Inspired by Martin's thesis. I'm not sure I can contribute anything useful to the explanation
@@ -568,7 +573,7 @@ We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref
     \caption{SMT adapted $\delta$-complete LP solver}\label{alg:delta-theory-solver}
     \begin{algorithmic}
         \Require $A \in \bbbr^{(|J'| + |K'|) \times n}, b \in \bbbr^{|J'| + |K'|}, l \in \bbbr^n, u \in \bbbr^n$ \\
-        \qquad as defined in Section~\ref{sec:lp} over the delta weakened problem~\eqref{eq:delta-lp}
+        \qquad as defined in Section~\ref{sec:lp} over the $\delta$ weakened problem~\eqref{eq:delta-lp}
         \Require $J', K'$ as defined in this Section
         \Require $\delta > 0$
         \Ensure Set of indexes of infeasible constraints $E$ or $\emptyset$
