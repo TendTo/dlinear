@@ -85,8 +85,8 @@ LiteralSet LeakyReluConstraint::LearnedClauses() const {
 
 std::ostream& LeakyReluConstraint::Print(std::ostream& os) const {
   os << "LeakyReluConstraint(" << active_var_ << " or " << inactive_var_ << " ["
-     << (lower_bound_ ? lower_bound_->get_str() : "-inf") << ", " << (upper_bound_ ? upper_bound_->get_str() : "+inf")
-     << "])";
+     << (lower_bound_ ? std::to_string(lower_bound_->get_d()) : "-inf") << ", "
+     << (upper_bound_ ? std::to_string(upper_bound_->get_d()) : "+inf") << "])";
   return os;
 }
 

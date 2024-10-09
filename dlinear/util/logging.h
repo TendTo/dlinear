@@ -76,6 +76,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
     if (::dlinear::get_logger(::dlinear::LoggerType::ERR)->should_log(spdlog::level::err))                      \
       fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                    \
                    std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id())); \
+    std::cout << std::flush;                                                                                    \
   } while (0)
 #define DLINEAR_DEV_FMT(msg, ...)                                                                              \
   do {                                                                                                         \
@@ -83,6 +84,7 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
       fmt::println("[{:%Y-%m-%d %H:%M:%S}] [\033[1m\033[35mDEV\033[0m] [thread {}] " msg "",                   \
                    std::chrono::system_clock::now(), std::hash<std::thread::id>{}(std::this_thread::get_id()), \
                    __VA_ARGS__);                                                                               \
+    std::cout << std::flush;                                                                                   \
   } while (0)
 
 #define DLINEAR_DEV_TRACE(msg) DLINEAR_DEV(msg)
