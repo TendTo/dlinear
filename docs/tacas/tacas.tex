@@ -179,11 +179,11 @@ Only $+, -, \cdot,$ arithmetic operators are allowed, with the restriction that 
 Therefore, each theory-literal in the formulae can be expressed in the form $a_1 \cdot x_1 + \ldots + a_n \cdot x_n \bowtie b$, where $x_i \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are variables, $a_i, b \in \bbbr \quad \forall i \in \{1, 2, \dots, n\}$ are constants and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
 With these restrictions in place, the \gls{qf-lra} theory is decidable.
 
-\subsection{LP}
+\subsection{Linear Programming}
 \label{sec:lp}
 
-It is easy to see how the \gls{qf-lra} theory is very closely related to the \gls{lp} problem.
-A linear program is a mathematical optimization problem where the objective function is to maximize, and the constraints the solution is subject to are linear.
+It is easy to see how the \gls{qf-lra} theory is very closely related to linear programming (\gls{lp}) problems.
+An LP program asks to maximize (minimize) a linear objective function of real variables, subject to linear constraints on said variables.
 Adopting a very common notation, consider a system of $m$ linear inequalities with unknown $x \in \bbbr^n$ and constant values $A \in \bbbr^{m \times n}$, $b \in \bbbr^m$ and $c \in \bbbr^n$.
 Variables may be bounded by $l \in \bbbr^n$ and $u \in \bbbr^n$, such that $l_i \le x_i \le u_i \quad \forall i \in \{1, 2, \ldots, n\}$.
 \gls{lp} problems are often presented in the \textit{standard form} \eqref{eq:lp-standard}, where the objective function is to be maximized, the constraints are all $\le$ inequalities and the variables are non-negative.
@@ -193,23 +193,22 @@ The conversion to the standard form is always possible and can be achieved in po
     \begin{split}
         \text{Maximize }   \quad & \sum_{i=1}^{n} c_i x_i                      \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j            \\
-        & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\}
+        & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\}\ .
     \end{split}
 \end{equation}
-\eqcaption{\gls{lp} problem in standard form.}
+%\eqcaption{\gls{lp} problem in standard form.} % no captions for equations
 
-The most commonly used algorithm to solve \gls{lp} problems is the Simplex method~\cite{ref:simplex}.
-Despite having a worst-case exponential time complexity, it is often very efficient in practice.
-
+The most commonly used algorithm to solve \gls{lp} problems is the Simplex method~\cite{dantzig1951maximization}, which offers a theoretically complete solution to the problem \eqref{eq:lp-standard}.
+%Despite having a worst-case exponential time complexity, it is often very efficient in practice.
 State-of-the-art \gls{smt} solvers such as Z3~\cite{ref:z3}, CVC5~\cite{ref:cvc5} and Yices~\cite{ref:yices} already fully support the \gls{qf-lra} theory
-by employing a specialized Simplex-based~\cite{ref:simplex} solver with rational numerical representation to guarantee an exact solution and support strict inequalities.
+by employing a specialized Simplex-based~\cite{ref:lra-dpll-t} solver with rational numerical representation to guarantee an exact solution and support strict inequalities.
 Unfortunately, unlike floating point arithmetic, exact rational arithmetic does not offer constant time complexity when it comes to mathematical operations,
 as the time required to complete the computations grows based on the size of the rational representation, which is only limited by the hardware's resources.
 In the \gls{lp} community, a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilizing floating point arithmetic~\cite{ref:gurobi} to achieve faster computations.
 This is not considered a viable option in the \gls{smt} context: inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
 
 Some alternative methods have been developed over the years.
-The \qsoptex solver \footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
+The \qsoptex\footnote{QSoptex: \url{https://www.math.uwaterloo.ca/~bico/qsopt/ex/index.html}} solver uses a technique called \textbf{incremental precision boosting}~\cite{ref:precision-boosting}.
 Working with floating-point numbers with variable precision, the algorithm increments the number of bits used in their representation until the solution is found, then checks it using a rational number representation only to confirm its correctness.
 A different approach is to utilize an \textbf{iterative refinement algorithm}~\cite{ref:iterative-refinement} such as the one implemented in \soplex~\cite{ref:soplex}.
 This variation starts by solving the original problem with a fixed precision before considering a sequence of related \gls{lp} instances that only differ in the variables' bounds, the constraints' sides, and the objective function coefficients.
@@ -243,8 +242,8 @@ where
 \begin{equation*}
     t_i(x) = a_{i1}x_1 + \ldots + a_{in}x_n - b_i, \quad 1 \le i \le m
 \end{equation*}
-with $A \in \bbbr^{m \times n}, b \in \bbbr^m$ and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
-To satisfy $\varphi$ means finding $x \in \bbbr^n $ such that that
+and the $a_{ij}$'s are the elements of $A \in \bbbr^{m \times n}, b \in \bbbr^m$ and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
+To satisfy $\varphi$ means finding $x \in \bbbr^n $ such that
 \begin{equation*}
     t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0
 \end{equation*}
@@ -256,9 +255,9 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 \subsection{Integrated Neural network verification}
 \label{sec:nn-verification}
 
-\begin{wrapfigure}[21]{R}{3cm}
+\begin{wrapfigure}[20]{R}{3cm}
     \captionsetup{font=small}
-    \vspace{-2.3cm}
+    \vspace{-1cm}
     \resizebox{1.04\linewidth}{!}{%
         \input{diagrams/onnx.tex}
     }
@@ -270,13 +269,13 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 Given an \gls{onnx} file~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
 Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
-These new formulae are then added to the set of assertions in an "if-then-else" encoding.
+These new formulae are then added to the set of assertions in an ``if-then-else'' encoding.
 From then on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
 For instance, the ReLU activation function represents the assignment
 \begin{equation*}
     y' = \begin{cases}
         x & \text{if } x \ge 0 \\
-        0 & \text{otherwise}
+        0 & \text{otherwise} .
     \end{cases}
 \end{equation*}
 Naming the new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0), C \coloneqq (x \ge 0)$, clauses $(A \lor \neg C) \land (B \lor C)$ are added to the set of assertions.
@@ -296,7 +295,7 @@ If the objective value is greater than $0$, we can guide the solver by suggestin
 \subsection*{Preprocessing}
 \label{sec:preprocessing}
 
-\dlinear implements some of the common preprocessing strategies when it comes to optimizing the performance solver for the \gls{qf-lra} theory.
+\dlinear implements some of the common preprocessing strategies when it comes to optimizing the performance solver for \gls{qf-lra}.
 The first step is to add some inexpensive implications between the bounds on the same variable, such as $x \ge 1 \implies x \ge 0 \implies x \ge -10$, potentially avoiding pointless assignments from the SAT solver.
 Then, all simple equality bounds are propagated using the problem's constraints, in a process that can be visualized as a graph-like structure (\autoref{dg:preprocessor}).
 If one or more conflicts are detected, the original atoms are traced back and used to generate the explanations.
@@ -418,51 +417,48 @@ The extended relaxed problem is defined as
 Two strict inequalities are needed to check whether the constraint is satisfied.
 Since checking both simultaneously with an OR disjunction is not supported by the \gls{lp} solver, the original problem must be split into two subproblems.
 Hence, given $|D|$ \nqcs, $2^{|D|}$ sub-problems are produced.
-\begin{align}
-    \label{eq:nq}
-    \begin{gathered}
+For instance, a problem with two \nqcs
+\begin{gather*}
+    \begin{cases}
+        A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+        A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+        A_{|J| + |K| + 1} x \ne b_{|J| + |K| + 1}                 \\
+        A_{|J| + |K| + 2} x \ne b_{|J| + |K| + 2}                 \\
+    \end{cases}
+    \\
+    \text{will be split into}
+    \\
+    \begin{pmatrix}
         \begin{cases}
             A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
             A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
-            A_{|J| + |K| + 1} x \ne b_{|J| + |K| + 1}                 \\
-            A_{|J| + |K| + 2} x \ne b_{|J| + |K| + 2}                 \\
+            A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
+            A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
+        \end{cases}
+         &
+        \begin{cases}
+            A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+            A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+            A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
+            A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
         \end{cases}
         \\
-        \text{will be split into}
-        \\
-        \begin{pmatrix}
-            \begin{cases}
-                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
-                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
-                A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
-                A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
-            \end{cases}
-             &
-            \begin{cases}
-                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
-                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
-                A_{|J| + |K| + 1} x < b_{|J| + |K| + 1}                   \\
-                A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
-            \end{cases}
-            \\
-            \begin{cases}
-                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
-                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
-                A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
-                A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
-            \end{cases}
-             &
-            \begin{cases}
-                A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
-                A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
-                A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
-                A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
-            \end{cases}
-        \end{pmatrix}
-    \end{gathered}
-\end{align}
-\eqcaption{Splitting an LP problem with 2 \nqcs into 4 subproblems. Note that the \nqcs appear in $4$ configurations: $\{<, <\}, \{<, >\}, \{>, <\}, \{>, >\}$.}
-
+        \begin{cases}
+            A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+            A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+            A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
+            A_{|J| + |K| + 2} x < b_{|J| + |K| + 2}
+        \end{cases}
+         &
+        \begin{cases}
+            A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
+            A_{|J| + 1\dots |J| + |K|} x < b_{|J| + 1\dots |J| + |K|} \\
+            A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
+            A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
+        \end{cases}
+    \end{pmatrix}
+\end{gather*}
+Note that the \nqcs appear in $4$ configurations: $\{<, <\}, \{<, >\}, \{>, <\}, \{>, >\}$.
 If any of the subproblems is feasible, then it is possible to conclude that the original problem is feasible.
 On the other hand, in the worst case, all $2^{|D|}$ problems must be solved to prove infeasibility.
 Some smarter heuristics can improve the average performance of the solver.
