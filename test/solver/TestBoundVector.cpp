@@ -3,6 +3,7 @@
  * @copyright 2024 dlinear
  * @licence BSD 3-Clause License
  */
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "dlinear/solver/BoundVector.h"
@@ -1178,6 +1179,119 @@ TEST_F(TestBoundVector, IsBoundedMultiple) {
   EXPECT_TRUE(empty_bounds_.IsBounded());
   EXPECT_TRUE(empty_bounds_.IsUpperBounded());
   EXPECT_TRUE(empty_bounds_.IsLowerBounded());
+}
+
+TEST_F(TestBoundVector, RemoveAbsentBound) { EXPECT_FALSE(empty_bounds_.RemoveBound(val_[1], LpColBound::L, lit())); }
+TEST_F(TestBoundVector, RemoveLowerBoundUnbounded) {
+  const Literal eq_exp = lit();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp);
+  EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::L, eq_exp));
+
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.active_lower_bound(), empty_bounds_.inf_l());
+  EXPECT_FALSE(empty_bounds_.IsLowerBounded());
+}
+TEST_F(TestBoundVector, RemoveUpperBoundUnbounded) {
+  const Literal eq_exp = lit();
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp);
+  EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::U, eq_exp));
+
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.active_upper_bound(), empty_bounds_.inf_u());
+  EXPECT_FALSE(empty_bounds_.IsUpperBounded());
+}
+TEST_F(TestBoundVector, RemoveUpperBoundChangeActiveBound) {
+  const Literal eq_exp = lit();
+  empty_bounds_.AddBound(val_[1], LpColBound::L, lit());
+  empty_bounds_.AddBound(val_[2], LpColBound::L, eq_exp);
+  EXPECT_TRUE(empty_bounds_.RemoveBound(val_[2], LpColBound::L, eq_exp));
+
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.active_lower_bound(), val_[1]);
+  EXPECT_TRUE(empty_bounds_.IsLowerBounded());
+}
+TEST_F(TestBoundVector, RemoveLowerBoundChangeActiveBound) {
+  const Literal eq_exp = lit();
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp);
+  empty_bounds_.AddBound(val_[2], LpColBound::U, lit());
+  EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::U, eq_exp));
+
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[2]);
+  EXPECT_TRUE(empty_bounds_.IsUpperBounded());
+}
+TEST_F(TestBoundVector, RemoveLowerBoundDuplicate) {
+  const Literal eq_exp = lit();
+  const Bound removed_bound{&val_[1], LpColBound::L, eq_exp, {eq_exp}};
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp);
+  empty_bounds_.AddBound(val_[1], LpColBound::L, lit());
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp);
+  empty_bounds_.AddBound(removed_bound);
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp, {lit()});
+  empty_bounds_.AddBound(val_[1], LpColBound::L, lit());
+  EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
+
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.active_lower_bound(), val_[1]);
+  EXPECT_TRUE(empty_bounds_.IsBounded());
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_bound)));
+}
+TEST_F(TestBoundVector, RemoveUpperBoundDuplicate) {
+  const Literal eq_exp = lit();
+  const Bound removed_bound{&val_[1], LpColBound::U, eq_exp, {eq_exp}};
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp);
+  empty_bounds_.AddBound(val_[1], LpColBound::U, lit());
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp);
+  empty_bounds_.AddBound(removed_bound);
+  empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp, {lit()});
+  empty_bounds_.AddBound(val_[1], LpColBound::U, lit());
+  EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
+
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[1]);
+  EXPECT_TRUE(empty_bounds_.IsBounded());
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_bound)));
+}
+TEST_F(TestBoundVector, RemoveEqBoundDuplicate) {
+  const Literal eq_exp = lit();
+  const Bound removed_bound{&val_[1], LpColBound::B, eq_exp, {eq_exp}};
+  empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp);
+  empty_bounds_.AddBound(val_[1], LpColBound::B, lit());
+  empty_bounds_.AddBound(val_[1], LpColBound::B, eq_exp);
+  empty_bounds_.AddBound(removed_bound);
+  empty_bounds_.AddBound(val_[1], LpColBound::B, eq_exp, {lit()});
+  empty_bounds_.AddBound(val_[1], LpColBound::U, lit());
+
+  Bound removed_lower_bound{removed_bound};
+  removed_lower_bound.lp_bound = LpColBound::L;
+  Bound removed_upper_bound{removed_bound};
+  removed_upper_bound.lp_bound = LpColBound::U;
+
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Contains(removed_lower_bound));
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Contains(removed_upper_bound));
+
+  EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
+
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[1]);
+  EXPECT_TRUE(empty_bounds_.IsBounded());
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_lower_bound)));
+  EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_upper_bound)));
+}
+TEST_F(TestBoundVector, RemoveNqBoundDuplicate) {
+  const Literal eq_exp = lit();
+  const Bound removed_bound{&val_[1], LpColBound::D, eq_exp, {eq_exp}};
+  empty_bounds_.AddBound(val_[1], LpColBound::D, eq_exp);
+  empty_bounds_.AddBound(val_[1], LpColBound::D, lit());
+  empty_bounds_.AddBound(val_[1], LpColBound::D, eq_exp);
+  empty_bounds_.AddBound(removed_bound);
+  empty_bounds_.AddBound(val_[1], LpColBound::D, eq_exp, {lit()});
+  empty_bounds_.AddBound(val_[1], LpColBound::D, lit());
+  EXPECT_THAT(empty_bounds_.nq_bounds(), ::testing::Contains(removed_bound));
+
+  EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
+
+  EXPECT_THAT(empty_bounds_.nq_bounds(), ::testing::Not(::testing::Contains(removed_bound)));
 }
 
 TEST_F(TestBoundVector, Stdout) { EXPECT_NO_THROW(std::cout << bounds_ << std::endl); }

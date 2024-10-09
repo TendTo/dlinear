@@ -92,8 +92,19 @@ class BoundVector {
    * @return true if the bound has been removed
    * @return false if the bound has not been found
    */
-   // TODO: ensure correctness of bound removal when there are multiple equal bounds
   bool RemoveBound(const Bound& bound);
+  /**
+   * Remove the bound with the given @p value, @p lp_bound, @p theory_lit and @p explanation from the vector
+   * if it is present.
+   * @param value value of the bound
+   * @param lp_bound type of the bound
+   * @param theory_lit theory literal associated with the bound
+   * @param explanation set of theory literals justifying the existence of the bound
+   * @return true if the bound has been removed
+   * @return false if the bound has not been found
+   */
+  bool RemoveBound(const mpq_class& value, LpColBound lp_bound, const Literal& theory_lit,
+                   const LiteralSet& explanation = {});
   /**
    * Manually set the active lower bound to @p value.
    *
@@ -302,7 +313,7 @@ class BoundVector {
    * Return an iterator over @ref bounds_ after the last lower bound and to the first upper bound.
    * @return iterator after the last lower bound and to the first upper bound
    */
-  [[nodiscard]] inline Bounds::const_iterator LowerBoundEnd() const { return bounds_.cbegin() + n_lower_bounds_; }
+  [[nodiscard]] Bounds::const_iterator LowerBoundEnd() const;
   /**
    * Return a @ref BoundIterator containing a minimal set of bounds enclosing the interval [@p lb, @p ub]
    * as well as all the not-equal constraints in that interval.

@@ -100,12 +100,41 @@ BoundIterator BoundVector::AddBound(const mpq_class& value, LpColBound lp_bound,
 
   return {};
 }
+bool BoundVector::RemoveBound(const mpq_class& value, const LpColBound lp_bound, const Literal& theory_literal,
+                              const LiteralSet& explanation) {
+  return RemoveBound({&value, lp_bound, theory_literal, explanation});
+}
 bool BoundVector::RemoveBound(const Bound& bound) {
-  if (bound.lp_bound == LpColBound::D) return nq_bounds_.erase_value(bound);
-  if (bound.lp_bound == LpColBound::B) {
-    return RemoveBound({bound.value, LpColBound::U, bound.theory_literal, bound.explanation}) ||
-           RemoveBound({bound.value, LpColBound::L, bound.theory_literal, bound.explanation});
+  if (bound.lp_bound == LpColBound::D) {
+    for (auto it = nq_bounds_.find(bound); it != nq_bounds_.end() && *it->value == *bound.value; ++it) {
+      if (it->theory_literal == bound.theory_literal && it->explanation == bound.explanation) {
+        return nq_bounds_.erase(it);
+      }
+    }
+    return false;
   }
+  if (bound.lp_bound == LpColBound::B) {
+    // Modify the bound temporarily to avoid pointless copies
+    Bound& modified_bound = const_cast<Bound&>(bound);
+    modified_bound.lp_bound = LpColBound::L;
+    const bool l_res = RemoveBound(modified_bound);
+    modified_bound.lp_bound = LpColBound::U;
+    const bool u_res = RemoveBound(modified_bound);
+    // Restore the original lp_bound value
+    modified_bound.lp_bound = LpColBound::B;
+    return l_res || u_res;
+  }
+
+  bool res = false;
+  for (auto it = FindLowerBound(bound.value, bound.lp_bound);
+       it != bounds_.cend() && *it->value == *bound.value && it->lp_bound == bound.lp_bound; ++it) {
+    if (it->theory_literal == bound.theory_literal && it->explanation == bound.explanation) {
+      res = bounds_.erase(it);
+      DLINEAR_ASSERT(res, "Bound must be removed");
+      break;
+    }
+  }
+  if (!res) return res;
   if (bound.lp_bound == LpColBound::L || bound.lp_bound == LpColBound::SL) {
     --n_lower_bounds_;
     active_lower_bound_ = n_lower_bounds_ == 0 ? inf_l_ : bounds_[n_lower_bounds_ - 1].value;
@@ -113,7 +142,7 @@ bool BoundVector::RemoveBound(const Bound& bound) {
     DLINEAR_ASSERT(bound.lp_bound == LpColBound::U || bound.lp_bound == LpColBound::SU, "Invalid bound");
     active_upper_bound_ = bounds_.size() == n_lower_bounds_ ? inf_u_ : bounds_[n_lower_bounds_].value;
   }
-  return bounds_.erase_value(bound);
+  return res;
 }
 BoundIterator BoundVector::ViolatedBounds(const mpq_class& value, LpColBound lp_bound) const {
   if (lp_bound == LpColBound::D) return {};
@@ -222,6 +251,10 @@ bool BoundVector::IsUpperBounded() const {
 }
 
 bool BoundVector::IsBounded() const { return IsLowerBounded() && IsUpperBounded(); }
+
+BoundVector::Bounds::const_iterator BoundVector::LowerBoundEnd() const {
+  return bounds_.cbegin() + static_cast<int>(n_lower_bounds_);
+}
 
 BoundIterator BoundVector::GetActiveBound() const { return GetActiveBound(*active_lower_bound_, *active_upper_bound_); }
 BoundIterator BoundVector::GetActiveBound(const mpq_class& value) const { return GetActiveBound(value, value); }
