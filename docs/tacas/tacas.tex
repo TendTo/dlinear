@@ -262,24 +262,22 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 Given an \gls{onnx} file~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
 Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
-These new formulae are then added to the set of assertions in an "at most one" encoding.
-From that point on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
-For instance, the ReLU activation function can be represented as
+These new formulae are then added to the set of assertions in an "if-then-else" encoding.
+From then on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
+For instance, the ReLU activation function represents the assignment
 \begin{equation*}
     y' = \begin{cases}
         x & \text{if } x \ge 0 \\
         0 & \text{otherwise}
     \end{cases}
 \end{equation*}
-Given the two new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0)$, the clauses $(A \lor B) \land (\neg A \lor \neg B)$ are added to the set of assertions.
+Naming the new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0), C \coloneqq (x \ge 0)$, clauses $(A \lor \neg C) \land (B \lor C)$ are added to the set of assertions.
 
-Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally intractable even for medium-sized networks.
+Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally already intractable for medium-sized networks.
 To mitigate this issue, we exploit the structure of the problem.
-The bound propagation mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
+The propagation of the bounds mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
 In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
-Furthermore, constraints coming from activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize while the other linear expression creates the constraints the problem is subject to.
-Note that some additional constraints may be needed to ensure the two formulations are equivalent.
-In the case of ReLUs, we must also enforce that the output of the activation function is greater than or equal to the input, which can be achieved by adding the constraints $y' \ge x$.
+Furthermore, the constraints coming from the activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize, while the other linear expression creates the constraints the problem is subject to.
 If the solver finds a solution where the objective value is equal to $0$, then we obtain a valid model.
 If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
