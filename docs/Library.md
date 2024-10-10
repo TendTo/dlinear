@@ -5,19 +5,17 @@ See the [Installation](./Installation.md) page for instructions on how to instal
 
 ## Linking
 
-When including the shared library in a project, make sure to define the following macros, before including the dlinear header
+When including the shared library in a project, you can include the main dlinear header
 
 ```cpp
-#define SPDLOG_FMT_EXTERNAL
-#define SPDLOG_COMPILED_LIB
-
+/** @file <my_file>.cpp */
 #include <dlinear/dlinear.h>
 ```
 
-or, even better, in the compilation command
+and link the library with the flags `-ldlinear`. Add the `-lgmp` flag if your project needs to manipulate rational numbers.
 
 ```bash
-g++ -std=c++20 <my_file>.cpp -lgmp -ldlinear -o <out_file> -DSPDLOG_FMT_EXTERNAL -DSPDLOG_COMPILED_LIB
+g++ -std=c++20 <my_file>.cpp -ldlinear -o <out_file>
 ```
 
 Finally, the executable can be run with
@@ -31,20 +29,12 @@ Finally, the executable can be run with
 The following example demonstrates how to use the library to check the satisfiability of a problem in SMT2 format:
 
 ```cpp
-/**
- * @file test.cpp
- */
-// Needed to indicate that an external fmt library version is in use
-#define SPDLOG_FMT_EXTERNAL
-// Needed to indicate that the spdlog library is compiled inside the shared library
-#define SPDLOG_COMPILED_LIB
-
+/** @file test.cpp */
 #include <dlinear/solver/SmtSolver.h>
 
 #include <iostream>
 
 int main() {
-  dlinear::Config config;
   dlinear::SmtSolver solver;
   solver.Parse("input.smt2");
 }
@@ -53,7 +43,7 @@ int main() {
 The example can be compiled with
 
 ```bash
-g++ -std=c++20 test.cpp -lgmp -ldlinear -o test
+g++ -std=c++20 test.cpp -ldlinear -o test
 ```
 
 and run with

@@ -65,7 +65,6 @@ Universit\`{a} di Roma ``La Sapienza'', Rome, Italy\\
     This paper presents the first release of \dlinear, an open-source SMT solver for the quantifier-free fragment of the linear real arithmetic theory.
     Instead of relying on rational arithmetic to verify or disprove the linear constraints like most state-of-the-art SMT solvers, \dlinear uses cheaper floating-point arithmetic whenever possible while still guaranteeing an exact solution, ensuring the completeness of the solver.
     The tool also allows for delta-complete reasoning, which relaxes the constraints by an arbitrary amount aiming to quicken the search for a model while ensuring that such a model, if it exists, will satisfy the original constraints within the given delta.
-    This approach is extended to neural networks verification where the activation functions are piecewise linear.
     \dlinear is developed in C++ and can be used as a standalone tool or as a library. We also provide a Docker image and a Python interface, \textit{pydlinear}, for ease of use.
     We demonstrate the strengths of the tool on a set of standard benchmarks, comparing it to other well-known SMT solvers.
     The results show how \dlinear significantly outperforms the competition on problems with numerous complex linear constraints.
@@ -79,20 +78,18 @@ Universit\`{a} di Roma ``La Sapienza'', Rome, Italy\\
 \gls{smt} solvers are tools designed to determine the satisfiability of logical formulas with respect to certain background theories.
 They extend the capabilities of \gls{sat} solvers by incorporating additional mathematical structures, allowing for more expressive problem formulations.
 \gls{smt} solvers are widely used in model checking, automated reasoning and formal verification.
-Formal verification applied to neural networks, in particular, has recently received considerable attention, as it can certify the safety and correctness of the network's output.
-Multiple neural network reasoners have been developed with this goal, including $\alpha$-$\beta$-CROWN~\cite{ref:a-crown,ref:b-crown,ref:crown,ref:lirpa}, Marabou~\cite{ref:marabou}, nnenum~\cite{ref:nnenum} and VeriNet~\cite{ref:verinet}.
 The \gls{qf-lra} logic is a subset of SMT problems where the formulas are quantifier-free, meaning they do not involve existential or universal quantifiers (e.g., $\forall, \exists$) and the non-boolean constraints consist of linear equations or inequalities over real numbers.
-\gls{smt} solvers often use a specialized implementation of the Simplex method to verify the feasibility of sets of linear constraints.
+\gls{smt} solvers often employ a specialized implementation of the Simplex method to verify the feasibility of sets of linear constraints.
 Numerical operations using floating-point arithmetic are prone to rounding errors or numerical instability; thus, techniques such as interval arithmetic and exact rational computations are required to ensure that the results are correct and complete.
 Given their relevance, \gls{smt} solvers have received a lot of attention over the years, with some of the most well-known being cvc5~\cite{ref:cvc5}, Z3~\cite{ref:z3}, and Yices~\cite{ref:yices}.
 
-This paper presents a tool called \dlinear, a solver for \gls{qf-lra} formulas, capable of producing both complete and $\delta$-complete outputs on standard \gls{smt} problems, as well as tackling the verification of Neural Networks with piecewise linear activation functions.
-Instead of relying on the slower rational arithmetic throughout all its computations, \dlinear encodes the problem in a way that allows the use of off-the-shelf fast exact \gls{lp} solvers, obtaining a significant speedup in instances when the linear constraints constitute the major performance bottleneck.
+This paper presents a tool called \dlinear, a solver for \gls{qf-lra} formulas, capable of producing both complete and $\delta$-complete outputs on standard \gls{smt} problems.
+Instead of relying on the slower rational arithmetic throughout all its computations, \dlinear encodes the problem in a way that allows the use of off-the-shelf fast exact \gls{lp} solvers, obtaining a significant speedup in instances where verifying the feasibility of the linear constraints constitute the major performance bottleneck.
 \dlinear can account for an arbitrary perturbation $\delta$ to the constraints, often leading to a faster solution when formal completeness is not required.
 
 The paper is structured as follows.
 \autoref{sec:preliminaries} provides an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory, and \gls{lp}.
-\autoref{sec:architecture} gives a technical description of the software architecture of the tool with some details on the current support for neural network verification.
+\autoref{sec:architecture} gives a technical description of the software architecture of the tool.
 The employed algorithms are analyzed in more depth in \autoref{sec:lra-theory-solver}, which describes the approach we exploit to adapt the exact \gls{lp} solvers for \gls{smt} solving, and in \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally.
 Lastly, \autoref{sec:benchmarks} presents the results of the experiments conducted to evaluate the tool's performance.
 
@@ -170,7 +167,7 @@ Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, 
 \end{gather*}
 A model $\mathcal{M}$ \textbf{satisfies} a formula $\varphi$ if $\mathcal{I}(\varphi) = \textbf{true}$.
 
-It is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}), among many others~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}.
+It is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}), among many others.~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}
 Then, the problem of \gls{smt} satisfiability is the problem of determining whether there exists a model that satisfies the formula $\varphi$ within the chosen theory.
 \end{comment}
 The tool presented in this paper will focus on the \gls{qf-lra} theory.
@@ -204,7 +201,7 @@ State-of-the-art \gls{smt} solvers such as Z3~\cite{ref:z3}, CVC5~\cite{ref:cvc5
 by employing a specialized Simplex-based~\cite{ref:lra-dpll-t} solver with rational numerical representation to guarantee an exact solution and support strict inequalities.
 Unfortunately, unlike floating point arithmetic, exact rational arithmetic does not offer constant time complexity when it comes to mathematical operations,
 as the time required to complete the computations grows based on the size of the rational representation, which is only limited by the hardware's resources.
-In the \gls{lp} community, a tradeoff between precision and speed of the tool usually favors the former, with many commercial tools utilizing floating point arithmetic~\cite{ref:gurobi} to achieve faster computations.
+In the \gls{lp} community, a trade-off between precision and speed of the tool usually favors the former, with many commercial tools utilizing floating point arithmetic~\cite{ref:gurobi} to achieve faster computations.
 This is not considered a viable option in the \gls{smt} context: inexact procedures would not guarantee completeness, as rounding errors are introduced in the computation.
 
 Some alternative methods have been developed over the years.
@@ -222,12 +219,12 @@ Some subroutines are in place to check for unsoundness and infeasibility in the 
 
 \dlinear implements the standard CDCL(T)-based~\cite{ref:dpll-t} \gls{smt} solver structure utilized in most other state-of-the-art solvers~\cite{ref:cvc5}.
 CDCL(T)-based solvers follow the lazy approach to \gls{smt} solving, being comprised of two main components interacting with each other (see~\autoref{dg:dpll}): a boolean \textbf{\gls{sat} solver} and a specialized \textbf{Theory solver}.
-All non-boolean formulae are first hidden behind a fresh corresponding boolean \textbf{theory-literal}.
+All non-boolean formulae are first hidden behind a newly introduced \textbf{theory-literal}.
 The \gls{sat} solver aims to satisfy the problem by assigning a $true$ or $false$ value to each literal.
 If no assignment is possible, we have determined the unsatisfiability of the input (I).
 On the other hand, if a boolean model is returned, the theory solver checks the consistency of the theory-literals that have been assigned a value by building a \gls{lp} problem from the corresponding linear constraints and checking its feasibility.
 If the problem is feasible, meaning the assignment is consistent with the theory, the model is returned, terminating the process (II).
-Otherwise, the theory solver is responsible for generating an explanation, which takes the form of one or more learned clauses to add to the original input, forcing the \gls{sat} solver to backtrack and try a different assignment while ensuring the same model will not be selected again.
+Otherwise, the theory solver is responsible for generating an explanation, which takes the form of one or more learned clauses to add to the original input, forcing the \gls{sat} solver to backtrack and try a different assignment and ensuring the same model will not be selected again.
 This process is repeated until one of the two exit conditions (I), (II) is met.
 As long as the explanations produced by the theory solver do not loop and only contain a combination of the theory-literals enabled for that iteration, the solver will eventually terminate.
 
@@ -251,44 +248,6 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 
 \dlinear includes some elementary preprocessing techniques that can guide the SAT solver and cheaply detect simple unsatisfiable linear constraints and produce a conflict clause without calling the \gls{lp} solver.
 \dlinear supports MPS files, a standard format for \gls{lp} problems, by implicitly creating a single assertion the solver will try to satisfy.
-
-\subsection{Integrated Neural network verification}
-\label{sec:nn-verification}
-
-\textcolor{red}{What do we do with this part? We don't report any NN results...}
-
-\begin{wrapfigure}[20]{R}{3cm}
-    \captionsetup{font=small}
-    \vspace{-1cm}
-    \resizebox{1.04\linewidth}{!}{%
-        \input{diagrams/onnx.tex}
-    }
-    \caption{ONNX graph.}
-    \label{dg:onnx}
-\end{wrapfigure}
-
-\dlinear implements a naive algorithm to verify neural networks that utilize piecewise linear activation functions.
-Given an \gls{onnx} file~\footnote{\url{https://onnx.ai/index.html}}, the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
-Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
-Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
-These new formulae are then added to the set of assertions in an ``if-then-else'' encoding.
-From then on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
-For instance, the ReLU activation function represents the assignment
-\begin{equation*}
-    y' = \begin{cases}
-        x & \text{if } x \ge 0 \\
-        0 & \text{otherwise} .
-    \end{cases}
-\end{equation*}
-Naming the new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0), C \coloneqq (x \ge 0)$, clauses $(A \lor \neg C) \land (B \lor C)$ are added to the set of assertions.
-
-Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally already intractable for medium-sized networks.
-To mitigate this issue, we exploit the structure of the problem.
-The propagation of the bounds mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
-In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
-Furthermore, the constraints coming from the activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize, while the other linear expression creates the constraints the problem is subject to.
-If the solver finds a solution where the objective value is equal to $0$, then we obtain a valid model.
-If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
 % ---- Linear Real Arithmetic theory ----
 \section{Linear Real Arithmetic theory solver}
@@ -328,7 +287,7 @@ The user can limit the preprocessing engine to only run once, on the fixed theor
             \path [->] (5) edge[draw=red] node {$-7x_5 + x_6 = -28$} (6);
         \end{scope}
     \end{tikzpicture}
-    \caption{Example of a preprocessor graph. The given bounds (the nodes on the left) propagate using the constraints, inducing additional bounds (the blue nodes) that can be used to guide the solver.
+    \caption{Example of a preprocessing graph. The given bounds (the nodes on the left) propagate using the constraints, inducing additional bounds (the blue nodes) that can be used to guide the solver.
         If a conflict is detected (red node), the edges responsible (red edges) are traced back to the origin to formulate an explanation to add to the SAT solver.
         In this case, the explanation adds the clause $(\neg l_1 \lor \neg l_2 \lor \neg l_3 \lor \neg l_4 \lor \neg l_5)$ where $l_1 \coloneqq x_2 = 2, l_2 \coloneqq x_3 = 3, l_3 \coloneqq -3x_2 + x_6 = 0, l_4 \coloneqq x_3 + 2x_5 = 13, l_5 \coloneqq -7x_5 + x_6 = -28$.
         All new valid assignments will not have all three red edges.}
@@ -352,7 +311,7 @@ Collecting the constraints corresponding to the indexes where the Farkas proof i
 To use out-of-the-box \gls{lp} solvers as theory solvers, some adjustments in the formulation of the input may be required.
 Strict inequalities are common in \gls{smt} formulae, but they are usually not supported by \gls{lp} solvers.
 They would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
-Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}}, use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
+Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver,~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}} use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
 Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function, which is not relevant in our context anyway.
 We introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$ since they can always be converted to $<$ by multiplying both sides by $-1$.
@@ -597,37 +556,52 @@ We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref
 We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2) and yices~\cite{ref:yices} (version 2.6.5).
 The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache, and a memory limit of 2.9GB (DDR4 RDIMMs).
 The timeout was set to 12 hours.
-Note that $dlinear_{\delta = 0}$ is used to indicate \dlinear in $\delta$-complete mode using an infinitesimal positive value as the precision parameter.
+We tested \dlinear both in complete mode (denoted with $\text{dlinear}_c$) and in $\delta$-complete mode with various $\delta$ values (denoted with $\text{dlinear}_{\delta = x}$).
+In the tables reporting the results, \#inst indicates the number of problems considered, \#sol the number of problems solved by that solver.
+Given the high variance of times, we show the geometric mean of the time to solve each problem in seconds in column \avgtime.
 
 \subsection*{LP Results}
 
-To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}}, the Netlib LP tests~\footnote{\url{http://www.netlib.org/lp/data/}}, and Csaba Mészáros' LP collection~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}, relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
+To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite,~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}} the Netlib LP tests,~\footnote{\url{http://www.netlib.org/lp/data/}} and Csaba Mészáros' LP collection,~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}} relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
 All the solvers were launched with the same timeout and the same set of inputs on completely independent nodes.
-The results are shown in~\autoref{fig:results-lp1} and \autoref{fig:results-lp2} and summarised in~\autoref{tab:results-lp-complete} and \autoref{tab:results-lp-delta}.
+The results are shown in~\autoref{fig:results-lp} and summarized in~\autoref{tab:results-lp-complete} and \autoref{tab:results-lp-delta}.
 \dlinear in the $\delta$-complete approach can solve most instances, going over the 1200 problems mark in all configurations and dropping to 1194 when in complete mode.
 Yices performs the best in terms of average speed but solves only 1111 problems before timeout, followed by cvc5 with 955 and Z3 with 934.
 
-\textcolor{red}{Figure needs caption}
+\textcolor{red}{footnote should be added after comma or dot.}
+
+\textcolor{red}{You are mixing British English and American English. See the word summarized above. I have changed the language for spell checking. It is American English. Please check the whole document.}
+
+%\textcolor{red}{Figure needs caption}
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}{.46\textwidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{img/on_file_lp.png}
+%         \caption{Cumulative number of problems solved by each solver only considering  problems solved by all solvers}
+%         \label{fig:results-lp1}
+%     \end{subfigure}%
+%     \hspace{1cm}
+%     \begin{subfigure}{.45\textwidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{img/total_lp.png}
+%         \caption{Cumulative number of problems solved by each solver considering all available problems}
+%         \label{fig:results-lp2}
+%     \end{subfigure}
+%     \caption{LP benchmark results}
+% \end{figure}
+
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{.46\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{img/on_file_lp.png}
-        \caption{Cumulative number of problems solved by each solver only considering  problems solved by all solvers}
-        \label{fig:results-lp1}
-    \end{subfigure}%
+    \includegraphics[width=0.45\linewidth]{img/on_file_lp.pdf}
     \hspace{1cm}
-    \begin{subfigure}{.45\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{img/total_lp.png}
-        \caption{Cumulative number of problems solved by each solver considering all available problems}
-        \label{fig:results-lp2}
-    \end{subfigure}
-    \caption{LP benchmark results}
+    \includegraphics[width=0.45\linewidth]{img/total_lp.pdf}
+    \caption{LP benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 847 problems solved by all solvers (\textbf{left}) and considering all 1237 problems (\textbf{right}). \textcolor{red}{change the axis range to reduce the white space inside the left figure. The figures have low quality saved as png. Could you create them with higher quality or as pdf?}}
+    \label{fig:results-lp}
 \end{figure}
 
 \begin{table}
-    \vspace{-1cm}
+    %\vspace{-1cm}
     \scriptsize
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
         \toprule
@@ -640,7 +614,7 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
         \bottomrule
     \end{tabular*}
     \medskip
-    \caption{Comparison between all complete solvers over the \gls{smt} problems. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
+    \caption{Comparison between all complete solvers over the \gls{lp} problems.}
     \label{tab:results-lp-complete}
 \end{table}
 
@@ -657,39 +631,46 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
         \bottomrule
     \end{tabular*}
     \medskip
-    \caption{Comparison between \dlinear over the \gls{smt} problems with different $\delta$. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
+    \caption{Comparison between \dlinear over the \gls{lp} problems with different $\delta$.}
     \label{tab:results-lp-delta}
-    \vspace{-1cm}
+    %\vspace{-1cm}
 \end{table}
 
 \subsection*{SMT Results}
 
-A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}.
-The results are shown in~\autoref{fig:results-smt1} and \autoref{fig:results-smt2} and summarised in~\autoref{tab:results-smt-complete} and \autoref{tab:results-smt-delta}.
+A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite.~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}
+The results are shown in~\autoref{fig:results-smt} and summarized in~\autoref{tab:results-smt-complete} and \autoref{tab:results-smt-delta}.
 Needless to say, the outputs are consistent among all four complete solvers.
 Although not as fast as the more established tools, \dlinear shows some notable performance gains when producing a $\delta$-complete output, managing to outperform Z3 in terms of the number of solved instances.
 
-\textcolor{red}{Figure needs caption}
+% \textcolor{red}{Figure needs caption}
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}{.46\textwidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{img/on_file_smt.png}
+%     \end{subfigure}%
+%     \hspace{1cm}
+%     \begin{subfigure}{.45\textwidth}
+%         \centering
+%         \includegraphics[width=\linewidth]{img/total_smt.png}
+%     \end{subfigure}
+%     \caption{SMT benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 823 problems solved by all solvers (\textbf{left}) and considering all 1754 problems (\textbf{right}). \textcolor{red}{Could you create them with higher quality or as pdf?}}
+%     \label{fig:results-smt}
+% \end{figure}
+
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{.46\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{img/on_file_smt.png}
-        \caption{Cumulative number of problems solved by each solver only considering  problems solved by all solvers}
-        \label{fig:results-smt1}
-    \end{subfigure}%
+    \includegraphics[width=0.45\linewidth]{img/on_file_smt.pdf}
     \hspace{1cm}
-    \begin{subfigure}{.45\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{img/total_smt.png}
-        \caption{Cumulative number of problems solved by each solver considering all available problems}
-        \label{fig:results-smt2}
-    \end{subfigure}
-    \caption{SMT benchmark results}
+    \includegraphics[width=0.45\linewidth]{img/total_smt.pdf}
+    \caption{SMT benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 823 problems solved by all solvers (\textbf{left}) and considering all 1754 problems (\textbf{right}). \textcolor{red}{Could you create them with higher quality or as pdf?}}
+    \label{fig:results-smt}
 \end{figure}
 
+
 \begin{table}
-    \vspace{-1cm}
+    %\vspace{-1cm}
     \scriptsize
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
         \toprule
@@ -702,7 +683,7 @@ Although not as fast as the more established tools, \dlinear shows some notable 
         \bottomrule
     \end{tabular*}
     \medskip
-    \caption{Comparison between all complete solvers over the \gls{lp} problems. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
+    \caption{Comparison between all complete solvers over the \gls{smt} problems.}
     \label{tab:results-smt-complete}
 \end{table}
 \begin{table}
@@ -718,16 +699,63 @@ Although not as fast as the more established tools, \dlinear shows some notable 
         \bottomrule
     \end{tabular*}
     \medskip
-    \caption{Comparison between \dlinear over the \gls{lp} problems with different $\delta$. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
+    \caption{Comparison between \dlinear over the \gls{smt} problems with different $\delta$.}
     \label{tab:results-smt-delta}
-    \vspace{-1cm}
+    %\vspace{-1cm}
 \end{table}
+
+
+%\section{Integrated Neural network verification}
+%\label{sec:nn-verification}
+\section{Future Extensions}
+
+%\textcolor{red}{What do we do with this part? We don't report any NN results...}
+
+\textcolor{red}{Add a para on your ideas for improving efficiency of the tool.}
+
+Future work on \dlinear will focus on several enhancements aimed at improving its performance and versatility.
+The symbolic representation of theory literals can be made more efficient by optimizing the underlying data structures for the \gls{qf-lra} use case and employing lazy computations whenever possible.
+Additionally, we will enhance the preprocessing phase by introducing more sophisticated algorithms to identify and deal with cheaply simplifiable assertions without involving the main \gls{lp} algorithm.
+Lastly, we will investigate integrating $\delta$-complete reasoning and exact floating point computation with the specialized Simplex algorithm described in~\cite{ref:lra-dpll-t}, obtaining both the faster average computation time and the small infeasibility explanations.
+
+\begin{wrapfigure}[23]{R}{2.9cm}
+    \captionsetup{font=small}
+    \vspace{-1cm}
+    \resizebox{1.04\linewidth}{!}{%
+        \input{diagrams/onnx.tex}
+    }
+    \caption{ONNX graph.}
+    \label{dg:onnx}
+\end{wrapfigure}
+
+We will also explore \dlinear's applications in neural network verification.
+\dlinear already implements a naive algorithm to verify neural networks that utilize piecewise linear activation functions.
+Given an \gls{onnx} file,~\footnote{\url{https://onnx.ai/index.html}} the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
+Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
+Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
+These new formulae are then added to the set of assertions in an ``if-then-else'' encoding.
+From then on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
+For instance, the ReLU activation function represents the assignment
+\begin{equation*}
+    y' = \begin{cases}
+        x & \text{if } x \ge 0 \\
+        0 & \text{otherwise} .
+    \end{cases}
+\end{equation*}
+Naming the new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0), C \coloneqq (x \ge 0)$, clauses $(A \lor \neg C) \land (B \lor C)$ are added to the set of assertions.
+
+Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally already intractable for medium-sized networks.
+To mitigate this issue, we exploit the structure of the problem.
+The propagation of the bounds mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
+In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
+Furthermore, the constraints coming from the activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize, while the other linear expression creates the constraints the problem is subject to.
+If the solver finds a solution where the objective value is equal to $0$, then we obtain a valid model.
+If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
 \section{Conclusion}
 
 \dlinear novelty comes from the adoption of exact but not purely rational linear programming solvers adapted for the \gls{smt} context, improving the average performance when dealing with instances where determining the feasibility of the linear constraints represents the main performance bottleneck.
-It is able to provide complete verification for problems within the \gls{qf-lra} logic and extends its capabilities to verify neural networks with piecewise activation functions.
-The $\delta$-complete approach can further speed up the verification process at the cost of relaxing the constraints by a positive user-defined value.
+It is able to provide complete verification for problems within the \gls{qf-lra} logic and the $\delta$-complete approach can further speed up the verification process at the cost of relaxing the constraints by a user-defined value.
 Future developments will focus on improving the performance of the software by introducing a specialized and efficient symbolic representation of the constraints and improving the heuristics used during the preprocessing phase and the exploration of the search space, especially for neural network verification.
 
 The latest version of the tool is available at \url{https://github.com/TendTo/dlinear}, along with the source code and the technical documentation.

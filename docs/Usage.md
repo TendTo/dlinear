@@ -27,13 +27,14 @@ If left unspecified, the program will look at the file extension to determine th
 dlinear path/to/problem.smt2
 # Invoke dlinear with a problem in MPS format
 dlinear path/to/problem.mps
-# Invoke dlinear with a problem enforcing the SMT2 format
+# Invoke dlinear with a problem assuming it is in SMT2 format
 dlinear path/to/problem --format smt2
 ```
 
 ## Stdin mode
 
 _dlinear_ can be used in stdin mode, where the user can input is received from the standard input.
+Note that in this case the format must be specified explicitly.
 
 ```bash
 # Invoke dlinear in stdin mode (SMT2 format)
