@@ -47,11 +47,11 @@
 \authorrunning{E. Casablanca et al.}
 
 \institute{Newcastle University, Newcastle upon Tyne, United Kindgom\\
-    \email{e.casablanca2@newcastle.ac.uk, martin.sidaway@icloud.com} \and % TODO: add Martin's email and ensure orcidID
-    Max Planck Institute for Software Systems, Kaiserslautern, Germany\\
-    \email{sadegh@mpi-sws.org} \and
-    La Sapienza University, Rome, Italy\\
-    \email{zuliani@di.uniroma1.it}}
+\email{e.casablanca2@newcastle.ac.uk, martin.sidaway@icloud.com} \and % TODO: add Martin's email and ensure orcidID
+Max Planck Institute for Software Systems, Kaiserslautern, Germany\\
+\email{sadegh@mpi-sws.org} \and
+Universit\`{a} di Roma ``La Sapienza'', Rome, Italy\\
+\email{zuliani@di.uniroma1.it}}
 
 %%%%%%%%%%%%%%%%%%%%%
 % ---- Sections ----
@@ -255,6 +255,8 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 \subsection{Integrated Neural network verification}
 \label{sec:nn-verification}
 
+\textcolor{red}{What do we do with this part? We don't report any NN results...}
+
 \begin{wrapfigure}[20]{R}{3cm}
     \captionsetup{font=small}
     \vspace{-1cm}
@@ -335,12 +337,10 @@ The user can limit the preprocessing engine to only run once, on the fixed theor
 
 \subsection{LP solver}
 
-\dlinear uses \soplex as its default \gls{lp} solver.
-It implements both the incremental precision boosting and the iterative refinement algorithms.
-The user can choose between the two or try a hybrid approach.
-\qsoptex can be used as an alternative solver, but it is limited to precision boosting and tends to produce less compact explanations, leading to more conflicts and slower convergence.
+\dlinear uses \soplex \cite{soplex} as its default \gls{lp} solver, which implements both the incremental precision boosting and the iterative refinement algorithms.
+The user can choose between the two or try a hybrid approach. The \qsoptex \cite{ref:precision-boosting} solver can also be used, but it is limited to precision boosting and tends to produce less compact explanations, leading to more conflicts and slower convergence.
 
-If a feasible solution is found, it means that the original formula is satisfiable, and the assignment is returned to the user.
+If the solver finds a feasible solution, it means that the original formula is satisfiable, and the assignment is returned to the user.
 Note that the solution's uniqueness is not guaranteed, so adding an artificial clause with the negation of the solution found will force the solver to find another assignment, if possible.
 On the other hand, if the \gls{lp} problem is infeasible, we can use the Farkas proof $y \in \bbbr^m$, corresponding to the last feasible solution of the dual problem before its unboundedness or infeasibility was detected.
 Given the initial $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimizes $y^T A$, the result will still be $y^T A x > y^T b$.
@@ -353,11 +353,11 @@ To use out-of-the-box \gls{lp} solvers as theory solvers, some adjustments in th
 Strict inequalities are common in \gls{smt} formulae, but they are usually not supported by \gls{lp} solvers.
 They would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
 Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}}, use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
-Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function, which is not relevant in this context anyway.
+Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function, which is not relevant in our context anyway.
 We introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$ since they can always be converted to $<$ by multiplying both sides by $-1$.
 The same applies to $\ge$ and $=$, which can be converted to $\le$ by using the standard form of the problem, as discussed in Section~\ref{sec:lp}.
-Note that we are excluding \nqcs for now, as they will be discussed next.
+Note that we are excluding not-equal-to ($\neq$) for now, as they will be discussed next.
 Let $K$ indicate the set of indexes of strict inequality constraints ($<$) and with $J$ the set of indexes for all other constraints ($\le$).
 Note that $K$ and $J$ are disjoint sets.
 Without loss of generality, assume that all the indices in $K$ are less than those in $J$ ($\max(J) < \min(K)$).
@@ -388,10 +388,11 @@ can be relaxed to
         \text{Maximize }   \quad & t                                                             \\
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
-        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
+        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\} \ .
     \end{split}
 \end{align}
 
+The proof of the following Theorem can be found in the Appendix.
 \begin{theorem}
     \label{thm:lp-relaxed}
     The original problem \eqref{eq:lp-original} is feasible if and only if the relaxed problem \eqref{eq:lp-relaxed} is feasible and there exists a solution that satisfies its optimal value is strictly greater than $0$.
@@ -425,9 +426,12 @@ For instance, a problem with two \nqcs
         A_{|J| + |K| + 1} x \ne b_{|J| + |K| + 1}                 \\
         A_{|J| + |K| + 2} x \ne b_{|J| + |K| + 2}                 \\
     \end{cases}
-    \\
-    \text{will be split into}
-    \\
+\end{gather*}
+%    \\
+%    \noindent\text{will be split into}
+will be split into
+%    \\
+\begin{gather*}
     \begin{pmatrix}
         \begin{cases}
             A_{1 \dots |J|} x \le b_{1 \dots |J| - 1}                 \\
@@ -456,7 +460,7 @@ For instance, a problem with two \nqcs
             A_{|J| + |K| + 1} x > b_{|J| + |K| + 1}                   \\
             A_{|J| + |K| + 2} x > b_{|J| + |K| + 2}
         \end{cases}
-    \end{pmatrix}
+    \end{pmatrix}\ .
 \end{gather*}
 Note that the \nqcs appear in $4$ configurations: $\{<, <\}, \{<, >\}, \{>, <\}, \{>, >\}$.
 If any of the subproblems is feasible, then it is possible to conclude that the original problem is feasible.
@@ -470,52 +474,59 @@ We can obtain this early termination by enumerating the number of times a unique
 If that number is equal to $2^{|T|}$, where $T$ is the set of indexes of the \nqcs in the subset, we can return an infeasibility explanation obtained by merging all the explanations produced by the subproblems that were enumerated.
 Lastly, it is possible to \textit{hot start} the solver by starting in a configuration close to the one that caused the last infeasibility.
 
+
 \subsection{Theory solver algorithm}
 
 Let $\text{LpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the constraints ($\le, <, \ne$), solves the extended relaxed problem \eqref{eq:lp-extended} and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
-$\odot$ represents an element-wise multiplication between two vectors or a vector and a scalar, with the scalar repeated to match the size of the vector.
-We adapt the \gls{lp} solver to the \gls{smt} context using the Algorithm~\ref{alg:theory-solver}.
+In practice, the routine will relax the strict inequalities based on the given indexes and solve the relaxed problem using a standard \gls{lp} solver, returning a Farkas proof if the problem is infeasible.
+Let  $\odot$ represent the element-wise multiplication between two vectors or a vector and a scalar, with the scalar repeated to match the size of the vector.
+The algorithm \dlinear uses when solving \gls{smt} problem in complete mode is shown in Algorithm~\ref{alg:theory-solver}.
 To simplify the presentation, only the essential heuristics are included in the pseudocode.
+The algorithm starts by solving the problem without any \nqcs.
+If this simplified version of the problem is infeasible (line~\ref{alg:theory-solver:infeasible}), the theory solver returns the explanation immediately, forcing the \gls{sat} solver to backtrack.
+Otherwise, we iterate over all possible configurations of the \nqcs using a $|{D}|$ bit counter $c$ to keep track of the current configuration.
+A bit $0$ ($1$) at the index $i$ of the binary representation of $c$ means the $i$-th \nqc becomes a $>$ ($<$) constraint (lines~\ref{alg:theory-solver:loop}--\ref{alg:theory-solver:loop-solve}).
+If we find a feasible solution, we return immediately, as the original problem is feasible and we have found a model (line~\ref{alg:theory-solver:feasible}).
+Otherwise, we check which \nqcs are involved in the infeasibility and store the infeasibility explanation, using an identifier $l$ to avoid redundancy (line~\ref{alg:theory-solver:nq-infeasible}--\ref{alg:theory-solver:store-explanation}).
+Upon exploring all possible configurations of a subset of \nqcs, which in the worst case corresponds to the entire set, we can return the union of the explanations produced by the subset (line~\ref{alg:theory-solver:relaxed-infeasible}).
+
+
+\textcolor{red}{I think you need more description of the algorithm. Ideally, add line numbers to Alg 1 and refer to them in the text.}
 \begin{algorithm}
     \caption{SMT adapted LP solver}\label{alg:theory-solver}
-    \begin{algorithmic}
-        \Require $A \in \bbbr^{(|J| + |K| + |D|) \times n}, b \in \bbbr^{|J| + |K| + |D|}, l \in \bbbr^n, u \in \bbbr^n$ \\
+    \begin{algorithmic}[1]
+        \Require $A \in \bbbr^{(|J| + |K| + |D|) \times n}, b \in \bbbr^{|J| + |K| + |D|}, l \in \bbbr^n, u \in \bbbr^n$ \newline
         \qquad as defined in~\autoref{sec:lp} over the extended relaxed problem~\eqref{eq:lp-extended}
-        \Require $J, K, D$ as defined in~\autoref{sec:strict-bounds} \\
+        \Require $J, K, D$ as defined in~\autoref{sec:strict-bounds} \newline
         \qquad note that $\max(J) < \min(K) \le \max(K) < \min(D)$
         \Ensure Set of indexes of infeasible constraints $E$ or $\emptyset$
         \State $E \gets \text{LpSolve}(A, b, l, u, J, K, \emptyset)$ \Comment{Solve the LP problem without $\ne$ constraints}
-        \If{$E \ne \emptyset$}
+        \If{$E \ne \emptyset$} \label{alg:theory-solver:infeasible}
         \State \Return $E$
         \EndIf
         \For {$s \in \text{ all non empty subsets of } D$}
         \State $V_s \gets \emptyset$
         \State $E_s \gets \emptyset$
         \EndFor
-        \State $c \gets 0$ \Comment{Initialize the binary counter}
-        \While{$c \le 2^{|D|}$}
+        \For{$c \gets 0$ to $2^{|D|}$} \label{alg:theory-solver:loop}
         \State Let $C \in \{-1, 1\}^{|D|}$ be the binary representation of $c$ with $0$ replaced by $-1$
         \State $C' \in \{-1, 1\}^{|J|+|K|+|D|} \gets \begin{bmatrix} 1^{|J|} & 1^{|K|} & C\end{bmatrix}$
         \State $A' \gets \begin{bmatrix}A_1 \odot C'_1 \\ \vdots \\ A_{|J|+|K|+|D|} \odot C'_{|J|+|K|+|D|}\end{bmatrix}$
-        \State $E \gets \text{LpSolve}(A', b \odot C', l, u, J, K, D)$
-        \If{$E = \emptyset$} \Comment{At least one subproblem is feasible}
+        \State $E \gets \text{LpSolve}(A', b \odot C', l, u, J, K, D)$ \label{alg:theory-solver:loop-solve}
+        \If{$E = \emptyset$} \Comment{At least one subproblem is feasible} \label{alg:theory-solver:feasible}
         \State \Return $\emptyset$
         \EndIf
-        \State $T \gets E \cap D$
-        \If{$T = \emptyset$} \Comment{No \nqcs are involved in the infeasibility, the problem is infeasible}
-        \State \Return $E$
-        \EndIf
+        \State $T \gets E \cap D$ \label{alg:theory-solver:nq-infeasible}
         \State $l \gets \{ C'_{|J| + |K| + t} \mid \forall t \in T\}$ % I want to construct a vector where each element is defined by the corresponding element in C' if the index is in T
         \If{$l \in V_T$} \Comment{Avoid adding redundant explanations for the same infeasibility}
         \State \textbf{Continue}
         \EndIf
         \State $V_T \gets V_T \cup \{l\}$
-        \State $E_T \gets E_T \cup E$
-        \If{$|V_T| = 2^{|T|}$} \Comment{Having explored it fully, a subset of the $\ne$ constraints is infeasible}
+        \State $E_T \gets E_T \cup E$ \label{alg:theory-solver:store-explanation}
+        \If{$|V_T| = 2^{|T|}$} \Comment{Having explored it fully, a subset of the $\ne$ constraints is infeasible} \label{alg:theory-solver:relaxed-infeasible}
         \State \Return $E_T$
         \EndIf
-        \State $c \gets c + 1$
-        \EndWhile
+        \EndFor
         \State \Return $E$
     \end{algorithmic}
 \end{algorithm}
@@ -524,11 +535,10 @@ To simplify the presentation, only the essential heuristics are included in the 
 \section{$\delta$-completeness}
 \label{sec:delta-completeness}
 
-\dlinear offers the option to use $\delta$-completeness.
-In this mode, the user can specify a precision parameter $\delta > 0$, relaxing the constraints to allow for an arbitrary error margin, to find a feasible solution faster.
+\dlinear offers the option to use $\delta$-completeness, which relaxes in a rigorous way the notion of full completeness \cite{delta-dec}. In this mode, the user can specify a precision parameter $\delta > 0$, relaxing the constraints to allow for an arbitrary error margin, to find a feasible solution faster.
 
 % Taken from Martin's thesis
-\begin{definition}
+\begin{definition}\cite{delta-dec}
     Let $\varphi$ be an \gls{smt} formula in which every theory-literal is in the form $t(x) \bowtie 0$.
     The $\delta$-weakening of $\varphi$ for any $\delta > 0$, denoted $\varphi^{-\delta}$, is the formula obtained by replacing every constraint $t(x) = 0$ with $|t(x)| \le \delta$, $t(x) \le 0$ with $t(x) \le \delta$, relaxing the strict inequalities from $t(x) < 0$ to $t(x) \le \delta$ and removing all \nqcs.
 \end{definition}
@@ -546,29 +556,30 @@ with the corresponding \gls{lp} problem being
         \quad                    & l_i - \delta \le x_i \le u_i + \delta,  \quad i \in \{1, 2, \ldots, n\}
     \end{split}
 \end{equation}
-\begin{definition}
+Next, the notion of $\delta$-complete decision procedure is the following:
+\begin{definition}\cite{paper:delta-complete}
     A $\delta$-complete decision procedure for satisfiability over a class of formulae $F$ is an algorithm that, if provided as input any formula $\varphi \in F$, terminates and outputs (non-deterministically) exactly one of the following symbols:
     \begin{enumerate}
         \item unsat only if $\varphi$ is unsatisfiable
         \item $\delta$-sat only if $\varphi^{-\delta}$ (the $\delta$-weakening of $\varphi$) is satisfiable
     \end{enumerate}
 \end{definition}
-Note that such a procedure is non-deterministic because both conditions can simultaneously be true.
+Note that such a procedure is non-deterministic because both conditions ({\em i.e.}, $\phi$ unsatisfiable and $\phi^{-\delta}$ satisfiable) can simultaneously be true.
 Furthermore, any complete method is, by definition, trivially $\delta$-complete.
-The advantage of this approach is that the \gls{lp} solver can stop refining the solution as soon as the arbitrary precision $\delta$, indicated by the user, is reached, possibly saving computation time, especially for numerically challenging instances.
+The advantage of this approach is that the \gls{lp} solver can stop refining the solution as soon as the user-defined precision $\delta$ is reached, possibly saving computation time, especially for numerically challenging instances.
 Leaving out the \nqcs also removes the potentially most computationally expensive part of the problem, as discussed in Section~\ref{sec:lra-theory-solver}.
-Whether this tradeoff between speed and completeness is acceptable is up to the user to decide.
+Whether this trade-off between speed and completeness is acceptable is up to the user to decide.
 
 When in $\delta$-complete mode, \dlinear uses the $\delta$ parameter to inform the underlying \gls{lp} solver that the precision boosting or iterative refinement algorithms can stop once the desired precision has been reached, returning the feasible solution found at that point.
 
-Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the $\delta$ weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if any are present.
+Let $\text{DeltaLpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the original constraints ($=, \le$), solves the $\delta$-weakened problem \eqref{eq:delta-lp} and returns the set of indexes of infeasible constraints if any are present.
 We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref{alg:delta-theory-solver}.
 
 % Inspired by Martin's thesis. I'm not sure I can contribute anything useful to the explanation
 \begin{algorithm}
     \caption{SMT adapted $\delta$-complete LP solver}\label{alg:delta-theory-solver}
     \begin{algorithmic}
-        \Require $A \in \bbbr^{(|J'| + |K'|) \times n}, b \in \bbbr^{|J'| + |K'|}, l \in \bbbr^n, u \in \bbbr^n$ \\
+        \Require $A \in \bbbr^{(|J'| + |K'|) \times n}, b \in \bbbr^{|J'| + |K'|}, l \in \bbbr^n, u \in \bbbr^n$ \newline
         \qquad as defined in Section~\ref{sec:lp} over the $\delta$ weakened problem~\eqref{eq:delta-lp}
         \Require $J', K'$ as defined in this Section
         \Require $\delta > 0$
@@ -588,29 +599,31 @@ The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-269
 The timeout was set to 12 hours.
 Note that $dlinear_{\delta = 0}$ is used to indicate \dlinear in $\delta$-complete mode using an infinitesimal positive value as the precision parameter.
 
-\subsection*{LP Result}
+\subsection*{LP Results}
 
 To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}}, the Netlib LP tests~\footnote{\url{http://www.netlib.org/lp/data/}}, and Csaba Mészáros' LP collection~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}}, relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
 All the solvers were launched with the same timeout and the same set of inputs on completely independent nodes.
 The results are shown in~\autoref{fig:results-lp1} and \autoref{fig:results-lp2} and summarised in~\autoref{tab:results-lp-complete} and \autoref{tab:results-lp-delta}.
-\dlinear in the $\delta$-complete approach can solve most instances, going over the 1200 problem marks in all configurations and dropping to 1194 when in complete mode.
+\dlinear in the $\delta$-complete approach can solve most instances, going over the 1200 problems mark in all configurations and dropping to 1194 when in complete mode.
 Yices performs the best in terms of average speed but solves only 1111 problems before timeout, followed by cvc5 with 955 and Z3 with 934.
 
+\textcolor{red}{Figure needs caption}
 \begin{figure}[H]
     \centering
     \begin{subfigure}{.46\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/on_file_lp.png}
-        \caption{Results over problems completed by all solvers}
+        \caption{Cumulative number of problems solved by each solver only considering  problems solved by all solvers}
         \label{fig:results-lp1}
     \end{subfigure}%
     \hspace{1cm}
     \begin{subfigure}{.45\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/total_lp.png}
-        \caption{Results over all problems}
+        \caption{Cumulative number of problems solved by each solver considering all available problems}
         \label{fig:results-lp2}
     \end{subfigure}
+    \caption{LP benchmark results}
 \end{figure}
 
 \begin{table}
@@ -629,7 +642,6 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
     \medskip
     \caption{Comparison between all complete solvers over the \gls{smt} problems. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
     \label{tab:results-lp-complete}
-    \vspace{-1cm}
 \end{table}
 
 \begin{table}
@@ -650,28 +662,30 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
     \vspace{-1cm}
 \end{table}
 
-\subsection*{SMT Result}
+\subsection*{SMT Results}
 
 A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}.
 The results are shown in~\autoref{fig:results-smt1} and \autoref{fig:results-smt2} and summarised in~\autoref{tab:results-smt-complete} and \autoref{tab:results-smt-delta}.
 Needless to say, the outputs are consistent among all four complete solvers.
 Although not as fast as the more established tools, \dlinear shows some notable performance gains when producing a $\delta$-complete output, managing to outperform Z3 in terms of the number of solved instances.
 
+\textcolor{red}{Figure needs caption}
 \begin{figure}[H]
     \centering
     \begin{subfigure}{.46\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/on_file_smt.png}
-        \caption{Results over problems completed by all solvers}
+        \caption{Cumulative number of problems solved by each solver only considering  problems solved by all solvers}
         \label{fig:results-smt1}
     \end{subfigure}%
     \hspace{1cm}
     \begin{subfigure}{.45\textwidth}
         \centering
         \includegraphics[width=\linewidth]{img/total_smt.png}
-        \caption{Results over all problems}
+        \caption{Cumulative number of problems solved by each solver considering all available problems}
         \label{fig:results-smt2}
     \end{subfigure}
+    \caption{SMT benchmark results}
 \end{figure}
 
 \begin{table}
@@ -690,7 +704,6 @@ Although not as fast as the more established tools, \dlinear shows some notable 
     \medskip
     \caption{Comparison between all complete solvers over the \gls{lp} problems. \avgtime represents the geometric mean of the time to solve each instance, in seconds.}
     \label{tab:results-smt-complete}
-    \vspace{-1cm}
 \end{table}
 \begin{table}
     \scriptsize

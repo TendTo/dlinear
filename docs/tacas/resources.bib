@@ -61,14 +61,14 @@
   title     = {$\delta$-Complete Decision Procedures for Satisfiability over the Reals},
   author    = {Gao, Sicun and Avigad, Jeremy and Clarke, Edmund M.},
   year      = 2012,
-  booktitle = {Automated Reasoning},
-  publisher = {Springer Berlin Heidelberg},
-  address   = {Berlin, Heidelberg},
+  booktitle = {Automated Reasoning - 6th International Joint Conference, {IJCAR}},
   pages     = {286--300},
-  isbn      = {978-3-642-31365-3},
-  editor    = {Gramlich, Bernhard and Miller, Dale and Sattler, Uli},
-  abstract  = {We introduce the notion of ``$\delta$-complete decision procedures'' for solving SMT problems over the real numbers, with the aim of handling a wide range of nonlinear functions including transcendental functions and solutions of Lipschitz-continuous ODEs. Given an SMT problem ϕ and a positive rational number $\delta$, a $\delta$-complete decision procedure determines either that ϕ is unsatisfiable, or that the ``$\delta$-weakening'' of ϕ is satisfiable. Here, the $\delta$-weakening of ϕ is a variant of ϕ that allows $\delta$-bounded numerical perturbations on ϕ. We establish the existence and complexity of $\delta$-complete decision procedures for bounded SMT over reals with functions mentioned above. We propose to use $\delta$-completeness as an ideal requirement for numerically-driven decision procedures. As a concrete example, we formally analyze the DPLL{\textlangle}ICP{\textrangle} framework, which integrates Interval Constraint Propagation in DPLL(T), and establish necessary and sufficient conditions for its $\delta$-completeness. We discuss practical applications of $\delta$-complete decision procedures for correctness-critical applications including formal verification and theorem proving.}
+  series    = {Lecture Notes in Computer Science},
+  volume    = {7364},
+  publisher = {Springer},
+  doi       = {10.1007/978-3-642-31365-3\_23}
 }
+
 @article{ref:dpll,
   title      = {A Machine Program for Theorem-Proving},
   author     = {Davis, Martin and Logemann, George and Loveland, Donald},
@@ -88,15 +88,14 @@
   numpages   = 4
 }
 @inproceedings{ref:lra-dpll-t,
-  title     = {A Fast Linear-Arithmetic Solver for DPLL(T)},
+  title     = {A Fast Linear-Arithmetic Solver for {DPLL(T)}},
   author    = {Dutertre, Bruno and de Moura, Leonardo},
   year      = 2006,
   booktitle = {Computer Aided Verification},
   publisher = {Springer Berlin Heidelberg},
   address   = {Berlin, Heidelberg},
   pages     = {81--94},
-  isbn      = {978-3-540-37411-4},
-  abstract  = {We present a new Simplex-based linear arithmetic solver that can be integrated efficiently in the DPLL(T) framework. The new solver improves over existing approaches by enabling fast backtracking, supporting a priori simplification to reduce the problem size, and providing an efficient form of theory propagation. We also present a new and simple approach for solving strict inequalities. Experimental results show substantial performance improvements over existing tools that use other Simplex-based solvers in DPLL(T) decision procedures. The new solver is even competitive with state-of-the-art tools specialized for the difference logic fragment.}
+  isbn      = {978-3-540-37411-4}
 }
 @misc{paper:drake,
   title  = {"Drake: Model-based design and verification for robotics},
@@ -159,7 +158,7 @@
   doi     = {10.3233/sat190039}
 }
 @inproceedings{paper:survey-smt,
-  title     = {A Survey of Satisfiability Modulo Theory},
+  title     = {A Survey of {Satisfiability Modulo Theory}},
   author    = {David Monniaux},
   year      = 2016,
   booktitle = {Computer Algebra in Scientific Computing - 18th International Workshop, {CASC} 2016, Bucharest, Romania, September 19-23, 2016, Proceedings},
@@ -168,11 +167,7 @@
   volume    = 9890,
   pages     = {401--425},
   doi       = {10.1007/978-3-319-45641-6\_26},
-  url       = {https://doi.org/10.1007/978-3-319-45641-6\_26},
-  editor    = {Vladimir P. Gerdt and Wolfram Koepf and Werner M. Seiler and Evgenii V. Vorozhtsov},
-  timestamp = {Tue, 14 May 2019 10:00:46 +0200},
-  biburl    = {https://dblp.org/rec/conf/casc/Monniaux16.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  editor    = {Vladimir P. Gerdt and Wolfram Koepf and Werner M. Seiler and Evgenii V. Vorozhtsov}
 }
 @inbook{paper:tseitin,
   title     = {On the Complexity of Derivation in Propositional Calculus},
@@ -192,36 +187,26 @@
   title     = {cvc5: {A} Versatile and Industrial-Strength {SMT} Solver},
   author    = {Haniel Barbosa and Clark W. Barrett and Martin Brain and Gereon Kremer and Hanna Lachnitt and Makai Mann and Abdalrhman Mohamed and Mudathir Mohamed and Aina Niemetz and Andres N{\"{o}}tzli and Alex Ozdemir and Mathias Preiner and Andrew Reynolds and Ying Sheng and Cesare Tinelli and Yoni Zohar},
   year      = 2022,
-  booktitle = {Tools and Algorithms for the Construction and Analysis of Systems - 28th International Conference, {TACAS} 2022, Held as Part of the European Joint Conferences on Theory and Practice of Software, {ETAPS} 2022, Munich, Germany, April 2-7, 2022, Proceedings, Part {I}},
+  booktitle = {Tools and Algorithms for the Construction and Analysis of Systems - 28th International Conference, {TACAS} 2022},
   publisher = {Springer},
   series    = {Lecture Notes in Computer Science},
   volume    = 13243,
   pages     = {415--442},
   doi       = {10.1007/978-3-030-99524-9\_24},
-  url       = {https://doi.org/10.1007/978-3-030-99524-9\_24},
-  editor    = {Dana Fisman and Grigore Rosu},
-  timestamp = {Fri, 01 Apr 2022 15:49:27 +0200},
-  biburl    = {https://dblp.org/rec/conf/tacas/BarbosaBBKLMMMN22.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  editor    = {Dana Fisman and Grigore Rosu}
 }
 @article{ref:dpll-t,
-  title      = {Solving SAT and SAT Modulo Theories: From an Abstract Davis-Putnam-Logemann-Loveland Procedure to DPLL(T)},
+  title      = {Solving {SAT} and {SAT} Modulo Theories: From an Abstract {Davis-Putnam-Logemann-Loveland} Procedure to {DPLL(T)}},
   author     = {Nieuwenhuis, Robert and Oliveras, Albert and Tinelli, Cesare},
   year       = 2006,
   month      = {nov},
-  journal    = {J. Acm},
+  journal    = {J. ACM},
   publisher  = {Association for Computing Machinery},
-  address    = {New York, NY, USA},
   volume     = 53,
   number     = 6,
   pages      = {937--977},
   doi        = {10.1145/1217856.1217859},
-  issn       = {0004-5411},
-  url        = {https://doi.org/10.1145/1217856.1217859},
-  issue_date = {November 2006},
-  abstract   = {We first introduce Abstract DPLL, a rule-based formulation of the Davis-Putnam-Logemann-Loveland (DPLL) procedure for propositional satisfiability. This abstract framework allows one to cleanly express practical DPLL algorithms and to formally reason about them in a simple way. Its properties, such as soundness, completeness or termination, immediately carry over to the modern DPLL implementations with features such as backjumping or clause learning.We then extend the framework to Satisfiability Modulo background Theories (SMT) and use it to model several variants of the so-called lazy approach for SMT. In particular, we use it to introduce a few variants of a new, efficient and modular approach for SMT based on a general DPLL(X) engine, whose parameter X can be instantiated with a specialized solver SolverT for a given theory T, thus producing a DPLL(T) system. We describe the high-level design of DPLL(X) and its cooperation with SolverT, discuss the role of theory propagation, and describe different DPLL(T) strategies for some theories arising in industrial applications.Our extensive experimental evidence, summarized in this article, shows that DPLL(T) systems can significantly outperform the other state-of-the-art tools, frequently even in orders of magnitude, and have better scaling properties.},
-  numpages   = 41,
-  keywords   = {Satisfiability Modulo Theories, SAT solvers}
+  issue_date = {November 2006}
 }
 @article{ref:fft-mult,
   author    = {David Harvey and Joris van der Hoeven},
@@ -246,7 +231,7 @@
   title     = {Handbook of satisfiability},
   author    = {Biere, Armin and Heule, Marijn and van Maaren, Hans},
   year      = 2009,
-  publisher = {IOS press},
+  publisher = {IOS Press},
   volume    = 185
 }
 @article{ref:iterative-refinement,
@@ -274,7 +259,6 @@
   year     = {2007},
   issn     = {0167-6377},
   doi      = {https://doi.org/10.1016/j.orl.2006.12.010},
-  url      = {https://www.sciencedirect.com/science/article/pii/S0167637707000211},
   author   = {David L. Applegate and William Cook and Sanjeeb Dash and Daniel G. Espinoza},
   keywords = {Linear programming, Simplex algorithm, Rational arithmetic},
   abstract = {The use of floating-point calculations limits the accuracy of solutions obtained by standard LP software. We present a simplex-based algorithm that returns exact rational solutions, taking advantage of the speed of floating-point calculations and attempting to minimize the operations performed in rational arithmetic. Extensive computational results are presented.}
@@ -424,11 +408,11 @@
   title     = {Yices 2.2},
   booktitle = {Computer Aided Verification},
   year      = {2014},
-  publisher = {Springer International Publishing},
-  address   = {Cham},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {8559},
   pages     = {737--744},
-  abstract  = {Yices is an SMT solver developed by SRI International. The first version of Yices was released in 2006 and has been continuously updated since then. In 2007, we started a complete re-implementation of the solver to improve performance and increase modularity and flexibility. We describe the latest release of Yices, namely, Yices 2.2. We present the tool's architecture and discuss the algorithms it implements, and we describe recent developments such as support for the SMT-LIB 2.0 notation and various performance improvements.},
-  isbn      = {978-3-319-08867-9}
+  publisher = {Springer},
+  doi       = {10.1007/978-3-319-08867-9\_49}
 }
 @inproceedings{ref:marabou,
   author    = {Wu, Haoze
@@ -460,16 +444,15 @@
 @article{ref:crown,
   title   = {Efficient Neural Network Robustness Certification with General Activation Functions},
   author  = {Zhang, Huan and Weng, Tsui-Wei and Chen, Pin-Yu and Hsieh, Cho-Jui and Daniel, Luca},
-  journal = {Advances in Neural Information Processing Systems},
+  journal = {Advances in Neural Information Processing Systems (NIPS)},
   volume  = {31},
   pages   = {4939--4948},
-  year    = {2018},
-  url     = {https://arxiv.org/pdf/1811.00866.pdf}
+  year    = {2018}
 }
 @article{ref:lirpa,
   title   = {A Convex Relaxation Barrier to Tight Robustness Verification of Neural Networks},
   author  = {Salman, Hadi and Yang, Greg and Zhang, Huan and Hsieh, Cho-Jui and Zhang, Pengchuan},
-  journal = {Advances in Neural Information Processing Systems},
+  journal = {Advances in Neural Information Processing Systems (NIPS)},
   volume  = {32},
   pages   = {9835--9846},
   year    = {2019}
@@ -484,7 +467,7 @@
 @article{ref:b-crown,
   title   = {{Beta-CROWN}: Efficient bound propagation with per-neuron split constraints for complete and incomplete neural network verification},
   author  = {Wang, Shiqi and Zhang, Huan and Xu, Kaidi and Lin, Xue and Jana, Suman and Hsieh, Cho-Jui and Kolter, J Zico},
-  journal = {Advances in Neural Information Processing Systems},
+  journal = {Advances in Neural Information Processing Systems (NIPS)},
   volume  = {34},
   year    = {2021}
 }
@@ -522,4 +505,28 @@
   volume  = {13},
   pages   = {339--347},
   year    = {1951}
+}
+
+@article{soplex,
+  author  = {Ambros M. Gleixner and
+             Daniel E. Steffy},
+  title   = {Linear programming using limited-precision oracles},
+  journal = {Math. Program.},
+  volume  = {183},
+  number  = {1},
+  pages   = {525--554},
+  year    = {2020},
+  doi     = {10.1007/S10107-019-01444-6}
+}
+
+
+@inproceedings{delta-dec,
+  author    = {Gao, Sicun and Avigad, Jeremy and Clarke, Edmund M.},
+  booktitle = {27th Annual IEEE Symposium on Logic in Computer Science},
+  title     = {Delta-Decidability over the Reals},
+  year      = {2012},
+  volume    = {},
+  number    = {},
+  pages     = {305-314},
+  doi       = {10.1109/LICS.2012.41}
 }
