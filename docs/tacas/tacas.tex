@@ -87,11 +87,18 @@ This paper presents a tool called \dlinear, a solver for \gls{qf-lra} formulas, 
 Instead of relying on the slower rational arithmetic throughout all its computations, \dlinear encodes the problem in a way that allows the use of off-the-shelf fast exact \gls{lp} solvers, obtaining a significant speedup in instances where verifying the feasibility of the linear constraints constitute the major performance bottleneck.
 \dlinear can account for an arbitrary perturbation $\delta$ to the constraints, often leading to a faster solution when formal completeness is not required.
 
+The latest version of the tool is available at 
+\begin{center}
+\url{https://github.com/TendTo/dlinear}
+\end{center}
+along with the source code and the technical documentation.
+We also provide a corresponding Python API in the form of the \textit{pydlinear} package, to facilitate its installation and use as a library, as well as a Docker image containing the prebuilt binary, making the tool effectively available on any platform supporting containerization.
+
 The paper is structured as follows.
 \autoref{sec:preliminaries} provides an overview of the theory behind \gls{smt}, with a focus on \gls{qf-lra} theory, and \gls{lp}.
 \autoref{sec:architecture} gives a technical description of the software architecture of the tool.
 The employed algorithms are analyzed in more depth in \autoref{sec:lra-theory-solver}, which describes the approach we exploit to adapt the exact \gls{lp} solvers for \gls{smt} solving, and in \autoref{sec:delta-completeness}, which defines $\delta$-completeness more formally.
-Lastly, \autoref{sec:benchmarks} presents the results of the experiments conducted to evaluate the tool's performance.
+Finally, \autoref{sec:benchmarks} presents the results of the experiments conducted to evaluate the tool's performance.
 
 \section{Preliminaries}
 \label{sec:preliminaries}
@@ -167,7 +174,7 @@ Formulae can be assigned a semantic meaning, \{\textbf{true}, \textbf{false}\}, 
 \end{gather*}
 A model $\mathcal{M}$ \textbf{satisfies} a formula $\varphi$ if $\mathcal{I}(\varphi) = \textbf{true}$.
 
-It is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}), among many others.~\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}
+It is common to restrict the signature $\Sigma$ to a specific theory $\mathcal{T}$, such as the theory of linear real arithmetic (\textbf{QF\_LRA}), the theory of bit-vectors (\textbf{QF\_BV}), the theory of quantifier-free integer arithmetic (\textbf{QF\_NIA}), among many others.\footnote{SMT-LIB officially supported logics: \url{https://smt-lib.org/logics.shtml}}
 Then, the problem of \gls{smt} satisfiability is the problem of determining whether there exists a model that satisfies the formula $\varphi$ within the chosen theory.
 \end{comment}
 The tool presented in this paper will focus on the \gls{qf-lra} theory.
@@ -189,7 +196,7 @@ The conversion to the standard form is always possible and can be achieved in po
     \label{eq:lp-standard}
     \begin{split}
         \text{Maximize }   \quad & \sum_{i=1}^{n} c_i x_i                      \\
-        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j            \\
+        \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} < b_j,  \quad \forall j \in \{1, 2, \dots, m\} \\
         & x_i \ge 0,  \quad i \in \{1, 2, \ldots, n\}\ .
     \end{split}
 \end{equation}
@@ -233,16 +240,16 @@ As long as the explanations produced by the theory solver do not loop and only c
 More formally, taking only the theory-literals into account, the assignment the \gls{sat} solver produces can be seen as the formula
 \begin{equation} % Taken from Martin's thesis
     \label{eq:smt-formula}
-    \varphi = t_1(x) \bowtie 0 \wedge \ldots \wedge t_m (x) \bowtie 0
+    \varphi = t_1(x) \bowtie 0 \wedge \ldots \wedge t_m (x) \bowtie 0,
 \end{equation}
 where
 \begin{equation*}
-    t_i(x) = a_{i1}x_1 + \ldots + a_{in}x_n - b_i, \quad 1 \le i \le m
+    t_i(x) = a_{i1}x_1 + \ldots + a_{in}x_n - b_i, \quad 1 \le i \le m,
 \end{equation*}
 and the $a_{ij}$'s are the elements of $A \in \bbbr^{m \times n}, b \in \bbbr^m$ and $\bowtie \in \{<, \le, =, \ne, \ge, >\}$.
 To satisfy $\varphi$ means finding $x \in \bbbr^n $ such that
 \begin{equation*}
-    t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0
+    t_1(x) \bowtie 0 \wedge \ldots \wedge t_m(x) \bowtie 0,
 \end{equation*}
 which can be seen as an \gls{lp} problem where we are only interested in the feasibility of the constraints and bounds.
 
@@ -250,12 +257,14 @@ which can be seen as an \gls{lp} problem where we are only interested in the fea
 \dlinear supports MPS files, a standard format for \gls{lp} problems, by implicitly creating a single assertion the solver will try to satisfy.
 
 % ---- Linear Real Arithmetic theory ----
-\section{Linear Real Arithmetic theory solver}
+\section{Linear Real Arithmetic Theory Solver}
 \label{sec:lra-theory-solver}
 
-\subsection*{Preprocessing}
-\label{sec:preprocessing}
+%\subsection*{Preprocessing}
+%\label{sec:preprocessing}
 
+\smallskip
+\noindent\textbf{Preprocessing.}
 \dlinear implements some of the common preprocessing strategies when it comes to optimizing the performance solver for \gls{qf-lra}.
 The first step is to add some inexpensive implications between the bounds on the same variable, such as $x \ge 1 \implies x \ge 0 \implies x \ge -10$, potentially avoiding pointless assignments from the SAT solver.
 Then, all simple equality bounds are propagated using the problem's constraints, in a process that can be visualized as a graph-like structure (\autoref{dg:preprocessor}).
@@ -294,7 +303,7 @@ The user can limit the preprocessing engine to only run once, on the fixed theor
     \label{dg:preprocessor}
 \end{figure}
 
-\subsection{LP solver}
+\subsection{LP Solver}
 
 \dlinear uses \soplex \cite{soplex} as its default \gls{lp} solver, which implements both the incremental precision boosting and the iterative refinement algorithms.
 The user can choose between the two or try a hybrid approach. The \qsoptex \cite{ref:precision-boosting} solver can also be used, but it is limited to precision boosting and tends to produce less compact explanations, leading to more conflicts and slower convergence.
@@ -305,13 +314,13 @@ On the other hand, if the \gls{lp} problem is infeasible, we can use the Farkas 
 Given the initial $Ax \le b$ and $l \le x \le u$, we get an inequality $y^T A x \le y^T b$, which is infeasible over the local bounds, meaning that even setting $x_i$ to the bound that minimizes $y^T A$, the result will still be $y^T A x > y^T b$.
 Collecting the constraints corresponding to the indexes where the Farkas proof is non-zero and the minimizing bounds makes it possible to determine a small infeasible subsystem of the original problem, albeit not necessarily an irreducible one, and use it to produce an explanation.
 
-\subsection{Strict bounds}
+\subsection{Strict Bounds}
 \label{sec:strict-bounds}
 
 To use out-of-the-box \gls{lp} solvers as theory solvers, some adjustments in the formulation of the input may be required.
 Strict inequalities are common in \gls{smt} formulae, but they are usually not supported by \gls{lp} solvers.
 They would make the feasible region no longer closed, possibly making the search for the optimal solution pointless.
-Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver,~\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}} use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
+Other state-of-the-art \gls{smt} solver employing rational arithmetic within the theory solver,\footnote{z3 documentation: \url{https://z3prover.github.io/papers/z3internals.html\#sec-rational-linear-arithmetic}} use a symbolic variable representing an infinitesimal parameter $\delta$ which enforces the inequality~\cite{ref:lra-dpll-t}.
 Since our goal is to verify feasibility, we can reformulate the problem into an equi-feasible one while eliminating the strict inequalities at the cost of losing the original objective function, which is not relevant in our context anyway.
 We introduce a new variable called \textbf{strict variable}, $t$.
 To simplify the notation, we only consider $<$ strict inequalities, but the same reasoning can be applied to $>$ since they can always be converted to $<$ by multiplying both sides by $-1$.
@@ -321,13 +330,13 @@ Let $K$ indicate the set of indexes of strict inequality constraints ($<$) and w
 Note that $K$ and $J$ are disjoint sets.
 Without loss of generality, assume that all the indices in $K$ are less than those in $J$ ($\max(J) < \min(K)$).
 Using intuitive indexing over vector and matrix elements, start by replacing each strict inequality
-\begin{align*}
+\begin{equation*}
     \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
-\end{align*}
+\end{equation*}
 with equivalent non-strict inequalities using the strict variable $t$:
-\begin{align*}
-    \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad t > 0, \quad \forall k \in K
-\end{align*}
+\begin{equation*}
+    \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad t > 0, \quad \forall k \in K.
+\end{equation*}
 This change would only move the strict inequality problem to the bound on $t$.
 However, it is possible to go a step further and relax the newly introduced bound by changing the objective function to maximize $t$.
 The original problem we want to verify the feasibility of
@@ -351,15 +360,53 @@ can be relaxed to
     \end{split}
 \end{align}
 
-The proof of the following Theorem can be found in the Appendix.
 \begin{theorem}
     \label{thm:lp-relaxed}
     The original problem \eqref{eq:lp-original} is feasible if and only if the relaxed problem \eqref{eq:lp-relaxed} is feasible and there exists a solution that satisfies its optimal value is strictly greater than $0$.
 \end{theorem}
 
-\subsection{Not equal to constraints}
+    \begin{proof}
+        Without loss of generality, assume that both linear programming problems are in standard form.
+        Let $K$ be the set of indexes of strict inequality constraints.
+        \\
+        \framedtext{\eqref{eq:lp-original} feasible $\implies$~\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$} \\
 
-Not equal to ($\ne$) constraints (\nqcs for short) pose a more significant challenge.
+        If the original problem is feasible, then there exists a solution, a set of values to be assigned to the decision variables $x_1, x_2, \ldots, x_n$, that satisfies all the constraints.
+        For each strict inequality constraint to be satisfied, it means that there exists a value $\delta_k > 0, \quad k \in K$ such that
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + \delta_k = b_k, \quad \forall k \in K .
+        \end{align*}
+        Let $\hat{t} = \min(\delta_k),\,  k \in K$.
+        Then we know that
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + \hat{t} \le b_k, \quad \hat{t} > 0, \quad \forall k \in K ,
+        \end{align*}
+        which is the formulation of the strict constraints used in the relaxed problem.
+        All other constraints have been left unchanged, therefore the solution to the original problem can be used to satisfy the constraints of the relaxed problem by setting $t = \hat{t}$, which is greater than $0$.
+        Hence, the objective value of the relaxed problem is $> 0$.
+        \\
+        \framedtext{\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$ $\implies$ \eqref{eq:lp-original} feasible} \\
+
+        The solution to the relaxed problem already satisfies all the non-strict constraints of the original problem.
+        The objective value is greater than $0$; therefore, $t > 0$.
+        Since all relaxed constraints in the form
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad t > 0, \quad \forall k \in K 
+        \end{align*}
+        are satisfied, the original strict inequality constraints
+        \begin{align*}
+            \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
+        \end{align*}
+        are also satisfied.
+        Hence, the original problem is feasible.
+        \qed
+    \end{proof}
+
+
+\subsection{Not Equal Constraints}
+\label{sec:nq-constraints}
+
+Not equal ($\ne$) constraints (\nqcs for short) pose a more significant challenge.
 Let $D$ be the set of indexes of the \nqcs.
 Again, without loss of generality, assume that all the indices in $D$ are greater than those in $K$ ($\max(K) < \min(D)$).
 The extended relaxed problem is defined as
@@ -370,7 +417,7 @@ The extended relaxed problem is defined as
         \text{subject to } \quad & \sum_{i=1}^{n} a_{ji}x_{i} \le b_j, \quad \forall j \in J     \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
         \quad                    & \sum_{i=1}^{n} a_{di}x_{i} + t \le b_d, \quad \forall d \in D \\
-        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\}
+        & t \ge 0, \quad l_i \le x_i \le u_i,  \quad i \in \{1, 2, \ldots, n\} .
     \end{split}
 \end{align}
 
@@ -434,7 +481,7 @@ If that number is equal to $2^{|T|}$, where $T$ is the set of indexes of the \nq
 Lastly, it is possible to \textit{hot start} the solver by starting in a configuration close to the one that caused the last infeasibility.
 
 
-\subsection{Theory solver algorithm}
+\subsection{Theory Solver Algorithm}
 
 Let $\text{LpSolve}$ be a routine that, given a generic \gls{lp} problem and the set of indexes corresponding to the senses of the constraints ($\le, <, \ne$), solves the extended relaxed problem \eqref{eq:lp-extended} and returns the set of indexes of infeasible constraints if there are any or an empty set otherwise.
 In practice, the routine will relax the strict inequalities based on the given indexes and solve the relaxed problem using a standard \gls{lp} solver, returning a Farkas proof if the problem is infeasible.
@@ -449,8 +496,6 @@ If we find a feasible solution, we return immediately, as the original problem i
 Otherwise, we check which \nqcs are involved in the infeasibility and store the infeasibility explanation, using an identifier $l$ to avoid redundancy (line~\ref{alg:theory-solver:nq-infeasible}--\ref{alg:theory-solver:store-explanation}).
 Upon exploring all possible configurations of a subset of \nqcs, which in the worst case corresponds to the entire set, we can return the union of the explanations produced by the subset (line~\ref{alg:theory-solver:relaxed-infeasible}).
 
-
-\textcolor{red}{I think you need more description of the algorithm. Ideally, add line numbers to Alg 1 and refer to them in the text.}
 \begin{algorithm}
     \caption{SMT adapted LP solver}\label{alg:theory-solver}
     \begin{algorithmic}[1]
@@ -491,7 +536,7 @@ Upon exploring all possible configurations of a subset of \nqcs, which in the wo
 \end{algorithm}
 
 % ---- Delta-completeness ----
-\section{$\delta$-completeness}
+\section{Delta-completeness}
 \label{sec:delta-completeness}
 
 \dlinear offers the option to use $\delta$-completeness, which relaxes in a rigorous way the notion of full completeness \cite{delta-dec}. In this mode, the user can specify a precision parameter $\delta > 0$, relaxing the constraints to allow for an arbitrary error margin, to find a feasible solution faster.
@@ -503,7 +548,7 @@ Upon exploring all possible configurations of a subset of \nqcs, which in the wo
 \end{definition}
 Denoting with $J'$ the set of indexes of those that were equality constraints in $\varphi$ and with $K'$ the set with every other constraint except for \nqcs, then $\varphi^{-\delta}$ can be written as
 \begin{equation*}
-    \varphi^{-\delta} = \bigwedge_{j \in J'} |t_j(x)| \le \delta \wedge \bigwedge_{k \in K'} t_k(x) \le \delta
+    \varphi^{-\delta} = \bigwedge_{j \in J'} |t_j(x)| \le \delta \wedge \bigwedge_{k \in K'} t_k(x) \le \delta ,
 \end{equation*}
 with the corresponding \gls{lp} problem being
 \begin{equation}
@@ -512,7 +557,7 @@ with the corresponding \gls{lp} problem being
         \text{Maximize }   \quad & 0                                                                                \\
         \text{subject to } \quad & \left|\sum_{i=1}^{n} a_{ji}x_{i}\right| \le b_j + \delta, \quad \forall j \in J' \\
         \quad                    & \sum_{i=1}^{n} a_{ki}x_{i} \le b_k + \delta, \quad \forall k \in K'              \\
-        \quad                    & l_i - \delta \le x_i \le u_i + \delta,  \quad i \in \{1, 2, \ldots, n\}
+        \quad                    & l_i - \delta \le x_i \le u_i + \delta,  \quad i \in \{1, 2, \ldots, n\} .
     \end{split}
 \end{equation}
 Next, the notion of $\delta$-complete decision procedure is the following:
@@ -526,7 +571,7 @@ Next, the notion of $\delta$-complete decision procedure is the following:
 Note that such a procedure is non-deterministic because both conditions ({\em i.e.}, $\phi$ unsatisfiable and $\phi^{-\delta}$ satisfiable) can simultaneously be true.
 Furthermore, any complete method is, by definition, trivially $\delta$-complete.
 The advantage of this approach is that the \gls{lp} solver can stop refining the solution as soon as the user-defined precision $\delta$ is reached, possibly saving computation time, especially for numerically challenging instances.
-Leaving out the \nqcs also removes the potentially most computationally expensive part of the problem, as discussed in Section~\ref{sec:lra-theory-solver}.
+Leaving out the \nqcs also removes the potentially most computationally expensive part of the problem, as discussed in Section~\ref{sec:nq-constraints}.
 Whether this trade-off between speed and completeness is acceptable is up to the user to decide.
 
 When in $\delta$-complete mode, \dlinear uses the $\delta$ parameter to inform the underlying \gls{lp} solver that the precision boosting or iterative refinement algorithms can stop once the desired precision has been reached, returning the feasible solution found at that point.
@@ -551,8 +596,9 @@ We can define the $\delta$-complete theory solver algorithm as in Algorithm~\ref
 % ---- Benchmarks ----
 \section{Benchmarks}
 \label{sec:benchmarks}
-\subsection*{Specifications}
+%\subsection*{Specifications}
 
+\noindent\textbf{Specifications.}
 We compared \dlinear with the following state-of-the-art tools: cvc5~\cite{ref:cvc5} (version 1.0.8), Z3~\cite{ref:z3} (version 4.12.2) and yices~\cite{ref:yices} (version 2.6.5).
 The benchmarking suite has been run on a CentOS machine with 2 Intel Xeon E5-2699 v4 processors @ 2.2 GHz, 22 cores, 55 MB cache, and a memory limit of 2.9GB (DDR4 RDIMMs).
 The timeout was set to 12 hours.
@@ -560,17 +606,21 @@ We tested \dlinear both in complete mode (denoted with $\text{dlinear}_c$) and i
 In the tables reporting the results, \#inst indicates the number of problems considered, \#sol the number of problems solved by that solver.
 Given the high variance of times, we show the geometric mean of the time to solve each problem in seconds in column \avgtime.
 
-\subsection*{LP Results}
+%\subsection*{LP Results}
 
-To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite,~\footnote{\url{https://miplib.zib.de/tag_benchmark.html}} the Netlib LP tests,~\footnote{\url{http://www.netlib.org/lp/data/}} and Csaba Mészáros' LP collection,~\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}} relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
+\smallskip
+\noindent\textbf{LP Results.}
+To showcase the strengths of \dlinear we used its parser to process a collection of 1245 \gls{lp} problems from the MIPLIB benchmarking suite,\footnote{\url{https://miplib.zib.de/tag_benchmark.html}} the Netlib LP tests,\footnote{\url{http://www.netlib.org/lp/data/}} and Csaba Mészáros' LP collection,\footnote{\url{http://old.sztaki.hu/~meszaros/public_ftp/lptestset/}} relaxing mixed integer constraints and converting them into equisatisfiable \gls{smt} problems encoded using the SMT2 format.
 All the solvers were launched with the same timeout and the same set of inputs on completely independent nodes.
 The results are shown in~\autoref{fig:results-lp} and summarized in~\autoref{tab:results-lp-complete} and \autoref{tab:results-lp-delta}.
 \dlinear in the $\delta$-complete approach can solve most instances, going over the 1200 problems mark in all configurations and dropping to 1194 when in complete mode.
 Yices performs the best in terms of average speed but solves only 1111 problems before timeout, followed by cvc5 with 955 and Z3 with 934.
+Comparing \dlinear and Yices more closely, we observe that \dlinear solves 103 instances Yices does not, taking a geometric average of  $18.45$ seconds, while Yices solves 20 problems \dlinear with a geometric average of 17.99 seconds.
+The difference is small, but \dlinear's result is more impactful as it considers around 5 times more elements.
 
-\textcolor{red}{footnote should be added after comma or dot.}
+%\textcolor{red}{footnote should be added after comma or dot.}
 
-\textcolor{red}{You are mixing British English and American English. See the word summarized above. I have changed the language for spell checking. It is American English. Please check the whole document.}
+%\textcolor{red}{You are mixing British English and American English. See the word summarized above. I have changed the language for spell checking. It is American English. Please check the whole document.}
 
 %\textcolor{red}{Figure needs caption}
 % \begin{figure}[H]
@@ -591,12 +641,14 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
 %     \caption{LP benchmark results}
 % \end{figure}
 
-\begin{figure}[H]
+\begin{figure}
     \centering
-    \includegraphics[width=0.45\linewidth]{img/on_file_lp.pdf}
+\includegraphics[width=0.45\linewidth]{img/on_file_lp.pdf}
     \hspace{1cm}
-    \includegraphics[width=0.45\linewidth]{img/total_lp.pdf}
-    \caption{LP benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 847 problems solved by all solvers (\textbf{left}) and considering all 1237 problems (\textbf{right}). \textcolor{red}{change the axis range to reduce the white space inside the left figure. The figures have low quality saved as png. Could you create them with higher quality or as pdf?}}
+\includegraphics[width=0.45\linewidth]{img/total_lp.pdf}
+    \caption{LP benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 847 problems solved by all solvers (\textbf{left}) and considering all 1237 problems (\textbf{right}). 
+    %\textcolor{red}{change the axis range to reduce the white space inside the left figure. The figures have low quality saved as png. Could you create them with higher quality or as pdf?}
+    }
     \label{fig:results-lp}
 \end{figure}
 
@@ -636,9 +688,10 @@ Yices performs the best in terms of average speed but solves only 1111 problems 
     %\vspace{-1cm}
 \end{table}
 
-\subsection*{SMT Results}
 
-A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite.~\footnote{\url{https://smt-lib.org/benchmarks.shtml}}
+\smallskip
+\noindent\textbf{SMT Results.}
+A similar setup was used to run the benchmarks over standard \gls{smt} \gls{qf-lra} problems from the SMT-LIB benchmarking suite.\footnote{\url{https://smt-lib.org/benchmarks.shtml}}
 The results are shown in~\autoref{fig:results-smt} and summarized in~\autoref{tab:results-smt-complete} and \autoref{tab:results-smt-delta}.
 Needless to say, the outputs are consistent among all four complete solvers.
 Although not as fast as the more established tools, \dlinear shows some notable performance gains when producing a $\delta$-complete output, managing to outperform Z3 in terms of the number of solved instances.
@@ -659,12 +712,14 @@ Although not as fast as the more established tools, \dlinear shows some notable 
 %     \label{fig:results-smt}
 % \end{figure}
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[width=0.45\linewidth]{img/on_file_smt.pdf}
     \hspace{1cm}
     \includegraphics[width=0.45\linewidth]{img/total_smt.pdf}
-    \caption{SMT benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 823 problems solved by all solvers (\textbf{left}) and considering all 1754 problems (\textbf{right}). \textcolor{red}{Could you create them with higher quality or as pdf?}}
+    \caption{SMT benchmark results. The vertical axes show the cumulative number of problems solved by each solver considering only the 823 problems solved by all solvers (\textbf{left}) and considering all 1754 problems (\textbf{right}). 
+    %\textcolor{red}{Could you create them with higher quality or as pdf?}
+    }
     \label{fig:results-smt}
 \end{figure}
 
@@ -711,16 +766,10 @@ Although not as fast as the more established tools, \dlinear shows some notable 
 
 %\textcolor{red}{What do we do with this part? We don't report any NN results...}
 
-\textcolor{red}{Add a para on your ideas for improving efficiency of the tool.}
-
-Future work on \dlinear will focus on several enhancements aimed at improving its performance and versatility.
-The symbolic representation of theory literals can be made more efficient by optimizing the underlying data structures for the \gls{qf-lra} use case and employing lazy computations whenever possible.
-Additionally, we will enhance the preprocessing phase by introducing more sophisticated algorithms to identify and deal with cheaply simplifiable assertions without involving the main \gls{lp} algorithm.
-Lastly, we will investigate integrating $\delta$-complete reasoning and exact floating point computation with the specialized Simplex algorithm described in~\cite{ref:lra-dpll-t}, obtaining both the faster average computation time and the small infeasibility explanations.
+%\textcolor{red}{Add a para on your ideas for improving efficiency of the tool.}
 
 \begin{wrapfigure}[23]{R}{2.9cm}
     \captionsetup{font=small}
-    \vspace{-1cm}
     \resizebox{1.04\linewidth}{!}{%
         \input{diagrams/onnx.tex}
     }
@@ -728,14 +777,21 @@ Lastly, we will investigate integrating $\delta$-complete reasoning and exact fl
     \label{dg:onnx}
 \end{wrapfigure}
 
+
+Future work on \dlinear will focus on several enhancements aimed at improving its performance and versatility.
+The symbolic representation of theory literals can be made more efficient by optimizing the underlying data structures for the \gls{qf-lra} use case and employing lazy computations whenever possible.
+Additionally, we will enhance the preprocessing phase by introducing more sophisticated algorithms to identify and deal with cheaply simplifiable assertions without involving the main \gls{lp} algorithm.
+Lastly, we will investigate integrating $\delta$-complete reasoning and exact floating point computation with the specialized Simplex algorithm described in~\cite{ref:lra-dpll-t}, obtaining both the faster average computation time and the small infeasibility explanations.
+
+
 We will also explore \dlinear's applications in neural network verification.
 \dlinear already implements a naive algorithm to verify neural networks that utilize piecewise linear activation functions.
-Given an \gls{onnx} file,~\footnote{\url{https://onnx.ai/index.html}} the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
+Given an \gls{onnx} file,\footnote{\url{https://onnx.ai/index.html}} the acyclic graph describing the network with all its layers is parsed, from inputs to outputs~(\autoref{dg:onnx}).
 Exploring the graph, most of the layers are converted into linear constraints that can be handled by the \dlinear's \gls{smt} solver functionalities.
 Upon encountering a piecewise linear activation function, we declare a fresh variable $y'$ and introduce enough formula to assert its equality with each of the possible outputs of the activation function.
 These new formulae are then added to the set of assertions in an ``if-then-else'' encoding.
 From then on, $y'$ replaces the corresponding linear constraint for all the dependent nodes of the graph.
-For instance, the ReLU activation function represents the assignment
+For instance, given an input $x$, the ReLU activation function represents the assignment
 \begin{equation*}
     y' = \begin{cases}
         x & \text{if } x \ge 0 \\
@@ -746,129 +802,90 @@ Naming the new formulae $A \coloneqq (y' = x), B \coloneqq (y' = 0), C \coloneqq
 
 Even limiting ourselves to the common ReLU activation layer, the number of subproblems grows exponentially, making the verification process computationally already intractable for medium-sized networks.
 To mitigate this issue, we exploit the structure of the problem.
-The propagation of the bounds mentioned in Section~\ref{sec:preprocessing} is adapted to iteratively tighten the bounds of the output of each activation layer.
+The propagation of the bounds mentioned in Section~\ref{sec:lra-theory-solver} is adapted to iteratively tighten the bounds of the output of each activation layer.
 In the best case, the newly found bounds can uniquely indicate the only branch a piecewise function can take, effectively removing the need to explore the other branches.
 Furthermore, the constraints coming from the activation functions are encoded as a \gls{soi}, which becomes the objective function to minimize, while the other linear expression creates the constraints the problem is subject to.
 If the solver finds a solution where the objective value is equal to $0$, then we obtain a valid model.
 If the objective value is greater than $0$, we can guide the solver by suggesting the inversion of the activation function which has the highest cost, defined as its absolute value given the current solution vector.
 
-\section{Conclusion}
+\section{Conclusions}
 
-\dlinear novelty comes from the adoption of exact but not purely rational linear programming solvers adapted for the \gls{smt} context, improving the average performance when dealing with instances where determining the feasibility of the linear constraints represents the main performance bottleneck.
+\dlinear's novelty comes from the adoption of exact but not purely rational linear programming solvers adapted for the \gls{smt} context, improving the average performance when dealing with instances where determining the feasibility of the linear constraints represents the main performance bottleneck.
 It is able to provide complete verification for problems within the \gls{qf-lra} logic and the $\delta$-complete approach can further speed up the verification process at the cost of relaxing the constraints by a user-defined value.
 Future developments will focus on improving the performance of the software by introducing a specialized and efficient symbolic representation of the constraints and improving the heuristics used during the preprocessing phase and the exploration of the search space, especially for neural network verification.
 
-The latest version of the tool is available at \url{https://github.com/TendTo/dlinear}, along with the source code and the technical documentation.
-We also provide a corresponding Python API in the form of the \textit{pydlinear} package, to facilitate its installation and use as a library, as well as a Docker image containing the prebuilt binary, making the tool effectively available on any platform supporting containerization.
+%\textcolor{red}{Shouldn't the next paragraph better be in Section 6 (or 5)?}
 
 \begin{credits}
-    \subsubsection{\ackname} This study was funded by EPSRC
+    \subsubsection{\ackname} This study was supported by the following grants: EPSRC EP/W524700/1, EIC 101070802, and ERC 101089047.
 \end{credits}
 
 % ---- Bibliography ----
 \bibliographystyle{splncs04}
 \bibliography{resources}
 
-% ---- Appendices ----
-\newpage
-\begin{subappendices}
-    \renewcommand{\thesection}{\Alph{section}}%
-    \section{Proof of~\autoref{thm:lp-relaxed}}
-    \begin{proof}
-        Without loss of generality, assume that both linear programming problems are in standard form.
-        Let $K$ be the set of indexes of strict inequality constraints.
-        \\
-        \framedtext{\eqref{eq:lp-original} feasible $\implies$~\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$} \\
+% % ---- Appendices ----
+% \newpage
+% \begin{subappendices}
+%     \renewcommand{\thesection}{\Alph{section}}%
 
-        If the original problem is feasible, then there exists a solution, a set of values to be assigned to the decision variables $x_1, x_2, \ldots, x_n$, that satisfies all the constraints.
-        For each strict inequality constraint to be satisfied, it means that there exists a value $\delta_k > 0, \quad k \in K$ such that
-        \begin{align*}
-            \sum_{i=1}^{n} a_{ki}x_{i} + \delta_k = b_k, \quad \forall k \in K
-        \end{align*}
-        Let $\bar{t} = \min(\delta_k), \quad k \in K$.
-        Then we know that
-        \begin{align*}
-            \sum_{i=1}^{n} a_{ki}x_{i} + \bar{t} \le b_k, \quad \forall k \in K \\
-            \bar{t} > 0
-        \end{align*}
-        which is the formulation of the strict constraints used in the relaxed problem.
-        All other constraints have been left unchanged, therefore the solution to the original problem can be used to satisfy the constraints of the relaxed problem by setting $t = \bar{t}$, which is greater than $0$.
-        Hence, the objective value of the relaxed problem is $> 0$.
-        \\
-        \framedtext{\eqref{eq:lp-relaxed} feasible $\land$~\eqref{eq:lp-relaxed} objective value $> 0$ $\implies$ \eqref{eq:lp-original} feasible} \\
+%     % ---- Extended benchmark results (LP) ----
+%     \newpage
+%     \section{Extended benchmark results}
+%     \setlength\LTleft{0pt}
+%     \setlength\LTright{0pt}
+%     \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
+%         \caption{
+%             Extended benchmark results over the \gls{lp} problems in alphabetical order.
+%             \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
+%             The \deltaresult column indicates whether a $\delta$-complete model was found.
+%             Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
+%         }                                                                                                                                                                                                                                                                                                     \\
+%         \toprule
+%               &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+%         \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+%         File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+%         \midrule
+%         \endfirsthead
+%         \toprule
+%               &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+%         \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+%         File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+%         \midrule
+%         \endhead
+%         \csvreader[head to column names]{data/lp.csv}{}
+%         {                                                                                                                                                                                                                                                                                                     \\
+%         \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
+%     \end{longtable}
+%     \newpage
+%     \setlength\LTleft{-2cm}
+%     \setlength\LTright{0pt}
+%     \begin{landscape}
+%         \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
+%             \caption{
+%                 Extended benchmark results over the \gls{smt} problems in alphabetical order.
+%                 \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
+%                 The \deltaresult column indicates whether a $\delta$-complete model was found.
+%                 Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
+%             }                                                                                                                                                                                                                                                                                                     \\
+%             \toprule
+%                   &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+%             \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+%             File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+%             \midrule
+%             \endfirsthead
+%             \toprule
+%                   &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
+%             \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
+%             File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
+%             \midrule
+%             \endhead
+%             \csvreader[head to column names]{data/smt.csv}{}
+%             {                                                                                                                                                                                                                                                                                                     \\
+%             \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
+%         \end{longtable}
+%     \end{landscape}
 
-        The solution to the relaxed problem already satisfies all the non-strict constraints of the original problem.
-        The objective value is greater than $0$; therefore, $t > 0$.
-        Since all relaxed constraints in the form
-        \begin{align*}
-            \sum_{i=1}^{n} a_{ki}x_{i} + t \le b_k, \quad \forall k \in K \\
-            t > 0
-        \end{align*}
-        are satisfied the original strict inequality constraints
-        \begin{align*}
-            \sum_{i=1}^{n} a_{ki}x_{i} < b_k, \quad \forall k \in K
-        \end{align*}
-        are also satisfied.
-        Hence, the original problem is feasible.
-    \end{proof}
-
-    % ---- Extended benchmark results (LP) ----
-    \newpage
-    \section{Extended benchmark results}
-    \setlength\LTleft{0pt}
-    \setlength\LTright{0pt}
-    \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
-        \caption{
-            Extended benchmark results over the \gls{lp} problems in alphabetical order.
-            \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
-            The \deltaresult column indicates whether a $\delta$-complete model was found.
-            Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
-        }                                                                                                                                                                                                                                                                                                     \\
-        \toprule
-              &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-        File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-        \midrule
-        \endfirsthead
-        \toprule
-              &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-        \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-        File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-        \midrule
-        \endhead
-        \csvreader[head to column names]{data/lp.csv}{}
-        {                                                                                                                                                                                                                                                                                                     \\
-        \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
-    \end{longtable}
-    \newpage
-    \setlength\LTleft{-2cm}
-    \setlength\LTright{0pt}
-    \begin{landscape}
-        \begin{longtable}{@{\extracolsep{\fill}}lrlrlrlrrrrr@{}}
-            \caption{
-                Extended benchmark results over the \gls{smt} problems in alphabetical order.
-                \textit{res} is the result solvers obtained on that input file. Complete solutions are prioritized over $\delta$-complete ones.
-                The \deltaresult column indicates whether a $\delta$-complete model was found.
-                Finally, \smttime represents the amount of time the solver took to produce an output, in seconds.
-            }                                                                                                                                                                                                                                                                                                     \\
-            \toprule
-                  &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-            \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-            File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-            \midrule
-            \endfirsthead
-            \toprule
-                  &              & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.001}$} & \multicolumn{2}{c}{$\text{dlinear}_{\delta = 0.1}$} & $\text{dlinear}_{c}$ & z3                & cvc5        & yices                                               \\
-            \cmidrule(l){3-4}\cmidrule(l){5-6}\cmidrule(l){7-8}\cmidrule(l){9-9}\cmidrule(l){10-10}\cmidrule(l){11-11}\cmidrule(l){12-12}
-            File  & \textit{res} & \quad\deltaresult                                 & \smttime                                              & \quad\deltaresult                                   & \smttime             & \quad\deltaresult & \smttime    & \smttime   & \smttime & \smttime & \smttime         \\
-            \midrule
-            \endhead
-            \csvreader[head to column names]{data/smt.csv}{}
-            {                                                                                                                                                                                                                                                                                                     \\
-            \file & \result      & \quad \resultDO                                   & \smtTimeDO                                            & \quad \resultDOOOI                                  & \smtTimeDOOOI        & \quad \resultDOI  & \smtTimeDOI & \smtTimeDc & \timeZ   & \timeC   & \timeY         }
-        \end{longtable}
-    \end{landscape}
-
-\end{subappendices}
+% \end{subappendices}
 
 \end{document}
