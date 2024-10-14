@@ -74,7 +74,8 @@ dlinear_cc_library(
     name = "stats",
     srcs = ["Stats.cpp"],
     hdrs = ["Stats.h"],
-    implementation_deps = [":logging"],
+    implementation_deps = ["@fmt"],
+    tags = ["no-dwyu"],
     deps = [":timer"],
 )
 
@@ -164,10 +165,7 @@ dlinear_cc_library(
     name = "timer",
     srcs = ["Timer.cpp"],
     hdrs = ["Timer.h"],
-    implementation_deps = [
-        ":logging",
-        "@fmt",
-    ],
+    implementation_deps = [":logging"],
 )
 
 dlinear_cc_library(

@@ -11,8 +11,6 @@
 #include <iostream>
 #include <utility>
 
-#include "dlinear/util/logging.h"
-
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
 #define DLINEAR_ITERATION_STATS_FMT "{:<35} @ {:<26} = {:>15}"
 

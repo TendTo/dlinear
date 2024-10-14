@@ -127,6 +127,7 @@ dlinear_cc_library(
     srcs = ["ReluConstraint.cpp"],
     hdrs = ["ReluConstraint.h"],
     implementation_deps = [
+        "//dlinear/symbolic:linear_formula_flattener",
         "//dlinear/util:exception",
         "//dlinear/util:infinity",
     ],
@@ -142,12 +143,13 @@ dlinear_cc_library(
     srcs = ["LeakyReluConstraint.cpp"],
     hdrs = ["LeakyReluConstraint.h"],
     implementation_deps = [
+        "//dlinear/symbolic:linear_formula_flattener",
         "//dlinear/util:exception",
         "//dlinear/util:infinity",
     ],
     deps = [
         ":piecewise_linear_constraint",
-        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
     ],
 )
