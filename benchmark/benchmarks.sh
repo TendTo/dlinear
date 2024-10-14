@@ -221,7 +221,7 @@ function parse_args
     readonly filename="${args[1]}"
 
     # Validate required args
-    if [[ -z "operation" ]]; then
+    if [[ -z "$operation" ]]; then
         >&2 echo "${ERROR} Missing required argument 'operation'"
         usage
         exit 1;
@@ -309,8 +309,8 @@ function lp() {
     if [ "$filename" == "all" ]; then
         find lp -name "*.mps" -exec dlinear -t $csv $mode_flag {} \;
     else
-        file_exists "lp/$(basename $filename).mps"
-        dlinear -t $csv $mode_flag --enforce-check-sat "lp/$(basename $filename).mps"
+        file_exists "lp/$(basename "$filename").mps"
+        dlinear -t "$csv" $mode_flag --enforce-check-sat "lp/$(basename "$filename").mps"
     fi
 }
 
@@ -320,12 +320,12 @@ function qf_lra() {
         echo "${INFO} Stopping here as --download flag was set"
         return
     fi
-    echo "${info} Running dLinear on qf_lra benchmarks"
+    echo "${INFO} Running dLinear on qf_lra benchmarks"
     if [ "$filename" == "all" ]; then
-        find qf_lra -name "*.smt2" -exec dlinear -t $csv $mode_flag {} \;
+        find qf_lra -name "*.smt2" -exec dlinear -t "$csv" $mode_flag {} \;
     else
-        file_exists "qf_lra/$(basename $filename).smt2"
-        dlinear -t $csv $mode_flag "qf_lra/$(basename $filename).smt2"
+        file_exists "qf_lra/$(basename "$filename").smt2"
+        dlinear -t "$csv" $mode_flag "qf_lra/$(basename "$filename").smt2"
     fi
 }
 
@@ -336,7 +336,7 @@ function main() {
     script_init "$@"
     parse_args "$@"
     PATH="$PATH:$(pwd)/../bazel-bin/dlinear"
-  case "$operation" in
+    case "$operation" in
         install)
             install
         ;;
