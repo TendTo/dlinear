@@ -1,6 +1,21 @@
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 load("//tools:dlinear.bzl", "DLINEAR_AUTHOR", "DLINEAR_AUTHOR_EMAIL", "DLINEAR_DESCRIPTION", "DLINEAR_HOMEPAGE", "DLINEAR_NAME", "DLINEAR_VERSION")
 
+genrule(
+    name = "bash_autocomplete",
+    outs = ["dlinear"],
+    cmd = "$(location //tools:bash_autocomplete) dlinear $(OUTS)",
+    tools = ["//tools:bash_autocomplete"],
+)
+
+pkg_tar(
+    name = "package_bash_autocomplete",
+    srcs = [":bash_autocomplete"],
+    extension = "tar.gz",
+    mode = "0755",
+    package_dir = "usr/share/bash-completion/completions",
+)
+
 pkg_tar(
     name = "package_bin",
     srcs = ["//dlinear"],
@@ -37,6 +52,7 @@ pkg_tar(
     name = "package",
     extension = "tar.gz",
     deps = [
+        ":package_bash_autocomplete",
         ":package_bin",
         ":package_headers",
         ":package_sharedlib",

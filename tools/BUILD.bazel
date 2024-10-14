@@ -1,5 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("//tools:var.bzl", "make_var_substitution")
+load("@pypi//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -165,4 +167,14 @@ sh_binary(
 ###########################################
 make_var_substitution(
     name = "make_var_substitution",
+)
+
+py_binary(
+    name = "bash_autocomplete",
+    srcs = ["bash_autocomplete.py"],
+    main = "bash_autocomplete.py",
+    python_version = "PY3",
+    deps = [
+        requirement("shtab"),
+    ],
 )
