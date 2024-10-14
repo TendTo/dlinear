@@ -1,10 +1,20 @@
-name: dlinear CI
+name: pydlinear CI
 
 on:
   push:
-    tags: 
-      - "v*.*.*"
-      - "*.*.*"
+    branches: [ main ]
+    paths:
+      - "dlinear/**"
+      - "pydlinear/**"
+      - "tools/**"
+      - "third_party/**"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "dlinear/**"
+      - "pydlinear/**"
+      - "tools/**"
+      - "third_party/**"
 
 env:
   PACKAGES: "build-essential automake libtool flex bison"
@@ -14,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ ubuntu-latest ]
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +57,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ ubuntu-latest ]
 
     steps:
       - uses: actions/checkout@v4
@@ -98,6 +108,7 @@ jobs:
           path: dist/
 
   publish:
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -115,4 +126,3 @@ jobs:
         with:
           skip-existing: true
           verbose: true
-          repository-url: https://test.pypi.org/legacy/

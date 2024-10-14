@@ -2,9 +2,10 @@ name: Docs CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "dlinear/**"
+      - "docs/**"
       - "test/**"
   workflow_dispatch:
 

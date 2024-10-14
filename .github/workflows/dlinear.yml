@@ -5,11 +5,15 @@ on:
     branches: [ main ]
     paths:
       - "dlinear/**"
+      - "tools/**"
+      - "third_party/**"
       - "test/**"
   pull_request:
     branches: [ main ]
     paths:
       - "dlinear/**"
+      - "tools/**"
+      - "third_party/**"
       - "test/**"
 
 env:
@@ -66,7 +70,7 @@ jobs:
             ${{ runner.os }}-bazel-
 
       - name: Lint
-        run: bazel test --//tools:enable_qsoptex --test_tag_filters=cpplint //dlinear/...
+        run: bazel test --test_tag_filters=cpplint //dlinear/...
 
   dwyu:
     runs-on: ubuntu-latest
