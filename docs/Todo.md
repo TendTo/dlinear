@@ -5,7 +5,7 @@
 - [x] Fix qsoptex Farkas ray
     - [x] Relegate qsoptex to compilation flag
 - [x] Make sure the solution match between the two test_solvers
-- [x] Try what happens by removing `Expand` from `Formula`
+- [x] Check what happens by removing `Expand` from `Formula`
     - It can be done only for mps files, since the structure of the formula is not always plain otherwise
 - [x] Add inequality support
 - [ ] Clean up benchmarking suite
@@ -41,7 +41,8 @@
 - [x] Use lazy cache for Formula's GetFreeVariables
 - [ ] Custom symbolic implementation
 - [ ] Report need for basis reset in Soplex (a bug in the solver?)
-- [x] Use the information from the preprocessor to guide the theory solver. Make sure the graph or causality is respected
+- [x] Use the information from the preprocessor to guide the theory solver. Make sure the graph or causality is
+  respected
 - [x] Remove Infinity singleton
 - [ ] Support string problem input
 - [x] Avoid resetting all constraints in the theory solver at each iteration. Instead, reset only the ones that have
@@ -52,15 +53,26 @@
 - [x] Improve theory propagation (simple bounds could imply other bounds, in a chain fashion)
 - [ ] Improve theory propagation even more
 - [ ] Add support for LRA
-- [x] Use a static array in the Variable class to store the name (and bounds?) of the variable. Use the variable id to access it. The position 0 can be reserved for "dummy".
+- [x] Use a static array in the Variable class to store the name (and bounds?) of the variable. Use the variable id to
+  access it. The position 0 can be reserved for "dummy".
+- [ ] Refactor solvers
+- [ ] Standardize infeasibility explanation
 
 ## TACAS
 
 - [x] Fix references
-- [ ] Use american english
+- [x] Use american english
 - [x] Expand the abstract. Why you'd want to use this tool?
-- [ ] Start the introduction with the importance of SAT/SMT solvers (and LP?)
+- [x] Start the introduction with the importance of SAT/SMT solvers (and LP?)
 - [x] At the end of the introduction add a paragraph on the structure of the paper
-- [ ] Add a survey of the state of the art SMT solvers
+- [x] Add a survey of the state of the art SMT solvers
 - [x] Move current technical introduction to another section (Preliminaries)
+- [ ] Artifact evaluation
 
+## Future work
+
+- [ ] Naive implementation of the rational simplex algorithm for SMT solvers
+  - [ ] Can it support iterative refinement or precision boosting?
+- [ ] Specialise symbolic representation for LRA
+- [ ] Extend cvc5 (or Z3) to use SoPlex as the theory solver
+- [ ] Investigate over-approximation techniques for neural networks verification

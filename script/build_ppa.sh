@@ -23,3 +23,4 @@ popd > /dev/null || exit 1
 
 popd > /dev/null || exit 1
 
+# dput ppa:tendto/dlinear dlinear_0.0.3-1_source.changes

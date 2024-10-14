@@ -8,7 +8,7 @@ See the [Installation](./Installation.md) page for instructions on how to instal
 When including the shared library in a project, you can include the main dlinear header
 
 ```cpp
-/** @file <my_file>.cpp */
+/* @file <my_file>.cpp */
 #include <dlinear/dlinear.h>
 ```
 
@@ -29,7 +29,7 @@ Finally, the executable can be run with
 The following example demonstrates how to use the library to check the satisfiability of a problem in SMT2 format:
 
 ```cpp
-/** @file test.cpp */
+/* @file test.cpp */
 #include <dlinear/solver/SmtSolver.h>
 
 #include <iostream>

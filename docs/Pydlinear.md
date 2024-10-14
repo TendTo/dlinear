@@ -5,6 +5,8 @@ The package can be used to create and solve linear programs from Python.
 
 ## From source
 
+Clone the repository and install the package with pip.
+
 ### Requirements
 
 - [python-dev](https://packages.ubuntu.com/bionic/python-dev)
