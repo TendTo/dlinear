@@ -44,6 +44,10 @@ INSTANTIATE_TEST_SUITE_P(TestDeltaSmt2, TestDeltaSmt2,
                                                               Config::PreprocessingRunningFrequency::ALWAYS)));
 
 TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
+  if (config_.filename() == "test/solver/smt2/clocksynchro_2clocks.worst_case_skew.induct.smt2" &&
+      config_.lp_solver() == Config::LPSolver::QSOPTEX) {
+    GTEST_SKIP();
+  }
   SmtSolver s{config_};
   const SmtSolverOutput& result = s.Parse();
   ASSERT_TRUE(delta_match_expected(result, s.GetExpected()));

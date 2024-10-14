@@ -344,6 +344,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SatResult::SAT_UNSATISFIABLE;
   }
 
+  DLINEAR_DEV("Start tightening bounds");
   // Check the current constraints to see if there is anything that could be used to use for the guided constraints
   for (const std::unique_ptr<PiecewiseLinearConstraint> &constraint : pl_constraints_) {
     const std::set<LiteralSet> tight_explanations{constraint->TightenBounds(theory_solver_->m_fixed_preprocessor())};
@@ -487,7 +488,6 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_DEV_FMT("ContextImpl::LearnExplanation({})", explanation);
-  std::cout << std::endl;
   DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG

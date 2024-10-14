@@ -69,11 +69,11 @@ TheorySolver::Explanations NNSoplexTheorySolver::EnableLiteral(const Literal &li
   DLINEAR_ASSERT(predicate_abstractor_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
 
   const auto &[var, truth] = lit;
+  DLINEAR_DEV_FMT("Enabled Literal {}", lit);
 
   // Literal will be handled by the ReLU SOI
   if (pl_theory_lit_.contains(var)) {
     const PiecewiseLinearConstraint &constraint = *pl_theory_lit_.at(var);
-    DLINEAR_DEV_FMT("ENABLED {} = fixed? {}\n{}", lit, constraint.fixed(), constraint);
     // No point in adding both sides of the piecewise constraint. Just consider the true one
     if (!truth) return {};
     // fmt::println("Enabled ReLU literal: ({}) {} -> {}", constraint.fixed(), lit, constraint);
@@ -82,6 +82,8 @@ TheorySolver::Explanations NNSoplexTheorySolver::EnableLiteral(const Literal &li
     if (!constraint.fixed()) {
       const bool is_active = constraint.active_var().equal_to(var);
       enabled_pl_constraints_.emplace_back(&constraint, is_active, false);
+      DLINEAR_DEV_FMT("ENABLED {} = fixed? {}\nIs active?: {}\n{}", lit, constraint.fixed(),
+                      enabled_pl_constraints_.back().active, constraint);
       soi_ += is_active ? constraint.active_soi() : constraint.inactive_soi();
       return {};
     }
@@ -239,6 +241,9 @@ void NNSoplexTheorySolver::UpdateExplanationsWithCurrentPiecewiseLinearLiterals(
     explanation.emplace(enabled_pl_constraint.active ? enabled_pl_constraint.constraint->active_var()
                                                      : enabled_pl_constraint.constraint->inactive_var(),
                         true);
+    DLINEAR_DEV_FMT("addidg {} to explanation", enabled_pl_constraint.active
+                                                    ? enabled_pl_constraint.constraint->active_var()
+                                                    : enabled_pl_constraint.constraint->inactive_var());
   }
   if (explanations.contains(explanation)) return;
   pl_explanations_.emplace(explanation);

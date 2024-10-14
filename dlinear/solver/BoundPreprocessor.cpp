@@ -349,11 +349,13 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
   if (IsEqualTo(formula, lit.truth)) {
     // Both bounds are equal. Add an equality bound to the variable
     if (l_rhs == u_rhs) {
-      DLINEAR_ASSERT(l_explanation == u_explanation, "The explanations must be the same");
+      DLINEAR_ASSERT_FMT(l_explanation == u_explanation, "The explanations must be the same. {} vs {} instead",
+                         l_explanation, u_explanation);
       const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::B, lit, l_explanation};
       BoundIterator violation{var_bounds.AddBound(bound)};
       if (!violation.empty()) {
         l_explanation.insert(lit);
+        // temporary_mpq_vector_.pop_back();  // Remove the unused bound
         violation.explanation(l_explanation);
         DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Eq bound {} conflict found", l_explanation);
         explanations.insert(l_explanation);
@@ -365,24 +367,35 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
       return true;
     }
     // The two bounds are different. Add the lower and upper bounds to the variable
-    const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, l_explanation};
-    BoundIterator violation{var_bounds.AddBound(bound)};
-    if (!violation.empty()) {
-      l_explanation.insert(lit);
-      violation.explanation(l_explanation);
-      DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Lower bound {} conflict found", l_explanation);
-      explanations.insert(l_explanation);
-      return false;
+    const Bound lower_bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, l_explanation};
+    if (l_rhs >= var_bounds.active_lower_bound()) {
+      BoundIterator violation{var_bounds.AddBound(lower_bound)};
+      if (!violation.empty()) {
+        temporary_mpq_vector_.pop_back();  // Remove the unused lower bound
+        l_explanation.insert(lit);
+        violation.explanation(l_explanation);
+        DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Lower bound {} conflict found", l_explanation);
+        explanations.insert(l_explanation);
+        return false;
+      }
+    } else {
+      temporary_mpq_vector_.pop_back();  // Remove the unused lower bound
     }
-    const Bound bound2{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, u_explanation};
-    BoundIterator violation2{var_bounds.AddBound(bound2)};
-    if (!violation2.empty()) {
-      var_bounds.RemoveBound(bound);  // Remove the lower bound too
-      u_explanation.insert(lit);
-      violation2.explanation(u_explanation);
-      DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Upper bound {} conflict found", u_explanation);
-      explanations.insert(u_explanation);
-      return false;
+    const Bound upper_bound{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, u_explanation};
+    if (u_rhs <= var_bounds.active_upper_bound()) {
+      BoundIterator violation{var_bounds.AddBound(upper_bound)};
+      if (!violation.empty()) {
+        temporary_mpq_vector_.pop_back();  // Remove the unused upper bound
+        // Also remove the unused lower bound, if had been added in the previous step
+        if (var_bounds.RemoveBound(lower_bound)) temporary_mpq_vector_.pop_back();
+        u_explanation.insert(lit);
+        violation.explanation(u_explanation);
+        DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints2: Upper bound {} conflict found", u_explanation);
+        explanations.insert(u_explanation);
+        return false;
+      }
+    } else {
+      temporary_mpq_vector_.pop_back();  // Remove the unused upper bound
     }
     DLINEAR_TRACE_FMT("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
                       var_to_propagate, l_rhs, u_rhs, lit, dependencies);
@@ -429,6 +442,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
   BoundIterator violation{var_bounds.AddBound(bound)};
   if (!violation.empty()) {
     bound.explanation.insert(lit);
+    temporary_mpq_vector_.pop_back();  // Remove the unused bound
     violation.explanation(bound.explanation);
     DLINEAR_DEBUG_FMT("BoundPreprocessor::PropagateConstraints: {} conflict found", bound.explanation);
     explanations.insert(bound.explanation);
