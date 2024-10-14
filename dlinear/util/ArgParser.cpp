@@ -110,7 +110,7 @@ void ArgParser::addOptions() {
   DLINEAR_PARSE_PARAM_BOOL(parser_, read_from_stdin, "--in");
   DLINEAR_PARSE_PARAM_BOOL(parser_, verify, "--verify");
 
-  DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', unsigned int, "-j", "--jobs");
+  //  DLINEAR_PARSE_PARAM_SCAN(parser_, number_of_jobs, 'i', unsigned int, "-j", "--jobs");
   DLINEAR_PARSE_PARAM_SCAN(parser_, precision, 'g', double, "-p", "--precision");
   DLINEAR_PARSE_PARAM_SCAN(parser_, random_seed, 'i', unsigned int, "-r", "--random-seed");
   DLINEAR_PARSE_PARAM_SCAN(parser_, simplex_sat_phase, 'i', int, "--simplex-sat-phase");
@@ -206,7 +206,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);
   DLINEAR_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);
   DLINEAR_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LPSolver);
-  DLINEAR_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);
+  // DLINEAR_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);
   DLINEAR_PARAM_TO_CONFIG("onnx-file", onnx_file, std::string);
   DLINEAR_PARAM_TO_CONFIG("optimize", optimize, bool);
   DLINEAR_PARAM_TO_CONFIG("precision", precision, double);
