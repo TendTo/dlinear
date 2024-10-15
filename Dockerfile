@@ -27,9 +27,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 COPY . .
 
-# Allow rules_python to run as root
-RUN sed 's/python.toolchain(/python.toolchain(\nignore_root_user_error = True,/g' MODULE.bazel -i  \
-    && bazel build //dlinear --config=opt --//tools:enable_static_build=True
+RUN sed 's/python.toolchain(/python.toolchain(\nignore_root_user_error = True,/g' MODULE.bazel -i
+RUN bazel build //dlinear --cxxopt=-O3 --cxxopt=-DNDEBUG --//tools:enable_static_build=True
 
 FROM alpine:3.19.0
 

@@ -9,6 +9,7 @@ on:
       - "third_party/**"
       - "test/**"
       - "*.bazel*"
+      - "Dockerfile"
       - ".github/workflows/docker.yml"
     tags:
       - "v*.*.*"
