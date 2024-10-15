@@ -94,6 +94,7 @@ SmtResult SmtSolver::GetExpected() const {
 void SmtSolver::Assert(const Formula &f) {
   DLINEAR_TRACE_FMT("SmtSolver::Assert: {}", f);
   output_.result = SmtResult::UNSOLVED;
+  for (const Variable &v : f.GetFreeVariables()) context_.DeclareVariable(v);
   context_.Assert(f);
 }
 

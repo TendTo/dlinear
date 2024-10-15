@@ -70,9 +70,8 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
 
 void Context::Impl::Assert(const Formula &f) {
   if (is_true(f)) return;     // Skip trivially true assertions.
-  if (box().empty()) return;  // The box has no variables, so skip.
-  if (is_false(f)) {          // The formula is false, so set the box to empty. There is no point in continuing
-    box().set_empty();
+  if (is_false(f)) {          // The formula is false. No point in adding it to the SAT solver. There is no point in continuing
+    stack_.push_back(f);
     return;
   }
 
@@ -303,12 +302,9 @@ bool Context::Impl::is_max() const { return is_max_; }
 SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
-  if (box().empty()) {
-    DLINEAR_DEBUG("ContextImpl::CheckSat: Box is empty");
-    return SatResult::SAT_UNSATISFIABLE;
-  }
+
   // If false ∈ stack, it's UNSAT.
-  for (const auto &f : stack_.get_vector()) {
+  for (const Formula &f : stack_.get_vector()) {
     if (is_false(f)) {
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSat: Found false formula = {}", f);
       return SatResult::SAT_UNSATISFIABLE;
