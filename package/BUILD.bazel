@@ -90,9 +90,9 @@ pkg_deb(
             "libc6",
             "libgcc-s1",
             # External dependencies
-            "libbz2-dev",
+            #            "libbz2-dev",
             "libgmp-dev",
-            "libmpfr-dev",
+            #            "libmpfr-dev",
         ],
     }),
     description = DLINEAR_DESCRIPTION,
