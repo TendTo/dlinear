@@ -3,20 +3,38 @@
 [![dlinear CI](https://github.com/TendTo/dlinear/actions/workflows/dlinear.yml/badge.svg)](https://github.com/TendTo/dlinear/actions/workflows/dlinear.yml)
 [![Docker CI](https://github.com/TendTo/dlinear/actions/workflows/docker.yml/badge.svg)](https://github.com/TendTo/dlinear/actions/workflows/docker.yml)
 [![Docs CI](https://github.com/TendTo/dlinear/actions/workflows/docs.yml/badge.svg)](https://tendto.github.io/dlinear/)
+[![pydlinear CI](https://github.com/TendTo/dlinear/actions/workflows/pydlinear.yml/badge.svg)](https://github.com/TendTo/dlinear/actions/workflows/pydlinear.yml)
 
 Delta-complete SMT solver for linear theories over the reals.
 Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://github.com/dreal/dreal4).
 
 ### Installation
 
-The following instructions are for Linux systems.
-The installation process for Windows and MacOS is not yet supported.
-For more information, refer to the [installation guide](docs/Installation.md).
+There are multiple ways of installing dlinear.
+The recommanded approach is to use the official [Docker image](https://github.com/TendTo/dlinear/pkgs/container/dlinear), the [ppa repository](https://launchpad.net/~tendto/+archive/ubuntu/dlinear) or the python wrapper [_pydlinear_](https://pypi.org/project/pydlinear).
+
+> [!Note]
+> Only Linux is supported, but using the Docker image circumvents this limitation.
 
 ```bash
-bazel build //:package_deb
-sudo dpkg -i bazel-bin/dlinear/dlinear.deb
+# Docker
+docker pull ghcr.io/tendto/dlinear:main
+docker run -it --rm ghcr.io/tendto/dlinear:main --help
 ```
+
+```bash
+# ppa repository
+sudo add-apt-repository ppa:tendto/dlinear
+sudo apt update
+```
+
+```bash
+# pydlinear
+pip3 install pydlinear
+pydlinear --help
+```
+
+For more information about the installation process options, including installation from sources, refer to the [installation guide](docs/Installation.md).
 
 ### Usage
 
@@ -24,43 +42,5 @@ For more information, refer to the [usage guide](docs/Usage.md).
 
 ```bash
 dlinear --help
-```
-
-### Useful commands
-
-```bash
-# Compile dlinear
-bazel build //dlinear
-# Run dlinear
-./bazel-bin/dlinear/dlinear
-```
-
-```bash
-# CPPlint
-bazel test //dlinear/...
-```
-
-```bash
-# Run dlinear unit tests
-bazel test --test_tag_filters=dlinear //test/...
-```
-
-```bash
-# Run dlinear integration tests by solving a bunch of problems
-# and confronting the results with the expected ones
-bazel test --test_tag_filters=solver //test/...
-```
-
-```bash
-# Run linting
-bazel test --test_tag_filters=cpplint //dlinear/...
-```
-
-### Enabling autocompletion on Ubuntu
-
-```bash
-# Install bash-completion
-sudo apt install bash-completion
-# Move the completion script to the bash-completion directory
-sudo cp script/dlinear_completion.sh /etc/bash_completion.d/dlinear.sh
+# Use `pydlinear --help` if you installed the pydlinear wrapper
 ```
