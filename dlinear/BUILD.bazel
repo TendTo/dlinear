@@ -41,21 +41,6 @@ dlinear_cc_binary(
     ],
 )
 
-dlinear_cc_binary(
-    name = "test",
-    srcs = ["test.cpp"],
-    tags = [
-        "no-dwyu",
-        "no-iwyu",
-    ],
-    deps = [
-        "//dlinear/parser/mps",
-        "//dlinear/parser/onnx",
-        "//dlinear/parser/smt2",
-        "//dlinear/parser/vnnlib",
-    ],
-)
-
 cc_shared_library(
     name = "libdlinear.so",
     shared_lib_name = "libdlinear.so",
