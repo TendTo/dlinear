@@ -16,6 +16,7 @@ BoundType ParseBoundType(const std::string& bound_type) { return ParseBoundType(
 
 BoundType ParseBoundType(const char bound_type[]) {
   while (*bound_type == ' ') ++bound_type;
+  DLINEAR_ASSERT(strlen(bound_type) == 2, "Bound type must be exactly 2 characters long");
   if (bound_type[2] != '\0' && bound_type[2] != ' ') DLINEAR_RUNTIME_ERROR_FMT("Invalid bound type: '{}'", bound_type);
   if ((bound_type[0] == 'l' || bound_type[0] == 'L') && (bound_type[1] == 'o' || bound_type[1] == 'O')) {
     return BoundType::LO;

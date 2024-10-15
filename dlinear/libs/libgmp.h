@@ -86,8 +86,7 @@ inline mpq_t &to_mpq_t(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.g
  * Cast a mpq_t to a mpq_class.
  *
  * This works because the internal representation of a mpq_class is exactly
- * the same as that of a mpq_t (and, because we only take a reference, no
- * constructor or destructor is ever called).
+ * the same as that of a mpq_t (and, because we only take a reference, no constructor or destructor is ever called).
  * @param mpq mpq_t to cast
  * @return mpq_class reference
  */
@@ -97,8 +96,7 @@ inline const mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast
  * Cast a mpq_t to a mpq_class.
  *
  * This works because the internal representation of a mpq_class is exactly
- * the same as that of a mpq_t (and, because we only take a reference, no
- * constructor or destructor is ever called).
+ * the same as that of a mpq_t (and, because we only take a reference, no constructor or destructor is ever called).
  * @param mpq mpq_t to cast
  * @return mpq_class reference
  */
@@ -106,9 +104,9 @@ inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &
 
 /**
  * Check if the char is either a digit or a plus/minus sign.
- * @param c The char to check.
- * @return True if the char is a digit or a plus/minus sign.
- * @return False otherwise.
+ * @param c The char to check
+ * @return true if the char is a digit or a plus/minus sign
+ * @return false if the char is not a digit or a plus/minus sign
  */
 inline bool is_digit_or_sign(char c) { return std::isdigit(c) || c == '+' || c == '-'; }
 

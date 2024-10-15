@@ -31,7 +31,7 @@
     - [ ] Use Ubuntu 23.04+ for gcc 13+ support
 - [ ] Return multiple explanations instead of just one when dealing with active constraints
 - [ ] Improve iterations over nq bounds
-- [x] Add symbolic preprocessor for constraints in the form of $x \lessgtr y$
+- [x] Add symbolic preprocessor for constraints in the form of $x <> y$
 - [ ] Remove completely free variables, especially from nq constraints
 - [ ] Investigate out of memory
 - [x] Handle conflicting constraints in preprocessor

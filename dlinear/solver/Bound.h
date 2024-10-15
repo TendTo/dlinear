@@ -14,7 +14,13 @@
 
 namespace dlinear {
 
-/** Bound. It is a tuple of value, bound type and index */
+/**
+ * Tuple containing the value, bound type and theory literal associated with the bound.
+ *
+ * It may also contain an explanation for the existence of the bound used to produce an explanation.
+ * @note For efficiency purposes, the value is just a pointer to the actual value.
+ * Therefore, it is important to ensure that the value is not deallocated while the bound is in use.
+ */
 struct Bound {
   Bound() = default;
   Bound(const mpq_class* value_, LpColBound lp_bound_, Literal theory_literal_, LiteralSet explanation_)

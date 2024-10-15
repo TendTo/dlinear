@@ -187,16 +187,30 @@ class MpsDriver : public Driver {
    */
   void End();
 
+  /** @getter{problem_name, MpsDriver} */
   [[nodiscard]] const std::string &problem_name() const { return problem_name_; }
+  /** @getsetter{problem_name, MpsDriver} */
   std::string &m_problem_name() { return problem_name_; }
+  /** @checker{enabled, strict mps} */
   [[nodiscard]] bool strict_mps() const { return strict_mps_; }
+  /**
+   * Set the strict mps mode.
+   * @param b new value of the strict mps mode
+   */
   void set_strict_mps(bool b) { strict_mps_ = b; }
+  /** @getter{number of assertions, MpsDriver} */
   [[nodiscard]] std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
+  /** @checker{enabled, minimization} */
   [[nodiscard]] bool is_min() const { return is_min_; }
+  /** @getter{objective row name, MpsDriver} */
   [[nodiscard]] const std::string &obj_row() const { return obj_row_; }
+  /** @getter{scanner, MpsDriver} */
+  [[nodiscard]] MpsScanner *scanner() { return scanner_; }
 
-  MpsScanner *scanner() { return scanner_; }
-
+  /**
+   * Print the problem in the smt2 format.
+   * @param os output stream
+   */
   void ToSmt2(std::ostream &os) const;
 
  private:

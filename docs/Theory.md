@@ -41,8 +41,8 @@ The fundamental property is that the new formula is satisfiable if and only if t
 
 The transformation uses three basic operators:
 
-| Original    | $ p \iff \text{formula} $                             | In CNF                                                                    |
-| ----------- | ----------------------------------------------------- | ------------------------------------------------------------------------- |
+| Original    | $ p \iff \text{formula} $                                           | In CNF                                                                    |
+| ----------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | $\neg a$    | $(\neg a \Longrightarrow p) \land (p \Longrightarrow \neg a)$       | $(a \lor p) \land (\neg a \lor \neg p)$                                   |
 | $a \land b$ | $(a \land b \Longrightarrow p) \land (p \Longrightarrow a \land b)$ | $(\neg a \lor \neg b \lor p) \land (a \lor \neg p) \land (b \lor \neg p)$ |
 | $a \lor b$  | $(a \lor b \Longrightarrow p) \land (p \Longrightarrow a \lor b)$   | $(a \lor b \lor \neg p) \land (\neg a \lor p) \land (\neg b \lor p)$      |

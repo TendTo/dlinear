@@ -57,8 +57,8 @@ class CadicalSatSolver : public SatSolver {
  private:
   [[nodiscard]] std::set<int> GetMainActiveLiterals() override;
 
-  CaDiCaL::Solver sat_{};
-  int next_var_id_{1};
+  CaDiCaL::Solver sat_{}; ///< SAT solver
+  int next_var_id_{1};   ///< Next variable id
 };
 
 }  // namespace dlinear

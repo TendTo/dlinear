@@ -153,6 +153,12 @@ class Driver {
   [[nodiscard]] const Stats &stats() const { return stats_; }
 
  protected:
+  /**
+   * Parse the stream.
+   * @param in input stream
+   * @return true if successfully parsed
+   * @return false if an error occurred
+   */
   virtual bool ParseStreamCore(std::istream &in) = 0;
 
   std::string stream_name_;  ///< The name of the stream being parsed.

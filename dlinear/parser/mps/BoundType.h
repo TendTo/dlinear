@@ -71,7 +71,7 @@ BoundType ParseBoundType(const std::string &bound_type);
  *
  * Any leading or trailing spaces are ignored.
  * The input is case-insensitive.
- *
+ * @pre The input must be exactly 2 characters long.
  * @param bound_type C-string representation of the bound type
  * @return corresponding bound type
  */

@@ -39,21 +39,112 @@ class BoundPreprocessor {
   using Explanations = std::set<LiteralSet>;
   using VarToEqBinomialMap = std::unordered_map<Variable, mpq_class>;
 
+  /**
+   * Construct a new Bound Preprocessor object using the @p predicate_abstractor.
+   * @param predicate_abstractor predicate abstractor containing the map between the variables and the literals
+   */
   explicit BoundPreprocessor(const PredicateAbstractor& predicate_abstractor);
 
+  /**
+   * Add a theory variable to the preprocessor.
+   *
+   * It will create a new entry in the theory_bounds_ map.
+   * @param var theory variable to add
+   */
   void AddVariable(const Variable& var);
 
+  /**
+   * Preprocess all the @p enabled_literals.
+   *
+   * It will enable the literals and propagate the bounds.
+   * If a conflict is detected, it will return the set of explanations.
+   * Enabled literals are cached and will not be enabled again in the future.
+   * @param enabled_literals literals to enable
+   * @return set of explanations from the enabled literals if a conflict is detected
+   * @return empty set if no conflict is detected
+   */
   std::set<LiteralSet> EnableLiterals(const std::vector<Literal>& enabled_literals);
+  /**
+   * Preprocess all the @p enabled_literals.
+   *
+   * It will enable the literals and propagate the bounds.
+   * If a conflict is detected, it will return the set of explanations.
+   * Enabled literals are cached and will not be enabled again in the future.
+   * @param enabled_literals literals to enable
+   * @param[out] explanations set of explanations from the enabled literals if a conflict is detected
+   */
   void EnableLiterals(const std::vector<Literal>& enabled_literals, std::set<LiteralSet>& explanation);
 
+  /**
+   * Enable the literal @p lit.
+   *
+   * It will enable the literal and propagate the bounds.
+   * If a conflict is detected, it will return the set of explanations.
+   * Enabled literals are cached and will not be enabled again in the future.
+   * @param lit literal to enable
+   * @return set of explanations from the enabled literal if a conflict is detected
+   * @return empty set if no conflict is detected
+   */
   std::set<LiteralSet> EnableLiteral(const Literal& lit);
+  /**
+   * Enable the literal @p lit.
+   *
+   * It will enable the literal and propagate the bounds.
+   * If a conflict is detected, it will return the set of explanations.
+   * Enabled literals are cached and will not be enabled again in the future.
+   * @param lit literal to enable
+   * @param[out] explanations set of explanations from the enabled literal if a conflict is detected
+   */
   void EnableLiteral(const Literal& lit, std::set<LiteralSet>& explanations);
 
+  /**
+   * Process all enabled literals.
+   *
+   * It will process the enabled literals and propagate the bounds.
+   * The bounds are propagated based on the BoundPropagationType and the formulae will be evaluated.
+   * If a conflict is detected, it will return the set of explanations.
+   * @return set of explanations from the enabled literals if a conflict is detected
+   * @return empty set if no conflict is detected
+   */
   Explanations Process();
+  /**
+   * Process all enabled literals.
+   *
+   * It will process the enabled literals and propagate the bounds.
+   * The bounds are propagated based on the BoundPropagationType and the formulae will be evaluated.
+   * If a conflict is detected, it will return the set of explanations.
+   * @param[out] explanations set of explanations from the enabled literals if a conflict is detected
+   */
   void Process(Explanations& explanations);
+  /**
+   * Process the enabled literals @p enabled_literals.
+   *
+   * It will process the enabled literals and propagate the bounds.
+   * The bounds are propagated based on the BoundPropagationType and the formulae will be evaluated.
+   * If a conflict is detected, it will return the set of explanations.
+   * @param enabled_literals literals to enable
+   * @return set of explanations from the enabled literals if a conflict is detected
+   * @return empty set if no conflict is detected
+   */
   Explanations Process(const LiteralSet& enabled_literals);
+  /**
+   * Process the enabled literals @p enabled_literals.
+   *
+   * It will process the enabled literals and propagate the bounds.
+   * The bounds are propagated based on the BoundPropagationType and the formulae will be evaluated.
+   * If a conflict is detected, it will return the set of explanations.
+   * @param enabled_literals literals to enable
+   * @param[out] explanations set of explanations from the enabled literals if a conflict is detected
+   */
   void Process(const LiteralSet& enabled_literals, Explanations& explanations);
 
+  /**
+   * Get the active explanation for the variable @p var.
+   *
+   * It will return the explanation for the variable @p var, justifying the active bounds.
+   * @param var variable to get the explanation for
+   * @param[out] explanation explanation for the variable @p var
+   */
   void GetActiveExplanation(const Variable& var, LiteralSet& explanation);
 
   /**
@@ -66,7 +157,19 @@ class BoundPreprocessor {
    */
   void SetInfinityBounds(const Variable& var, const mpq_class& lb, const mpq_class& ub);
 
+  /**
+   * Clear the preprocessor.
+   *
+   * It will clear the environment, the theory bounds, and the enabled literals.
+   */
   void Clear();
+  /**
+   * Clear the preprocessor using the @p fixed_preprocessor.
+   *
+   * It will clear the environment, the theory bounds, and the enabled literals by copying the values from the
+   * @p fixed_preprocessor.
+   * @param fixed_preprocessor preprocessor to use as a reference
+   */
   void Clear(const BoundPreprocessor& fixed_preprocessor);
 
   /** @getter{configuration, BoundPreprocessor} */

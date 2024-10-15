@@ -69,8 +69,8 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
 }
 
 void Context::Impl::Assert(const Formula &f) {
-  if (is_true(f)) return;     // Skip trivially true assertions.
-  if (is_false(f)) {          // The formula is false. No point in adding it to the SAT solver. There is no point in continuing
+  if (is_true(f)) return;  // Skip trivially true assertions.
+  if (is_false(f)) {  // The formula is false. No point in adding it to the SAT solver. There is no point in continuing
     stack_.push_back(f);
     return;
   }

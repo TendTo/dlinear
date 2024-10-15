@@ -67,7 +67,6 @@ class MpqArray {
  public:
   /**
    * Construct a new MpqArray object, allocating the array with @p nElements elements.
-   *
    * @param nElements The number of elements in the array.
    */
   explicit MpqArray(size_t nElements);
@@ -79,14 +78,12 @@ class MpqArray {
   ~MpqArray();
   /**
    * Obtain a constant pointer to the internal array.
-   *
    * @return internal mpq_t array as a constant pointer
    */
   explicit operator const mpq_t *() const { return array; }
 
   /**
    * Obtain a pointer to the internal array.
-   *
    * @return internal mpq_t array
    */
   explicit operator mpq_t *() { return array; }
@@ -95,6 +92,7 @@ class MpqArray {
 
   const mpq_t &operator[](const int idx) const { return array[idx]; }
 
+  /** @getter{size, array} */
   [[nodiscard]] size_t size() const { return array ? reinterpret_cast<size_t *>(array)[-1] : 0; }
 
   /**
