@@ -151,16 +151,6 @@ github_archive(
 
 gitlab_archive = use_repo_rule("//tools:git_archive.bzl", "gitlab_archive")
 
-# MIT | c++ library for arbitrary precision arithmetic
-gitlab_archive(
-    name = "mpfr",
-    build_file = "//third_party:mpfr.BUILD.bazel",
-    commit = "4.2.1",
-    domain = "inria.fr",
-    repository = "mpfr/mpfr",
-    sha256 = "e34aab8b2cdcc3f37ef8bd1b33fcd9867b472412698c6a0ec60dbb4970f88a3d",
-)
-
 ## HTTP repositories
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -172,6 +162,15 @@ http_archive(
     sha256 = "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
     strip_prefix = "gmp-6.3.0",
     url = "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
+)
+
+# MIT | c++ library for arbitrary precision arithmetic
+http_archive(
+    name = "mpfr",
+    build_file = "//third_party:mpfr.BUILD.bazel",
+    sha256 = "277807353a6726978996945af13e52829e3abd7a9a5b7fb2793894e18f1fcbb2",
+    strip_prefix = "mpfr-4.2.1",
+    url = "https://www.mpfr.org/mpfr-current/mpfr-4.2.1.tar.xz",
 )
 
 http_archive(
