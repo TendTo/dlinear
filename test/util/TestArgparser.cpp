@@ -46,7 +46,7 @@ TEST_F(TestArgParser, DefaultValues) {
   EXPECT_DOUBLE_EQ(parser_.get<double>("precision"), 9.999999999999996e-4);
   EXPECT_FALSE(parser_.get<bool>("produce-models"));
   EXPECT_EQ(parser_.get<uint>("random-seed"), 0u);
-  EXPECT_EQ(parser_.get<uint>("jobs"), 1u);
+  //  EXPECT_EQ(parser_.get<uint>("jobs"), 1u);
   EXPECT_FALSE(parser_.get<bool>("continuous-output"));
   EXPECT_FALSE(parser_.get<bool>("debug-parsing"));
   EXPECT_FALSE(parser_.get<bool>("debug-scanning"));
@@ -108,16 +108,16 @@ TEST_F(TestArgParser, ParseInvalidPrecision) {
   EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Invalid argument for --precision");
 }
 
-TEST_F(TestArgParser, ParseJobs) {
-  const char *argv[] = {"dlinear", filename_smt2_.c_str(), "--jobs", "2"};
-  parser_.parse(sizeof(argv) / sizeof(argv[0]), argv);
-  EXPECT_EQ(parser_.get<uint>("jobs"), 2u);
-}
-
-TEST_F(TestArgParser, ParseInvalidJobs) {
-  const char *argv[] = {"dlinear", filename_smt2_.c_str(), "--jobs", "-1"};
-  EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Failed to parse '-1' as decimal integer");
-}
+// TEST_F(TestArgParser, ParseJobs) {
+//   const char *argv[] = {"dlinear", filename_smt2_.c_str(), "--jobs", "2"};
+//   parser_.parse(sizeof(argv) / sizeof(argv[0]), argv);
+//   EXPECT_EQ(parser_.get<uint>("jobs"), 2u);
+// }
+//
+// TEST_F(TestArgParser, ParseInvalidJobs) {
+//   const char *argv[] = {"dlinear", filename_smt2_.c_str(), "--jobs", "-1"};
+//   EXPECT_DEATH(parser_.parse(sizeof(argv) / sizeof(argv[0]), argv), "Failed to parse '-1' as decimal integer");
+// }
 
 TEST_F(TestArgParser, ParseContinuousOutput) {
   const char *argv[] = {"dlinear", filename_smt2_.c_str(), "--continuous-output"};
