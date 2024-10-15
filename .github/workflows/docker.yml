@@ -3,7 +3,14 @@ name: Docker CI
 on:
   push:
     branches: [ main ]
-    tags: 
+    paths:
+      - "dlinear/**"
+      - "tools/**"
+      - "third_party/**"
+      - "test/**"
+      - "*.bazel*"
+      - ".github/workflows/docker.yml"
+    tags:
       - "v*.*.*"
       - "*.*.*"
 

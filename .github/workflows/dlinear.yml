@@ -8,6 +8,8 @@ on:
       - "tools/**"
       - "third_party/**"
       - "test/**"
+      - "*.bazel*"
+      - ".github/workflows/dlinear.yml"
   pull_request:
     branches: [ main ]
     paths:
@@ -15,6 +17,8 @@ on:
       - "tools/**"
       - "third_party/**"
       - "test/**"
+      - "*.bazel*"
+      - ".github/workflows/dlinear.yml"
 
 env:
   PACKAGES: 'python3 build-essential automake libtool flex bison'

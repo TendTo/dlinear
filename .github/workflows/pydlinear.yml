@@ -8,6 +8,11 @@ on:
       - "pydlinear/**"
       - "tools/**"
       - "third_party/**"
+      - "*.bazel*"
+      - ".github/workflows/pydlinear.yml"
+    tags:
+      - "v*.*.*"
+      - "*.*.*"
   pull_request:
     branches: [ main ]
     paths:
@@ -15,6 +20,8 @@ on:
       - "pydlinear/**"
       - "tools/**"
       - "third_party/**"
+      - "*.bazel*"
+      - ".github/workflows/pydlinear.yml"
 
 env:
   PACKAGES: "build-essential automake libtool flex bison"
