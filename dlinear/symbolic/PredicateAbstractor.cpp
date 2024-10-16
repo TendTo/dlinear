@@ -15,17 +15,19 @@
 
 namespace dlinear {
 
-Formula PredicateAbstractor::Convert(const Formula &f) {
+Formula PredicateAbstractor::Process(const Formula &f) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
-  return Visit(f);
+  return VisitFormula(f);
 }
+Formula PredicateAbstractor::operator()(const Formula &f) { return Process(f); }
 
-Formula PredicateAbstractor::Convert(const std::vector<Formula> &formulas) {
-  return Convert(make_conjunction(std::set<Formula>{formulas.begin(), formulas.end()}));
+Formula PredicateAbstractor::Process(const std::vector<Formula> &formulas) {
+  return Process(make_conjunction(std::set<Formula>{formulas.begin(), formulas.end()}));
 }
+Formula PredicateAbstractor::operator()(const std::vector<Formula> &formulas) { return Process(formulas); }
 
-Formula PredicateAbstractor::Visit(const Formula &f) {
+Formula PredicateAbstractor::VisitFormula(const Formula &f) const {
   const Formula flattened_f{flattener_.Flatten(f)};
   const bool is_negated = is_negation(flattened_f);
   const Formula &unary_f = is_negated ? get_operand(flattened_f) : flattened_f;
@@ -34,14 +36,14 @@ Formula PredicateAbstractor::Visit(const Formula &f) {
   const auto it = formula_to_var_map_.find(unary_f);
   if (it == formula_to_var_map_.cend()) {
     // No, we haven't processed it before.
-    return FormulaVisitor::Visit(flattened_f);
+    return FormulaVisitor::VisitFormula(flattened_f);
   } else {
     // Yes, we have processed this formula before.
     return is_negated ? !Formula{it->second} : Formula{it->second};
   }
 }
 
-Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
+Formula PredicateAbstractor::VisitAtomic(const Formula &f) const {
   // Flatten linear formulas to make sure they have the standard form (ax + by <=> c).
   const Formula flattened_f{flattener_.Flatten(f)};
   const bool is_negated = is_negation(flattened_f);
@@ -58,23 +60,23 @@ Formula PredicateAbstractor::VisitAtomic(const Formula &f) {
   return is_negated ? !Formula{it->second} : Formula{it->second};
 }
 
-Formula PredicateAbstractor::VisitEqualTo(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitNotEqualTo(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitLessThan(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitLessThanOrEqualTo(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitGreaterThan(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitGreaterThanOrEqualTo(const Formula &f) { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitEqualTo(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitNotEqualTo(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitLessThan(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitLessThanOrEqualTo(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitGreaterThan(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitGreaterThanOrEqualTo(const Formula &f) const { return VisitAtomic(f); }
 
-Formula PredicateAbstractor::VisitNegation(const Formula &f) { return !Visit(get_operand(f)); }
-Formula PredicateAbstractor::VisitForall(const Formula &f) { return VisitAtomic(f); }
-Formula PredicateAbstractor::VisitConjunction(const Formula &f) {
+Formula PredicateAbstractor::VisitNegation(const Formula &f) const { return !VisitFormula(get_operand(f)); }
+Formula PredicateAbstractor::VisitForall(const Formula &f) const { return VisitAtomic(f); }
+Formula PredicateAbstractor::VisitConjunction(const Formula &f) const {
   const std::set<Formula> operands{
-      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+      map(get_operands(f), [this](const Formula &formula) { return VisitFormula(formula); })};
   return make_conjunction(operands);
 }
-Formula PredicateAbstractor::VisitDisjunction(const Formula &f) {
+Formula PredicateAbstractor::VisitDisjunction(const Formula &f) const {
   const std::set<Formula> operands{
-      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+      map(get_operands(f), [this](const Formula &formula) { return VisitFormula(formula); })};
   return make_disjunction(operands);
 }
 

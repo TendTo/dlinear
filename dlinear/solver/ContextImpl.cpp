@@ -89,9 +89,9 @@ void Context::Impl::AssertPiecewiseLinearFunction(const Variable &var, const For
   DLINEAR_ASSERT(!var.is_dummy() && var.get_type() == Variable::Type::CONTINUOUS, "Variable must be a real variable");
   DLINEAR_ASSERT(is_relational(cond), "Condition must be a relational formula");
 
-  const Formula condition_lit = predicate_abstractor_.Convert(cond);
-  const Formula active_lit = predicate_abstractor_.Convert(var - active == 0);
-  const Formula inactive_lit = predicate_abstractor_.Convert(var - inactive == 0);
+  const Formula condition_lit = predicate_abstractor_(cond);
+  const Formula active_lit = predicate_abstractor_(var - active == 0);
+  const Formula inactive_lit = predicate_abstractor_(var - inactive == 0);
   // Make sure the cond is assigned a value (true or false) in the SAT solver
   const Formula force_assignment(condition_lit || !condition_lit);
   const Formula active_assertion{active_lit || !condition_lit};

@@ -23,7 +23,7 @@ namespace dlinear {
  * The boolean formula will be a boolean variable or a conjunction of boolean variables.
  * The object keeps a bijective map between newly introduced the boolean variables and the first-order logic formulae.
  */
-class PredicateAbstractor : public FormulaVisitor {
+class PredicateAbstractor : public FormulaVisitor<> {
  public:
   /**
    * Construct a new PredicateAbstractor object with the given @p config.
@@ -40,7 +40,8 @@ class PredicateAbstractor : public FormulaVisitor {
    * @param f formula to be converted
    * @return boolean formula
    */
-  Formula Convert(const Formula &f);
+  [[nodiscard]] Formula Process(const Formula &f);
+  [[nodiscard]] Formula operator()(const Formula &f);
 
   /**
    * Convert a vector first-order logic formula @p formulas into a Boolean formula
@@ -52,13 +53,14 @@ class PredicateAbstractor : public FormulaVisitor {
    * @param f formula to be converted
    * @return boolean formula
    */
-  Formula Convert(const std::vector<Formula> &formulas);
+  [[nodiscard]] Formula Process(const std::vector<Formula> &formulas);
+  [[nodiscard]] Formula operator()(const std::vector<Formula> &formulas);
 
   /** @getter{map of previously converted formulae to variable, PredicateAbstractor} */
-  const std::unordered_map<Variable, Formula> &var_to_formula_map() const { return var_to_formula_map_; }
+  [[nodiscard]] const std::unordered_map<Variable, Formula> &var_to_formula_map() const { return var_to_formula_map_; }
 
-  const Variable &operator[](const Formula &f) const { return formula_to_var_map_.at(f); }
-  const Formula &operator[](const Variable &var) const { return var_to_formula_map_.at(var); }
+  [[nodiscard]] const Variable &operator[](const Formula &f) const { return formula_to_var_map_.at(f); }
+  [[nodiscard]] const Formula &operator[](const Variable &var) const { return var_to_formula_map_.at(var); }
 
  private:
   /**
@@ -70,24 +72,24 @@ class PredicateAbstractor : public FormulaVisitor {
    * @return newly created Boolean variable in the map @ref var_to_formula_map_ if the formula is not present
    * @return existing Boolean variable in the map @ref var_to_formula_map_ if the formula was already present
    */
-  Formula Visit(const Formula &f) override;
-  Formula VisitAtomic(const Formula &f);
-  Formula VisitEqualTo(const Formula &f) override;
-  Formula VisitNotEqualTo(const Formula &f) override;
-  Formula VisitGreaterThan(const Formula &f) override;
-  Formula VisitGreaterThanOrEqualTo(const Formula &f) override;
-  Formula VisitLessThan(const Formula &f) override;
-  Formula VisitLessThanOrEqualTo(const Formula &f) override;
-  Formula VisitConjunction(const Formula &f) override;
-  Formula VisitDisjunction(const Formula &f) override;
-  Formula VisitNegation(const Formula &f) override;
-  Formula VisitForall(const Formula &f) override;
+  [[nodiscard]] Formula VisitFormula(const Formula &f) const override;
+  [[nodiscard]] Formula VisitAtomic(const Formula &f) const;
+  [[nodiscard]] Formula VisitEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitGreaterThan(const Formula &f) const override;
+  [[nodiscard]] Formula VisitGreaterThanOrEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitLessThan(const Formula &f) const override;
+  [[nodiscard]] Formula VisitLessThanOrEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f) const override;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f) const override;
+  [[nodiscard]] Formula VisitNegation(const Formula &f) const override;
+  [[nodiscard]] Formula VisitForall(const Formula &f) const override;
 
-  std::unordered_map<Variable, Formula>
+  mutable std::unordered_map<Variable, Formula>
       var_to_formula_map_;  ///< Map from Boolean variable to previously converted formula.
-  std::unordered_map<Formula, Variable>
-      formula_to_var_map_;            ///< Map from previously converted formula to Boolean variable.
-  LinearFormulaFlattener flattener_;  ///< Linear formula flattener.
+  mutable std::unordered_map<Formula, Variable>
+      formula_to_var_map_;                    ///< Map from previously converted formula to Boolean variable.
+  mutable LinearFormulaFlattener flattener_;  ///< Linear formula flattener.
 };
 
 }  // namespace dlinear

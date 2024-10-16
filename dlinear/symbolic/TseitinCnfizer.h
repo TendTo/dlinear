@@ -23,7 +23,7 @@ namespace dlinear {
  * The method can introduce extra Boolean variables.
  * Check [Wikipedia](https://en.wikipedia.org/wiki/Tseytin_transformation) for more information.
  */
-class TseitinCnfizer : public FormulaVisitor {
+class TseitinCnfizer : public FormulaVisitor<std::map<Variable, Formula> &> {
  public:
   /**
    * Construct a new TseitinCnfizer object with the given @p config.
@@ -36,26 +36,16 @@ class TseitinCnfizer : public FormulaVisitor {
    * @param f formula to convert
    * @return vector of equi-satisfiable formulae in CNF
    */
-  std::vector<Formula> Convert(const Formula &f);
-
-  /**
-   * @getter{map of temporary variables, TseitinCnfizer, @note @ref map_ is cleared at the beginning of @ref Convert }
-   */
-  [[nodiscard]] const std::map<Variable, Formula> &map() const { return map_; }
+  [[nodiscard]] std::vector<Formula> Process(const Formula &f) const;
+  [[nodiscard]] std::vector<Formula> operator()(const Formula &f) const;
 
  private:
-  Formula VisitConjunction(const Formula &f) override;
-  Formula VisitDisjunction(const Formula &f) override;
-  Formula VisitNegation(const Formula &f) override;
-  Formula VisitForall(const Formula &f) override;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f, std::map<Variable, Formula> &map) const override;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f, std::map<Variable, Formula> &map) const override;
+  [[nodiscard]] Formula VisitNegation(const Formula &f, std::map<Variable, Formula> &map) const override;
+  [[nodiscard]] Formula VisitForall(const Formula &f, std::map<Variable, Formula> &map) const override;
 
-  /**
-   * Map a temporary variable, which is introduced by a Tseitin transformation, to a corresponding Formula.
-   * @note that this map_ is cleared at the beginning of @ref Convert call.
-   */
-  std::map<Variable, Formula> map_;
-
-  NaiveCnfizer naive_cnfizer_;  ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
+  const NaiveCnfizer naive_cnfizer_;  ///< Naive CNFizer. Transforms nested formulas inside universal quantification.
 };
 
 }  // namespace dlinear

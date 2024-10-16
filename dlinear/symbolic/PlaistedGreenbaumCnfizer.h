@@ -24,7 +24,7 @@ namespace dlinear {
  * The method can introduce extra Boolean variables.
  * Check [Wikipedia](https://en.wikipedia.org/wiki/Plaisted-Greenbaum_transformation) for more information.
  */
-class PlaistedGreenbaumCnfizer : public FormulaVisitor {
+class PlaistedGreenbaumCnfizer : public FormulaVisitor<std::vector<Formula> &, std::vector<Variable> &> {
  public:
   /**
    * Construct a new PlaistedGreenbaumCnfizer object with the given @p config.
@@ -38,25 +38,22 @@ class PlaistedGreenbaumCnfizer : public FormulaVisitor {
    * @param f A formula to be converted.
    * @return A vector of clauses.
    */
-  std::vector<Formula> Convert(const Formula &f);
-
-  /** @getter{auxiliary variables introduced during the conversion, PlaistedGreenbaumCnfizer} */
-  [[nodiscard]] const std::vector<Variable> &vars() const { return vars_; }
+  [[nodiscard]] std::pair<std::vector<Formula>, std::vector<Variable>> Process(const Formula &f) const;
+  [[nodiscard]] std::pair<std::vector<Formula>, std::vector<Variable>> operator()(const Formula &f) const;
 
  private:
-  Formula VisitConjunction(const Formula &f) override;
-  Formula VisitDisjunction(const Formula &f) override;
-  Formula VisitNegation(const Formula &f) override;
-  Formula VisitForall(const Formula &f) override;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f, std::vector<Formula> &aux,
+                                         std::vector<Variable> &vars) const override;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f, std::vector<Formula> &aux,
+                                         std::vector<Variable> &vars) const override;
+  [[nodiscard]] Formula VisitNegation(const Formula &f, std::vector<Formula> &aux,
+                                      std::vector<Variable> &vars) const override;
+  [[nodiscard]] Formula VisitForall(const Formula &f, std::vector<Formula> &aux,
+                                    std::vector<Variable> &vars) const override;
+
   const Nnfizer nnfizer_;
-
-  NaiveCnfizer naive_cnfizer_;  ///< Naive CNFizer. Used to transform nested formulas inside universal quantification.
-
-  std::vector<Formula>
-      aux_;  ///< Auxiliary clauses collected during conversion. @note It is cleared at the beginning of `Convert` call.
-
-  std::vector<Variable>
-      vars_;  ///< Variables generated during conversion. @note It is cleared at the beginning of `Convert` call.
+  const NaiveCnfizer
+      naive_cnfizer_;  ///< Naive CNFizer. Used to transform nested formulas inside universal quantification.
 };
 
 }  // namespace dlinear

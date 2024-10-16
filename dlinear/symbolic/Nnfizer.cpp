@@ -12,13 +12,16 @@
 
 namespace dlinear {
 
-Formula Nnfizer::Convert(const Formula &f, const bool push_negation_into_relationals) const {
-  DLINEAR_TRACE_FMT("Nnfizer::Convert({}, {})", f, push_negation_into_relationals);
-  return Visit(f, true, push_negation_into_relationals);
-}
+Nnfizer::Nnfizer(const dlinear::Config &config) : FormulaVisitor<bool, bool>{config, "Nnfizer"} {}
 
-Formula Nnfizer::Visit(const Formula &f, const bool polarity, const bool push_negation_into_relationals) const {
-  return VisitFormula<Formula>(this, f, polarity, push_negation_into_relationals);
+Formula Nnfizer::Process(const Formula &f, bool push_negation_into_relationals) const {
+  DLINEAR_TRACE_FMT("Nnfizer::Convert({}, {})", f, push_negation_into_relationals);
+  const TimerGuard timer_guard{&stats_.m_timer(), stats_.enabled()};
+  stats_.Increase();
+  return VisitFormula(f, true, push_negation_into_relationals);
+}
+Formula Nnfizer::operator()(const Formula &f, const bool push_negation_into_relationals) const {
+  return Process(f, push_negation_into_relationals);
 }
 
 Formula Nnfizer::VisitFalse(const Formula &, const bool polarity, const bool) const {
@@ -85,7 +88,7 @@ Formula Nnfizer::VisitConjunction(const Formula &f, const bool polarity,
   // NNF(¬(f₁ ∧ ... ∨ fₙ)) = NNF(¬f₁) ∨ ... ∨ NNF(¬fₙ)
   const std::set<Formula> new_operands{
       map(get_operands(f), [this, polarity, push_negation_into_relationals](const Formula &formula) {
-        return this->Visit(formula, polarity, push_negation_into_relationals);
+        return this->VisitFormula(formula, polarity, push_negation_into_relationals);
       })};
   return polarity ? make_conjunction(new_operands) : make_disjunction(new_operands);
 }
@@ -96,7 +99,7 @@ Formula Nnfizer::VisitDisjunction(const Formula &f, const bool polarity,
   // NNF(¬(f₁ ∨ ... ∨ fₙ)) = NNF(¬f₁) ∧ ... ∧ NNF(¬fₙ)
   const std::set<Formula> new_operands{
       map(get_operands(f), [this, polarity, push_negation_into_relationals](const Formula &formula) {
-        return this->Visit(formula, polarity, push_negation_into_relationals);
+        return this->VisitFormula(formula, polarity, push_negation_into_relationals);
       })};
   return polarity ? make_disjunction(new_operands) : make_conjunction(new_operands);
 }
@@ -104,7 +107,7 @@ Formula Nnfizer::VisitDisjunction(const Formula &f, const bool polarity,
 Formula Nnfizer::VisitNegation(const Formula &f, const bool polarity, const bool push_negation_into_relationals) const {
   // NNF(¬f, ⊤) = NNF(f, ⊥)
   // NNF(¬f, ⊥) = NNF(f, ⊤)
-  return Visit(get_operand(f), !polarity, push_negation_into_relationals);
+  return VisitFormula(get_operand(f), !polarity, push_negation_into_relationals);
 }
 
 Formula Nnfizer::VisitForall(const Formula &f, const bool polarity, const bool) const {

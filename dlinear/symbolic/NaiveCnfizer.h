@@ -19,7 +19,7 @@ namespace dlinear {
  * We are using this transformation in TseitinCnfizer
  * when we process the nested formula in a universally quantified formula.
  */
-class NaiveCnfizer : public FormulaVisitor {
+class NaiveCnfizer : public FormulaVisitor<> {
  public:
   /**
    * Construct a new NaiveCnfizer object with the given @p config.
@@ -32,15 +32,16 @@ class NaiveCnfizer : public FormulaVisitor {
    * @param f formula to be converted
    * @return cnf converted formula
    */
-  [[nodiscard]] Formula Convert(const Formula &f);
+  [[nodiscard]] Formula Process(const Formula &f) const;
+  [[nodiscard]] Formula operator()(const Formula &f) const;
 
  private:
-  [[nodiscard]] Formula VisitEqualTo(const Formula &f) override;
-  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f) override;
-  [[nodiscard]] Formula VisitConjunction(const Formula &f) override;
-  [[nodiscard]] Formula VisitDisjunction(const Formula &f) override;
-  [[nodiscard]] Formula VisitNegation(const Formula &f) override;
-  [[nodiscard]] Formula VisitForall(const Formula &f) override;
+  [[nodiscard]] Formula VisitEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitNotEqualTo(const Formula &f) const override;
+  [[nodiscard]] Formula VisitConjunction(const Formula &f) const override;
+  [[nodiscard]] Formula VisitDisjunction(const Formula &f) const override;
+  [[nodiscard]] Formula VisitNegation(const Formula &f) const override;
+  [[nodiscard]] Formula VisitForall(const Formula &f) const override;
 
   Nnfizer nnfizer_{config_};  ///< NNFizer. Used to convert the formula into NNF.
 };

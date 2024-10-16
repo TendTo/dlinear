@@ -17,37 +17,40 @@ namespace dlinear {
 //  - It visits each node and introduce a Boolean variable `b` for
 //    each subterm `f`, and keep the relation `b ⇔ f`.
 //  - Then it cnfizes each `b ⇔ f` and make a conjunction of them.
-Formula NaiveCnfizer::Convert(const Formula &f) {
+Formula NaiveCnfizer::Process(const Formula &f) const {
+  const TimerGuard timer_guard{&stats_.m_timer(), stats_.enabled()};
+  stats_.Increase();
   // TODO(soonho): Using cache if needed.
-  return Visit(nnfizer_.Convert(f, true));
+  return VisitFormula(nnfizer_.Process(f, true));
 }
+Formula NaiveCnfizer::operator()(const Formula &f) const { return Process(f); }
 
-Formula NaiveCnfizer::VisitEqualTo(const Formula &f) {
+Formula NaiveCnfizer::VisitEqualTo(const Formula &f) const {
   const Expression &lhs{get_lhs_expression(f)};
   const Expression &rhs{get_rhs_expression(f)};
   return (lhs >= rhs) && (lhs <= rhs);
 }
-Formula NaiveCnfizer::VisitNotEqualTo(const Formula &f) {
+Formula NaiveCnfizer::VisitNotEqualTo(const Formula &f) const {
   const Expression &lhs{get_lhs_expression(f)};
   const Expression &rhs{get_rhs_expression(f)};
   return (lhs > rhs) || (lhs < rhs);
 }
-Formula NaiveCnfizer::VisitForall(const Formula &f) {
+Formula NaiveCnfizer::VisitForall(const Formula &f) const {
   // f = ∀y. φ(x, y).
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
   const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
-  return forall(quantified_variables, Convert(quantified_formula));
+  return forall(quantified_variables, Process(quantified_formula));
 }
 
-Formula NaiveCnfizer::VisitConjunction(const Formula &f) {
+Formula NaiveCnfizer::VisitConjunction(const Formula &f) const {
   const std::set<Formula> transformed_operands{
-      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+      map(get_operands(f), [this](const Formula &formula) { return this->VisitFormula(formula); })};
   return make_conjunction(transformed_operands);
 }
 
-Formula NaiveCnfizer::VisitDisjunction(const Formula &f) {
+Formula NaiveCnfizer::VisitDisjunction(const Formula &f) const {
   const std::set<Formula> &transformed_operands{
-      map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+      map(get_operands(f), [this](const Formula &formula) { return this->VisitFormula(formula); })};
   return std::accumulate(transformed_operands.begin(), transformed_operands.end(), Formula::False(),
                          [](const Formula &cnf1, const Formula &cnf2) {
                            std::set<Formula> clauses;
@@ -80,7 +83,7 @@ Formula NaiveCnfizer::VisitDisjunction(const Formula &f) {
                          });
 }
 
-Formula NaiveCnfizer::VisitNegation(const Formula &f) {
+Formula NaiveCnfizer::VisitNegation(const Formula &f) const {
   DLINEAR_ASSERT(is_atomic(get_operand(f)), "The formula must be atomic");
   return f;
 }

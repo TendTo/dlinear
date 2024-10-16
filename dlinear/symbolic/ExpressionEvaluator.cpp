@@ -16,22 +16,26 @@
 
 namespace dlinear {
 
-ExpressionEvaluator::ExpressionEvaluator(Expression e) : e_{std::move(e)} {}
+ExpressionEvaluator::ExpressionEvaluator(Expression e, const Config& config)
+    : GenericExpressionVisitor<Interval, const Box&>{config, "ExpressionEvaluator"}, e_{std::move(e)} {}
 
-Interval ExpressionEvaluator::operator()(const Box& box) const { return Visit(e_, box); }
-
-Interval ExpressionEvaluator::Visit(const Expression& e, const Box& box) const {
-  return VisitExpression<Interval>(this, e, box);
+Interval ExpressionEvaluator::Process(const Box& box) const {
+  const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
+  return VisitExpression(e_, box);
 }
+Interval ExpressionEvaluator::operator()(const Box& box) const { return Process(box); }
 
-Interval ExpressionEvaluator::VisitVariable(const Expression& e, const Box& box) {
+Interval ExpressionEvaluator::VisitVariable(const Expression& e, const Box& box) const {
   const Variable& var{get_variable(e)};
   return box[var];
 }
 
-Interval ExpressionEvaluator::VisitConstant(const Expression& e, const Box&) { return Interval{get_constant_value(e)}; }
+Interval ExpressionEvaluator::VisitConstant(const Expression& e, const Box&) const {
+  return Interval{get_constant_value(e)};
+}
 
-Interval ExpressionEvaluator::VisitRealConstant(const Expression&, const Box&) {
+Interval ExpressionEvaluator::VisitRealConstant(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
@@ -40,7 +44,7 @@ Interval ExpressionEvaluator::VisitAddition(const Expression& e, const Box& box)
   const auto& expr_to_coeff_map = get_expr_to_coeff_map_in_addition(e);
   return std::accumulate(expr_to_coeff_map.begin(), expr_to_coeff_map.end(), Interval{c},
                          [this, &box](const Interval& init, const std::pair<const Expression, mpq_class>& p) {
-                           return init + Visit(p.first, box) * p.second;
+                           return init + VisitExpression(p.first, box) * p.second;
                          });
 }
 
@@ -148,11 +152,12 @@ Interval ExpressionEvaluator::VisitMax(const Expression&, const Box&) const {
   DLINEAR_RUNTIME_ERROR("Operation is not supported yet.");
 }
 
-Interval ExpressionEvaluator::VisitIfThenElse(const Expression& /* unused */, const Box& /* unused */) {
+Interval ExpressionEvaluator::VisitIfThenElse(const Expression& /* unused */, const Box& /* unused */) const {
   DLINEAR_RUNTIME_ERROR("If-then-else expression is not supported yet.");
 }
 
-Interval ExpressionEvaluator::VisitUninterpretedFunction(const Expression& /* unused */, const Box& /* unused */) {
+Interval ExpressionEvaluator::VisitUninterpretedFunction(const Expression& /* unused */,
+                                                         const Box& /* unused */) const {
   DLINEAR_RUNTIME_ERROR("Uninterpreted function is not supported.");
 }
 

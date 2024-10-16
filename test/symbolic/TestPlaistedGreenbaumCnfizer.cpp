@@ -36,7 +36,7 @@ class PlaistedGreenbaumCnfizerTest : public ::testing::Test {
 
  protected:
   ::testing::AssertionResult CnfChecker(const Formula &f) {
-    const vector<Formula> clauses{cnfizer_.Convert(f)};
+    const auto [clauses, aux]{cnfizer_(f)};
     const Formula f_cnf{make_conjunction(set<Formula>{clauses.begin(), clauses.end()})};
     // Check1: f_cnf should be in CNF.
     if (!is_cnf(f_cnf)) {

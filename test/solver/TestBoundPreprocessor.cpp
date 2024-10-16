@@ -39,7 +39,7 @@ class MockContextBoundPreprocessor : public BoundPreprocessor {
  private:
   Formula Flatten(const Formula &formula) {
     PredicateAbstractor pa{config()};
-    const Variable var = get_variable(pa.Convert(formula));
+    const Variable var = get_variable(pa.Process(formula));
     return pa.var_to_formula_map().at(var);
   }
 };
@@ -65,7 +65,7 @@ class TestBoundPreprocessor : public ::testing::Test {
   void AddConstraints(std::initializer_list<Formula> formulas) {
     for (const auto &formula : formulas) {
       for (const Variable &var : formula.GetFreeVariables()) bound_preprocessor_.AddVariable(var);
-      const Formula flattened = pa_.Convert(formula);
+      const Formula flattened = pa_.Process(formula);
       const Variable &var = is_negation(flattened) ? get_variable(get_operand(flattened)) : get_variable(flattened);
       const Literal lit{var, !is_negation(flattened)};
       bound_preprocessor_.EnableLiteral(lit);

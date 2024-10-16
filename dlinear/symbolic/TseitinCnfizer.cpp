@@ -33,16 +33,17 @@ void CnfizeDisjunction(const Variable &b, const Formula &f, std::vector<Formula>
 //  - It visits each node and introduce a Boolean variable `b` for
 //    each subterm `f`, and keep the relation `b ⇔ f`.
 //  - Then it cnfizes each `b ⇔ f` and make a conjunction of them.
-std::vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
-  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+std::vector<Formula> TseitinCnfizer::Process(const Formula &f) const {
+  const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
-  map_.clear();
+
+  std::map<Variable, Formula> map;
   std::vector<Formula> ret;
-  const Formula head{Visit(f)};
-  if (map_.empty()) {
+  const Formula head{VisitFormula(f, map)};
+  if (map.empty()) {
     return {head};
   }
-  for (auto const &p : map_) {
+  for (auto const &p : map) {
     if (get_variable(head).equal_to(p.first)) {
       if (is_conjunction(p.second)) {
         const std::set<Formula> &conjuncts(get_operands(p.second));
@@ -56,8 +57,9 @@ std::vector<Formula> TseitinCnfizer::Convert(const Formula &f) {
   }
   return ret;
 }
+std::vector<Formula> TseitinCnfizer::operator()(const Formula &f) const { return Process(f); }
 
-Formula TseitinCnfizer::VisitForall(const Formula &f) {
+Formula TseitinCnfizer::VisitForall(const Formula &f, std::map<Variable, Formula> &map) const {
   // Given: f := ∀y. φ(x, y), this process CNFizes φ(x, y) and push the
   // universal quantifier over conjunctions:
   //
@@ -66,7 +68,7 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
   const Variables &quantified_variables{get_quantified_variables(f)};  // y
   const Formula &quantified_formula{get_quantified_formula(f)};        // φ(x, y)
   // clause₁(x, y) ∧ ... ∧ clauseₙ(x, y)
-  const std::set<Formula> clauses{get_clauses(naive_cnfizer_.Convert(quantified_formula))};
+  const std::set<Formula> clauses{get_clauses(naive_cnfizer_.Process(quantified_formula))};
   const std::set<Formula> new_clauses{::dlinear::map(clauses, [&quantified_variables](const Formula &clause) {
     DLINEAR_ASSERT(is_clause(clause), "Must be a clause");
     if (HaveIntersection(clause.GetFreeVariables(), quantified_variables)) {
@@ -82,39 +84,39 @@ Formula TseitinCnfizer::VisitForall(const Formula &f) {
   } else {
     static std::size_t id{0};
     const Variable bvar{std::string("forall") + std::to_string(id++), Variable::Type::BOOLEAN};
-    map_.emplace(bvar, make_conjunction(new_clauses));
+    map.emplace(bvar, make_conjunction(new_clauses));
     return Formula{bvar};
   }
 }
 
-Formula TseitinCnfizer::VisitConjunction(const Formula &f) {
+Formula TseitinCnfizer::VisitConjunction(const Formula &f, std::map<Variable, Formula> &map) const {
   // Introduce a new Boolean variable, `bvar` for `f` and record the
   // relation `bvar ⇔ f`.
   static std::size_t id{0};
-  const std::set<Formula> transformed_operands{
-      ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const std::set<Formula> transformed_operands{::dlinear::map(
+      get_operands(f), [this, &map](const Formula &formula) { return this->VisitFormula(formula, map); })};
   const Variable bvar{std::string("conj") + std::to_string(id++), Variable::Type::BOOLEAN};
-  map_.emplace(bvar, make_conjunction(transformed_operands));
+  map.emplace(bvar, make_conjunction(transformed_operands));
   return Formula{bvar};
 }
 
-Formula TseitinCnfizer::VisitDisjunction(const Formula &f) {
+Formula TseitinCnfizer::VisitDisjunction(const Formula &f, std::map<Variable, Formula> &map) const {
   static std::size_t id{0};
-  const std::set<Formula> &transformed_operands{
-      ::dlinear::map(get_operands(f), [this](const Formula &formula) { return this->Visit(formula); })};
+  const std::set<Formula> &transformed_operands{::dlinear::map(
+      get_operands(f), [this, &map](const Formula &formula) { return this->VisitFormula(formula, map); })};
   const Variable bvar{std::string("disj") + std::to_string(id++), Variable::Type::BOOLEAN};
-  map_.emplace(bvar, make_disjunction(transformed_operands));
+  map.emplace(bvar, make_disjunction(transformed_operands));
   return Formula{bvar};
 }
 
-Formula TseitinCnfizer::VisitNegation(const Formula &f) {
+Formula TseitinCnfizer::VisitNegation(const Formula &f, std::map<Variable, Formula> &map) const {
   const Formula &operand{get_operand(f)};
   if (is_atomic(operand)) {
     return f;
   } else {
     const Variable bvar{"neg", Variable::Type::BOOLEAN};
-    const Formula transformed_operand{Visit(operand)};
-    map_.emplace(bvar, !transformed_operand);
+    const Formula transformed_operand{VisitFormula(operand, map)};
+    map.emplace(bvar, !transformed_operand);
     return Formula{bvar};
   }
 }

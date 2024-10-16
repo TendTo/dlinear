@@ -16,17 +16,23 @@
 
 namespace dlinear {
 
-PrefixPrinter::PrefixPrinter(std::ostream &os) : os_{os}, old_precision_{os.precision()} {}
+PrefixPrinter::PrefixPrinter(std::ostream &os, const Config &config)
+    : GenericFormulaVisitor<std::ostream &>(config, "PrefixPrinter"),
+      GenericExpressionVisitor<std::ostream &>(config, "PrefixPrinter"),
+      os_{os},
+      old_precision_{os.precision()} {}
 
 PrefixPrinter::~PrefixPrinter() { os_.precision(old_precision_); }
 
-std::ostream &PrefixPrinter::Print(const Expression &e) { return VisitExpression<std::ostream &>(this, e); }
+std::ostream &PrefixPrinter::Print(const Expression &e) const { return GenericExpressionVisitor::VisitExpression(e); }
+std::ostream &PrefixPrinter::operator()(const Expression &e) const { return Print(e); }
 
-std::ostream &PrefixPrinter::Print(const Formula &f) { return VisitFormula<std::ostream &>(this, f); }
+std::ostream &PrefixPrinter::Print(const Formula &f) const { return VisitFormula(f); }
+std::ostream &PrefixPrinter::operator()(const Formula &f) const { return Print(f); }
 
-std::ostream &PrefixPrinter::VisitVariable(const Expression &e) { return os_ << get_variable(e); }
+std::ostream &PrefixPrinter::VisitVariable(const Expression &e) const { return os_ << get_variable(e); }
 
-std::ostream &PrefixPrinter::VisitConstant(const Expression &e) {
+std::ostream &PrefixPrinter::VisitConstant(const Expression &e) const {
   const mpq_class &constant{get_constant_value(e)};
   bool print_den = constant.get_den() != 1;
   if (print_den) {
@@ -41,13 +47,13 @@ std::ostream &PrefixPrinter::VisitConstant(const Expression &e) {
   return os_;
 }
 
-std::ostream &PrefixPrinter::VisitUnaryFunction(const std::string &name, const Expression &e) {
+std::ostream &PrefixPrinter::VisitUnaryFunction(const std::string &name, const Expression &e) const {
   os_ << "(" << name << " ";
   Print(get_argument(e));
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitBinaryFunction(const std::string &name, const Expression &e) {
+std::ostream &PrefixPrinter::VisitBinaryFunction(const std::string &name, const Expression &e) const {
   os_ << "(" << name << " ";
   Print(get_first_argument(e));
   os_ << " ";
@@ -55,7 +61,7 @@ std::ostream &PrefixPrinter::VisitBinaryFunction(const std::string &name, const 
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitAddition(const Expression &e) {
+std::ostream &PrefixPrinter::VisitAddition(const Expression &e) const {
   const mpq_class &constant{get_constant_in_addition(e)};
   os_ << "(+";
   if (constant != 0.0) {
@@ -79,7 +85,7 @@ std::ostream &PrefixPrinter::VisitAddition(const Expression &e) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitMultiplication(const Expression &e) {
+std::ostream &PrefixPrinter::VisitMultiplication(const Expression &e) const {
   const mpq_class &constant{get_constant_in_multiplication(e)};
   os_ << "(*";
   if (constant != 1.0) {
@@ -103,43 +109,43 @@ std::ostream &PrefixPrinter::VisitMultiplication(const Expression &e) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitDivision(const Expression &e) { return VisitBinaryFunction("/", e); }
+std::ostream &PrefixPrinter::VisitDivision(const Expression &e) const { return VisitBinaryFunction("/", e); }
 
-std::ostream &PrefixPrinter::VisitLog(const Expression &e) { return VisitUnaryFunction("log", e); }
+std::ostream &PrefixPrinter::VisitLog(const Expression &e) const { return VisitUnaryFunction("log", e); }
 
-std::ostream &PrefixPrinter::VisitAbs(const Expression &e) { return VisitUnaryFunction("abs", e); }
+std::ostream &PrefixPrinter::VisitAbs(const Expression &e) const { return VisitUnaryFunction("abs", e); }
 
-std::ostream &PrefixPrinter::VisitExp(const Expression &e) { return VisitUnaryFunction("exp", e); }
+std::ostream &PrefixPrinter::VisitExp(const Expression &e) const { return VisitUnaryFunction("exp", e); }
 
-std::ostream &PrefixPrinter::VisitSqrt(const Expression &e) { return VisitUnaryFunction("sqrt", e); }
+std::ostream &PrefixPrinter::VisitSqrt(const Expression &e) const { return VisitUnaryFunction("sqrt", e); }
 
-std::ostream &PrefixPrinter::VisitPow(const Expression &e) { return VisitBinaryFunction("^", e); }
+std::ostream &PrefixPrinter::VisitPow(const Expression &e) const { return VisitBinaryFunction("^", e); }
 
-std::ostream &PrefixPrinter::VisitSin(const Expression &e) { return VisitUnaryFunction("sin", e); }
+std::ostream &PrefixPrinter::VisitSin(const Expression &e) const { return VisitUnaryFunction("sin", e); }
 
-std::ostream &PrefixPrinter::VisitCos(const Expression &e) { return VisitUnaryFunction("cos", e); }
+std::ostream &PrefixPrinter::VisitCos(const Expression &e) const { return VisitUnaryFunction("cos", e); }
 
-std::ostream &PrefixPrinter::VisitTan(const Expression &e) { return VisitUnaryFunction("tan", e); }
+std::ostream &PrefixPrinter::VisitTan(const Expression &e) const { return VisitUnaryFunction("tan", e); }
 
-std::ostream &PrefixPrinter::VisitAsin(const Expression &e) { return VisitUnaryFunction("asin", e); }
+std::ostream &PrefixPrinter::VisitAsin(const Expression &e) const { return VisitUnaryFunction("asin", e); }
 
-std::ostream &PrefixPrinter::VisitAcos(const Expression &e) { return VisitUnaryFunction("acos", e); }
+std::ostream &PrefixPrinter::VisitAcos(const Expression &e) const { return VisitUnaryFunction("acos", e); }
 
-std::ostream &PrefixPrinter::VisitAtan(const Expression &e) { return VisitUnaryFunction("atan", e); }
+std::ostream &PrefixPrinter::VisitAtan(const Expression &e) const { return VisitUnaryFunction("atan", e); }
 
-std::ostream &PrefixPrinter::VisitAtan2(const Expression &e) { return VisitBinaryFunction("atan2", e); }
+std::ostream &PrefixPrinter::VisitAtan2(const Expression &e) const { return VisitBinaryFunction("atan2", e); }
 
-std::ostream &PrefixPrinter::VisitSinh(const Expression &e) { return VisitUnaryFunction("sinh", e); }
+std::ostream &PrefixPrinter::VisitSinh(const Expression &e) const { return VisitUnaryFunction("sinh", e); }
 
-std::ostream &PrefixPrinter::VisitCosh(const Expression &e) { return VisitUnaryFunction("cosh", e); }
+std::ostream &PrefixPrinter::VisitCosh(const Expression &e) const { return VisitUnaryFunction("cosh", e); }
 
-std::ostream &PrefixPrinter::VisitTanh(const Expression &e) { return VisitUnaryFunction("tanh", e); }
+std::ostream &PrefixPrinter::VisitTanh(const Expression &e) const { return VisitUnaryFunction("tanh", e); }
 
-std::ostream &PrefixPrinter::VisitMin(const Expression &e) { return VisitBinaryFunction("min", e); }
+std::ostream &PrefixPrinter::VisitMin(const Expression &e) const { return VisitBinaryFunction("min", e); }
 
-std::ostream &PrefixPrinter::VisitMax(const Expression &e) { return VisitBinaryFunction("max", e); }
+std::ostream &PrefixPrinter::VisitMax(const Expression &e) const { return VisitBinaryFunction("max", e); }
 
-std::ostream &PrefixPrinter::VisitIfThenElse(const Expression &e) {
+std::ostream &PrefixPrinter::VisitIfThenElse(const Expression &e) const {
   os_ << "(ite ";
   Print(get_conditional_formula(e));
   os_ << " ";
@@ -149,17 +155,17 @@ std::ostream &PrefixPrinter::VisitIfThenElse(const Expression &e) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitUninterpretedFunction(const Expression &) {
+std::ostream &PrefixPrinter::VisitUninterpretedFunction(const Expression &) const {
   throw std::runtime_error("Not implemented.");
 }
 
-std::ostream &PrefixPrinter::VisitFalse(const Formula &) { return os_ << "false"; }
+std::ostream &PrefixPrinter::VisitFalse(const Formula &) const { return os_ << "false"; }
 
-std::ostream &PrefixPrinter::VisitTrue(const Formula &) { return os_ << "true"; }
+std::ostream &PrefixPrinter::VisitTrue(const Formula &) const { return os_ << "true"; }
 
-std::ostream &PrefixPrinter::VisitVariable(const Formula &f) { return os_ << get_variable(f); }
+std::ostream &PrefixPrinter::VisitVariable(const Formula &f) const { return os_ << get_variable(f); }
 
-std::ostream &PrefixPrinter::VisitEqualTo(const Formula &f) {
+std::ostream &PrefixPrinter::VisitEqualTo(const Formula &f) const {
   os_ << "(= ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -167,7 +173,7 @@ std::ostream &PrefixPrinter::VisitEqualTo(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitNotEqualTo(const Formula &f) {
+std::ostream &PrefixPrinter::VisitNotEqualTo(const Formula &f) const {
   os_ << "(not (= ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -175,7 +181,7 @@ std::ostream &PrefixPrinter::VisitNotEqualTo(const Formula &f) {
   return os_ << "))";
 }
 
-std::ostream &PrefixPrinter::VisitGreaterThan(const Formula &f) {
+std::ostream &PrefixPrinter::VisitGreaterThan(const Formula &f) const {
   os_ << "(> ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -183,7 +189,7 @@ std::ostream &PrefixPrinter::VisitGreaterThan(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitGreaterThanOrEqualTo(const Formula &f) {
+std::ostream &PrefixPrinter::VisitGreaterThanOrEqualTo(const Formula &f) const {
   os_ << "(>= ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -191,7 +197,7 @@ std::ostream &PrefixPrinter::VisitGreaterThanOrEqualTo(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitLessThan(const Formula &f) {
+std::ostream &PrefixPrinter::VisitLessThan(const Formula &f) const {
   os_ << "(< ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -199,7 +205,7 @@ std::ostream &PrefixPrinter::VisitLessThan(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitLessThanOrEqualTo(const Formula &f) {
+std::ostream &PrefixPrinter::VisitLessThanOrEqualTo(const Formula &f) const {
   os_ << "(<= ";
   Print(get_lhs_expression(f));
   os_ << " ";
@@ -207,7 +213,7 @@ std::ostream &PrefixPrinter::VisitLessThanOrEqualTo(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitConjunction(const Formula &f) {
+std::ostream &PrefixPrinter::VisitConjunction(const Formula &f) const {
   os_ << "(and";
   for (const auto &f_i : get_operands(f)) {
     os_ << " ";
@@ -216,7 +222,7 @@ std::ostream &PrefixPrinter::VisitConjunction(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitDisjunction(const Formula &f) {
+std::ostream &PrefixPrinter::VisitDisjunction(const Formula &f) const {
   os_ << "(or";
   for (const auto &f_i : get_operands(f)) {
     os_ << " ";
@@ -225,24 +231,28 @@ std::ostream &PrefixPrinter::VisitDisjunction(const Formula &f) {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitNegation(const Formula &f) {
+std::ostream &PrefixPrinter::VisitNegation(const Formula &f) const {
   os_ << "(not ";
   Print(get_operand(f));
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitForall(const Formula &) { throw std::runtime_error("Not implemented."); }
+std::ostream &PrefixPrinter::VisitForall(const Formula &) const { throw std::runtime_error("Not implemented."); }
 
 std::string ToPrefix(const Expression &e) {
   std::ostringstream oss;
-  PrefixPrinter pp{oss};
+  static Config config;
+  config.m_with_timings() = false;
+  PrefixPrinter pp{oss, config};
   pp.Print(e);
   return oss.str();
 }
 
 std::string ToPrefix(const Formula &f) {
   std::ostringstream oss;
-  PrefixPrinter pp{oss};
+  static Config config;
+  config.m_with_timings() = false;
+  PrefixPrinter pp{oss, config};
   pp.Print(f);
   return oss.str();
 }

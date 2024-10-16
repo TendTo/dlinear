@@ -24,7 +24,11 @@ dlinear_cc_library(
         ":literal",
         "//dlinear/libs:gmp",
     ],
-    deps = [":symbolic"],
+    deps = [
+        ":expression_visitor",
+        ":formula_visitor",
+        ":symbolic",
+    ],
 )
 
 dlinear_cc_library(
@@ -44,9 +48,20 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "formula_visitor",
-    srcs = ["FormulaVisitor.cpp"],
-    hdrs = ["FormulaVisitor.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    hdrs = [
+        "FormulaVisitor.h",
+        "GenericFormulaVisitor.h",
+    ],
+    deps = [
+        ":symbolic",
+        "//dlinear/util:config",
+        "//dlinear/util:stats",
+    ],
+)
+
+dlinear_cc_library(
+    name = "expression_visitor",
+    hdrs = ["GenericExpressionVisitor.h"],
     deps = [
         ":symbolic",
         "//dlinear/util:config",
@@ -94,6 +109,7 @@ dlinear_cc_library(
         "//dlinear/util:exception",
     ],
     deps = [
+        ":expression_visitor",
         ":symbolic",
         "//dlinear/util:box",
     ],
@@ -105,6 +121,7 @@ dlinear_cc_library(
     hdrs = ["Nnfizer.h"],
     implementation_deps = ["//dlinear/util:logging"],
     deps = [
+        ":formula_visitor",
         ":symbolic",
         "//dlinear/util:config",
     ],
@@ -132,6 +149,8 @@ dlinear_cc_library(
         "//dlinear/util:timer",
     ],
     deps = [
+        ":expression_visitor",
+        ":formula_visitor",
         ":literal",
         ":symbolic",
         "//dlinear/util:config",

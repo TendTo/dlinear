@@ -31,27 +31,27 @@ class TestPredicateAbstractor : public ::testing::Test {
 
 TEST_F(TestPredicateAbstractor, False) {
   // False <-> False
-  const Formula abstracted{abstractor_.Convert(Formula::False())};
+  const Formula abstracted{abstractor_.Process(Formula::False())};
   EXPECT_TRUE(is_false(abstracted));
 }
 
 TEST_F(TestPredicateAbstractor, True) {
   // True <-> True
-  const Formula abstracted{abstractor_.Convert(Formula::True())};
+  const Formula abstracted{abstractor_.Process(Formula::True())};
   EXPECT_TRUE(is_true(abstracted));
 }
 
 TEST_F(TestPredicateAbstractor, Variable) {
   // b <-> b
   const Formula f{b1_};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_.Process(f)};
   EXPECT_PRED2(FormulaEqual, f, f_abstracted);
 }
 
 TEST_F(TestPredicateAbstractor, Eq) {
   // x + y == 10 <-> b
   const Formula f{x_ + y_ == 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_.Process(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_variable(f_abstracted));
@@ -65,7 +65,7 @@ TEST_F(TestPredicateAbstractor, Eq) {
 TEST_F(TestPredicateAbstractor, Neq) {
   // x + y != 10 <-> !(x + y == 10)
   const Formula f{x_ + y_ != 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_negation(f_abstracted));
@@ -80,7 +80,7 @@ TEST_F(TestPredicateAbstractor, Neq) {
 TEST_F(TestPredicateAbstractor, Gt) {
   // x + y > 10 <-> !(x + y <= 10)
   const Formula f{x_ + y_ > 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_negation(f_abstracted));
@@ -95,7 +95,7 @@ TEST_F(TestPredicateAbstractor, Gt) {
 TEST_F(TestPredicateAbstractor, Geq) {
   // x + y >= 10 <-> !(x + y < 10)
   const Formula f{x_ + y_ >= 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_negation(f_abstracted));
@@ -110,7 +110,7 @@ TEST_F(TestPredicateAbstractor, Geq) {
 TEST_F(TestPredicateAbstractor, Lt) {
   // x + y < 10 <-> b
   const Formula f{x_ + y_ < 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_variable(f_abstracted));
@@ -124,7 +124,7 @@ TEST_F(TestPredicateAbstractor, Lt) {
 TEST_F(TestPredicateAbstractor, Leq) {
   // x + y <= 10 <-> b
   const Formula f{x_ + y_ <= 10};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
 
   EXPECT_FALSE(is_variable(f));
   ASSERT_TRUE(is_variable(f_abstracted));
@@ -144,7 +144,7 @@ TEST_F(TestPredicateAbstractor, Conjunction) {
   const Formula conjunction{f1 && f2 && f3 && f4};
   const set<Formula> operands{get_operands(conjunction)};
 
-  const Formula conjunction_abstracted{abstractor_.Convert(conjunction)};
+  const Formula conjunction_abstracted{abstractor_(conjunction)};
   ASSERT_TRUE(is_conjunction(conjunction_abstracted));
   const set<Formula> operands_abstracted{get_operands(conjunction_abstracted)};
   EXPECT_EQ(operands_abstracted.size(), operands.size());
@@ -174,7 +174,7 @@ TEST_F(TestPredicateAbstractor, Disjunction) {
   const Formula disjunction{f1 || f2 || f3 || f4};
   const set<Formula> operands{get_operands(disjunction)};
 
-  const Formula disjunction_abstracted{abstractor_.Convert(disjunction)};
+  const Formula disjunction_abstracted{abstractor_(disjunction)};
   ASSERT_TRUE(is_disjunction(disjunction_abstracted));
   const set<Formula> operands_abstracted{get_operands(disjunction_abstracted)};
   EXPECT_EQ(operands_abstracted.size(), operands.size());
@@ -192,7 +192,7 @@ TEST_F(TestPredicateAbstractor, Negation) {
   // !(x + y >= 10) <-> x + y < 10
   const Formula f{x_ + y_ >= 10};
   const Formula not_f{!f};
-  const Formula not_f_abstracted{abstractor_.Convert(not_f)};
+  const Formula not_f_abstracted{abstractor_(not_f)};
 
   ASSERT_TRUE(is_variable(not_f_abstracted));
   const Variable &var{get_variable(not_f_abstracted)};
@@ -204,7 +204,7 @@ TEST_F(TestPredicateAbstractor, Negation) {
 TEST_F(TestPredicateAbstractor, Forall) {
   // (∀x. x >= 0) <-> b
   const Formula f{forall({x_}, x_ >= 0)};
-  const Formula f_abstracted{abstractor_.Convert(f)};
+  const Formula f_abstracted{abstractor_(f)};
   ASSERT_TRUE(is_variable(f_abstracted));
   const Variable &var{get_variable(f_abstracted)};
   EXPECT_EQ(var.get_type(), Variable::Type::BOOLEAN);

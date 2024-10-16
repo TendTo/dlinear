@@ -41,13 +41,13 @@ std::vector<std::vector<Literal>> SatSolver::clauses() const {
 
 void SatSolver::AddFormula(const Formula &f) {
   DLINEAR_DEBUG_FMT("SatSolver::AddFormula({})", f);
-  std::vector<Formula> clauses{cnfizer_.Convert(f)};
+  auto [clauses, aux] = cnfizer_(f);
 
   // Collect CNF variables and store them in `cnf_variables_`.
-  for (const Variable &p : cnfizer_.vars()) cnf_variables_.insert(p.get_id());
+  for (const Variable &p : aux) cnf_variables_.insert(p.get_id());
   // Convert a first-order clauses into a Boolean formula by predicate abstraction
   // The original can be retrieved by `predicate_abstractor_[abstracted_formula]`.
-  for (Formula &clause : clauses) clause = predicate_abstractor_.Convert(clause);
+  for (Formula &clause : clauses) clause = predicate_abstractor_.Process(clause);
 
   AddClauses(clauses);
 }
