@@ -146,38 +146,38 @@ class Box {
 
   /**
    * Bisect the box at @p i -th dimension.
-   * @param i dimension to bisect
+   * @param i dimension to Bisect
    * @return pair of boxes resulting from the bisection
    * @throw std::runtime if @p i -th dimension is not bisectable
    */
-  [[nodiscard]] std::pair<Box, Box> bisect(int i) const;
+  [[nodiscard]] std::pair<Box, Box> Bisect(int i) const;
 
   /**
    * Bisect the box at @p var.
-   * @param var variable to bisect
+   * @param var variable to Bisect
    * @return pair of boxes resulting from the bisection
    * @throw std::runtime if @p var is not bisectable
    */
-  [[nodiscard]] std::pair<Box, Box> bisect(const Variable &var) const;
+  [[nodiscard]] std::pair<Box, Box> Bisect(const Variable &var) const;
 
  private:
   /**
    * Bisects the box at @p i -th dimension.
    * @pre @p i-th variable is bisectable.
    * @pre @p i-th variable is of integer type.
-   * @param i index of the dimension to bisect
+   * @param i index of the dimension to Bisect
    * @return pair of boxes resulting from the bisection
    */
-  [[nodiscard]] std::pair<Box, Box> bisect_int(int i) const;
+  [[nodiscard]] std::pair<Box, Box> BisectInt(int i) const;
 
   /**
    * Bisects the box at @p i -th dimension.
    * @pre @p i-th variable is bisectable.
    * @pre @p i-th variable is of continuous type.
-   * @param i index of the dimension to bisect
+   * @param i index of the dimension to Bisect
    * @return pair of boxes resulting from the bisection
    */
-  [[nodiscard]] std::pair<Box, Box> bisect_continuous(int i) const;
+  [[nodiscard]] std::pair<Box, Box> BisectContinuous(int i) const;
 
   Config::LPSolver lp_solver_;                                     ///< LP solver
   std::vector<Interval> values_;                                   ///< Interval vector of the box

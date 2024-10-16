@@ -139,9 +139,9 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
 
   if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
       config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ON_ITERATION) {
-    timer_guard.pause();  // Pause the timer to measure the time spent in the preprocessor
+    timer_guard.Pause();  // Pause the timer to measure the time spent in the preprocessor
     preprocessor_.Process(explanations);
-    timer_guard.resume();
+    timer_guard.Resume();
     DLINEAR_DEBUG("TheorySolver::CheckSat: conflict detected in preprocessing");
     if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
   }

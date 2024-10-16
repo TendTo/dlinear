@@ -27,8 +27,8 @@ mpq_class CStringToMpq(const char str[]) {
   return result;
 }
 
-void MpqArray::AllocateMpqArray(size_t nElements) {
-  auto const memSize = static_cast<size_t>(sizeof(mpq_t) * nElements + sizeof(size_t));
+void MpqArray::AllocateMpqArray(size_t n_elements) {
+  auto const memSize = static_cast<size_t>(sizeof(mpq_t) * n_elements + sizeof(size_t));
   void *newArray = nullptr;
   if (memSize) {
     newArray = calloc(1, memSize);
@@ -37,24 +37,24 @@ void MpqArray::AllocateMpqArray(size_t nElements) {
       exit(1);
     }
   }
-  size_t *sizeArray = nElements ? static_cast<size_t *>(newArray) : nullptr;
-  if (nElements) sizeArray[0] = nElements;
+  size_t *sizeArray = n_elements ? static_cast<size_t *>(newArray) : nullptr;
+  if (n_elements) sizeArray[0] = n_elements;
 
-  array = reinterpret_cast<mpq_t *>(nElements ? (sizeArray + 1) : nullptr);
-  for (size_t i = 0; i < nElements; ++i) mpq_init(array[i]);
+  array_ = reinterpret_cast<mpq_t *>(n_elements ? (sizeArray + 1) : nullptr);
+  for (size_t i = 0; i < n_elements; ++i) mpq_init(array_[i]);
 }
 
 void MpqArray::FreeMpqArray() {
-  auto *sizeArray = reinterpret_cast<size_t *>(array);
+  auto *sizeArray = reinterpret_cast<size_t *>(array_);
   if (sizeArray) sizeArray--;
   size_t nElements = sizeArray ? sizeArray[0] : 0;
 
-  for (size_t i = 0; i < nElements; ++i) mpq_clear(array[i]);
+  for (size_t i = 0; i < nElements; ++i) mpq_clear(array_[i]);
   free(sizeArray);
-  array = nullptr;
+  array_ = nullptr;
 }
 
-MpqArray::MpqArray(size_t nElements) : array{nullptr} { AllocateMpqArray(nElements); }
+MpqArray::MpqArray(size_t n_elements) : array_{nullptr} { AllocateMpqArray(n_elements); }
 
 MpqArray::~MpqArray() { FreeMpqArray(); }
 

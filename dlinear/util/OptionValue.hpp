@@ -98,7 +98,7 @@ class OptionValue {
    * It does nothing if the current type is @ref Type::FROM_CODE.
    * @param value new value, given by a command-line argument.
    */
-  void set_from_command_line(const T &value) {
+  void SetFromCommandLine(const T &value) {
     if (type_ != Type::FROM_CODE) {
       value_ = value;
       type_ = Type::FROM_COMMAND_LINE;
@@ -111,7 +111,7 @@ class OptionValue {
    * It does nothing if the current type is @ref Type::FROM_COMMAND_LINE or @ref Type::FROM_CODE.
    * @param value new value, provided from a file.
    */
-  void set_from_file(const T &value) {
+  void SetFromFile(const T &value) {
     switch (type_) {
       case Type::DEFAULT:
       case Type::FROM_FILE:

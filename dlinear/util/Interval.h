@@ -21,12 +21,12 @@ class Interval {
   /**
    * Constructs an interval from a string.
    * @code
-   * Box::Interval::fromString("100"); // [-100, 100]
+   * Box::Interval::FromString("100"); // [-100, 100]
    * @endcode
    * @param s value used to construct the interval
    * @return newly constructed interval
    */
-  static Interval fromString(const std::string &s);
+  static Interval FromString(const std::string &s);
   explicit Interval(const mpq_class &val) : lb_(val), ub_(val) {}
   Interval(const mpq_class &lb, const mpq_class &ub);
   Interval(const Interval &other) = default;
@@ -61,7 +61,7 @@ class Interval {
   ARITHMETIC_OPERATORS(Interval)
   GENERIC_ARITHMETIC_OPERATORS(Interval, mpq_class &)
 
-  std::ostream &printToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const;
+  std::ostream &PrintToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const;
 
  private:
   mpq_class lb_, ub_;

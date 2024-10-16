@@ -78,19 +78,9 @@ mpz_class ceil(const mpq_class &val);
  * @param cla mpq_class to cast
  * @return mpq_t reference
  */
-inline const mpq_t &to_mpq_t(const mpq_class &cla) { return *reinterpret_cast<const mpq_t *>(cla.get_mpq_t()); }
+inline const mpq_t &ToMpq(const mpq_class &cla) { return *reinterpret_cast<const mpq_t *>(cla.get_mpq_t()); }
 
-inline mpq_t &to_mpq_t(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.get_mpq_t()); }  // NOLINT
-
-/**
- * Cast a mpq_t to a mpq_class.
- *
- * This works because the internal representation of a mpq_class is exactly
- * the same as that of a mpq_t (and, because we only take a reference, no constructor or destructor is ever called).
- * @param mpq mpq_t to cast
- * @return mpq_class reference
- */
-inline const mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast<const mpq_class &>(mpq); }
+inline mpq_t &ToMpq(mpq_class &cla) { return *reinterpret_cast<mpq_t *>(cla.get_mpq_t()); }  // NOLINT
 
 /**
  * Cast a mpq_t to a mpq_class.
@@ -100,7 +90,17 @@ inline const mpq_class &to_mpq_class(const mpq_t &mpq) { return reinterpret_cast
  * @param mpq mpq_t to cast
  * @return mpq_class reference
  */
-inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(mpq); }  // NOLINT
+inline const mpq_class &ToMpqClass(const mpq_t &mpq) { return reinterpret_cast<const mpq_class &>(mpq); }
+
+/**
+ * Cast a mpq_t to a mpq_class.
+ *
+ * This works because the internal representation of a mpq_class is exactly
+ * the same as that of a mpq_t (and, because we only take a reference, no constructor or destructor is ever called).
+ * @param mpq mpq_t to cast
+ * @return mpq_class reference
+ */
+inline mpq_class &ToMpqClass(mpq_t &mpq) { return reinterpret_cast<mpq_class &>(mpq); }  // NOLINT
 
 /**
  * Check if the char is either a digit or a plus/minus sign.
@@ -108,7 +108,7 @@ inline mpq_class &to_mpq_class(mpq_t &mpq) { return reinterpret_cast<mpq_class &
  * @return true if the char is a digit or a plus/minus sign
  * @return false if the char is not a digit or a plus/minus sign
  */
-inline bool is_digit_or_sign(char c) { return std::isdigit(c) || c == '+' || c == '-'; }
+inline bool IsDigitOrSign(char c) { return std::isdigit(c) || c == '+' || c == '-'; }
 
 /**
  * Convert a string to a mpq_class.
@@ -116,31 +116,31 @@ inline bool is_digit_or_sign(char c) { return std::isdigit(c) || c == '+' || c =
  * The number is converted exactly, without any rounding,
  * by interpreting the string as a base-10 rational number.
  * @code
- * string_to_mpq("0") == 0
- * string_to_mpq(".") == 0
- * string_to_mpq("0.") == 0
- * string_to_mpq(".0") == 0
- * string_to_mpq("15") == 15/1
- * string_to_mpq("1.5") == 15/10
- * string_to_mpq("15.") == 15/1
- * string_to_mpq(".15") == 15/100
- * string_to_mpq("15.0") == 15/1
- * string_to_mpq("15.00") == 15/1
- * string_to_mpq("15") == 15/1
- * string_to_mpq("1.5E2") == 15/10 * 10^2
- * string_to_mpq("1.5E-2") == 15/10 * 10^-2
- * string_to_mpq("E+2") == 1/1 * 10^2
- * string_to_mpq("15/6") == 15/6
- * string_to_mpq("0/1010") == 0
- * string_to_mpq("inf") == 1e100
- * string_to_mpq("-inf") == -1e100
+ * StringToMpq("0") == 0
+ * StringToMpq(".") == 0
+ * StringToMpq("0.") == 0
+ * StringToMpq(".0") == 0
+ * StringToMpq("15") == 15/1
+ * StringToMpq("1.5") == 15/10
+ * StringToMpq("15.") == 15/1
+ * StringToMpq(".15") == 15/100
+ * StringToMpq("15.0") == 15/1
+ * StringToMpq("15.00") == 15/1
+ * StringToMpq("15") == 15/1
+ * StringToMpq("1.5E2") == 15/10 * 10^2
+ * StringToMpq("1.5E-2") == 15/10 * 10^-2
+ * StringToMpq("E+2") == 1/1 * 10^2
+ * StringToMpq("15/6") == 15/6
+ * StringToMpq("0/1010") == 0
+ * StringToMpq("inf") == 1e100
+ * StringToMpq("-inf") == -1e100
  * @endcode
  * @note Only a single leading + or - sign is allowed.
  * @warning If the string is not a valid rational number, the result is undefined.
  * @param str The string to convert.
  * @return The mpq_class instance.
  */
-inline mpq_class string_to_mpq(std::string_view str) {
+inline mpq_class StringToMpq(std::string_view str) {
   // Remove leading + and - sign
   const bool is_negative = str[0] == '-';
   if (is_negative || str[0] == '+') str.remove_prefix(1);
@@ -152,7 +152,7 @@ inline mpq_class string_to_mpq(std::string_view str) {
   if (symbol_pos == std::string::npos) {
     const size_t start_pos = str.find_first_not_of('0', str[0] == '+' ? 1 : 0);
     if (start_pos == std::string_view::npos) return {0};
-    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), is_digit_or_sign), "Invalid number: {}",
+    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + start_pos, str.cend(), IsDigitOrSign), "Invalid number: {}",
     //    str);
     return is_negative ? -mpq_class{str.data() + start_pos} : mpq_class{str.data() + start_pos};
   }
@@ -186,7 +186,7 @@ inline mpq_class string_to_mpq(std::string_view str) {
   // case 3b: string does not contain a . , only an exponent E
   if (str[symbol_pos] == 'e' || str[symbol_pos] == 'E') {
     int plus_pos = str[0] == '+' ? 1 : 0;
-    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), is_digit_or_sign), "Invalid number: {}",
+    //    DLINEAR_ASSERT_FMT(std::all_of(str.cbegin() + plus_pos, str.cend(), IsDigitOrSign), "Invalid number: {}",
     //    str);
 
     char *const str_number = new char[len - plus_pos + 1];
@@ -217,9 +217,9 @@ inline mpq_class string_to_mpq(std::string_view str) {
   }
 
   const size_t n_decimals = len - dot_pos - 1;
-  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, is_digit_or_sign),
+  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + start_pos, str.begin() + dot_pos, IsDigitOrSign),
   //                     "Invalid number: {}", str);
-  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), is_digit_or_sign), "Invalid number: {}",
+  //  DLINEAR_ASSERT_FMT(std::all_of(str.begin() + dot_pos + 1, str.cend(), IsDigitOrSign), "Invalid number: {}",
   //  str);
   char *const str_number = new char[digits + n_decimals + 3];
 

@@ -36,21 +36,21 @@ class TimerBase {
    *
    * The timer is reset to zero.
    */
-  void start();
+  void Start();
 
   /**
    * Pause the timer.
    *
    * If the timer is not running, this function does nothing.
    */
-  void pause();
+  void Pause();
 
   /**
    * Resume the timer.
    *
    * If the timer is not running, this function does nothing.
    */
-  void resume();
+  void Resume();
 
   /** @checker{running, timer} */
   [[nodiscard]] bool is_running() const;
@@ -132,7 +132,7 @@ class TimerGuard {
    *
    * If @p enabled is false or @p timer is a nullptr, this class does not do anything.
    * If @p start_timer is true, starts the @p timer in the constructor.
-   * Otherwise, it does not start it and a user has to call `resume()` to start it.
+   * Otherwise, it does not start it and a user has to call `Resume()` to start it.
    * @param timer a pointer to the timer object to be guarded
    * @param enabled whether the timer is enabled and should run
    * @param start_timer whether the timer should be started as soon as the guard is created
@@ -151,10 +151,10 @@ class TimerGuard {
   ~TimerGuard();
 
   /** Pause the guarded timer object */
-  void pause();
+  void Pause();
 
   /** Resume the guarded timer object */
-  void resume();
+  void Resume();
 
  private:
   Timer *const timer_;         ///< The timer to be guarded.

@@ -22,7 +22,7 @@ namespace dlinear {
  * @param name The name of the file.
  * @return The extension of the file.
  */
-std::string get_extension(const std::string &name);
+std::string GetExtension(const std::string &name);
 
 /**
  * Split a C-string by whitespace.
@@ -33,7 +33,7 @@ std::string get_extension(const std::string &name);
  * @param in input string to split
  * @return vector os strings
  */
-std::vector<std::string> split_string_by_whitespace(const char *in);
+std::vector<std::string> SplitStringByWhitespace(const char *in);
 
 /**
  * Get the files in a directory.
@@ -41,6 +41,6 @@ std::vector<std::string> split_string_by_whitespace(const char *in);
  * @param path The path to the directory.
  * @return A vector of strings, each string being the path to each file in the directory.
  */
-std::vector<std::string> get_files(const std::string &path, const std::string& extension = "");
+std::vector<std::string> GetFiles(const std::string &path, const std::string& extension = "");
 
 }  // namespace dlinear

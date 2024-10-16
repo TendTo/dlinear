@@ -66,10 +66,10 @@ mpq_class CStringToMpq(const char str[]);
 class MpqArray {
  public:
   /**
-   * Construct a new MpqArray object, allocating the array with @p nElements elements.
-   * @param nElements The number of elements in the array.
+   * Construct a new MpqArray object, allocating the array with @p n_elements elements.
+   * @param n_elements The number of elements in the array.
    */
-  explicit MpqArray(size_t nElements);
+  explicit MpqArray(size_t n_elements);
   MpqArray(const MpqArray &) = delete;
   MpqArray(MpqArray &&) = delete;
   MpqArray &operator=(const MpqArray &) = delete;
@@ -77,23 +77,23 @@ class MpqArray {
   /** Destroy the MpqArray object, freeing the array */
   ~MpqArray();
   /**
-   * Obtain a constant pointer to the internal array.
+   * Obtain a constant pointer to the internal @ref array_.
    * @return internal mpq_t array as a constant pointer
    */
-  explicit operator const mpq_t *() const { return array; }
+  explicit operator const mpq_t *() const { return array_; }
 
   /**
    * Obtain a pointer to the internal array.
    * @return internal mpq_t array
    */
-  explicit operator mpq_t *() { return array; }
+  explicit operator mpq_t *() { return array_; }
 
-  mpq_t &operator[](const int idx) { return array[idx]; }
+  mpq_t &operator[](const int idx) { return array_[idx]; }
 
-  const mpq_t &operator[](const int idx) const { return array[idx]; }
+  const mpq_t &operator[](const int idx) const { return array_[idx]; }
 
   /** @getter{size, array} */
-  [[nodiscard]] size_t size() const { return array ? reinterpret_cast<size_t *>(array)[-1] : 0; }
+  [[nodiscard]] size_t size() const { return array_ ? reinterpret_cast<size_t *>(array_)[-1] : 0; }
 
   /**
    * Resize the array to have @p nElements elements.
@@ -104,15 +104,16 @@ class MpqArray {
   void Resize(size_t nElements);
 
  private:
-  mpq_t *array;  ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
+  mpq_t *array_;  ///< array of mpq_t. It is allocated by AllocateMpqArray() and freed by FreeMpqArray().
 
   /**
-   * Allocate the array with @p nElements elements.
+   * Allocate the array with @p n_elements elements.
    *
    * The array has a peculiar structure, where the element at index -1 is the size of the array.
-   * @param nElements The number of elements in the array.
+   * All the other @p n_elements elements are mpq_t.
+   * @param n_elements The number of elements in the array.
    */
-  void AllocateMpqArray(size_t nElements);
+  void AllocateMpqArray(size_t n_elements);
 
   /** Free the array of mpq_t */
   void FreeMpqArray();

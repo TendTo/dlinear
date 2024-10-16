@@ -17,14 +17,14 @@ TEST(TestConfig, Constructor) {
 TEST(TestConfig, SetFromFile) {
   OptionValue<int> ov{3};
   EXPECT_EQ(ov.get(), 3);
-  ov.set_from_file(4);
+  ov.SetFromFile(4);
   EXPECT_EQ(ov.get(), 4);
 }
 
 TEST(TestConfig, SetFromCmdLine) {
   OptionValue<int> ov{3};
   EXPECT_EQ(ov.get(), 3);
-  ov.set_from_command_line(4);
+  ov.SetFromCommandLine(4);
   EXPECT_EQ(ov.get(), 4);
 }
 
@@ -40,7 +40,7 @@ TEST(TestConfig, CodePriorityOverFile) {
   EXPECT_EQ(ov.get(), 3);
   ov = 4;
   EXPECT_EQ(ov.get(), 4);
-  ov.set_from_file(5);
+  ov.SetFromFile(5);
   EXPECT_EQ(ov.get(), 4);
 }
 
@@ -49,15 +49,15 @@ TEST(TestConfig, CodePriorityOverCmdLine) {
   EXPECT_EQ(ov.get(), 3);
   ov = 4;
   EXPECT_EQ(ov.get(), 4);
-  ov.set_from_command_line(5);
+  ov.SetFromCommandLine(5);
   EXPECT_EQ(ov.get(), 4);
 }
 
 TEST(TestConfig, CmdLinePriorityOverFile) {
   OptionValue<int> ov{3};
   EXPECT_EQ(ov.get(), 3);
-  ov.set_from_command_line(4);
+  ov.SetFromCommandLine(4);
   EXPECT_EQ(ov.get(), 4);
-  ov.set_from_file(5);
+  ov.SetFromFile(5);
   EXPECT_EQ(ov.get(), 4);
 }

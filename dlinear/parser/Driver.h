@@ -170,7 +170,7 @@ class Driver {
   bool debug_parsing_{false};  ///< Enable debug output in the bison parser.
 
   Stats stats_;   ///< Statistics for the driver.
-  Timer *timer_;  ///< Pointer to the timer for the driver. Used to pause the timer when checking sat.
+  Timer *timer_;  ///< Pointer to the timer for the driver. Used to Pause the timer when checking sat.
 };
 
 }  // namespace dlinear

@@ -9,9 +9,9 @@
 
 using dlinear::gmp::ceil;
 using dlinear::gmp::floor;
-using dlinear::gmp::string_to_mpq;
-using dlinear::gmp::to_mpq_class;
-using dlinear::gmp::to_mpq_t;
+using dlinear::gmp::StringToMpq;
+using dlinear::gmp::ToMpq;
+using dlinear::gmp::ToMpqClass;
 using std::make_pair;
 
 class TestGmp : public ::testing::TestWithParam<std::pair<std::string, mpq_class>> {};
@@ -67,13 +67,13 @@ TEST(TestGmp, ToMpqClass) {
   mpq_init(a);
 
   mpq_set_d(a, 1);
-  EXPECT_EQ(to_mpq_class(a), mpq_class{1});
+  EXPECT_EQ(ToMpqClass(a), mpq_class{1});
 
   mpq_set_d(a, 0);
-  EXPECT_EQ(to_mpq_class(a), mpq_class{0});
+  EXPECT_EQ(ToMpqClass(a), mpq_class{0});
 
   mpq_set_si(a, 1, 2);
-  EXPECT_EQ(to_mpq_class(a), mpq_class(1, 2));
+  EXPECT_EQ(ToMpqClass(a), mpq_class(1, 2));
 
   mpq_clear(a);
 }
@@ -84,15 +84,15 @@ TEST(TestGmp, ToMpqT) {
   mpq_init(b);
 
   mpq_set_d(b, 1);
-  EXPECT_TRUE(mpq_equal(to_mpq_t(a), b));
+  EXPECT_TRUE(mpq_equal(ToMpq(a), b));
 
   a = 0;
   mpq_set_d(b, 0);
-  EXPECT_TRUE(mpq_equal(to_mpq_t(a), b));
+  EXPECT_TRUE(mpq_equal(ToMpq(a), b));
 
   a = mpq_class{1, 2};
   mpq_set_si(b, 1, 2);
-  EXPECT_TRUE(mpq_equal(to_mpq_t(a), b));
+  EXPECT_TRUE(mpq_equal(ToMpq(a), b));
 
   mpq_clear(b);
 }
@@ -100,17 +100,17 @@ TEST(TestGmp, ToMpqT) {
 TEST_P(TestGmp, ConvertStringToMpq) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
-  EXPECT_EQ(string_to_mpq(s), expected);
+  EXPECT_EQ(StringToMpq(s), expected);
 }
 
 TEST_P(TestGmp, ConvertStringToMpqPrefixPlus) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
-  EXPECT_EQ(string_to_mpq("+" + s), expected);
+  EXPECT_EQ(StringToMpq("+" + s), expected);
 }
 
 TEST_P(TestGmp, ConvertStringToMpqPrefixMinus) {
   auto [s, expected] = GetParam();
   expected.canonicalize();
-  EXPECT_EQ(string_to_mpq("-" + s), -expected);
+  EXPECT_EQ(StringToMpq("-" + s), -expected);
 }

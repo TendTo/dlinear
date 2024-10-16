@@ -33,12 +33,12 @@ class ArgParser {
    * @param argc number of arguments
    * @param argv array of arguments as strings
    */
-  void parse(int argc, const char **argv);
+  void Parse(int argc, const char **argv);
 
   /** @getter{version, program} */
   [[nodiscard]] static std::string version();
   /** @getter{hash status, repository} */
-  [[nodiscard]] static std::string repositoryStatus();
+  [[nodiscard]] static std::string repository_status();
   /** @getter{printable console prompt, program} */
   [[nodiscard]] std::string prompt() const;
 
@@ -48,7 +48,7 @@ class ArgParser {
    * The @ref Config object will be used throughout the program to pass the configuration to all the components.
    * @return configuration object
    */
-  [[nodiscard]] Config toConfig() const;
+  [[nodiscard]] Config ToConfig() const;
 
   /**
    * Get the value of a parameter from the internal parser.
@@ -66,14 +66,14 @@ class ArgParser {
 
  private:
   /** Add all the options, positional arguments and flags to the parser. */
-  void addOptions();
+  void AddOptions();
 
   /**
    * Validate the options, ensuring the correctness of the parameters and the consistency of the options.
    * @throw std::invalid_argument if the options are inconsistent or incorrect.
    * @throw std::runtime_error if an error occurs during parsing.
    */
-  void validateOptions();
+  void ValidateOptions();
 
   friend std::ostream &operator<<(std::ostream &os, const ArgParser &parser);
 

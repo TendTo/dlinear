@@ -18,9 +18,9 @@ int main(int argc, const char* argv[]) {
   // Initialize the command line parser.
   dlinear::ArgParser parser{};
   // Parse the command line arguments.
-  parser.parse(argc, argv);
+  parser.Parse(argc, argv);
   // Get the configuration from the command line arguments.
-  dlinear::Config config = parser.toConfig();
+  dlinear::Config config = parser.ToConfig();
 
   // Setup the infinity values.
   dlinear::SmtSolver solver{config};

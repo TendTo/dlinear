@@ -78,7 +78,7 @@ Interval &Interval::operator/=(const mpq_class &o) {
   return *this;
 }
 
-std::ostream &Interval::printToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const {
+std::ostream &Interval::PrintToStream(std::ostream &os, const mpq_class &ninfinity, const mpq_class &infinity) const {
   if (is_empty()) return os << "[ empty ]";
   if (lb() <= ninfinity && ub() >= infinity) return os << "[ ENTIRE ]";
 
@@ -102,7 +102,7 @@ std::ostream &operator<<(std::ostream &os, const Interval &iv) {
   return os << "[" << iv.lb() << ", " << iv.ub() << "]";
 }
 
-Interval Interval::fromString(const std::string &s) {
+Interval Interval::FromString(const std::string &s) {
   RoundingModeGuard guard(FE_UPWARD);
   const double ub{stod(s)};
   double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s);  // TODO: shouldn't this be -stod(s) or even -ub?

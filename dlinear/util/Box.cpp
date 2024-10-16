@@ -85,7 +85,7 @@ void Box::Add(const Variable &v, const mpq_class &lb, const mpq_class &ub) {
                  "Binary variable must be in [0, 1]");
 
   // Integer variable => lb, ub ∈ Z.
-  DLINEAR_ASSERT(v.get_type() != Variable::Type::INTEGER || (is_integer(lb) && is_integer(ub)),
+  DLINEAR_ASSERT(v.get_type() != Variable::Type::INTEGER || (IsInteger(lb) && IsInteger(ub)),
                  "Integer variable must be in Z");
 
   values_[(*var_to_idx_)[v]] = Interval{lb, ub};
@@ -134,34 +134,34 @@ std::pair<mpq_class, int> Box::MaxDiam() const {
   return std::make_pair(max_diam, idx);
 }
 
-std::pair<Box, Box> Box::bisect(const int i) const {
+std::pair<Box, Box> Box::Bisect(const int i) const {
   const Variable &var{(*idx_to_var_)[i]};
   if (!values_[i].is_bisectable()) {
-    DLINEAR_RUNTIME_ERROR_FMT("Variable {} = {} is not bisectable but Box::bisect is called.", var, values_[i]);
+    DLINEAR_RUNTIME_ERROR_FMT("Variable {} = {} is not bisectable but Box::Bisect is called.", var, values_[i]);
   }
   switch (var.get_type()) {
     case Variable::Type::CONTINUOUS:
-      return bisect_continuous(i);
+      return BisectContinuous(i);
     case Variable::Type::INTEGER:
     case Variable::Type::BINARY:
-      return bisect_int(i);
+      return BisectInt(i);
     case Variable::Type::BOOLEAN:
       DLINEAR_UNREACHABLE();
   }
   DLINEAR_UNREACHABLE();
 }
 
-std::pair<Box, Box> Box::bisect(const Variable &var) const {
+std::pair<Box, Box> Box::Bisect(const Variable &var) const {
   auto it = var_to_idx_->find(var);
   if (it != var_to_idx_->end()) {
-    return bisect(it->second);
+    return Bisect(it->second);
   } else {
     DLINEAR_RUNTIME_ERROR_FMT("Variable {} is not found in this box.", var);
   }
-  return bisect((*var_to_idx_)[var]);
+  return Bisect((*var_to_idx_)[var]);
 }
 
-std::pair<Box, Box> Box::bisect_int(const int i) const {
+std::pair<Box, Box> Box::BisectInt(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::INTEGER ||
                      idx_to_var_->at(i).get_type() == Variable::Type::BINARY,
                  "Variable must be integer or binary");
@@ -182,7 +182,7 @@ std::pair<Box, Box> Box::bisect_int(const int i) const {
   return std::make_pair(b1, b2);
 }
 
-std::pair<Box, Box> Box::bisect_continuous(const int i) const {
+std::pair<Box, Box> Box::BisectContinuous(const int i) const {
   DLINEAR_ASSERT(idx_to_var_->at(i).get_type() == Variable::Type::CONTINUOUS, "Variable must be continuous");
   Box b1{*this};
   Box b2{*this};
@@ -233,7 +233,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
       case Variable::Type::INTEGER:
       case Variable::Type::BINARY:
       case Variable::Type::CONTINUOUS:
-        interval.printToStream(os, Infinity::ninfinity(box.lp_solver()), Infinity::infinity(box.lp_solver()));
+        interval.PrintToStream(os, Infinity::ninfinity(box.lp_solver()), Infinity::infinity(box.lp_solver()));
         break;
       case Variable::Type::BOOLEAN:
         if (interval.ub() == 0.0)

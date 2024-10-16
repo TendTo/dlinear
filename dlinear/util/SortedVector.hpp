@@ -240,7 +240,7 @@ class SortedVector {
    */
   bool erase_value(const T& value) {
     auto it = std::lower_bound(vector_.cbegin(), vector_.cend(), value, compare_);
-    if (it == vector_.cend() || !IsEqual(*it, value)) return false;
+    if (it == vector_.cend() || !is_equal(*it, value)) return false;
     vector_.erase(it);
     return true;
   }
@@ -255,7 +255,7 @@ class SortedVector {
    */
   const_iterator find(const T& value) const {
     auto it = std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
-    if (it == vector_.end() || !IsEqual(*it, value)) return end();
+    if (it == vector_.end() || !is_equal(*it, value)) return end();
     return it;
   }
 
@@ -294,7 +294,7 @@ class SortedVector {
     auto it = find(value);
     if (it == vector_.end()) return 0;
     size_t count = 1;
-    for (it++; it != vector_.end() && IsEqual(*it, value); ++it) ++count;
+    for (it++; it != vector_.end() && is_equal(*it, value); ++it) ++count;
     return count;
   }
 
@@ -324,7 +324,7 @@ class SortedVector {
    */
   [[nodiscard]] const_iterator greater_begin(const T& value) const {
     auto it = std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
-    while (it != vector_.cend() && IsEqual(*it, value)) ++it;
+    while (it != vector_.cend() && is_equal(*it, value)) ++it;
     return it;
   }
 
@@ -354,7 +354,9 @@ class SortedVector {
    * @return true if the elements are equal
    * @return false if the elements are not equal
    */
-  inline bool IsEqual(const T& lhs, const T& rhs) const { return !compare_(lhs, rhs) && !compare_(rhs, lhs); }
+  [[nodiscard]] inline bool is_equal(const T& lhs, const T& rhs) const {
+    return !compare_(lhs, rhs) && !compare_(rhs, lhs);
+  }
 
   std::vector<T> vector_;  ///< Underlying vector to store the sorted list
   Compare compare_;        ///< Comparison function to maintain the sorted order

@@ -169,7 +169,7 @@ void SoplexTheorySolver::SetSPXVarCoeff(soplex::DSVectorRational &coeffs, const 
   if (value <= -soplex::infinity || value >= soplex::infinity) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large: {}", value);
   }
-  coeffs.add(it->second, gmp::to_mpq_t(value));
+  coeffs.add(it->second, gmp::ToMpq(value));
 }
 
 void SoplexTheorySolver::CreateArtificials(const int spx_row) {
@@ -257,8 +257,8 @@ void SoplexTheorySolver::UpdateModelSolution() {
   DLINEAR_ASSERT(x.dim() >= colcount, "x.dim() must be >= colcount");
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
-    DLINEAR_ASSERT(model_[var].lb() <= gmp::to_mpq_class(x[theory_col].backend().data()) &&
-                       gmp::to_mpq_class(x[theory_col].backend().data()) <= model_[var].ub(),
+    DLINEAR_ASSERT(model_[var].lb() <= gmp::ToMpqClass(x[theory_col].backend().data()) &&
+                       gmp::ToMpqClass(x[theory_col].backend().data()) <= model_[var].ub(),
                    "val must be in bounds");
     model_[var] = x[theory_col].backend().data();
   }

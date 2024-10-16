@@ -13,7 +13,7 @@
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
-using dlinear::get_files;
+using dlinear::GetFiles;
 using dlinear::SmtSolver;
 using dlinear::SmtSolverOutput;
 
@@ -38,7 +38,7 @@ class TestDeltaVnnlib : public ::testing::TestWithParam<std::tuple<Config::LPSol
 
 INSTANTIATE_TEST_SUITE_P(TestDeltaVnnlib, TestDeltaVnnlib,
                          ::testing::Combine(enabled_test_solvers, ::testing::Values(0.0, 0.1),
-                                            ::testing::ValuesIn(get_files("test/solver/vnnlib", ".vnnlib"))));
+                                            ::testing::ValuesIn(GetFiles("test/solver/vnnlib", ".vnnlib"))));
 
 TEST_P(TestDeltaVnnlib, VnnlibInputAgainstExpectedOutput) {
   if (config_.lp_solver() == Config::LPSolver::QSOPTEX) GTEST_SKIP();

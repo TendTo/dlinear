@@ -16,7 +16,7 @@
 #include "dlinear/util/exception.h"
 #include "dlinear/libs/libgmp.h"
 
-using dlinear::gmp::string_to_mpq;
+using dlinear::gmp::StringToMpq;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -309,12 +309,12 @@ command_get_info:
                 ;
 
 command_push:   '(' TK_PUSH INT ')' {
-                    driver.Push(convert_int64_to_int($3));
+                    driver.Push(ConvertInt64ToInt($3));
                 }
                 ;
 
 command_pop:    '(' TK_POP INT ')' {
-                    driver.Pop(convert_int64_to_int($3));
+                    driver.Pop(ConvertInt64ToInt($3));
                 }
                 ;
 
@@ -414,10 +414,10 @@ term:           TK_TRUE { $$ = Formula::True(); }
             $$ = $5;
         }
         |       RATIONAL {
-            $$ = string_to_mpq($1);
+            $$ = StringToMpq($1);
         }
         |       HEXFLOAT { $$ = $1; }
-        |       INT { $$ = convert_int64_to_rational($1); }
+        |       INT { $$ = ConvertInt64ToRational($1); }
         |       SYMBOL {
             try {
                 const std::variant<const Expression *, const Variable *> const_or_var = driver.LookupDefinedName($1);

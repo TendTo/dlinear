@@ -13,7 +13,7 @@
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Config;
-using dlinear::get_files;
+using dlinear::GetFiles;
 using dlinear::SmtSolver;
 using dlinear::SmtSolverOutput;
 
@@ -37,7 +37,7 @@ class TestDeltaSmt2 : public ::testing::TestWithParam<
 };
 
 INSTANTIATE_TEST_SUITE_P(TestDeltaSmt2, TestDeltaSmt2,
-                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(get_files("test/solver/smt2")),
+                         ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(GetFiles("test/solver/smt2")),
                                             ::testing::Values(0.0, 0.1),
                                             ::testing::Values(Config::PreprocessingRunningFrequency::NEVER,
                                                               Config::PreprocessingRunningFrequency::ON_FIXED,

@@ -76,7 +76,7 @@ void QsoptexTheorySolver::UpdateModelSolution() {
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
     DLINEAR_ASSERT(
-        model_[var].lb() <= gmp::to_mpq_class(x_[theory_col]) && gmp::to_mpq_class(x_[theory_col]) <= model_[var].ub(),
+        model_[var].lb() <= gmp::ToMpqClass(x_[theory_col]) && gmp::ToMpqClass(x_[theory_col]) <= model_[var].ub(),
         "val must be in bounds");
     model_[var] = x_[theory_col];
   }

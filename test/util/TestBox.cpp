@@ -193,7 +193,7 @@ TEST_P(TestBox, BisectReal) {
   box_.Add(x_, -10, 10);
   box_.Add(y_, -5, 5);
 
-  const pair<Box, Box> p{box_.bisect(x_)};
+  const pair<Box, Box> p{box_.Bisect(x_)};
   const Box &box1{p.first};
   const Box &box2{p.second};
 
@@ -295,7 +295,7 @@ TEST_P(TestBox, IsNothrowMoveConstructible) {
 }
 
 TEST_P(TestBox, IntervalFromString) {
-  Interval interval = Interval::fromString("100");
+  Interval interval = Interval::FromString("100");
   EXPECT_EQ(interval.lb(), 100);  // TODO: should be -100??
   EXPECT_EQ(interval.ub(), 100);
 }

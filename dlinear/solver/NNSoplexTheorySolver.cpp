@@ -174,7 +174,7 @@ NNSoplexTheorySolver::SpxCheckSatResult NNSoplexTheorySolver::SpxCheckSat(mpq_cl
                                                   : *actual_precision};
   switch (status) {
     case SoplexStatus::OPTIMAL:
-      fmt::println("Objective value: {}", gmp::to_mpq_class(spx_.objValueRational().backend().data()).get_d());
+      fmt::println("Objective value: {}", gmp::ToMpqClass(spx_.objValueRational().backend().data()).get_d());
       return spx_.objValueRational() <= violation_rhs.get_mpq_t() ? SpxCheckSatResult::SAT
                                                                   : SpxCheckSatResult::SOI_VIOLATION;
     case SoplexStatus::INFEASIBLE:
@@ -194,7 +194,7 @@ bool NNSoplexTheorySolver::InvertGreatestViolation() {
   Environment env;
   for (int theory_col = 0; theory_col < static_cast<int>(theory_col_to_var_.size()); theory_col++) {
     const Variable &var{theory_col_to_var_[theory_col]};
-    env[var] = gmp::to_mpq_class(x[theory_col].backend().data());
+    env[var] = gmp::ToMpqClass(x[theory_col].backend().data());
   }
 
   // fmt::println("x: {}", x);
@@ -296,8 +296,8 @@ void NNSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
   const mpq_class &rhs{spx_rhs_[spx_row]};
   spx_.changeRangeRational(
       spx_row,
-      sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
-      sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
+      sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::ToMpq(rhs)) : Rational(-soplex::infinity),
+      sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::ToMpq(rhs)) : Rational(soplex::infinity));
   theory_rows_state_.at(spx_row) = true;
   DLINEAR_ASSERT(truth == theory_row_to_lit_[spx_row].truth, "truth must be equal to stored lit truth");
   DLINEAR_TRACE_FMT("NNSoplexTheorySolver::EnableLinearLiteral({} {} {})", theory_row_to_lit_[spx_row], sense, rhs);

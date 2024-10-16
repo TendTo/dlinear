@@ -96,7 +96,7 @@ SatResult DeltaSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Exp
   if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
     DLINEAR_RUNTIME_ERROR_FMT("SoPlex returned {}. That's not allowed here", status);
   } else if (spx_.getRowViolationRational(max_violation, sum_violation)) {
-    *actual_precision = gmp::to_mpq_class(max_violation.backend().data());
+    *actual_precision = gmp::ToMpqClass(max_violation.backend().data());
     DLINEAR_DEBUG_FMT("DeltaSoplexTheorySolver::CheckSat: SoPlex returned {}, precision = {}", status,
                       *actual_precision);
   } else {
@@ -124,14 +124,14 @@ void DeltaSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
     if (sense == LpRowSense::NQ) return;
     spx_.changeRangeRational(
         spx_row,
-        sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
-        sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
+        sense == LpRowSense::GE || sense == LpRowSense::EQ ? Rational(gmp::ToMpq(rhs)) : Rational(-soplex::infinity),
+        sense == LpRowSense::LE || sense == LpRowSense::EQ ? Rational(gmp::ToMpq(rhs)) : Rational(soplex::infinity));
   } else {
     if (sense == LpRowSense::EQ) return;
     spx_.changeRangeRational(
         spx_row,
-        sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(-soplex::infinity),
-        sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::to_mpq_t(rhs)) : Rational(soplex::infinity));
+        sense == LpRowSense::LE || sense == LpRowSense::NQ ? Rational(gmp::ToMpq(rhs)) : Rational(-soplex::infinity),
+        sense == LpRowSense::GE || sense == LpRowSense::NQ ? Rational(gmp::ToMpq(rhs)) : Rational(soplex::infinity));
   }
   theory_rows_state_.at(spx_row) = true;
   DLINEAR_TRACE_FMT("DeltaSoplexTheorySolver::EnableLinearLiteral({}{})", truth ? "" : "¬", spx_row);

@@ -75,9 +75,9 @@ void init_util(py::module_ &m) {
                       argv[i] = const_cast<char *>(args[i].c_str());
                     }
                     ArgParser argparser{};
-                    argparser.parse(static_cast<int>(args.size()), argv);
+                    argparser.Parse(static_cast<int>(args.size()), argv);
                     delete[] argv;
-                    return argparser.toConfig();
+                    return argparser.ToConfig();
                   })
       .def_property("bound_implication_frequency", &Config::bound_implication_frequency,
                     [](Config &self, const Config::PreprocessingRunningFrequency &frequency) {
@@ -149,7 +149,7 @@ void init_util(py::module_ &m) {
       .def_property_readonly("is_empty", &Interval::is_empty)
       .def_property_readonly("is_bisectable", &Interval::is_bisectable)
       .def_property_readonly("is_degenerated", &Interval::is_degenerated)
-      .def("bisect", &Interval::bisect)
+      .def("Bisect", &Interval::bisect)
       .def("__eq__", &Interval::operator==)
       .def("__add__", py::overload_cast<const Interval &>(&Interval::operator+=))
       .def("__add__", py::overload_cast<const mpq_class &>(&Interval::operator+=))

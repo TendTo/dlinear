@@ -25,14 +25,14 @@ TEST(TestTimer, TimerBeahavior) {
   EXPECT_EQ(timer.elapsed(), Timer::clock::duration{0});
 
   // Start the timer.
-  timer.start();
+  timer.Start();
   DoSomeWork(1000);
   EXPECT_TRUE(timer.is_running());
   const auto duration1{timer.elapsed()};
   EXPECT_GT(duration1, Timer::clock::duration{0});
 
   // Pause the timer.
-  timer.pause();
+  timer.Pause();
   EXPECT_FALSE(timer.is_running());
   const auto duration2{timer.elapsed()};
   DoSomeWork(1000);
@@ -41,14 +41,14 @@ TEST(TestTimer, TimerBeahavior) {
   EXPECT_EQ(duration2, duration3);
 
   // Pause the timer.
-  timer.resume();
+  timer.Resume();
   DoSomeWork(1000);
   const auto duration4{timer.elapsed()};
   EXPECT_LT(duration3, duration4);
   EXPECT_TRUE(timer.is_running());
 
   // Start the TestTimer this should reset it.
-  timer.start();
+  timer.Start();
   DoSomeWork(10);
   const auto duration5{timer.elapsed()};
   EXPECT_LE(duration5, duration1);

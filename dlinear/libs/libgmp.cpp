@@ -29,13 +29,13 @@ size_t hash<mpq_class>::operator()(const mpq_class &val) const {
 namespace dlinear {
 
 std::strong_ordering operator<=>(const mpq_class &lhs, const mpq_t &rhs) {
-  const mpq_class &rhs_class = gmp::to_mpq_class(rhs);
+  const mpq_class &rhs_class = gmp::ToMpqClass(rhs);
   return lhs < rhs_class   ? std::strong_ordering::less
          : lhs > rhs_class ? std::strong_ordering::greater
                            : std::strong_ordering::equal;
 }
 std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs) {
-  const mpq_class &lhs_class = gmp::to_mpq_class(lhs);
+  const mpq_class &lhs_class = gmp::ToMpqClass(lhs);
   return lhs_class < rhs   ? std::strong_ordering::less
          : lhs_class > rhs ? std::strong_ordering::greater
                            : std::strong_ordering::equal;

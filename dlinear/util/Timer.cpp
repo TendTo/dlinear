@@ -18,15 +18,15 @@ template <class T>
 TimerBase<T>::TimerBase() : last_start_{now()} {}
 
 template <class T>
-void TimerBase<T>::start() {
-  DLINEAR_TRACE("TimerBase::start");
+void TimerBase<T>::Start() {
+  DLINEAR_TRACE("TimerBase::Start");
   last_start_ = now();
   elapsed_ = duration{0};
   running_ = true;
 }
 
 template <class T>
-void TimerBase<T>::pause() {
+void TimerBase<T>::Pause() {
   if (running_) {
     running_ = false;
     elapsed_ += (now() - last_start_);
@@ -34,7 +34,7 @@ void TimerBase<T>::pause() {
 }
 
 template <class T>
-void TimerBase<T>::resume() {
+void TimerBase<T>::Resume() {
   if (!running_) {
     last_start_ = now();
     running_ = true;
@@ -71,19 +71,19 @@ template class TimerBase<user_clock>;
 
 TimerGuard::TimerGuard(Timer *const timer, const bool enabled, const bool start_timer)
     : timer_{timer}, enabled_{enabled && timer_ != nullptr} {
-  if (enabled_ && start_timer) timer_->resume();
+  if (enabled_ && start_timer) timer_->Resume();
 }
 
 TimerGuard::~TimerGuard() {
-  if (enabled_) timer_->pause();
+  if (enabled_) timer_->Pause();
 }
 
-void TimerGuard::pause() {
-  if (enabled_) timer_->pause();
+void TimerGuard::Pause() {
+  if (enabled_) timer_->Pause();
 }
 
-void TimerGuard::resume() {
-  if (enabled_) timer_->resume();
+void TimerGuard::Resume() {
+  if (enabled_) timer_->Resume();
 }
 
 }  // namespace dlinear

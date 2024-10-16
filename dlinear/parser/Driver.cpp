@@ -62,10 +62,10 @@ void Driver::Error(const std::string& m) { std::cerr << m << std::endl; }
 void Driver::CheckSat() {
   DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
   // Don't consider the time spent checking sat in the time spent parsing.
-  timer_->pause();
+  timer_->Pause();
   mpq_class precision = context_.config().precision();
   context_.CheckSat(&precision);
-  timer_->resume();
+  timer_->Resume();
 }
 
 void Driver::GetModel() {
@@ -98,17 +98,17 @@ void Driver::GetInfo(const std::string& key) const {
 void Driver::Maximize(const Expression& f) {
   DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
   // Don't consider the time spent maximizing in the time spent parsing.
-  timer_->pause();
+  timer_->Pause();
   context_.Maximize(f);
-  timer_->resume();
+  timer_->Resume();
 }
 
 void Driver::Minimize(const Expression& f) {
   DLINEAR_ASSERT(timer_ != nullptr, "Timer must be set.");
   // Don't consider the time spent minimizing in the time spent parsing.
-  timer_->pause();
+  timer_->Pause();
   context_.Minimize(f);
-  timer_->resume();
+  timer_->Resume();
 }
 
 }  // namespace dlinear

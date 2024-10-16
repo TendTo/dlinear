@@ -10,33 +10,33 @@
 
 #include "dlinear/util/filesystem.h"
 
-using dlinear::get_extension;
+using dlinear::GetExtension;
 using std::ofstream;
 using std::string;
 
 TEST(TestFilesystem, GetExtension1) {
   const string f{"01.smt2"};
-  EXPECT_EQ(get_extension(f), "smt2");
+  EXPECT_EQ(GetExtension(f), "smt2");
 }
 
 TEST(TestFilesystem, GetExtension2) {
   const string f{"abc_def.gh.smt2"};
-  EXPECT_EQ(get_extension(f), "smt2");
+  EXPECT_EQ(GetExtension(f), "smt2");
 }
 
 TEST(TestFilesystem, GetExtension3) {
   const string f{"01.dr"};
-  EXPECT_EQ(get_extension(f), "dr");
+  EXPECT_EQ(GetExtension(f), "dr");
 }
 
 TEST(TestFilesystem, GetExtension4) {
   const string f{"123_456.789.dr"};
-  EXPECT_EQ(get_extension(f), "dr");
+  EXPECT_EQ(GetExtension(f), "dr");
 }
 
 TEST(TestFilesystem, GetExtension5) {
   const string f{"123_456_789"};
-  EXPECT_EQ(get_extension(f), "");
+  EXPECT_EQ(GetExtension(f), "");
 }
 
 TEST(TestFilesystem, FileExists) {

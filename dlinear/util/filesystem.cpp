@@ -13,13 +13,13 @@
 
 namespace dlinear {
 
-std::string get_extension(const std::string &name) {
+std::string GetExtension(const std::string &name) {
   const std::size_t idx = name.rfind('.');
   if (idx == std::string::npos) return "";
   return name.substr(idx + 1);
 }
 
-std::vector<std::string> split_string_by_whitespace(const char *in) {
+std::vector<std::string> SplitStringByWhitespace(const char *in) {
   std::vector<std::string> r;
   for (const char *p = in; *p; ++p) {
     while (*p == ' ' || *p == '\t' || *p == '\r') ++p;
@@ -32,7 +32,7 @@ std::vector<std::string> split_string_by_whitespace(const char *in) {
   return r;
 }
 
-std::vector<std::string> get_files(const std::string &path, const std::string &extension) {
+std::vector<std::string> GetFiles(const std::string &path, const std::string &extension) {
   std::vector<std::string> files;
   for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(path)) {
     if (!extension.empty() && entry.path().extension() != extension) continue;

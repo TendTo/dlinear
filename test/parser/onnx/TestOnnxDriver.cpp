@@ -11,7 +11,7 @@
 using dlinear::Config;
 using dlinear::Context;
 using dlinear::Expression;
-using dlinear::get_files;
+using dlinear::GetFiles;
 using dlinear::onnx::OnnxDriver;
 using dlinear::onnx::Tensor;
 

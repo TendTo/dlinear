@@ -57,7 +57,7 @@ namespace dlinear {
 
 #define DLINEAR_PARAM_TO_CONFIG(param_name, config_name, type)                                                      \
   do {                                                                                                              \
-    if (parser_.is_used(param_name)) config.m_##config_name().set_from_command_line(parser_.get<type>(param_name)); \
+    if (parser_.is_used(param_name)) config.m_##config_name().SetFromCommandLine(parser_.get<type>(param_name)); \
   } while (false)
 
 ArgParser::ArgParser()
@@ -71,14 +71,14 @@ ArgParser::ArgParser()
 #endif
 {
   DLINEAR_TRACE("ArgParser::ArgParser");
-  addOptions();
+  AddOptions();
 }
 
-void ArgParser::parse(int argc, const char **argv) {
+void ArgParser::Parse(int argc, const char **argv) {
   try {
     parser_.parse_args(argc, argv);
     DLINEAR_LOG_INIT_VERBOSITY((parser_.get<bool>("silent") ? 0 : verbosity_));
-    validateOptions();
+    ValidateOptions();
     DLINEAR_TRACE("ArgParser::parse: parsed args");
   } catch (const std::runtime_error &err) {
     std::cerr << err.what() << "\n" << parser_ << std::endl;
@@ -89,8 +89,8 @@ void ArgParser::parse(int argc, const char **argv) {
   }
 }
 
-void ArgParser::addOptions() {
-  DLINEAR_TRACE("ArgParser::addOptions: adding options");
+void ArgParser::AddOptions() {
+  DLINEAR_TRACE("ArgParser::AddOptions: adding options");
   parser_.add_description(prompt());
   parser_.add_argument("file").help("input file").default_value("");
   parser_.add_argument("--onnx-file").help("ONNX file name").default_value("").nargs(1);
@@ -182,14 +182,14 @@ void ArgParser::addOptions() {
 
 std::ostream &operator<<(std::ostream &os, const ArgParser &parser) { return os << parser.parser_ << std::endl; }
 
-Config ArgParser::toConfig() const {
-  DLINEAR_TRACE("ArgParser::toConfig: converting to Config");
+Config ArgParser::ToConfig() const {
+  DLINEAR_TRACE("ArgParser::ToConfig: converting to Config");
   Config config{};
 
   // Add all the options to the config in alphabetical order
   if (parser_.is_used("complete")) {
-    config.m_complete().set_from_command_line(parser_.get<bool>("complete"));
-    config.m_precision().set_from_command_line(0.0);
+    config.m_complete().SetFromCommandLine(parser_.get<bool>("complete"));
+    config.m_precision().SetFromCommandLine(0.0);
   }
   DLINEAR_PARAM_TO_CONFIG("bound-implication-frequency", bound_implication_frequency,
                           Config::PreprocessingRunningFrequency);
@@ -202,7 +202,7 @@ Config ArgParser::toConfig() const {
   DLINEAR_PARAM_TO_CONFIG("disable-expansion", disable_expansion, bool);
   DLINEAR_PARAM_TO_CONFIG("bound-propagation-type", bound_propagation_type, Config::BoundPropagationType);
   DLINEAR_PARAM_TO_CONFIG("enforce-check-sat", enforce_check_sat, bool);
-  config.m_filename().set_from_command_line(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
+  config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);
   DLINEAR_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);
   DLINEAR_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LPSolver);
@@ -218,17 +218,17 @@ Config ArgParser::toConfig() const {
   DLINEAR_PARAM_TO_CONFIG("silent", silent, bool);
   DLINEAR_PARAM_TO_CONFIG("simplex-sat-phase", simplex_sat_phase, int);
   DLINEAR_PARAM_TO_CONFIG("skip-check-sat", skip_check_sat, bool);
-  config.m_verbose_dlinear().set_from_command_line(verbosity_);
+  config.m_verbose_dlinear().SetFromCommandLine(verbosity_);
   DLINEAR_PARAM_TO_CONFIG("verbose-simplex", verbose_simplex, int);
   DLINEAR_PARAM_TO_CONFIG("verify", verify, bool);
   DLINEAR_PARAM_TO_CONFIG("timings", with_timings, bool);
 
-  DLINEAR_TRACE_FMT("ArgParser::toConfig: {}", config);
+  DLINEAR_TRACE_FMT("ArgParser::ToConfig: {}", config);
   return config;
 }
 
-void ArgParser::validateOptions() {
-  DLINEAR_TRACE("ArgParser::validateOptions: validating options");
+void ArgParser::ValidateOptions() {
+  DLINEAR_TRACE("ArgParser::ValidateOptions: validating options");
   if (parser_.is_used("in") && parser_.is_used("file"))
     DLINEAR_INVALID_ARGUMENT("--in", "--in and file are mutually exclusive");
   if (!parser_.is_used("in") && !parser_.is_used("file"))
@@ -238,7 +238,7 @@ void ArgParser::validateOptions() {
   // Check file extension if a file is provided
   if (parser_.is_used("file")) {
     const Config::Format format = parser_.get<Config::Format>("format");
-    const std::string extension{get_extension(parser_.get<std::string>("file"))};
+    const std::string extension{GetExtension(parser_.get<std::string>("file"))};
     if (format == Config::Format::AUTO && extension != "smt2" && extension != "mps" && extension != "vnnlib") {
       DLINEAR_INVALID_ARGUMENT("file", "file must be .smt2, .mps or .vnnlib if --format is auto");
     }
@@ -271,7 +271,7 @@ void ArgParser::validateOptions() {
 
 std::string ArgParser::version() { return DLINEAR_VERSION_STRING; }
 
-std::string ArgParser::repositoryStatus() { return DLINEAR_VERSION_REPOSTAT; }
+std::string ArgParser::repository_status() { return DLINEAR_VERSION_REPOSTAT; }
 
 std::string ArgParser::prompt() const {
 #ifndef NDEBUG
@@ -279,7 +279,7 @@ std::string ArgParser::prompt() const {
 #else
   const std::string build_type{"Release"};
 #endif
-  std::string repo_stat = repositoryStatus();
+  std::string repo_stat = repository_status();
   if (!repo_stat.empty()) {
     repo_stat = " (repository: " + repo_stat + ")";
   }

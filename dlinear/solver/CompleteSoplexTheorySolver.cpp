@@ -477,10 +477,10 @@ void CompleteSoplexTheorySolver::EnableSpxRow(int spx_row, bool truth) {
 
   lp_row.setRowVector(row_vector);
   lp_row.setLhs(sense == LpRowSense::GE || sense == LpRowSense::EQ || sense == LpRowSense::GT
-                    ? Rational(gmp::to_mpq_t(rhs))
+                    ? Rational(gmp::ToMpq(rhs))
                     : Rational(-soplex::infinity));
   lp_row.setRhs(sense == LpRowSense::LE || sense == LpRowSense::EQ || sense == LpRowSense::LT
-                    ? Rational(gmp::to_mpq_t(rhs))
+                    ? Rational(gmp::ToMpq(rhs))
                     : Rational(soplex::infinity));
   spx_.changeRowRational(spx_row, lp_row);
 

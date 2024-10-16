@@ -18,13 +18,13 @@ namespace dlinear {
  * @param v value to check
  * @return whether @p v is represented by `int`
  */
-bool is_integer(double v);
+bool IsInteger(double v);
 /**
  * Check if @p v is represented by `int`.
  * @param v value to check
  * @return whether @p v is represented by `int`
  */
-bool is_integer(const mpq_class &v);
+bool IsInteger(const mpq_class &v);
 
 /**
  * Convert @p v of int64_t to int.
@@ -32,7 +32,7 @@ bool is_integer(const mpq_class &v);
  * @param v value to convert
  * @return converted value
  */
-int convert_int64_to_int(std::int64_t v);
+int ConvertInt64ToInt(std::int64_t v);
 
 /**
  * Convert @p v of int64_t to double.
@@ -40,13 +40,13 @@ int convert_int64_to_int(std::int64_t v);
  * @param v value to convert
  * @return converted value
  */
-double convert_int64_to_double(std::int64_t v);
+double ConvertInt64ToDouble(std::int64_t v);
 
 /**
  * Convert @p v of int64_t to rational.
  * @param v value to convert
  * @return converted value
  */
-mpq_class convert_int64_to_rational(std::int64_t v);
+mpq_class ConvertInt64ToRational(std::int64_t v);
 
 }  // namespace dlinear

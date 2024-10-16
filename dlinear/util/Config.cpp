@@ -15,7 +15,7 @@ namespace dlinear {
 Config::Config(std::string filename) : filename_{std::move(filename)} {}
 Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
 
-std::string Config::filename_extension() const { return get_extension(filename_.get()); }
+std::string Config::filename_extension() const { return GetExtension(filename_.get()); }
 
 bool Config::needs_expansion() const {
   if (disable_expansion_.get()) return false;

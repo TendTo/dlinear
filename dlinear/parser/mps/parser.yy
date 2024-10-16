@@ -13,7 +13,7 @@
 #include "dlinear/parser/mps/BoundType.h"
 #include "dlinear/util/exception.h"
 
-using dlinear::gmp::string_to_mpq;
+using dlinear::gmp::StringToMpq;
 
 /* void yyerror(SmtPrsr parser, const char *); */
 #define YYMAXDEPTH 1024 * 1024
@@ -161,11 +161,11 @@ columns: columns column
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
 column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn($1, $2, mpq_class{string_to_mpq($3)}); 
-        driver.AddColumn($1, $4, mpq_class{string_to_mpq($5)});
+        driver.AddColumn($1, $2, mpq_class{StringToMpq($3)});
+        driver.AddColumn($1, $4, mpq_class{StringToMpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddColumn($1, $2, mpq_class{string_to_mpq($3)}); 
+        driver.AddColumn($1, $2, mpq_class{StringToMpq($3)});
     }
     | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { }
     | command
@@ -188,18 +188,18 @@ rhs: rhs rhs_row
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
 rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs($1, $2, mpq_class{string_to_mpq($3)});
-        driver.AddRhs($1, $4, mpq_class{string_to_mpq($5)});
+        driver.AddRhs($1, $2, mpq_class{StringToMpq($3)});
+        driver.AddRhs($1, $4, mpq_class{StringToMpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", $1, mpq_class{string_to_mpq($2)});
-        driver.AddRhs("", $3, mpq_class{string_to_mpq($4)});
+        driver.AddRhs("", $1, mpq_class{StringToMpq($2)});
+        driver.AddRhs("", $3, mpq_class{StringToMpq($4)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRhs($1, $2, mpq_class{string_to_mpq($3)});
+        driver.AddRhs($1, $2, mpq_class{StringToMpq($3)});
     }
     | SYMBOL SYMBOL '\n' { 
-        driver.AddRhs("", $1, mpq_class{string_to_mpq($2)});
+        driver.AddRhs("", $1, mpq_class{StringToMpq($2)});
     }
     | command
     | '\n'
@@ -221,11 +221,11 @@ ranges: ranges range
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
 range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange($1, $2, mpq_class{string_to_mpq($3)});
-        driver.AddRange($1, $4, mpq_class{string_to_mpq($5)});
+        driver.AddRange($1, $2, mpq_class{StringToMpq($3)});
+        driver.AddRange($1, $4, mpq_class{StringToMpq($5)});
     }
     | SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddRange($1, $2, mpq_class{string_to_mpq($3)}); 
+        driver.AddRange($1, $2, mpq_class{StringToMpq($3)});
     }
     | command
     | '\n'
@@ -252,10 +252,10 @@ bounds: bounds bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
 bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, $2, $3, mpq_class{string_to_mpq($4)});
+        driver.AddBound($1, $2, $3, mpq_class{StringToMpq($4)});
     }
     | BOUND_TYPE SYMBOL SYMBOL '\n' { 
-        driver.AddBound($1, "", $2, mpq_class{string_to_mpq($3)});
+        driver.AddBound($1, "", $2, mpq_class{StringToMpq($3)});
     }
     | BOUND_TYPE_SINGLE SYMBOL SYMBOL SYMBOL '\n' { 
         driver.AddBound($1, $2, $3);

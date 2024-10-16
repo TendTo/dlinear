@@ -244,8 +244,8 @@ void Context::Impl::SetLogic(const Logic logic) {
 void Context::Impl::SetOption(const std::string &key, const std::string &val) {
   DLINEAR_DEBUG_FMT("ContextImpl::SetOption({} ↦ {})", key, val);
   option_[key] = val;
-  if (key == ":precision") config_.m_precision().set_from_file(ParseDoubleOption(key, val));
-  if (key == ":produce-models") return config_.m_produce_models().set_from_file(ParseBooleanOption(key, val));
+  if (key == ":precision") config_.m_precision().SetFromFile(ParseDoubleOption(key, val));
+  if (key == ":produce-models") return config_.m_produce_models().SetFromFile(ParseBooleanOption(key, val));
 }
 
 std::string Context::Impl::GetOption(const std::string &key) const {
