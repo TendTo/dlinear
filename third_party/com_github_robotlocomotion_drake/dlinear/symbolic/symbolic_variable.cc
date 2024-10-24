@@ -17,24 +17,29 @@ using std::string;
 namespace dlinear::drake::symbolic {
 
 std::vector<std::string> Variable::names_{{"dummy"}};
+const std::size_t numeric_id_mask = (1ul << (7ul * 8ul)) - 1ul;
 
-Variable::Id Variable::get_next_id() {
+Variable::Id Variable::get_next_id(const Type type) {
   // Note that id 0 is reserved for anonymous variable which is created by the
   // default constructor, Variable(). As a result, we have an invariant
   // "get_next_id() > 0".
-  static atomic<Id> next_id(1);
-  return next_id++;
+  static std::atomic<Variable::Id> next_id{1};
+  const std::size_t counter = next_id.fetch_add(1);
+  // We'll assume that size_t is at least 8 bytes wide, so that we can pack the
+  // counter into the lower 7 bytes of `id_` and the `Type` into the upper byte.
+  static_assert(sizeof(Id) >= 8);
+  return counter | (static_cast<std::size_t>(type) << (7 * 8));
 }
 
-Variable::Variable(string name, const Type type) : id_{get_next_id()}, type_{type} {
+Variable::Variable(string name, const Type type) : id_{get_next_id(type)} {
   assert(id_ > 0);
   names_.push_back(std::move(name));
-  assert(names_.size() == id_ + 1);
+  assert(names_.size() == (id_ & numeric_id_mask) + 1);
 }
 
 Variable::Id Variable::get_id() const { return id_; }
-Variable::Type Variable::get_type() const { return type_; }
-string Variable::get_name() const { return names_[id_]; }
+Variable::Type Variable::get_type() const { return static_cast<Type>(Id{id_} >> (7 * 8)); }
+const string &Variable::get_name() const { return names_[id_ & numeric_id_mask]; }
 string Variable::to_string() const {
   ostringstream oss;
   oss << *this;
