@@ -10,8 +10,8 @@
 
 #include <unordered_set>
 
-#include "dlinear/solver/PiecewiseLinearConstraint.h"
-#include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
+#include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 

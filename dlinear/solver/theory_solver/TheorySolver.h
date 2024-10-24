@@ -13,10 +13,10 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/BoundIterator.h"
-#include "dlinear/solver/BoundPreprocessor.h"
-#include "dlinear/solver/LpColBound.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundIterator.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpColBound.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"

@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/BoundVector.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundVector.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/environment.h"
 #include "dlinear/symbolic/literal.h"

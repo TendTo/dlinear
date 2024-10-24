@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "dlinear/solver/BoundPreprocessor.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
 
 using dlinear::BoundPreprocessor;
 using dlinear::BoundVectorMap;

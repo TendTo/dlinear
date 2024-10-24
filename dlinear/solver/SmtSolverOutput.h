@@ -11,8 +11,8 @@
 #include <string>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/LpResult.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpResult.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"

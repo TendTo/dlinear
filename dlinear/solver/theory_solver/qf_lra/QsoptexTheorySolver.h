@@ -13,8 +13,8 @@
 #include <vector>
 
 #include "dlinear/libs/libqsopt_ex.h"
-#include "dlinear/solver/LpRowSense.h"
-#include "dlinear/solver/TheorySolver.h"
+#include "dlinear/solver/theory_solver/TheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Box.h"

@@ -10,7 +10,7 @@
 #include <memory>
 #include <string_view>
 
-#include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 
 using dlinear::BoundPreprocessor;
 using dlinear::BoundVectorMap;

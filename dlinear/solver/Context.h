@@ -11,10 +11,10 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Logic.h"
-#include "dlinear/solver/LpResult.h"
-#include "dlinear/solver/PiecewiseLinearConstraint.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/SmtSolverOutput.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpResult.h"
+#include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"

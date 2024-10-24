@@ -5,7 +5,7 @@
  */
 #include "SortedVector.hpp"
 
-#include "dlinear/solver/Bound.h"
+#include "dlinear/solver/theory_solver/qf_lra/Bound.h"
 
 namespace dlinear {
 

@@ -3,7 +3,7 @@
  * @copyright 2024 dlinear
  * @licence BSD 3-Clause License
  */
-#include "dlinear/solver/PiecewiseLinearConstraint.h"
+#include "PiecewiseLinearConstraint.h"
 
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Infinity.h"

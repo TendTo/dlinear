@@ -17,8 +17,8 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/libs/libsoplex.h"
-#include "dlinear/solver/LpRowSense.h"
-#include "dlinear/solver/TheorySolver.h"
+#include "dlinear/solver/theory_solver/TheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
