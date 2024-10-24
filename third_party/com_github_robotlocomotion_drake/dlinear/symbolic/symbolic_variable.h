@@ -14,20 +14,15 @@ namespace symbolic {
 /** Represents a symbolic variable. */
 class Variable {
  public:
-  typedef size_t Id;
+  using Id = std::size_t;
 
   /** Supported types of symbolic variables. */
-  enum class Type {
+  enum class Type : std::uint8_t {
     CONTINUOUS,  ///< A CONTINUOUS variable takes a `mpq_class` value.
     INTEGER,     ///< An INTEGER variable takes an `int` value.
     BINARY,      ///< A BINARY variable takes an integer value from {0, 1}.
     BOOLEAN,     ///< A BOOLEAN variable takes a `bool` value.
   };
-
-  Variable(const Variable &) = default;
-  Variable &operator=(const Variable &) = default;
-  Variable(Variable &&) = default;
-  Variable &operator=(Variable &&) = default;
 
   /** Default constructor. Constructs a dummy variable of CONTINUOUS type. This
    *  is needed to have Eigen::Matrix<Variable>. The objects created by the
@@ -38,10 +33,7 @@ class Variable {
    *  It is allowed to construct a dummy variable but it should not be used to
    *  construct a symbolic expression.
    */
-  Variable() : id_{0}, type_{Type::CONTINUOUS} {}
-
-  /** Default destructor. */
-  ~Variable() = default;
+  Variable() : id_{0} {}
 
   /** Constructs a variable with a string. If not specified, it has CONTINUOUS
    * type by default.*/
@@ -49,27 +41,26 @@ class Variable {
 
   /** Checks if this is a dummy variable (ID = 0) which is created by
    *  the default constructor. */
-  bool is_dummy() const { return get_id() == 0; }
-  Id get_id() const;
-  Type get_type() const;
-  size_t get_hash() const { return std::hash<Id>{}(id_); }
-  std::string get_name() const;
-  std::string to_string() const;
+  [[nodiscard]] bool is_dummy() const { return get_id() == 0; }
+  [[nodiscard]] Id get_id() const;
+  [[nodiscard]] Type get_type() const;
+  [[nodiscard]] size_t get_hash() const { return std::hash<Id>{}(id_); }
+  [[nodiscard]] const std::string &get_name() const;
+  [[nodiscard]] std::string to_string() const;
 
   /// Checks the equality of two variables based on their ID values.
-  bool equal_to(const Variable &v) const { return id_ == v.id_; }
+  [[nodiscard]] bool equal_to(const Variable &v) const { return id_ == v.id_; }
 
   /// Compares two variables based on their ID values.
-  bool less(const Variable &v) const { return id_ < v.id_; }
+  [[nodiscard]] bool less(const Variable &v) const { return id_ < v.id_; }
 
   friend std::ostream &operator<<(std::ostream &os, const Variable &var);
 
  private:
-  static std::vector<std::string> names_;  ///< Names of variables.
+  static std::vector<std::string> names_;  ///< Names of all existing variables.
   // Produces a unique ID for a variable.
-  static Id get_next_id();
-  Id id_{};                                      ///< Unique identifier.
-  Type type_{Type::CONTINUOUS};                  ///< Type of variable.
+  static Id get_next_id(Type type);
+  Id id_{};  ///< Unique identifier.
 };
 
 std::ostream &operator<<(std::ostream &os, Variable::Type type);
