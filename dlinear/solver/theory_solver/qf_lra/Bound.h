@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/LpColBound.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpColBound.h"
 #include "dlinear/symbolic/literal.h"
 
 namespace dlinear {

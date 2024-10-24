@@ -1,0 +1,43 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
+
+exports_files([
+    "TheorySolver.h",
+    "TheorySolver.cpp",
+])
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_srcs(
+    name = "srcs",
+    subfolder = "theory_solver",
+    deps = [
+        "//dlinear/solver/sat_solver/qf_lra",
+    ],
+)
+
+dlinear_cc_library(
+    name = "theory_solver",
+    srcs = ["TheorySolver.cpp"],
+    hdrs = ["TheorySolver.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:timer",
+    ],
+    deps = [
+        "//dlinear/libs:gmp",
+        "//dlinear/solver/theory_solver/qf_lra:qf_lra_theory_solver",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+    ],
+)
+
+cpplint()

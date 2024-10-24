@@ -9,8 +9,8 @@
 #include <fstream>
 
 #include "dlinear/parser/onnx/NodeOpType.h"
-#include "dlinear/solver/LeakyReluConstraint.h"
-#include "dlinear/solver/ReluConstraint.h"
+#include "dlinear/solver/theory_solver/qf_lra/LeakyReluConstraint.h"
+#include "dlinear/solver/theory_solver/qf_lra/ReluConstraint.h"
 #include "dlinear/util/exception.h"
 
 #ifdef DLINEAR_PYDLINEAR

@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "dlinear/solver/BoundIterator.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundIterator.h"
 
 using dlinear::Bound;
 using dlinear::BoundIterator;

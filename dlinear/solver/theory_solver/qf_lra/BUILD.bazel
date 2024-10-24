@@ -1,0 +1,233 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_srcs(
+    name = "srcs",
+    subfolder = "qf_lra",
+)
+
+dlinear_cc_library(
+    name = "lp_result",
+    srcs = ["LpResult.cpp"],
+    hdrs = ["LpResult.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
+    name = "lp_sense",
+    srcs = ["LpRowSense.cpp"],
+    hdrs = ["LpRowSense.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "lp_bound",
+    srcs = ["LpColBound.cpp"],
+    hdrs = ["LpColBound.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
+    name = "piecewise_constraint_state",
+    srcs = ["PiecewiseConstraintState.cpp"],
+    hdrs = ["PiecewiseConstraintState.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+)
+
+dlinear_cc_library(
+    name = "piecewise_linear_constraint",
+    srcs = ["PiecewiseLinearConstraint.cpp"],
+    hdrs = ["PiecewiseLinearConstraint.h"],
+    implementation_deps = [
+        "//dlinear/util:config",
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
+    deps = [
+        ":bound_preprocessor",
+        ":piecewise_constraint_state",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "relu_constraint",
+    srcs = ["ReluConstraint.cpp"],
+    hdrs = ["ReluConstraint.h"],
+    implementation_deps = [
+        "//dlinear/symbolic:linear_formula_flattener",
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
+    deps = [
+        ":piecewise_linear_constraint",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:predicate_abstractor",
+    ],
+)
+
+dlinear_cc_library(
+    name = "leaky_relu_constraint",
+    srcs = ["LeakyReluConstraint.cpp"],
+    hdrs = ["LeakyReluConstraint.h"],
+    implementation_deps = [
+        "//dlinear/symbolic:linear_formula_flattener",
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
+    deps = [
+        ":piecewise_linear_constraint",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound",
+    srcs = ["Bound.cpp"],
+    hdrs = ["Bound.h"],
+    deps = [
+        ":lp_bound",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_iterator",
+    srcs = ["BoundIterator.cpp"],
+    hdrs = ["BoundIterator.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [":bound"],
+)
+
+dlinear_cc_library(
+    name = "bound_vector",
+    srcs = ["BoundVector.cpp"],
+    hdrs = ["BoundVector.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":bound_iterator",
+        ":lp_bound",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_implicator",
+    srcs = ["BoundImplicator.cpp"],
+    hdrs = ["BoundImplicator.h"],
+    implementation_deps = ["//dlinear/util:exception"],
+    deps = [
+        ":lp_sense",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
+    name = "bound_preprocessor",
+    srcs = ["BoundPreprocessor.cpp"],
+    hdrs = ["BoundPreprocessor.h"],
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:infinity",
+    ],
+    deps = [
+        ":bound_vector",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:environment",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
+    name = "qf_lra_theory_solver",
+    srcs = select({
+        "//tools:enabled_qsoptex": [
+            "DeltaQsoptexTheorySolver.cpp",
+            "QsoptexTheorySolver.cpp",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": [
+            "CompleteSoplexTheorySolver.cpp",
+            "DeltaSoplexTheorySolver.cpp",
+            "NNSoplexTheorySolver.cpp",
+            "SoplexTheorySolver.cpp",
+        ],
+        "//conditions:default": [],
+    }),
+    hdrs = [
+        "//dlinear/solver/theory_solver:TheorySolver.h",
+    ] + select({
+        "//tools:enabled_qsoptex": [
+            "DeltaQsoptexTheorySolver.h",
+            "QsoptexTheorySolver.h",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": [
+            "CompleteSoplexTheorySolver.h",
+            "DeltaSoplexTheorySolver.h",
+            "NNSoplexTheorySolver.h",
+            "SoplexTheorySolver.h",
+        ],
+        "//conditions:default": [],
+    }),
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:timer",
+    ],
+    deps = [
+        ":bound_iterator",
+        ":bound_preprocessor",
+        ":lp_bound",
+        ":lp_sense",
+        ":piecewise_linear_constraint",
+        "//dlinear/libs:gmp",
+        "//dlinear/solver:sat_result",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:bit_increment_iterator",
+        "//dlinear/util:box",
+        "//dlinear/util:config",
+        "//dlinear/util:logging",
+        "//dlinear/util:stats",
+    ] + select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }),
+)
+
+cpplint()

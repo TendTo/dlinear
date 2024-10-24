@@ -21,7 +21,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/SatResult.h"
-#include "dlinear/solver/SoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/BitIncrementIterator.h"

@@ -10,10 +10,10 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/solver/BoundImplicator.h"
 #include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/sat_solver/CadicalSatSolver.h"
 #include "dlinear/solver/sat_solver/PicosatSatSolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundImplicator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
@@ -25,12 +25,12 @@
 #include "pydlinear/interrupt.h"
 #endif
 #ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/solver/DeltaQsoptexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/DeltaQsoptexTheorySolver.h"
 #endif
 #ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/solver/CompleteSoplexTheorySolver.h"
-#include "dlinear/solver/DeltaSoplexTheorySolver.h"
-#include "dlinear/solver/NNSoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/CompleteSoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/DeltaSoplexTheorySolver.h"
+#include "dlinear/solver/theory_solver/qf_lra/NNSoplexTheorySolver.h"
 #endif
 
 namespace {

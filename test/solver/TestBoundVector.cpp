@@ -6,7 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "dlinear/solver/BoundVector.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundVector.h"
 
 using dlinear::Bound;
 using dlinear::BoundVector;

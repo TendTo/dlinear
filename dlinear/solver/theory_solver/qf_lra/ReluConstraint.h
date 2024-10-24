@@ -8,7 +8,7 @@
 
 #include <optional>
 
-#include "dlinear/solver/PiecewiseLinearConstraint.h"
+#include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/symbolic.h"
 

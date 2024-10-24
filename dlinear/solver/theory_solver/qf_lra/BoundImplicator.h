@@ -18,7 +18,7 @@
 #include <map>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/LpRowSense.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"

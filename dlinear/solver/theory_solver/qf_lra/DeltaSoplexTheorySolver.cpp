@@ -10,7 +10,7 @@
 #include <map>
 
 #include "dlinear/libs/libsoplex.h"
-#include "dlinear/solver/LpRowSense.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"

@@ -177,7 +177,7 @@ dlinear_cc_library(
     name = "sorted_vector",
     srcs = ["SortedVector.cpp"],
     hdrs = ["SortedVector.hpp"],
-    implementation_deps = ["//dlinear/solver:bound"],
+    implementation_deps = ["//dlinear/solver/theory_solver/qf_lra:bound"],
 )
 
 dlinear_cc_library(

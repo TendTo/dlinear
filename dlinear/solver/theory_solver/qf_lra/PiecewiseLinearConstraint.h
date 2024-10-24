@@ -10,8 +10,8 @@
 #include <optional>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/BoundPreprocessor.h"
-#include "dlinear/solver/PiecewiseConstraintState.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
+#include "dlinear/solver/theory_solver/qf_lra/PiecewiseConstraintState.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 
