@@ -1,0 +1,56 @@
+load("//tools:cpplint.bzl", "cpplint")
+load("//tools:dlinear.bzl", "dlinear_cc_library", "dlinear_srcs")
+
+package(default_visibility = [
+    "//dlinear:__subpackages__",
+    "//test:__subpackages__",
+])
+
+dlinear_srcs(
+    name = "srcs",
+    subfolder = "sat_solver",
+)
+
+dlinear_cc_library(
+    name = "sat_solver",
+    srcs = [
+        "SatSolver.cpp",
+    ] + select({
+        "//tools:enabled_picosat": ["PicosatSatSolver.cpp"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["CadicalSatSolver.cpp"],
+        "//conditions:default": [],
+    }),
+    hdrs = [
+        "SatSolver.h",
+    ] + select({
+        "//tools:enabled_picosat": ["PicosatSatSolver.h"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["CadicalSatSolver.h"],
+        "//conditions:default": [],
+    }),
+    implementation_deps = [
+        "//dlinear/util:exception",
+        "//dlinear/util:logging",
+        "//dlinear/util:timer",
+    ],
+    deps = [
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:plaisted_greenbaum_cnfizer",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:scoped_structures",
+        "//dlinear/util:stats",
+    ] + select({
+        "//tools:enabled_picosat": ["@picosat"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_cadical": ["@cadical"],
+        "//conditions:default": [],
+    }),
+)
+
+cpplint()

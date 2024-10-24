@@ -9,6 +9,9 @@ package(default_visibility = [
 dlinear_srcs(
     name = "srcs",
     subfolder = "solver",
+    deps = [
+        "//dlinear/solver/sat_solver",
+    ],
 )
 
 dlinear_cc_library(
@@ -52,48 +55,6 @@ dlinear_cc_library(
     hdrs = ["SatResult.h"],
     implementation_deps = ["//dlinear/util:exception"],
     deps = ["//dlinear/util:logging"],
-)
-
-dlinear_cc_library(
-    name = "sat_solver",
-    srcs = [
-        "SatSolver.cpp",
-    ] + select({
-        "//tools:enabled_picosat": ["PicosatSatSolver.cpp"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_cadical": ["CadicalSatSolver.cpp"],
-        "//conditions:default": [],
-    }),
-    hdrs = [
-        "SatSolver.h",
-    ] + select({
-        "//tools:enabled_picosat": ["PicosatSatSolver.h"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_cadical": ["CadicalSatSolver.h"],
-        "//conditions:default": [],
-    }),
-    implementation_deps = [
-        "//dlinear/util:exception",
-        "//dlinear/util:logging",
-        "//dlinear/util:timer",
-    ],
-    deps = [
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:plaisted_greenbaum_cnfizer",
-        "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:config",
-        "//dlinear/util:scoped_structures",
-        "//dlinear/util:stats",
-    ] + select({
-        "//tools:enabled_picosat": ["@picosat"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_cadical": ["@cadical"],
-        "//conditions:default": [],
-    }),
 )
 
 dlinear_cc_library(
@@ -303,8 +264,8 @@ dlinear_cc_library(
     implementation_deps = [
         ":bound_implicator",
         ":relu_constraint",
-        ":sat_solver",
         ":theory_solver",
+        "//dlinear/solver/sat_solver",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/util:exception",
         "//dlinear/util:logging",

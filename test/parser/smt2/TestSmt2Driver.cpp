@@ -172,8 +172,8 @@ TEST_F(TestSmt2Driver, LetCommand) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW(Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
-  EXPECT_THROW(Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
 
   EXPECT_EQ(driver.context().box().size(), 4);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
@@ -195,8 +195,8 @@ TEST_F(TestSmt2Driver, LetConstantCommand) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW(Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
-  EXPECT_THROW(Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
 
   EXPECT_EQ(driver.context().box().size(), 6);
   EXPECT_EQ(driver.context().assertions().size(), 6u);

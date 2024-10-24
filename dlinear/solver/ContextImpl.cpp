@@ -11,9 +11,9 @@
 #include <vector>
 
 #include "dlinear/solver/BoundImplicator.h"
-#include "dlinear/solver/CadicalSatSolver.h"
-#include "dlinear/solver/PicosatSatSolver.h"
 #include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/sat_solver/CadicalSatSolver.h"
+#include "dlinear/solver/sat_solver/PicosatSatSolver.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
