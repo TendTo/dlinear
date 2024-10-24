@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "dlinear/solver/CadicalSatSolver.h"
+#include "dlinear/solver/sat_solver/CadicalSatSolver.h"
 
 using dlinear::CadicalSatSolver;
 using dlinear::Config;

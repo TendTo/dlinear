@@ -53,13 +53,13 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_picosat_sat_solver",
     tags = ["solver"],
-    deps = ["//dlinear/solver:sat_solver"],
+    deps = ["//dlinear/solver/sat_solver"],
 )
 
 dlinear_cc_googletest(
     name = "test_cadical_sat_solver",
     tags = ["solver"],
-    deps = ["//dlinear/solver:sat_solver"],
+    deps = ["//dlinear/solver/sat_solver"],
 )
 
 dlinear_cc_googletest(

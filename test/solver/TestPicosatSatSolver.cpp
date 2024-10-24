@@ -9,7 +9,7 @@
 #include <functional>
 #include <memory>
 
-#include "dlinear/solver/PicosatSatSolver.h"
+#include "dlinear/solver/sat_solver/PicosatSatSolver.h"
 
 using dlinear::Config;
 using dlinear::Formula;
