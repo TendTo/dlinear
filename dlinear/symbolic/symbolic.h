@@ -1,6 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
+ * @copyrignt 2017 Toyota Research Institute (dreal4)
  * @licence BSD 3-Clause License
  * This is the header file that we consolidate Drake's symbolic
  * classes and expose them inside of dlinear namespace.
