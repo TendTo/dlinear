@@ -79,6 +79,7 @@ dlinear_cc_googletest(
     deps = [
         ":test_solver_utils",
         "//dlinear/solver",
+        "//dlinear/util:exception",
     ],
 )
 

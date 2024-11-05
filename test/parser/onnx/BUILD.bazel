@@ -9,7 +9,10 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_tensor",
     tags = ["onnx"],
-    deps = ["//dlinear/parser/onnx:tensor"],
+    deps = [
+        "//dlinear/parser/onnx:tensor",
+        "//dlinear/util:exception",
+    ],
 )
 
 dlinear_cc_googletest(

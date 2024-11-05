@@ -8,6 +8,7 @@
 
 #include "dlinear/util/SortedVector.hpp"
 
+using dlinear::DlinearOutOfRangeException;
 using dlinear::SortedVector;
 
 class TestSortedVector : public ::testing::Test {
@@ -145,8 +146,8 @@ TEST_F(TestSortedVector, AtNegative) {
 }
 
 TEST_F(TestSortedVector, OutOfRangeAt) {
-  EXPECT_THROW(sv_.at(sv_.size()), std::out_of_range);
-  EXPECT_THROW(sv_.at(-sv_.size() - 1), std::out_of_range);
+  EXPECT_THROW(sv_.at(sv_.size()), DlinearOutOfRangeException);
+  EXPECT_THROW(sv_.at(-sv_.size() - 1), DlinearOutOfRangeException);
 }
 
 TEST_F(TestSortedVector, EraseElement) {

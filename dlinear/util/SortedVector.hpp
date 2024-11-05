@@ -13,6 +13,8 @@
 #include <utility>
 #include <vector>
 
+#include "dlinear/util/exception.h"
+
 namespace dlinear {
 struct Bound;  // Forward declaration
 
@@ -149,10 +151,10 @@ class SortedVector {
    * Access element at index @p i with bounds checking.
    * @param i position of the element to access
    * @return element at the given position
-   * @throw std::out_of_range if @p i is out of range
+   * @throw DlinearOutOfRangeException if @p i is out of range
    */
   const T& at(size_t i) const {
-    if (i >= vector_.size()) throw std::out_of_range("Index out of range");
+    if (i >= vector_.size()) throw DlinearOutOfRangeException("Index out of range");
     return vector_[i];
   }
 
@@ -162,11 +164,11 @@ class SortedVector {
    * It also supports negative indices, where -1 is the last element, -2 is the second to last, and so on.
    * @param i position of the element to access (negative indices are supported)
    * @return element at the given position
-   * @throw std::out_of_range if @p i is out of range
+   * @throw DlinearOutOfRangeException if @p i is out of range
    */
   const T& at(int i) const {
     if (i < 0) i = static_cast<int>(vector_.size()) + i;
-    if (i < 0 || i >= static_cast<int>(vector_.size())) throw std::out_of_range("Index out of range");
+    if (i < 0 || i >= static_cast<int>(vector_.size())) throw DlinearOutOfRangeException("Index out of range");
     return vector_[i];
   }
 

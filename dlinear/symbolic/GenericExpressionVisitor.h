@@ -1,9 +1,9 @@
 /**
-* @author Ernesto Casablanca (casablancaernesto@gmail.com)
-* @copyright 2024 dlinear
-* @licence BSD 3-Clause License
-* GenericExpressionVisitor class.
-*/
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence BSD 3-Clause License
+ * GenericExpressionVisitor class.
+ */
 #pragma once
 
 #include <stdexcept>
@@ -11,6 +11,7 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 
@@ -83,13 +84,13 @@ class GenericExpressionVisitor {
       case ExpressionKind::IfThenElse:
         return VisitIfThenElse(e, std::forward<Args>(args)...);
       case ExpressionKind::Infty:
-        throw std::runtime_error("An infinity is detected while visiting an expression.");
+        throw DlinearException("An infinity is detected while visiting an expression.");
       case ExpressionKind::NaN:
-        throw std::runtime_error("NaN is detected while visiting an expression.");
+        throw DlinearException("NaN is detected while visiting an expression.");
       case ExpressionKind::UninterpretedFunction:
         return VisitUninterpretedFunction(e, std::forward<Args>(args)...);
       default:
-        throw std::runtime_error("Unreachable code.");
+        throw DlinearUnreachableException("Unreachable code.");
     }
   }
 

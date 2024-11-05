@@ -10,6 +10,7 @@
 
 #include <stdexcept>
 
+#include "dlinear/util/exception.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
@@ -61,7 +62,7 @@ std::chrono::duration<double>::rep TimerBase<T>::seconds() const {
 user_clock::time_point user_clock::now() {
   DLINEAR_TRACE("user_clock::now");
   struct rusage usage{};
-  if (0 != getrusage(RUSAGE_SELF, &usage)) throw std::runtime_error("Failed to get current resource usage (getrusage)");
+  if (0 != getrusage(RUSAGE_SELF, &usage)) throw DlinearException("Failed to get current resource usage (getrusage)");
   return time_point(duration(uint64_t(usage.ru_utime.tv_sec) * std::micro::den + uint64_t(usage.ru_utime.tv_usec)));
 }
 

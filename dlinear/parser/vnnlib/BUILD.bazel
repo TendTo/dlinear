@@ -64,6 +64,7 @@ dlinear_cc_library(
         ":sort",
         ":term",
         "//dlinear/symbolic:literal",
+        "//dlinear/util:exception",
     ],
 )
 

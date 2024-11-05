@@ -11,6 +11,7 @@
 #include "dlinear/util/ScopedUnorderedSet.hpp"
 #include "dlinear/util/ScopedVector.hpp"
 
+using dlinear::DlinearOutOfRangeException;
 using dlinear::ScopedUnorderedMap;
 using dlinear::ScopedUnorderedSet;
 using dlinear::ScopedVector;
@@ -157,7 +158,7 @@ GTEST_TEST(ScopedUnorderedMapTest, Update) {
   EXPECT_EQ(map[1], 3);
   EXPECT_EQ(map.size(), 1u);
 
-  EXPECT_THROW(map[2], std::runtime_error);
+  EXPECT_THROW(map[2], std::out_of_range);
 }
 
 GTEST_TEST(ScopedUnorderedMapTest, PushPop) {
@@ -256,7 +257,7 @@ GTEST_TEST(ScopedUnorderedSetTest, Clear) {
   set1.clear();
   EXPECT_EQ(set1.size(), 0u);
 
-  EXPECT_THROW(set1.pop(), std::runtime_error);
+  EXPECT_THROW(set1.pop(), DlinearOutOfRangeException);
 }
 
 GTEST_TEST(ScopedUnorderedSetTest, PushPop) {

@@ -6,7 +6,9 @@
 #include <gtest/gtest.h>
 
 #include "dlinear/parser/onnx/Tensor.h"
+#include "dlinear/util/exception.h"
 
+using dlinear::DlinearOutOfRangeException;
 using dlinear::Expression;
 using dlinear::onnx::Tensor;
 
@@ -490,5 +492,5 @@ TEST_F(TestTensor, PadHigherDimensions) {
 TEST_F(TestTensor, PaddOdd) {
   xt::xarray<Expression> values{{1, 2, 3}, {4, 5, 6}};
   Tensor tensor{values};
-  EXPECT_THROW(Tensor{tensor.Pad({1, 2, 3, 4, 5})}, std::out_of_range);
+  EXPECT_THROW(Tensor{tensor.Pad({1, 2, 3, 4, 5})}, DlinearOutOfRangeException);
 }

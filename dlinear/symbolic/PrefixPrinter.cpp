@@ -156,7 +156,7 @@ std::ostream &PrefixPrinter::VisitIfThenElse(const Expression &e) const {
 }
 
 std::ostream &PrefixPrinter::VisitUninterpretedFunction(const Expression &) const {
-  throw std::runtime_error("Not implemented.");
+  throw DlinearNotImplementedException{};
 }
 
 std::ostream &PrefixPrinter::VisitFalse(const Formula &) const { return os_ << "false"; }
@@ -237,7 +237,7 @@ std::ostream &PrefixPrinter::VisitNegation(const Formula &f) const {
   return os_ << ")";
 }
 
-std::ostream &PrefixPrinter::VisitForall(const Formula &) const { throw std::runtime_error("Not implemented."); }
+std::ostream &PrefixPrinter::VisitForall(const Formula &) const { throw DlinearNotImplementedException{}; }
 
 std::string ToPrefix(const Expression &e) {
   std::ostringstream oss;

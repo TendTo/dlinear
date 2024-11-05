@@ -9,23 +9,47 @@
 
 #include "dlinear/util/error.h"
 
+using dlinear::DlinearAssertionException;
+using dlinear::DlinearException;
+using dlinear::DlinearInvalidArgumentException;
+using dlinear::DlinearUnreachableException;
 using std::invalid_argument;
 using std::runtime_error;
 
-class TestException : public ::testing::Test {
- protected:
-  void SetUp() override { DLINEAR_LOG_INIT_VERBOSITY(5); }
-  void TearDown() override { DLINEAR_LOG_INIT_VERBOSITY(0); }
-};
+#ifndef NDEBUG
 
-TEST_F(TestException, AssertFail) { EXPECT_DEATH(DLINEAR_ASSERT(false, "Message"), "Assertion `false` failed"); }
+TEST(TestException, AssertFail) { EXPECT_THROW(DLINEAR_ASSERT(false, "Message"), DlinearAssertionException); }
 
-TEST_F(TestException, AssertFailReport) { EXPECT_DEATH(DLINEAR_ASSERT(1 + 1 == 3, "Message"), "Message"); }
+TEST(TestException, AssertFailReport) {
+  EXPECT_THROW(DLINEAR_ASSERT(1 + 1 == 3, "Message"), DlinearAssertionException);
+}
 
-TEST_F(TestException, AssertSuccess) { EXPECT_NO_THROW(DLINEAR_ASSERT(true, "Message")); }
+TEST(TestException, AssertSuccess) { EXPECT_NO_THROW(DLINEAR_ASSERT(true, "Message")); }
 
-TEST_F(TestException, Unreachable) { EXPECT_DEATH(DLINEAR_UNREACHABLE(), "Should not be reachable"); }
+TEST(TestException, Unreachable) { EXPECT_THROW(DLINEAR_UNREACHABLE(), DlinearUnreachableException); }
 
-TEST_F(TestException, RuntimeError) { EXPECT_THROW(DLINEAR_RUNTIME_ERROR("Message"), runtime_error); }
+#else
 
-TEST(TestLogging, RuntimeErrorFmt) { EXPECT_THROW(DLINEAR_RUNTIME_ERROR_FMT("Message: {}", "format"), runtime_error); }
+TEST(TestException, AssertFail) { EXPECT_NO_THROW(DLINEAR_ASSERT(false, "Message")); }
+
+TEST(TestException, AssertFailReport) { EXPECT_NO_THROW(DLINEAR_ASSERT(1 + 1 == 3, "Message")); }
+
+TEST(TestException, AssertSuccess) { EXPECT_NO_THROW(DLINEAR_ASSERT(true, "Message")); }
+
+TEST(TestException, Unreachable) { EXPECT_DEATH(DLINEAR_UNREACHABLE()); }
+
+#endif
+
+TEST(TestException, RuntimeError) { EXPECT_THROW(DLINEAR_RUNTIME_ERROR("Message"), DlinearException); }
+
+TEST(TestException, RuntimeErrorFmt) {
+  EXPECT_THROW(DLINEAR_RUNTIME_ERROR_FMT("Message: {}", "format"), DlinearException);
+}
+
+TEST(TestException, InvalidArgument) {
+  EXPECT_THROW(DLINEAR_INVALID_ARGUMENT("Message: {}", "actual"), DlinearInvalidArgumentException);
+}
+
+TEST(TestException, InvalidArgumentExpected) {
+  EXPECT_THROW(DLINEAR_INVALID_ARGUMENT_EXPECTED("Message: {}", "actual", "expected"), DlinearInvalidArgumentException);
+}

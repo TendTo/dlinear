@@ -77,7 +77,7 @@ class OnnxDriver : public Driver {
    * @param name name of the attribute
    * @param default_value optional default value. If the attribute is not found, this value is returned.
    * @return attribute value
-   * @throw std::runtime_error if the attribute is not found and no default value is provided
+   * @throw DlinearException if the attribute is not found and no default value is provided
    */
   template <IsAnyOf<bool, float, std::int64_t, std::string, std::vector<float>, std::vector<std::int64_t>,
                     std::vector<std::string>, const ::onnx::TensorProto*>

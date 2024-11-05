@@ -79,14 +79,14 @@ class Term {
   /**
    * Check if this term can be matched with @p s.
    * @param s sort to match with
-   * @throw std::runtime_error if @p s is mismatched
+   * @throw DlinearException if @p s is mismatched
    */
   void Check(Sort s) const;
 
   /**
    * Check if this term can be matched with @p t.
    * @param t type of the variable
-   * @throw std::runtime_error if @p t is mismatched
+   * @throw DlinearException if @p t is mismatched
    */
   void Check(Variable::Type t) const;
 

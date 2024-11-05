@@ -70,8 +70,8 @@ class ArgParser {
 
   /**
    * Validate the options, ensuring the correctness of the parameters and the consistency of the options.
-   * @throw std::invalid_argument if the options are inconsistent or incorrect.
-   * @throw std::runtime_error if an error occurs during parsing.
+   * @throw DlinearInvalidArgumentException if the options are inconsistent or incorrect.
+   * @throw DlinearException if an error occurs during parsing.
    */
   void ValidateOptions();
 

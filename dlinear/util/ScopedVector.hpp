@@ -57,7 +57,7 @@ class ScopedVector {
   void push() { scopes_.push_back(vector_.size()); }
   size_t pop() {
     if (scopes_.empty()) {
-      throw std::runtime_error("Nothing to pop.");
+      throw DlinearException("Nothing to pop.");
     }
     size_t count = 0;
     size_t const prev_size = scopes_.back();

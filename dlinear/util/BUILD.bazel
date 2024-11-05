@@ -55,9 +55,16 @@ dlinear_cc_library(
     hdrs = ["error.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":exception",
         ":logging",
         "@fmt",
     ],
+)
+
+dlinear_cc_library(
+    name = "exception",
+    hdrs = ["exception.h"],
+    visibility = ["//visibility:public"],
 )
 
 dlinear_cc_library(
@@ -152,6 +159,7 @@ dlinear_cc_library(
         "ScopedUnorderedSet.hpp",
         "ScopedVector.hpp",
     ],
+    deps = [":exception"],
 )
 
 dlinear_cc_library(
@@ -165,7 +173,10 @@ dlinear_cc_library(
     name = "timer",
     srcs = ["Timer.cpp"],
     hdrs = ["Timer.h"],
-    implementation_deps = [":logging"],
+    implementation_deps = [
+        ":exception",
+        ":logging",
+    ],
 )
 
 dlinear_cc_library(
@@ -178,6 +189,7 @@ dlinear_cc_library(
     srcs = ["SortedVector.cpp"],
     hdrs = ["SortedVector.hpp"],
     implementation_deps = ["//dlinear/solver/theory_solver/qf_lra:bound"],
+    deps = [":exception"],
 )
 
 dlinear_cc_library(

@@ -100,21 +100,21 @@ class Smt2Driver : public Driver {
    * Lookup a variable or constant expression associated with a name @p name.
    * @param name name of the variable or constant expression
    * @return the variable or constant expression with name @p name
-   * @throw std::out_or_range std:: if no variable or constant expression is associated with @p name
+   * @throw DlinearOutOfRange std:: if no variable or constant expression is associated with @p name
    */
   std::variant<const Expression *, const Variable *> LookupDefinedName(const std::string &name) const;
   /**
    * Lookup a constant expression associated with a name @p name.
    * @param name name of the constant expression
    * @return the constant expression with name @p name
-   * @throw std::out_or_range std:: if no constant expression is associated with @p name
+   * @throw DlinearOutOfRange std:: if no constant expression is associated with @p name
    */
   const Expression &LookupConstant(const std::string &name) const;
   /**
    * Lookup a variable associated with a name @p name.
    * @param name name of the variable
    * @return the variable with name @p name
-   * @throw std::out_or_range if no variable is associated with @p name
+   * @throw DlinearOutOfRange if no variable is associated with @p name
    */
   const Variable &LookupVariable(const std::string &name) const;
   /**
@@ -122,8 +122,8 @@ class Smt2Driver : public Driver {
    * @param name name of the function
    * @param arguments arguments to pass to the function
    * @return output of the function @p name with @p arguments
-   * @throw std::out_or_range if no function is associated with @p name
-   * @throw std::runtime_error if the function is incompatible with the @p arguments
+   * @throw DlinearOutOfRange if no function is associated with @p name
+   * @throw DlinearException if the function is incompatible with the @p arguments
    */
   Term LookupFunction(const std::string &name, const std::vector<Term> &arguments) const;
 

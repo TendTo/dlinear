@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "dlinear/util/exception.h"
+
 namespace dlinear {
 
 template <class Key, class T, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
@@ -89,21 +91,15 @@ class ScopedUnorderedMap {
   /**
    * Lookup the value for the given key.
    * @param key key to use for the lookup
-   * @throw runtime_error if the key does not exist
+   * @throw out_of_range if the key does not exist
    * @return element with the given key, if it exists
    */
-  const T &operator[](const Key &key) const {
-    const auto it = map_.find(key);
-    if (it == map_.end()) {
-      throw std::runtime_error("ScopedUnorderedMap has no entry for the key {}" + std::to_string(key));
-    }
-    return it->second;
-  }
+  const T &operator[](const Key &key) const { return map_.at(key); }
 
   /**
    * Lookup the value for the given key.
    * @param key key to use for the lookup
-   * @throw runtime_error if the key does not exist
+   * @throw out_of_range if the key does not exist
    * @return element with the given key, if it exists
    */
   const T &at(const Key &key) const { return map_.at(key); }
@@ -116,7 +112,7 @@ class ScopedUnorderedMap {
   void push() { stack_.push_back(actions_.size()); }
   void pop() {
     if (stack_.empty()) {
-      throw std::runtime_error("ScopedUnorderedMap cannot be popped because it's scope is empty.");
+      throw DlinearException("ScopedUnorderedMap cannot be popped because it's scope is empty.");
     }
     size_type idx = stack_.back();
     while (idx < actions_.size()) {

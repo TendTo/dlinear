@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "dlinear/util/exception.h"
+
 namespace dlinear {
 
 template <class Key, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
@@ -82,7 +84,7 @@ class ScopedUnorderedSet {
   void push() { stack_.push_back(actions_.size()); }
   void pop() {
     if (stack_.empty()) {
-      throw std::runtime_error("ScopedUnorderedSet cannot be popped because it's scope is empty.");
+      throw DlinearOutOfRangeException("ScopedUnorderedSet cannot be popped because it's scope is empty.");
     }
     size_type idx = stack_.back();
     while (idx < actions_.size()) {

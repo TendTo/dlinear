@@ -110,7 +110,7 @@ class BoundVector {
    *
    * The method won't have any effect if @p value is less than the active lower bound.
    * @param value value of the new lower bound
-   * @throw std::runtime_error if the value is greater than the active upper bound
+   * @throw DlinearException if the value is greater than the active upper bound
    */
   void SetLowerBound(const mpq_class& value);
   /**
@@ -118,7 +118,7 @@ class BoundVector {
    *
    * The method won't have any effect if @p value is greater than the active upper bound.
    * @param value value of the new upper bound
-   * @throw std::runtime_error if the value is less than the active lower bound
+   * @throw DlinearException if the value is less than the active lower bound
    */
   void SetUpperBound(const mpq_class& value);
   /**
@@ -128,7 +128,7 @@ class BoundVector {
    * and @p ub is less than the active upper bound respectively.
    * @param lb new lower bound
    * @param ub new upper bound
-   * @throw std::runtime_error if after setting the bounds, the lower bound is greater than the upper bound
+   * @throw DlinearException if after setting the bounds, the lower bound is greater than the upper bound
    */
   void SetBounds(const mpq_class& lb, const mpq_class& ub);
 

@@ -64,7 +64,7 @@ class SmtSolver {
    *
    * The formula will be added to the context and will be checked by the solver in the next call to @ref CheckSat.
    * @param f formula to assert
-   * @throw std::runtime_error if the formula is not in the correct format
+   * @throw DlinearException if the formula is not in the correct format
    */
   void Assert(const Formula &f);
 
@@ -75,8 +75,8 @@ class SmtSolver {
    * If the input contains the (check-sat) command, a satisfiability check will be performed.
    * @return output of the solver, if the input contains the (check-sat) command.
    * Otherwise, the result field will be @ref SmtResult::UNSOLVED.
-   * @throw std::runtime_error if the input is not in the correct format or the files contains an unsupported command
-   * @throw std::out_of_range if the file try to access undeclared variables
+   * @throw DlinearException if the input is not in the correct format or the files contains an unsupported command
+   * @throw DlinearOutOfRange if the file try to access undeclared variables
    */
   const SmtSolverOutput &Parse();
 
@@ -89,8 +89,8 @@ class SmtSolver {
    * @param filename name of the file to parse or an empty string for standard input
    * @return output of the solver, if the input contains the (check-sat) command.
    * Otherwise, the result field will be @ref SmtResult::UNSOLVED.
-   * @throw std::runtime_error if the input is not in the correct format or the files contains an unsupported command
-   * @throw std::out_of_range if the file try to access undeclared variables
+   * @throw DlinearException if the input is not in the correct format or the files contains an unsupported command
+   * @throw DlinearOutOfRange if the file try to access undeclared variables
    */
   const SmtSolverOutput &Parse(const std::string &filename);
 
@@ -118,8 +118,8 @@ class SmtSolver {
    * If the input contains the (check-sat) command, a satisfiability check will be performed.
    * @return true if the input was parsed correctly
    * @return false if there was an error parsing the input
-   * @throw std::runtime_error if the input is not in the correct format or the files contains an unsupported command
-   * @throw std::out_of_range if the file try to access undeclared variables
+   * @throw DlinearException if the input is not in the correct format or the files contains an unsupported command
+   * @throw DlinearOutOfRange if the file try to access undeclared variables
    */
   bool ParseInput();
 

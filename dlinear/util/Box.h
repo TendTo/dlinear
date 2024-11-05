@@ -149,7 +149,7 @@ class Box {
    * Bisect the box at @p i -th dimension.
    * @param i dimension to Bisect
    * @return pair of boxes resulting from the bisection
-   * @throw std::runtime if @p i -th dimension is not bisectable
+   * @throw DlinearException if @p i -th dimension is not bisectable
    */
   [[nodiscard]] std::pair<Box, Box> Bisect(int i) const;
 
@@ -157,7 +157,7 @@ class Box {
    * Bisect the box at @p var.
    * @param var variable to Bisect
    * @return pair of boxes resulting from the bisection
-   * @throw std::runtime if @p var is not bisectable
+   * @throw DlinearException if @p var is not bisectable
    */
   [[nodiscard]] std::pair<Box, Box> Bisect(const Variable &var) const;
 

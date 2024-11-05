@@ -105,7 +105,6 @@ class BitIncrementIterator {
    * @param i index of the bit to check. The index must be in the range [0, n), big endian order.
    * @return true if the bit is fixed
    * @return false if the bit is not fixed
-   * @throw std::out_of_range if @p i is out of range
    */
   [[nodiscard]] bool IsFixed(std::size_t i) const { return fixed_[i]; }
 

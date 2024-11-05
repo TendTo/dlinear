@@ -6,10 +6,12 @@
 #include <gtest/gtest.h>
 
 #include "dlinear/parser/smt2/Driver.h"
+#include "dlinear/util/exception.h"
 #include "test/symbolic/TestSymbolicUtils.h"
 
 using dlinear::Config;
 using dlinear::Context;
+using dlinear::DlinearOutOfRangeException;
 using dlinear::Variable;
 using dlinear::smt2::FunctionDefinition;
 using dlinear::smt2::Smt2Driver;
@@ -172,8 +174,8 @@ TEST_F(TestSmt2Driver, LetCommand) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
-  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), DlinearOutOfRangeException);
+  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), DlinearOutOfRangeException);
 
   EXPECT_EQ(driver.context().box().size(), 4);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
@@ -195,8 +197,8 @@ TEST_F(TestSmt2Driver, LetConstantCommand) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), std::out_of_range);
-  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), std::out_of_range);
+  EXPECT_THROW([[maybe_unused]] Variable lhs = driver.LookupVariable("lhs"), DlinearOutOfRangeException);
+  EXPECT_THROW([[maybe_unused]] Variable rhs = driver.LookupVariable("rhs"), DlinearOutOfRangeException);
 
   EXPECT_EQ(driver.context().box().size(), 6);
   EXPECT_EQ(driver.context().assertions().size(), 6u);
@@ -243,7 +245,7 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMaxFunction) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW(driver.LookupFunction("max", {Term{x}, Term{y}}), std::out_of_range);
+  EXPECT_THROW(driver.LookupFunction("max", {Term{x}, Term{y}}), DlinearOutOfRangeException);
 
   EXPECT_EQ(driver.context().box().size(), 4);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
@@ -264,7 +266,7 @@ TEST_F(TestSmt2Driver, IgnoreRedefinedMinFunction) {
 
   const Variable& x = driver.LookupVariable("x");
   const Variable& y = driver.LookupVariable("y");
-  EXPECT_THROW(driver.LookupFunction("max", {Term{x}, Term{y}}), std::out_of_range);
+  EXPECT_THROW(driver.LookupFunction("max", {Term{x}, Term{y}}), DlinearOutOfRangeException);
 
   EXPECT_EQ(driver.context().box().size(), 4);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
@@ -379,5 +381,5 @@ TEST_F(TestSmt2Driver, Exit) {
                          "(declare-fun y () Real)"));
   const Variable& x = driver.LookupVariable("x");
   EXPECT_EQ(x.get_name(), "x");
-  EXPECT_THROW(driver.LookupVariable("y"), std::out_of_range);
+  EXPECT_THROW(driver.LookupVariable("y"), DlinearOutOfRangeException);
 }

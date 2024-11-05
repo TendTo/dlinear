@@ -16,6 +16,7 @@
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
+#include "dlinear/util/exception.h"
 
 namespace dlinear {
 
@@ -73,7 +74,7 @@ class GenericFormulaVisitor {
       case FormulaKind::Forall:
         return VisitForall(f, args...);
       default:
-        throw std::runtime_error("Unknown formula kind");
+        throw DlinearUnreachableException("Unknown formula kind");
     }
   }
   [[nodiscard]] virtual Result VisitFalse(const Formula &f, Args... args) const = 0;
