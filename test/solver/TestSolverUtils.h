@@ -30,8 +30,6 @@ std::set<dlinear::SmtResult> delta_result(dlinear::SmtResult res) {
       return {dlinear::SmtResult::DELTA_SAT};
     case dlinear::SmtResult::UNSAT:
       return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
-    case dlinear::SmtResult::UNKNOWN:
-      return {dlinear::SmtResult::UNKNOWN};
     default:
       DLINEAR_UNREACHABLE();
   }

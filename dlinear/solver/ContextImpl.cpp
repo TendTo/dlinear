@@ -304,15 +304,12 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
 
   // If false ∈ stack, it's UNSAT.
-  for (const Formula &f : stack_.get_vector()) {
-    if (is_false(f)) {
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSat: Found false formula = {}", f);
-      return SatResult::SAT_UNSATISFIABLE;
-    }
+  if (std::any_of(stack_.begin(), stack_.end(), drake::symbolic::is_false)) {
+    DLINEAR_DEBUG("ContextImpl::CheckSat: Found false assertion");
+    return SatResult::SAT_UNSATISFIABLE;
   }
   // If stack = ∅ or stack = {true}, it's trivially SAT.
-  //  std::all_of(stack_.get_vector().begin(), stack_.get_vector().end(), drake::symbolic::is_true);
-  if (stack_.empty() || (stack_.size() == 1 && is_true(stack_.first()))) {
+  if (std::all_of(stack_.begin(), stack_.end(), drake::symbolic::is_true)) {
     DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Found Model\n{}", box());
     return SatResult::SAT_SATISFIABLE;
   }
@@ -380,10 +377,10 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEV_DEBUG("New iteration");
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
-    const auto optional_model = sat_solver_->CheckSat();
+    const auto sat_model = sat_solver_->CheckSat();
 
     // The SAT solver did not return a model.
-    if (!optional_model) {
+    if (!sat_model) {
       if (have_unsolved) {  // There was an unsolved theory instance. The SMT solver failed to prove UNSAT.
         DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNKNOWN");
         DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
@@ -397,8 +394,8 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
     // Extrapolate the boolean and theory model from the SAT model.
-    const std::vector<Literal> &boolean_model{optional_model->first};
-    const std::vector<Literal> &theory_model{optional_model->second};
+    const std::vector<Literal> &boolean_model{sat_model->first};
+    const std::vector<Literal> &theory_model{sat_model->second};
 
     // Update the Boolean variables in the model (not used by the LP solver).
     for (const auto &[var, truth] : boolean_model) {

@@ -22,17 +22,12 @@ namespace dlinear {
 
 /** SmtSolver Result based on the result of the solver. */
 enum class SmtResult {
-  UNSOLVED,       ///< The solver has not yet been run.
-  SKIP_SAT,       ///< The user asked to skip the satisfiability check.
-  SAT,            ///< The problem is satisfiable.
-  DELTA_SAT,      ///< The problem is delta-satisfiable.
-  OPTIMAL,        ///< The optimization problem is optimal.
-  DELTA_OPTIMAL,  ///< The optimization problem is delta-optimal.
-  UNBOUNDED,      ///< The problem is unbounded.
-  INFEASIBLE,     ///< The problem is infeasible.
-  UNSAT,          ///< The problem is unsatisfiable.
-  UNKNOWN,        ///< Could not determine satisfiability.
-  ERROR,          ///< An error occurred.
+  UNSOLVED,   ///< The solver has not yet been run.
+  SKIP_SAT,   ///< The user asked to skip the satisfiability check.
+  SAT,        ///< The problem is satisfiable.
+  DELTA_SAT,  ///< The problem is delta-satisfiable.
+  UNSAT,      ///< The problem is unsatisfiable.
+  ERROR,      ///< An error occurred.
 };
 
 SmtResult parse_smt_result(SatResult sat_result);
@@ -55,20 +50,10 @@ struct SmtSolverOutput {
         precision{config.precision()},
         actual_precision{config.precision()} {}
 
-  /**
-   * Return the precision upper bound.
-   * @return precision upper bound
-   */
+  /** @getter{precision, upper bound} */
   [[nodiscard]] double precision_upper_bound() const;
-  /**
-   * Return whether the problem is satisfiable or some variant of it.
-   * @return true if the problem is satisfiable
-   * @return false if the problem is not satisfiable
-   */
-  [[nodiscard]] bool is_sat() const {
-    return result == SmtResult::SAT || result == SmtResult::DELTA_SAT || result == SmtResult::OPTIMAL ||
-           result == SmtResult::DELTA_OPTIMAL;
-  }
+  /** @checker{satisfiable, problem or its delta-relaxation} */
+  [[nodiscard]] bool is_sat() const { return result == SmtResult::SAT || result == SmtResult::DELTA_SAT; }
   /**
    * Exit code of the solver to return to the user.
    * @return 0 if the problem is satisfiable

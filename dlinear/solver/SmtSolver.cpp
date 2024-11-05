@@ -88,7 +88,7 @@ SmtResult SmtSolver::GetExpected() const {
   std::string status = context_.GetInfo(":status");
   if (status == "sat") return SmtResult::SAT;
   if (status == "unsat") return SmtResult::UNSAT;
-  return SmtResult::UNKNOWN;
+  return SmtResult::UNSOLVED;
 }
 
 void SmtSolver::Assert(const Formula &f) {
