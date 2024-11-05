@@ -15,7 +15,7 @@
 #include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Timer.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 
 #define STRICT_VARIABLE_IDX (spx_.numColsRational() - 1)

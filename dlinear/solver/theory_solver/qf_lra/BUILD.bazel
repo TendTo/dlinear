@@ -15,7 +15,7 @@ dlinear_cc_library(
     name = "lp_result",
     srcs = ["LpResult.cpp"],
     hdrs = ["LpResult.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
 )
 
@@ -23,7 +23,7 @@ dlinear_cc_library(
     name = "lp_sense",
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [
         "//dlinear/symbolic",
         "//dlinear/util:logging",
@@ -34,7 +34,7 @@ dlinear_cc_library(
     name = "lp_bound",
     srcs = ["LpColBound.cpp"],
     hdrs = ["LpColBound.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
 )
 
@@ -42,7 +42,7 @@ dlinear_cc_library(
     name = "piecewise_constraint_state",
     srcs = ["PiecewiseConstraintState.cpp"],
     hdrs = ["PiecewiseConstraintState.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
 )
 
 dlinear_cc_library(
@@ -51,7 +51,7 @@ dlinear_cc_library(
     hdrs = ["PiecewiseLinearConstraint.h"],
     implementation_deps = [
         "//dlinear/util:config",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:infinity",
     ],
     deps = [
@@ -70,7 +70,7 @@ dlinear_cc_library(
     hdrs = ["ReluConstraint.h"],
     implementation_deps = [
         "//dlinear/symbolic:linear_formula_flattener",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:infinity",
     ],
     deps = [
@@ -86,7 +86,7 @@ dlinear_cc_library(
     hdrs = ["LeakyReluConstraint.h"],
     implementation_deps = [
         "//dlinear/symbolic:linear_formula_flattener",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:infinity",
     ],
     deps = [
@@ -112,7 +112,7 @@ dlinear_cc_library(
     name = "bound_iterator",
     srcs = ["BoundIterator.cpp"],
     hdrs = ["BoundIterator.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [":bound"],
 )
 
@@ -120,7 +120,7 @@ dlinear_cc_library(
     name = "bound_vector",
     srcs = ["BoundVector.cpp"],
     hdrs = ["BoundVector.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [
         ":bound_iterator",
         ":lp_bound",
@@ -135,7 +135,7 @@ dlinear_cc_library(
     name = "bound_implicator",
     srcs = ["BoundImplicator.cpp"],
     hdrs = ["BoundImplicator.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [
         ":lp_sense",
         "//dlinear/libs:gmp",
@@ -152,7 +152,7 @@ dlinear_cc_library(
     srcs = ["BoundPreprocessor.cpp"],
     hdrs = ["BoundPreprocessor.h"],
     implementation_deps = [
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:infinity",
     ],
     deps = [
@@ -202,7 +202,7 @@ dlinear_cc_library(
         "//conditions:default": [],
     }),
     implementation_deps = [
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:timer",
     ],
     deps = [

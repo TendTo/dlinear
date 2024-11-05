@@ -9,7 +9,7 @@
 #include <ostream>
 #include <utility>
 
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 #define TRACE_VIOLATED_BOUNDS(it)                                                                                    \
   DLINEAR_TRACE_FMT("BoundVector::ViolatedBounds: ({} {}) incompatible with ({} {})", value, lp_bound, *(it)->value, \

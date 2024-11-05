@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include "dlinear/util/RoundingModeGuard.hpp"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

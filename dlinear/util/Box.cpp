@@ -15,7 +15,7 @@
 
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/RoundingModeGuard.hpp"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/math.h"
 
 namespace dlinear {

@@ -15,12 +15,12 @@
 #include <utility>
 
 #include "dlinear/symbolic/hash.h"
-#include "dlinear/util/exception.h"
 #include "dlinear/symbolic/symbolic_environment.h"
 #include "dlinear/symbolic/symbolic_expression.h"
 #include "dlinear/symbolic/symbolic_expression_visitor.h"
 #include "dlinear/symbolic/symbolic_variable.h"
 #include "dlinear/symbolic/symbolic_variables.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear::drake::symbolic {
 

@@ -11,7 +11,7 @@
 #include "dlinear/parser/onnx/NodeOpType.h"
 #include "dlinear/solver/theory_solver/qf_lra/LeakyReluConstraint.h"
 #include "dlinear/solver/theory_solver/qf_lra/ReluConstraint.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 #ifdef DLINEAR_PYDLINEAR
 #include "pydlinear/interrupt.h"

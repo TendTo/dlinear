@@ -19,7 +19,7 @@ dlinear_cc_library(
     name = "logic",
     srcs = ["Logic.cpp"],
     hdrs = ["Logic.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
 )
 
@@ -27,7 +27,7 @@ dlinear_cc_library(
     name = "sat_result",
     srcs = ["SatResult.cpp"],
     hdrs = ["SatResult.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
 )
 
@@ -47,7 +47,7 @@ dlinear_cc_library(
         "//dlinear/solver/theory_solver/qf_lra:bound_implicator",
         "//dlinear/solver/theory_solver/qf_lra:relu_constraint",
         "//dlinear/symbolic:if_then_else_eliminator",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
     ],
@@ -74,7 +74,7 @@ dlinear_cc_library(
     name = "solver_output",
     srcs = ["SmtSolverOutput.cpp"],
     hdrs = ["SmtSolverOutput.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     visibility = [
         "//benchmark:__subpackages__",
         "//dlinear:__subpackages__",
@@ -102,7 +102,7 @@ dlinear_cc_library(
         "//dlinear/parser/smt2",
         "//dlinear/parser/vnnlib",
         "//dlinear/util:concepts",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:logging",
         "//dlinear/util:timer",
     ],

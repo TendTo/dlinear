@@ -11,7 +11,7 @@
 
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 std::pair<std::vector<Formula>, std::vector<Variable>> PlaistedGreenbaumCnfizer::Process(const Formula &f) const {

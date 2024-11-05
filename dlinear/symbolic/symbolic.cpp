@@ -11,7 +11,7 @@
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

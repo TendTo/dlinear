@@ -7,7 +7,7 @@
 
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Infinity.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

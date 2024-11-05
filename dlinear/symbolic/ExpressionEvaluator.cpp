@@ -12,7 +12,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

@@ -13,7 +13,7 @@
 #include "dlinear/parser/smt2/Term.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/math.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/libs/libgmp.h"
 
 using dlinear::gmp::StringToMpq;

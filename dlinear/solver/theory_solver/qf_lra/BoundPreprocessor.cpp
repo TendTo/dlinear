@@ -13,7 +13,7 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/util/Infinity.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 #if DEBUGGING_PREPROCESSOR
 #include <string>

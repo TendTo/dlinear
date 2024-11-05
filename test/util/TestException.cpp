@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 using std::invalid_argument;
 using std::runtime_error;

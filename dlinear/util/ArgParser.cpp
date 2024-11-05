@@ -19,7 +19,7 @@
 #endif
 
 #include "dlinear/util/OptionValue.hpp"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/filesystem.h"
 #include "dlinear/util/logging.h"
 #include "dlinear/version.h"

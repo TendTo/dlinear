@@ -16,7 +16,7 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/ScopedVector.hpp"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

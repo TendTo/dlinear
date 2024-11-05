@@ -9,7 +9,7 @@
 
 #include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "dlinear/util/Infinity.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

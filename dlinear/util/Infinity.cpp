@@ -5,7 +5,7 @@
  */
 #include "Infinity.h"
 
-#include "exception.h"
+#include "error.h"
 
 #ifdef DLINEAR_ENABLED_QSOPTEX
 #include "dlinear/libs/libqsopt_ex.h"

@@ -10,7 +10,7 @@
 
 #include "dlinear/solver/SmtSolverOutput.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/filesystem.h"
 
 const auto enabled_test_solvers = ::testing::Values(

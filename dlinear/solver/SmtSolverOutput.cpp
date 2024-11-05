@@ -9,7 +9,7 @@
 #include <limits>
 #include <sstream>
 
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 

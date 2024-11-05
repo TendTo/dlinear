@@ -36,7 +36,7 @@ dlinear_cc_library(
         "dlinear/symbolic/symbolic_variables.cc",
     ],
     hdrs = [":hdrs"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     includes = ["."],
     deps = ["//dlinear/libs:gmp"],
 )

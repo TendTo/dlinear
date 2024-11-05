@@ -25,7 +25,7 @@ dlinear_cc_googletest(
 dlinear_cc_googletest(
     name = "test_exception",
     tags = ["util"],
-    deps = ["//dlinear/util:exception"],
+    deps = ["//dlinear/util:error"],
 )
 
 dlinear_cc_googletest(

@@ -17,7 +17,7 @@ dlinear_cc_library(
     name = "node_op_type",
     srcs = ["NodeOpType.cpp"],
     hdrs = ["NodeOpType.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
 )
 
 dlinear_cc_library(
@@ -26,7 +26,7 @@ dlinear_cc_library(
     hdrs = ["Tensor.h"],
     implementation_deps = [
         "//dlinear/symbolic:literal",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:logging",
         "@fmt",
     ],
@@ -46,7 +46,7 @@ dlinear_cc_library(
     implementation_deps = [
         "//dlinear/solver/theory_solver/qf_lra:leaky_relu_constraint",
         "//dlinear/solver/theory_solver/qf_lra:relu_constraint",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
     ],
     deps = [
         ":node_op_type",

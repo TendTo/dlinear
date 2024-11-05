@@ -18,7 +18,7 @@ dlinear_cc_library(
     srcs = ["ArgParser.cpp"],
     hdrs = ["ArgParser.h"],
     implementation_deps = [
-        ":exception",
+        ":error",
         ":filesystem",
         ":logging",
         "//dlinear:version",
@@ -44,15 +44,15 @@ dlinear_cc_library(
         "OptionValue.hpp",
     ],
     implementation_deps = [
-        ":exception",
+        ":error",
         ":filesystem",
     ],
     deps = [":logging"],
 )
 
 dlinear_cc_library(
-    name = "exception",
-    hdrs = ["exception.h"],
+    name = "error",
+    hdrs = ["error.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":logging",
@@ -84,7 +84,7 @@ dlinear_cc_library(
     srcs = ["Infinity.cpp"],
     hdrs = ["Infinity.h"],
     implementation_deps = [
-        ":exception",
+        ":error",
     ] + select({
         "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
         "//conditions:default": [],
@@ -103,7 +103,7 @@ dlinear_cc_library(
     srcs = ["Box.cpp"],
     hdrs = ["Box.h"],
     implementation_deps = [
-        ":exception",
+        ":error",
         ":infinity",
         ":math",
     ],
@@ -125,7 +125,7 @@ dlinear_cc_library(
         "RoundingModeGuard.hpp",
     ],
     implementation_deps = [
-        ":exception",
+        ":error",
     ],
     deps = [
         ":definitions",
@@ -139,7 +139,7 @@ dlinear_cc_library(
     srcs = ["math.cpp"],
     hdrs = ["math.h"],
     implementation_deps = [
-        ":exception",
+        ":error",
         ":logging",
     ],
     deps = ["//dlinear/libs:gmp"],

@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <iostream>
 
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear::mps {
 

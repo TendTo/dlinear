@@ -37,7 +37,7 @@ dlinear_cc_library(
     hdrs = ["symbolic.h"],
     implementation_deps = [
         "//dlinear/libs:gmp",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
     ],
     deps = [
         ":literal",
@@ -75,7 +75,7 @@ dlinear_cc_library(
     hdrs = ["LinearFormulaFlattener.h"],
     implementation_deps = [
         "//dlinear/libs:gmp",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
     ],
     deps = [
         ":symbolic",
@@ -106,7 +106,7 @@ dlinear_cc_library(
     implementation_deps = [
         ":literal",
         "//dlinear/libs:gmp",
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
     ],
     deps = [
         ":expression_visitor",
@@ -131,7 +131,7 @@ dlinear_cc_library(
     name = "cnfizer",
     srcs = ["NaiveCnfizer.cpp"],
     hdrs = ["NaiveCnfizer.h"],
-    implementation_deps = ["//dlinear/util:exception"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [
         ":formula_visitor",
         ":nnfizier",
@@ -180,7 +180,7 @@ dlinear_cc_library(
     srcs = ["PlaistedGreenbaumCnfizer.cpp"],
     hdrs = ["PlaistedGreenbaumCnfizer.h"],
     implementation_deps = [
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:stats",
         "//dlinear/util:timer",
     ],
@@ -199,7 +199,7 @@ dlinear_cc_library(
     srcs = ["TseitinCnfizer.cpp"],
     hdrs = ["TseitinCnfizer.h"],
     implementation_deps = [
-        "//dlinear/util:exception",
+        "//dlinear/util:error",
         "//dlinear/util:stats",
         "//dlinear/util:timer",
     ],

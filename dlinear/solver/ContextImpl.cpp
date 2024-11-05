@@ -18,7 +18,7 @@
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
 #include "dlinear/util/Stats.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 
 #ifdef DLINEAR_PYDLINEAR

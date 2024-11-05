@@ -10,7 +10,7 @@
 
 #include "dlinear/solver/ContextImpl.h"
 #include "dlinear/solver/theory_solver/qf_lra/ReluConstraint.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {

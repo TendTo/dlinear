@@ -11,7 +11,7 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/parser/mps/Sense.h"
 #include "dlinear/parser/mps/BoundType.h"
-#include "dlinear/util/exception.h"
+#include "dlinear/util/error.h"
 
 using dlinear::gmp::StringToMpq;
 
