@@ -13,7 +13,7 @@
 #endif
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -37,7 +37,7 @@ class DeltaSoplexTheorySolver : public SoplexTheorySolver {
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
-  SatResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
+  TheoryResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
 
  private:
   void EnableSpxRow(int spx_row, bool truth) override;

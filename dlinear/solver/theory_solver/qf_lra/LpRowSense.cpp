@@ -5,6 +5,8 @@
  */
 #include "LpRowSense.h"
 
+#include <ostream>
+
 #include "dlinear/util/error.h"
 
 namespace dlinear {

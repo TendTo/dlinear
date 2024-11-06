@@ -127,9 +127,9 @@ void SatSolver::GetMainActiveLiterals(std::set<int> &lits) const {
   }
 }
 
-Model SatSolver::OnSatResult() {
-  Model model;
-
+void SatSolver::OnSatResult(Model &model) {
+  model.boolean_model.clear();
+  model.theory_model.clear();
   for (int i : GetMainActiveLiterals()) {
     const auto it_var = sat_to_var_.find(abs(i));
     if (it_var == sat_to_var_.end()) {
@@ -141,17 +141,16 @@ Model SatSolver::OnSatResult() {
     const auto &var_to_formula_map = predicate_abstractor_.var_to_formula_map();
     if (var_to_formula_map.contains(var)) {  // The variable is a theory literal
       DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add theory literal {}{} to Model", i > 0 ? "" : "¬", var);
-      model.second.emplace_back(var, i > 0);
+      model.theory_model.emplace_back(var, i > 0);
     } else if (cnf_variables_.count(var.get_id()) == 0) {  // The variable wasn't introduced by CNF transformations
       DLINEAR_TRACE_FMT("SatSolver::CheckSat: Add Boolean literal {}{} to Model ", i > 0 ? "" : "¬", var);
-      model.first.emplace_back(var, i > 0);
+      model.boolean_model.emplace_back(var, i > 0);
     } else {  // The variable was introduced by CNF transformations
       DLINEAR_TRACE_FMT("SatSolver::CheckSat: Skip {}{} which is a temporary variable.", i > 0 ? "" : "¬", var);
     }
   }
   DLINEAR_DEBUG("SatSolver::CheckSat() Found a model.");
   //  DLINEAR_TRACE_FMT("SatSolver::CheckSat(): Model: {}", model);
-  return model;
 }
 
 }  // namespace dlinear

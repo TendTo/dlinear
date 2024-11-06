@@ -5,6 +5,8 @@
  */
 #include "Bound.h"
 
+#include <ostream>
+
 namespace dlinear {
 
 std::strong_ordering Bound::operator<=>(const Bound& other) const {

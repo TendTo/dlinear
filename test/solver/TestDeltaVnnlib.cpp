@@ -44,5 +44,5 @@ TEST_P(TestDeltaVnnlib, VnnlibInputAgainstExpectedOutput) {
   if (config_.lp_solver() == Config::LPSolver::QSOPTEX) GTEST_SKIP();
   SmtSolver s{config_};
   const SmtSolverOutput result = s.Parse();
-  ASSERT_TRUE(delta_match_expected(result, s.GetExpected()));
+  ASSERT_EQ(~result.result, ~s.GetExpected());
 }

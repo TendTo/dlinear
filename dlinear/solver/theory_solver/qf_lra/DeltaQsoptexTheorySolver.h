@@ -11,7 +11,7 @@
 #endif
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/QsoptexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -36,7 +36,7 @@ class DeltaQsoptexTheorySolver : public QsoptexTheorySolver {
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
-  SatResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
+  TheoryResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
 
  private:
   void EnableQsxRow(int spx_row, bool truth) override;

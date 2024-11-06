@@ -26,8 +26,8 @@ void Context::AssertPiecewiseLinearFunction(const Variable &var, const Formula &
                                             const Expression &inactive) {
   impl_->AssertPiecewiseLinearFunction(var, cond, active, inactive);
 }
-SatResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
-LpResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
+SmtResult Context::CheckSat(mpq_class *actual_precision) { return impl_->CheckSat(actual_precision); }
+SmtResult Context::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) { return impl_->CheckOpt(obj_lo, obj_up); }
 void Context::DeclareVariable(const Variable &v, const bool is_model_variable) {
   impl_->DeclareVariable(v, is_model_variable);
 }

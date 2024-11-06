@@ -73,7 +73,7 @@ std::set<int> PicosatSatSolver::GetMainActiveLiterals() {
   return lits;
 }
 
-std::optional<Model> PicosatSatSolver::CheckSat() {
+SatResult PicosatSatSolver::CheckSat(Model &model) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
@@ -84,13 +84,15 @@ std::optional<Model> PicosatSatSolver::CheckSat() {
   const int ret{picosat_sat(sat_, -1)};
 
   if (ret == PICOSAT_SATISFIABLE) {
-    return OnSatResult();
+    OnSatResult(model);
+    return config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT;
   } else if (ret == PICOSAT_UNSATISFIABLE) {
     DLINEAR_DEBUG("PicosatSatSolver::CheckSat() No solution.");
-    return {};
+    return SatResult::UNSAT;
   } else {
     DLINEAR_ASSERT(ret == PICOSAT_UNKNOWN, "ret must be PICOSAT_UNKNOWN");
-    DLINEAR_RUNTIME_ERROR("PICOSAT returns PICOSAT_UNKNOWN.");
+    DLINEAR_ERROR("PicosatSatSolver::CheckSat() Unknown error.");
+    return SatResult::ERROR;
   }
 }
 

@@ -74,7 +74,7 @@ DeltaQsoptexTheorySolver::Explanations DeltaQsoptexTheorySolver::EnableLiteral(c
   return explanations;
 }
 
-SatResult DeltaQsoptexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
+TheoryResult DeltaQsoptexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   int status = -1;
@@ -116,15 +116,15 @@ SatResult DeltaQsoptexTheorySolver::CheckSatCore(mpq_class *actual_precision, Ex
     case QS_LP_FEASIBLE:
     case QS_LP_DELTA_FEASIBLE:
       UpdateModelSolution();
-      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: returning SAT_DELTA_SATISFIABLE");
-      return SatResult::SAT_DELTA_SATISFIABLE;
+      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: returning DELTA_SAT");
+      return TheoryResult::DELTA_SAT;
     case QS_LP_INFEASIBLE:
       UpdateExplanations(explanations);
-      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: returning SAT_UNSATISFIABLE");
-      return SatResult::SAT_UNSATISFIABLE;
+      DLINEAR_DEBUG("DeltaQsoptexTheorySolver::CheckSat: returning UNSAT");
+      return TheoryResult::UNSAT;
     case QS_LP_UNSOLVED:
       DLINEAR_WARN("DeltaQsoptexTheorySolver::CheckSat: QSopt_ex failed to return a result");
-      return SatResult::SAT_UNSOLVED;
+      return TheoryResult::ERROR;
     default:
       DLINEAR_UNREACHABLE();
   }

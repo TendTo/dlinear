@@ -67,7 +67,7 @@ dlinear_cc_googletest(
     tags = ["solver"],
     deps = [
         ":test_solver_utils",
-        "//dlinear/solver/theory_solver",
+        "//dlinear/solver/theory_solver/qf_lra:qf_lra_theory_solver",
     ],
 )
 

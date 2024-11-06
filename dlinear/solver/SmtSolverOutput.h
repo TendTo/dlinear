@@ -11,27 +11,13 @@
 #include <string>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/SatResult.h"
-#include "dlinear/solver/theory_solver/qf_lra/LpResult.h"
+#include "dlinear/solver/SmtResult.h"
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
 #include "dlinear/util/Timer.h"
 
 namespace dlinear {
-
-/** SmtSolver Result based on the result of the solver. */
-enum class SmtResult {
-  UNSOLVED,   ///< The solver has not yet been run.
-  SKIP_SAT,   ///< The user asked to skip the satisfiability check.
-  SAT,        ///< The problem is satisfiable.
-  DELTA_SAT,  ///< The problem is delta-satisfiable.
-  UNSAT,      ///< The problem is unsatisfiable.
-  ERROR,      ///< An error occurred.
-};
-
-SmtResult parse_smt_result(SatResult sat_result);
-SmtResult parse_smt_result(LpResult lp_result);
 
 /**
  * Data struct containing the output of the solver, such as the result of the computation as well as some statistics.
@@ -97,7 +83,14 @@ struct SmtSolverOutput {
   mpq_class actual_precision;             ///< Actual precision of the computation. Always <= than precision
 };
 
-std::ostream &operator<<(std::ostream &os, const SmtResult &result);
 std::ostream &operator<<(std::ostream &os, const SmtSolverOutput &output);
 
 }  // namespace dlinear
+
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
+OSTREAM_FORMATTER(dlinear::SmtSolverOutput)
+
+#endif

@@ -11,9 +11,8 @@
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/Logic.h"
-#include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/SmtResult.h"
 #include "dlinear/solver/SmtSolverOutput.h"
-#include "dlinear/solver/theory_solver/qf_lra/LpResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -83,7 +82,7 @@ class Context {
    * constraints.
    * @return the satisfiability result.
    */
-  SatResult CheckSat(mpq_class *actual_precision);
+  SmtResult CheckSat(mpq_class *actual_precision);
   /**
    * Check the satisfiability of the asserted formulas, and (where possible) optimizes an objective function over them.
    *
@@ -91,7 +90,7 @@ class Context {
    * @param[out] obj_lo the lower bound of the objective function
    * @param[out] obj_up the upper bound of the objective function
    */
-  LpResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
+  SmtResult CheckOpt(mpq_class *obj_lo, mpq_class *obj_up);
 
   /**
    * Declare a variable @p v.

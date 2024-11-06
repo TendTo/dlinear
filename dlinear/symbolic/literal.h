@@ -25,8 +25,12 @@ struct Literal {
   Variable var;  ///< Variable.
   bool truth;    ///< Truth value.
 };
-using LiteralSet = std::set<Literal>;                                 ///< A set of literals.
-using Model = std::pair<std::vector<Literal>, std::vector<Literal>>;  ///< A model is a pair of two vectors of literals.
+using LiteralSet = std::set<Literal>;  ///< A set of literals.
+/** A model is a pair of two vectors of literals. */
+struct Model {
+  std::vector<Literal> boolean_model;  ///< Boolean literals that have been assigned a value.
+  std::vector<Literal> theory_model;   ///< Theory literals that have been assigned a value.
+};
 
 bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs);
 std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Literal &rhs);

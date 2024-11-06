@@ -12,14 +12,6 @@ dlinear_srcs(
 )
 
 dlinear_cc_library(
-    name = "lp_result",
-    srcs = ["LpResult.cpp"],
-    hdrs = ["LpResult.h"],
-    implementation_deps = ["//dlinear/util:error"],
-    deps = ["//dlinear/util:logging"],
-)
-
-dlinear_cc_library(
     name = "lp_sense",
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],
@@ -212,7 +204,7 @@ dlinear_cc_library(
         ":lp_sense",
         ":piecewise_linear_constraint",
         "//dlinear/libs:gmp",
-        "//dlinear/solver:sat_result",
+        "//dlinear/solver/theory_solver:theory_result",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",

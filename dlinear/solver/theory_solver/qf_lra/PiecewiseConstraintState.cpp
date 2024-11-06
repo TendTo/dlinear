@@ -5,7 +5,7 @@
  */
 #include "PiecewiseConstraintState.h"
 
-#include <iostream>
+#include <ostream>
 
 #include "dlinear/util/error.h"
 

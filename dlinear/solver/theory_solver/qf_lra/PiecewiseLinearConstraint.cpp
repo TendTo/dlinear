@@ -5,6 +5,8 @@
  */
 #include "PiecewiseLinearConstraint.h"
 
+#include <ostream>
+
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Infinity.h"
 #include "dlinear/util/error.h"

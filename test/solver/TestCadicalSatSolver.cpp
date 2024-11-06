@@ -19,6 +19,7 @@ using dlinear::Literal;
 using dlinear::LiteralSet;
 using dlinear::Model;
 using dlinear::PredicateAbstractor;
+using dlinear::SatResult;
 using dlinear::SatSolver;
 using dlinear::Variable;
 using std::unique_ptr;
@@ -36,12 +37,14 @@ class TestCadicalSatSolver : public ::testing::Test {
   const Variable by_{"by", Variable::Type::BOOLEAN};
   const Variable bz_{"bz", Variable::Type::BOOLEAN};
   CadicalSatSolver s_;
+  Model model_;
   explicit TestCadicalSatSolver() : config_{get_config()}, pa_{config_}, s_{pa_} {}
 
   static Config get_config() {
     Config config{};
     config.m_filename() = "test.smt2";
     config.m_format() = Config::Format::AUTO;
+    config.m_complete() = true;
     return config;
   }
 };
@@ -72,105 +75,105 @@ TEST_F(TestCadicalSatSolver, AddClauseDisjunction) {
 TEST_F(TestCadicalSatSolver, SingleTrueValue) {
   s_.AddFormula(Formula{bx_});
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 1u);
-  EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), TrueLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 1u);
+  EXPECT_TRUE(std::all_of(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SingleFalseValue) {
   s_.AddFormula(!bx_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 1u);
-  EXPECT_TRUE(std::none_of(res.value().first.begin(), res.value().first.end(), TrueLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 1u);
+  EXPECT_TRUE(std::none_of(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveOrTwo) {
   s_.AddFormula(bx_ || by_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_LE(res.value().first.size(), 2u);
-  EXPECT_GE(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 1);
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_LE(model_.boolean_model.size(), 2u);
+  EXPECT_GE(std::count_if(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral), 1);
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveOrThree) {
   s_.AddFormula(bx_ || by_ || bz_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_LE(res.value().first.size(), 3u);
-  EXPECT_GE(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 1);
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_LE(model_.boolean_model.size(), 3u);
+  EXPECT_GE(std::count_if(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral), 1);
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveAndTwo) {
   s_.AddFormula(bx_ && by_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
 
-  EXPECT_EQ(res.value().first.size(), 2u);
-  EXPECT_EQ(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 2);
-  EXPECT_TRUE(res.value().second.empty());
+  EXPECT_EQ(model_.boolean_model.size(), 2u);
+  EXPECT_EQ(std::count_if(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral), 2);
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveAndThree) {
   s_.AddFormula(bx_ && by_ && bz_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 3u);
-  EXPECT_EQ(std::count_if(res.value().first.begin(), res.value().first.end(), TrueLiteral), 3);
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 3u);
+  EXPECT_EQ(std::count_if(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral), 3);
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveImplyFalse) {
   s_.AddFormula(imply(bx_, by_));
   s_.AddFormula(!by_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 2u);
-  EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), FalseLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 2u);
+  EXPECT_TRUE(std::all_of(model_.boolean_model.begin(), model_.boolean_model.end(), FalseLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveImplyTrue) {
   s_.AddFormula(imply(bx_, by_));
   s_.AddFormula(Formula{bx_});
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 2u);
-  EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), TrueLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 2u);
+  EXPECT_TRUE(std::all_of(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 TEST_F(TestCadicalSatSolver, SolveIffFalse) {
   s_.AddFormula(iff(bx_, by_));
   s_.AddFormula(!bx_);
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 2u);
-  EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), FalseLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 2u);
+  EXPECT_TRUE(std::all_of(model_.boolean_model.begin(), model_.boolean_model.end(), FalseLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, SolveIffTrue) {
   s_.AddFormula(iff(bx_, by_));
   s_.AddFormula(Formula{bx_});
 
-  const std::optional<Model> res = s_.CheckSat();
-  EXPECT_TRUE(res.has_value());
-  EXPECT_EQ(res.value().first.size(), 2u);
-  EXPECT_TRUE(std::all_of(res.value().first.begin(), res.value().first.end(), TrueLiteral));
-  EXPECT_TRUE(res.value().second.empty());
+  const SatResult res = s_.CheckSat(model_);
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_EQ(model_.boolean_model.size(), 2u);
+  EXPECT_TRUE(std::all_of(model_.boolean_model.begin(), model_.boolean_model.end(), TrueLiteral));
+  EXPECT_TRUE(model_.theory_model.empty());
 }
 
 TEST_F(TestCadicalSatSolver, FixedSingleTrue) {
@@ -221,24 +224,25 @@ TEST_F(TestCadicalSatSolver, FixedOr) {
 TEST_F(TestCadicalSatSolver, Assume) {
   s_.AddFormula((x_ < 0) || (y_ < 0));
   s_.Assume({s_.predicate_abstractor()[x_ < 0], false});
-  const auto [bool_model, theory_model] = s_.CheckSat().value();
+  SatResult res = s_.CheckSat(model_);
 
-  EXPECT_TRUE(bool_model.empty());
-  ASSERT_EQ(theory_model.size(), 1u);
-  EXPECT_THAT(theory_model, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[y_ < 0], true}));
+  EXPECT_EQ(res, config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT);
+  EXPECT_TRUE(model_.boolean_model.empty());
+  ASSERT_EQ(model_.theory_model.size(), 1u);
+  EXPECT_THAT(model_.theory_model, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[y_ < 0], true}));
 
   s_.Assume({s_.predicate_abstractor()[y_ < 0], false});
-  const auto [bool_model2, theory_model2] = s_.CheckSat().value();
+  res = s_.CheckSat(model_);
 
-  EXPECT_TRUE(bool_model2.empty());
-  ASSERT_EQ(theory_model2.size(), 1u);
-  EXPECT_THAT(theory_model2, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[x_ < 0], true}));
+  EXPECT_TRUE(model_.boolean_model.empty());
+  ASSERT_EQ(model_.theory_model.size(), 1u);
+  EXPECT_THAT(model_.theory_model, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[x_ < 0], true}));
 
   s_.Assume({s_.predicate_abstractor()[x_ < 0], true});
   s_.Assume({s_.predicate_abstractor()[y_ < 0], true});
-  const auto [bool_model3, theory_model3] = s_.CheckSat().value();
+  res = s_.CheckSat(model_);
 
-  EXPECT_TRUE(bool_model3.empty());
-  ASSERT_EQ(theory_model3.size(), 1u);
-  EXPECT_THAT(theory_model3, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[y_ < 0], true}));
+  EXPECT_TRUE(model_.boolean_model.empty());
+  ASSERT_EQ(model_.theory_model.size(), 1u);
+  EXPECT_THAT(model_.theory_model, ::testing::UnorderedElementsAre(Literal{s_.predicate_abstractor()[y_ < 0], true}));
 }

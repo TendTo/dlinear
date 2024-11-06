@@ -24,9 +24,9 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "sat_result",
-    srcs = ["SatResult.cpp"],
-    hdrs = ["SatResult.h"],
+    name = "smt_result",
+    srcs = ["SmtResult.cpp"],
+    hdrs = ["SmtResult.h"],
     implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
 )
@@ -43,8 +43,11 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         "//dlinear/solver/sat_solver",
+        "//dlinear/solver/sat_solver:sat_result",
         "//dlinear/solver/theory_solver",
+        "//dlinear/solver/theory_solver:theory_result",
         "//dlinear/solver/theory_solver/qf_lra:bound_implicator",
+        "//dlinear/solver/theory_solver/qf_lra:qf_lra_theory_solver",
         "//dlinear/solver/theory_solver/qf_lra:relu_constraint",
         "//dlinear/symbolic:if_then_else_eliminator",
         "//dlinear/util:error",
@@ -53,10 +56,9 @@ dlinear_cc_library(
     ],
     deps = [
         ":logic",
-        ":sat_result",
+        ":smt_result",
         ":solver_output",
         "//dlinear/libs:gmp",
-        "//dlinear/solver/theory_solver/qf_lra:lp_result",
         "//dlinear/solver/theory_solver/qf_lra:piecewise_linear_constraint",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
@@ -82,11 +84,11 @@ dlinear_cc_library(
         "//test:__subpackages__",
     ],
     deps = [
-        ":sat_result",
+        ":smt_result",
         "//dlinear/libs:gmp",
-        "//dlinear/solver/theory_solver/qf_lra:lp_result",
         "//dlinear/util:box",
         "//dlinear/util:config",
+        "//dlinear/util:logging",
         "//dlinear/util:stats",
         "//dlinear/util:timer",
     ],

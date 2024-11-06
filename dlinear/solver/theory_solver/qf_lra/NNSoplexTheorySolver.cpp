@@ -111,7 +111,7 @@ TheorySolver::Explanations NNSoplexTheorySolver::EnableLiteral(const Literal &li
   return explanations;
 }
 
-SatResult NNSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) {
+TheoryResult NNSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) {
   // fmt::println("NN Soplex Theory Solver: SOI = {}", soi_);
   // Use the Sum of Infeasibility expression built so far to create the objective function of the optimization
   // with the goal of minimizing it
@@ -133,18 +133,18 @@ SatResult NNSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, std::s
       case SpxCheckSatResult::SAT:  // A solution with the desired precision has been found
         UpdateModelSolution();
         DLINEAR_DEBUG("NNSoplexTheorySolver::CheckSat: returning sat");
-        return SatResult::SAT_DELTA_SATISFIABLE;
+        return TheoryResult::DELTA_SAT;
       case SpxCheckSatResult::INFEASIBLE:  // The constraints are infeasible
         UpdateExplanations(explanations);
         DLINEAR_DEBUG("NNSoplexTheorySolver::CheckSat: returning unsat");
-        return SatResult::SAT_UNSATISFIABLE;
+        return TheoryResult::UNSAT;
       case SpxCheckSatResult::SOI_VIOLATION:  // The SOI constraint has been violated, invert a piecewise constraint
         // TODO(tend): temporary solution to avoid looping. Check if the explanation was added
         UpdateExplanationsWithCurrentPiecewiseLinearLiterals(explanations);
         // Tried all sub-problems, just return UNSAT and start over
         if (explanations.size() == prev_size || !InvertGreatestViolation()) {
           DLINEAR_DEBUG("NNSoplexTheorySolver::CheckSat: returning unsat");
-          return SatResult::SAT_UNSATISFIABLE;
+          return TheoryResult::UNSAT;
         }
         break;
       default:

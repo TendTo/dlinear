@@ -15,6 +15,7 @@
 #include <set>
 #include <string>
 
+#include "dlinear/solver/sat_solver/SatResult.h"
 #include "dlinear/solver/sat_solver/SatSolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -42,7 +43,7 @@ class CadicalSatSolver : public SatSolver {
 
   void MakeSatVar(const Variable &var) override;
 
-  std::optional<Model> CheckSat() override;
+  SatResult CheckSat(Model &model) override;
 
   void Push() override;
   void Pop() override;
@@ -57,8 +58,8 @@ class CadicalSatSolver : public SatSolver {
  private:
   [[nodiscard]] std::set<int> GetMainActiveLiterals() override;
 
-  CaDiCaL::Solver sat_{}; ///< SAT solver
-  int next_var_id_{1};   ///< Next variable id
+  CaDiCaL::Solver sat_{};  ///< SAT solver
+  int next_var_id_{1};     ///< Next variable id
 };
 
 }  // namespace dlinear

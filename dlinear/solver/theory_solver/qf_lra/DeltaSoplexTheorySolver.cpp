@@ -79,7 +79,7 @@ DeltaSoplexTheorySolver::Explanations DeltaSoplexTheorySolver::EnableLiteral(con
   return explanations;
 }
 
-SatResult DeltaSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
+TheoryResult DeltaSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   // Set the bounds for the variables
@@ -106,12 +106,12 @@ SatResult DeltaSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Exp
   switch (status) {
     case SoplexStatus::OPTIMAL:
       UpdateModelSolution();
-      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning SAT_DELTA_SATISFIABLE");
-      return SatResult::SAT_DELTA_SATISFIABLE;
+      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning DELTA_SAT");
+      return TheoryResult::DELTA_SAT;
     case SoplexStatus::INFEASIBLE:
       UpdateExplanations(explanations);
-      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning SAT_UNSATISFIABLE");
-      return SatResult::SAT_UNSATISFIABLE;
+      DLINEAR_DEBUG("DeltaSoplexTheorySolver::CheckSat: returning UNSAT");
+      return TheoryResult::UNSAT;
     default:
       DLINEAR_UNREACHABLE();
   }

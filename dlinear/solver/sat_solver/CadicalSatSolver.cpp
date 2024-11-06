@@ -65,7 +65,7 @@ std::set<int> CadicalSatSolver::GetMainActiveLiterals() {
   return lits;
 }
 
-std::optional<Model> CadicalSatSolver::CheckSat() {
+SatResult CadicalSatSolver::CheckSat(Model &model) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
@@ -75,13 +75,15 @@ std::optional<Model> CadicalSatSolver::CheckSat() {
   const int ret = sat_.solve();
 
   if (ret == CaDiCaL::Status::SATISFIABLE) {
-    return OnSatResult();
+    OnSatResult(model);
+    return config_.complete() ? SatResult::SAT : SatResult::DELTA_SAT;
   } else if (ret == CaDiCaL::Status::UNSATISFIABLE) {
     DLINEAR_DEBUG("CadicalSatSolver::CheckSat() No solution.");
-    return {};
+    return SatResult::UNSAT;
   } else {
     DLINEAR_ASSERT(ret == CaDiCaL::Status::UNKNOWN, "ret must be UNKNOWN");
-    DLINEAR_RUNTIME_ERROR("CaDiCaL returned UNKNOWN.");
+    DLINEAR_ERROR("CadicalSatSolver::CheckSat() Unknown error.");
+    return SatResult::ERROR;
   }
 }
 

@@ -7,35 +7,12 @@
 
 #include <cmath>
 #include <limits>
+#include <ostream>
 #include <sstream>
 
 #include "dlinear/util/error.h"
 
 namespace dlinear {
-
-SmtResult parse_smt_result(const SatResult sat_result) {
-  switch (sat_result) {
-    case SatResult::SAT_SATISFIABLE:
-      return SmtResult::SAT;
-    case SatResult::SAT_DELTA_SATISFIABLE:
-      return SmtResult::DELTA_SAT;
-    case SatResult::SAT_UNSATISFIABLE:
-      return SmtResult::UNSAT;
-    case SatResult::SAT_UNSOLVED:
-      return SmtResult::UNSOLVED;
-    case SatResult::SAT_NO_RESULT:
-      return SmtResult::UNSOLVED;
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}
-
-SmtResult parse_smt_result(const LpResult sat_result) {
-  switch (sat_result) {
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}
 
 double SmtSolverOutput::precision_upper_bound() const {
   return std::nextafter(actual_precision.get_d(), std::numeric_limits<double>::infinity());
@@ -70,25 +47,6 @@ bool SmtSolverOutput::matches_expectation(SmtResult expectation) const {
       return true;
     case SmtResult::ERROR:
       return false;
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}
-
-std::ostream& operator<<(std::ostream& os, const SmtResult& bound) {
-  switch (bound) {
-    case SmtResult::UNSAT:
-      return os << "unsat";
-    case SmtResult::SKIP_SAT:
-      return os << "skip-sat";
-    case SmtResult::UNSOLVED:
-      return os << "unsolved";
-    case SmtResult::SAT:
-      return os << "sat";
-    case SmtResult::DELTA_SAT:
-      return os << "delta-sat";
-    case SmtResult::ERROR:
-      return os << "error";
     default:
       DLINEAR_UNREACHABLE();
   }

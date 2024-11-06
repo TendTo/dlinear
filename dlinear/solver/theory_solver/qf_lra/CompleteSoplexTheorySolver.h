@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -31,7 +31,7 @@ namespace dlinear {
 
 /**
  * Complete solver using SoPlex.
- * 
+ *
  * The linear is problem exactly, also dealing with strict inequalities.
  * As a tradeoff, the objective function is used internally, so it is not possible to maximise or minimise an
  * arbitrary expression.
@@ -47,7 +47,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) override;
 
-  SatResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
+  TheoryResult CheckSatCore(mpq_class* actual_precision, Explanations& explanations) override;
 
   void Reset() override;
 
@@ -67,7 +67,7 @@ class CompleteSoplexTheorySolver : public SoplexTheorySolver {
    * @return The result of the SAT check
    * @see theory_rows_to_explanations_.
    */
-  SatResult SpxCheckSat();
+  TheoryResult SpxCheckSat();
 
   /**
    * Update the explanation with the current LP solution.

@@ -5,6 +5,8 @@
  */
 #include "LpColBound.h"
 
+#include <ostream>
+
 #include "dlinear/util/error.h"
 
 namespace dlinear {

@@ -10,9 +10,10 @@
 #include <utility>
 #include <vector>
 
-#include "dlinear/solver/SatResult.h"
 #include "dlinear/solver/sat_solver/CadicalSatSolver.h"
 #include "dlinear/solver/sat_solver/PicosatSatSolver.h"
+#include "dlinear/solver/sat_solver/SatResult.h"
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/BoundImplicator.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
@@ -126,27 +127,27 @@ void Context::Impl::Push() {
   stack_.push();
 }
 
-SatResult Context::Impl::CheckSat(mpq_class *precision) {
+SmtResult Context::Impl::CheckSat(mpq_class *precision) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
   if (config_.skip_check_sat()) {
     DLINEAR_DEBUG("ContextImpl::CheckSat() - Skipping SAT check");
     UpdateAndPrintOutput(SmtResult::SKIP_SAT);
-    return SatResult::SAT_NO_RESULT;
+    return SmtResult::SKIP_SAT;
   }
 
-  const SatResult result = CheckSatCore(precision);
+  const SmtResult result = CheckSatCore(precision);
   switch (result) {
-    case SatResult::SAT_DELTA_SATISFIABLE:
-    case SatResult::SAT_SATISFIABLE:
+    case SmtResult::SAT:
+    case SmtResult::DELTA_SAT:
       model_ = ExtractModel(box());
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSat() - Found Model\n{}", model_);
       break;
-    case SatResult::SAT_UNSATISFIABLE:
+    case SmtResult::UNSAT:
       DLINEAR_DEBUG("ContextImpl::CheckSat() - Model not found");
       model_.set_empty();
       break;
-    case SatResult::SAT_UNSOLVED:
-      DLINEAR_DEBUG("ContextImpl::CheckSat() - Unknown");
+    case SmtResult::ERROR:
+      DLINEAR_DEBUG("ContextImpl::CheckSat() - Error");
       model_.set_empty();
       break;
     default:
@@ -156,19 +157,19 @@ SatResult Context::Impl::CheckSat(mpq_class *precision) {
   if (output_ == nullptr) return result;
   DLINEAR_DEBUG("ContextImpl::CheckSat() - Setting output");
   output_->actual_precision = *precision;
-  UpdateAndPrintOutput(parse_smt_result(result));
+  UpdateAndPrintOutput(result);
   return result;
 }
 
-LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
+SmtResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
   if (config_.skip_check_sat()) {
     DLINEAR_DEBUG("ContextImpl::CheckOpt() - Skipping SAT check");
     UpdateAndPrintOutput(SmtResult::SKIP_SAT);
-    return LpResult::LP_NO_RESULT;
+    return SmtResult::SKIP_SAT;
   }
-  const LpResult result = CheckOptCore(obj_lo, obj_up);
-  if (LpResult::LP_DELTA_OPTIMAL == result || LpResult::LP_OPTIMAL == result) {
+  const SmtResult result = CheckOptCore(obj_lo, obj_up);
+  if (SmtResult::DELTA_SAT == result || SmtResult::SAT == result) {
     model_ = ExtractModel(box());
     DLINEAR_DEBUG_FMT("ContextImpl::CheckOpt() - Found Model\n{}", model_);
   } else {
@@ -180,7 +181,7 @@ LpResult Context::Impl::CheckOpt(mpq_class *obj_lo, mpq_class *obj_up) {
   DLINEAR_DEBUG("ContextImpl::CheckSat() - Setting output");
   output_->lower_bound = *obj_lo;
   output_->upper_bound = *obj_up;
-  UpdateAndPrintOutput(parse_smt_result(result));
+  UpdateAndPrintOutput(result);
   return result;
 }
 
@@ -299,19 +300,19 @@ bool Context::Impl::is_max() const { return is_max_; }
   return true;
 }
 
-SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
+SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
   DLINEAR_TRACE_FMT("ContextImpl::CheckSat: Box =\n{}", box());
 
   // If false ∈ stack, it's UNSAT.
   if (std::any_of(stack_.begin(), stack_.end(), drake::symbolic::is_false)) {
     DLINEAR_DEBUG("ContextImpl::CheckSat: Found false assertion");
-    return SatResult::SAT_UNSATISFIABLE;
+    return SmtResult::UNSAT;
   }
   // If stack = ∅ or stack = {true}, it's trivially SAT.
   if (std::all_of(stack_.begin(), stack_.end(), drake::symbolic::is_true)) {
     DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Found Model\n{}", box());
-    return SatResult::SAT_SATISFIABLE;
+    return SmtResult::SAT;
   }
 
   DLINEAR_DEV_FMT("STATE: {}", fmt::join(assertions(), "\n"));
@@ -334,7 +335,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   if (!explanations.empty()) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
     LearnExplanations(explanations);
-    return SatResult::SAT_UNSATISFIABLE;
+    return SmtResult::UNSAT;
   }
 
   DLINEAR_DEV("Start tightening bounds");
@@ -345,7 +346,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     if (tight_explanations.empty()) continue;
     DLINEAR_DEV_DEBUG("ContextImpl::CheckSatCore() - Tightening bounds check = UNSAT");
     LearnExplanations(tight_explanations);
-    return SatResult::SAT_UNSATISFIABLE;
+    return SmtResult::UNSAT;
   }
   theory_solver_->Reset();
 
@@ -377,33 +378,41 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEV_DEBUG("New iteration");
     // The box is passed in to the SAT solver solely to provide the LP solver
     // with initial bounds on the numerical variables.
-    const auto sat_model = sat_solver_->CheckSat();
+    Model sat_model;
+    const SatResult sat_result = sat_solver_->CheckSat(sat_model);
 
     // The SAT solver did not return a model.
-    if (!sat_model) {
-      if (have_unsolved) {  // There was an unsolved theory instance. The SMT solver failed to prove UNSAT.
-        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNKNOWN");
-        DLINEAR_RUNTIME_ERROR("LP solver failed to solve some instances");
-      } else {  // There is no unsolved theory instance. The SAT solver succeeded in proving UNSAT.
-        DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNSAT");
-        return SatResult::SAT_UNSATISFIABLE;
-      }
+    switch (sat_result) {
+      case SatResult::DELTA_SAT:  // A SAT model was found. It is time to check the theory.
+      case SatResult::SAT:
+        break;
+      case SatResult::UNSAT:
+        if (have_unsolved) {  // There was an unsolved theory instance. The SMT solver failed to prove UNSAT.
+          DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = ERROR");
+          return SmtResult::ERROR;
+        } else {  // There is no unsolved theory instance. The SAT solver succeeded in proving UNSAT.
+          DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = UNSAT");
+          return SmtResult::UNSAT;
+        }
+      case SatResult::ERROR:
+        DLINEAR_ERROR("ContextImpl::CheckSatCore() - Sat Check = ERROR");
+        return SmtResult::ERROR;
+      default:
+        DLINEAR_UNREACHABLE();
     }
 
     // The SAT solver found a model that satisfies the formula. SAT from SATSolver.
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
-    // Extrapolate the boolean and theory model from the SAT model.
-    const std::vector<Literal> &boolean_model{sat_model->first};
-    const std::vector<Literal> &theory_model{sat_model->second};
-
     // Update the Boolean variables in the model (not used by the LP solver).
-    for (const auto &[var, truth] : boolean_model) {
+    for (const auto &[var, truth] : sat_model.boolean_model) {
       box()[var] = truth ? 1 : 0;  // true -> 1 and false -> 0
     }
 
+    // Extrapolate the theory model from the SAT model.
+    const std::vector<Literal> &theory_model{sat_model.theory_model};
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
-    if (theory_model.empty()) return SatResult::SAT_SATISFIABLE;
+    if (theory_model.empty()) return SmtResult::SAT;
 
     theory_solver_->Reset();
     const TheorySolver::Explanations bound_explanations{theory_solver_->EnableLiterals(theory_model)};
@@ -415,18 +424,18 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 
     TheorySolver::Explanations theory_explanations;
     // If the SAT solver found a model, we have to check if it is consistent with the theory
-    SatResult theory_result = theory_solver_->CheckSat(box(), actual_precision, theory_explanations);
-    if (theory_result == SatResult::SAT_DELTA_SATISFIABLE || theory_result == SatResult::SAT_SATISFIABLE) {
+    const TheoryResult theory_result = theory_solver_->CheckSat(box(), actual_precision, theory_explanations);
+    if (theory_result == TheoryResult::DELTA_SAT || theory_result == TheoryResult::SAT) {
       // SAT from TheorySolver.
       DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
       box() = theory_solver_->model();
-      return theory_result;
+      return theory_result == TheoryResult::DELTA_SAT ? SmtResult::DELTA_SAT : SmtResult::SAT;
     }
 
-    if (theory_result == SatResult::SAT_UNSATISFIABLE) {  // UNSAT from TheorySolver.
+    if (theory_result == TheoryResult::UNSAT) {  // UNSAT from TheorySolver.
       DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
     } else {
-      DLINEAR_ASSERT(theory_result == SatResult::SAT_UNSOLVED, "theory must be unsolved");
+      DLINEAR_ASSERT(theory_result == TheoryResult::ERROR, "theory must be unsolved");
       DLINEAR_WARN("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
       have_unsolved = true;  // Will prevent return of UNSAT
       theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
@@ -436,7 +445,7 @@ SatResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   }
 }
 
-LpResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
+SmtResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
   DLINEAR_RUNTIME_ERROR("CheckOptCore() Not implemented");
 }
 void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {

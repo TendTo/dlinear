@@ -21,28 +21,3 @@ const auto enabled_test_solvers = ::testing::Values(
     dlinear::Config::LPSolver::SOPLEX
 #endif
 );
-
-std::set<dlinear::SmtResult> delta_result(dlinear::SmtResult res) {
-  switch (res) {
-    case dlinear::SmtResult::SAT:
-      return {dlinear::SmtResult::SAT, dlinear::SmtResult::DELTA_SAT};
-    case dlinear::SmtResult::DELTA_SAT:
-      return {dlinear::SmtResult::DELTA_SAT};
-    case dlinear::SmtResult::UNSAT:
-      return {dlinear::SmtResult::UNSAT, dlinear::SmtResult::DELTA_SAT};
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}
-
-bool delta_match_expected(const dlinear::SmtSolverOutput& output, dlinear::SmtResult expected) {
-  switch (expected) {
-    case dlinear::SmtResult::SAT:
-    case dlinear::SmtResult::DELTA_SAT:
-      return output.is_sat();
-    case dlinear::SmtResult::UNSAT:
-      return true;
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}

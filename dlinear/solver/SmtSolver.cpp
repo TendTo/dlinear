@@ -5,7 +5,6 @@
  */
 #include "SmtSolver.h"
 
-#include <iostream>
 #include <utility>
 
 #include "dlinear/parser/mps/Driver.h"

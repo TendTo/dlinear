@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/SatResult.h"
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/BoundIterator.h"
 #include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpColBound.h"
@@ -153,7 +153,7 @@ class TheorySolver {
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
    */
-  SatResult CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations);
+  TheoryResult CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations);
   /**
    * Check the satisfiability of the theory.
    *
@@ -168,7 +168,7 @@ class TheorySolver {
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
    */
-  virtual SatResult CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) = 0;
+  virtual TheoryResult CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) = 0;
 
   /**
    * Consolidate the solver.

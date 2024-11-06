@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 
+#include "dlinear/solver/sat_solver/SatResult.h"
 #include "dlinear/symbolic/PlaistedGreenbaumCnfizer.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -142,10 +143,12 @@ class SatSolver {
 
   /**
    * Check the satisfiability of the current configuration.
-   * @return a witness, satisfying model if the problem is SAT.
-   * @return empty optional if UNSAT
+   * @param[out] a witness, satisfying model if the problem is SAT.
+   * @return SatResult::SAT if the problem is satisfiable and a model has been found
+   * @return SatResult::UNSAT if the problem is unsatisfiable
+   * @return SatResult::ERROR if an error occurred
    */
-  virtual std::optional<Model> CheckSat() = 0;
+  virtual SatResult CheckSat(Model &model) = 0;
   /** @getter{statistics, SAT solver}*/
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
   /** @getter{statistics of the cnfizer, SAT solver} */
@@ -211,12 +214,10 @@ class SatSolver {
    */
   void GetMainActiveLiterals(std::set<int> &lits) const;
   /**
-   * If the SAT solver returns SAT, this function can be used to obtain a model
-   * for the formula.
-   *
-   * @return model returned by the SAT solver
+   * If the SAT solver returns SAT, this function can be used to obtain a model for the formula.
+   * @param[out] model returned by the SAT solver
    */
-  Model OnSatResult();
+  void OnSatResult(Model &model);
   /**
    * Update data structures used to minimize the number of assigned literals the theory solver has to verify.
    * @param lit literal from the SAT solver

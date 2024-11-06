@@ -5,6 +5,7 @@
  */
 #include "ReluConstraint.h"
 
+#include <ostream>
 #include <utility>
 
 #include "dlinear/symbolic/LinearFormulaFlattener.h"

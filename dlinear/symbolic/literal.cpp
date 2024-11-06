@@ -52,9 +52,9 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &literals)
 
 std::ostream &operator<<(std::ostream &os, const Model &model) {
   os << "Boolean model:\n";
-  for (const auto &lit : model.first) os << lit << " ";
+  for (const auto &lit : model.boolean_model) os << lit << " ";
   os << "\nTheory model:\n";
-  for (const auto &lit : model.second) os << lit << " ";
+  for (const auto &lit : model.theory_model) os << lit << " ";
   return os;
 }
 }  // namespace dlinear

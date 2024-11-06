@@ -47,7 +47,7 @@ TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   SmtSolver s{config_};
   s.Parse();
   const SmtSolverOutput result = s.CheckSat();
-  ASSERT_TRUE(delta_match_expected(result, s.GetExpected()));
+  ASSERT_EQ(~result.result, ~s.GetExpected());
   if (result.is_sat() && config_.precision() == 0) {
     ASSERT_TRUE(s.Verify(result.complete_model));
   }

@@ -119,7 +119,7 @@ CompleteSoplexTheorySolver::Explanations CompleteSoplexTheorySolver::EnableLiter
   return explanations;
 }
 
-SatResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
+TheoryResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, Explanations &explanations) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   // Set the bounds for the variables
@@ -131,9 +131,9 @@ SatResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, 
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: calling SoPlex (phase {})", config_.simplex_sat_phase());
 
   // First, check the sat result without taking into account nq constraints
-  SatResult sat_status = SpxCheckSat();
+  TheoryResult sat_status = SpxCheckSat();
   DLINEAR_DEBUG_FMT("CompleteSoplexTheorySolver::CheckSat: no nq constraints sat_status = {}", sat_status);
-  if (sat_status != SatResult::SAT_SATISFIABLE) {
+  if (sat_status != TheoryResult::SAT) {
     theory_rows_to_explanations_.insert(last_theory_rows_to_explanation_);
     DLINEAR_ASSERT(theory_rows_to_explanations_.size() == 1, "theory_rows_to_explanations_ must have size 1");
     GetExplanation(explanations);
@@ -167,7 +167,7 @@ SatResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, 
     DLINEAR_TRACE_FMT("CompleteSoplexTheorySolver::CheckSat: intermediate sat_status = {}", sat_status);
 
     // If the problem is SAT and not locked, we can return immediately
-    if (sat_status == SatResult::SAT_SATISFIABLE) break;
+    if (sat_status == TheoryResult::SAT) break;
 
     // Use some heuristics to update the iterator based on the current explanation.
     // Otherwise, just increment the iterator with the next configuration and try again
@@ -176,20 +176,20 @@ SatResult CompleteSoplexTheorySolver::CheckSatCore(mpq_class *actual_precision, 
 
   *actual_precision = 0;
   switch (sat_status) {
-    case SatResult::SAT_SATISFIABLE:
+    case TheoryResult::SAT:
       UpdateModelSolution();
       DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: returning sat");
-      return SatResult::SAT_SATISFIABLE;
-    case SatResult::SAT_UNSATISFIABLE:
+      return TheoryResult::SAT;
+    case TheoryResult::UNSAT:
       GetExplanation(explanations);
       DLINEAR_DEBUG("CompleteSoplexTheorySolver::CheckSat: returning unsat");
-      return SatResult::SAT_UNSATISFIABLE;
+      return TheoryResult::UNSAT;
     default:
       DLINEAR_UNREACHABLE();
   }
 }
 
-SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
+TheoryResult CompleteSoplexTheorySolver::SpxCheckSat() {
 #if 0
   spx_.writeFile("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear/dump.lp");
 #endif
@@ -208,13 +208,12 @@ SatResult CompleteSoplexTheorySolver::SpxCheckSat() {
 
   switch (status) {
     case SoplexStatus::OPTIMAL:
-      if (spx_.objValueRational() > 0)
-        return locked_solver_ ? SatResult::SAT_UNSATISFIABLE : SatResult::SAT_SATISFIABLE;
+      if (spx_.objValueRational() > 0) return locked_solver_ ? TheoryResult::UNSAT : TheoryResult::SAT;
       UpdateExplanationStrictInfeasible();
-      return SatResult::SAT_UNSATISFIABLE;
+      return TheoryResult::UNSAT;
     case SoplexStatus::INFEASIBLE:
       UpdateExplanationInfeasible();
-      return SatResult::SAT_UNSATISFIABLE;
+      return TheoryResult::UNSAT;
     default:
       DLINEAR_UNREACHABLE();
   }

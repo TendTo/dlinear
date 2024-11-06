@@ -15,8 +15,16 @@ dlinear_srcs(
     name = "srcs",
     subfolder = "theory_solver",
     deps = [
-        "//dlinear/solver/sat_solver/qf_lra",
+        "//dlinear/solver/theory_solver/qf_lra",
     ],
+)
+
+dlinear_cc_library(
+    name = "theory_result",
+    srcs = ["TheoryResult.cpp"],
+    hdrs = ["TheoryResult.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = ["//dlinear/util:logging"],
 )
 
 dlinear_cc_library(
@@ -25,11 +33,13 @@ dlinear_cc_library(
     hdrs = ["TheorySolver.h"],
     implementation_deps = [
         "//dlinear/util:error",
-        "//dlinear/util:timer",
     ],
     deps = [
+        ":theory_result",
         "//dlinear/libs:gmp",
-        "//dlinear/solver/theory_solver/qf_lra:qf_lra_theory_solver",
+        "//dlinear/solver/theory_solver/qf_lra:bound_iterator",
+        "//dlinear/solver/theory_solver/qf_lra:bound_preprocessor",
+        "//dlinear/solver/theory_solver/qf_lra:lp_bound",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",

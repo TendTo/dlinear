@@ -12,6 +12,14 @@ dlinear_srcs(
 )
 
 dlinear_cc_library(
+    name = "sat_result",
+    srcs = ["SatResult.cpp"],
+    hdrs = ["SatResult.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
     name = "sat_solver",
     srcs = [
         "SatSolver.cpp",
@@ -37,6 +45,7 @@ dlinear_cc_library(
         "//dlinear/util:timer",
     ],
     deps = [
+        ":sat_result",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:plaisted_greenbaum_cnfizer",

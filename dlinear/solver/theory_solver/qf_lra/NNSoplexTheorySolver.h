@@ -10,6 +10,7 @@
 
 #include <unordered_set>
 
+#include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/solver/theory_solver/qf_lra/SoplexTheorySolver.h"
 #include "dlinear/symbolic/literal.h"
@@ -35,7 +36,7 @@ class NNSoplexTheorySolver : public SoplexTheorySolver {
 
   void AddLiteral(const Variable &formula_var, const Formula &formula) override;
   Explanations EnableLiteral(const Literal &lit) override;
-  SatResult CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) override;
+  TheoryResult CheckSatCore(mpq_class *actual_precision, std::set<LiteralSet> &explanations) override;
   void Reset() override;
 
  private:

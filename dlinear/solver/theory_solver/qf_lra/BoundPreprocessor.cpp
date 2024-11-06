@@ -70,7 +70,7 @@ bool check_explanation(const BoundPreprocessor& preprocessor, const LiteralSet& 
     smt_solver.Assert(f);
   }
   const auto result = smt_solver.CheckSat(&zero);
-  if (result != SatResult::SAT_UNSATISFIABLE) {
+  if (result != TheorySolverResult::UNSAT) {
     //    DLINEAR_RUNTIME_ERROR_FMT("The explanation {} is not valid", explanation);
     print_all = true;
     return false;

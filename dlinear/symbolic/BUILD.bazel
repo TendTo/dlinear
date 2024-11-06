@@ -66,6 +66,7 @@ dlinear_cc_library(
     deps = [
         ":symbolic",
         "//dlinear/util:config",
+        "//dlinear/util:exception",
         "//dlinear/util:stats",
     ],
 )

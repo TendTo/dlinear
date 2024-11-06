@@ -16,6 +16,7 @@
 #include <set>
 #include <string>
 
+#include "dlinear/solver/sat_solver/SatResult.h"
 #include "dlinear/solver/sat_solver/SatSolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -44,7 +45,7 @@ class PicosatSatSolver : public SatSolver {
 
   void MakeSatVar(const Variable &var) override;
 
-  std::optional<Model> CheckSat() override;
+  SatResult CheckSat(Model &model) override;
 
   void Push() override;
   void Pop() override;

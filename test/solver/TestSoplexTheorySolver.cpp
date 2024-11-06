@@ -19,8 +19,8 @@ using dlinear::Config;
 using dlinear::Literal;
 using dlinear::LiteralSet;
 using dlinear::PredicateAbstractor;
-using dlinear::SatResult;
 using dlinear::SoplexTheorySolver;
+using dlinear::TheoryResult;
 using dlinear::Variable;
 using std::unique_ptr;
 
@@ -30,7 +30,7 @@ class MockSoplexTheorySolver : public SoplexTheorySolver {
       : SoplexTheorySolver{predicate_abstractor} {}
   MOCK_METHOD(void, AddLiteral, (const dlinear::Variable &formula_var, const dlinear::Formula &formula), (override));
   MOCK_METHOD(SoplexTheorySolver::Explanations, EnableLiteral, (const dlinear::Literal &lit), (override));
-  MOCK_METHOD(SatResult, CheckSatCore, (mpq_class * actual_precision, SoplexTheorySolver::Explanations &explanation),
+  MOCK_METHOD(TheoryResult, CheckSatCore, (mpq_class * actual_precision, SoplexTheorySolver::Explanations &explanation),
               (override));
   MOCK_METHOD(void, EnableSpxRow, (int, bool), (override));
 };

@@ -118,7 +118,8 @@ void TheorySolver::BoundsToTheoryRows(const Variable &var, const mpq_class &valu
     for (const Literal &exp : it->explanation) theory_rows.insert(lit_to_theory_row_.at(exp.var.get_id()));
   }
 }
-SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, std::set<LiteralSet> &explanations) {
+TheoryResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision,
+                                          std::set<LiteralSet> &explanations) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
 
@@ -134,7 +135,7 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
   if (theory_row_to_lit_.empty()) {
     DLINEAR_DEBUG("TheorySolver::CheckSat: no need to call LP solver");
     UpdateModelBounds();
-    return SatResult::SAT_SATISFIABLE;
+    return TheoryResult::SAT;
   }
 
   if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
@@ -143,7 +144,7 @@ SatResult TheorySolver::CheckSat(const Box &box, mpq_class *actual_precision, st
     preprocessor_.Process(explanations);
     timer_guard.Resume();
     DLINEAR_DEBUG("TheorySolver::CheckSat: conflict detected in preprocessing");
-    if (!explanations.empty()) return SatResult::SAT_UNSATISFIABLE;
+    if (!explanations.empty()) return TheoryResult::UNSAT;
   }
 
   DLINEAR_DEV_DEBUG_FMT("TheorySolver::CheckSat: running {}", config_.lp_solver());
