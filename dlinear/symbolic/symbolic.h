@@ -46,6 +46,8 @@ using drake::symbolic::Variables;
 using drake::symbolic::VisitExpression;
 using drake::symbolic::VisitFormula;
 
+using AssertCallback = std::function<void(const Formula &)>;
+
 /**
  * Change the kind of the formula by multiplying all the expressions by a negative number.
  *

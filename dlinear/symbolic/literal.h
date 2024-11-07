@@ -9,6 +9,7 @@
 #pragma once
 
 #include <compare>
+#include <functional>
 #include <ostream>
 #include <set>
 #include <utility>
@@ -25,7 +26,10 @@ struct Literal {
   Variable var;  ///< Variable.
   bool truth;    ///< Truth value.
 };
-using LiteralSet = std::set<Literal>;  ///< A set of literals.
+using LiteralSet = std::set<Literal>;                       ///< A set of literals.
+using Explanation = std::set<Literal>;                      ///< An explanation of a conflict.
+using ConflictCallback = std::function<void(Explanation)>;  ///< Callback for conflict explanations.
+
 /** A model is a pair of two vectors of literals. */
 struct Model {
   std::vector<Literal> boolean_model;  ///< Boolean literals that have been assigned a value.
