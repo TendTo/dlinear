@@ -20,6 +20,7 @@ class TheoryPreprocessor {
   explicit TheoryPreprocessor(const Config& config, const std::string& class_name = "TheoryPreprocessor");
   virtual ~TheoryPreprocessor() = default;
 
+  virtual void AddVariable(const Variable& var) = 0;
   virtual bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) = 0;
   virtual bool Process(const ConflictCallback& conflict_cb) = 0;
 

@@ -57,6 +57,8 @@ dlinear_cc_library(
         "//dlinear/util:error",
     ],
     deps = [
+        ":theory_preprocessor",
+        ":theory_propagator",
         ":theory_result",
         "//dlinear/libs:gmp",
         "//dlinear/solver/theory_solver/qf_lra:bound_iterator",

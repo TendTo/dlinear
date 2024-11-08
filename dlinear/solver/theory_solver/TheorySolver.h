@@ -42,9 +42,9 @@ class TheorySolver {
    * understanding of the literals.
    * The @p class_name is used to identify the theory solver in the logs.
    * @note The @p predicate abstractor will share its configuration with the theory solver.
-   * @param class_name name of the subclass of the theory solver used
    * @param predicate_abstractor predicate abstractor linking boolean literals to theory literals. It is shared between
-   * the theory solver and the SAT solver
+   * the theory solver and the SAT solver and will determine the theory solver's configuration
+   * @param class_name name of the subclass of the theory solver used
    */
   explicit TheorySolver(const PredicateAbstractor &predicate_abstractor,
                         const std::string &class_name = "TheorySolver");
@@ -118,7 +118,7 @@ class TheorySolver {
   /** @getter{configuration, TheorySolver} */
   [[nodiscard]] const Config &config() const { return config_; }
   /** @getter{predicate abstractor, TheorySolver} */
-  [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
+  [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return pa_; }
   /** @getter{vector of enabled literals, TheorySolver} */
   [[nodiscard]] virtual LiteralSet enabled_literals() const = 0;
   /** @getter{statistics, TheorySolver} */
@@ -162,7 +162,7 @@ class TheorySolver {
    * This method must be called after all the literals have been added to the solver and before calling
    * any other method.
    * Once the solver has been consolidated, no more literals can be added to it.
-   * A previously added literal can be enabled using the @ref EnableLiteral method and disabled with @ref Reset.
+   * A previously added literal can be enabled using the @ref EnableLiteral method and disabled with @ref Backtrack.
    * @note A solver can be consolidated only once.
    * If you need to change the variables or constraints, you must create a new theory solver.
    * @param box box with the bounds for the variables, if any
@@ -177,7 +177,7 @@ class TheorySolver {
    * but they will need to be enabled again to be considered in the next iteration.
    * If you need to change them, you must create a new theory solver.
    */
-  virtual void Reset();  // TODO: backtrack instead of Reset?
+  virtual void Backtrack();
 
 #ifndef NDEBUG
   virtual void DumpEnabledLiterals() = 0;
@@ -192,12 +192,12 @@ class TheorySolver {
    */
   virtual void UpdateModelSolution() = 0;
 
-  const Config &config_;                             ///< Configuration of the theory solver
-  bool is_consolidated_;                             ///< Whether the solver has been consolidated.
-                                                     ///< It must be true before running the solver or enabling literals
-  const PredicateAbstractor &predicate_abstractor_;  ///< Predicate abstractor mapping boolean vars to theory literals
-  Box model_;                                        ///< Model produced by the theory solver
-  IterationStats stats_;                             ///< Statistics of the theory solver
+  const Config &config_;           ///< Configuration of the theory solver
+  bool is_consolidated_;           ///< Whether the solver has been consolidated.
+                                   ///< It must be true before running the solver or enabling literals
+  const PredicateAbstractor &pa_;  ///< Predicate abstractor mapping boolean vars to theory literals
+  Box model_;                      ///< Model produced by the theory solver
+  IterationStats stats_;           ///< Statistics of the theory solver
 
   std::unique_ptr<TheoryPreprocessor> preprocessor_;  ///< Preprocessor to handle the theory constraints
   std::unique_ptr<TheoryPropagator> propagator_;      ///< Propagator to handle the theory constraints

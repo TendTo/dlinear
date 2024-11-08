@@ -13,7 +13,7 @@ namespace dlinear {
 TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
     : config_{predicate_abstractor.config()},
       is_consolidated_{false},
-      predicate_abstractor_{predicate_abstractor},
+      pa_{predicate_abstractor},
       model_{config_.lp_solver()},
       stats_{config_.with_timings(), class_name, "Total time spent in CheckSat", "Total # of CheckSat"},
       preprocessor_{nullptr},
@@ -22,11 +22,11 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
 const Box &TheorySolver::model() const { return model_; }
 
 void TheorySolver::AddLiterals() {
-  for (const auto &[var, f] : predicate_abstractor_.var_to_formula_map()) AddLiteral(var, f);
+  for (const auto &[var, f] : pa_.var_to_formula_map()) AddLiteral(var, f);
 }
 
 void TheorySolver::AddLiterals(std::span<const Literal> literals) {
-  for (const Literal &lit : literals) AddLiteral(lit.var, predicate_abstractor_[lit.var]);
+  for (const Literal &lit : literals) AddLiteral(lit.var, pa_[lit.var]);
 }
 
 bool TheorySolver::PreprocessFixedLiterals(const LiteralSet &fixed_literals, const ConflictCallback &conflict_cb) {

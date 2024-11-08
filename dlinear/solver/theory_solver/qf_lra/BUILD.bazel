@@ -23,11 +23,43 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "lp_result",
+    srcs = ["LpResult.cpp"],
+    hdrs = ["LpResult.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
     name = "lp_bound",
     srcs = ["LpColBound.cpp"],
     hdrs = ["LpColBound.h"],
     implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
+    name = "lp_solver",
+    srcs = ["LpSolver.cpp"] + select({
+        "//tools:enabled_soplex": ["SoplexLpSolver.cpp"],
+        "//conditions:default": [],
+    }),
+    hdrs = ["LpSolver.h"] + select({
+        "//tools:enabled_soplex": ["SoplexLpSolver.h"],
+        "//conditions:default": [],
+    }),
+    implementation_deps = ["//dlinear/util:error"],
+    deps = [
+        ":lp_result",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
+        "//dlinear/util:stats",
+    ] + select({
+        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }),
 )
 
 dlinear_cc_library(
@@ -160,7 +192,25 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "lp_theory_solver",
+    srcs = ["LpTheorySolver.cpp"],
+    hdrs = ["LpTheorySolver.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = [
+        ":qf_lra_theory_solver",
+    ],
+)
+
+dlinear_cc_library(
     name = "qf_lra_theory_solver",
+    srcs = ["QfLraTheorySolver.cpp"],
+    hdrs = ["QfLraTheorySolver.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = ["//dlinear/solver/theory_solver"],
+)
+
+dlinear_cc_library(
+    name = "qf_lra_theory_solver_old",
     srcs = select({
         "//tools:enabled_qsoptex": [
             "DeltaQsoptexTheorySolver.cpp",

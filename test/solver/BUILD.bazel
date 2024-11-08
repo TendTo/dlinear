@@ -72,6 +72,15 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
+    name = "test_lp_solver",
+    tags = ["solver"],
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/solver/theory_solver/qf_lra:lp_solver",
+    ],
+)
+
+dlinear_cc_googletest(
     name = "test_delta_smt2",
     size = "enormous",
     data = glob(["smt2/*.smt2"]),
