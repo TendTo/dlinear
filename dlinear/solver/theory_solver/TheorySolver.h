@@ -123,6 +123,10 @@ class TheorySolver {
   [[nodiscard]] virtual LiteralSet enabled_literals() const = 0;
   /** @getter{statistics, TheorySolver} */
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
+  /** @getter{preprocessor, TheorySolver} */
+  [[nodiscard]] const TheoryPreprocessor &preprocessor() const { return *preprocessor_; }
+  /** @getter{propagator, TheorySolver} */
+  [[nodiscard]] const TheoryPropagator &propagator() const { return *propagator_; }
 
   /**
    * Check the satisfiability of the theory.
@@ -179,9 +183,7 @@ class TheorySolver {
    */
   virtual void Backtrack();
 
-#ifndef NDEBUG
-  virtual void DumpEnabledLiterals() = 0;
-#endif
+  virtual void Propagate(const AssertCallback &assert_cb);
 
  protected:
   /**

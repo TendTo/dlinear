@@ -15,6 +15,7 @@
 #include "dlinear/solver/sat_solver/SatResult.h"
 #include "dlinear/solver/theory_solver/TheoryResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/BoundImplicator.h"
+#include "dlinear/solver/theory_solver/qf_lra/DeltaLpTheorySolver.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/util/OptionValue.hpp"
@@ -24,14 +25,6 @@
 
 #ifdef DLINEAR_PYDLINEAR
 #include "pydlinear/interrupt.h"
-#endif
-#ifdef DLINEAR_ENABLED_QSOPTEX
-#include "dlinear/solver/theory_solver/qf_lra/DeltaQsoptexTheorySolver.h"
-#endif
-#ifdef DLINEAR_ENABLED_SOPLEX
-#include "dlinear/solver/theory_solver/qf_lra/CompleteSoplexTheorySolver.h"
-#include "dlinear/solver/theory_solver/qf_lra/DeltaSoplexTheorySolver.h"
-#include "dlinear/solver/theory_solver/qf_lra/NNSoplexTheorySolver.h"
 #endif
 
 namespace {
@@ -64,6 +57,8 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
       is_max_{false},
       predicate_abstractor_{config},
       ite_eliminator_{config},
+      conflict_cb_{[this](const Explanation &explanation) { LearnExplanation(explanation); }},
+      assert_cb_{[this](const Formula &f) { sat_solver_->AddFormula(f); }},
       sat_solver_{GetSatSolver()},
       theory_solver_{GetTheorySolver()} {
   boxes_.push_back(Box{config_.lp_solver()});
@@ -315,29 +310,24 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     return SmtResult::SAT;
   }
 
-  DLINEAR_DEV_FMT("STATE: {}", fmt::join(assertions(), "\n"));
-
-  // Temporarily disable to study the effect of guided constraints
-  if (config_.actual_bound_implication_frequency() != Config::PreprocessingRunningFrequency::NEVER) {
-    // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
-    BoundImplicator propagator{config_, [this](const Formula &f) { sat_solver_->AddFormula(f); },
-                               predicate_abstractor_};
-    propagator.Propagate();
-  }
+  //  DLINEAR_DEV_FMT("STATE: {}", fmt::join(assertions(), "\n"));
 
   // Add the theory literals from the SAT solver to the theory solver.
   theory_solver_->AddLiterals();
+  // Consolidate the theory literals. No more literals can be added after this.
   theory_solver_->Consolidate(box());
+  // See if any of the current literals can be used to guide the SAT by propagating and implying other literals.
+  theory_solver_->Propagate(assert_cb_);
 
   // Preprocess the fixed theory literals to avoid having to preprocess them again and again.
   DLINEAR_TRACE_FMT("Fixed theory literals: {}", sat_solver_->FixedTheoryLiterals());
-  const std::set<LiteralSet> explanations{theory_solver_->PreprocessFixedLiterals(sat_solver_->FixedTheoryLiterals())};
-  if (!explanations.empty()) {
+  const bool success = theory_solver_->PreprocessFixedLiterals(sat_solver_->FixedTheoryLiterals(), conflict_cb_);
+  if (!success) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
-    LearnExplanations(explanations);
     return SmtResult::UNSAT;
   }
 
+#if 0
   DLINEAR_DEV("Start tightening bounds");
   // Check the current constraints to see if there is anything that could be used to use for the guided constraints
   for (const std::unique_ptr<PiecewiseLinearConstraint> &constraint : pl_constraints_) {
@@ -348,7 +338,7 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     LearnExplanations(tight_explanations);
     return SmtResult::UNSAT;
   }
-  theory_solver_->Reset();
+  theory_solver_->Backtrack();
 
   for (auto it = pl_constraints_.begin(); it != pl_constraints_.end();) {
     const LiteralSet learned_clauses{it->get()->LearnedClauses()};
@@ -367,10 +357,11 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     auto &nnSoplexTheorySolver = static_cast<NNSoplexTheorySolver &>(*theory_solver_);
     nnSoplexTheorySolver.SetPiecewiseLinearConstraints(pl_constraints_);
   }
+#endif
 
   bool have_unsolved = false;
   while (true) {
-    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py, when we build dReal python package.
+    // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py, when we build dlinear python package.
 #ifdef DLINEAR_PYDLINEAR
     py_check_signals();
 #endif
@@ -401,7 +392,7 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
         DLINEAR_UNREACHABLE();
     }
 
-    // The SAT solver found a model that satisfies the formula. SAT from SATSolver.
+    // The SAT solver found a model that satisfies the formula. SAT from SAT Solver.
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Sat Check = SAT");
 
     // Update the Boolean variables in the model (not used by the LP solver).
@@ -414,34 +405,29 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     // If there is no theory to solve, the SAT solver output is enough to return SAT.
     if (theory_model.empty()) return SmtResult::SAT;
 
-    theory_solver_->Reset();
-    const TheorySolver::Explanations bound_explanations{theory_solver_->EnableLiterals(theory_model)};
-    if (!bound_explanations.empty()) {
-      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Enable bound check = UNSAT");
-      LearnExplanations(bound_explanations);
+    theory_solver_->Backtrack();
+    const bool enable_literals_success = theory_solver_->EnableLiterals(theory_model, conflict_cb_);
+    if (!enable_literals_success) {
+      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - EnableLiterals = UNSAT");
       continue;
     }
 
-    TheorySolver::Explanations theory_explanations;
     // If the SAT solver found a model, we have to check if it is consistent with the theory
-    const TheoryResult theory_result = theory_solver_->CheckSat(box(), actual_precision, theory_explanations);
+    const TheoryResult theory_result = theory_solver_->CheckSat(actual_precision, conflict_cb_);
     if (theory_result == TheoryResult::DELTA_SAT || theory_result == TheoryResult::SAT) {
       // SAT from TheorySolver.
-      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory Check = {}", theory_result);
-      box() = theory_solver_->model();
+      DLINEAR_DEBUG_FMT("ContextImpl::CheckSatCore() - Theory CheckSat = {}", theory_result);
+      box() = theory_solver_->model();  // TODO: check this. Does it remove the boolean variables?
       return theory_result == TheoryResult::DELTA_SAT ? SmtResult::DELTA_SAT : SmtResult::SAT;
     }
 
     if (theory_result == TheoryResult::UNSAT) {  // UNSAT from TheorySolver.
-      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory Check = UNSAT");
+      DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Theory CheckSat = UNSAT");
     } else {
       DLINEAR_ASSERT(theory_result == TheoryResult::ERROR, "theory must be unsolved");
-      DLINEAR_WARN("ContextImpl::CheckSatCore() - Theory Check = UNKNOWN");
+      DLINEAR_WARN("ContextImpl::CheckSatCore() - Theory CheckSat = UNKNOWN");
       have_unsolved = true;  // Will prevent return of UNSAT
-      theory_explanations.emplace(theory_model.cbegin(), theory_model.cend());
     }
-    DLINEAR_ASSERT(!theory_explanations.empty(), "theory_explanations must not be empty");
-    LearnExplanations(theory_explanations);
   }
 }
 
@@ -452,25 +438,7 @@ void Context::Impl::MinimizeCore([[maybe_unused]] const Expression &obj_expr) {
   DLINEAR_RUNTIME_ERROR("MinimizeCore() Not implemented");
 }
 std::unique_ptr<TheorySolver> Context::Impl::GetTheorySolver() {
-  switch (config_.lp_solver()) {
-#ifdef DLINEAR_ENABLED_QSOPTEX
-    case Config::LPSolver::QSOPTEX:
-      if (!config_.complete())  // TODO: add support for complete QSOPTEX
-        return std::make_unique<DeltaQsoptexTheorySolver>(predicate_abstractor_);
-      DLINEAR_RUNTIME_ERROR("Only delta-complete mode is supported for qsoptex");
-#endif
-#ifdef DLINEAR_ENABLED_SOPLEX
-    case Config::LPSolver::SOPLEX:
-      if (!config_.onnx_file().empty())
-        return std::make_unique<NNSoplexTheorySolver>(predicate_abstractor_);
-      else if (config_.complete())
-        return std::make_unique<CompleteSoplexTheorySolver>(predicate_abstractor_);
-      else
-        return std::make_unique<DeltaSoplexTheorySolver>(predicate_abstractor_);
-#endif
-    default:
-      DLINEAR_UNREACHABLE();
-  }
+  return std::make_unique<DeltaLpTheorySolver>(predicate_abstractor_);
 }
 std::unique_ptr<SatSolver> Context::Impl::GetSatSolver() {
   switch (config_.sat_solver()) {
@@ -498,11 +466,6 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   sat_solver_->AddLearnedClause(explanation);
 }
 
-void Context::Impl::LearnExplanations(const TheorySolver::Explanations &explanations) {
-  DLINEAR_ASSERT(!explanations.empty(), "Explanations cannot be empty");
-  for (const LiteralSet &explanation : explanations) LearnExplanation(explanation);
-}
-
 void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
   if (output_ == nullptr) return;
   DLINEAR_DEBUG("ContextImpl::UpdateAndPrintOutput() - Setting output");
@@ -515,7 +478,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     output_->sat_stats = sat_solver_->stats();
     output_->ite_stats = ite_eliminator_.stats();
     output_->theory_stats = theory_solver_->stats();
-    output_->preprocessor_stats = theory_solver_->preprocessor().stats() + theory_solver_->fixed_preprocessor().stats();
+    output_->preprocessor_stats = theory_solver_->preprocessor().stats();
     output_->predicate_abstractor_stats = predicate_abstractor_.stats();
     output_->cnfizer_stats = sat_solver_->cnfizer_stats();
   }

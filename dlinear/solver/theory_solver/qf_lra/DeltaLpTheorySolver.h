@@ -1,3 +1,9 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence BSD 3-Clause License
+ * DeltaLpTheorySolver class.
+ */
 #pragma once
 
 #include "dlinear/solver/theory_solver/qf_lra/LpTheorySolver.h"
@@ -10,15 +16,10 @@ class DeltaLpTheorySolver : public LpTheorySolver {
   explicit DeltaLpTheorySolver(const PredicateAbstractor& predicate_abstractor,
                                const std::string& class_name = "DeltaLpTheorySolver");
 
-  void AddVariable(const Variable& var) override;
-  void AddLiterals() override;
-  void Consolidate(const Box& box) override;
-  void Backtrack() override;
+  void AddLiteral(const Variable& formula_var, const Formula& formula) final;
+  bool EnableLiteral(const Literal& lit, ConflictCallback conflict_cb) final;
 
- protected:
-  void UpdateModelSolution() override;
-  void EnableSpxVarBound() override;
-  void EnableSpxRow(int spx_row, bool truth) override;
+  TheoryResult CheckSatCore(mpq_class* actual_precision, ConflictCallback conflict_cb) final;
 };
 
 }  // namespace dlinear

@@ -253,15 +253,6 @@ class Context::Impl {
    */
   void LearnExplanation(const LiteralSet &explanation);
   /**
-   * The TheorySolver found a number of conflicts and the explanations are the set of literals that are responsible.
-   *
-   * The explanations are returned to the SAT solver so that it can use them to learn a new clause and backtrack,
-   * looking for a new, non-conflicting assignment.
-   * @param explanations set of sets of literals that are responsible for the conflict
-   */
-  void LearnExplanations(const TheorySolver::Explanations &explanations);
-
-  /**
    * Check the satisfiability of the current set of assertions.
    *
    * This method is called internally by @ref CheckSat().
@@ -339,7 +330,10 @@ class Context::Impl {
 
   PredicateAbstractor predicate_abstractor_;  ///< Converts the theory literals to boolean variables.
   IfThenElseEliminator ite_eliminator_;       ///< Eliminates if-then-else expressions from the formula.
-  // TODO: these could become templated classes for added efficiency
+
+  ConflictCallback conflict_cb_;  ///< Callback to be called when a conflict is found.
+  AssertCallback assert_cb_;      ///< Callback to be called when an assertion needs to be added.
+
   const std::unique_ptr<SatSolver> sat_solver_;        ///< SAT solver.
   const std::unique_ptr<TheorySolver> theory_solver_;  ///< Theory solver.
 

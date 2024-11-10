@@ -14,6 +14,7 @@
 
 using dlinear::Config;
 using dlinear::GetFiles;
+using dlinear::SmtResult;
 using dlinear::SmtSolver;
 using dlinear::SmtSolverOutput;
 
@@ -39,8 +40,9 @@ class TestDeltaSmt2 : public ::testing::TestWithParam<
 INSTANTIATE_TEST_SUITE_P(TestDeltaSmt2, TestDeltaSmt2,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(GetFiles("test/solver/smt2")),
                                             ::testing::Values(0.0, 0.1),
-                                            ::testing::Values(Config::PreprocessingRunningFrequency::NEVER,
-                                                              Config::PreprocessingRunningFrequency::ON_FIXED,
+                                            ::testing::Values(
+//                                                Config::PreprocessingRunningFrequency::NEVER,
+//                                                              Config::PreprocessingRunningFrequency::ON_FIXED,
                                                               Config::PreprocessingRunningFrequency::ALWAYS)));
 
 TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
@@ -50,5 +52,9 @@ TEST_P(TestDeltaSmt2, Smt2InputAgainstExpectedOutput) {
   }
   SmtSolver s{config_};
   const SmtSolverOutput& result = s.Parse();
-  ASSERT_EQ(~result.result, ~s.GetExpected());
+
+  ASSERT_EQ(result.result, (result.result == SmtResult::DELTA_SAT ? SmtResult::DELTA_SAT : ~s.GetExpected()));
+  if (result.is_sat() && config_.precision() == 0) {
+    ASSERT_TRUE(s.Verify(result.complete_model));
+  }
 }

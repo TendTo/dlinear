@@ -53,16 +53,34 @@ bool TheorySolver::EnableLiterals(const std::span<const Literal> theory_literals
   return res;
 }
 
-void TheorySolver::Consolidate(const Box &) {
+void TheorySolver::Consolidate(const Box &model) {
   if (is_consolidated_) return;
   DLINEAR_DEBUG("TheorySolver::Consolidate()");
   is_consolidated_ = true;
+  model_ = model;
 }
 
 TheoryResult TheorySolver::CheckSat(mpq_class *actual_precision, const ConflictCallback &conflict_cb) {
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   return CheckSatCore(actual_precision, conflict_cb);
+}
+
+void TheorySolver::Propagate(const AssertCallback &assert_cb) {
+  // Temporarily disable to study the effect of guided constraints
+  // The propagator is disabled or absent (maybe this theory does not have a propagator implemented)
+  if (config_.actual_bound_implication_frequency() == Config::PreprocessingRunningFrequency::NEVER ||
+      propagator_ == nullptr) {
+    return;
+  }
+  // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
+  propagator_->Propagate(assert_cb);
+}
+void TheorySolver::Backtrack() {
+  DLINEAR_TRACE("OldTestLpSolver::Backtrack()");
+  DLINEAR_ASSERT(is_consolidated_, "The solver  must be consolidate before resetting it");
+  // Backtrack all the constraints added with the last iteration, keeping the fixed ones
+  // preprocessor_->Backtrack();
 }
 
 }  // namespace dlinear

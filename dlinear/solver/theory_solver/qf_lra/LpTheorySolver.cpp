@@ -16,62 +16,71 @@
 
 namespace dlinear {
 
-LpTheorySolver::LpTheorySolver(PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : QfLraTheorySolver{predicate_abstractor, class_name} {}
+LpTheorySolver::LpTheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
+    : QfLraTheorySolver{predicate_abstractor, class_name}, lp_solver_{LpSolver::GetInstance(config_)} {}
 
 void LpTheorySolver::AddLiterals() {
-  const int num_literals = static_cast<int>(pa_.var_to_formula_map().size());
+  DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
+  lp_solver_->ReserveRows(static_cast<int>(pa_.var_to_formula_map().size()));
+  lp_solver_->ReserveColumns(static_cast<int>(pa_.var_to_formula_map().size()));
   TheorySolver::AddLiterals();
+}
+void LpTheorySolver::AddLiterals(std::span<const Literal> literals) {
+  DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
+  lp_solver_->ReserveRows(static_cast<int>(literals.size()));
+  lp_solver_->ReserveColumns(static_cast<int>(literals.size()));
+  TheorySolver::AddLiterals(literals);
 }
 
 void LpTheorySolver::AddVariable(const Variable &var) {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add variables after consolidation");
-  auto it = var_to_lp_col_.find(var);
-  // The variable is already present
-  if (it != var_to_lp_col_.end()) return;
-
-  const int num_cols = lp_solver_->num_columns();
-  lp_solver_->AddColumn();
-  var_to_lp_col_.emplace(var, num_cols);
-  lp_col_to_var_.emplace_back(var);
+  if (lp_solver_->var_to_col().contains(var)) return;  // Variable is already present
+  lp_solver_->AddColumn(var);
+  vars_bounds_.emplace(var, BoundVector{lp_solver_->ninfinity(), lp_solver_->infinity()});
   if (preprocessor_ != nullptr) preprocessor_->AddVariable(var);
-  DLINEAR_DEBUG_FMT("LpTheorySolver::AddVariable({} ↦ {})", var, num_cols);
+  DLINEAR_DEBUG_FMT("LpTheorySolver::AddVariable({} ↦ {})", var, lp_solver_->num_columns());
 }
 
 void LpTheorySolver::Consolidate(const Box &box) {
   if (is_consolidated_) return;
 
   lp_solver_->Consolidate();
+  rows_state_.resize(lp_solver_->num_rows(), false);
 
-  DLINEAR_ASSERT(static_cast<int>(lp_col_to_var_.size()) <= lp_solver_->num_columns(), "theory_col must be in bounds");
+  DLINEAR_ASSERT(static_cast<int>(lp_solver_->col_to_var().size()) <= lp_solver_->num_columns(),
+                 "theory_col must be in bounds");
   // Set variable bounds based on the box
-  for (const Variable &var : lp_col_to_var_) {
+  for (const Variable &var : lp_solver_->col_to_var()) {
     if (box.has_variable(var)) {
-      DLINEAR_ASSERT(lp_solver_->ninfinity() <= box[var].lb(), "lower bound must be >= -infinity");
-      DLINEAR_ASSERT(box[var].lb() <= box[var].ub(), "lower bound must be <= upper bound");
-      DLINEAR_ASSERT(box[var].ub() <= lp_solver_->infinity(), "upper bound must be <= infinity");
-      preprocessor_->SetInfinityBounds(var, box[var].lb(), box[var].ub());
+      DLINEAR_ASSERT_FMT(lp_solver_->ninfinity() <= box[var].lb(), "invalid lower bound. Expected {} <= {}",
+                         lp_solver_->ninfinity(), box[var].lb());
+      DLINEAR_ASSERT_FMT(box[var].lb() <= box[var].ub(), "invalid bounds. Expected {} <= {}", box[var].lb(),
+                         box[var].ub());
+      DLINEAR_ASSERT_FMT(box[var].ub() <= lp_solver_->infinity(), "invalid upper bound. Expected {} <= {}",
+                         box[var].ub(), lp_solver_->infinity());
+      vars_bounds_.insert_or_assign(var, BoundVector{box[var].lb(), box[var].ub()});
     }
   }
 
   // Backtrack preprocessor to the fixed bounds
-  preprocessor_->Clear(fixed_preprocessor_);
+  //  if (preprocessor_ != nullptr) preprocessor_->Backtrack();
   TheorySolver::Consolidate(box);
 }
 
 void LpTheorySolver::Backtrack() {
-  TheorySolver::Backtrack();
+  // Disable all rows
+  rows_state_.assign(rows_state_.size(), false);
   lp_solver_->Backtrack();
 }
 
 void LpTheorySolver::UpdateModelSolution() {
   DLINEAR_TRACE("LpTheorySolver::UpdateModelSolution()");
   DLINEAR_ASSERT(lp_solver_->solution().has_value(), "solution must be available");
-  DLINEAR_ASSERT(lp_solver_->solution().value().size() >= lp_col_to_var_.size(),
+  DLINEAR_ASSERT(lp_solver_->solution().value().size() >= lp_solver_->col_to_var().size(),
                  "solution must contain all the variables");
-  for (int theory_col = 0; theory_col < static_cast<int>(lp_col_to_var_.size()); theory_col++) {
-    const Variable &var{lp_col_to_var_[theory_col]};
-    const mpq_class val = lp_solver_->solution().value().at(theory_col);
+  for (int theory_col = 0; theory_col < static_cast<int>(lp_solver_->col_to_var().size()); theory_col++) {
+    const Variable &var = lp_solver_->col_to_var().at(theory_col);
+    const mpq_class &val = lp_solver_->solution().value().at(theory_col);
     DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "val must be in bounds");
     model_[var] = val;
   }
@@ -79,7 +88,7 @@ void LpTheorySolver::UpdateModelSolution() {
 
 void LpTheorySolver::UpdateModelBounds() {
   DLINEAR_ASSERT(lp_solver_->num_rows() == 0, "There must be no rows in the LP solver");
-  DLINEAR_ASSERT(std::all_of(lp_col_to_var_.cbegin(), lp_col_to_var_.cend(),
+  DLINEAR_ASSERT(std::all_of(lp_solver_->col_to_var().cbegin(), lp_solver_->col_to_var().cend(),
                              [this](const Variable &var) {
                                const auto &[lb, ub] = vars_bounds_.at(var).GetActiveBoundsValue();
                                return lb <= ub;
@@ -102,36 +111,43 @@ void LpTheorySolver::UpdateModelBounds() {
   }
 }
 
-void LpTheorySolver::UpdateExplanation(LiteralSet &explanation) {
-  explanation.clear();
+void LpTheorySolver::UpdateInfeasible(const ConflictCallback &conflict_cb) {
+  LiteralSet explanation;
   for (const auto &bound : lp_solver_->infeasible_bounds().value()) {
-    const Variable &var = lp_col_to_var_[std::abs(bound)];
+    const Variable &var = lp_solver_->col_to_var().at(std::abs(bound));
     const BoundVector &var_bounds = vars_bounds_.at(var);
     var_bounds.GetActiveBounds(bound < 0 ? var_bounds.active_lower_bound() : var_bounds.active_upper_bound())
         .explanation(explanation);
   }
   for (const auto &row : lp_solver_->infeasible_rows().value()) {
-    explanation.insert(lp_row_to_lit_[row]);
+    explanation.insert(lp_solver_->row_to_lit().at(row));
   }
+  conflict_cb(explanation);
 }
 
 void LpTheorySolver::DisableNotEnabledRows() {
-  for (int theory_row = 0; theory_row < lp_solver_->num_rows(); theory_row++) {
-    if (!lp_rows_state_.at(theory_row)) lp_solver_->DisableRow(theory_row);
+  for (int row = 0; row < static_cast<int>(rows_state_.size()); row++) {
+    if (!rows_state_.at(row)) lp_solver_->DisableRow(row);
   }
 }
 
-void LpTheorySolver::EnableSpxVarBound() {
+void LpTheorySolver::EnableVarBound() {
   for (const auto &[var, bounds] : vars_bounds_) {
-    lp_solver_->EnableBound(var_to_lp_col_.at(var), bounds.active_lower_bound(), bounds.active_upper_bound());
-    DLINEAR_TRACE_FMT("EnableSpxVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(),
-                      bounds.active_upper_bound());
+    lp_solver_->EnableBound(lp_solver_->var_to_col().at(var), bounds.active_lower_bound(), bounds.active_upper_bound());
+    DLINEAR_TRACE_FMT("EnableVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(), bounds.active_upper_bound());
   }
 }
 
-void LpTheorySolver::EnableSpxRow(const int spx_row) {
-  const auto &[var, truth] = lp_row_to_lit_[spx_row];
-  EnableSpxRow(spx_row, truth);
+LiteralSet LpTheorySolver::enabled_literals() const {
+  std::set<Literal> enabled_lits{};
+  for (std::size_t i = 0; i < lp_solver_->row_to_lit().size(); ++i) {
+    if (rows_state_[i]) enabled_lits.insert(lp_solver_->row_to_lit().at(i));
+  }
+  for (const auto &[var, bound] : vars_bounds_) {
+    const BoundIterator it = bound.GetActiveBounds();
+    it.explanation(enabled_lits);
+  }
+  return enabled_lits;
 }
 
 }  // namespace dlinear
