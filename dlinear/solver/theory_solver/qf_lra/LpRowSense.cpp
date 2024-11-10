@@ -12,7 +12,7 @@
 namespace dlinear {
 
 LpRowSense parseLpSense(const Formula &f) {
-  DLINEAR_ASSERT(is_relational(f), "Expected a relational formula");
+  DLINEAR_ASSERT_FMT(is_relational(f), "Expected a relational formula, got {}", f);
   if (is_equal_to(f)) return LpRowSense::EQ;
   if (is_greater_than(f)) return LpRowSense::GT;
   if (is_greater_than_or_equal_to(f)) return LpRowSense::GE;

@@ -14,10 +14,33 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
       ninfinity_{-soplex::infinity},
       infinity_{soplex::infinity},
       rninfinity_{-soplex::infinity},
-      rinfinity_{soplex::infinity} {}
+      rinfinity_{soplex::infinity} {
+  // Default SoPlex parameters
+  spx_.setRealParam(soplex::SoPlex::FEASTOL, config_.precision());
+  spx_.setBoolParam(soplex::SoPlex::RATREC, false);
+  spx_.setIntParam(soplex::SoPlex::READMODE, soplex::SoPlex::READMODE_RATIONAL);
+  spx_.setIntParam(soplex::SoPlex::SOLVEMODE, soplex::SoPlex::SOLVEMODE_RATIONAL);
+  spx_.setIntParam(soplex::SoPlex::CHECKMODE, soplex::SoPlex::CHECKMODE_RATIONAL);
+  spx_.setIntParam(soplex::SoPlex::SYNCMODE, soplex::SoPlex::SYNCMODE_AUTO);
+  spx_.setIntParam(soplex::SoPlex::SIMPLIFIER, soplex::SoPlex::SIMPLIFIER_INTERNAL);
+  spx_.setIntParam(soplex::SoPlex::VERBOSITY, config_.verbose_simplex());
+  // Default is maximize.
+  spx_.setIntParam(soplex::SoPlex::OBJSENSE, soplex::SoPlex::OBJSENSE_MAXIMIZE);
+  // Enable precision boosting
+  bool enable_precision_boosting = config_.lp_mode() != Config::LPMode::PURE_ITERATIVE_REFINEMENT;
+  spx_.setBoolParam(soplex::SoPlex::ADAPT_TOLS_TO_MULTIPRECISION, enable_precision_boosting);
+  spx_.setBoolParam(soplex::SoPlex::PRECISION_BOOSTING, enable_precision_boosting);
+  spx_.setIntParam(soplex::SoPlex::RATFAC_MINSTALLS, enable_precision_boosting ? 0 : 2);
+  // Enable iterative refinement
+  bool enable_iterative_refinement = config_.lp_mode() != Config::LPMode::PURE_PRECISION_BOOSTING;
+  spx_.setBoolParam(soplex::SoPlex::ITERATIVE_REFINEMENT, enable_iterative_refinement);
+  DLINEAR_DEBUG_FMT(
+      "SoplexTheorySolver::SoplexTheorySolver: precision = {}, precision_boosting = {}, iterative_refinement = {}",
+      config_.precision(), enable_precision_boosting, enable_iterative_refinement);
+}
 
-int SoplexLpSolver::num_columns() const { return spx_.numColsRational(); }
-int SoplexLpSolver::num_rows() const { return spx_.numRowsRational(); }
+int SoplexLpSolver::num_columns() const { return spx_cols_.num() > 0 ? spx_cols_.num() : spx_.numColsRational(); }
+int SoplexLpSolver::num_rows() const { return spx_rows_.num() > 0 ? spx_rows_.num() : spx_.numRowsRational(); }
 const mpq_class& SoplexLpSolver::ninfinity() const { return infinity_; }
 const mpq_class& SoplexLpSolver::infinity() const { return ninfinity_; }
 
@@ -30,12 +53,15 @@ void SoplexLpSolver::AddColumn() {
   // Add the column to the LP
   spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), rinfinity_, rninfinity_));
 }
-void SoplexLpSolver::AddRow(const Formula& formula) {
+void SoplexLpSolver::AddRow(const Formula& formula) { AddRow(formula, parseLpSense(formula)); }
+void SoplexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
+  senses_.emplace_back(sense);
   spx_rows_.add(soplex::LPRowRational(rninfinity_, ParseRowCoeff(formula), rinfinity_));
 }
 void SoplexLpSolver::SetObjective(int column, const mpq_class& value) {
   spx_.changeObjRational(column, Rational(value.get_mpq_t()));
 }
+void SoplexLpSolver::EnableRow(const int row) { EnableRow(row, senses_[row], rhs_[row]); }
 void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense) { EnableRow(row, sense, rhs_[row]); }
 void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
   DLINEAR_ASSERT(row < spx_.numRowsRational(), "Row index out of bounds");
@@ -107,9 +133,11 @@ LpResult SoplexLpSolver::Optimise(mpq_class& precision) {
 
   switch (status) {
     case SoplexStatus::OPTIMAL:
+      UpdateFeasible();
+      return max_violation.is_zero() ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
     case SoplexStatus::UNBOUNDED:
       UpdateFeasible();
-      return LpResult::OPTIMAL;
+      return LpResult::UNBOUNDED;
     case SoplexStatus::INFEASIBLE:
       UpdateInfeasible();
       return LpResult::INFEASIBLE;
@@ -173,7 +201,7 @@ void SoplexLpSolver::UpdateInfeasible() {
       col_violation += farkas_ray[j] * spx_.rowVectorRational(j)[i];
     }
     if (col_violation.is_zero()) continue;
-    DLINEAR_TRACE_FMT("SoplexLpSolver::UpdateInfeasible: {}[{}] = {}", lp_col_to_var_[i], i, col_violation);
+    DLINEAR_TRACE_FMT("SoplexLpSolver::UpdateInfeasible: {}[{}] = {}", col_to_var_.at(i), i, col_violation);
     infeasible_bounds_->emplace_back(col_violation > 0 ? i : -i);
   }
 }
@@ -218,13 +246,14 @@ soplex::DSVectorRational SoplexLpSolver::ParseRowCoeff(const Formula& formula) {
 }
 
 void SoplexLpSolver::SetVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const {
-  const auto it = var_to_lp_col_.find(var);
-  if (it == var_to_lp_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Undefined variable in the SoPlex LP solver: {}", var);
+  const auto it = var_to_col_.find(var);
+  if (it == var_to_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Undefined variable in the SoPlex LP solver: {}", var);
   if (value <= ninfinity_ || value >= infinity_) {
     DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large for SoPlex: {}", value);
   }
   coeffs.add(it->second, gmp::ToMpq(value));
 }
+
 void SoplexLpSolver::Dump() { spx_.writeFileRational("~/dlinear.temp.dump.soplex.lp"); }
 
 }  // namespace dlinear

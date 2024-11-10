@@ -72,11 +72,28 @@ dlinear_cc_googletest(
 )
 
 dlinear_cc_googletest(
-    name = "test_lp_solver",
+    name = "test_delta_lp_solver",
+    size = "large",
+    data = glob(["mps/*.mps"]),
     tags = ["solver"],
     deps = [
         ":test_solver_utils",
+        "//dlinear/parser/mps",
         "//dlinear/solver/theory_solver/qf_lra:lp_solver",
+        "//dlinear/symbolic:linear_formula_flattener",
+    ],
+)
+
+dlinear_cc_googletest(
+    name = "test_complete_lp_solver",
+    size = "large",
+    data = glob(["mps/*.mps"]),
+    tags = ["solver"],
+    deps = [
+        ":test_solver_utils",
+        "//dlinear/parser/mps",
+        "//dlinear/solver/theory_solver/qf_lra:lp_solver",
+        "//dlinear/symbolic:linear_formula_flattener",
     ],
 )
 

@@ -11,6 +11,7 @@
 
 #include "dlinear/parser/mps/Driver.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpSolver.h"
+#include "dlinear/symbolic/LinearFormulaFlattener.h"
 #include "test/solver/TestSolverUtils.h"
 
 using dlinear::Box;
@@ -18,18 +19,19 @@ using dlinear::Config;
 using dlinear::Context;
 using dlinear::Formula;
 using dlinear::GetFiles;
+using dlinear::LinearFormulaFlattener;
 using dlinear::LpResult;
 using dlinear::LpSolver;
 using dlinear::Variable;
 using dlinear::mps::MpsDriver;
 
-class TestLpSolver : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
+class TestDeltaLpSolver : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
  protected:
   Config config_;
   std::unique_ptr<LpSolver> lp_solver_;
   std::unique_ptr<Context> context_;
 
-  TestLpSolver() {
+  TestDeltaLpSolver() {
     const auto& [lp_solver, filename, precision] = GetParam();
     config_.m_precision() = precision;
     config_.m_complete() = false;
@@ -44,26 +46,40 @@ class TestLpSolver : public ::testing::TestWithParam<std::tuple<Config::LPSolver
   }
 };
 
-INSTANTIATE_TEST_SUITE_P(TestLpSolver, TestLpSolver,
+INSTANTIATE_TEST_SUITE_P(TestDeltaLpSolver, TestDeltaLpSolver,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(GetFiles("test/solver/mps")),
-                                            ::testing::Values(0.0)));
+                                            ::testing::Values(0.1, 0.001)));
 
-TEST_P(TestLpSolver, MpsInputAgainstExpectedOutput) {
+TEST_P(TestDeltaLpSolver, LpInputAgainstExpectedOutput) {
+  DLINEAR_LOG_INIT_VERBOSITY(1);
+  if (config_.lp_solver() == Config::LPSolver::QSOPTEX) GTEST_SKIP();
   MpsDriver driver{*context_};
   driver.ParseFile(config_.filename());
   for (const Formula& assertion : context_->assertions()) {
     for (const Variable& var : assertion.GetFreeVariables()) {
-      lp_solver_->AddColumn(var);
+      if (!lp_solver_->var_to_col().contains(var)) lp_solver_->AddColumn(var);
     }
-    lp_solver_->AddRow(assertion);
+    Formula flat_assertion = LinearFormulaFlattener{config_}.Flatten(assertion);
+    if (is_negation(flat_assertion))
+      flat_assertion =
+          get_lhs_expression(get_operand(flat_assertion)) >= get_rhs_expression(get_operand(flat_assertion));
+    lp_solver_->AddRow(flat_assertion);
   }
   lp_solver_->Consolidate();
   mpq_class precision{config_.precision()};
+  lp_solver_->EnableRows();
   const LpResult result = lp_solver_->Optimise(precision);
-  ASSERT_EQ(result, context_->GetInfo(":status") == "sat" ? LpResult::OPTIMAL : LpResult::INFEASIBLE);
-  Box model{context_->model()};
 
-  if (result == LpResult::OPTIMAL && config_.precision() == 0) {
+  ASSERT_EQ(~result, context_->GetInfo(":status") == "sat" ? LpResult::DELTA_OPTIMAL : LpResult::INFEASIBLE);
+  EXPECT_LE(precision, config_.precision());
+  EXPECT_TRUE(result != LpResult::OPTIMAL || precision == 0);
+
+  if (result == LpResult::OPTIMAL) {
+    Box model{context_->model()};
+    for (int i = 0; i < static_cast<int>(lp_solver_->solution().value().size()); ++i) {
+      model.Add(lp_solver_->col_to_var().at(i));
+      model[lp_solver_->col_to_var().at(i)] = lp_solver_->solution().value().at(i);
+    }
     ASSERT_TRUE(context_->Verify(model));
   }
 }

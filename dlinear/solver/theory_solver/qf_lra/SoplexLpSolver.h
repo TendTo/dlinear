@@ -8,6 +8,8 @@
 
 #include "dlinear/libs/libsoplex.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpSolver.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -24,8 +26,10 @@ class SoplexLpSolver : public LpSolver {
   void ReserveRows(int num_rows) final;
   void AddColumn() final;
   void AddRow(const Formula& formula) final;
+  void AddRow(const Formula& formula, LpRowSense sense) final;
   void SetObjective(int column, const mpq_class& value) final;
 
+  void EnableRow(int row) final;
   void EnableRow(int row, LpRowSense sense) final;
   void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) final;
   void DisableRow(int row) final;
@@ -83,7 +87,7 @@ class SoplexLpSolver : public LpSolver {
    */
   void UpdateInfeasible();
 
-  soplex::SoPlex spx_;
+  soplex::SoPlex spx_;  ///< SoPlex LP solver
 
   soplex::LPColSetRational spx_cols_;  ///< Columns of the LP problem
   soplex::LPRowSetRational spx_rows_;  ///< Rows of the LP problem
