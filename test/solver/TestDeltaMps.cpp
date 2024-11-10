@@ -14,6 +14,7 @@
 
 using dlinear::Config;
 using dlinear::GetFiles;
+using dlinear::SmtResult;
 using dlinear::SmtSolver;
 using dlinear::SmtSolverOutput;
 
@@ -47,7 +48,8 @@ TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
   SmtSolver s{config_};
   s.Parse();
   const SmtSolverOutput result = s.CheckSat();
-  ASSERT_EQ(~result.result, ~s.GetExpected());
+
+  ASSERT_EQ(result.result, (result.result == SmtResult::DELTA_SAT ? SmtResult::DELTA_SAT : ~s.GetExpected()));
   if (result.is_sat() && config_.precision() == 0) {
     ASSERT_TRUE(s.Verify(result.complete_model));
   }

@@ -6,6 +6,7 @@
 #include "LpSolver.h"
 
 #include <ostream>
+#include <utility>
 
 #include "dlinear/solver/theory_solver/qf_lra/QsoptexLpSolver.h"
 #include "dlinear/solver/theory_solver/qf_lra/SoplexLpSolver.h"
@@ -13,7 +14,7 @@
 
 namespace dlinear {
 
-LpSolver::LpSolver(const Config& config, const std::string& class_name)
+LpSolver::LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name)
     : config_{config},
       stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
       rhs_{},
@@ -25,7 +26,9 @@ LpSolver::LpSolver(const Config& config, const std::string& class_name)
       objective_value_{},
       solution_{},
       infeasible_rows_{},
-      infeasible_bounds_{} {}
+      infeasible_bounds_{},
+      ninfinity_{std::move(ninfinity)},
+      infinity_{std::move(infinity)} {}
 
 std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
   switch (config.lp_solver()) {
@@ -67,18 +70,23 @@ void LpSolver::UpdateModelWithSolution(Box& model) {
   }
 }
 void LpSolver::AddRow(const Variable& formula_var, const Formula& formula) {
+  AddRow(formula_var, formula, parseLpSense(formula));
+}
+void LpSolver::AddRow(const Formula& formula) { AddRow(formula, parseLpSense(formula)); }
+void LpSolver::AddRow(const Variable& formula_var, const Formula& formula, LpRowSense sense) {
   DLINEAR_ASSERT(!lit_to_row_.contains(formula_var), "Literal already exists in the LP.");
   // Update indexes
   lit_to_row_.emplace(formula_var, lit_to_row_.size());
   row_to_lit_.emplace_back(formula_var, true);
   // Add a row representing this formula to the lp solver
-  AddRow(formula);
+  AddRow(formula, sense);
 
   DLINEAR_ASSERT(static_cast<std::size_t>(num_rows()) == row_to_lit_.size(), "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(num_rows()) == lit_to_row_.size(), "incorrect theory_row_to_lit_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(num_rows()) == senses_.size(), "incorrect spx_sense_.size()");
   DLINEAR_ASSERT(static_cast<std::size_t>(num_rows()) == rhs_.size(), "incorrect spx_rhs_.size()");
 }
+
 void LpSolver::UpdateLiteralAssignment(const Variable& var, bool truth) {
   DLINEAR_ASSERT(lit_to_row_.contains(var), "Literal not found in the LP.");
   UpdateLiteralAssignment(lit_to_row_.at(var), truth);
@@ -110,8 +118,6 @@ void LpSolver::ReserveColumns(int size) {
   var_to_col_.reserve(size);
   col_to_var_.reserve(size);
 }
-
-void LpSolver::AddRow(const Formula& formula) { AddRow(formula, parseLpSense(formula)); }
 
 void LpSolver::EnableRow(int row) { EnableRow(row, senses_.at(row), rhs_.at(row)); }
 void LpSolver::EnableRow(int row, LpRowSense sense) { EnableRow(row, sense, rhs_.at(row)); }

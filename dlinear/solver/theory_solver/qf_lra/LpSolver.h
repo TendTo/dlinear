@@ -35,7 +35,7 @@ class LpSolver {
    * @param config configuration to use
    * @param class_name name of the class
    */
-  explicit LpSolver(const Config& config, const std::string& class_name = "LpSolver");
+  LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name = "LpSolver");
   virtual ~LpSolver() = default;
 
   /** @getter{number of columns, lp solver} */
@@ -43,9 +43,9 @@ class LpSolver {
   /** @getter{number of rows, lp solver} */
   [[nodiscard]] virtual int num_rows() const = 0;
   /** @getter{negative infinity threshold value, lp solver} */
-  [[nodiscard]] virtual const mpq_class& ninfinity() const = 0;
+  [[nodiscard]] const mpq_class& ninfinity() const { return ninfinity_; }
   /** @getter{infinity threshold value, lp solver} */
-  [[nodiscard]] virtual const mpq_class& infinity() const = 0;
+  [[nodiscard]] const mpq_class& infinity() const { return infinity_; }
   /** @getter{statistics, lp solver} */
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
   /** @getter{configuration, lp solver} */
@@ -77,8 +77,9 @@ class LpSolver {
   virtual void AddColumn() = 0;
   void AddColumn(const Variable& var);
 
-  void AddRow(const Formula& formula);
   void AddRow(const Variable& formula_var, const Formula& formula);
+  void AddRow(const Variable& formula_var, const Formula& formula, LpRowSense sense);
+  void AddRow(const Formula& formula);
   virtual void AddRow(const Formula& formula, LpRowSense sense) = 0;
 
   virtual void SetObjective(int column, const mpq_class& value) = 0;
@@ -150,6 +151,9 @@ class LpSolver {
   std::optional<std::vector<int>> infeasible_rows_;    ///< Set of infeasible rows detected by the Farkas ray
   std::optional<std::vector<int>> infeasible_bounds_;  ///< Set of infeasible bounds detected by the Farkas ray.
   ///< If the row index is negative, the lower bound is to blame, else the infeasibility arises from the upper bound
+
+  mpq_class ninfinity_;  ///< Negative infinity threshold value
+  mpq_class infinity_;   ///< Infinity threshold value
 };
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver);

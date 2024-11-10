@@ -25,7 +25,7 @@ extern "C" void QsoptexCheckSatPartialSolution(mpq_QSdata const* /*prob*/, mpq_t
 }
 
 QsoptexLpSolver::QsoptexLpSolver(const Config& config, const std::string& class_name)
-    : LpSolver{config, class_name}, qsx_{nullptr}, ray_{0}, x_{0}, ninfinity_{0}, infinity_{0} {
+    : LpSolver{config, 0, 0, class_name}, qsx_{nullptr}, ray_{0}, x_{0} {
   qsopt_ex::QSXStart();
   ninfinity_ = mpq_class{mpq_NINFTY};
   infinity_ = mpq_class{mpq_INFTY};
@@ -47,8 +47,6 @@ QsoptexLpSolver::~QsoptexLpSolver() {
 
 int QsoptexLpSolver::num_columns() const { return mpq_QSget_colcount(qsx_); }
 int QsoptexLpSolver::num_rows() const { return mpq_QSget_rowcount(qsx_); }
-const mpq_class& QsoptexLpSolver::ninfinity() const { return infinity_; }
-const mpq_class& QsoptexLpSolver::infinity() const { return ninfinity_; }
 
 void QsoptexLpSolver::AddColumn() {
   // Add the column to the LP

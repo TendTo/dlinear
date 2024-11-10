@@ -24,8 +24,6 @@ class QsoptexLpSolver : public LpSolver {
 
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
-  [[nodiscard]] const mpq_class& ninfinity() const override;
-  [[nodiscard]] const mpq_class& infinity() const override;
 
   void AddColumn() final;
   void AddRow(const Formula& formula, LpRowSense sense) final;
@@ -81,9 +79,6 @@ class QsoptexLpSolver : public LpSolver {
 
   qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
   qsopt_ex::MpqArray x_;    ///< Solution vector
-
-  mpq_class ninfinity_;  ///< Negative infinity
-  mpq_class infinity_;   ///< Positive infinity
 };
 
 }  // namespace dlinear

@@ -668,8 +668,8 @@ const mpq_class* BoundPreprocessor::StoreTemporaryMpq(const mpq_class& value) {
 Bound BoundPreprocessor::GetSimpleBound(const dlinear::Literal& lit) const {
   return GetSimpleBound(lit, predicate_abstractor_[lit.var]);
 }
-Bound BoundPreprocessor::GetSimpleBound(const Literal& lit, const Formula& formula) const {
-  DLINEAR_ASSERT(IsSimpleBound(formula), "Formula must be a simple bound");
+Bound BoundPreprocessor::GetSimpleBound(const Literal& lit, const Formula& formula) {
+  DLINEAR_ASSERT_FMT(IsSimpleBound(formula), "Expected simple bound, got {}", formula);
   const Expression& lhs{get_lhs_expression(formula)};
   const Expression& rhs{get_rhs_expression(formula)};
   if (IsEqualTo(formula, lit.truth)) {

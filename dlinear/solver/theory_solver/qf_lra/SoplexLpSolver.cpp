@@ -14,10 +14,8 @@ using soplex::Rational;
 using SoplexStatus = soplex::SPxSolver::Status;
 
 SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_name)
-    : LpSolver{config, class_name},
+    : LpSolver{config, -soplex::infinity, soplex::infinity, class_name},
       spx_{},
-      ninfinity_{-soplex::infinity},
-      infinity_{soplex::infinity},
       rninfinity_{-soplex::infinity},
       rinfinity_{soplex::infinity} {
   // Default SoPlex parameters
@@ -46,8 +44,6 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
 
 int SoplexLpSolver::num_columns() const { return spx_cols_.num() > 0 ? spx_cols_.num() : spx_.numColsRational(); }
 int SoplexLpSolver::num_rows() const { return spx_rows_.num() > 0 ? spx_rows_.num() : spx_.numRowsRational(); }
-const mpq_class& SoplexLpSolver::ninfinity() const { return infinity_; }
-const mpq_class& SoplexLpSolver::infinity() const { return ninfinity_; }
 
 void SoplexLpSolver::ReserveColumns(const int num_columns) {
   LpSolver::ReserveColumns(num_columns);
@@ -254,7 +250,7 @@ void SoplexLpSolver::SetVarCoeff(soplex::DSVectorRational& coeffs, const Variabl
   const auto it = var_to_col_.find(var);
   if (it == var_to_col_.end()) DLINEAR_RUNTIME_ERROR_FMT("Undefined variable in the SoPlex LP solver: {}", var);
   if (value <= ninfinity_ || value >= infinity_) {
-    DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large for SoPlex: {}", value);
+    DLINEAR_RUNTIME_ERROR_FMT("LP coefficient too large for SoPlex: {} <= {} <= {}", ninfinity_, value, infinity_);
   }
   coeffs.add(it->second, gmp::ToMpq(value));
 }

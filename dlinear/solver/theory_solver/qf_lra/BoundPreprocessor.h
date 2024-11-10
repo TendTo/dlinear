@@ -296,6 +296,9 @@ class BoundPreprocessor {
   bool PropagateBoundsPolynomial(const Literal& lit, const Variable& var_to_propagate,
                                  const std::vector<Bound>& assumptions, Explanations& explanations);
 
+  Bound GetSimpleBound(const dlinear::Literal& lit) const;
+  static Bound GetSimpleBound(const Literal& lit, const Formula& formula);
+
  protected:
   const Variable* ShouldPropagateEqPolynomial(const Literal& lit) const;
   const Variable* ShouldPropagateEqPolynomial(const Formula& formula) const;
@@ -303,9 +306,6 @@ class BoundPreprocessor {
   const Variable* ShouldPropagateBoundsPolynomial(const Formula& formula) const;
   bool ShouldEvaluate(const Literal& lit) const;
   bool ShouldEvaluate(const Formula& formula) const;
-
-  Bound GetSimpleBound(const dlinear::Literal& lit) const;
-  Bound GetSimpleBound(const Literal& lit, const Formula& formula) const;
 
   void PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);
   void PropagateEqConstraints(std::list<Literal>& enabled_literals, Explanations& explanations);

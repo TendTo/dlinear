@@ -23,8 +23,6 @@ class SoplexLpSolver : public LpSolver {
 
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
-  [[nodiscard]] const mpq_class& ninfinity() const override;
-  [[nodiscard]] const mpq_class& infinity() const override;
 
   void ReserveColumns(int num_columns) final;
   void ReserveRows(int num_rows) final;
@@ -41,7 +39,6 @@ class SoplexLpSolver : public LpSolver {
 
   void Consolidate() final;
   void Backtrack() final;
-
 
 #ifndef NDEBUG
   void Dump() final;
@@ -89,8 +86,6 @@ class SoplexLpSolver : public LpSolver {
   soplex::LPColSetRational spx_cols_;  ///< Columns of the LP problem
   soplex::LPRowSetRational spx_rows_;  ///< Rows of the LP problem
 
-  mpq_class ninfinity_;          ///< Negative infinity
-  mpq_class infinity_;           ///< Positive infinity
   soplex::Rational rninfinity_;  ///< Rational negative infinity
   soplex::Rational rinfinity_;   ///< Rational positive infinity
 };

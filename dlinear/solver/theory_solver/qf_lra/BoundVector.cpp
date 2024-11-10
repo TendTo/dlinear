@@ -33,6 +33,12 @@ BoundVector::BoundVector(const mpq_class& inf_l, const mpq_class& inf_u)
       active_lower_bound_{inf_l_},
       active_upper_bound_{inf_u_} {}
 
+bool BoundVector::AddBound(const Bound& bound, const ConflictCallback& callback_cb) {
+  const BoundIterator violation{AddBound(*bound.value, bound.lp_bound, bound.theory_literal, bound.explanation)};
+  if (violation.empty()) return true;
+  callback_cb(violation.explanation());
+  return false;
+}
 BoundIterator BoundVector::AddBound(const Bound& bound) {
   return AddBound(*bound.value, bound.lp_bound, bound.theory_literal, bound.explanation);
 }

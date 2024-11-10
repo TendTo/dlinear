@@ -73,6 +73,20 @@ class BoundVector {
    *
    * The bound will be sorted in the vector according to its value and type with the goal of identifying
    * violating bounds as fast a possible.
+   * If a violation is detected the explanation will be used to call @p conflict_cb.
+   * @note If a violation is detected, the bound will not be added. The vector will remain unchanged.
+   * @param bound bound to add
+   * @param conflict_cb callback to call if a violation is detected
+   * @return true if the bound has been added successfully
+   * @return false if a violation prevented the bound from being added
+   * @see AddBound(const mpq_class&, LpColBound, int)
+   */
+  bool AddBound(const Bound& bound, const ConflictCallback& conflict_cb);
+  /**
+   * Add a new bound to the vector.
+   *
+   * The bound will be sorted in the vector according to its value and type with the goal of identifying
+   * violating bounds as fast a possible.
    * The @p idx it is ignored by the @ref BoundVector, but can be used by the caller to identify the bound.
    * Before adding a new bound, a check is performed to ensure it does not violate any of the existing bounds.
    * If a violation is detected, a @ref BoundIterator containing all the violated bounds is returned instead.
