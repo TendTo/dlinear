@@ -43,13 +43,13 @@
     }                                                                                                      \
   } while (false)
 
-#define DLINEAR_ASSERT_FMT(condition, message, ...)                                                                    \
-  do {                                                                                                                 \
-    if (!(condition)) {                                                                                                \
-      DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}\n" message, #condition, __FILE__, __LINE__, __VA_ARGS__);   \
-      throw ::dlinear::DlinearAssertionException(fmt::format("Assertion `{}` failed in {}:{}: {}" message, #condition, \
-                                                             __FILE__, __LINE__, message, __VA_ARGS__));               \
-    }                                                                                                                  \
+#define DLINEAR_ASSERT_FMT(condition, message, ...)                                                                  \
+  do {                                                                                                               \
+    if (!(condition)) {                                                                                              \
+      DLINEAR_CRITICAL_FMT("Assertion `{}` failed in {}:{}\n" message, #condition, __FILE__, __LINE__, __VA_ARGS__); \
+      throw ::dlinear::DlinearAssertionException(                                                                    \
+          fmt::format("Assertion `{}` failed in {}:{}: " message, #condition, __FILE__, __LINE__, __VA_ARGS__));     \
+    }                                                                                                                \
   } while (false)
 
 #define DLINEAR_UNREACHABLE()                                                   \

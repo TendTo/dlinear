@@ -1,3 +1,8 @@
+/**
+ * @author Ernesto Casablanca (casablancaernesto@gmail.com)
+ * @copyright 2024 dlinear
+ * @licence BSD 3-Clause License
+ */
 #include "SoplexLpSolver.h"
 
 #include "dlinear/util/error.h"
@@ -45,15 +50,18 @@ const mpq_class& SoplexLpSolver::ninfinity() const { return infinity_; }
 const mpq_class& SoplexLpSolver::infinity() const { return ninfinity_; }
 
 void SoplexLpSolver::ReserveColumns(const int num_columns) {
+  LpSolver::ReserveColumns(num_columns);
   spx_cols_ = soplex::LPColSetRational(num_columns, num_columns);
 }
-void SoplexLpSolver::ReserveRows(const int num_rows) { spx_rows_ = soplex::LPRowSetRational(num_rows, num_rows); }
+void SoplexLpSolver::ReserveRows(const int num_rows) {
+  LpSolver::ReserveRows(num_rows);
+  spx_rows_ = soplex::LPRowSetRational(num_rows, num_rows);
+}
 
 void SoplexLpSolver::AddColumn() {
   // Add the column to the LP
   spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), rinfinity_, rninfinity_));
 }
-void SoplexLpSolver::AddRow(const Formula& formula) { AddRow(formula, parseLpSense(formula)); }
 void SoplexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
   senses_.emplace_back(sense);
   spx_rows_.add(soplex::LPRowRational(rninfinity_, ParseRowCoeff(formula), rinfinity_));
@@ -61,12 +69,14 @@ void SoplexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
 void SoplexLpSolver::SetObjective(int column, const mpq_class& value) {
   spx_.changeObjRational(column, Rational(value.get_mpq_t()));
 }
-void SoplexLpSolver::EnableRow(const int row) { EnableRow(row, senses_[row], rhs_[row]); }
-void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense) { EnableRow(row, sense, rhs_[row]); }
 void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
-  DLINEAR_ASSERT(row < spx_.numRowsRational(), "Row index out of bounds");
+  DLINEAR_ASSERT(row < num_rows(), "Row index out of bounds");
   DLINEAR_ASSERT(ninfinity_ <= rhs && rhs <= infinity_, "LP RHS value too large");
-  if (sense == LpRowSense::NQ) return;
+  if (sense == LpRowSense::NQ) {
+    DisableRow(row);
+    return;
+  }
+
   spx_.changeRangeRational(
       row,
       sense == LpRowSense::GE || sense == LpRowSense::GT || sense == LpRowSense::EQ ? Rational(rhs.get_mpq_t())
@@ -89,6 +99,7 @@ void SoplexLpSolver::EnableBound(const int column, const LpColBound bound, const
       break;
     case LpColBound::D:
     case LpColBound::F:
+      DisableBound(column);
       break;
     default:
       DLINEAR_UNREACHABLE();
@@ -99,13 +110,7 @@ void SoplexLpSolver::EnableBound(const int column, const mpq_class& lb, const mp
 }
 void SoplexLpSolver::DisableBound(const int column) { spx_.changeBoundsRational(column, rninfinity_, rinfinity_); }
 void SoplexLpSolver::DisableRow(const int row) { spx_.changeRangeRational(row, rninfinity_, rinfinity_); }
-void SoplexLpSolver::DisableAll() {
-  for (int i = 0; i < spx_.numColsRational(); i++) DisableBound(i);
-  for (int i = 0; i < spx_.numRowsRational(); i++) DisableRow(i);
-}
-void SoplexLpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
-  for (const auto& [column, value] : objective) SetObjective(column, value);
-}
+
 void SoplexLpSolver::Consolidate() {
   spx_.addColsRational(spx_cols_);
   spx_.addRowsRational(spx_rows_);
@@ -116,7 +121,7 @@ void SoplexLpSolver::Backtrack() {
   // https://github.com/scipopt/soplex/issues/38
   spx_.clearBasis();
 }
-LpResult SoplexLpSolver::Optimise(mpq_class& precision) {
+LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision) {
   const SoplexStatus status = spx_.optimize();
   Rational max_violation, sum_violation;
 
@@ -152,11 +157,11 @@ void SoplexLpSolver::UpdateFeasible() {
   infeasible_rows_ = std::nullopt;
 
   // Set the feasible information
-  const int colcount = spx_.numColsRational();
+  const int colcount = num_columns();
 
   objective_value_ = gmp::ToMpqClass(spx_.objValueRational().backend().data());
   solution_ = std::make_optional<std::vector<mpq_class>>();
-  solution_->reserve(spx_.numColsRational());
+  solution_->reserve(colcount);
   soplex::VectorRational solution;
   solution.reDim(colcount);
   [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(solution);
@@ -174,14 +179,14 @@ void SoplexLpSolver::UpdateInfeasible() {
   infeasible_rows_ = std::make_optional<std::vector<int>>();
 
   // Get the infeasible rows
-  const int rowcount = spx_.numRowsRational();
-  const int colcount = spx_.numColsRational();
+  const int rowcount = num_rows();
+  const int colcount = num_columns();
 
   infeasible_rows_->reserve(rowcount);
   infeasible_bounds_->reserve(colcount);
 
   soplex::VectorRational farkas_ray{rowcount};
-  DLINEAR_ASSERT(farkas_ray.dim() == spx_.numRowsRational(), "farkas_ray must have the same dimension as the rows");
+  DLINEAR_ASSERT(farkas_ray.dim() == num_rows(), "farkas_ray must have the same dimension as the rows");
   // Get the Farkas ray to identify which rows are responsible for the conflict
   [[maybe_unused]] bool res = spx_.getDualFarkasRational(farkas_ray);
   DLINEAR_ASSERT(res, "getDualFarkasRational() must return true");

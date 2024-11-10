@@ -61,23 +61,23 @@ class LpSolver {
   /** @getter{right-hand side of the constraints, lp solver} */
   [[nodiscard]] const std::vector<mpq_class>& rhs() const { return rhs_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
-  [[nodiscard]] const std::map<Variable, int>& var_to_col() const { return var_to_col_; }
+  [[nodiscard]] const std::unordered_map<Variable, int>& var_to_col() const { return var_to_col_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::vector<Variable>& col_to_var() const { return col_to_var_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
-  [[nodiscard]] const std::map<Variable, int>& lit_to_row() const { return lit_to_row_; }
+  [[nodiscard]] const std::unordered_map<Variable, int>& lit_to_row() const { return lit_to_row_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
   [[nodiscard]] const std::vector<Literal>& row_to_lit() const { return row_to_lit_; }
   /** @getter{sense of the constraints, lp solver} */
   [[nodiscard]] const std::vector<LpRowSense>& senses() const { return senses_; }
 
-  virtual void ReserveColumns(int size) = 0;
-  virtual void ReserveRows(int size) = 0;
+  virtual void ReserveColumns(int size);
+  virtual void ReserveRows(int size);
 
   virtual void AddColumn() = 0;
   void AddColumn(const Variable& var);
 
-  virtual void AddRow(const Formula& formula) = 0;
+  void AddRow(const Formula& formula);
   void AddRow(const Variable& formula_var, const Formula& formula);
   virtual void AddRow(const Formula& formula, LpRowSense sense) = 0;
 
@@ -87,8 +87,8 @@ class LpSolver {
   void UpdateLiteralAssignment(int row, bool truth);
 
   void EnableRows();
-  virtual void EnableRow(int row) = 0;
-  virtual void EnableRow(int row, LpRowSense sense) = 0;
+  void EnableRow(int row);
+  void EnableRow(int row, LpRowSense sense);
   virtual void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) = 0;
   virtual void DisableRow(int row) = 0;
 
@@ -100,11 +100,12 @@ class LpSolver {
   void EnableBound(const Variable& var, const mpq_class& lb, const mpq_class& ub);
   void DisableBound(const Variable& var);
 
-  virtual void DisableAll() = 0;
+  void DisableAll();
 
-  virtual void SetObjective(const std::unordered_map<int, mpq_class>& objective) = 0;
+  void SetObjective(const std::unordered_map<int, mpq_class>& objective);
+  void SetObjective(const std::vector<mpq_class>& objective);
 
-  virtual void Consolidate() = 0;
+  virtual void Consolidate();
   virtual void Backtrack();
 
   /**
@@ -113,7 +114,7 @@ class LpSolver {
    * The actual precision will be returned in the @p precision parameter.
    * @param precision[in, out] desired precision for the optimisation that becomes the actual precision achieved
    */
-  virtual LpResult Optimise(mpq_class& precision) = 0;
+  LpResult Optimise(mpq_class& precision);
 
   void UpdateModelWithSolution(Box& model);
 
@@ -122,25 +123,27 @@ class LpSolver {
 #endif
 
  protected:
+  virtual LpResult OptimiseCore(mpq_class& precision) = 0;
+
   const Config& config_;  ///< Configuration to use
   IterationStats stats_;  ///< Statistics of the solver
 
-  std::vector<mpq_class> rhs_;
-  std::vector<LpRowSense> senses_;
+  std::vector<mpq_class> rhs_;      ///< Right-hand side of the constraints
+  std::vector<LpRowSense> senses_;  ///< Sense of the constraints (e.g. <=, =, >=)
 
-  std::map<Variable, int> var_to_col_;  ///< Theory column ⇔ Variable.
-                                        ///< The column is the one used by the lp solver.
-                                        ///< The Variable is the one created by the PredicateAbstractor
-  std::vector<Variable> col_to_var_;    ///< Literal ⇔ lp row.
-                                        ///< The literal is the one created by the PredicateAbstractor
-                                        ///< The row is the constraint used by the lp solver.
-  std::map<Variable, int> lit_to_row_;  ///< Theory row ⇔ Literal
-                                        ///< The row is the constraint used by the lp solver.
-                                        ///< The literal is the one created by the PredicateAbstractor.
-                                        ///< It may not contain simple bounds
-  std::vector<Literal> row_to_lit_;     ///< Variable ⇔ lp column.
-                                        ///< The Variable is the one created by the PredicateAbstractor
-                                        ///< The column is the one used by the lp solver.
+  std::unordered_map<Variable, int> var_to_col_;  ///< Theory column ⇔ Variable.
+                                                  ///< The column is the one used by the lp solver.
+                                                  ///< The Variable is the one created by the PredicateAbstractor
+  std::vector<Variable> col_to_var_;              ///< Literal ⇔ lp row.
+                                                  ///< The literal is the one created by the PredicateAbstractor
+                                                  ///< The row is the constraint used by the lp solver.
+  std::unordered_map<Variable, int> lit_to_row_;  ///< Theory row ⇔ Literal
+                                                  ///< The row is the constraint used by the lp solver.
+                                                  ///< The literal is the one created by the PredicateAbstractor.
+                                                  ///< It may not contain simple bounds
+  std::vector<Literal> row_to_lit_;               ///< Variable ⇔ lp column.
+                                                  ///< The Variable is the one created by the PredicateAbstractor
+                                                  ///< The column is the one used by the lp solver.
 
   std::optional<mpq_class> objective_value_;           ///< Objective value
   std::optional<std::vector<mpq_class>> solution_;     ///< Solution vector

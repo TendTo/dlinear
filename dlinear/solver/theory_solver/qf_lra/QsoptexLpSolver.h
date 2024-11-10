@@ -2,32 +2,31 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence BSD 3-Clause License
- * SoplexLpSolver class.
+ * QsoptexLpSolver class.
  */
 #pragma once
 
-#ifndef DLINEAR_ENABLED_SOPLEX
-#error SoPlex is not enabled. Please enable it by adding "--//tools:enable_soplex" to the bazel command.
+#ifndef DLINEAR_ENABLED_QSOPTEX
+#error QSopt_ex is not enabled. Please enable it by adding "--//tools:enable_qsoptex" to the bazel command.
 #endif
 
-#include "dlinear/libs/libsoplex.h"
+#include "dlinear/libs/libqsopt_ex.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpSolver.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
-class SoplexLpSolver : public LpSolver {
+class QsoptexLpSolver : public LpSolver {
  public:
-  explicit SoplexLpSolver(const Config& config, const std::string& class_name = "SoplexLpSolver");
+  explicit QsoptexLpSolver(const Config& config, const std::string& class_name = "QsoptexLpSolver");
+  ~QsoptexLpSolver() override;
 
   [[nodiscard]] int num_columns() const override;
   [[nodiscard]] int num_rows() const override;
   [[nodiscard]] const mpq_class& ninfinity() const override;
   [[nodiscard]] const mpq_class& infinity() const override;
 
-  void ReserveColumns(int num_columns) final;
-  void ReserveRows(int num_rows) final;
   void AddColumn() final;
   void AddRow(const Formula& formula, LpRowSense sense) final;
   void SetObjective(int column, const mpq_class& value) final;
@@ -39,33 +38,27 @@ class SoplexLpSolver : public LpSolver {
   void EnableBound(int column, const mpq_class& lb, const mpq_class& ub) final;
   void DisableBound(int column) final;
 
-  void Consolidate() final;
-  void Backtrack() final;
-
-
 #ifndef NDEBUG
   void Dump() final;
 #endif
 
  private:
   LpResult OptimiseCore(mpq_class& precision) final;
+
   /**
-   * Parse a @p formula and return the vector of coefficients to apply to the decisional variables.
-   *
-   * It will store the rhs term in @ref rhs_ and create a vector of coefficients for the row.
+   * Parse a @p formula and set the coefficient for each decisional variable appearing in it,
+   * while also storing the rhs term in @ref rhs_.
+   * @param row row to set the coefficients for
    * @param formula symbolic formula representing the row
-   * @return vector of coefficients to apply to the decisional variables in the row
    */
-  soplex::DSVectorRational ParseRowCoeff(const Formula& formula);
+  void SetRowCoeff(int row, const Formula& formula);
   /**
-   * Set the coefficients to apply to @p var on a specific row.
-   *
-   * The coefficient is set in @p coeff.
-   * @param coeffs[out] vector of coefficients to apply to the decisional variables
+   * Set the coefficients to apply to @p var on a specific @p row.
+   * @param row row to set the coefficients for
    * @param var variable to set the coefficients for
    * @param value value to set the coefficients to
    */
-  void SetVarCoeff(soplex::DSVectorRational& coeffs, const Variable& var, const mpq_class& value) const;
+  void SetVarCoeff(int row, const Variable& var, const mpq_class& value) const;
 
   /**
    * Use the result from the lp solver to update the solution vector and objective value.
@@ -84,15 +77,13 @@ class SoplexLpSolver : public LpSolver {
    */
   void UpdateInfeasible();
 
-  soplex::SoPlex spx_;  ///< SoPlex LP solver
+  mpq_QSprob qsx_;  ///< QSopt_ex LP solver
 
-  soplex::LPColSetRational spx_cols_;  ///< Columns of the LP problem
-  soplex::LPRowSetRational spx_rows_;  ///< Rows of the LP problem
+  qsopt_ex::MpqArray ray_;  ///< Ray of the last infeasible solution
+  qsopt_ex::MpqArray x_;    ///< Solution vector
 
-  mpq_class ninfinity_;          ///< Negative infinity
-  mpq_class infinity_;           ///< Positive infinity
-  soplex::Rational rninfinity_;  ///< Rational negative infinity
-  soplex::Rational rinfinity_;   ///< Rational positive infinity
+  mpq_class ninfinity_;  ///< Negative infinity
+  mpq_class infinity_;   ///< Positive infinity
 };
 
 }  // namespace dlinear

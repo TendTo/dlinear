@@ -7,6 +7,7 @@
 
 #include <ostream>
 
+#include "dlinear/solver/theory_solver/qf_lra/QsoptexLpSolver.h"
 #include "dlinear/solver/theory_solver/qf_lra/SoplexLpSolver.h"
 #include "dlinear/util/error.h"
 
@@ -31,7 +32,7 @@ std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
     case Config::LPSolver::SOPLEX:
       return std::make_unique<SoplexLpSolver>(config);
     case Config::LPSolver::QSOPTEX:
-      return nullptr;
+      return std::make_unique<QsoptexLpSolver>(config);
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -56,6 +57,8 @@ void LpSolver::Backtrack() {
   infeasible_rows_.reset();
   infeasible_bounds_.reset();
 }
+void LpSolver::Consolidate() {}
+
 void LpSolver::UpdateModelWithSolution(Box& model) {
   DLINEAR_DEBUG("LpSolver::UpdateModelWithSolution()");
   DLINEAR_ASSERT(solution().has_value(), "LpSolver::UpdateModelWithSolution() called without a solution.");
@@ -94,6 +97,40 @@ void LpSolver::EnableBound(const Variable& var, const mpq_class& lb, const mpq_c
 void LpSolver::DisableBound(const Variable& var) { DisableBound(var_to_col_.at(var)); }
 void LpSolver::EnableRows() {
   for (int i = 0; i < num_rows(); ++i) EnableRow(i);
+}
+void LpSolver::ReserveRows(int size) {
+  DLINEAR_ASSERT(size >= 0, "Invalid number of rows.");
+  rhs_.reserve(size);
+  senses_.reserve(size);
+  lit_to_row_.reserve(size);
+  row_to_lit_.reserve(size);
+}
+void LpSolver::ReserveColumns(int size) {
+  DLINEAR_ASSERT(size >= 0, "Invalid number of columns.");
+  var_to_col_.reserve(size);
+  col_to_var_.reserve(size);
+}
+
+void LpSolver::AddRow(const Formula& formula) { AddRow(formula, parseLpSense(formula)); }
+
+void LpSolver::EnableRow(int row) { EnableRow(row, senses_.at(row), rhs_.at(row)); }
+void LpSolver::EnableRow(int row, LpRowSense sense) { EnableRow(row, sense, rhs_.at(row)); }
+
+void LpSolver::DisableAll() {
+  for (int i = 0; i < num_columns(); i++) DisableBound(i);
+  for (int i = 0; i < num_rows(); i++) DisableRow(i);
+}
+
+void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective) {
+  for (const auto& [column, value] : objective) SetObjective(column, value);
+}
+void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
+  for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
+}
+LpResult LpSolver::Optimise(mpq_class& precision) {
+  const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
+  return OptimiseCore(precision);
 }
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
