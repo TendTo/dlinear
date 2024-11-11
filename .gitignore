@@ -79,6 +79,7 @@ benchmark/**/*.mps
 
 # Docs
 docs/out/
+docs/pub/
 
 # Temporary files and directories
 temp/
