@@ -17,6 +17,9 @@
 
 namespace dlinear {
 
+/**
+ * Linear programming solver using [QSopt_ex](https://www.math.uwaterloo.ca/~bico/qsopt/ex/).
+ */
 class QsoptexLpSolver : public LpSolver {
  public:
   explicit QsoptexLpSolver(const Config& config, const std::string& class_name = "QsoptexLpSolver");
@@ -72,6 +75,11 @@ class QsoptexLpSolver : public LpSolver {
    * This will allow the SAT solver to find a new assignment without the conflict.
    * The useful information will be stored in @ref infeasible_rows_ and @ref infeasible_bounds_.
    * On the other hand, both @ref objective_value_ and @ref solution_ will be cleared.
+   *
+   * More formally, we can use the infeasible ray @f$ y @f$ to create the linear inequality @f$ (y^T A) x \le y^T b @f$,
+   * which is infeasible over the local bounds.
+   * In other words, even setting each element of @f$ x @f$ to the bound that minimise @f$ (y^A) x @f$,
+   * its value is still greater than @f$ y^T b @f$.
    */
   void UpdateInfeasible();
 

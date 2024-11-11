@@ -92,7 +92,7 @@ class Context::Impl {
   /**
    * Check the satisfiability of the asserted formulas, and sets
    * @p actual_precision to the actual max infeasibility where appropriate.
-   * @param[in,out] actual_precision initialized with the desired precision, it will be
+   * @param[in,out] precision initialized with the desired precision, it will be
    * set to the lowest possible precision below the given one that satisfies the
    * constraints.
    * @return the satisfiability result.
@@ -124,12 +124,12 @@ class Context::Impl {
   void SetDomain(const Variable &v, const Expression &lb, const Expression &ub);
   /**
    * Assert a formula minimizing a cost function @p f.
-   * @param f the cost function to be minimized
+   * @param obj_function the cost function to be minimized
    */
   void Minimize(const Expression &obj_function);
   /**
    * Assert a formula maximizing a cost function @p f.
-   * @param f the cost function to be maximized
+   * @param obj_function the cost function to be maximized
    */
   void Maximize(const Expression &obj_function);
   /**

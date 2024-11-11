@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @copyrignt 2017 Toyota Research Institute (dreal4)
+ * @copyright 2017 Toyota Research Institute (dreal4)
  * @licence BSD 3-Clause License
  * PredicateAbstractor class.
  */
@@ -51,7 +51,7 @@ class PredicateAbstractor : public FormulaVisitor<> {
    * For example, a formula @f$ (x > 0) \land (y < 0) @f$ will be converted into @f$ b_1 \land b_2 @f$
    * while @f$ b_1 @f$ corresponds with @f$ x > 0 @f$ and  @f$ b_2 @f$ corresponds with @f$ y < 0 @f$.
    * The class provides `operator[b]` which looks up the corresponding formula for a Boolean variable @f$ b @f$.
-   * @param f formula to be converted
+   * @param formulas formula to be converted
    * @return boolean formula
    */
   [[nodiscard]] Formula Process(const std::vector<Formula> &formulas);

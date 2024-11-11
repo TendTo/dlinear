@@ -36,7 +36,11 @@ BoundVector::BoundVector(const mpq_class& inf_l, const mpq_class& inf_u)
 bool BoundVector::AddBound(const Bound& bound, const ConflictCallback& callback_cb) {
   const BoundIterator violation{AddBound(*bound.value, bound.lp_bound, bound.theory_literal, bound.explanation)};
   if (violation.empty()) return true;
-  callback_cb(violation.explanation());
+  Explanation explanation;
+  violation.explanation(explanation);
+  explanation.insert(bound.explanation.cbegin(), bound.explanation.cend());
+  explanation.insert(bound.theory_literal);
+  callback_cb(explanation);
   return false;
 }
 BoundIterator BoundVector::AddBound(const Bound& bound) {

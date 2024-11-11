@@ -458,7 +458,8 @@ void Context::Impl::LearnExplanation(const LiteralSet &explanation) {
   DLINEAR_DEBUG_FMT("ContextImpl::LearnExplanation(): size of explanation = {} - stack size = {}", explanation.size(),
                     stack_.get_vector().size());
   DLINEAR_DEV_FMT("ContextImpl::LearnExplanation({})", explanation);
-  DLINEAR_ASSERT(!explanations_so_far.contains(explanation), "Explanation already present, looping!");
+  DLINEAR_ASSERT_FMT(!explanations_so_far.contains(explanation), "Explanation already present, looping!\n{}\nin\n{}",
+                     explanation, explanations_so_far);
   DLINEAR_ASSERT(!explanation.empty(), "No explanation is provided. Infinite loop detected.");
 #ifndef NDEBUG
   explanations_so_far.insert(explanation);

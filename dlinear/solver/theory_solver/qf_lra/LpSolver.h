@@ -7,6 +7,7 @@
 #pragma once
 
 #include <iosfwd>
+#include <optional>
 #include <unordered_map>
 
 #include "dlinear/libs/libgmp.h"
@@ -25,6 +26,32 @@ namespace dlinear {
  * Facade class that hides the underlying LP solver used by dlinear.
  *
  * It provides a common interface to interact with any number of LP solvers, implemented as subclasses.
+ * An LP problem is defined as
+ * @f[
+ * \begin{array}{}
+ *      & \max              & c^T x     \newline
+ *      & \text{subject to} & A x \le b \newline
+ *      &                   & l \le x \le u
+ * \end{array}
+ * @f]
+ * where @f$ x @f$ is the vector of real variables, @f$ c @f$ is the vector of objective coefficients,
+ * @f$ A @f$ is the matrix of coefficients of the constraints, @f$ b @f$ is the right-hand side of the constraints,
+ * @f$ l @f$ is the vector of lower bounds, and @f$ u @f$ is the vector of upper bounds.
+ *
+ * If the problem is feasible, the solution vector @f$ x @f$ and the objective value are made available.
+ * Otherwise, the Farekas ray  @f$ y @f$ is used to create the linear inequality @f$ (y^T A) x \le y^T b @f$,
+ * which is infeasible over the local bounds.
+ * In other words, even setting each element of @f$ x @f$ to the bound that minimise @f$ (y^A) x @f$,
+ * its value is still greater than @f$ y^T b @f$.
+ *
+ * The usual workflow is as follows:
+ * - For each real variable in the SMT problem, add a linked column with @ref AddColumn(const Variable&).
+ * - For each symbolic formula in the SMT problem, add a linked row with @ref AddRow(const Variable&, const Formula&).
+ * - Consolidate the LP problem with @ref Consolidate.
+ * - Enable the active rows and bounds with @ref EnableRow and @ref EnableBound.
+ * - Optimise the LP problem with @ref Optimise.
+ *   - If the problem is feasible, update the model with @ref UpdateModelWithSolution.
+ *   - If the problem is infeasible, generate an explanation using the infeasible rows and bounds.
  */
 class LpSolver {
  public:
@@ -71,52 +98,210 @@ class LpSolver {
   /** @getter{sense of the constraints, lp solver} */
   [[nodiscard]] const std::vector<LpRowSense>& senses() const { return senses_; }
 
+  /**
+   * Reserve space for the given number of columns and rows.
+   *
+   * Can speed up the addition of columns if the guess is close to the actual number.
+   * @param size number of columns to reserve
+   */
   virtual void ReserveColumns(int size);
+  /**
+   * Reserve space for the given number of rows.
+   *
+   * Can speed up the addition of rows if the guess is close to the actual number.
+   * @param size number of rows to reserve
+   */
   virtual void ReserveRows(int size);
 
+  /**
+   * Add a new column to the LP problem.
+   * @pre The column must be added before the LP problem is consolidated.
+   */
   virtual void AddColumn() = 0;
+  /**
+   * Add a new column to the LP problem  @p var .
+   *
+   * It also links the new column to the given @p var .
+   * @pre The column must be added before the LP problem is consolidated.
+   * @pre All other columns already in the LP problem have been linked as well.
+   * @param var real variable this column is linked to
+   */
   void AddColumn(const Variable& var);
 
+  /**
+   * Add a new row to the LP problem with the given @p formula .
+   *
+   * It also links the new row to the given @p formula_var .
+   * @pre The row must be added before the LP problem is consolidated.
+   * @pre All other rows already in the LP problem have been linked as well.
+   * @param formula_var variable representing a literal this row is linked to
+   * @param formula symbolic formula representing the row
+   */
   void AddRow(const Variable& formula_var, const Formula& formula);
+  /**
+   * Add a new row to the LP problem with the given @p formula and @p sense .
+   *
+   * It also links the new row to the given @p formula_var .
+   * @pre The row must be added before the LP problem is consolidated.
+   * @pre All other rows already in the LP problem have been linked as well.
+   * @param formula_var variable representing a literal this row is linked to
+   * @param formula symbolic formula representing the row
+   * @param sense sense of the row (e.g. <=, =, >=)
+   */
   void AddRow(const Variable& formula_var, const Formula& formula, LpRowSense sense);
+  /**
+   * Add a new row to the LP problem with the given @p formula .
+   * @pre The row must be added before the LP problem is consolidated.
+   * @param formula symbolic formula representing the row
+   */
   void AddRow(const Formula& formula);
+  /**
+   * Add a new row to the LP problem with the given @p formula and @p sense .
+   * @pre The row must be added before the LP problem is consolidated.
+   * @param formula symbolic formula representing the row
+   * @param sense sense of the row (e.g. <=, =, >=)
+   */
   virtual void AddRow(const Formula& formula, LpRowSense sense) = 0;
 
-  virtual void SetObjective(int column, const mpq_class& value) = 0;
-
+  /**
+   * Set the truth value of the literal identified by @p var in @ref row_to_lit_ to the given @p truth value.
+   * @param var variable representing the literal to update
+   * @param truth new truth value for the literal
+   */
   void UpdateLiteralAssignment(const Variable& var, bool truth);
+  /**
+   * Set the truth value of the literal identified by @p row in @ref row_to_lit_ to the given @p truth value.
+   * @param row row representing the literal to update
+   * @param truth new truth value for the literal
+   */
   void UpdateLiteralAssignment(int row, bool truth);
 
+  /** Enable all rows previously added in the LP problem. */
   void EnableRows();
+  /**
+   * Enable the row with index @p row in the LP problem.
+   * @param row index of the row to enable
+   */
   void EnableRow(int row);
+  /**
+   * Enable the row with index @p row in the LP problem and assign it the given @p sense .
+   * @param row index of the row to enable
+   * @param sense sense to assign the row (e.g. <=, =, >=)
+   */
   void EnableRow(int row, LpRowSense sense);
+  /**
+   * Enable the row with index @p row in the LP problem and assign it the given @p sense and @p rhs .
+   * @param row index of the row to enable
+   * @param sense sense to assign the row (e.g. <=, =, >=)
+   * @param rhs right-hand side of the row
+   */
   virtual void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) = 0;
+  /**
+   * Disable the row with index @p row in the LP problem.
+   * @param row index of the row to disable
+   */
   virtual void DisableRow(int row) = 0;
 
+  /**
+   * Enable the bound of the column with index @p column in the LP problem
+   * and assign it the given @p bound and @p value .
+   * @param column index of the column to enable
+   * @param bound bound to assign the column (e.g. lower, upper)
+   * @param value value to assign the bound
+   */
   virtual void EnableBound(int column, LpColBound bound, const mpq_class& value) = 0;
+  /**
+   * Enable the bound of the column with index @p column in the LP problem
+   * and assign it the given @p lb and @p ub .
+   * @param column index of the column to enable
+   * @param lb lower bound to assign the column
+   * @param ub upper bound to assign the column
+   */
   virtual void EnableBound(int column, const mpq_class& lb, const mpq_class& ub) = 0;
+  /**
+   * Disable the bound of the column with index @p column in the LP problem.
+   * @param column index of the column to disable
+   */
   virtual void DisableBound(int column) = 0;
 
+  /**
+   * Enable the bound linked to @p var and assign it the given @p bound and @p value .
+   * @param var real variable linked to the column
+   * @param bound bound to assign the variable (e.g. lower, upper)
+   * @param value value to assign the bound
+   */
   void EnableBound(const Variable& var, LpColBound bound, const mpq_class& value);
+  /**
+   * Enable the bound linked to @p var and assign it the given @p lb and @p ub .
+   * @param var real variable linked to the column
+   * @param lb lower bound to assign the variable
+   * @param ub upper bound to assign the variable
+   */
   void EnableBound(const Variable& var, const mpq_class& lb, const mpq_class& ub);
+  /**
+   * Disable the bound linked to @p var .
+   * @param var real variable linked to the column
+   */
   void DisableBound(const Variable& var);
 
+  /** Disable all rows and bounds */
   void DisableAll();
 
+  /**
+   * Set the objective coefficients of the LP problem to the given @p objective .
+   * @param objective map from column index to objective coefficient
+   */
   void SetObjective(const std::unordered_map<int, mpq_class>& objective);
+  /**
+   * Set the objective coefficients of the LP problem to the given @p objective .
+   * @param objective
+   */
   void SetObjective(const std::vector<mpq_class>& objective);
+  /**
+   * The the objective coefficient of the column corresponding to the give @p var to the given @p value .
+   * @param var variable to set the objective for
+   * @param value new objective coefficient for the column
+   */
+  void SetObjective(const Variable& var, const mpq_class& value);
+  /**
+   * The the objective coefficient of the given @p column to the given @p value .
+   * @param column column to set the objective for
+   * @param value new objective coefficient for the column
+   */
+  virtual void SetObjective(int column, const mpq_class& value) = 0;
 
+  /**
+   * Consolidate the LP problem, making sure all added rows and columns are ready to be enabled.
+   *
+   * Must be called after adding all the desired rows and columns and before any attempt at enabling or disabling them
+   * or calling the @ref Optimise method.
+   */
   virtual void Consolidate();
+  /**
+   * Ensure the solver is in a state that enables the solution of another LP problem.
+   *
+   * It does not enable or disable any row.
+   */
   virtual void Backtrack();
 
   /**
    * Optimise the LP problem with the given @p precision .
    *
    * The actual precision will be returned in the @p precision parameter.
-   * @param precision[in, out] desired precision for the optimisation that becomes the actual precision achieved
+   * @param[in,out] precision desired precision for the optimisation that becomes the actual precision achieved
+   * @return OPTIMAL if an optimal solution has been found and the return value of @p precision is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of @p precision @f$\ge 0 @f$
+   * @return UNBOUNDED if the problem is unbounded
+   * @return INFEASIBLE if the problem is infeasible
+   * @return ERROR if an error occurred
    */
   LpResult Optimise(mpq_class& precision);
 
+  /**
+   * Update the model with the solution found by the LP solver.
+   * @pre The last call to @ref Optimise discovered a feasible solution.
+   * @param model box to update with the solution
+   */
   void UpdateModelWithSolution(Box& model);
 
 #ifndef NDEBUG
@@ -124,10 +309,16 @@ class LpSolver {
 #endif
 
  protected:
+  /**
+   * Internal method that optimises the LP problem with the given @p precision .
+   * @param precision
+   * @return
+   */
   virtual LpResult OptimiseCore(mpq_class& precision) = 0;
 
   const Config& config_;  ///< Configuration to use
   IterationStats stats_;  ///< Statistics of the solver
+  bool consolidated_;     ///< Whether the LP problem has been consolidated
 
   std::vector<mpq_class> rhs_;      ///< Right-hand side of the constraints
   std::vector<LpRowSense> senses_;  ///< Sense of the constraints (e.g. <=, =, >=)

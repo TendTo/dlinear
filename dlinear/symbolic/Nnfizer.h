@@ -1,7 +1,7 @@
 /**
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
- * @copyrignt 2017 Toyota Research Institute (dreal4)
+ * @copyright 2017 Toyota Research Institute (dreal4)
  * @licence BSD 3-Clause License
  * Nnfizer class.
  */

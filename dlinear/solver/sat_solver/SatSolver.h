@@ -143,7 +143,7 @@ class SatSolver {
 
   /**
    * Check the satisfiability of the current configuration.
-   * @param[out] a witness, satisfying model if the problem is SAT.
+   * @param[out] model witness, satisfying model if the problem is SAT.
    * @return SatResult::SAT if the problem is satisfiable and a model has been found
    * @return SatResult::UNSAT if the problem is unsatisfiable
    * @return SatResult::ERROR if an error occurred
