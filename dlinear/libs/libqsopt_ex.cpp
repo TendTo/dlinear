@@ -6,6 +6,8 @@
 
 #include "libqsopt_ex.h"
 
+#include <iostream>
+
 namespace dlinear::qsopt_ex {
 
 mpq_class *StringToMpqPtr(const std::string &str) { return CStringToMpqPtr(str.c_str()); }
@@ -63,6 +65,16 @@ void MpqArray::Resize(size_t nElements) {
     FreeMpqArray();
     AllocateMpqArray(nElements);
   }
+}
+
+std::ostream &operator<<(std::ostream &os, const MpqArray &array) {
+  os << "[";
+  for (int i = 0; i < static_cast<int>(array.size()); ++i) {
+    os << array[i];
+    if (i + 1u < array.size()) os << ", ";
+  }
+  os << "]";
+  return os;
 }
 
 void QSXStart() { QSexactStart(); }

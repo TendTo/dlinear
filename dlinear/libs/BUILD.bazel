@@ -42,6 +42,7 @@ dlinear_cc_library(
     hdrs = ["libqsopt_ex.h"],
     tags = ["no-iwyu"],
     deps = [
+        "//dlinear/util:logging",
         "@gmp//:gmpxx",
     ] + select({
         "//tools:enabled_qsoptex": ["@qsopt_ex"],

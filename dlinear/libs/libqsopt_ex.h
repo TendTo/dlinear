@@ -21,12 +21,13 @@ extern "C" {
 #include <qsopt_ex/QSopt_ex.h>  // IWYU pragma: export
 }
 
-#include <string>
-
 // These #defines from <qsopt_ex/QSopt_ex.h> cause problems for us
 // because they mess with SoPlex's enums.
 #undef OPTIMAL
 #undef DUAL_INFEASIBLE
+
+#include <iosfwd>
+#include <string>
 
 namespace dlinear::qsopt_ex {
 
@@ -119,7 +120,17 @@ class MpqArray {
   void FreeMpqArray();
 };
 
+std::ostream &operator<<(std::ostream &os, const MpqArray &array);
+
 void QSXStart();
 void QSXFinish();
 
 }  // namespace dlinear::qsopt_ex
+
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
+OSTREAM_FORMATTER(dlinear::qsopt_ex::MpqArray);
+
+#endif
