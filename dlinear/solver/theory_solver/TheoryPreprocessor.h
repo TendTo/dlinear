@@ -20,9 +20,15 @@ class TheoryPreprocessor {
   explicit TheoryPreprocessor(const Config& config, const std::string& class_name = "TheoryPreprocessor");
   virtual ~TheoryPreprocessor() = default;
 
+  /** @getter{configuration, TheoryPreprocessor} */
+  [[nodiscard]] const Config& config() const { return config_; }
+  /** @getter{statistics, TheoryPreprocessor} */
+  [[nodiscard]] const IterationStats& stats() const { return stats_; }
+
   virtual void AddVariable(const Variable& var) = 0;
   virtual bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) = 0;
   virtual bool Process(const ConflictCallback& conflict_cb) = 0;
+  virtual bool Backtrack() = 0;
 
  protected:
   const Config& config_;
