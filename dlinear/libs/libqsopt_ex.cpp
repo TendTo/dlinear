@@ -30,19 +30,18 @@ mpq_class CStringToMpq(const char str[]) {
 }
 
 void MpqArray::AllocateMpqArray(size_t n_elements) {
+  if (n_elements == 0) return;
   auto const memSize = static_cast<size_t>(sizeof(mpq_t) * n_elements + sizeof(size_t));
-  void *newArray = nullptr;
-  if (memSize) {
-    newArray = calloc(1, memSize);
-    if (!newArray) {
-      fprintf(stderr, "EXIT: Not enough memory while allocating %zd bytes", memSize);
-      exit(1);
-    }
-  }
-  size_t *sizeArray = n_elements ? static_cast<size_t *>(newArray) : nullptr;
-  if (n_elements) sizeArray[0] = n_elements;
 
-  array_ = reinterpret_cast<mpq_t *>(n_elements ? (sizeArray + 1) : nullptr);
+  size_t *newArray = nullptr;
+  newArray = static_cast<std::size_t *>(calloc(1, memSize));
+  if (!newArray) {
+    fprintf(stderr, "EXIT: Not enough memory while allocating %zd bytes", memSize);
+    exit(1);
+  }
+
+  newArray[0] = n_elements;
+  array_ = reinterpret_cast<mpq_t *>(newArray + 1);
   for (size_t i = 0; i < n_elements; ++i) mpq_init(array_[i]);
 }
 
