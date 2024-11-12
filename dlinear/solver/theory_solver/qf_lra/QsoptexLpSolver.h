@@ -29,8 +29,11 @@ class QsoptexLpSolver : public LpSolver {
   [[nodiscard]] int num_rows() const override;
 
   void AddColumn() final;
+  void AddColumn(const mpq_class& lb, const mpq_class& ub) final;
+  void AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) final;
   void AddRow(const Formula& formula, LpRowSense sense) final;
   void SetObjective(int column, const mpq_class& value) final;
+  void SetCoefficient(int row, int column, const mpq_class& value) final;
 
   void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) final;
   void DisableRow(int row) final;
@@ -44,7 +47,7 @@ class QsoptexLpSolver : public LpSolver {
 #endif
 
  private:
-  LpResult OptimiseCore(mpq_class& precision) final;
+  LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
 
   /**
    * Parse a @p formula and set the coefficient for each decisional variable appearing in it,

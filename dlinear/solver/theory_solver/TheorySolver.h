@@ -111,7 +111,7 @@ class TheorySolver {
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
-  virtual bool EnableLiteral(const Literal &lit, ConflictCallback conflict_cb) = 0;
+  virtual bool EnableLiteral(const Literal &lit, const ConflictCallback &conflict_cb) = 0;
 
   /** @getter{model that satisfies all the constraints, TheorySolver} */
   [[nodiscard]] const Box &model() const;
@@ -158,7 +158,7 @@ class TheorySolver {
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
    * @return ERROR if an error occurred during the check
    */
-  virtual TheoryResult CheckSatCore(mpq_class *actual_precision, ConflictCallback conflict_cb) = 0;
+  virtual TheoryResult CheckSatCore(mpq_class *actual_precision, const ConflictCallback &conflict_cb) = 0;
 
   /**
    * Consolidate the solver using the knowledge of the added literals.

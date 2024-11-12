@@ -29,7 +29,7 @@ void DeltaLpTheorySolver::AddLiteral(const Variable& formula_var, const Formula&
   DLINEAR_DEBUG_FMT("DeltaLpTheorySolver::AddLiteral: {} ↦ {}", formula, lp_solver_->num_rows());
 }
 
-bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, ConflictCallback conflict_cb) {
+bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
   DLINEAR_ASSERT(pa_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
 
@@ -63,14 +63,11 @@ bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, ConflictCallback con
   return true;
 }
 
-TheoryResult DeltaLpTheorySolver::CheckSatCore(mpq_class* actual_precision, ConflictCallback conflict_cb) {
+TheoryResult DeltaLpTheorySolver::CheckSatCore(mpq_class* actual_precision, const ConflictCallback& conflict_cb) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
   // Set the bounds for the variables
-  for (const auto& [var, bounds] : vars_bounds_) {
-    lp_solver_->EnableBound(var, bounds.active_lower_bound(), bounds.active_upper_bound());
-    DLINEAR_DEV_FMT("EnableVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(), bounds.active_upper_bound());
-  }
+  EnableVarBound();
 
   // Remove all the disabled rows from the LP solver
   DisableNotEnabledRows();
@@ -88,7 +85,7 @@ TheoryResult DeltaLpTheorySolver::CheckSatCore(mpq_class* actual_precision, Conf
       DLINEAR_DEBUG("DeltaLpTheorySolver::CheckSat: returning DELTA_SAT");
       return TheoryResult::DELTA_SAT;
     case LpResult::INFEASIBLE:
-      UpdateInfeasible(conflict_cb);
+      NotifyInfeasible(conflict_cb);
       DLINEAR_DEBUG("DeltaLpTheorySolver::CheckSat: returning UNSAT");
       return TheoryResult::UNSAT;
     case LpResult::ERROR:

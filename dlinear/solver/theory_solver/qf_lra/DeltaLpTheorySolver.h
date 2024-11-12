@@ -7,7 +7,8 @@
 #pragma once
 
 #include "dlinear/solver/theory_solver/qf_lra/LpTheorySolver.h"
-#include "third_party/com_github_robotlocomotion_drake/dlinear/symbolic/symbolic_variable.h"
+#include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -17,9 +18,9 @@ class DeltaLpTheorySolver : public LpTheorySolver {
                                const std::string& class_name = "DeltaLpTheorySolver");
 
   void AddLiteral(const Variable& formula_var, const Formula& formula) final;
-  bool EnableLiteral(const Literal& lit, ConflictCallback conflict_cb) final;
+  bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) final;
 
-  TheoryResult CheckSatCore(mpq_class* actual_precision, ConflictCallback conflict_cb) final;
+  TheoryResult CheckSatCore(mpq_class* actual_precision, const ConflictCallback& conflict_cb) final;
 };
 
 }  // namespace dlinear

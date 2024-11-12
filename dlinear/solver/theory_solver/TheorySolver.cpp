@@ -61,6 +61,11 @@ void TheorySolver::Consolidate(const Box &model) {
 }
 
 TheoryResult TheorySolver::CheckSat(mpq_class *actual_precision, const ConflictCallback &conflict_cb) {
+  DLINEAR_DEV("TheorySolver::CheckSat");
+  if (preprocessor_ != nullptr) {
+    const bool success = preprocessor_->Process(conflict_cb);
+    if (!success) return TheoryResult::UNSAT;
+  }
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   return CheckSatCore(actual_precision, conflict_cb);

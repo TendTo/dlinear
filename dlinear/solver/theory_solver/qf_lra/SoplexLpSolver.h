@@ -30,8 +30,11 @@ class SoplexLpSolver : public LpSolver {
   void ReserveColumns(int num_columns) final;
   void ReserveRows(int num_rows) final;
   void AddColumn() final;
+  void AddColumn(const mpq_class& lb, const mpq_class& ub) final;
+  void AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) final;
   void AddRow(const Formula& formula, LpRowSense sense) final;
   void SetObjective(int column, const mpq_class& value) final;
+  void SetCoefficient(int row, int column, const mpq_class& value) final;
 
   void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) final;
   void DisableRow(int row) final;
@@ -48,7 +51,7 @@ class SoplexLpSolver : public LpSolver {
 #endif
 
  private:
-  LpResult OptimiseCore(mpq_class& precision) final;
+  LpResult OptimiseCore(mpq_class& precision, bool store_solution) final;
   /**
    * Parse a @p formula and return the vector of coefficients to apply to the decisional variables.
    *
@@ -71,7 +74,7 @@ class SoplexLpSolver : public LpSolver {
    * Use the result from the lp solver to update the solution vector and objective value.
    *
    * The lp solver was able to find a feasible solution to the problem.
-   * The useful information will be stored in @ref objective_value_ and @ref solution_.
+   * The useful information will be stored in @ref solution_ and @ref dual_solution_.
    * On the other hand, both @ref infeasible_rows_ and @ref infeasible_bounds_ will be cleared.
    */
   void UpdateFeasible();
@@ -80,7 +83,7 @@ class SoplexLpSolver : public LpSolver {
    *
    * This will allow the SAT solver to find a new assignment without the conflict.
    * The useful information will be stored in @ref infeasible_rows_ and @ref infeasible_bounds_.
-   * On the other hand, both @ref objective_value_ and @ref solution_ will be cleared.
+   * On the other hand, both @ref solution_ and @ref dual_solution_ will be cleared.
    *
    * More formally, we can use the infeasible ray @f$ y @f$ to create the linear inequality @f$ (y^T A) x \le y^T b @f$,
    * which is infeasible over the local bounds.

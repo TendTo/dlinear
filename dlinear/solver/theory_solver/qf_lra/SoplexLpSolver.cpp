@@ -10,7 +10,6 @@
 
 namespace dlinear {
 
-using soplex::Rational;
 using SoplexStatus = soplex::SPxSolver::Status;
 
 SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_name)
@@ -42,8 +41,8 @@ SoplexLpSolver::SoplexLpSolver(const Config& config, const std::string& class_na
       config_.precision(), enable_precision_boosting, enable_iterative_refinement);
 }
 
-int SoplexLpSolver::num_columns() const { return spx_cols_.num() > 0 ? spx_cols_.num() : spx_.numColsRational(); }
-int SoplexLpSolver::num_rows() const { return spx_rows_.num() > 0 ? spx_rows_.num() : spx_.numRowsRational(); }
+int SoplexLpSolver::num_columns() const { return consolidated_ ? spx_.numColsRational() : spx_cols_.num(); }
+int SoplexLpSolver::num_rows() const { return consolidated_ ? spx_.numRowsRational() : spx_rows_.num(); }
 
 void SoplexLpSolver::ReserveColumns(const int num_columns) {
   LpSolver::ReserveColumns(num_columns);
@@ -55,46 +54,78 @@ void SoplexLpSolver::ReserveRows(const int num_rows) {
 }
 
 void SoplexLpSolver::AddColumn() {
+  DLINEAR_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
   // Add the column to the LP
   spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), rinfinity_, rninfinity_));
 }
+void SoplexLpSolver::AddColumn(const mpq_class& lb, const mpq_class& ub) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
+  // Add the column to the LP
+  spx_cols_.add(soplex::LPColRational(0, soplex::DSVectorRational(), ub.get_mpq_t(), lb.get_mpq_t()));
+}
+void SoplexLpSolver::AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot add columns after consolidation.");
+  // Add the column to the LP
+  spx_cols_.add(soplex::LPColRational(obj.get_mpq_t(), soplex::DSVectorRational(), ub.get_mpq_t(), lb.get_mpq_t()));
+}
+
 void SoplexLpSolver::AddRow(const Formula& formula, LpRowSense sense) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot add rows after consolidation.");
   senses_.emplace_back(sense);
   spx_rows_.add(soplex::LPRowRational(rninfinity_, ParseRowCoeff(formula), rinfinity_));
 }
 void SoplexLpSolver::SetObjective(int column, const mpq_class& value) {
-  spx_.changeObjRational(column, Rational(value.get_mpq_t()));
+  DLINEAR_ASSERT(column < num_columns(), "Column index out of bounds");
+  DLINEAR_ASSERT(ninfinity_ <= value && value <= infinity_, "LP objective value too large");
+  if (consolidated_) {
+    spx_.changeObjRational(column, value.get_mpq_t());
+  } else {
+    spx_cols_.maxObj_w(column) = value.get_mpq_t();
+  }
 }
-void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
+void SoplexLpSolver::SetCoefficient(int row, int column, const mpq_class& value) {
   DLINEAR_ASSERT(row < num_rows(), "Row index out of bounds");
-  DLINEAR_ASSERT(ninfinity_ <= rhs && rhs <= infinity_, "LP RHS value too large");
-  if (sense == LpRowSense::NQ) {
-    DisableRow(row);
-    return;
+  DLINEAR_ASSERT(column < num_columns(), "Column index out of bounds");
+  DLINEAR_ASSERT(ninfinity_ <= value && value <= infinity_, "LP coefficient value too large");
+
+  if (consolidated_) {
+    spx_.changeElementRational(row, column, value.get_mpq_t());
+  } else {
+    spx_rows_.rowVector_w(row).value(column) = value.get_mpq_t();
   }
 
-  spx_.changeRangeRational(
-      row,
-      sense == LpRowSense::GE || sense == LpRowSense::GT || sense == LpRowSense::EQ ? Rational(rhs.get_mpq_t())
-                                                                                    : rninfinity_,
-      sense == LpRowSense::LE || sense == LpRowSense::LT || sense == LpRowSense::EQ ? Rational(rhs.get_mpq_t())
-                                                                                    : rinfinity_);
+  if (DLINEAR_TRACE_ENABLED) {
+    if (consolidated_)
+      DLINEAR_TRACE_FMT("SoplexLpSolver::SetCoefficient: row {}: {}", row, spx_.rowVectorRational(row));
+    else
+      DLINEAR_TRACE_FMT("SoplexLpSolver::SetCoefficient: row {}: {}", row, spx_rows_.rowVector(row));
+  }
+}
+
+void SoplexLpSolver::EnableRow(const int row, const LpRowSense sense, const mpq_class& rhs) {
+  DLINEAR_ASSERT(consolidated_, "Cannot enable rows before consolidation.");
+  DLINEAR_ASSERT(row < num_rows(), "Row index out of bounds");
+  DLINEAR_ASSERT(ninfinity_ <= rhs && rhs <= infinity_, "LP RHS value too large");
+  DLINEAR_ASSERT_FMT(
+      sense == LpRowSense::EQ || sense == LpRowSense::LE || sense == LpRowSense::GE || sense == LpRowSense::NQ,
+      "Unsupported sense {}", sense);
+
+  spx_.changeRangeRational(row, sense == LpRowSense::GE || sense == LpRowSense::EQ ? rhs.get_mpq_t() : rninfinity_,
+                           sense == LpRowSense::LE || sense == LpRowSense::EQ ? rhs.get_mpq_t() : rinfinity_);
 }
 void SoplexLpSolver::EnableBound(const int column, const LpColBound bound, const mpq_class& value) {
   switch (bound) {
     case LpColBound::B:
-      spx_.changeBoundsRational(column, Rational(value.get_mpq_t()), Rational(value.get_mpq_t()));
+      spx_.changeBoundsRational(column, value.get_mpq_t(), value.get_mpq_t());
       break;
     case LpColBound::L:
-    case LpColBound::SL:
-      spx_.changeBoundsRational(column, Rational(value.get_mpq_t()), rinfinity_);
+      spx_.changeBoundsRational(column, value.get_mpq_t(), rinfinity_);
       break;
     case LpColBound::U:
-    case LpColBound::SU:
-      spx_.changeBoundsRational(column, rninfinity_, Rational(value.get_mpq_t()));
+      spx_.changeBoundsRational(column, rninfinity_, value.get_mpq_t());
       break;
-    case LpColBound::D:
     case LpColBound::F:
+    case LpColBound::D:
       DisableBound(column);
       break;
     default:
@@ -102,12 +133,22 @@ void SoplexLpSolver::EnableBound(const int column, const LpColBound bound, const
   }
 }
 void SoplexLpSolver::EnableBound(const int column, const mpq_class& lb, const mpq_class& ub) {
-  spx_.changeBoundsRational(column, Rational(lb.get_mpq_t()), Rational(ub.get_mpq_t()));
+  DLINEAR_ASSERT(consolidated_, "Cannot enable bounds before consolidation.");
+  DLINEAR_ASSERT(ninfinity_ <= lb && lb <= infinity_, "LP lower bound value too large");
+  DLINEAR_ASSERT(ninfinity_ <= ub && ub <= infinity_, "LP upper bound value too large");
+  spx_.changeBoundsRational(column, lb.get_mpq_t(), ub.get_mpq_t());
 }
-void SoplexLpSolver::DisableBound(const int column) { spx_.changeBoundsRational(column, rninfinity_, rinfinity_); }
-void SoplexLpSolver::DisableRow(const int row) { spx_.changeRangeRational(row, rninfinity_, rinfinity_); }
+void SoplexLpSolver::DisableBound(const int column) {
+  DLINEAR_ASSERT(consolidated_, "Cannot disable bounds before consolidation.");
+  spx_.changeBoundsRational(column, rninfinity_, rinfinity_);
+}
+void SoplexLpSolver::DisableRow(const int row) {
+  DLINEAR_ASSERT(consolidated_, "Cannot disable rows before consolidation.");
+  spx_.changeRangeRational(row, rninfinity_, rinfinity_);
+}
 
 void SoplexLpSolver::Consolidate() {
+  LpSolver::Consolidate();
   spx_.addColsRational(spx_cols_);
   spx_.addRowsRational(spx_rows_);
 }
@@ -117,9 +158,9 @@ void SoplexLpSolver::Backtrack() {
   // https://github.com/scipopt/soplex/issues/38
   spx_.clearBasis();
 }
-LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision) {
+LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision, const bool store_solution) {
   const SoplexStatus status = spx_.optimize();
-  Rational max_violation, sum_violation;
+  soplex::Rational max_violation, sum_violation;
 
   // The status must be OPTIMAL, UNBOUNDED, or INFEASIBLE. Anything else is an error
   if (status != SoplexStatus::OPTIMAL && status != SoplexStatus::UNBOUNDED && status != SoplexStatus::INFEASIBLE) {
@@ -134,10 +175,10 @@ LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision) {
 
   switch (status) {
     case SoplexStatus::OPTIMAL:
-      UpdateFeasible();
+      if (store_solution) UpdateFeasible();
       return max_violation.is_zero() ? LpResult::OPTIMAL : LpResult::DELTA_OPTIMAL;
     case SoplexStatus::UNBOUNDED:
-      UpdateFeasible();
+      if (store_solution) UpdateFeasible();
       return LpResult::UNBOUNDED;
     case SoplexStatus::INFEASIBLE:
       UpdateInfeasible();
@@ -148,38 +189,33 @@ LpResult SoplexLpSolver::OptimiseCore(mpq_class& precision) {
 }
 
 void SoplexLpSolver::UpdateFeasible() {
-  // Reset the infeasible information
-  infeasible_bounds_ = std::nullopt;
-  infeasible_rows_ = std::nullopt;
-
+  DLINEAR_ASSERT(solution_.empty(), "solution_ must be empty");
+  DLINEAR_ASSERT(dual_solution_.empty(), "dual_solution_ must be empty");
   // Set the feasible information
   const int colcount = num_columns();
+  const int rowcount = num_rows();
 
-  objective_value_ = gmp::ToMpqClass(spx_.objValueRational().backend().data());
-  solution_ = std::make_optional<std::vector<mpq_class>>();
-  solution_->reserve(colcount);
-  soplex::VectorRational solution;
-  solution.reDim(colcount);
+  soplex::VectorRational solution{colcount};
   [[maybe_unused]] const bool has_sol = spx_.getPrimalRational(solution);
   DLINEAR_ASSERT(has_sol, "has_sol must be true");
   DLINEAR_ASSERT(solution.dim() >= colcount, "x.dim() must be >= colcount");
-  for (int i = 0; i < solution.dim(); i++) solution_->emplace_back(gmp::ToMpqClass(solution[i].backend().data()));
+  for (int i = 0; i < solution.dim(); i++) solution_.emplace_back(gmp::ToMpqClass(solution[i].backend().data()));
+
+  soplex::VectorRational dual{rowcount};
+  [[maybe_unused]] const bool has_dual = spx_.getDualRational(dual);
+  DLINEAR_ASSERT(has_dual, "has_dual must be true");
+  for (int i = 0; i < rowcount; i++) dual_solution_.emplace_back(gmp::ToMpqClass(dual[i].backend().data()));
+
+  DLINEAR_DEV_FMT("solution: {}", solution_);
+  DLINEAR_DEV_FMT("dual: {}", dual_solution_);
 }
+
 void SoplexLpSolver::UpdateInfeasible() {
-  // Reset the feasible information
-  objective_value_ = std::nullopt;
-  solution_ = std::nullopt;
-
+  DLINEAR_ASSERT(infeasible_rows_.empty(), "infeasible_rows_ must be empty");
+  DLINEAR_ASSERT(infeasible_bounds_.empty(), "infeasible_bounds_ must be empty");
   // Set the infeasible information
-  infeasible_bounds_ = std::make_optional<std::vector<int>>();
-  infeasible_rows_ = std::make_optional<std::vector<int>>();
-
-  // Get the infeasible rows
   const int rowcount = num_rows();
   const int colcount = num_columns();
-
-  infeasible_rows_->reserve(rowcount);
-  infeasible_bounds_->reserve(colcount);
 
   soplex::VectorRational farkas_ray{rowcount};
   DLINEAR_ASSERT(farkas_ray.dim() == num_rows(), "farkas_ray must have the same dimension as the rows");
@@ -190,20 +226,21 @@ void SoplexLpSolver::UpdateInfeasible() {
   // Add the non-zero rows to the infeasible core
   for (int i = 0; i < rowcount; i++) {
     if (farkas_ray[i].is_zero()) continue;
-    DLINEAR_TRACE_FMT("SoplexLpSolver::UpdateInfeasible: ray[{}] = {}", i, farkas_ray[i]);
-    infeasible_rows_->emplace_back(i);
+    DLINEAR_TRACE_FMT("SoplexLpSolver::NotifyInfeasible: ray[{}] = {}", i, farkas_ray[i]);
+    infeasible_rows_.emplace_back(i);
   }
   //  Multiply the Farkas ray by the row coefficients to get the column violations: ray * A
   //  If the result is non-zero, the sign indicates the bound that caused the violation.
-  Rational col_violation{0};
+  soplex::Rational col_violation{0};
   for (int i = 0; i < colcount; i++) {
     col_violation = 0;
     for (int j = 0; j < rowcount; j++) {
       col_violation += farkas_ray[j] * spx_.rowVectorRational(j)[i];
     }
     if (col_violation.is_zero()) continue;
-    DLINEAR_TRACE_FMT("SoplexLpSolver::UpdateInfeasible: {}[{}] = {}", col_to_var_.at(i), i, col_violation);
-    infeasible_bounds_->emplace_back(col_violation > 0 ? i : -i);
+    if (DLINEAR_TRACE_ENABLED && static_cast<std::size_t>(i) < col_to_var_.size())
+      DLINEAR_TRACE_FMT("SoplexLpSolver::NotifyInfeasible: {}[{}] = {}", col_to_var_.at(i), i, col_violation);
+    infeasible_bounds_.emplace_back(i, col_violation < 0);
   }
 }
 

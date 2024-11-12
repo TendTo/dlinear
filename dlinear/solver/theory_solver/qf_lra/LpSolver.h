@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/theory_solver/qf_lra/LpBoundViolation.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpColBound.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpResult.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
@@ -77,14 +78,17 @@ class LpSolver {
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
   /** @getter{configuration, lp solver} */
   [[nodiscard]] const Config& config() const { return config_; }
-  /** @getter{objective value\, if the lp is feasible\,, lp solver} */
-  [[nodiscard]] const std::optional<mpq_class>& objective_value() const { return objective_value_; }
-  /** @getter{solution\, if the lp is feasible\,, lp solver} */
-  [[nodiscard]] const std::optional<std::vector<mpq_class>>& solution() const { return solution_; }
-  /** @getter{infeasible\, if the lp is infeasible\,, lp solver} */
-  [[nodiscard]] const std::optional<std::vector<int>>& infeasible_rows() const { return infeasible_rows_; }
-  /** @getter{solution\, if the lp is infeasible\,, lp solver} */
-  [[nodiscard]] const std::optional<std::vector<int>>& infeasible_bounds() const { return infeasible_bounds_; }
+  /** @getter{primal solution\, if the lp is feasible\,, lp solver} */
+  [[nodiscard]] const std::vector<mpq_class>& solution() const { return solution_; }
+  /** @getter{dual solution\, if the lp is feasible\,, lp solver */
+  [[nodiscard]] const std::vector<mpq_class>& dual_solution() const { return dual_solution_; }
+  /** @getter{vector of rows responsible for the infeasibility\, if the lp is infeasible\,, lp solver} */
+  [[nodiscard]] const std::vector<int>& infeasible_rows() const { return infeasible_rows_; }
+  /**
+   * @getter{vector of column bounds responsible for the infeasibility\, if the lp is infeasible\,, lp solver,
+   * False means the lower bound is to blame, else it upper bound is at fault.}
+   */
+  [[nodiscard]] const std::vector<LpBoundViolation>& infeasible_bounds() const { return infeasible_bounds_; }
   /** @getter{right-hand side of the constraints, lp solver} */
   [[nodiscard]] const std::vector<mpq_class>& rhs() const { return rhs_; }
   /** @getter{maps from and to SMT variables to LP columns/rows, lp solver} */
@@ -97,6 +101,30 @@ class LpSolver {
   [[nodiscard]] const std::vector<Literal>& row_to_lit() const { return row_to_lit_; }
   /** @getter{sense of the constraints, lp solver} */
   [[nodiscard]] const std::vector<LpRowSense>& senses() const { return senses_; }
+  /**
+   * Shorthand notation to get the literal linked with row @p row.
+   * @param row index of the row the literal is linked to
+   * @return corresponding literal
+   */
+  [[nodiscard]] const Literal& lit(int row) const { return row_to_lit_.at(row); }
+  /**
+   * Shorthand notation to get the real variable linked with column @p column.
+   * @param column index of the column the real variable is linked to
+   * @return corresponding real variable
+   */
+  [[nodiscard]] const Variable& var(int column) const { return col_to_var_.at(column); }
+  /**
+   * Shorthand notation to get the row linked with the literal @p lit.
+   * @param lit theory literal the row is linked to
+   * @return corresponding row in the LP
+   */
+  [[nodiscard]] int row(const Literal& lit) const { return lit_to_row_.at(lit.var); }
+  /**
+   * Shorthand notation to get the column linked with the real variable @p var.
+   * @param var real variable the column is linked to
+   * @return corresponding column in the LP
+   */
+  [[nodiscard]] int column(const Variable& var) const { return var_to_col_.at(var); }
 
   /**
    * Reserve space for the given number of columns and rows.
@@ -114,12 +142,27 @@ class LpSolver {
   virtual void ReserveRows(int size);
 
   /**
-   * Add a new column to the LP problem.
+   * Add a new unbounded column to the LP problem.
    * @pre The column must be added before the LP problem is consolidated.
    */
   virtual void AddColumn() = 0;
   /**
-   * Add a new column to the LP problem  @p var .
+   * Add a new bounded column to the LP problem.
+   * @pre The column must be added before the LP problem is consolidated.
+   * @param lb lower bound of the column
+   * @param ub upper bound of the column
+   */
+  virtual void AddColumn(const mpq_class& lb, const mpq_class& ub) = 0;
+  /**
+   * Add a new bounded column to the LP problem with a given @p obj coefficient.
+   * @pre The column must be added before the LP problem is consolidated.
+   * @param obj objective coefficient of the column
+   * @param lb lower bound of the column
+   * @param ub upper bound of the column
+   */
+  virtual void AddColumn(const mpq_class& obj, const mpq_class& lb, const mpq_class& ub) = 0;
+  /**
+   * Add a new unbounded column to the LP problem  @p var .
    *
    * It also links the new column to the given @p var .
    * @pre The column must be added before the LP problem is consolidated.
@@ -159,7 +202,7 @@ class LpSolver {
    * Add a new row to the LP problem with the given @p formula and @p sense .
    * @pre The row must be added before the LP problem is consolidated.
    * @param formula symbolic formula representing the row
-   * @param sense sense of the row (e.g. <=, =, >=)
+   * @param sense sense of the row (i.e. <=, =, >=)
    */
   virtual void AddRow(const Formula& formula, LpRowSense sense) = 0;
 
@@ -186,13 +229,13 @@ class LpSolver {
   /**
    * Enable the row with index @p row in the LP problem and assign it the given @p sense .
    * @param row index of the row to enable
-   * @param sense sense to assign the row (e.g. <=, =, >=)
+   * @param sense sense to assign the row (i.e. <=, =, >=)
    */
   void EnableRow(int row, LpRowSense sense);
   /**
    * Enable the row with index @p row in the LP problem and assign it the given @p sense and @p rhs .
    * @param row index of the row to enable
-   * @param sense sense to assign the row (e.g. <=, =, >=)
+   * @param sense sense to assign the row (i.e. <=, =, >=)
    * @param rhs right-hand side of the row
    */
   virtual void EnableRow(int row, LpRowSense sense, const mpq_class& rhs) = 0;
@@ -206,7 +249,7 @@ class LpSolver {
    * Enable the bound of the column with index @p column in the LP problem
    * and assign it the given @p bound and @p value .
    * @param column index of the column to enable
-   * @param bound bound to assign the column (e.g. lower, upper)
+   * @param bound bound to assign the column (i.e. lower, upper, bounded, free)
    * @param value value to assign the bound
    */
   virtual void EnableBound(int column, LpColBound bound, const mpq_class& value) = 0;
@@ -227,7 +270,7 @@ class LpSolver {
   /**
    * Enable the bound linked to @p var and assign it the given @p bound and @p value .
    * @param var real variable linked to the column
-   * @param bound bound to assign the variable (e.g. lower, upper)
+   * @param bound bound to assign the variable (i.e. lower, upper, bounded, free)
    * @param value value to assign the bound
    */
   void EnableBound(const Variable& var, LpColBound bound, const mpq_class& value);
@@ -246,6 +289,14 @@ class LpSolver {
 
   /** Disable all rows and bounds */
   void DisableAll();
+
+  /**
+   * Set the coefficient of the @p row constraint to apply at the @p column decisional variable.
+   * @param row row of the constraint
+   * @param column column containing the decisional variable to set the coefficient for
+   * @param value new value of the coefficient
+   */
+  virtual void SetCoefficient(int row, int column, const mpq_class& value) = 0;
 
   /**
    * Set the objective coefficients of the LP problem to the given @p objective .
@@ -287,15 +338,19 @@ class LpSolver {
   /**
    * Optimise the LP problem with the given @p precision .
    *
+   * The result of the computation will be stored in @ref solution_ and @ref dual_solution_ if the problem is feasible,
+   * and in @ref infeasible_rows_ and @ref infeasible_bounds_ otherwise.
+   * If @p store_solution is false, the solution will not be stored, but the LpResult will still be returned.
    * The actual precision will be returned in the @p precision parameter.
    * @param[in,out] precision desired precision for the optimisation that becomes the actual precision achieved
+   * @param store_solution whether the solution and dual solution should be stored
    * @return OPTIMAL if an optimal solution has been found and the return value of @p precision is @f$ = 0 @f$
    * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of @p precision @f$\ge 0 @f$
    * @return UNBOUNDED if the problem is unbounded
    * @return INFEASIBLE if the problem is infeasible
    * @return ERROR if an error occurred
    */
-  LpResult Optimise(mpq_class& precision);
+  LpResult Optimise(mpq_class& precision, bool store_solution = true);
 
   /**
    * Update the model with the solution found by the LP solver.
@@ -311,10 +366,15 @@ class LpSolver {
  protected:
   /**
    * Internal method that optimises the LP problem with the given @p precision .
-   * @param precision
-   * @return
+   * @param precision desired precision for the optimisation
+   * @param store_solution whether the solution and dual solution should be stored
+   * @return OPTIMAL if an optimal solution has been found and the return value of @p precision is @f$ = 0 @f$
+   * @return DELTA_OPTIMAL if an optimal solution has been found and the return value of @p precision @f$\ge 0 @f$
+   * @return UNBOUNDED if the problem is unbounded
+   * @return INFEASIBLE if the problem is infeasible
+   * @return ERROR if an error occurred
    */
-  virtual LpResult OptimiseCore(mpq_class& precision) = 0;
+  virtual LpResult OptimiseCore(mpq_class& precision, bool store_solution) = 0;
 
   const Config& config_;  ///< Configuration to use
   IterationStats stats_;  ///< Statistics of the solver
@@ -337,11 +397,10 @@ class LpSolver {
                                                   ///< The Variable is the one created by the PredicateAbstractor
                                                   ///< The column is the one used by the lp solver.
 
-  std::optional<mpq_class> objective_value_;           ///< Objective value
-  std::optional<std::vector<mpq_class>> solution_;     ///< Solution vector
-  std::optional<std::vector<int>> infeasible_rows_;    ///< Set of infeasible rows detected by the Farkas ray
-  std::optional<std::vector<int>> infeasible_bounds_;  ///< Set of infeasible bounds detected by the Farkas ray.
-  ///< If the row index is negative, the lower bound is to blame, else the infeasibility arises from the upper bound
+  std::vector<mpq_class> solution_;                  ///< Solution vector
+  std::vector<mpq_class> dual_solution_;             ///< Dual solution vector
+  std::vector<int> infeasible_rows_;                 ///< Set of infeasible rows
+  std::vector<LpBoundViolation> infeasible_bounds_;  ///< Set of infeasible bounds.
 
   mpq_class ninfinity_;  ///< Negative infinity threshold value
   mpq_class infinity_;   ///< Infinity threshold value

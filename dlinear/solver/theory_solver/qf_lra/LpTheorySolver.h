@@ -47,7 +47,7 @@ class LpTheorySolver : public QfLraTheorySolver {
  protected:
   void UpdateModelBounds();
   void UpdateModelSolution() override;
-  void UpdateInfeasible(const ConflictCallback& conflict_cb);
+  void NotifyInfeasible(const ConflictCallback& conflict_cb);
 
   /** Set the bounds of the variables in the LP solver.  */
   virtual void EnableVarBound();

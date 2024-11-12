@@ -17,14 +17,15 @@ namespace dlinear {
 LpSolver::LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name)
     : config_{config},
       stats_{config.with_timings(), class_name, "Total time spent in Optimise", "Total # of Optimise"},
+      consolidated_{false},
       rhs_{},
       senses_{},
       var_to_col_{},
       col_to_var_{},
       lit_to_row_{},
       row_to_lit_{},
-      objective_value_{},
       solution_{},
+      dual_solution_{},
       infeasible_rows_{},
       infeasible_bounds_{},
       ninfinity_{std::move(ninfinity)},
@@ -42,6 +43,7 @@ std::unique_ptr<LpSolver> LpSolver::GetInstance(const Config& config) {
 }
 
 void LpSolver::AddColumn(const Variable& var) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot add variables after consolidation.");
   DLINEAR_ASSERT(!var_to_col_.contains(var), "Variable already exists in the LP.");
   // Update indexes
   var_to_col_.emplace(var, var_to_col_.size());
@@ -54,19 +56,26 @@ void LpSolver::AddColumn(const Variable& var) {
 }
 
 void LpSolver::Backtrack() {
+  DLINEAR_ASSERT(consolidated_, "Cannot backtrack without consolidating.");
   DLINEAR_DEBUG("LpSolver::Backtrack()");
-  solution_.reset();
-  objective_value_.reset();
-  infeasible_rows_.reset();
-  infeasible_bounds_.reset();
+  solution_.clear();
+  dual_solution_.clear();
+  infeasible_rows_.clear();
+  infeasible_bounds_.clear();
 }
-void LpSolver::Consolidate() {}
+void LpSolver::Consolidate() {
+  solution_.reserve(num_columns());
+  dual_solution_.reserve(num_rows());
+  infeasible_rows_.reserve(num_rows());
+  infeasible_bounds_.reserve(num_columns());
+  consolidated_ = true;
+}
 
 void LpSolver::UpdateModelWithSolution(Box& model) {
   DLINEAR_DEBUG("LpSolver::UpdateModelWithSolution()");
-  DLINEAR_ASSERT(solution().has_value(), "LpSolver::UpdateModelWithSolution() called without a solution.");
-  for (int i = 0; i < static_cast<int>(solution().value().size()); ++i) {
-    model[col_to_var_.at(i)] = solution().value().at(i);
+  DLINEAR_ASSERT(!solution().empty(), "LpSolver::UpdateModelWithSolution() called without a solution.");
+  for (int i = 0; i < static_cast<int>(solution().size()); ++i) {
+    model[col_to_var_.at(i)] = solution().at(i);
   }
 }
 void LpSolver::AddRow(const Variable& formula_var, const Formula& formula) {
@@ -87,16 +96,16 @@ void LpSolver::AddRow(const Variable& formula_var, const Formula& formula, LpRow
   DLINEAR_ASSERT(static_cast<std::size_t>(num_rows()) == rhs_.size(), "incorrect spx_rhs_.size()");
 }
 
-void LpSolver::UpdateLiteralAssignment(const Variable& var, bool truth) {
+void LpSolver::UpdateLiteralAssignment(const Variable& var, const bool truth) {
   DLINEAR_ASSERT(lit_to_row_.contains(var), "Literal not found in the LP.");
   UpdateLiteralAssignment(lit_to_row_.at(var), truth);
 }
-void LpSolver::UpdateLiteralAssignment(int row, bool truth) {
+void LpSolver::UpdateLiteralAssignment(const int row, const bool truth) {
   DLINEAR_ASSERT(0 <= row && row < num_rows(), "Row index out of bounds.");
   row_to_lit_.at(row).truth = truth;
 }
 
-void LpSolver::EnableBound(const Variable& var, LpColBound bound, const mpq_class& value) {
+void LpSolver::EnableBound(const Variable& var, const LpColBound bound, const mpq_class& value) {
   EnableBound(var_to_col_.at(var), bound, value);
 }
 void LpSolver::EnableBound(const Variable& var, const mpq_class& lb, const mpq_class& ub) {
@@ -106,21 +115,23 @@ void LpSolver::DisableBound(const Variable& var) { DisableBound(var_to_col_.at(v
 void LpSolver::EnableRows() {
   for (int i = 0; i < num_rows(); ++i) EnableRow(i);
 }
-void LpSolver::ReserveRows(int size) {
+void LpSolver::ReserveRows(const int size) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot reserve rows after consolidation.");
   DLINEAR_ASSERT(size >= 0, "Invalid number of rows.");
   rhs_.reserve(size);
   senses_.reserve(size);
   lit_to_row_.reserve(size);
   row_to_lit_.reserve(size);
 }
-void LpSolver::ReserveColumns(int size) {
+void LpSolver::ReserveColumns(const int size) {
+  DLINEAR_ASSERT(!consolidated_, "Cannot reserve columns after consolidation.");
   DLINEAR_ASSERT(size >= 0, "Invalid number of columns.");
   var_to_col_.reserve(size);
   col_to_var_.reserve(size);
 }
 
-void LpSolver::EnableRow(int row) { EnableRow(row, senses_.at(row), rhs_.at(row)); }
-void LpSolver::EnableRow(int row, LpRowSense sense) { EnableRow(row, sense, rhs_.at(row)); }
+void LpSolver::EnableRow(const int row) { EnableRow(row, senses_.at(row), rhs_.at(row)); }
+void LpSolver::EnableRow(const int row, const LpRowSense sense) { EnableRow(row, sense, rhs_.at(row)); }
 
 void LpSolver::DisableAll() {
   for (int i = 0; i < num_columns(); i++) DisableBound(i);
@@ -133,11 +144,15 @@ void LpSolver::SetObjective(const std::unordered_map<int, mpq_class>& objective)
 void LpSolver::SetObjective(const std::vector<mpq_class>& objective) {
   for (int i = 0; i < static_cast<int>(objective.size()); ++i) SetObjective(i, objective.at(i));
 }
-LpResult LpSolver::Optimise(mpq_class& precision) {
+LpResult LpSolver::Optimise(mpq_class& precision, const bool store_solution) {
+  DLINEAR_ASSERT(consolidated_, "Cannot optimise without consolidating.");
+  DLINEAR_ASSERT(infeasible_rows_.empty() && infeasible_bounds_.empty() && solution_.empty() && dual_solution_.empty(),
+                 "Previous run information was not backtracked.");
   const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
-  return OptimiseCore(precision);
+  return OptimiseCore(precision, store_solution);
 }
+void LpSolver::SetObjective(const Variable& var, const mpq_class& value) { SetObjective(var_to_col_.at(var), value); }
 
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
   if (dynamic_cast<const SoplexLpSolver*>(&solver)) {
@@ -152,23 +167,28 @@ std::ostream& operator<<(std::ostream& os, const LpSolver& solver) {
   os << "infinity: " << solver.infinity() << ", ";
   os << "stats: " << solver.stats() << ", ";
   os << "config: " << solver.config() << ", ";
-  os << "objective_value: " << solver.objective_value().value_or(mpq_class{0}) << ", ";
-  if (solver.objective_value().has_value()) {
+  if (!solver.solution().empty()) {
     os << "solution: ";
-    for (int i = 0; i < static_cast<int>(solver.solution().value().size()); ++i) {
-      os << solver.col_to_var().at(i) << " = " << solver.solution().value().at(i) << ", ";
+    for (int i = 0; i < static_cast<int>(solver.solution().size()); ++i) {
+      os << solver.col_to_var().at(i) << " = " << solver.solution().at(i) << ", ";
     }
   }
-  if (solver.infeasible_rows().has_value()) {
+  if (!solver.dual_solution().empty()) {
+    os << "dual_solution: ";
+    for (int i = 0; i < static_cast<int>(solver.dual_solution().size()); ++i) {
+      os << solver.row_to_lit().at(i).var << " = " << solver.dual_solution().at(i) << ", ";
+    }
+  }
+  if (!solver.infeasible_rows().empty()) {
     os << "infeasible_rows: ";
-    for (const int s : solver.infeasible_rows().value()) {
+    for (const int s : solver.infeasible_rows()) {
       os << s << ", ";
     }
   }
-  if (solver.infeasible_bounds().has_value()) {
+  if (!solver.infeasible_bounds().empty()) {
     os << "infeasible_bounds: ";
-    for (const int s : solver.infeasible_bounds().value()) {
-      os << solver.col_to_var().at(std::abs(s)) << (s < 0 ? " LB " : " UB ") << ", ";
+    for (const auto& [column, upper_bound] : solver.infeasible_bounds()) {
+      os << solver.col_to_var().at(column) << (upper_bound ? " UB " : " LB ") << ", ";
     }
   }
   os << "}";

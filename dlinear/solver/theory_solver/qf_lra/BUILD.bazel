@@ -39,25 +39,45 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "lp_bound_violation",
+    srcs = ["LpBoundViolation.cpp"],
+    hdrs = ["LpBoundViolation.h"],
+    deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
     name = "lp_solver",
     srcs = ["LpSolver.cpp"] + select({
         "//tools:enabled_soplex": ["SoplexLpSolver.cpp"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_qsoptex": ["QsoptexLpSolver.cpp"],
         "//conditions:default": [],
     }),
     hdrs = ["LpSolver.h"] + select({
         "//tools:enabled_soplex": ["SoplexLpSolver.h"],
         "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_qsoptex": ["QsoptexLpSolver.h"],
+        "//conditions:default": [],
     }),
     implementation_deps = ["//dlinear/util:error"],
     deps = [
+        ":lp_bound",
+        ":lp_bound_violation",
         ":lp_result",
+        ":lp_sense",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:box",
         "//dlinear/util:config",
         "//dlinear/util:stats",
     ] + select({
         "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
+        "//conditions:default": [],
+    }) + select({
+        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
         "//conditions:default": [],
     }),
 )
@@ -193,11 +213,23 @@ dlinear_cc_library(
 
 dlinear_cc_library(
     name = "lp_theory_solver",
-    srcs = ["LpTheorySolver.cpp"],
-    hdrs = ["LpTheorySolver.h"],
+    srcs = [
+        "CompleteLpTheorySolver.cpp",
+        "DeltaLpTheorySolver.cpp",
+        "LpTheorySolver.cpp",
+    ],
+    hdrs = [
+        "CompleteLpTheorySolver.h",
+        "DeltaLpTheorySolver.h",
+        "LpTheorySolver.h",
+    ],
     implementation_deps = ["//dlinear/util:error"],
     deps = [
+        ":lp_solver",
         ":qf_lra_theory_solver",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:bit_increment_iterator",
     ],
 )
 

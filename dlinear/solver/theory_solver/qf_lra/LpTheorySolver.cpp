@@ -71,16 +71,18 @@ void LpTheorySolver::Backtrack() {
   // Disable all rows
   rows_state_.assign(rows_state_.size(), false);
   lp_solver_->Backtrack();
+  for (auto &[var, bounds] : vars_bounds_) bounds.Clear();
 }
 
 void LpTheorySolver::UpdateModelSolution() {
-  DLINEAR_TRACE("LpTheorySolver::UpdateModelSolution()");
-  DLINEAR_ASSERT(lp_solver_->solution().has_value(), "solution must be available");
-  DLINEAR_ASSERT(lp_solver_->solution().value().size() >= lp_solver_->col_to_var().size(),
+  DLINEAR_ASSERT(!lp_solver_->solution().empty(), "solution must be available");
+  DLINEAR_ASSERT(lp_solver_->solution().size() >= lp_solver_->col_to_var().size(),
                  "solution must contain all the variables");
+
+  DLINEAR_TRACE("LpTheorySolver::UpdateModelSolution()");
   for (int theory_col = 0; theory_col < static_cast<int>(lp_solver_->col_to_var().size()); theory_col++) {
     const Variable &var = lp_solver_->col_to_var().at(theory_col);
-    const mpq_class &val = lp_solver_->solution().value().at(theory_col);
+    const mpq_class &val = lp_solver_->solution().at(theory_col);
     DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "val must be in bounds");
     model_[var] = val;
   }
@@ -111,16 +113,17 @@ void LpTheorySolver::UpdateModelBounds() {
   }
 }
 
-void LpTheorySolver::UpdateInfeasible(const ConflictCallback &conflict_cb) {
+void LpTheorySolver::NotifyInfeasible(const ConflictCallback &conflict_cb) {
+  DLINEAR_ASSERT(!lp_solver_->infeasible_rows().empty(), "There must be infeasible rows");
   LiteralSet explanation;
-  for (const auto &bound : lp_solver_->infeasible_bounds().value()) {
-    const Variable &var = lp_solver_->col_to_var().at(std::abs(bound));
-    const BoundVector &var_bounds = vars_bounds_.at(var);
-    var_bounds.GetActiveBounds(bound < 0 ? var_bounds.active_lower_bound() : var_bounds.active_upper_bound())
-        .explanation(explanation);
-  }
-  for (const auto &row : lp_solver_->infeasible_rows().value()) {
+  for (const auto &row : lp_solver_->infeasible_rows()) {
     explanation.insert(lp_solver_->row_to_lit().at(row));
+  }
+  for (const auto &[column, upper_bound] : lp_solver_->infeasible_bounds()) {
+    const Variable &var = lp_solver_->col_to_var().at(column);
+    const BoundVector &var_bounds = vars_bounds_.at(var);
+    var_bounds.GetActiveBounds(upper_bound ? var_bounds.active_upper_bound() : var_bounds.active_lower_bound())
+        .explanation(explanation);
   }
   conflict_cb(explanation);
 }
@@ -134,7 +137,10 @@ void LpTheorySolver::DisableNotEnabledRows() {
 void LpTheorySolver::EnableVarBound() {
   for (const auto &[var, bounds] : vars_bounds_) {
     lp_solver_->EnableBound(lp_solver_->var_to_col().at(var), bounds.active_lower_bound(), bounds.active_upper_bound());
-    DLINEAR_TRACE_FMT("EnableVarBound: {} = [{}, {}]", var, bounds.active_lower_bound(), bounds.active_upper_bound());
+    DLINEAR_TRACE_FMT(
+        "EnableVarBound: {} = [{}, {}]", var,
+        bounds.active_lower_bound() <= lp_solver_->ninfinity() ? "-inf" : fmt::to_string(bounds.active_lower_bound()),
+        bounds.active_upper_bound() >= lp_solver_->infinity() ? "inf" : fmt::to_string(bounds.active_upper_bound()));
   }
 }
 
