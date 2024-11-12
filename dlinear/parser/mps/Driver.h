@@ -242,6 +242,7 @@ class MpsDriver : public Driver {
    * The result is then combined with the rhs value and the correct row sense to build the Formula that makes up the
    * assertion.
    */
+  // TODO: store additional mapping from row to int [idx] and col to int [idx] and use vectors for everything else
   std::unordered_map<std::string, std::map<Expression, mpq_class>> rows_;
   std::unordered_map<std::string, Sense> row_senses_;       ///< The sense of each row.
   std::unordered_map<std::string, Variable> columns_;       ///< The columns of the problem. Contains the variables.

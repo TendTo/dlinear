@@ -97,7 +97,7 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
         rhs_[row] = row_expression <= value;
         break;
       case Sense::G:
-        rhs_[row] = value <= row_expression;
+        rhs_[row] = row_expression >= value;
         break;
       case Sense::E:
         rhs_[row] = row_expression == value;
@@ -130,8 +130,8 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
         break;
       case Sense::E:
         rhs_[row] = value > 0
-                        ? rhs_values_[row] <= row_expression && row_expression <= mpq_class(rhs_values_[row] + value)
-                        : mpq_class{rhs_values_[row] + value} <= row_expression && row_expression <= rhs_values_[row];
+                        ? row_expression >= rhs_values_[row] && row_expression <= mpq_class(rhs_values_[row] + value)
+                        : row_expression >= mpq_class{rhs_values_[row] + value} && row_expression <= rhs_values_[row];
         break;
       case Sense::N:
         DLINEAR_WARN("Sense N is used only for objective function. No action to take");
@@ -156,11 +156,11 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         break;
       case BoundType::LO:
       case BoundType::LI:
-        bounds_[column] &= value <= columns_.at(column);
+        bounds_[column] &= columns_.at(column) >= value;
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FX:
-        bounds_[column] &= (value <= columns_.at(column)) && (columns_.at(column) <= value);
+        bounds_[column] &= (columns_.at(column) >= value) && (columns_.at(column) <= value);
         skip_lower_bound_[column] = true;
         break;
       default:
@@ -179,7 +179,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
   try {
     switch (bound_type) {
       case BoundType::BV:
-        bounds_[column] = (0 <= columns_.at(column)) && (columns_.at(column) <= 1);
+        bounds_[column] = (columns_.at(column) >= 0) && (columns_.at(column) <= 1);
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FR:
@@ -215,11 +215,19 @@ void MpsDriver::End() {
   }
   DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());
   for (const auto &[name, bound] : bounds_) {
-    context_.Assert(bound);
+    if (is_conjunction(bound)) {
+      for (const Formula &sub_bound : get_operands(bound)) context_.Assert(sub_bound);
+    } else {
+      context_.Assert(bound);
+    }
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
-    context_.Assert(row);
+    if (is_conjunction(row)) {
+      for (const Formula &sub_row : get_operands(row)) context_.Assert(sub_row);
+    } else {
+      context_.Assert(row);
+    }
   }
   if (context_.config().optimize() && !obj_row_.empty()) {
     Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
