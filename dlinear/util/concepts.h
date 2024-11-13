@@ -14,6 +14,35 @@
 namespace dlinear {
 
 /**
+ * Check if the type T is an iterable type
+ * @code
+ * template <Iterable T>
+ * void foo(T t); // T can be any iterable type
+ * @endcode
+ * @tparam T type to check
+ */
+template <class T>
+concept Iterable = requires(T t) {
+  { t.begin() } -> std::convertible_to<typename T::iterator>;
+  { t.end() } -> std::convertible_to<typename T::iterator>;
+};
+
+/**
+ * Check if the type T is an iterable type with elements of type U
+ * @code
+ * template <TypedIterable<int> T>
+ * void foo(T t); // T can be any iterable type with elements of type int
+ * @endcode
+ * @tparam T type to check
+ * @tparam U type of the elements
+ */
+template <typename T, typename U>
+concept TypedIterable = requires(T t, U u) {
+  { t.begin() } -> std::convertible_to<typename T::iterator>;
+  { t.end() } -> std::convertible_to<typename T::iterator>;
+} && std::same_as<typename T::value_type, U>;
+
+/**
  * Check if the type T is any of the types U
  * @code
  * template <IsAnyOf<int, float, bool> T>
