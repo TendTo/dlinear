@@ -274,7 +274,10 @@ void QsoptexLpSolver::SetVarCoeff(const int row, const Variable& var, const mpq_
   mpq_clear(c_value);
 }
 
+#ifndef NDEBUG
 void QsoptexLpSolver::Dump() { mpq_QSdump_prob(qsx_); }
+#endif
+
 void QsoptexLpSolver::SetCoefficient(const int row, const int column, const mpq_class& value) {
   DLINEAR_ASSERT_FMT(row < num_rows(), "Row index out of bounds: {} >= {}", row, num_rows());
   DLINEAR_ASSERT_FMT(column < num_columns(), "Column index out of bounds: {} >= {}", column, num_columns());

@@ -292,6 +292,8 @@ void SoplexLpSolver::SetVarCoeff(soplex::DSVectorRational& coeffs, const Variabl
   coeffs.add(it->second, gmp::ToMpq(value));
 }
 
+#ifndef NDEBUG
 void SoplexLpSolver::Dump() { spx_.writeFileRational("~/dlinear.temp.dump.soplex.lp"); }
+#endif
 
 }  // namespace dlinear
