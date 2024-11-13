@@ -32,6 +32,8 @@ void DeltaLpTheorySolver::AddLiteral(const Variable& formula_var, const Formula&
 bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
   DLINEAR_ASSERT(pa_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
+  // No need to enable a fixed literal again
+  if (enabled_literals_checkpoint_.contains(lit.var)) return true;
 
   if (preprocessor_ != nullptr) {
     const bool success = preprocessor_->EnableLiteral(lit, conflict_cb);

@@ -67,11 +67,20 @@ void LpTheorySolver::Consolidate(const Box &box) {
   TheorySolver::Consolidate(box);
 }
 
+void LpTheorySolver::CreateCheckpoint() {
+  for (auto &[var, bounds] : vars_bounds_) vars_bounds_checkpoint_.insert_or_assign(var, bounds);
+  rows_state_checkpoint_ = rows_state_;
+  DLINEAR_DEBUG_FMT("LpTheorySolver::CreateCheckpoint: #var_bounds = {}, #rows_state = {}",
+                    vars_bounds_checkpoint_.size(), rows_state_checkpoint_.size());
+  DLINEAR_TRACE_FMT("LpTheorySolver::CreateCheckpoint: var_bounds = {}, rows_state = {}", vars_bounds_checkpoint_,
+                    rows_state_checkpoint_);
+}
+
 void LpTheorySolver::Backtrack() {
   // Disable all rows
-  rows_state_.assign(rows_state_.size(), false);
   lp_solver_->Backtrack();
-  for (auto &[var, bounds] : vars_bounds_) bounds.Clear();
+  rows_state_ = rows_state_checkpoint_;
+  for (auto &[var, bounds] : vars_bounds_) bounds = vars_bounds_checkpoint_.at(var);
 }
 
 void LpTheorySolver::UpdateModelSolution() {
@@ -100,16 +109,7 @@ void LpTheorySolver::UpdateModelBounds() {
   // Update the box with the new bounds, since the LP solver won't be called, for there are no constraints.
   for (const auto &[var, bounds] : vars_bounds_) {
     const auto &[lb, ub] = bounds.GetActiveBoundsValue();
-    mpq_class val;
-    if (lp_solver_->ninfinity() < lb) {
-      val = lb;
-    } else if (ub < lp_solver_->infinity()) {
-      val = ub;
-    } else {
-      val = 0;
-    }
-    DLINEAR_ASSERT(model_[var].lb() <= val && val <= model_[var].ub(), "val must be in bounds");
-    model_[var] = val;
+    model_[var] = Interval{std::max(model_[var].lb(), lb), std::min(ub, model_[var].ub())};
   }
 }
 

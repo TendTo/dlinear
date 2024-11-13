@@ -27,15 +27,17 @@ class CompleteLpTheorySolver : public LpTheorySolver {
   TheoryResult CheckSatCore(mpq_class* actual_precision, const ConflictCallback& conflict_cb) final;
 
  private:
-  void EnableStrictRow(int row, bool truth);
+  void CreateCheckpoint() final;
   void EnableVarBound() final;
+
+  void EnableStrictRow(int row, bool truth);
   void EnableNqLiterals(const std::vector<bool>& nq_status, bool force = false);
   void EnableNqLiteral(int row, bool truth);
   void DisableNqLiterals(const std::set<size_t>& nq_constraints);
   LpResult LpCheckSat();
   void UpdateRowExplanationInfeasible();
   void UpdateRowExplanationStrictInfeasible();
-  std::set<size_t> IteratorNqRowsInLastExplanation() const;
+  [[nodiscard]] std::set<size_t> IteratorNqRowsInLastExplanation() const;
   bool UpdateBitIncrementIteratorBasedOnExplanation(BitIncrementIterator& bit_iterator);
   void NotifyRowInfeasible(const ConflictCallback& conflict_cb);
 
@@ -53,9 +55,11 @@ class CompleteLpTheorySolver : public LpTheorySolver {
 
   std::vector<int> nq_row_to_theory_rows_;  ///< Index of row with a non-equal-to constraint in the order they appear
                                             ///< mapped to the corresponding spx_row
-  std::vector<bool> last_nq_status_;        ///< Last status of the non-equal constraints.
-                                            ///< Keeps track last sense of the constraints:
-                                            ///< @f$ < @f$ (false) or @f$ > @f$ (true).
+  std::vector<int> nq_row_to_theory_rows_checkpoint_;  ///< Checkpoint of the nq_row_to_theory_rows_
+
+  std::vector<bool> last_nq_status_;  ///< Last status of the non-equal constraints.
+                                      ///< Keeps track last sense of the constraints:
+                                      ///< @f$ < @f$ (false) or @f$ > @f$ (true).
 
   std::set<int> last_infeasible_lp_rows_;                ///< Last set of theory rows that are part of the explanation
   std::set<std::set<int>> theory_rows_to_explanations_;  ///< Set that contains all the explanation the solver produced

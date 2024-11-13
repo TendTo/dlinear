@@ -55,6 +55,8 @@ void CompleteLpTheorySolver::AddLiteral(const Variable& formula_var, const Formu
 bool CompleteLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before enabling a literal");
   DLINEAR_ASSERT(pa_.var_to_formula_map().contains(lit.var), "var must map to a theory literal");
+  // No need to enable a fixed literal again
+  if (enabled_literals_checkpoint_.contains(lit.var)) return true;
 
   if (preprocessor_ != nullptr) {
     const bool success = preprocessor_->EnableLiteral(lit, conflict_cb);
@@ -407,9 +409,17 @@ void CompleteLpTheorySolver::EnableStrictRow(int row, bool truth) {
                     Literal{lp_solver_->lit(row).var, truth}, sense);
 }
 
+void CompleteLpTheorySolver::CreateCheckpoint() {
+  LpTheorySolver::CreateCheckpoint();
+  nq_row_to_theory_rows_checkpoint_ = nq_row_to_theory_rows_;
+  DLINEAR_DEBUG_FMT("CompleteLpTheorySolver::CreateCheckpoint: #nq_row_to_theory_rows = {}",
+                    nq_row_to_theory_rows_.size());
+  DLINEAR_TRACE_FMT("CompleteLpTheorySolver::CreateCheckpoint: nq_row_to_theory_rows = {}", nq_row_to_theory_rows_);
+}
+
 void CompleteLpTheorySolver::Backtrack() {
   LpTheorySolver::Backtrack();
-  nq_row_to_theory_rows_.clear();
+  nq_row_to_theory_rows_ = nq_row_to_theory_rows_checkpoint_;
   theory_rows_to_explanations_.clear();
   nq_explanations_.clear();
   locked_solver_ = false;

@@ -2,7 +2,7 @@
  * @author Ernesto Casablanca (casablancaernesto@gmail.com)
  * @copyright 2024 dlinear
  * @licence BSD 3-Clause License
- * SoplexTheorySolver class.
+ * LpTheorySolver class.
  */
 #pragma once
 
@@ -24,9 +24,7 @@
 namespace dlinear {
 
 /**
- * SoPlex is an exact LP solver written in C++.
- * It uses a mixture of techniques, from iterative refinement to precision boosting, in order to efficiently solve LPs
- * exactly.
+ * Ensure the theory literals are consistent using a standard exact LP solver.
  */
 class LpTheorySolver : public QfLraTheorySolver {
  public:
@@ -40,13 +38,25 @@ class LpTheorySolver : public QfLraTheorySolver {
   void Consolidate(const Box& box) override;
   void Backtrack() override;
 
+  /** @getter{LP solver, LpTheorySolver} */
   [[nodiscard]] const LpSolver& lp_solver() const { return *lp_solver_; }
 
   [[nodiscard]] LiteralSet enabled_literals() const final;
 
  protected:
+  void CreateCheckpoint() override;
+
+  /**
+   * Update the @ref model_ with the bounds of the variables determined by the enabled literals.
+   * @pre The solver must be consolidated.
+   * @pre There are no rows in the lp problem, only bounds
+   */
   void UpdateModelBounds();
   void UpdateModelSolution() override;
+  /**
+   * Notify the SAT solver that the current LP problem is infeasible by calling @p conflict_cb with the explanation.
+   * @param conflict_cb conflict callback to be called with the explanation
+   */
   void NotifyInfeasible(const ConflictCallback& conflict_cb);
 
   /** Set the bounds of the variables in the LP solver.  */
@@ -60,7 +70,8 @@ class LpTheorySolver : public QfLraTheorySolver {
    */
   void DisableNotEnabledRows();
 
-  std::vector<bool> rows_state_;  ///< Whether each LP row is enabled or not.
+  std::vector<bool> rows_state_;             ///< Whether each LP row is enabled or not.
+  std::vector<bool> rows_state_checkpoint_;  ///< Whether each LP row is enabled or not. Will be used to backtrack.
 
   std::unique_ptr<LpSolver> lp_solver_;  ///< Exact LP solver
 };
