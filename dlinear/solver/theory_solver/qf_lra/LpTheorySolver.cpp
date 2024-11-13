@@ -10,7 +10,6 @@
 #include <map>
 #include <utility>
 
-#include "dlinear/util/Config.h"
 #include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 

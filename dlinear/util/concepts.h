@@ -25,7 +25,7 @@ template <class T>
 concept Iterable = requires(T t) {
   { t.begin() } -> std::convertible_to<typename T::iterator>;
   { t.end() } -> std::convertible_to<typename T::iterator>;
-};
+};  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
  * Check if the type T is an iterable type with elements of type U

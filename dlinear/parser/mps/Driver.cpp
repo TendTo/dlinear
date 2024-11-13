@@ -131,7 +131,7 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
       case Sense::E:
         rhs_[row] = value > 0
                         ? row_expression >= rhs_values_[row] && row_expression <= mpq_class(rhs_values_[row] + value)
-                        : row_expression >= mpq_class{rhs_values_[row] + value} && row_expression <= rhs_values_[row];
+                        : row_expression >= mpq_class(rhs_values_[row] + value) && row_expression <= rhs_values_[row];
         break;
       case Sense::N:
         DLINEAR_WARN("Sense N is used only for objective function. No action to take");

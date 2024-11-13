@@ -12,8 +12,6 @@
 #include <vector>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/theory_solver/TheorySolver.h"
-#include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpSolver.h"
 #include "dlinear/solver/theory_solver/qf_lra/QfLraTheorySolver.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"

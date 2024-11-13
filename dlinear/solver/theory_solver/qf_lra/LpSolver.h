@@ -409,3 +409,11 @@ class LpSolver {
 std::ostream& operator<<(std::ostream& os, const LpSolver& solver);
 
 }  // namespace dlinear
+
+#ifdef DLINEAR_INCLUDE_FMT
+
+#include "dlinear/util/logging.h"
+
+OSTREAM_FORMATTER(dlinear::LpSolver);
+
+#endif
