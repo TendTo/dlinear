@@ -18,6 +18,7 @@ enum class SmtResult {
   DELTA_SAT,  ///< The problem is delta-satisfiable.
   UNSAT,      ///< The problem is unsatisfiable.
   ERROR,      ///< An error occurred.
+  TIMEOUT,    ///< The solver timed out.
 };
 
 /**

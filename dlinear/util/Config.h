@@ -204,6 +204,9 @@ class Config {
   DLINEAR_PARAMETER(silent, bool, false, "Silent mode. Nothing will be printed on the standard output")
   DLINEAR_PARAMETER(simplex_sat_phase, int, 1, "What phase to use to verify the feasibility of the LP problem")
   DLINEAR_PARAMETER(skip_check_sat, bool, false, "Parse the input, but does not run the solver")
+  DLINEAR_PARAMETER(
+      timeout, unsigned int, 0,
+      "Timeout in milliseconds for the main routine, without accounting for input parsing. 0 means no timeout")
   DLINEAR_PARAMETER(verbose_dlinear, int, 2, "Verbosity level for dlinear. In the range [0, 5]")
   DLINEAR_PARAMETER(verbose_simplex, int, 0, "Verbosity level for simplex. In the range [0, 5]")
   DLINEAR_PARAMETER(verify, bool, false, "If the input produces a SAT output, verify the assignment against the input")

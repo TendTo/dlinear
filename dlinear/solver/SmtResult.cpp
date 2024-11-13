@@ -25,6 +25,8 @@ std::ostream& operator<<(std::ostream& os, const SmtResult& bound) {
       return os << "delta-sat";
     case SmtResult::ERROR:
       return os << "error";
+    case SmtResult::TIMEOUT:
+      return os << "timeout";
     default:
       DLINEAR_UNREACHABLE();
   }

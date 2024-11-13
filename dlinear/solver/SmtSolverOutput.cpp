@@ -28,8 +28,10 @@ int SmtSolverOutput::exit_code() const {
       return 1;
     case SmtResult::ERROR:
       return 2;
-    default:
+    case SmtResult::TIMEOUT:
       return 3;
+    default:
+      return 4;
   }
 }
 
@@ -46,6 +48,7 @@ bool SmtSolverOutput::matches_expectation(SmtResult expectation) const {
     case SmtResult::UNSOLVED:
       return true;
     case SmtResult::ERROR:
+    case SmtResult::TIMEOUT:
       return false;
     default:
       DLINEAR_UNREACHABLE();
@@ -72,18 +75,21 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
             "To use the SAT solver, remove the option --skip-check-sat\n"
             "skip-sat";
       break;
+    case SmtResult::TIMEOUT:
+      os << "timeout";
+      break;
     default:
       DLINEAR_UNREACHABLE();
   }
   if (s.with_timings) {
-    os << " after " << s.smt_solver_timer.seconds() << " seconds\n"
-       << s.parser_stats << "\n"
-       << s.ite_stats << "\n"
-       << s.cnfizer_stats << "\n"
-       << s.predicate_abstractor_stats << "\n"
-       << s.preprocessor_stats << "\n"
-       << s.sat_stats << "\n"
-       << s.theory_stats;
+    os << " after " << s.smt_solver_timer.seconds() << " seconds";
+    os << "\n" << s.parser_stats;
+    if (s.ite_stats.iterations() > 0) os << "\n" << s.ite_stats;
+    if (s.cnfizer_stats.iterations() > 0) os << "\n" << s.cnfizer_stats;
+    if (s.predicate_abstractor_stats.iterations() > 0) os << "\n" << s.predicate_abstractor_stats;
+    if (s.preprocessor_stats.iterations() > 0) os << "\n" << s.preprocessor_stats;
+    if (s.sat_stats.iterations() > 0) os << "\n" << s.sat_stats;
+    if (s.theory_stats.iterations() > 0) os << "\n" << s.theory_stats;
   }
   if (!s.model.empty() && s.produce_models) {
     os << "\n" << s.model;

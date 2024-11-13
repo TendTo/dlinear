@@ -55,8 +55,8 @@ namespace dlinear {
         .nargs(1);                                                            \
   } while (false)
 
-#define DLINEAR_PARAM_TO_CONFIG(param_name, config_name, type)                                                      \
-  do {                                                                                                              \
+#define DLINEAR_PARAM_TO_CONFIG(param_name, config_name, type)                                                   \
+  do {                                                                                                           \
     if (parser_.is_used(param_name)) config.m_##config_name().SetFromCommandLine(parser_.get<type>(param_name)); \
   } while (false)
 
@@ -114,6 +114,7 @@ void ArgParser::AddOptions() {
   DLINEAR_PARSE_PARAM_SCAN(parser_, precision, 'g', double, "-p", "--precision");
   DLINEAR_PARSE_PARAM_SCAN(parser_, random_seed, 'i', unsigned int, "-r", "--random-seed");
   DLINEAR_PARSE_PARAM_SCAN(parser_, simplex_sat_phase, 'i', int, "--simplex-sat-phase");
+  DLINEAR_PARSE_PARAM_SCAN(parser_, timeout, 'i', unsigned int, "--timeout");
   DLINEAR_PARSE_PARAM_SCAN(parser_, verbose_simplex, 'i', int, "--verbose-simplex");
 
   parser_.add_argument("-V", "--verbose")
@@ -218,6 +219,7 @@ Config ArgParser::ToConfig() const {
   DLINEAR_PARAM_TO_CONFIG("silent", silent, bool);
   DLINEAR_PARAM_TO_CONFIG("simplex-sat-phase", simplex_sat_phase, int);
   DLINEAR_PARAM_TO_CONFIG("skip-check-sat", skip_check_sat, bool);
+  DLINEAR_PARAM_TO_CONFIG("timeout", timeout, unsigned int);
   config.m_verbose_dlinear().SetFromCommandLine(verbosity_);
   DLINEAR_PARAM_TO_CONFIG("verbose-simplex", verbose_simplex, int);
   DLINEAR_PARAM_TO_CONFIG("verify", verify, bool);

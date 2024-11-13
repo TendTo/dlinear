@@ -63,6 +63,7 @@ const SmtSolverOutput &SmtSolver::CheckSat() {
 }
 
 bool SmtSolver::Verify(const Box &model) const { return context_.Verify(model); }
+void SmtSolver::Interrupt() { context_.Interrupt(); }
 
 const SmtSolverOutput &SmtSolver::Parse(const std::string &filename) {
   config_.m_filename() = filename;

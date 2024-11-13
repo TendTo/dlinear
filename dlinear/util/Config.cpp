@@ -223,6 +223,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "silent = " << config.silent() << ",\n"
             << "simplex_sat_phase = " << config.simplex_sat_phase() << ",\n"
             << "skip_check_sat = " << config.skip_check_sat() << ",\n"
+            << "timeout = " << config.timeout() << ",\n"
             << "verbose_dlinear = " << config.verbose_dlinear() << ",\n"
             << "verbose_simplex = " << config.verbose_simplex() << ",\n"
             << "verify = " << config.verify() << ",\n"

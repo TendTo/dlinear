@@ -5,6 +5,7 @@
  */
 #include "ContextImpl.h"
 
+#include <future>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -58,6 +59,7 @@ const std::function<void(const Formula &)> debug_assert_cb = [](const Formula &)
 Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
     : config_{config},
       output_{output},
+      interrupted_{false},
       logic_{},
       model_{config_.lp_solver()},
       have_objective_{false},
@@ -134,11 +136,25 @@ void Context::Impl::Push() {
 
 SmtResult Context::Impl::CheckSat(mpq_class *precision) {
   if (!logic_.has_value()) DLINEAR_WARN("Logic is not set. Defaulting to QF_LRA.");
+  DLINEAR_INFO("ContextImpl::CheckSat: Checking the satisfiability of the input");
   if (config_.skip_check_sat()) {
     DLINEAR_DEBUG("ContextImpl::CheckSat() - Skipping SAT check");
     UpdateAndPrintOutput(SmtResult::SKIP_SAT);
     return SmtResult::SKIP_SAT;
   }
+
+  // Start timeout thread to interrupt the CheckSat loop if it takes too long
+  interrupted_ = false;
+  std::condition_variable check_sat_finished;
+  std::future<void> timeout = std::async(std::launch::async, [this, &check_sat_finished]() -> void {
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    check_sat_finished.wait_for(lock, std::chrono::milliseconds(config_.timeout()));
+    if (config_.timeout() > 0) {
+      DLINEAR_INFO_FMT("ContextImpl::CheckSat: The solver is taking longer than {}ms. Interrupting", config_.timeout());
+      Interrupt();
+    }
+  });
 
   const SmtResult result = CheckSatCore(precision);
   switch (result) {
@@ -155,6 +171,10 @@ SmtResult Context::Impl::CheckSat(mpq_class *precision) {
       DLINEAR_DEBUG("ContextImpl::CheckSat() - Error");
       model_.set_empty();
       break;
+    case SmtResult::TIMEOUT:
+      DLINEAR_DEBUG("ContextImpl::CheckSat() - Timeout");
+      model_.set_empty();
+      break;
     default:
       DLINEAR_UNREACHABLE();
   }
@@ -163,6 +183,10 @@ SmtResult Context::Impl::CheckSat(mpq_class *precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSat() - Setting output");
   output_->actual_precision = *precision;
   UpdateAndPrintOutput(result);
+
+  // Ensure the timer thread is stopped cleanly
+  check_sat_finished.notify_all();
+  timeout.wait();
   return result;
 }
 
@@ -304,6 +328,10 @@ bool Context::Impl::is_max() const { return is_max_; }
   }
   return true;
 }
+void Context::Impl::Interrupt() {
+  DLINEAR_DEBUG("ContextImpl::Interrupt()");
+  interrupted_ = true;
+}
 
 SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   DLINEAR_DEBUG("ContextImpl::CheckSatCore()");
@@ -377,7 +405,7 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
 #endif
 
   bool have_unsolved = false;
-  while (true) {
+  while (!interrupted_) {
     // Note that 'DLINEAR_PYDLINEAR' is only defined in setup.py, when we build dlinear python package.
 #ifdef DLINEAR_PYDLINEAR
     py_check_signals();
@@ -446,6 +474,7 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
       have_unsolved = true;  // Will prevent return of UNSAT
     }
   }
+  return SmtResult::TIMEOUT;
 }
 
 SmtResult Context::Impl::CheckOptCore([[maybe_unused]] mpq_class *obj_lo, [[maybe_unused]] mpq_class *obj_up) {
@@ -513,7 +542,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     output_->sat_stats = sat_solver_->stats();
     output_->ite_stats = ite_eliminator_.stats();
     output_->theory_stats = theory_solver_->stats();
-    output_->preprocessor_stats = theory_solver_->preprocessor().stats();
+    if (theory_solver_->preprocessor()) output_->preprocessor_stats = theory_solver_->preprocessor()->stats();
     output_->predicate_abstractor_stats = predicate_abstractor_.stats();
     output_->cnfizer_stats = sat_solver_->cnfizer_stats();
   }

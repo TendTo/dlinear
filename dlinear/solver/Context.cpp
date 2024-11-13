@@ -72,5 +72,6 @@ const ScopedVector<Formula> &Context::assertions() const { return impl_->asserti
 bool Context::have_objective() const { return impl_->have_objective(); }
 bool Context::is_max() const { return impl_->is_max(); }
 bool Context::Verify(const Box &model) const { return impl_->Verify(model); }
+void Context::Interrupt() { impl_->Interrupt(); }
 
 }  // namespace dlinear

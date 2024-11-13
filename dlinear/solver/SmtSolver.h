@@ -110,6 +110,18 @@ class SmtSolver {
    */
   [[nodiscard]] bool Verify(const Box &model) const;
 
+  /**
+   * Set a flag that stops the @ref CheckSat() or @ref CheckOpt() execution.
+   *
+   * While both methods will eventually return a result, the exponential complexity of the algorithms
+   * may lead to a long execution time.
+   * This flag allows the user to interrupt the execution of the solver.
+   * @note The flag will only be checked at the beginning of each loop iteration.
+   * Each loop invokes both the SAT solver and Theory solver, so they need to terminate for the loop to be interrupted.
+   * @warning This method has no effect if it called before either of the two methods has started.
+   */
+  void Interrupt();
+
  private:
   /**
    * Parse the problem from the input indicated in the configuration.

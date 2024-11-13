@@ -68,6 +68,7 @@ dlinear_cc_library(
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:box",
+        "//dlinear/util:concepts",
         "//dlinear/util:config",
         "//dlinear/util:logging",
         "//dlinear/util:stats",
