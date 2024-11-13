@@ -55,22 +55,19 @@ dlinear_cc_library(
     hdrs = ["TheorySolver.h"],
     implementation_deps = [
         "//dlinear/util:error",
+        "//dlinear/util:logging",
     ],
     deps = [
         ":theory_preprocessor",
         ":theory_propagator",
         ":theory_result",
         "//dlinear/libs:gmp",
-        "//dlinear/solver/theory_solver/qf_lra:bound_iterator",
-        "//dlinear/solver/theory_solver/qf_lra:bound_preprocessor",
-        "//dlinear/solver/theory_solver/qf_lra:lp_bound",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:box",
         "//dlinear/util:concepts",
         "//dlinear/util:config",
-        "//dlinear/util:logging",
         "//dlinear/util:stats",
     ],
 )

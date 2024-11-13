@@ -68,10 +68,12 @@ dlinear_cc_library(
         ":lp_result",
         ":lp_sense",
         "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:box",
         "//dlinear/util:config",
+        "//dlinear/util:logging",
         "//dlinear/util:stats",
     ] + select({
         "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
@@ -223,13 +225,20 @@ dlinear_cc_library(
         "DeltaLpTheorySolver.h",
         "LpTheorySolver.h",
     ],
-    implementation_deps = ["//dlinear/util:error"],
+    implementation_deps = [
+        ":bound_preprocessor",
+        "//dlinear/util:error",
+        "//dlinear/util:logging",
+    ],
     deps = [
         ":lp_solver",
         ":qf_lra_theory_solver",
+        "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
         "//dlinear/util:bit_increment_iterator",
+        "//dlinear/util:box",
     ],
 )
 
@@ -237,71 +246,10 @@ dlinear_cc_library(
     name = "qf_lra_theory_solver",
     srcs = ["QfLraTheorySolver.cpp"],
     hdrs = ["QfLraTheorySolver.h"],
-    implementation_deps = ["//dlinear/util:error"],
-    deps = ["//dlinear/solver/theory_solver"],
-)
-
-dlinear_cc_library(
-    name = "qf_lra_theory_solver_old",
-    srcs = select({
-        "//tools:enabled_qsoptex": [
-            "DeltaQsoptexTheorySolver.cpp",
-            "QsoptexTheorySolver.cpp",
-        ],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_soplex": [
-            "CompleteSoplexTheorySolver.cpp",
-            "DeltaSoplexTheorySolver.cpp",
-            "NNSoplexTheorySolver.cpp",
-            "SoplexTheorySolver.cpp",
-        ],
-        "//conditions:default": [],
-    }),
-    hdrs = [
-        "//dlinear/solver/theory_solver:TheorySolver.h",
-    ] + select({
-        "//tools:enabled_qsoptex": [
-            "DeltaQsoptexTheorySolver.h",
-            "QsoptexTheorySolver.h",
-        ],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_soplex": [
-            "CompleteSoplexTheorySolver.h",
-            "DeltaSoplexTheorySolver.h",
-            "NNSoplexTheorySolver.h",
-            "SoplexTheorySolver.h",
-        ],
-        "//conditions:default": [],
-    }),
-    implementation_deps = [
-        "//dlinear/util:error",
-        "//dlinear/util:timer",
-    ],
     deps = [
-        ":bound_iterator",
-        ":bound_preprocessor",
-        ":lp_bound",
-        ":lp_sense",
-        ":piecewise_linear_constraint",
-        "//dlinear/libs:gmp",
-        "//dlinear/solver/theory_solver:theory_result",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:bit_increment_iterator",
-        "//dlinear/util:box",
-        "//dlinear/util:config",
-        "//dlinear/util:logging",
-        "//dlinear/util:stats",
-    ] + select({
-        "//tools:enabled_qsoptex": ["//dlinear/libs:qsopt_ex"],
-        "//conditions:default": [],
-    }) + select({
-        "//tools:enabled_soplex": ["//dlinear/libs:soplex"],
-        "//conditions:default": [],
-    }),
+        ":bound_vector",
+        "//dlinear/solver/theory_solver",
+    ],
 )
 
 cpplint()
