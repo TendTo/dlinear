@@ -18,49 +18,49 @@ using dlinear::SmtSolver;
 using dlinear::Variable;
 using std::unique_ptr;
 
-class TestSolver : public ::testing::TestWithParam<Config::LPSolver> {
+class TestSmtSolver : public ::testing::TestWithParam<Config::LPSolver> {
  protected:
   Config config_;
   const Variable x_{"x"}, y_{"y"}, z_{"z"};
   const Variable a_{"a", Variable::Type::BOOLEAN}, b_{"b", Variable::Type::BOOLEAN}, c_{"c", Variable::Type::BOOLEAN};
-  explicit TestSolver() : config_{} {
+  explicit TestSmtSolver() : config_{} {
     config_.m_filename() = "test.smt2";
     config_.m_format() = Config::Format::AUTO;
   }
   void SetUp() override { config_.m_lp_solver() = GetParam(); }
 };
 
-INSTANTIATE_TEST_SUITE_P(TestSolver, TestSolver, enabled_test_solvers);
+INSTANTIATE_TEST_SUITE_P(TestSmtSolver, TestSmtSolver, enabled_test_solvers);
 
-TEST_P(TestSolver, CheckSatWrongFilename) {
+TEST_P(TestSmtSolver, CheckSatWrongFilename) {
   SmtSolver s{"test.err"};
   EXPECT_THROW(s.Parse(), std::runtime_error);
 }
 
-TEST_P(TestSolver, CheckSatEmpty) {
+TEST_P(TestSmtSolver, CheckSatEmpty) {
   SmtSolver s{config_};
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckSatTrue) {
+TEST_P(TestSmtSolver, CheckSatTrue) {
   SmtSolver s{config_};
   s.Assert(Expression{1} + 1 == 2);
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckUnsatFalse) {
+TEST_P(TestSmtSolver, CheckUnsatFalse) {
   SmtSolver s{config_};
   s.Assert(Expression{1} + 1 == 3);
   EXPECT_EQ(s.CheckSat().result, SmtResult::UNSAT);
 }
 
-TEST_P(TestSolver, CheckSatSimpleBound) {
+TEST_P(TestSmtSolver, CheckSatSimpleBound) {
   SmtSolver s{config_};
   s.Assert(x_ > 0);
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckSatSimpleBounds) {
+TEST_P(TestSmtSolver, CheckSatSimpleBounds) {
   SmtSolver s{config_};
   s.Assert(x_ > 1);
   s.Assert(x_ < 11);
@@ -70,34 +70,34 @@ TEST_P(TestSolver, CheckSatSimpleBounds) {
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckUnsatConflictingAssertions) {
+TEST_P(TestSmtSolver, CheckUnsatConflictingAssertions) {
   SmtSolver s{config_};
   s.Assert(x_ > 0);
   s.Assert(x_ < 0);
   EXPECT_EQ(s.CheckSat().result, SmtResult::UNSAT);
 }
 
-TEST_P(TestSolver, CheckSatBoolean) {
+TEST_P(TestSmtSolver, CheckSatBoolean) {
   SmtSolver s{config_};
   s.Assert(a_ && b_);
   s.Assert(a_ || b_);
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckSatTautology) {
+TEST_P(TestSmtSolver, CheckSatTautology) {
   SmtSolver s{config_};
   s.Assert(a_ || !b_);
   s.Assert(!a_ || b_);
   EXPECT_EQ(s.CheckSat().result, SmtResult::SAT);
 }
 
-TEST_P(TestSolver, CheckUnsatContradiction) {
+TEST_P(TestSmtSolver, CheckUnsatContradiction) {
   SmtSolver s{config_};
   s.Assert(a_ && !a_);
   EXPECT_EQ(s.CheckSat().result, SmtResult::UNSAT);
 }
 
-TEST_P(TestSolver, CheckUnsatConflict) {
+TEST_P(TestSmtSolver, CheckUnsatConflict) {
   SmtSolver s{config_};
   s.Assert(Formula{a_});
   s.Assert(!a_ && b_);

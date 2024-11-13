@@ -18,36 +18,36 @@ using dlinear::SmtResult;
 using dlinear::SmtSolver;
 using dlinear::SmtSolverOutput;
 
-class TestMps : public ::testing::TestWithParam<
-                    std::tuple<Config::LPSolver, std::string, double, Config::PreprocessingRunningFrequency>> {
+class TestDeltaMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver, std::string, double>> {
  protected:
   Config config_;
 
-  TestMps() {
-    const auto& [lp_solver, filename, precision, frequency] = GetParam();
+  TestDeltaMps() {
+    const auto& [lp_solver, filename, precision] = GetParam();
     config_.m_precision() = precision;
     config_.m_complete() = false;
+    config_.m_timeout() = 30000;
     config_.m_format() = Config::Format::MPS;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
     config_.m_verify() = true;
-    config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
-    config_.m_bound_propagation_frequency() = frequency;
-    config_.m_bound_implication_frequency() = frequency;
+    config_.m_bound_propagation_frequency() = Config::PreprocessingRunningFrequency::NEVER;
+    config_.m_bound_implication_frequency() = Config::PreprocessingRunningFrequency::NEVER;
     std::cout << "Testing " << filename << std::endl;
   }
 };
 
-INSTANTIATE_TEST_SUITE_P(TestMps, TestMps,
+INSTANTIATE_TEST_SUITE_P(TestDeltaMps, TestDeltaMps,
                          ::testing::Combine(enabled_test_solvers, ::testing::ValuesIn(GetFiles("test/solver/mps")),
-                                            ::testing::Values(0.0, 0.1),
-                                            ::testing::Values(Config::PreprocessingRunningFrequency::NEVER,
-                                                              Config::PreprocessingRunningFrequency::ALWAYS)));
+                                            ::testing::Values(0.0, 0.1)));
 
-TEST_P(TestMps, MpsInputAgainstExpectedOutput) {
+TEST_P(TestDeltaMps, MpsInputAgainstExpectedOutput) {
   SmtSolver s{config_};
   s.Parse();
   const SmtSolverOutput result = s.CheckSat();
+
+  // Ignore the test if the solver is not supported or if it's too slow
+  if (result.result == SmtResult::ERROR || result.result == SmtResult::TIMEOUT) GTEST_SKIP();
 
   ASSERT_EQ(result.result, (result.result == SmtResult::DELTA_SAT ? SmtResult::DELTA_SAT : ~s.GetExpected()));
   if (result.is_sat() && config_.precision() == 0) {

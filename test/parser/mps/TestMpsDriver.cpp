@@ -3,6 +3,7 @@
  * @copyright 2024 dlinear
  * @licence BSD 3-Clause License
  */
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "dlinear/parser/mps/Driver.h"
@@ -69,7 +70,7 @@ TEST_F(TestMpsDriver, Rows) {
   const Variable& x = driver.context().box().variable(0);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
   EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x <= 0));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(0 <= 2 * x));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(2 * x >= 0));
   EXPECT_TRUE(driver.context().assertions()[2].EqualTo(3 * x == 0));
 }
 
@@ -97,7 +98,7 @@ TEST_F(TestMpsDriver, Columns) {
   const Variable& x3 = driver.context().box().variable(2);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
   EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 <= 0));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(0 <= 12 * x1 + 21 * x2 + 32 * x3));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 0));
   EXPECT_TRUE(driver.context().assertions()[2].EqualTo(33 * x3 == 0));
 }
 
@@ -128,7 +129,7 @@ TEST_F(TestMpsDriver, Rhs) {
   const Variable& x3 = driver.context().box().variable(2);
   EXPECT_EQ(driver.context().assertions().size(), 3u);
   EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 <= 1));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(2 <= 12 * x1 + 21 * x2 + 32 * x3));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
   EXPECT_TRUE(driver.context().assertions()[2].EqualTo(33 * x3 == 3));
 }
 
@@ -160,11 +161,13 @@ TEST_F(TestMpsDriver, RangePositive) {
   const Variable& x1 = driver.context().box().variable(0);
   const Variable& x2 = driver.context().box().variable(1);
   const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 3u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo((11 * x1 + 31 * x3 <= 1) && (1 - 51 <= 11 * x1 + 31 * x3)));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo((2 <= 12 * x1 + 21 * x2 + 32 * x3) &&
-                                                       (12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52)));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo((3 <= 33 * x3) && (33 * x3 <= 3 + 53)));
+  EXPECT_EQ(driver.context().assertions().size(), 6u);
+  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 >= 1 - 51));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(11 * x1 + 31 * x3 <= 1));
+  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
+  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52));
+  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(33 * x3 >= 3));
+  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(33 * x3 <= 3 + 53));
 }
 
 TEST_F(TestMpsDriver, RangeNegative) {
@@ -195,11 +198,13 @@ TEST_F(TestMpsDriver, RangeNegative) {
   const Variable& x1 = driver.context().box().variable(0);
   const Variable& x2 = driver.context().box().variable(1);
   const Variable& x3 = driver.context().box().variable(2);
-  EXPECT_EQ(driver.context().assertions().size(), 3u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo((11 * x1 + 31 * x3 <= 1) && (1 - 51 <= 11 * x1 + 31 * x3)));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo((2 <= 12 * x1 + 21 * x2 + 32 * x3) &&
-                                                       (12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52)));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo((3 - 53 <= 33 * x3) && (33 * x3 <= 3)));
+  EXPECT_EQ(driver.context().assertions().size(), 6u);
+  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(11 * x1 + 31 * x3 >= 1 - 51));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(11 * x1 + 31 * x3 <= 1));
+  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(12 * x1 + 21 * x2 + 32 * x3 >= 2));
+  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(12 * x1 + 21 * x2 + 32 * x3 <= 2 + 52));
+  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(33 * x3 >= 3 - 53));
+  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(33 * x3 <= 3));
 }
 
 TEST_F(TestMpsDriver, BoundsPositive) {
@@ -228,11 +233,13 @@ TEST_F(TestMpsDriver, BoundsPositive) {
   const Variable& x3 = driver.context().box().variable(2);
   const Variable& x4 = driver.context().box().variable(3);
   const Variable& x5 = driver.context().box().variable(4);
-  EXPECT_EQ(driver.context().assertions().size(), 4u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo((61 <= x1)));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo((0 <= x2) && (x2 <= 62)));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo((63 <= x3) && (x3 <= 63)));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
+  EXPECT_EQ(driver.context().assertions().size(), 6u);
+  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= 61));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 >= 0));
+  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x2 <= 62));
+  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x3 >= 63));
+  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(x3 <= 63));
+  EXPECT_TRUE(driver.context().assertions()[5].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
 }
 
 TEST_F(TestMpsDriver, BoundsNegative) {
@@ -261,11 +268,12 @@ TEST_F(TestMpsDriver, BoundsNegative) {
   const Variable& x3 = driver.context().box().variable(2);
   const Variable& x4 = driver.context().box().variable(3);
   const Variable& x5 = driver.context().box().variable(4);
-  EXPECT_EQ(driver.context().assertions().size(), 4u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo((-61 <= x1)));
+  EXPECT_EQ(driver.context().assertions().size(), 5u);
+  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= -61));
   EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 <= -62));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo((-63 <= x3) && (x3 <= -63)));
-  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
+  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x3 >= -63));
+  EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x3 <= -63));
+  EXPECT_TRUE(driver.context().assertions()[4].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
 }
 
 TEST_F(TestMpsDriver, BoundsImplicit) {
@@ -292,8 +300,8 @@ TEST_F(TestMpsDriver, BoundsImplicit) {
   const Variable& x4 = driver.context().box().variable(3);
   const Variable& x5 = driver.context().box().variable(4);
   EXPECT_EQ(driver.context().assertions().size(), 4u);
-  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(0 <= x1));
-  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(0 <= x2));
-  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(0 <= x3));
+  EXPECT_TRUE(driver.context().assertions()[0].EqualTo(x1 >= 0));
+  EXPECT_TRUE(driver.context().assertions()[1].EqualTo(x2 >= 0));
+  EXPECT_TRUE(driver.context().assertions()[2].EqualTo(x3 >= 0));
   EXPECT_TRUE(driver.context().assertions()[3].EqualTo(x1 + x2 + x3 + x4 + x5 == 0));
 }

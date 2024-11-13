@@ -130,7 +130,7 @@ class TheorySolver {
   /** @getter{statistics, TheorySolver} */
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
   /** @getter{preprocessor, TheorySolver} */
-  [[nodiscard]] const TheoryPreprocessor &preprocessor() const { return *preprocessor_; }
+  [[nodiscard]] const TheoryPreprocessor *preprocessor() const { return preprocessor_.get(); }
   /** @getter{propagator, TheorySolver} */
   [[nodiscard]] const TheoryPropagator &propagator() const { return *propagator_; }
 

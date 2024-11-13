@@ -39,7 +39,6 @@ class TestDeltaLpSolver : public ::testing::TestWithParam<std::tuple<Config::LPS
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
     config_.m_verify() = true;
-    config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
     lp_solver_ = LpSolver::GetInstance(config_);
     context_ = std::make_unique<Context>(config_);
     std::cout << "Testing " << filename << std::endl;
@@ -75,9 +74,9 @@ TEST_P(TestDeltaLpSolver, LpInputAgainstExpectedOutput) {
 
   if (result == LpResult::OPTIMAL) {
     Box model{context_->model()};
-    for (int i = 0; i < static_cast<int>(lp_solver_->solution().value().size()); ++i) {
+    for (int i = 0; i < static_cast<int>(lp_solver_->solution().size()); ++i) {
       model.Add(lp_solver_->col_to_var().at(i));
-      model[lp_solver_->col_to_var().at(i)] = lp_solver_->solution().value().at(i);
+      model[lp_solver_->col_to_var().at(i)] = lp_solver_->solution().at(i);
     }
     ASSERT_TRUE(context_->Verify(model));
   }
