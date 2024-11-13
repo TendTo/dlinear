@@ -61,16 +61,19 @@ struct SmtSolverOutput {
    */
   [[nodiscard]] bool matches_expectation(SmtResult expectation) const;
 
+  /**
+   * Add the statistics of a component of the solver to the output.
+   *
+   * They will be displayed in the same order they were added.
+   * @param stats statistics to add
+   */
+  void add_iteration_stats(const IterationStats &stats) { iteration_stats.push_back(stats); }
+
   bool produce_models;  ///< Whether the solver should produce models
   bool with_timings;    ///< Whether the solver should show timings
 
-  Stats parser_stats{with_timings, ""};                         ///< Statistics about the solver
-  IterationStats ite_stats{with_timings, ""};                   ///< Statistics about the if-then-else simplifier
-  IterationStats cnfizer_stats{with_timings, ""};               ///< Statistics about the formula cnfizer
-  IterationStats predicate_abstractor_stats{with_timings, ""};  ///< Statistics about the predicate abstractor
-  IterationStats sat_stats{with_timings, ""};                   ///< Statistics about the satisfiability check
-  IterationStats theory_stats{with_timings, ""};                ///< Statistics about the theory check
-  IterationStats preprocessor_stats{with_timings, ""};          ///< Statistics about the bound preprocessor
+  Stats parser_stats{with_timings, ""};           ///< Statistics about the solver
+  std::vector<IterationStats> iteration_stats{};  ///< Statistics about many components of the solver
 
   Timer smt_solver_timer{};               ///< Timer keeping track of the time spent in the SMT solver
   unsigned int n_assertions{0};           ///< Number of assertions in the input

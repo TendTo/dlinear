@@ -36,7 +36,7 @@ void LpTheorySolver::AddVariable(const Variable &var) {
   if (lp_solver_->var_to_col().contains(var)) return;  // Variable is already present
   lp_solver_->AddColumn(var);
   vars_bounds_.emplace(var, BoundVector{lp_solver_->ninfinity(), lp_solver_->infinity()});
-  if (preprocessor_ != nullptr) preprocessor_->AddVariable(var);
+  for (const std::unique_ptr<TheoryPreprocessor> &preprocessor : preprocessors_) preprocessor->AddVariable(var);
   DLINEAR_DEBUG_FMT("LpTheorySolver::AddVariable({} ↦ {})", var, lp_solver_->num_columns());
 }
 

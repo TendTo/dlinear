@@ -50,6 +50,8 @@ class Stats {
   [[nodiscard]] Timer &m_timer() { return timer_; }
   /** @getter{timer, stats} */
   [[nodiscard]] const Timer &timer() const { return timer_; }
+  /** @getter{class_name, stats} */
+  [[nodiscard]] const std::string &class_name() const { return class_name_; }
   /**
    * Convert the current state of the object to a formatted string, only including the specific
    * part the Stat object is concerned about

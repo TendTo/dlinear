@@ -58,10 +58,11 @@ bool CompleteLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCal
   // No need to enable a fixed literal again
   if (enabled_literals_checkpoint_.contains(lit.var)) return true;
 
-  if (preprocessor_ != nullptr) {
-    const bool success = preprocessor_->EnableLiteral(lit, conflict_cb);
-    if (!success) return false;
+  bool success = true;
+  for (const std::unique_ptr<TheoryPreprocessor>& preprocessor : preprocessors_) {
+    success &= preprocessor->EnableLiteral(lit, conflict_cb);
   }
+  if (!success) return false;
 
   const auto& [var, truth] = lit;
   const Formula& formula = pa_[var];

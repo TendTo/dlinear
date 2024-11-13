@@ -84,12 +84,9 @@ std::ostream& operator<<(std::ostream& os, const SmtSolverOutput& s) {
   if (s.with_timings) {
     os << " after " << s.smt_solver_timer.seconds() << " seconds";
     os << "\n" << s.parser_stats;
-    if (s.ite_stats.iterations() > 0) os << "\n" << s.ite_stats;
-    if (s.cnfizer_stats.iterations() > 0) os << "\n" << s.cnfizer_stats;
-    if (s.predicate_abstractor_stats.iterations() > 0) os << "\n" << s.predicate_abstractor_stats;
-    if (s.preprocessor_stats.iterations() > 0) os << "\n" << s.preprocessor_stats;
-    if (s.sat_stats.iterations() > 0) os << "\n" << s.sat_stats;
-    if (s.theory_stats.iterations() > 0) os << "\n" << s.theory_stats;
+    for (const IterationStats& stats : s.iteration_stats) {
+      if (stats.iterations() > 0) os << "\n" << stats;
+    }
   }
   if (!s.model.empty() && s.produce_models) {
     os << "\n" << s.model;

@@ -37,6 +37,8 @@ namespace dlinear {
  */
 class TheorySolver {
  public:
+  using PreprocessorsVector = std::vector<std::unique_ptr<TheoryPreprocessor>>;
+  using PropagatorsVector = std::vector<std::unique_ptr<TheoryPropagator>>;
   /**
    * Construct a new Theory Solver object.
    *
@@ -52,12 +54,33 @@ class TheorySolver {
                         const std::string &class_name = "TheorySolver");
   virtual ~TheorySolver() = default;
 
-  /** Add all the literals in the @ref pa_ to the theory solver. */
+  /**
+   * Add a preprocessor to the theory solver.
+   *
+   * The preprocessors will be run in the same order they were added.
+   * @pre preprocessors can only be added before the consolidation
+   * @param preprocessor preprocessor to add
+   */
+  void AddPreprocessor(std::unique_ptr<TheoryPreprocessor> preprocessor);
+  /**
+   * Add a propagator to the theory solver.
+   *
+   * The propagators will be run in the same order they were added.
+   * @pre preprocessors can only be added before the consolidation
+   * @param propagator propagator to add
+   */
+  void AddPropagator(std::unique_ptr<TheoryPropagator> propagator);
+
+  /**
+   * Add all the literals in the @ref pa_ to the theory solver.
+   * @pre literals can only be added before the consolidation
+   */
   virtual void AddLiterals();
   /**
    * Add a vector of literals to the theory solver.
    *
    * Each literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
+   * @pre literals can only be added before the consolidation
    */
   virtual void AddLiterals(std::span<const Literal> literals);
   /**
@@ -65,6 +88,7 @@ class TheorySolver {
    *
    * A Literal is formed by a variable that corresponds to a theory formula inside the PredicateAbstractor
    * and the formula itself.
+   * @pre literals can only be added before the consolidation
    * @param formula_var boolean variable that corresponds to the theory formula
    * @param formula symbolic formula that represents the theory formula
    */
@@ -129,10 +153,10 @@ class TheorySolver {
   [[nodiscard]] virtual LiteralSet enabled_literals() const = 0;
   /** @getter{statistics, TheorySolver} */
   [[nodiscard]] const IterationStats &stats() const { return stats_; }
-  /** @getter{preprocessor, TheorySolver} */
-  [[nodiscard]] const TheoryPreprocessor *preprocessor() const { return preprocessor_.get(); }
-  /** @getter{propagator, TheorySolver} */
-  [[nodiscard]] const TheoryPropagator &propagator() const { return *propagator_; }
+  /** @getter{preprocessors, TheorySolver} */
+  [[nodiscard]] const PreprocessorsVector &preprocessors() const { return preprocessors_; }
+  /** @getter{propagators, TheorySolver} */
+  [[nodiscard]] const PropagatorsVector &propagators() const { return propagators_; }
 
   /**
    * Check the satisfiability of the theory.
@@ -222,8 +246,8 @@ class TheorySolver {
 
   std::unordered_set<Variable> enabled_literals_checkpoint_;  ///< Literals present in the last checkpoint
 
-  std::unique_ptr<TheoryPreprocessor> preprocessor_;  ///< Preprocessor to handle the theory constraints
-  std::unique_ptr<TheoryPropagator> propagator_;      ///< Propagator to handle the theory constraints
+  PreprocessorsVector preprocessors_;  ///< Preprocessors to handle the theory constraints
+  PropagatorsVector propagators_;      ///< Propagators to handle the theory constraints
 };
 
 }  // namespace dlinear
