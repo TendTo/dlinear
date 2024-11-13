@@ -329,6 +329,13 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   // See if any of the current literals can be used to guide the SAT by propagating and implying other literals.
   theory_solver_->Propagate(assert_cb_);
 
+#ifndef NDEBUG
+  if (debug_theory_solver != nullptr) {
+    debug_theory_solver->AddLiterals();
+    debug_theory_solver->Consolidate(box());
+  }
+#endif
+
   // Preprocess the fixed theory literals to avoid having to preprocess them again and again.
   DLINEAR_TRACE_FMT("Fixed theory literals: {}", sat_solver_->FixedTheoryLiterals());
   const bool success = theory_solver_->PreprocessFixedLiterals(sat_solver_->FixedTheoryLiterals(), conflict_cb_);
@@ -336,16 +343,6 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
     DLINEAR_DEBUG("ContextImpl::CheckSatCore() - Fixed bound check = UNSAT");
     return SmtResult::UNSAT;
   }
-
-#ifndef NDEBUG
-  if (debug_theory_solver != nullptr) {
-    debug_theory_solver->AddLiterals();
-    debug_theory_solver->Consolidate(box());
-    debug_theory_solver->Propagate(debug_assert_cb);
-    DLINEAR_ASSERT(debug_theory_solver->PreprocessFixedLiterals(sat_solver_->FixedTheoryLiterals(), debug_conflict_cb),
-                   "Preprocessing must be successful");
-  }
-#endif
 
 #if 0
   DLINEAR_DEV("Start tightening bounds");

@@ -148,6 +148,8 @@ LpResult LpSolver::Optimise(mpq_class& precision, const bool store_solution) {
   DLINEAR_ASSERT(consolidated_, "Cannot optimise without consolidating.");
   DLINEAR_ASSERT(infeasible_rows_.empty() && infeasible_bounds_.empty() && solution_.empty() && dual_solution_.empty(),
                  "Previous run information was not backtracked.");
+  DLINEAR_ASSERT(num_rows() > 0, "Cannot optimise without rows.");
+  DLINEAR_ASSERT(num_columns() > 0, "Cannot optimise without columns.");
   const TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
   return OptimiseCore(precision, store_solution);

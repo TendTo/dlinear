@@ -133,6 +133,13 @@ TheoryResult CompleteLpTheorySolver::CheckSatCore(mpq_class* actual_precision, c
   // This theory solver is complete, precision is always 0
   *actual_precision = 0;
 
+  // There are no rows in the LP problem, only bounds we already checked with the BoundVector
+  if (lp_solver_->num_rows() == 0) {
+    UpdateModelBounds();
+    DLINEAR_DEBUG("CompleteLpTheorySolver::CheckSat: no rows, returning SAT");
+    return TheoryResult::SAT;
+  }
+
   // Set the bounds for the variables
   EnableVarBound();
 

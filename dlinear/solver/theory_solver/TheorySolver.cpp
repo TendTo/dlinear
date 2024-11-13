@@ -28,24 +28,33 @@ void TheorySolver::AddLiterals() {
 void TheorySolver::AddLiterals(std::span<const Literal> literals) {
   for (const Literal &lit : literals) AddLiteral(lit.var, pa_[lit.var]);
 }
-
-bool TheorySolver::PreprocessFixedLiterals(const LiteralSet &fixed_literals, const ConflictCallback &conflict_cb) {
+template <TypedIterable<Literal> Iterable>
+bool TheorySolver::PreprocessFixedLiterals(const Iterable &fixed_literals, const ConflictCallback &conflict_cb) {
+  DLINEAR_DEBUG_FMT("TheorySolver::PreprocessFixedLiterals(#fixed_literals = {})", fixed_literals.size());
   DLINEAR_TRACE_FMT("TheorySolver::PreprocessFixedLiterals({})", fixed_literals);
   DLINEAR_ASSERT(is_consolidated_, "Fixed literals can be preprocessed only after consolidation");
 
   // No need to preprocess if there is no preprocessor
-  if (preprocessor_ == nullptr) return true;
   bool res = true;
-  for (const Literal &lit : fixed_literals) res &= preprocessor_->EnableLiteral(lit, conflict_cb);
-  if (config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ALWAYS ||
-      config_.actual_bound_propagation_frequency() == Config::PreprocessingRunningFrequency::ON_FIXED) {
-    res &= preprocessor_->Process(conflict_cb);
+  for (const Literal &lit : fixed_literals) {
+    res &= EnableLiteral(lit, conflict_cb);
   }
+  if (preprocessor_ != nullptr) {
+    DLINEAR_DEBUG("TheorySolver::PreprocessFixedLiterals: running preprocessor");
+    res &= preprocessor_->ProcessFixed(conflict_cb);
+  }
+
   DLINEAR_TRACE_FMT("TheorySolver::PreprocessFixedLiterals() -> {}", res);
+  if (res) {
+    for (const Literal &lit : fixed_literals) enabled_literals_checkpoint_.insert(lit.var);
+    CreateCheckpoint();
+  }
+  DLINEAR_DEV_FMT("TheorySolver::PreprocessFixedLiterals() -> {}", res);
   return res;
 }
 
-bool TheorySolver::EnableLiterals(const std::span<const Literal> theory_literals, const ConflictCallback &conflict_cb) {
+template <TypedIterable<Literal> Iterable>
+bool TheorySolver::EnableLiterals(const Iterable &theory_literals, const ConflictCallback &conflict_cb) {
   bool res = true;
   for (const Literal &lit : theory_literals) {
     res &= EnableLiteral(lit, conflict_cb);
@@ -58,6 +67,7 @@ void TheorySolver::Consolidate(const Box &model) {
   DLINEAR_DEBUG("TheorySolver::Consolidate()");
   is_consolidated_ = true;
   model_ = model;
+  CreateCheckpoint();
 }
 
 TheoryResult TheorySolver::CheckSat(mpq_class *actual_precision, const ConflictCallback &conflict_cb) {
@@ -87,5 +97,12 @@ void TheorySolver::Backtrack() {
   // Backtrack all the constraints added with the last iteration, keeping the fixed ones
   // preprocessor_->Backtrack();
 }
+
+template bool TheorySolver::PreprocessFixedLiterals(const std::vector<Literal> &, const ConflictCallback &);
+template bool TheorySolver::PreprocessFixedLiterals(const LiteralSet &, const ConflictCallback &);
+template bool TheorySolver::PreprocessFixedLiterals(const std::span<Literal> &, const ConflictCallback &);
+template bool TheorySolver::EnableLiterals(const std::vector<Literal> &, const ConflictCallback &);
+template bool TheorySolver::EnableLiterals(const LiteralSet &, const ConflictCallback &);
+template bool TheorySolver::EnableLiterals(const std::span<Literal> &, const ConflictCallback &);
 
 }  // namespace dlinear

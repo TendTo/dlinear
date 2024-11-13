@@ -68,6 +68,13 @@ bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCallba
 TheoryResult DeltaLpTheorySolver::CheckSatCore(mpq_class* actual_precision, const ConflictCallback& conflict_cb) {
   DLINEAR_ASSERT(is_consolidated_, "The solver must be consolidate before checking for sat");
 
+  // There are no rows in the LP problem, only bounds we already checked exactly with the BoundVector
+  if (lp_solver_->num_rows() == 0) {
+    UpdateModelBounds();
+    DLINEAR_DEBUG("DeltaLpTheorySolver::CheckSat: no rows, returning SAT");
+    return TheoryResult::SAT;
+  }
+
   // Set the bounds for the variables
   EnableVarBound();
 

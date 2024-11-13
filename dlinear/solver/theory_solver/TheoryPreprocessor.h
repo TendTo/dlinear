@@ -28,6 +28,7 @@ class TheoryPreprocessor {
   virtual void AddVariable(const Variable& var) = 0;
   virtual bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) = 0;
   virtual bool Process(const ConflictCallback& conflict_cb) = 0;
+  virtual bool ProcessFixed(const ConflictCallback& conflict_cb) = 0;
   virtual bool Backtrack() = 0;
 
  protected:

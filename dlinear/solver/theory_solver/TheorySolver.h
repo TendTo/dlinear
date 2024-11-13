@@ -11,6 +11,7 @@
 #include <set>
 #include <span>
 #include <string>
+#include <unordered_set>
 
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/theory_solver/TheoryPreprocessor.h"
@@ -22,6 +23,7 @@
 #include "dlinear/util/Box.h"
 #include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
+#include "dlinear/util/concepts.h"
 
 namespace dlinear {
 
@@ -76,12 +78,14 @@ class TheorySolver {
    * Some quick preprocessing will be run to ensure that the @p fixed_literals are not trivially inconsistent.
    * If that is the case, an explanation is produced and used to invoke the @p conflict_cb .
    * @pre the literals must have been added to the theory solver with @ref AddLiteral
+   * @tparam Iterable generic iterable containing literals (i.e. std::vector, std::set, std::span)
    * @param fixed_literals set of fixed literals
    * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
-  virtual bool PreprocessFixedLiterals(const LiteralSet &fixed_literals, const ConflictCallback &conflict_cb);
+  template <TypedIterable<Literal> Iterable>
+  bool PreprocessFixedLiterals(const Iterable &fixed_literals, const ConflictCallback &conflict_cb);
   /**
    * Add a variable to the theory solver.
    * @param var variable to add
@@ -94,12 +98,14 @@ class TheorySolver {
    * with the current set of enabled literals.
    * If that is the case, an explanation is produced and used to invoke the @p conflict_cb .
    * @pre the literal must have been added to the theory solver with @ref AddLiteral
+   * @tparam Iterable generic iterable containing literals (i.e. std::vector, std::set, std::span)
    * @param theory_literals vector of literals to be enabled
    * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
-  bool EnableLiterals(std::span<const Literal> theory_literals, const ConflictCallback &conflict_cb);
+  template <TypedIterable<Literal> Iterable>
+  bool EnableLiterals(const Iterable &theory_literals, const ConflictCallback &conflict_cb);
   /**
    * Enable the @p lit literal that had previously been added to the theory solver.
    *
@@ -183,7 +189,20 @@ class TheorySolver {
    */
   virtual void Backtrack();
 
+  /**
+   * Use some cheap heuristics to propagate some theory constraints to the SAT solver by calling @p assert_db.
+   *
+   * This will introduce new literals helping the SAT solver avoid trivial conflicts.
+   * @param assert_cb callback to be called when a new literal is introduced
+   */
   virtual void Propagate(const AssertCallback &assert_cb);
+
+  /**
+   * Create a new checkpoint in the TheorySolver, storing the current state.
+   *
+   * All subsequent calls to @ref Backtrack will revert the solver to this state.
+   */
+  virtual void CreateCheckpoint() = 0;
 
  protected:
   /**
@@ -200,6 +219,8 @@ class TheorySolver {
   const PredicateAbstractor &pa_;  ///< Predicate abstractor mapping boolean vars to theory literals
   Box model_;                      ///< Model produced by the theory solver
   IterationStats stats_;           ///< Statistics of the theory solver
+
+  std::unordered_set<Variable> enabled_literals_checkpoint_;  ///< Literals present in the last checkpoint
 
   std::unique_ptr<TheoryPreprocessor> preprocessor_;  ///< Preprocessor to handle the theory constraints
   std::unique_ptr<TheoryPropagator> propagator_;      ///< Propagator to handle the theory constraints
