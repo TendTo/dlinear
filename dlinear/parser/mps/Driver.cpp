@@ -122,7 +122,7 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
     switch (row_senses_.at(row)) {
       case Sense::L:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
-        rhs_[row] &= mpq_class{rhs_values_[row] - value} <= row_expression;
+        rhs_[row] &= row_expression >= mpq_class{rhs_values_[row] - value};
         break;
       case Sense::G:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
