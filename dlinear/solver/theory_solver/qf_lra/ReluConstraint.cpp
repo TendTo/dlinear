@@ -6,11 +6,13 @@
 #include "ReluConstraint.h"
 
 #include <ostream>
+#include <string>
 #include <utility>
 
+#include "dlinear/solver/theory_solver/qf_lra/BoundVector.h"
 #include "dlinear/symbolic/LinearFormulaFlattener.h"
-#include "dlinear/util/Infinity.h"
 #include "dlinear/util/error.h"
+#include "dlinear/util/logging.h"
 
 namespace dlinear {
 

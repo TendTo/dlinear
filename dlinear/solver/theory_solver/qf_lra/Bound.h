@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <compare>
+#include <iosfwd>
 #include <utility>
 
 #include "dlinear/libs/libgmp.h"

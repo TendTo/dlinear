@@ -14,9 +14,9 @@
 #include <gmp.h>    // IWYU pragma: export
 #include <gmpxx.h>  // IWYU pragma: export
 
-#include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <compare>
 #include <cstring>
 #include <string>
 #include <string_view>

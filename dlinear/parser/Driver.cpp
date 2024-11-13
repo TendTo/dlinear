@@ -5,7 +5,6 @@
  */
 #include "Driver.h"
 
-#include <fstream>
 #include <iostream>
 #include <sstream>  // IWYU pragma: keep for std::stringstream
 #include <vector>

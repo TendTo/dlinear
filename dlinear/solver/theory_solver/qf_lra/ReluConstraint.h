@@ -6,10 +6,14 @@
  */
 #pragma once
 
-#include <optional>
+#include <iosfwd>
+#include <set>
 
+#include "dlinear/libs/libgmp.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
+#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {

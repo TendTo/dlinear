@@ -6,6 +6,7 @@
 
 #include "BoundType.h"
 
+#include <cstring>
 #include <iostream>
 
 #include "dlinear/util/error.h"

@@ -5,7 +5,7 @@
  */
 #include "Term.h"
 
-#include <iostream>
+#include <ostream>
 
 #include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"

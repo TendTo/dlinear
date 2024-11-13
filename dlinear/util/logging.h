@@ -68,7 +68,6 @@ std::shared_ptr<spdlog::logger> get_logger(LoggerType logger_type);  // NOLINT
 
 #ifndef NDEBUG
 
-#include <sstream>
 #include <thread>
 
 #define DLINEAR_DEV(msg)                                                                                        \

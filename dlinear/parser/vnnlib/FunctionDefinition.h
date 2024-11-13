@@ -12,6 +12,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "dlinear/parser/vnnlib/Sort.h"
