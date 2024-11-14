@@ -13,7 +13,7 @@ Fork of [dlinear4](https://github.com/martinjos/dlinear4) and [dReal4](https://g
 There are multiple ways of installing dlinear.
 The recommanded approach is to use the official [Docker image](https://github.com/TendTo/dlinear/pkgs/container/dlinear), the [ppa repository](https://launchpad.net/~tendto/+archive/ubuntu/dlinear) or the python wrapper [_pydlinear_](https://pypi.org/project/pydlinear).
 
-> [!Note]
+> [!Note]  
 > Only Linux is supported, but using the Docker image circumvents this limitation.
 
 ```bash
@@ -24,7 +24,7 @@ docker run -it --rm ghcr.io/tendto/dlinear:main --help
 ```
 
 ```bash
-# ppa repository
+# ppa repository (Ubuntu)
 sudo add-apt-repository ppa:tendto/dlinear
 sudo apt update
 # Run dlinear
@@ -38,4 +38,4 @@ pip3 install pydlinear
 pydlinear --help
 ```
 
-For more information about the setup, including installation from sources, refer to the [installation guide](docs/Installation.md) and [usage guide](docs/Usage.md)
+For more information about the setup, including installation from sources, refer to the [installation guide](docs/Installation.md) and [usage guide](docs/Usage.md).
