@@ -157,12 +157,12 @@ class BoundVector {
    * Return the number of lower bounds in the vector, both strict and non-strict.
    * @return number of lower bounds
    */
-  [[nodiscard]] int n_lower_bounds() const { return n_lower_bounds_; }
+  [[nodiscard]] std::size_t n_lower_bounds() const { return n_lower_bounds_; }
   /**
    * Return the number of upper bounds in the vector, both strict and non-strict.
    * @return number of upper bounds
    */
-  [[nodiscard]] int n_upper_bounds() const { return static_cast<int>(bounds_.size()) - n_lower_bounds_; }
+  [[nodiscard]] std::size_t n_upper_bounds() const { return bounds_.size() - n_lower_bounds_; }
   /**
    * Return a @ref BoundIterator containing a minimal set of bounds
    * enclosing the interval [@ref active_lower_bound_, @ref active_upper_bound_]

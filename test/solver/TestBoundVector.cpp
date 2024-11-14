@@ -39,8 +39,8 @@ class TestBoundVector : public ::testing::Test {
 
 TEST_F(TestBoundVector, Constructor) {
   BoundVector bounds{inf_l_, inf_u_};
-  EXPECT_EQ(bounds.n_upper_bounds(), 0);
-  EXPECT_EQ(bounds.n_lower_bounds(), 0);
+  EXPECT_EQ(bounds.n_upper_bounds(), 0u);
+  EXPECT_EQ(bounds.n_lower_bounds(), 0u);
   EXPECT_TRUE(bounds.bounds().empty());
   EXPECT_EQ(bounds.active_lower_bound(), inf_l_);
   EXPECT_EQ(bounds.active_upper_bound(), inf_u_);
@@ -53,8 +53,8 @@ TEST_F(TestBoundVector, AddLBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::L, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 1u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), value);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), inf_u_);
@@ -70,8 +70,8 @@ TEST_F(TestBoundVector, AddUBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::U, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 1u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), inf_l_);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), value);
@@ -87,8 +87,8 @@ TEST_F(TestBoundVector, AddBBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::B, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 2u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), value);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), value);
@@ -109,8 +109,8 @@ TEST_F(TestBoundVector, AddSLBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::SL, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 1u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), value);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), inf_u_);
@@ -126,8 +126,8 @@ TEST_F(TestBoundVector, AddSUBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::SU, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 1u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), inf_l_);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), value);
@@ -143,8 +143,8 @@ TEST_F(TestBoundVector, AddDBound) {
   const mpq_class value{1};
   const Literal exp{Variable{"exp", Variable::Type::BOOLEAN}, true};
   empty_bounds_.AddBound(value, LpColBound::D, {exp});
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0);
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0u);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0u);
   EXPECT_EQ(empty_bounds_.bounds().size(), 0u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), inf_l_);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), inf_u_);
@@ -764,8 +764,8 @@ TEST_F(TestBoundVector, SetUpperBoundInvalid) {
 
 TEST_F(TestBoundVector, Clear) {
   bounds_.Clear();
-  EXPECT_EQ(bounds_.n_upper_bounds(), 0);
-  EXPECT_EQ(bounds_.n_lower_bounds(), 0);
+  EXPECT_EQ(bounds_.n_upper_bounds(), 0u);
+  EXPECT_EQ(bounds_.n_lower_bounds(), 0u);
   EXPECT_EQ(bounds_.bounds().size(), 0u);
   EXPECT_EQ(bounds_.active_lower_bound(), inf_l_);
   EXPECT_EQ(bounds_.active_upper_bound(), inf_u_);
@@ -1187,7 +1187,7 @@ TEST_F(TestBoundVector, RemoveLowerBoundUnbounded) {
   empty_bounds_.AddBound(val_[1], LpColBound::L, eq_exp);
   EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::L, eq_exp));
 
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 0u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), empty_bounds_.inf_l());
   EXPECT_FALSE(empty_bounds_.IsLowerBounded());
 }
@@ -1196,7 +1196,7 @@ TEST_F(TestBoundVector, RemoveUpperBoundUnbounded) {
   empty_bounds_.AddBound(val_[1], LpColBound::U, eq_exp);
   EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::U, eq_exp));
 
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 0u);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), empty_bounds_.inf_u());
   EXPECT_FALSE(empty_bounds_.IsUpperBounded());
 }
@@ -1206,7 +1206,7 @@ TEST_F(TestBoundVector, RemoveUpperBoundChangeActiveBound) {
   empty_bounds_.AddBound(val_[2], LpColBound::L, eq_exp);
   EXPECT_TRUE(empty_bounds_.RemoveBound(val_[2], LpColBound::L, eq_exp));
 
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 1u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), val_[1]);
   EXPECT_TRUE(empty_bounds_.IsLowerBounded());
 }
@@ -1216,7 +1216,7 @@ TEST_F(TestBoundVector, RemoveLowerBoundChangeActiveBound) {
   empty_bounds_.AddBound(val_[2], LpColBound::U, lit());
   EXPECT_TRUE(empty_bounds_.RemoveBound(val_[1], LpColBound::U, eq_exp));
 
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 1u);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[2]);
   EXPECT_TRUE(empty_bounds_.IsUpperBounded());
 }
@@ -1231,7 +1231,7 @@ TEST_F(TestBoundVector, RemoveLowerBoundDuplicate) {
   empty_bounds_.AddBound(val_[1], LpColBound::L, lit());
   EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
 
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4u);
   EXPECT_EQ(empty_bounds_.active_lower_bound(), val_[1]);
   EXPECT_TRUE(empty_bounds_.IsBounded());
   EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_bound)));
@@ -1247,7 +1247,7 @@ TEST_F(TestBoundVector, RemoveUpperBoundDuplicate) {
   empty_bounds_.AddBound(val_[1], LpColBound::U, lit());
   EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
 
-  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.n_upper_bounds(), 4u);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[1]);
   EXPECT_TRUE(empty_bounds_.IsBounded());
   EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_bound)));
@@ -1272,7 +1272,7 @@ TEST_F(TestBoundVector, RemoveEqBoundDuplicate) {
 
   EXPECT_TRUE(empty_bounds_.RemoveBound(removed_bound));
 
-  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4);
+  EXPECT_EQ(empty_bounds_.n_lower_bounds(), 4u);
   EXPECT_EQ(empty_bounds_.active_upper_bound(), val_[1]);
   EXPECT_TRUE(empty_bounds_.IsBounded());
   EXPECT_THAT(empty_bounds_.bounds(), ::testing::Not(::testing::Contains(removed_lower_bound)));
