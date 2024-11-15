@@ -30,9 +30,8 @@ class TestDeltaVnnlib : public ::testing::TestWithParam<std::tuple<Config::LPSol
     config_.m_onnx_file() = filename.substr(0, filename.find('.')) + ".onnx";
     config_.m_lp_solver() = lp_solver;
     config_.m_verify() = true;
-    config_.m_bound_propagation_type() = Config::BoundPropagationType::BOUND_POLYNOMIAL;
-    config_.m_bound_propagation_frequency() = Config::PreprocessingRunningFrequency::ALWAYS;
-    config_.m_bound_implication_frequency() = Config::PreprocessingRunningFrequency::ALWAYS;
+    config_.m_bound_checking_frequency() = Config::RunningFrequency::ALWAYS;
+    config_.m_simple_bound_propagation_frequency() = Config::RunningFrequency::ALWAYS;
     std::cout << "Testing " << filename << std::endl;
     DLINEAR_LOG_INIT_VERBOSITY(4);
   }

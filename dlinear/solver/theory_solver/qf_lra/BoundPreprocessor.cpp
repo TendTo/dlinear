@@ -160,7 +160,7 @@ BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& ena
   return explanations;
 }
 void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
-  DLINEAR_ASSERT(config_.actual_bound_propagation_frequency() != Config::PreprocessingRunningFrequency::NEVER,
+  DLINEAR_ASSERT(config_.actual_bound_checking_frequency() != Config::RunningFrequency::NEVER,
                  "Method Process should not be called with a frequency of NEVER");
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
@@ -462,10 +462,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
 void BoundPreprocessor::PropagateConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {
   DLINEAR_TRACE("BoundPreprocessor::PropagateConstraints()");
   // TODO(tend): reintroduce PropagateEqBinConstraints();
-  if (config_.actual_bound_propagation_type() < Config::BoundPropagationType::EQ_POLYNOMIAL) return;
-  PropagateEqConstraints(enabled_literals, explanations);
-  if (!explanations.empty() || config_.actual_bound_propagation_type() < Config::BoundPropagationType::BOUND_POLYNOMIAL)
-    return;
+  // TODO(tend): implement different propagation strategies
   PropagateBoundConstraints(enabled_literals, explanations);
 }
 void BoundPreprocessor::PropagateEqConstraints(std::list<Literal>& enabled_literals, Explanations& explanations) {

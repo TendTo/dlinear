@@ -29,9 +29,8 @@ class TestDeltaSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolve
     config_.m_format() = Config::Format::SMT2;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
-    config_.m_bound_propagation_type() = Config::BoundPropagationType::AUTO;
-    config_.m_bound_propagation_frequency() = Config::PreprocessingRunningFrequency::NEVER;
-    config_.m_bound_implication_frequency() = Config::PreprocessingRunningFrequency::NEVER;
+    config_.m_bound_checking_frequency() = Config::RunningFrequency::NEVER;
+    config_.m_simple_bound_propagation_frequency() = Config::RunningFrequency::NEVER;
     std::cout << "Testing " << filename << std::endl;
   }
 };

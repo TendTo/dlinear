@@ -46,7 +46,6 @@ dlinear_cc_library(
         "//dlinear/solver/sat_solver:sat_result",
         "//dlinear/solver/theory_solver",
         "//dlinear/solver/theory_solver:theory_result",
-        "//dlinear/solver/theory_solver/qf_lra:bound_implicator",
         "//dlinear/solver/theory_solver/qf_lra:lp_theory_solver",
         "//dlinear/solver/theory_solver/qf_lra:relu_constraint",
         "//dlinear/symbolic:if_then_else_eliminator",

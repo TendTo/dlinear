@@ -45,54 +45,38 @@ Config::Format Config::actual_format() const {
       return format_.get();
   }
 }
-Config::BoundPropagationType Config::actual_bound_propagation_type() const {
-  switch (bound_propagation_type_.get()) {
-    case BoundPropagationType::AUTO:
+
+Config::RunningFrequency Config::actual_simple_bound_propagation_frequency() const {
+  switch (simple_bound_propagation_frequency_.get()) {
+    case RunningFrequency::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return BoundPropagationType::EQ_POLYNOMIAL;
+          return RunningFrequency::ALWAYS;
         case Format::MPS:
-          return BoundPropagationType::EQ_BINOMIAL;
+          return RunningFrequency::NEVER;
         case Format::VNNLIB:
-          return BoundPropagationType::BOUND_POLYNOMIAL;
+          return RunningFrequency::ALWAYS;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return bound_propagation_type_.get();
+      return simple_bound_propagation_frequency_.get();
   }
 }
-Config::PreprocessingRunningFrequency Config::actual_bound_propagation_frequency() const {
-  switch (bound_propagation_frequency_.get()) {
-    case PreprocessingRunningFrequency::AUTO:
+Config::RunningFrequency Config::actual_bound_checking_frequency() const {
+  switch (bound_checking_frequency_.get()) {
+    case RunningFrequency::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return PreprocessingRunningFrequency::ALWAYS;
+          return RunningFrequency::ALWAYS;
         case Format::MPS:
-          return PreprocessingRunningFrequency::NEVER;
         case Format::VNNLIB:
-          return PreprocessingRunningFrequency::ALWAYS;
+          return RunningFrequency::NEVER;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return bound_propagation_frequency_.get();
-  }
-}
-Config::PreprocessingRunningFrequency Config::actual_bound_implication_frequency() const {
-  switch (bound_implication_frequency_.get()) {
-    case PreprocessingRunningFrequency::AUTO:
-      switch (actual_format()) {
-        case Format::SMT2:
-          return PreprocessingRunningFrequency::ALWAYS;
-        case Format::MPS:
-        case Format::VNNLIB:
-          return PreprocessingRunningFrequency::NEVER;
-        default:
-          DLINEAR_UNREACHABLE();
-      }
-    default:
-      return bound_implication_frequency_.get();
+      return bound_checking_frequency_.get();
   }
 }
 
@@ -163,32 +147,17 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const Config::BoundPropagationType &type) {
-  switch (type) {
-    case Config::BoundPropagationType::AUTO:
-      return os << "auto";
-    case Config::BoundPropagationType::EQ_BINOMIAL:
-      return os << "eq-binomial";
-    case Config::BoundPropagationType::EQ_POLYNOMIAL:
-      return os << "eq-polynomial";
-    case Config::BoundPropagationType::BOUND_POLYNOMIAL:
-      return os << "bound-polynomial";
-    default:
-      DLINEAR_UNREACHABLE();
-  }
-}
-
-std::ostream &operator<<(std::ostream &os, const Config::PreprocessingRunningFrequency &frequency) {
+std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequency) {
   switch (frequency) {
-    case Config::PreprocessingRunningFrequency::AUTO:
+    case Config::RunningFrequency::AUTO:
       return os << "auto";
-    case Config::PreprocessingRunningFrequency::NEVER:
+    case Config::RunningFrequency::NEVER:
       return os << "never";
-    case Config::PreprocessingRunningFrequency::ON_FIXED:
+    case Config::RunningFrequency::ON_FIXED:
       return os << "on-fixed";
-    case Config::PreprocessingRunningFrequency::ON_ITERATION:
+    case Config::RunningFrequency::ON_ITERATION:
       return os << "on-iteration";
-    case Config::PreprocessingRunningFrequency::ALWAYS:
+    case Config::RunningFrequency::ALWAYS:
       return os << "always";
     default:
       DLINEAR_UNREACHABLE();
@@ -197,9 +166,8 @@ std::ostream &operator<<(std::ostream &os, const Config::PreprocessingRunningFre
 
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
-            << "bound_implication_frequency = " << config.bound_implication_frequency() << ",\n"
-            << "bound_propagation_frequency = " << config.bound_propagation_frequency() << ",\n"
-            << "bound_propagation_type = " << config.bound_propagation_type() << ",\n"
+            << "simple_bound_propagation_frequency = " << config.simple_bound_propagation_frequency() << ",\n"
+            << "bound_checking_frequency = " << config.bound_checking_frequency() << ",\n"
             << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"

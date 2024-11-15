@@ -68,20 +68,13 @@ class Config {
     PURE_ITERATIVE_REFINEMENT = 2,  ///< Use the iterative refinement mode, if available
     HYBRID = 3,                     ///< Use both modes, if available
   };
-  /** Types of bound propagation supported by the bound propagator */
-  enum class BoundPropagationType {
-    AUTO = 0,           ///< Automatically select the best configuration based on expected performance. Default option
-    EQ_BINOMIAL = 1,    ///< Only propagate bounds in theory formulas in the form @f$ a x_1 + b x_2 = c @f$
-    EQ_POLYNOMIAL = 2,  ///< Only propagate bound in theory formulae in the form @f$ \sum a_i x_i = c @f$
-    BOUND_POLYNOMIAL = 3,  ///< Propagate all possible constraints
-  };
-  /** Frequency at which the preprocessors will run */
-  enum class PreprocessingRunningFrequency {
+  /** Frequency at which a subprocess will run */
+  enum class RunningFrequency {
     AUTO,          ///< Automatically select the best configuration based on expected performance. Default option
-    NEVER,         ///< Never run this preprocess, effectively disabling it
-    ON_FIXED,      ///< Run this preprocess only once, on fixed literals, before all iterations
-    ON_ITERATION,  ///< Run this preprocess only at every iteration
-    ALWAYS         /// Run this preprocess at every chance it gets. Usually combines ON_FIXED and ON_ITERATION
+    NEVER,         ///< Never run this subprocess, effectively disabling it
+    ON_FIXED,      ///< Run this subprocess only once, on fixed literals, before all iterations
+    ON_ITERATION,  ///< Run this subprocess only at every iteration
+    ALWAYS         /// Run this subprocess at every chance it gets. Usually combines ON_FIXED and ON_ITERATION
   };
 
   /** @constructor{Config} */
@@ -127,36 +120,26 @@ class Config {
    */
   [[nodiscard]] Format actual_format() const;
   /**
-   * @getter{actual `actual_bound_propagation_type` parameter, configuration,
-     If the actual_bound_propagation_type is BoundPropagationType::AUTO\,
-     it will return the appropriate bound propagation type based on the actual format}
-   */
-  [[nodiscard]] BoundPropagationType actual_bound_propagation_type() const;
-  /**
-   * @getter{actual `bound_propagation_frequency` parameter, configuration,
-     If the bound_propagation_frequency is PreprocessingRunningFrequency::AUTO\,
+   * @getter{actual `simple_bound_propagation_frequency` parameter, configuration,
+     If the bound_propagation_frequency is RunningFrequency::AUTO\,
      it will return the appropriate preprocessing running frequency based on the actual format}
    */
-  [[nodiscard]] PreprocessingRunningFrequency actual_bound_propagation_frequency() const;
+  [[nodiscard]] RunningFrequency actual_simple_bound_propagation_frequency() const;
   /**
-   * @getter{actual `bound_implication_frequency` parameter, configuration,
-     If the bound_implication_frequency is PreprocessingRunningFrequency::AUTO\,
+   * @getter{actual `bound_checking_frequency` parameter, configuration,
+     If the bound_implication_frequency is RunningFrequency::AUTO\,
      it will return the appropriate preprocessing running frequency based on the actual format}
    */
-  [[nodiscard]] PreprocessingRunningFrequency actual_bound_implication_frequency() const;
+  [[nodiscard]] RunningFrequency actual_bound_checking_frequency() const;
 
  private:
   OptionValue<std::string> filename_{""};
   OptionValue<std::string> onnx_file_{""};
 
-  DLINEAR_PARAMETER(bound_propagation_type, BoundPropagationType, BoundPropagationType::AUTO,
-                    "The type of bound propagation to apply in the preprocessing phase.\n"
-                    "\t\tEach of the options is more complete and expensive than the previous one.\n"
-                    "\t\tOne of: auto (1), eq-binomial (2), eq-polynomial (3), bound-polynomial (4)")
-  DLINEAR_PARAMETER(bound_propagation_frequency, PreprocessingRunningFrequency, PreprocessingRunningFrequency::AUTO,
+  DLINEAR_PARAMETER(simple_bound_propagation_frequency, RunningFrequency, RunningFrequency::AUTO,
                     "How often to run the generic bound propagation preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
-  DLINEAR_PARAMETER(bound_implication_frequency, PreprocessingRunningFrequency, PreprocessingRunningFrequency::AUTO,
+  DLINEAR_PARAMETER(bound_checking_frequency, RunningFrequency, RunningFrequency::AUTO,
                     "How often to run the bound implication preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), always (3)")
   DLINEAR_PARAMETER(complete, bool, false,
@@ -187,7 +170,7 @@ class Config {
   DLINEAR_PARAMETER(precision, double, 9.999999999999996e-4,
                     "Delta precision used by the LP solver solver.\n"
                     "\t\tEven when set to 0, a positive infinitesimal value will be considered.\n"
-                    "\t\twhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
+                    "\t\tWhile the LP solver will yield an exact solution, strict inequalities will still be relaxed\n"
                     "\t\tUse the --complete flag if you are looking for a complete solution")
   DLINEAR_PARAMETER(produce_models, bool, false,
                     "Produce models, showing a valid assignment.\n"
@@ -219,8 +202,7 @@ std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 std::ostream &operator<<(std::ostream &os, const Config::SatSolver &mode);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
-std::ostream &operator<<(std::ostream &os, const Config::BoundPropagationType &type);
-std::ostream &operator<<(std::ostream &os, const Config::PreprocessingRunningFrequency &frequency);
+std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequency);
 
 }  // namespace dlinear
 
@@ -233,7 +215,6 @@ OSTREAM_FORMATTER(dlinear::Config::LPSolver);
 OSTREAM_FORMATTER(dlinear::Config::SatSolver);
 OSTREAM_FORMATTER(dlinear::Config::Format);
 OSTREAM_FORMATTER(dlinear::Config::LPMode);
-OSTREAM_FORMATTER(dlinear::Config::BoundPropagationType);
-OSTREAM_FORMATTER(dlinear::Config::PreprocessingRunningFrequency);
+OSTREAM_FORMATTER(dlinear::Config::RunningFrequency);
 
 #endif

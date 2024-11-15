@@ -15,7 +15,6 @@
 #include "dlinear/solver/sat_solver/PicosatSatSolver.h"
 #include "dlinear/solver/sat_solver/SatResult.h"
 #include "dlinear/solver/theory_solver/TheoryResult.h"
-#include "dlinear/solver/theory_solver/qf_lra/BoundImplicator.h"
 #include "dlinear/solver/theory_solver/qf_lra/CompleteLpTheorySolver.h"
 #include "dlinear/solver/theory_solver/qf_lra/DeltaLpTheorySolver.h"
 #include "dlinear/symbolic/IfThenElseEliminator.h"
@@ -552,7 +551,7 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     IterationStats preprocessors_total_stats{true, ""};
     for (const auto &preprocessor : theory_solver_->preprocessors()) preprocessors_total_stats += preprocessor->stats();
     std::cout << "file,complete,satSolver,lpSolver,assertions,precision,actualPrecision,simplexPhase,"
-                 "boundPropagationType,boundPropagationFrequency,boundImplicationFrequency,satDefaultPhase,lpMode,"
+                 "simpleBoundPropagationFrequency,boundCheckingFrequency,satDefaultPhase,lpMode,"
                  "timeUnit,parserTime,satTime,preprocessorTime,theoryTime,smtTime,result\n";
     std::cout << config_.filename() << ","                            //
               << config_.complete() << ","                            //
@@ -562,9 +561,8 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
               << config_.precision() << ","                           //
               << output_->actual_precision.get_d() << ","             //
               << config_.simplex_sat_phase() << ","                   //
-              << config_.actual_bound_propagation_type() << ","       //
-              << config_.actual_bound_propagation_frequency() << ","  //
-              << config_.actual_bound_implication_frequency() << ","  //
+              << config_.simple_bound_propagation_frequency() << ","  //
+              << config_.bound_checking_frequency() << ","            //
               << config_.sat_default_phase() << ","                   //
               << config_.actual_lp_mode() << ","                      //
               << "s" << ","                                           //

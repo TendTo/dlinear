@@ -198,22 +198,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "bound_implicator",
-    srcs = ["BoundImplicator.cpp"],
-    hdrs = ["BoundImplicator.h"],
-    implementation_deps = ["//dlinear/util:error"],
-    deps = [
-        ":lp_sense",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:config",
-        "//dlinear/util:sorted_vector",
-    ],
-)
-
-dlinear_cc_library(
     name = "bound_preprocessor",
     srcs = ["BoundPreprocessor.cpp"],
     hdrs = ["BoundPreprocessor.h"],

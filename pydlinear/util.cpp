@@ -47,12 +47,12 @@ void init_util(py::module_ &m) {
       .value("PICOSAT", Config::SatSolver::PICOSAT)
       .value("CADICAL", Config::SatSolver::CADICAL);
 
-  py::enum_<Config::PreprocessingRunningFrequency>(m, "PreprocessingRunningFrequency")
-      .value("AUTO", Config::PreprocessingRunningFrequency::AUTO)
-      .value("NEVER", Config::PreprocessingRunningFrequency::NEVER)
-      .value("ON_FIXED", Config::PreprocessingRunningFrequency::ON_FIXED)
-      .value("ON_ITERATION", Config::PreprocessingRunningFrequency::ON_ITERATION)
-      .value("ALWAYS", Config::PreprocessingRunningFrequency::ALWAYS);
+  py::enum_<Config::RunningFrequency>(m, "RunningFrequency")
+      .value("AUTO", Config::RunningFrequency::AUTO)
+      .value("NEVER", Config::RunningFrequency::NEVER)
+      .value("ON_FIXED", Config::RunningFrequency::ON_FIXED)
+      .value("ON_ITERATION", Config::RunningFrequency::ON_ITERATION)
+      .value("ALWAYS", Config::RunningFrequency::ALWAYS);
 
   py::enum_<Config::BoundPropagationType>(m, "BoundPropagationType")
       .value("AUTO", Config::BoundPropagationType::AUTO)
@@ -80,12 +80,12 @@ void init_util(py::module_ &m) {
                     return argparser.ToConfig();
                   })
       .def_property("bound_implication_frequency", &Config::bound_implication_frequency,
-                    [](Config &self, const Config::PreprocessingRunningFrequency &frequency) {
-                      self.m_bound_implication_frequency() = frequency;
+                    [](Config &self, const Config::RunningFrequency &frequency) {
+                      self.m_simple_bound_propagation_frequency() = frequency;
                     })
       .def_property("bound_propagation_frequency", &Config::bound_propagation_frequency,
-                    [](Config &self, const Config::PreprocessingRunningFrequency &frequency) {
-                      self.m_bound_propagation_frequency() = frequency;
+                    [](Config &self, const Config::RunningFrequency &frequency) {
+                      self.m_bound_checking_frequency() = frequency;
                     })
       .def_property(
           "bound_propagation_type", &Config::bound_propagation_type,

@@ -57,10 +57,7 @@ class TestBoundPreprocessor : public ::testing::Test {
   std::vector<Literal> active_constraints_;
   LiteralSet enabled_literals_;
 
-  TestBoundPreprocessor() : bound_preprocessor_{pa_} {
-    DLINEAR_LOG_INIT_VERBOSITY(0);
-    config_.m_bound_propagation_type() = Config::BoundPropagationType::BOUND_POLYNOMIAL;
-  }
+  TestBoundPreprocessor() : bound_preprocessor_{pa_} { DLINEAR_LOG_INIT_VERBOSITY(0); }
 
   void AddConstraints(std::initializer_list<Formula> formulas) {
     for (const auto &formula : formulas) {

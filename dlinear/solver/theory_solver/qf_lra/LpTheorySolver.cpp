@@ -10,13 +10,17 @@
 #include <map>
 #include <utility>
 
+#include "dlinear/solver/theory_solver/qf_lra/SimpleBoundPropagator.h"
 #include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
 
 namespace dlinear {
 
 LpTheorySolver::LpTheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
-    : QfLraTheorySolver{predicate_abstractor, class_name}, lp_solver_{LpSolver::GetInstance(config_)} {}
+    : QfLraTheorySolver{predicate_abstractor, class_name}, lp_solver_{LpSolver::GetInstance(config_)} {
+  if (config_.simple_bound_propagation_frequency() != Config::RunningFrequency::NEVER)
+    AddPropagator(std::make_unique<SimpleBoundPropagator>(*this));
+}
 
 void LpTheorySolver::AddLiterals() {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add literals after consolidation");
