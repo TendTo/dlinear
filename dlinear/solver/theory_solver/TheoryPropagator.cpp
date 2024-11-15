@@ -5,8 +5,11 @@
  */
 #include "TheoryPropagator.h"
 
+#include "dlinear/solver/theory_solver/TheorySolver.h"
+
 namespace dlinear {
-TheoryPropagator::TheoryPropagator(const Config &config, const std::string &class_name)
-    : config_{config},
-      stats_{config.with_timings(), class_name, "Total time spent in Propagate", "Total # of Propagate"} {}
+TheoryPropagator::TheoryPropagator(const TheorySolver &theory_solver, const std::string &class_name)
+    : theory_solver_{theory_solver},
+      stats_{theory_solver.config().with_timings(), class_name, "Total time spent in Propagate",
+             "Total # of Propagate"} {}
 }  // namespace dlinear

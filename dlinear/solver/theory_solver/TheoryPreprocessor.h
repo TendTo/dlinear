@@ -10,18 +10,20 @@
 #include <string>
 
 #include "dlinear/symbolic/literal.h"
-#include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
+// Forward declaration
+class TheorySolver;
+
 class TheoryPreprocessor {
  public:
-  explicit TheoryPreprocessor(const Config& config, const std::string& class_name = "TheoryPreprocessor");
+  explicit TheoryPreprocessor(const TheorySolver& theory_solver, const std::string& class_name = "TheoryPreprocessor");
   virtual ~TheoryPreprocessor() = default;
 
-  /** @getter{configuration, TheoryPreprocessor} */
-  [[nodiscard]] const Config& config() const { return config_; }
+  /** @getter{theory solver, TheoryPreprocessor} */
+  [[nodiscard]] const TheorySolver& theory_solver() const { return theory_solver_; }
   /** @getter{statistics, TheoryPreprocessor} */
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
 
@@ -32,7 +34,7 @@ class TheoryPreprocessor {
   virtual bool Backtrack() = 0;
 
  protected:
-  const Config& config_;
+  const TheorySolver& theory_solver_;
   const IterationStats stats_;
 };
 

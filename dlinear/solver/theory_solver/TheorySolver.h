@@ -61,7 +61,7 @@ class TheorySolver {
    * @pre preprocessors can only be added before the consolidation
    * @param preprocessor preprocessor to add
    */
-  void AddPreprocessor(std::unique_ptr<TheoryPreprocessor> preprocessor);
+  void AddPreprocessor(std::unique_ptr<TheoryPreprocessor> &&preprocessor);
   /**
    * Add a propagator to the theory solver.
    *
@@ -69,7 +69,7 @@ class TheorySolver {
    * @pre preprocessors can only be added before the consolidation
    * @param propagator propagator to add
    */
-  void AddPropagator(std::unique_ptr<TheoryPropagator> propagator);
+  void AddPropagator(std::unique_ptr<TheoryPropagator> &&propagator);
 
   /**
    * Add all the literals in the @ref pa_ to the theory solver.

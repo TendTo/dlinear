@@ -10,18 +10,20 @@
 #include <string>
 
 #include "dlinear/symbolic/symbolic.h"
-#include "dlinear/util/Config.h"
 #include "dlinear/util/Stats.h"
 
 namespace dlinear {
 
+// Forward declarations
+class TheorySolver;
+
 class TheoryPropagator {
  public:
-  explicit TheoryPropagator(const Config& config, const std::string& class_name = "TheoryPropagator");
+  explicit TheoryPropagator(const TheorySolver& theory_solver, const std::string& class_name = "TheoryPropagator");
   virtual ~TheoryPropagator() = default;
 
-  /** @getter{configuration, TheoryPropagator} */
-  [[nodiscard]] const Config& config() const { return config_; }
+  /** @getter{theory solver, TheoryPropagator} */
+  [[nodiscard]] const TheorySolver& theory_solver() const { return theory_solver_; }
   /** @getter{statistics, TheoryPropagator} */
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
 
@@ -30,7 +32,7 @@ class TheoryPropagator {
   virtual void Propagate(const AssertCallback& assert_cb) = 0;
 
  protected:
-  const Config& config_;
+  const TheorySolver& theory_solver_;
   const IterationStats stats_;
 };
 

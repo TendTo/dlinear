@@ -5,8 +5,11 @@
  */
 #include "TheoryPreprocessor.h"
 
+#include "dlinear/solver/theory_solver/TheorySolver.h"
+
 namespace dlinear {
-TheoryPreprocessor::TheoryPreprocessor(const Config &config, const std::string &class_name)
-    : config_{config}, stats_{config.with_timings(), class_name, "Total time spent in Process", "Total # of Process"} {}
+TheoryPreprocessor::TheoryPreprocessor(const TheorySolver &theory_solver, const std::string &class_name)
+    : theory_solver_{theory_solver},
+      stats_{theory_solver.config().with_timings(), class_name, "Total time spent in Process", "Total # of Process"} {}
 
 }  // namespace dlinear

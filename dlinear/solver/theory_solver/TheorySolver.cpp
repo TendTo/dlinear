@@ -19,12 +19,12 @@ TheorySolver::TheorySolver(const PredicateAbstractor &predicate_abstractor, cons
       preprocessors_{},
       propagators_{} {}
 
-void TheorySolver::AddPreprocessor(std::unique_ptr<TheoryPreprocessor> preprocessor) {
+void TheorySolver::AddPreprocessor(std::unique_ptr<TheoryPreprocessor> &&preprocessor) {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add preprocessors after consolidation");
   preprocessors_.push_back(std::move(preprocessor));
 }
 
-void TheorySolver::AddPropagator(std::unique_ptr<TheoryPropagator> propagator) {
+void TheorySolver::AddPropagator(std::unique_ptr<TheoryPropagator> &&propagator) {
   DLINEAR_ASSERT(!is_consolidated_, "Cannot add propagators after consolidation");
   propagators_.push_back(std::move(propagator));
 }
