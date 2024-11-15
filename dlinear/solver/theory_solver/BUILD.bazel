@@ -28,38 +28,22 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "theory_propagator",
-    srcs = ["TheoryPropagator.cpp"],
-    hdrs = ["TheoryPropagator.h"],
-    deps = [
-        "//dlinear/symbolic",
-        "//dlinear/util:config",
-        "//dlinear/util:stats",
-    ],
-)
-
-dlinear_cc_library(
-    name = "theory_preprocessor",
-    srcs = ["TheoryPreprocessor.cpp"],
-    hdrs = ["TheoryPreprocessor.h"],
-    deps = [
-        "//dlinear/symbolic:literal",
-        "//dlinear/util:config",
-        "//dlinear/util:stats",
-    ],
-)
-
-dlinear_cc_library(
     name = "theory_solver",
-    srcs = ["TheorySolver.cpp"],
-    hdrs = ["TheorySolver.h"],
+    srcs = [
+        "TheoryPreprocessor.cpp",
+        "TheoryPropagator.cpp",
+        "TheorySolver.cpp",
+    ],
+    hdrs = [
+        "TheoryPreprocessor.h",
+        "TheoryPropagator.h",
+        "TheorySolver.h",
+    ],
     implementation_deps = [
         "//dlinear/util:error",
         "//dlinear/util:logging",
     ],
     deps = [
-        ":theory_preprocessor",
-        ":theory_propagator",
         ":theory_result",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",

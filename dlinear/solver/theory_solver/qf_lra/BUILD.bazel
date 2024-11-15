@@ -46,6 +46,22 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "propagators",
+    srcs = ["SimpleBoundPropagator.cpp"],
+    hdrs = ["SimpleBoundPropagator.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = [
+        ":lp_sense",
+        "//dlinear/libs:gmp",
+        "//dlinear/solver/theory_solver",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
     name = "lp_solver",
     srcs = ["LpSolver.cpp"] + select({
         "//tools:enabled_soplex": ["SoplexLpSolver.cpp"],
@@ -231,6 +247,7 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":bound_preprocessor",
+        ":propagators",
         "//dlinear/util:error",
         "//dlinear/util:logging",
     ],
