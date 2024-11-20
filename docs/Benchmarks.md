@@ -7,7 +7,7 @@ The `benchmark` folder contains some utility script that have been used to colle
 
 ### TACAS 2025
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14161449.svg)](https://doi.org/10.5281/zenodo.14161449)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14161448.svg)](https://doi.org/10.5281/zenodo.14161448)
 
 - Tool version: `0.0.1`
 
