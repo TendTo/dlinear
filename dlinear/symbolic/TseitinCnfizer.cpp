@@ -47,7 +47,7 @@ std::vector<Formula> TseitinCnfizer::Process(const Formula &f) const {
     if (get_variable(head).equal_to(p.first)) {
       if (is_conjunction(p.second)) {
         const std::set<Formula> &conjuncts(get_operands(p.second));
-        copy(conjuncts.begin(), conjuncts.end(), back_inserter(ret));
+        std::ranges::copy(conjuncts, back_inserter(ret));
       } else {
         ret.push_back(p.second);
       }

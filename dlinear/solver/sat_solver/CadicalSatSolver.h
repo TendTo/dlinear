@@ -11,7 +11,6 @@
 #endif
 
 #include <cadical/cadical.hpp>
-#include <optional>
 #include <set>
 #include <string>
 

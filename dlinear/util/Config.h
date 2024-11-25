@@ -49,10 +49,10 @@ class Config {
   };
   /** Phase for the SAT solver. */
   enum class SatDefaultPhase {
-    False = 0,              ///< Assign false to non fixed decision literals
-    True = 1,               ///< Assign true to non fixed decision literals
+    False = 0,              ///< Assign false to non-fixed decision literals
+    True = 1,               ///< Assign true to non-fixed decision literals
     JeroslowWang = 2,       ///< Default option
-    RandomInitialPhase = 3  ///< Randomly assign a value to non fixed decision literals
+    RandomInitialPhase = 3  ///< Randomly assign a value to non-fixed decision literals
   };
   /** Format of the input file. */
   enum class Format {

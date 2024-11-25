@@ -9,8 +9,8 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
 #include <numeric>
+#include <ostream>
 #include <queue>
 #include <stack>
 #include <unordered_map>
@@ -145,7 +145,7 @@ class Graph {
    * @param v vertex to add
    */
   void AddVertex(const T& v) {
-    if (adj_list_.find(v) == adj_list_.end()) adj_list_.try_emplace(v);
+    if (!adj_list_.contains(v)) adj_list_.try_emplace(v);
   }
 
   /**
@@ -156,7 +156,7 @@ class Graph {
    * @return false if either @p u or @p v is not in the graph or if there is no edge from @p u to @p v
    */
   bool HasEdge(const T& u, const T& v) const {
-    return adj_list_.find(u) != adj_list_.cend() && adj_list_.at(u).find({v, W{}}) != adj_list_.at(u).cend();
+    return adj_list_.contains(u) && adj_list_.at(u).find({v, W{}}) != adj_list_.at(u).cend();
   }
   /**
    * Check if there are any positive number of vertexes starting from vertex @p u
@@ -164,7 +164,7 @@ class Graph {
    * @return true if there is at least a vertex starting from @p u
    * @return false if there is no vertex starting from @p u
    */
-  bool HasEdges(const T& u) const { return adj_list_.find(u) != adj_list_.cend() && !adj_list_.at(u).empty(); }
+  bool HasEdges(const T& u) const { return adj_list_.contains(u) && !adj_list_.at(u).empty(); }
 
   /**
    * Get a pointer to the weight of the edge from vertex @p u to vertex @p v
@@ -267,7 +267,7 @@ class Graph {
    */
   void DFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
     // If the starting vertex is not in the graph, return
-    if (adj_list_.find(start) == adj_list_.end()) return;
+    if (!adj_list_.contains(start)) return;
 
     visited.reserve(adj_list_.size());
     std::stack<T> stack;
@@ -278,14 +278,14 @@ class Graph {
     while (!stack.empty()) {
       const T current = std::move(stack.top());
       stack.pop();
-      if (visited.find(current) != visited.end()) continue;
+      if (visited.contains(current)) continue;
       visited.insert(current);
       const VisitResult res = func(edges.at(current).first, current, *edges.at(current).second);
       if (res == VisitResult::STOP) return;
-      if (res == VisitResult::SKIP || adj_list_.find(current) == adj_list_.end()) continue;
+      if (res == VisitResult::SKIP || !adj_list_.contains(current)) continue;
       for (auto adj_it = adj_list_.at(current).begin(); adj_it != adj_list_.at(current).end(); ++adj_it) {
         const auto& [adj_vertex, weight] = *adj_it;
-        if (visited.find(adj_vertex) != visited.end()) continue;
+        if (visited.contains(adj_vertex)) continue;
         stack.push(adj_vertex);
         edges.insert_or_assign(adj_vertex, std::make_pair(current, &weight));
       }
@@ -327,7 +327,7 @@ class Graph {
    */
   void BFS(const T& start, const VisitFunc& func, std::unordered_set<T>& visited) {
     // If the starting vertex is not in the graph, return
-    if (adj_list_.find(start) == adj_list_.end()) return;
+    if (!adj_list_.contains(start)) return;
 
     visited.reserve(adj_list_.size());
     std::queue<T> queue;
@@ -339,13 +339,13 @@ class Graph {
     while (!queue.empty()) {
       const VisitResult res = func(edges.at(queue.front()).first, queue.front(), *edges.at(queue.front()).second);
       if (res == VisitResult::STOP) return;
-      if (res == VisitResult::SKIP || adj_list_.find(queue.front()) == adj_list_.end()) {
+      if (res == VisitResult::SKIP || !adj_list_.contains(queue.front())) {
         queue.pop();
         continue;
       }
       for (auto adj_it = adj_list_.at(queue.front()).begin(); adj_it != adj_list_.at(queue.front()).end(); ++adj_it) {
         const auto& [adj_vertex, weight] = *adj_it;
-        if (visited.find(adj_vertex) != visited.end()) continue;
+        if (visited.contains(adj_vertex)) continue;
         visited.insert(adj_vertex);
         queue.push(adj_vertex);
         edges.insert_or_assign(adj_vertex, std::make_pair(queue.front(), &weight));
@@ -394,9 +394,7 @@ class Graph {
    * @see VisitResult
    */
   void AllPaths(const T& start, const T& end, const PathsFunc& func, std::unordered_set<T>& visited) {
-    if (adj_list_.find(start) == adj_list_.end() || adj_list_.find(end) == adj_list_.end() ||
-        adj_list_.find(start) == adj_list_.find(end))
-      return;
+    if (!adj_list_.contains(start) || !adj_list_.contains(end) || adj_list_.find(start) == adj_list_.find(end)) return;
     std::stack<T> stack;
     std::unordered_map<T, typename std::unordered_set<Edge>::iterator> iterators;
     std::vector<T> path;
@@ -431,7 +429,7 @@ class Graph {
 
       const T next = it->first;
       ++it;
-      if (visited.find(next) == visited.end()) {
+      if (!visited.contains(next)) {
         stack.push(next);
         visited.insert(next);
         path.push_back(next);

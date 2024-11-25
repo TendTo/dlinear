@@ -26,6 +26,7 @@ inline std::size_t bool_vector_to_int(const std::vector<bool>& v, const std::set
 CompleteLpTheorySolver::CompleteLpTheorySolver(const PredicateAbstractor& predicate_abstractor,
                                                const std::string& class_name)
     : LpTheorySolver{predicate_abstractor, class_name},
+      strict_variable_idx_{},
       nq_row_to_theory_rows_{},
       last_nq_status_{},
       last_infeasible_lp_rows_{},

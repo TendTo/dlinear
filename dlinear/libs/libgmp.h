@@ -21,13 +21,10 @@
 #include <string>
 #include <string_view>
 
-namespace std {
-
 template <>
-struct hash<mpq_class> {
-  size_t operator()(const mpq_class &val) const;
+struct std::hash<mpq_class> {
+  size_t operator()(const mpq_class &val) const noexcept;
 };
-}  // namespace std
 
 namespace dlinear {
 

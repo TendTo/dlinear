@@ -21,9 +21,7 @@ std::strong_ordering operator<=>(const dlinear::Literal &lhs, const dlinear::Lit
   return std::strong_ordering::equal;
 }
 
-bool operator==(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs) {
-  return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
-}
+bool operator==(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs) { return std::ranges::equal(lhs, rhs); }
 std::strong_ordering operator<=>(const dlinear::LiteralSet &lhs, const dlinear::LiteralSet &rhs) {
   return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }

@@ -71,7 +71,7 @@ void LpSolver::Consolidate() {
   consolidated_ = true;
 }
 
-void LpSolver::UpdateModelWithSolution(Box& model) {
+void LpSolver::UpdateModelWithSolution(Box& model) const {
   DLINEAR_DEBUG("LpSolver::UpdateModelWithSolution()");
   DLINEAR_ASSERT(!solution().empty(), "LpSolver::UpdateModelWithSolution() called without a solution.");
   for (int i = 0; i < static_cast<int>(solution().size()); ++i) {

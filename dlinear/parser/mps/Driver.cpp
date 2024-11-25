@@ -108,7 +108,7 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
       default:
         DLINEAR_UNREACHABLE();
     }
-  } catch (const std::out_of_range &e) {
+  } catch (const std::out_of_range &) {
     DLINEAR_RUNTIME_ERROR_FMT("Row {} not found", row);
   }
   DLINEAR_TRACE_FMT("Updated rhs {}", rhs_[row]);
@@ -139,7 +139,7 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
       default:
         DLINEAR_UNREACHABLE();
     }
-  } catch (const std::out_of_range &e) {
+  } catch (const std::out_of_range &) {
     DLINEAR_RUNTIME_ERROR_FMT("Row {} not found", row);
   }
 }
@@ -166,7 +166,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
       default:
         DLINEAR_UNREACHABLE();
     }
-  } catch (const std::out_of_range &e) {
+  } catch (const std::out_of_range &) {
     DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
   }
 
@@ -192,7 +192,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
       default:
         DLINEAR_UNREACHABLE();
     }
-  } catch (const std::out_of_range &e) {
+  } catch (const std::out_of_range &) {
     DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
   }
 

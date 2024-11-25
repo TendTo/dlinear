@@ -6,10 +6,8 @@
 
 #include "libgmp.h"
 
-namespace std {
-
 // https://en.cppreference.com/w/cpp/utility/hash/operator()
-size_t hash<mpq_class>::operator()(const mpq_class &val) const {
+size_t std::hash<mpq_class>::operator()(const mpq_class &val) const noexcept {
   mp_limb_t result = 2166136261;
   size_t num_size = mpz_size(val.get_num_mpz_t());
   size_t den_size = mpz_size(val.get_den_mpz_t());
@@ -23,8 +21,6 @@ size_t hash<mpq_class>::operator()(const mpq_class &val) const {
   }
   return static_cast<size_t>(result);
 }
-
-}  // namespace std
 
 namespace dlinear {
 

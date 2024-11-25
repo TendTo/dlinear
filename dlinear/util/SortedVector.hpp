@@ -153,7 +153,7 @@ class SortedVector {
    * @return element at the given position
    * @throw DlinearOutOfRangeException if @p i is out of range
    */
-  const T& at(size_t i) const {
+  [[nodiscard]] const T& at(size_t i) const {
     if (i >= vector_.size()) throw DlinearOutOfRangeException("Index out of range");
     return vector_[i];
   }
@@ -166,7 +166,7 @@ class SortedVector {
    * @return element at the given position
    * @throw DlinearOutOfRangeException if @p i is out of range
    */
-  const T& at(int i) const {
+  [[nodiscard]] const T& at(int i) const {
     if (i < 0) i = static_cast<int>(vector_.size()) + i;
     if (i < 0 || i >= static_cast<int>(vector_.size())) throw DlinearOutOfRangeException("Index out of range");
     return vector_[i];
@@ -183,13 +183,13 @@ class SortedVector {
    * Reference to the first element in the sorted list.
    * @return reference to the first element
    */
-  const T& front() const { return vector_.front(); }
+  [[nodiscard]] const T& front() const { return vector_.front(); }
 
   /**
    * Reference to the last element in the sorted list.
    * @return reference to the last element
    */
-  const T& back() const { return vector_.back(); }
+  [[nodiscard]] const T& back() const { return vector_.back(); }
 
   /**
    * Remove the element at position @p it from the sorted list.
@@ -255,7 +255,7 @@ class SortedVector {
    * @return iterator to the element if it is found
    * @return end iterator if the element is not found
    */
-  const_iterator find(const T& value) const {
+  [[nodiscard]] const_iterator find(const T& value) const {
     auto it = std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
     if (it == vector_.end() || !is_equal(*it, value)) return end();
     return it;
@@ -269,7 +269,7 @@ class SortedVector {
    * @param value value of the element to find
    * @return iterator to the first valid position
    */
-  const_iterator lower_bound(const T& value) const {
+  [[nodiscard]] const_iterator lower_bound(const T& value) const {
     return std::lower_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
@@ -281,7 +281,7 @@ class SortedVector {
    * @param value value of the element to find
    * @return iterator to the last valid position
    */
-  const_iterator upper_bound(const T& value) const {
+  [[nodiscard]] const_iterator upper_bound(const T& value) const {
     return std::upper_bound(vector_.begin(), vector_.end(), value, compare_);
   }
 
@@ -296,7 +296,7 @@ class SortedVector {
     auto it = find(value);
     if (it == vector_.end()) return 0;
     size_t count = 1;
-    for (it++; it != vector_.end() && is_equal(*it, value); ++it) ++count;
+    for (++it; it != vector_.end() && is_equal(*it, value); ++it) ++count;
     return count;
   }
 
@@ -335,16 +335,16 @@ class SortedVector {
 
   iterator begin() { return vector_.begin(); }
   iterator end() { return vector_.end(); }
-  const_iterator begin() const { return vector_.cbegin(); }
-  const_iterator end() const { return vector_.cend(); }
-  const_iterator cbegin() const { return vector_.begin(); }
-  const_iterator cend() const { return vector_.end(); }
+  [[nodiscard]] const_iterator begin() const { return vector_.cbegin(); }
+  [[nodiscard]] const_iterator end() const { return vector_.cend(); }
+  [[nodiscard]] const_iterator cbegin() const { return vector_.begin(); }
+  [[nodiscard]] const_iterator cend() const { return vector_.end(); }
   reverse_iterator rbegin() { return vector_.rbegin(); }
   reverse_iterator rend() { return vector_.rend(); }
-  const_reverse_iterator rbegin() const { return vector_.crbegin(); }
-  const_reverse_iterator rend() const { return vector_.crend(); }
-  const_reverse_iterator crbegin() const { return vector_.crbegin(); }
-  const_reverse_iterator crend() const { return vector_.crend(); }
+  [[nodiscard]] const_reverse_iterator rbegin() const { return vector_.crbegin(); }
+  [[nodiscard]] const_reverse_iterator rend() const { return vector_.crend(); }
+  [[nodiscard]] const_reverse_iterator crbegin() const { return vector_.crbegin(); }
+  [[nodiscard]] const_reverse_iterator crend() const { return vector_.crend(); }
 
  private:
   /**

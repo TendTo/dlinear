@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include <istream>
+#include <iosfwd>
 
 #pragma GCC system_header
 

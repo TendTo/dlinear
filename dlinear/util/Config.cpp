@@ -5,7 +5,7 @@
  */
 #include "Config.h"
 
-#include <iostream>
+#include <ostream>
 #include <utility>
 
 #include "dlinear/util/error.h"

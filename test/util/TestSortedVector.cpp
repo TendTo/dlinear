@@ -146,8 +146,8 @@ TEST_F(TestSortedVector, AtNegative) {
 }
 
 TEST_F(TestSortedVector, OutOfRangeAt) {
-  EXPECT_THROW(sv_.at(sv_.size()), DlinearOutOfRangeException);
-  EXPECT_THROW(sv_.at(-sv_.size() - 1), DlinearOutOfRangeException);
+  EXPECT_THROW([[maybe_unused]] auto v = sv_.at(sv_.size()), DlinearOutOfRangeException);
+  EXPECT_THROW([[maybe_unused]] auto v = sv_.at(-sv_.size() - 1), DlinearOutOfRangeException);
 }
 
 TEST_F(TestSortedVector, EraseElement) {

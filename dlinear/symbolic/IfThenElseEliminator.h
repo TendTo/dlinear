@@ -15,7 +15,6 @@
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/Config.h"
-#include "dlinear/util/Stats.h"
 
 namespace dlinear {
 /**

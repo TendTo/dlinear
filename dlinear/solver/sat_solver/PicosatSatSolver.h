@@ -12,7 +12,6 @@
 
 #include <picosat/picosat.h>
 
-#include <optional>
 #include <set>
 #include <string>
 

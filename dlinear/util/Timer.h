@@ -87,8 +87,8 @@ TimerBase<T> TimerBase<T>::operator+(const TimerBase<T> &other) const {
 }
 
 // Use high_resolution clock if it's steady, otherwise use steady_clock.
-using chosen_steady_clock = std::conditional<std::chrono::high_resolution_clock::is_steady,
-                                             std::chrono::high_resolution_clock, std::chrono::steady_clock>::type;
+using chosen_steady_clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
+                                               std::chrono::high_resolution_clock, std::chrono::steady_clock>;
 
 extern template class TimerBase<chosen_steady_clock>;
 /** Timer class using the a steady clock. */

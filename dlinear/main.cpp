@@ -20,7 +20,7 @@ int main(int argc, const char* argv[]) {
   // Parse the command line arguments.
   parser.Parse(argc, argv);
   // Get the configuration from the command line arguments.
-  dlinear::Config config = parser.ToConfig();
+  const dlinear::Config config = parser.ToConfig();
 
   // Setup the infinity values.
   dlinear::SmtSolver solver{config};

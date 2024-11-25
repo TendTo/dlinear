@@ -14,7 +14,6 @@
 #include <ostream>
 
 #include "dlinear/util/Infinity.h"
-#include "dlinear/util/RoundingModeGuard.hpp"
 #include "dlinear/util/error.h"
 #include "dlinear/util/math.h"
 
@@ -114,7 +113,7 @@ const std::vector<Variable> &Box::variables() const { return *variables_; }
 
 const Variable &Box::variable(const int i) const { return idx_to_var_->at(i); }
 
-bool Box::has_variable(const Variable &var) const { return var_to_idx_->count(var) > 0; }
+bool Box::has_variable(const Variable &var) const { return var_to_idx_->contains(var); }
 
 int Box::index(const Variable &var) const { return var_to_idx_->at(var); }
 
@@ -124,9 +123,8 @@ std::vector<Interval> &Box::m_interval_vector() { return values_; }
 std::pair<mpq_class, int> Box::MaxDiam() const {
   mpq_class max_diam{0.0};
   int idx{-1};
-  for (std::size_t i{0}; i < variables_->size(); ++i) {
-    const mpq_class &diam_i{values_[i].diam()};
-    if (diam_i > max_diam && values_[i].is_bisectable()) {
+  for (int i = 0; i < static_cast<int>(variables_->size()); ++i) {
+    if (const mpq_class & diam_i{values_[i].diam()}; diam_i > max_diam && values_[i].is_bisectable()) {
       max_diam = diam_i;
       idx = i;
     }
@@ -250,8 +248,7 @@ std::ostream &operator<<(std::ostream &os, const Box &box) {
 }
 
 bool operator==(const Box &b1, const Box &b2) {
-  return std::equal(b1.variables().begin(), b1.variables().end(), b2.variables().begin(), b2.variables().end(),
-                    std::equal_to<Variable>{}) &&
+  return std::ranges::equal(b1.variables(), b2.variables(), std::equal_to<Variable>{}) &&
          (b1.interval_vector() == b2.interval_vector());
 }
 

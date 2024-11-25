@@ -55,7 +55,7 @@ class LpTheorySolver : public QfLraTheorySolver {
    * Notify the SAT solver that the current LP problem is infeasible by calling @p conflict_cb with the explanation.
    * @param conflict_cb conflict callback to be called with the explanation
    */
-  void NotifyInfeasible(const ConflictCallback& conflict_cb);
+  void NotifyInfeasible(const ConflictCallback& conflict_cb) const;
 
   /** Set the bounds of the variables in the LP solver.  */
   virtual void EnableVarBound();

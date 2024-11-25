@@ -401,8 +401,7 @@ bool BoundPreprocessor::PropagateBoundsPolynomial(const Literal& lit, const Vari
                       var_to_propagate, l_rhs, u_rhs, lit, dependencies);
     //    fmt::println("BoundPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
     //                 var_propagated, l_rhs, u_rhs, lit, dependencies);
-    const mpq_class* const eq_bound = var_bounds.GetActiveEqualityBound();
-    if (eq_bound != nullptr) {
+    if (const mpq_class* const eq_bound = var_bounds.GetActiveEqualityBound(); eq_bound != nullptr) {
       DLINEAR_ASSERT(!env_.contains(var_to_propagate) || env_[var_to_propagate] == *eq_bound,
                      "No conflict should arise from this assignment");
       env_[var_to_propagate] = *eq_bound;

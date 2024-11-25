@@ -43,6 +43,7 @@ class Context::Impl {
   /**
    * Construct a context with @p config.
    * @param config the configuration of the context
+   * @param[out] output the output of running the @ref CheckSat or @ref CheckOpt methods
    */
   explicit Impl(Config &config, SmtSolverOutput *output = nullptr);
   Impl(const Impl &) = delete;
@@ -172,13 +173,13 @@ class Context::Impl {
    * Get the configuration of the context.
    * @return configuration of the context
    */
-  const Config &config() const { return config_; }
+  [[nodiscard]] const Config &config() const { return config_; }
   /**
    * Get the the asserted formulas.
    * @note that the returned vector can be a proper subset of the asserted formulas.
    * For example, when `x <= 5` is asserted, box() is updated to have this information and the formula is thrown away.
    */
-  const ScopedVector<Formula> &assertions() const;
+  [[nodiscard]] const ScopedVector<Formula> &assertions() const;
   /**
    * Get the current active box from the top of the @ref stack_ of boxes.
    * @return the active box of the context
@@ -188,15 +189,15 @@ class Context::Impl {
    * Get the current active box from the top of the @ref stack_ of boxes.
    * @return the active box of the context
    */
-  const Box &box() const { return boxes_.last(); }
+  [[nodiscard]] const Box &box() const { return boxes_.last(); }
   /**
    * Get a representation of a model computed by the solver in response to the last invocation of the check-sat.
    * @return the model computed by the solver
    */
-  const Box &get_model() { return model_; }
+  [[nodiscard]] const Box &get_model() const { return model_; }
 
   /** @getter{predicate_abstractor, context} */
-  const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
+  [[nodiscard]] const PredicateAbstractor &predicate_abstractor() const { return predicate_abstractor_; }
   [[nodiscard]] const SmtSolverOutput *solver_output() const { return output_; }
   SmtSolverOutput *m_solver_output() { return output_; }
   /**
@@ -204,13 +205,13 @@ class Context::Impl {
    * @return true if there is an objective function to optimize. @ref CheckOpt() will be called
    * @return false if there is no objective function. @ref CheckSat() will be called
    */
-  bool have_objective() const;
+  [[nodiscard]] bool have_objective() const;
   /**
    * Check whether or not the objective function (if present) is a maximization.
    * @return true if the original objective function is a maximization
    * @return false if the original objective function is a minimization
    */
-  bool is_max() const;
+  [[nodiscard]] bool is_max() const;
   /**
    * Check whether the @p model satisfies all the assertions loaded in the context.
    *
@@ -297,7 +298,7 @@ class Context::Impl {
    * @return true if the variable is a model variable
    * @return false if the variable is not a model variable
    */
-  bool IsModelVariable(const Variable &v) const;
+  [[nodiscard]] bool IsModelVariable(const Variable &v) const;
 
   /**
    * Extract a model from the @p box.
@@ -307,7 +308,7 @@ class Context::Impl {
    * @param box box to extract a model from.
    * @return box which is free of non-model variables.
    */
-  Box ExtractModel(const Box &box) const;
+  [[nodiscard]] Box ExtractModel(const Box &box) const;
 
   /**
    * Update the @ref output_ with the last @p smt_result .

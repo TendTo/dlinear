@@ -23,8 +23,8 @@ using drake::symbolic::Variable;
 
 /** A literal is a variable with an associated truth value, indicating whether it is true or false. */
 struct Literal {
-  Variable var;  ///< Variable.
-  bool truth;    ///< Truth value.
+  Variable var{};  ///< Variable.
+  bool truth{};    ///< Truth value.
 };
 using LiteralSet = std::set<Literal>;                       ///< A set of literals.
 using Explanation = std::set<Literal>;                      ///< An explanation of a conflict.
@@ -32,8 +32,8 @@ using ConflictCallback = std::function<void(Explanation)>;  ///< Callback for co
 
 /** A model is a pair of two vectors of literals. */
 struct Model {
-  std::vector<Literal> boolean_model;  ///< Boolean literals that have been assigned a value.
-  std::vector<Literal> theory_model;   ///< Theory literals that have been assigned a value.
+  std::vector<Literal> boolean_model{};  ///< Boolean literals that have been assigned a value.
+  std::vector<Literal> theory_model{};   ///< Theory literals that have been assigned a value.
 };
 
 bool operator==(const dlinear::Literal &lhs, const dlinear::Literal &rhs);

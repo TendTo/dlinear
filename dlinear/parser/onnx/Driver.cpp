@@ -747,10 +747,10 @@ void OnnxDriver::AddNodes() {
   bool added = true;
   while (added) {
     added = false;
-    for (auto it = nodes.begin(); it != nodes.end(); it++) {
+    for (auto it = nodes.begin(); it != nodes.end(); ++it) {
       if (AddNode(**it)) {
         it = nodes.erase(it);
-        it--;
+        --it;
         added = true;
       }
     }

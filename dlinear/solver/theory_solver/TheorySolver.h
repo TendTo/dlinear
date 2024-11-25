@@ -138,6 +138,7 @@ class TheorySolver {
    * If that is the case, an explanation is produced and used to invoke the @p conflict_cb .
    * @pre the literal must have been added to the theory solver with @ref AddLiteral
    * @param lit new literal to be enabled
+   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */

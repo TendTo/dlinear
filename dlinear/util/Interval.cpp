@@ -17,7 +17,7 @@ Interval::Interval(const mpq_class &lb, const mpq_class &ub) : lb_(lb), ub_(ub) 
 }
 
 std::pair<Interval, Interval> Interval::bisect(const mpq_class &p) const {
-  mpq_class midpoint{lb_ + p * (ub_ - lb_)};
+  const mpq_class midpoint{lb_ + p * (ub_ - lb_)};
   return std::make_pair(Interval(lb_, midpoint), Interval(midpoint, ub_));
 }
 
@@ -105,7 +105,7 @@ std::ostream &operator<<(std::ostream &os, const Interval &iv) {
 Interval Interval::FromString(const std::string &s) {
   RoundingModeGuard guard(FE_UPWARD);
   const double ub{stod(s)};
-  double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s);  // TODO: shouldn't this be -stod(s) or even -ub?
+  const double lb = s[0] == '-' ? -stod(s.substr(1)) : -stod("-" + s);  // TODO: shouldn't this be -stod(s) or even -ub?
   return Interval{lb, ub};
 }
 

@@ -19,6 +19,9 @@ class QfLraTheorySolver : public TheorySolver {
   explicit QfLraTheorySolver(const PredicateAbstractor& predicate_abstractor,
                              const std::string& class_name = "QfLraTheorySolver");
 
+  /** @getter{bounds over the real variables, QfLraTheorySolver} */
+  [[nodiscard]] const BoundVectorMap& vars_bounds() const { return vars_bounds_; }
+
  protected:
   BoundVectorMap vars_bounds_;  ///< Bounds of the real variables. Reset to the checkpoint bounds with backtracking
   BoundVectorMap vars_bounds_checkpoint_;  ///< Checkpoint bounds of the real variables. Won't change with backtracking

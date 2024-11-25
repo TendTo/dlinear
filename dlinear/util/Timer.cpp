@@ -63,7 +63,7 @@ user_clock::time_point user_clock::now() {
   DLINEAR_TRACE("user_clock::now");
   struct rusage usage{};
   if (0 != getrusage(RUSAGE_SELF, &usage)) throw DlinearException("Failed to get current resource usage (getrusage)");
-  return time_point(duration(uint64_t(usage.ru_utime.tv_sec) * std::micro::den + uint64_t(usage.ru_utime.tv_usec)));
+  return time_point(duration(static_cast<uint64_t>(usage.ru_utime.tv_sec) * std::micro::den + static_cast<uint64_t>(usage.ru_utime.tv_usec)));
 }
 
 // Explicit instantiations

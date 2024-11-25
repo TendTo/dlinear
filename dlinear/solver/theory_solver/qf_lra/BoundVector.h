@@ -204,7 +204,6 @@ class BoundVector {
   void GetActiveExplanation(LiteralSet& explanation) const;
   /**
    * Produce a @ref LiteralSet containing all the active bounds that can be used as an explanation.
-   * @param theory_bound_to_lit map between the bound id and the theory literal
    * @return set of literal corresponding to the explanation
    */
   [[nodiscard]] LiteralSet GetActiveExplanation() const;

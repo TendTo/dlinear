@@ -43,8 +43,9 @@ BoundIterator::BoundIterator(BoundIterator::internal_iterator begin_bounds_it,
                  "Non-equal bounds iterator is out of bounds.");
 }
 
-BoundIterator::BoundIterator(std::pair<BoundIterator::internal_iterator, BoundIterator::internal_iterator> bounds,
-                             std::pair<BoundIterator::internal_iterator, BoundIterator::internal_iterator> nq_bounds)
+BoundIterator::BoundIterator(
+    const std::pair<BoundIterator::internal_iterator, BoundIterator::internal_iterator> &bounds,
+    const std::pair<BoundIterator::internal_iterator, BoundIterator::internal_iterator> &nq_bounds)
     : begin_bounds_it_(bounds.first),
       bounds_it_(bounds.first),
       end_bounds_it_(std::max(bounds.second, bounds.first)),

@@ -61,6 +61,8 @@ class LpSolver {
   /**
    * Construct a new LpSolver object with the given @p config .
    * @param config configuration to use
+   * @param ninfinity negative infinity threshold value
+   * @param infinity infinity threshold value
    * @param class_name name of the class
    */
   LpSolver(const Config& config, mpq_class ninfinity, mpq_class infinity, const std::string& class_name = "LpSolver");
@@ -357,7 +359,7 @@ class LpSolver {
    * @pre The last call to @ref Optimise discovered a feasible solution.
    * @param model box to update with the solution
    */
-  void UpdateModelWithSolution(Box& model);
+  void UpdateModelWithSolution(Box& model) const;
 
 #ifndef NDEBUG
   virtual void Dump() = 0;

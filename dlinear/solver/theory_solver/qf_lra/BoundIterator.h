@@ -83,8 +83,8 @@ class BoundIterator {
    * @param bounds begin and end iterators to the bounds
    * @param nq_bounds begin and end iterators to the non-equal bounds
    */
-  BoundIterator(std::pair<internal_iterator, internal_iterator> bounds,
-                std::pair<internal_iterator, internal_iterator> nq_bounds);
+  BoundIterator(const std::pair<internal_iterator, internal_iterator> &bounds,
+                const std::pair<internal_iterator, internal_iterator> &nq_bounds);
 
   explicit operator bool() const { return bounds_it_ != end_bounds_it_ || nq_bounds_it_ != end_nq_bounds_it_; }
 

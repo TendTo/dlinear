@@ -40,9 +40,9 @@ bool ParseBooleanOption([[maybe_unused]] const std::string &key, const std::stri
 double ParseDoubleOption([[maybe_unused]] const std::string &key, const std::string &val) {
   try {
     return std::stod(val);
-  } catch (const std::invalid_argument &e) {
+  } catch (const std::invalid_argument &) {
     DLINEAR_INVALID_ARGUMENT_EXPECTED(key, val, "double");
-  } catch (const std::out_of_range &e) {
+  } catch (const std::out_of_range &) {
     DLINEAR_OUT_OF_RANGE_FMT("Out of range value {} is provided for option {}. Expected double", val, key);
   }
 }
@@ -50,7 +50,6 @@ double ParseDoubleOption([[maybe_unused]] const std::string &key, const std::str
 #ifndef NDEBUG
 std::unique_ptr<TheorySolver> debug_theory_solver;
 const std::function<void(const LiteralSet &)> debug_conflict_cb = [](const LiteralSet &) {};
-const std::function<void(const Formula &)> debug_assert_cb = [](const Formula &) {};
 #endif
 
 }  // namespace
@@ -299,9 +298,7 @@ Box Context::Impl::ExtractModel(const Box &box) const {
   return new_box;
 }
 
-bool Context::Impl::IsModelVariable(const Variable &v) const {
-  return model_variables_.find(v.get_id()) != model_variables_.end();
-}
+bool Context::Impl::IsModelVariable(const Variable &v) const { return model_variables_.contains(v.get_id()); }
 
 void Context::Impl::MarkModelVariable(const Variable &v) { model_variables_.insert(v.get_id()); }
 

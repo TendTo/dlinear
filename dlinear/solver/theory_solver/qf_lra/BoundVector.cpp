@@ -274,8 +274,8 @@ BoundIterator BoundVector::GetActiveBound(const mpq_class& lb, const mpq_class& 
   auto lb_it = FindUpperBound(&lb, LpColBound::SL);
   auto ub_it = FindLowerBound(&ub, LpColBound::SU);
   // Adjust the iterators based on the state of the vector
-  if (lb_it != bounds_.cbegin() && lb == *(std::prev(lb_it))->value) lb_it--;
-  if (ub_it != bounds_.cend() && ub == *ub_it->value) ub_it++;
+  if (lb_it != bounds_.cbegin() && lb == *(std::prev(lb_it))->value) --lb_it;
+  if (ub_it != bounds_.cend() && ub == *ub_it->value) ++ub_it;
   return BoundIterator{
       lb_it, ub_it,  // The non-equal bounds become inclusive if there is no normal bounds
       lb_it == ub_it || lb_it->lp_bound != LpColBound::SL ? FindLowerNqBoundValue(&lb) : FindUpperNqBoundValue(&lb),

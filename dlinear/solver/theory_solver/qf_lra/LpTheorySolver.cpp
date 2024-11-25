@@ -116,7 +116,7 @@ void LpTheorySolver::UpdateModelBounds() {
   }
 }
 
-void LpTheorySolver::NotifyInfeasible(const ConflictCallback &conflict_cb) {
+void LpTheorySolver::NotifyInfeasible(const ConflictCallback &conflict_cb) const {
   DLINEAR_ASSERT(!lp_solver_->infeasible_rows().empty(), "There must be infeasible rows");
   LiteralSet explanation;
   for (const auto &row : lp_solver_->infeasible_rows()) {

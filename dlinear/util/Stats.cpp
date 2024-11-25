@@ -8,7 +8,7 @@
 #include <fmt/core.h>
 
 #include <chrono>
-#include <iostream>
+#include <ostream>
 #include <utility>
 
 #define DLINEAR_STATS_FMT "{:<35} @ {:<26} = {:>15} sec"
