@@ -26,9 +26,9 @@ struct Literal {
   Variable var{};  ///< Variable.
   bool truth{};    ///< Truth value.
 };
-using LiteralSet = std::set<Literal>;                       ///< A set of literals.
-using Explanation = std::set<Literal>;                      ///< An explanation of a conflict.
-using ConflictCallback = std::function<void(Explanation)>;  ///< Callback for conflict explanations.
+using LiteralSet = std::set<Literal>;                               ///< A set of literals.
+using Explanation = std::set<Literal>;                              ///< An explanation of a conflict.
+using ConflictCallback = std::function<void(const Explanation &)>;  ///< Callback for conflict explanations.
 
 /** A model is a pair of two vectors of literals. */
 struct Model {
