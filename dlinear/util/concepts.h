@@ -28,6 +28,21 @@ concept Iterable = requires(T t) {
 };  // NOLINT(readability/braces) per C++ standard concept definition
 
 /**
+ * Check if the type T is an iterable type with a size() method
+ * @code
+ * template <SizedIterable T>
+ * void foo(T t); // T can be any iterable type with a size() method
+ * @endcode
+ * @tparam T type to check
+ */
+template <class T>
+concept SizedIterable = requires(T t) {
+  { t.begin() } -> std::convertible_to<typename T::iterator>;
+  { t.end() } -> std::convertible_to<typename T::iterator>;
+  { t.size() } -> std::convertible_to<std::size_t>;
+};  // NOLINT(readability/braces) per C++ standard concept definition
+
+/**
  * Check if the type T is an iterable type with elements of type U
  * @code
  * template <TypedIterable<int> T>
@@ -40,6 +55,22 @@ template <typename T, typename U>
 concept TypedIterable = requires(T t, U u) {
   { t.begin() } -> std::convertible_to<typename T::iterator>;
   { t.end() } -> std::convertible_to<typename T::iterator>;
+} && std::same_as<typename T::value_type, U>;
+
+/**
+ * Check if the type T is an iterable type with elements of type U and a size() method
+ * @code
+ * template <TypedSizedIterable<int> T>
+ * void foo(T t); // T can be any iterable type with elements of type int and a size() method
+ * @endcode
+ * @tparam T type to check
+ * @tparam U type of the elements
+ */
+template <typename T, typename U>
+concept SizedTypedIterable = requires(T t, U u) {
+  { t.begin() } -> std::convertible_to<typename T::iterator>;
+  { t.end() } -> std::convertible_to<typename T::iterator>;
+  { t.size() } -> std::convertible_to<std::size_t>;
 } && std::same_as<typename T::value_type, U>;
 
 /**
