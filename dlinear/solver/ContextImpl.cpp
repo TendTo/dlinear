@@ -70,7 +70,12 @@ Context::Impl::Impl(Config &config, SmtSolverOutput *const output)
       theory_solver_{GetTheorySolver()} {
   boxes_.push_back(Box{config_.lp_solver()});
 #ifndef NDEBUG
-  debug_theory_solver = config_.lp_solver() == Config::LPSolver::SOPLEX ? GetTheorySolver() : nullptr;
+  const double precision = config_.precision();
+  const_cast<double &>(config_.m_precision().get()) = 0;
+  debug_theory_solver = config_.lp_solver() == Config::LPSolver::SOPLEX
+                            ? std::make_unique<CompleteLpTheorySolver>(predicate_abstractor_)
+                            : nullptr;
+  const_cast<double &>(config_.m_precision().get()) = precision;
 #endif
 }
 
@@ -357,6 +362,8 @@ SmtResult Context::Impl::CheckSatCore(mpq_class *actual_precision) {
   if (debug_theory_solver != nullptr) {
     debug_theory_solver->AddLiterals();
     debug_theory_solver->Consolidate(box());
+    const_cast<TheorySolver::PreprocessorsVector &>(debug_theory_solver->preprocessors()).clear();
+    const_cast<TheorySolver::PropagatorsVector &>(debug_theory_solver->propagators()).clear();
   }
 #endif
 
@@ -550,24 +557,24 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     std::cout << "file,complete,satSolver,lpSolver,assertions,precision,actualPrecision,simplexPhase,"
                  "simpleBoundPropagationFrequency,boundCheckingFrequency,satDefaultPhase,lpMode,"
                  "timeUnit,parserTime,satTime,preprocessorTime,theoryTime,smtTime,result\n";
-    std::cout << config_.filename() << ","                            //
-              << config_.complete() << ","                            //
-              << config_.sat_solver() << ","                          //
-              << config_.lp_solver() << ","                           //
-              << output_->n_assertions << ","                         //
-              << config_.precision() << ","                           //
-              << output_->actual_precision.get_d() << ","             //
-              << config_.simplex_sat_phase() << ","                   //
-              << config_.simple_bound_propagation_step() << ","  //
-              << config_.bound_preprocess_step() << ","            //
-              << config_.sat_default_phase() << ","                   //
-              << config_.actual_lp_mode() << ","                      //
-              << "s" << ","                                           //
-              << output_->parser_stats.timer().seconds() << ","       //
-              << sat_solver_->stats().timer().seconds() << ","        //
-              << preprocessors_total_stats.timer().seconds() << ","   //
-              << theory_solver_->stats().timer().seconds() << ","     //
-              << output_->smt_solver_timer.seconds() << ","           //
+    std::cout << config_.filename() << ","                           //
+              << config_.complete() << ","                           //
+              << config_.sat_solver() << ","                         //
+              << config_.lp_solver() << ","                          //
+              << output_->n_assertions << ","                        //
+              << config_.precision() << ","                          //
+              << output_->actual_precision.get_d() << ","            //
+              << config_.simplex_sat_phase() << ","                  //
+              << config_.simple_bound_propagation_step() << ","      //
+              << config_.bound_preprocess_step() << ","              //
+              << config_.sat_default_phase() << ","                  //
+              << config_.actual_lp_mode() << ","                     //
+              << "s" << ","                                          //
+              << output_->parser_stats.timer().seconds() << ","      //
+              << sat_solver_->stats().timer().seconds() << ","       //
+              << preprocessors_total_stats.timer().seconds() << ","  //
+              << theory_solver_->stats().timer().seconds() << ","    //
+              << output_->smt_solver_timer.seconds() << ","          //
               << output_->result << std::endl;
   } else if (!config_.silent()) {
     std::cout << *output_ << std::endl;
