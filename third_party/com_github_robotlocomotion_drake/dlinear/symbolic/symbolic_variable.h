@@ -18,10 +18,10 @@ class Variable {
 
   /** Supported types of symbolic variables. */
   enum class Type : std::uint8_t {
-    CONTINUOUS,  ///< A CONTINUOUS variable takes a `mpq_class` value.
-    INTEGER,     ///< An INTEGER variable takes an `int` value.
-    BINARY,      ///< A BINARY variable takes an integer value from {0, 1}.
-    BOOLEAN,     ///< A BOOLEAN variable takes a `bool` value.
+    CONTINUOUS = 0b00000001,  ///< A CONTINUOUS variable takes a `mpq_class` value.
+    INTEGER = 0b00000010,     ///< An INTEGER variable takes an `int` value.
+    BINARY = 0b00000100,      ///< A BINARY variable takes an integer value from {0, 1}.
+    BOOLEAN = 0b00001000,     ///< A BOOLEAN variable takes a `bool` value.
   };
 
   /** Default constructor. Constructs a dummy variable of CONTINUOUS type. This
