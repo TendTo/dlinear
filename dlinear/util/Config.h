@@ -122,25 +122,31 @@ class Config {
   /**
    * @getter{actual `simple_bound_propagation_frequency` parameter, configuration,
      If the bound_propagation_frequency is RunningFrequency::AUTO\,
-     it will return the appropriate preprocessing running frequency based on the actual format}
+     it will return the appropriate running frequency based on the actual format}
    */
   [[nodiscard]] RunningFrequency actual_simple_bound_propagation_frequency() const;
   /**
-   * @getter{actual `bound_checking_frequency` parameter, configuration,
+   * @getter{actual `bound_preprocess_frequency` parameter, configuration,
      If the bound_implication_frequency is RunningFrequency::AUTO\,
-     it will return the appropriate preprocessing running frequency based on the actual format}
+     it will return the appropriate running frequency based on the actual format}
    */
-  [[nodiscard]] RunningFrequency actual_bound_checking_frequency() const;
+  [[nodiscard]] RunningFrequency actual_bound_preprocess_frequency() const;
+  /**
+  * @getter{actual `eq_binomial_bound_preprocess_frequency` parameter, configuration,
+    If the eq_binomial_bound_preprocess_frequency is RunningFrequency::AUTO\,
+    it will return the appropriate running frequency based on the actual format}
+  */
+  [[nodiscard]] RunningFrequency actual_eq_binomial_bound_preprocess_frequency() const;
 
  private:
   OptionValue<std::string> filename_{""};
   OptionValue<std::string> onnx_file_{""};
 
   DLINEAR_PARAMETER(simple_bound_propagation_frequency, RunningFrequency, RunningFrequency::AUTO,
-                    "How often to run the generic bound propagation preprocessing.\n"
+                    "How often to run the simple bound propagation preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
-  DLINEAR_PARAMETER(bound_checking_frequency, RunningFrequency, RunningFrequency::AUTO,
-                    "How often to run the bound implication preprocessing.\n"
+  DLINEAR_PARAMETER(bound_preprocess_frequency, RunningFrequency, RunningFrequency::AUTO,
+                    "How often to run the bound checking preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), always (3)")
   DLINEAR_PARAMETER(complete, bool, false,
                     "Run the solver in complete mode.\n"
@@ -156,6 +162,9 @@ class Config {
   DLINEAR_PARAMETER(
       enforce_check_sat, bool, false,
       "Perform a satisfiability check at the end of parsing if the input does not contain a (check-sat) directive")
+  DLINEAR_PARAMETER(eq_binomial_bound_preprocess_frequency, RunningFrequency, RunningFrequency::AUTO,
+                    "How often to run the eq binomial bound checking preprocessing.\n"
+                    "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
                     "Input file format\n"
                     "\t\tOne of: auto (1), smt2 (2), mps (3), vnnlib (4)")

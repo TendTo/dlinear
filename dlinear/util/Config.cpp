@@ -63,8 +63,8 @@ Config::RunningFrequency Config::actual_simple_bound_propagation_frequency() con
       return simple_bound_propagation_frequency_.get();
   }
 }
-Config::RunningFrequency Config::actual_bound_checking_frequency() const {
-  switch (bound_checking_frequency_.get()) {
+Config::RunningFrequency Config::actual_bound_preprocess_frequency() const {
+  switch (bound_preprocess_frequency_.get()) {
     case RunningFrequency::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
@@ -76,7 +76,23 @@ Config::RunningFrequency Config::actual_bound_checking_frequency() const {
           DLINEAR_UNREACHABLE();
       }
     default:
-      return bound_checking_frequency_.get();
+      return bound_preprocess_frequency_.get();
+  }
+}
+Config::RunningFrequency Config::actual_eq_binomial_bound_preprocess_frequency() const {
+  switch (eq_binomial_bound_preprocess_frequency_.get()) {
+    case RunningFrequency::AUTO:
+      switch (actual_format()) {
+        case Format::SMT2:
+          return RunningFrequency::ALWAYS;
+        case Format::MPS:
+        case Format::VNNLIB:
+          return RunningFrequency::NEVER;
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    default:
+      return eq_binomial_bound_preprocess_frequency_.get();
   }
 }
 
@@ -167,7 +183,7 @@ std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequ
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
             << "simple_bound_propagation_frequency = " << config.simple_bound_propagation_frequency() << ",\n"
-            << "bound_checking_frequency = " << config.bound_checking_frequency() << ",\n"
+            << "bound_preprocess_frequency = " << config.bound_preprocess_frequency() << ",\n"
             << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
@@ -175,6 +191,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "debug_scanning = " << config.debug_scanning() << ",\n"
             << "disable_expansion = " << config.disable_expansion() << ",\n"
             << "enforce_check_sat = " << config.enforce_check_sat() << ",\n"
+            << "eq_binomial_bound_preprocess_frequency = " << config.eq_binomial_bound_preprocess_frequency() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"
             << "lp_mode = '" << config.lp_mode() << "',\n"
