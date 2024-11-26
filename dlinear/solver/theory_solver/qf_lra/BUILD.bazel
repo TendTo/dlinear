@@ -46,6 +46,34 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
+    name = "preprocessors",
+    srcs = [
+        #        "BoundPreprocessor.cpp",
+        "EqBinomialBoundPreprocessor.cpp",
+    ],
+    hdrs = [
+        #        "BoundPreprocessor.h",
+        "EqBinomialBoundPreprocessor.h",
+    ],
+    implementation_deps = [
+        ":qf_lra_theory_solver",
+        "//dlinear/util:error",
+    ],
+    deps = [
+        ":bound_vector",
+        ":lp_sense",
+        "//dlinear/libs:gmp",
+        "//dlinear/solver/theory_solver",
+        "//dlinear/symbolic",
+        "//dlinear/symbolic:environment",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:graph",
+        "//dlinear/util:logging",
+        "//dlinear/util:sorted_vector",
+    ],
+)
+
+dlinear_cc_library(
     name = "propagators",
     srcs = ["SimpleBoundPropagator.cpp"],
     hdrs = ["SimpleBoundPropagator.h"],
@@ -231,6 +259,7 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":bound_preprocessor",
+        ":preprocessors",
         ":propagators",
         "//dlinear/util:error",
         "//dlinear/util:logging",
