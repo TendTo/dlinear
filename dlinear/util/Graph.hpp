@@ -101,7 +101,7 @@ class Graph {
    * @param v to vertex
    * @param bidirectional whether to add another edge from @p v to @p u
    */
-  void AddEdge(const T& u, const T& v, bool bidirectional = true) {
+  void AddEdge(const T& u, const T& v, const bool bidirectional = true) {
     adj_list_[u].emplace(v, 1);
     adj_list_[v];  // Ensure the ending vertex exists
     if (bidirectional) adj_list_[v].emplace(u, 1);
@@ -118,7 +118,7 @@ class Graph {
    * @return true if the edge was updated with a new weight
    * @return false if the edge was absent or if it was already present and the weight is the same
    */
-  bool AddEdge(const T& u, const T& v, const W& weight, bool bidirectional = true) {
+  bool AddEdge(const T& u, const T& v, const W& weight, const bool bidirectional = true) {
     bool updated = false;
     const auto [it, inserted] = adj_list_[u].emplace(v, weight);
     adj_list_[v];  // Ensure the ending vertex exists
@@ -128,10 +128,10 @@ class Graph {
       updated = true;
     }
     if (bidirectional) {
-      const auto [b_it, b_inserted] = adj_list_[v].emplace(u, 1 / weight);
-      if (!b_inserted && b_it->second != 1 / weight) {
+      const auto [b_it, b_inserted] = adj_list_[v].emplace(u, weight);
+      if (!b_inserted && b_it->second != weight) {
         adj_list_.at(v).erase(b_it);
-        adj_list_.at(v).emplace(u, 1 / weight);
+        adj_list_.at(v).emplace(u, weight);
         updated = true;
       }
     }
@@ -175,7 +175,7 @@ class Graph {
    */
   const W* GetEdgeWeight(const T& u, const T& v) const {
     if (auto it = adj_list_.find(u); it != adj_list_.cend()) {
-      if (auto it2 = adj_list_.at(u).find({v, W{}}); it2 != adj_list_.at(u).cend()) {
+      if (auto it2 = it->second.find({v, W{}}); it2 != adj_list_.at(u).cend()) {
         return &it2->second;
       }
     }
@@ -194,7 +194,7 @@ class Graph {
    * @param v to vertex
    * @param bidirectional whether to remove the edge from @p v to @p u too
    */
-  void RemoveEdge(const T& u, const T& v, bool bidirectional = true) {
+  void RemoveEdge(const T& u, const T& v, const bool bidirectional = true) {
     adj_list_[u].erase({v, W{}});
     if (bidirectional) adj_list_[v].erase({u, W{}});
   }
