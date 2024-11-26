@@ -73,15 +73,14 @@ string Environment::to_string() const {
 }
 
 const Environment::mapped_type &Environment::at(const Environment::key_type &key) const {
-  const auto &value = map_.at(key);
   if (key.is_dummy()) throw runtime_error("Environment::at is called with a dummy variable.");
-  return value;
+  return map_.at(key);
 }
 
 std::size_t Environment::erase(const Environment::key_type &key) { return map_.erase(key); }
 void Environment::erase(const Environment::iterator &pos) { map_.erase(pos); }
 
-bool Environment::contains(const key_type &key) const { return map_.find(key) != map_.end(); }
+bool Environment::contains(const key_type &key) const { return map_.contains(key); }
 
 Environment::mapped_type &Environment::operator[](const key_type &key) {
   if (key.is_dummy()) {
@@ -98,7 +97,7 @@ const Environment::mapped_type &Environment::operator[](const key_type &key) con
     oss << "Environment::operator[] is called with a dummy variable.";
     throw runtime_error(oss.str());
   }
-  if (!map_.count(key)) {
+  if (!map_.contains(key)) {
     ostringstream oss;
     oss << "Environment::operator[] was called on a const Environment " << "with a missing key \"" << key << "\".";
     throw runtime_error(oss.str());
