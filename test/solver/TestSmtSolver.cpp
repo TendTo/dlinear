@@ -20,20 +20,20 @@ using std::unique_ptr;
 
 class TestSmtSolver : public ::testing::TestWithParam<Config::LPSolver> {
  protected:
-  Config config_;
+  Config config_{std::string{"test.smt2"}};
   const Variable x_{"x"}, y_{"y"}, z_{"z"};
   const Variable a_{"a", Variable::Type::BOOLEAN}, b_{"b", Variable::Type::BOOLEAN}, c_{"c", Variable::Type::BOOLEAN};
-  explicit TestSmtSolver() : config_{} {
-    config_.m_filename() = "test.smt2";
-    config_.m_format() = Config::Format::AUTO;
+  explicit TestSmtSolver() {
+    config_.m_lp_solver() = GetParam();
+    config_.SetPreprocessStep(Config::ExecutionStep::NEVER);
+    config_.SetPropagationStep(Config::ExecutionStep::NEVER);
   }
-  void SetUp() override { config_.m_lp_solver() = GetParam(); }
 };
 
 INSTANTIATE_TEST_SUITE_P(TestSmtSolver, TestSmtSolver, enabled_test_solvers);
 
 TEST_P(TestSmtSolver, CheckSatWrongFilename) {
-  SmtSolver s{"test.err"};
+  SmtSolver s{"non_present.smt2"};
   EXPECT_THROW(s.Parse(), std::runtime_error);
 }
 

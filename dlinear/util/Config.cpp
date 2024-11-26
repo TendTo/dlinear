@@ -13,7 +13,8 @@
 
 namespace dlinear {
 Config::Config(std::string filename) : filename_{std::move(filename)} {}
-Config::Config(bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
+Config::Config(const bool read_from_stdin) : read_from_stdin_{read_from_stdin} {}
+Config::Config(const Format format) : format_{format} {}
 
 std::string Config::filename_extension() const { return GetExtension(filename_.get()); }
 
@@ -53,9 +54,8 @@ Config::ExecutionStep Config::actual_simple_bound_propagation_step() const {
         case Format::SMT2:
           return ExecutionStep::ALWAYS;
         case Format::MPS:
-          return ExecutionStep::NEVER;
         case Format::VNNLIB:
-          return ExecutionStep::ALWAYS;
+          return ExecutionStep::NEVER;
         default:
           DLINEAR_UNREACHABLE();
       }
@@ -94,6 +94,12 @@ Config::ExecutionStep Config::actual_eq_binomial_bound_preprocess_step() const {
     default:
       return eq_binomial_bound_preprocess_step_.get();
   }
+}
+
+void Config::SetPropagationStep(const ExecutionStep step) { simple_bound_propagation_step_ = step; }
+void Config::SetPreprocessStep(const ExecutionStep step) {
+  eq_binomial_bound_preprocess_step_ = step;
+  bound_preprocess_step_ = step;
 }
 
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {

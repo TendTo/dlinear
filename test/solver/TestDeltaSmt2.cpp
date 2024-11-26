@@ -29,8 +29,6 @@ class TestDeltaSmt2 : public ::testing::TestWithParam<std::tuple<Config::LPSolve
     config_.m_format() = Config::Format::SMT2;
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
-    config_.m_bound_preprocess_step() = Config::ExecutionStep::NEVER;
-    config_.m_simple_bound_propagation_step() = Config::ExecutionStep::NEVER;
     std::cout << "Testing " << filename << std::endl;
   }
 };

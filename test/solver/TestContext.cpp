@@ -19,7 +19,7 @@ class TestContext : public ::testing::TestWithParam<Config::LPSolver> {
  protected:
   const Variable x_{"x"};
   const Variable y_{"Y"};
-  Config config_;
+  Config config_{Config::Format::SMT2};
   Context context_;
   explicit TestContext() : context_{config_} {
     config_.m_lp_solver() = GetParam();

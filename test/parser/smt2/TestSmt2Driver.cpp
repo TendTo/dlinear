@@ -19,13 +19,14 @@ using dlinear::smt2::Term;
 
 class TestSmt2Driver : public ::testing::Test {
  protected:
-  TestSmt2Driver() { config_.m_format() = Config::Format::SMT2; }
-  Config config_;
+  Config config_{Config::Format::SMT2};
   Context context_{config_};
+  Smt2Driver driver_{context_};
 };
 
 TEST_F(TestSmt2Driver, ValidSetLogic) {
   Smt2Driver driver{context_};
+  Smt2Driver driver2{driver};
   EXPECT_TRUE(driver.ParseString("(set-logic QF_LRA)"));
 }
 

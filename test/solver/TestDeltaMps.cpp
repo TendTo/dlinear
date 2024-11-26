@@ -31,8 +31,6 @@ class TestDeltaMps : public ::testing::TestWithParam<std::tuple<Config::LPSolver
     config_.m_filename() = filename;
     config_.m_lp_solver() = lp_solver;
     config_.m_verify() = true;
-    config_.m_bound_preprocess_step() = Config::ExecutionStep::NEVER;
-    config_.m_simple_bound_propagation_step() = Config::ExecutionStep::NEVER;
     std::cout << "Testing " << filename << std::endl;
   }
 };

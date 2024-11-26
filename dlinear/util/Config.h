@@ -89,6 +89,11 @@ class Config {
    * @param read_from_stdin whether to read the input from the standard input
    */
   explicit Config(bool read_from_stdin);
+  /**
+   * Construct a new Config object and immediately set the format.
+   * @param format whether to read the input from the standard input
+   */
+  explicit Config(Format format);
 
  public:
   static constexpr std::string_view help_onnx_file{"ONNX file name"};
@@ -137,6 +142,17 @@ class Config {
     it will return the appropriate running frequency based on the actual format}
   */
   [[nodiscard]] ExecutionStep actual_eq_binomial_bound_preprocess_step() const;
+
+  /**
+   * Set the step at which the simple bound propagation will run.
+   * @param step step at which the simple bound propagation will run
+   */
+  void SetPropagationStep(ExecutionStep step);
+  /**
+   * Set the step at which all the preprocessors will run.
+   * @param step step at which all the preprocessors will run
+   */
+  void SetPreprocessStep(ExecutionStep step);
 
  private:
   OptionValue<std::string> filename_{""};

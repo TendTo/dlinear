@@ -16,8 +16,7 @@ using dlinear::mps::MpsDriver;
 
 class TestMpsDriver : public ::testing::Test {
  protected:
-  TestMpsDriver() { config_.m_format() = Config::Format::MPS; }
-  Config config_;
+  Config config_{Config::Format::MPS};
   Context context_{config_};
 };
 
