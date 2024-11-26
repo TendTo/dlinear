@@ -1,7 +1,8 @@
-//
-// Created by c3054737 on 13/11/24.
-//
-
+/**
+ * @author dlinear (https://github.com/TendTo/dlinear)
+ * @copyright 2024 dlinear
+ * @licence Apache-2.0 license
+ */
 #include "SimpleBoundPropagator.h"
 
 #include <ranges>
@@ -128,7 +129,7 @@ void SimpleBoundPropagator::PropagateAssertions(const AssertCallback& assert_cb)
           assert_cb(iff(last_eq_constraint->variable, bool_var));
         } else {
           assert_cb(!last_eq_constraint->variable || !bool_var);
-          DLINEAR_DEV_TRACE_FMT("SimpleBoundPropagator::PropagateAssertions: {} || {}",
+          DLINEAR_DEV_TRACE_FMT("SimpleBoundPropagator::PropagateAssertions: {} <!=!> {}",
                                 pa[last_eq_constraint->variable], pa[bool_var]);
         }
       }

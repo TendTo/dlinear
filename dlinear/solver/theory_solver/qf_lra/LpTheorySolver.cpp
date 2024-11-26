@@ -23,11 +23,11 @@ LpTheorySolver::LpTheorySolver(const PredicateAbstractor &predicate_abstractor, 
   auto var_bounds{std::make_shared<BoundVectorMap>()};
 
   // Propagators
-  if (config_.simple_bound_propagation_step() != Config::ExecutionStep::NEVER)
+  if (config_.actual_simple_bound_propagation_step() != Config::ExecutionStep::NEVER)
     AddPropagator(std::make_unique<SimpleBoundPropagator>(*this));
 
   // Preprocessors
-  if (config_.eq_binomial_bound_preprocess_step() != Config::ExecutionStep::NEVER)
+  if (config_.actual_eq_binomial_bound_preprocess_step() != Config::ExecutionStep::NEVER)
     AddPreprocessor(std::make_unique<EqBinomialBoundPreprocessor>(*this, var_bounds, env, class_name));
 }
 
@@ -89,6 +89,7 @@ void LpTheorySolver::CreateCheckpoint() {
 }
 
 void LpTheorySolver::Backtrack() {
+  TheorySolver::Backtrack();
   // Disable all rows
   lp_solver_->Backtrack();
   rows_state_ = rows_state_checkpoint_;
