@@ -44,7 +44,7 @@ bool TheorySolver::PreprocessFixedLiterals(const Iterable &fixed_literals, const
   DLINEAR_TRACE_FMT("TheorySolver::PreprocessFixedLiterals({})", fixed_literals);
   DLINEAR_ASSERT(is_consolidated_, "Fixed literals can be preprocessed only after consolidation");
 
-  // No need to preprocess if there is no preprocessor
+  // Enable all the fixed literals
   for (const Literal &lit : fixed_literals) {
     if (!EnableLiteral(lit, conflict_cb)) return false;
   }
@@ -86,6 +86,7 @@ TheoryResult TheorySolver::CheckSat(mpq_class *actual_precision, const ConflictC
   }
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();
+  DLINEAR_DEV("TheorySolver::CheckSatCore");
   return CheckSatCore(actual_precision, conflict_cb);
 }
 
@@ -102,7 +103,7 @@ void TheorySolver::Backtrack() {
   DLINEAR_TRACE("OldTestLpSolver::Backtrack()");
   DLINEAR_ASSERT(is_consolidated_, "The solver  must be consolidate before resetting it");
   // Backtrack all the constraints added with the last iteration, keeping the fixed ones
-  // preprocessor_->Backtrack();
+  for (const std::unique_ptr<TheoryPreprocessor> &preprocessor : preprocessors_) preprocessor->Backtrack();
 }
 
 template bool TheorySolver::PreprocessFixedLiterals(const std::vector<Literal> &, const ConflictCallback &);
