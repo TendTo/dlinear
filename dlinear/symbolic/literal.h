@@ -51,6 +51,13 @@ std::ostream &operator<<(std::ostream &os, const std::vector<Literal> &variables
 
 }  // namespace dlinear
 
+template <>
+struct std::hash<dlinear::Literal> {
+  std::size_t operator()(const dlinear::Literal &l) const noexcept {
+    return l.truth ? std::hash<dlinear::Variable>{}(l.var) : ~std::hash<dlinear::Variable>{}(l.var);
+  }
+};
+
 #ifdef DLINEAR_INCLUDE_FMT
 
 #include "dlinear/util/logging.h"
