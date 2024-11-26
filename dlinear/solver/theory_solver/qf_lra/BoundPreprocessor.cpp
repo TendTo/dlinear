@@ -160,7 +160,7 @@ BoundPreprocessor::Explanations BoundPreprocessor::Process(const LiteralSet& ena
   return explanations;
 }
 void BoundPreprocessor::Process(const LiteralSet& enabled_literals, Explanations& explanations) {
-  DLINEAR_ASSERT(config_.actual_bound_checking_frequency() != Config::RunningFrequency::NEVER,
+  DLINEAR_ASSERT(config_.actual_bound_preprocess_step() != Config::ExecutionStep::NEVER,
                  "Method Process should not be called with a frequency of NEVER");
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
   stats_.Increase();

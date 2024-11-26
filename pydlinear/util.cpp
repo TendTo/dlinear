@@ -47,18 +47,12 @@ void init_util(py::module_ &m) {
       .value("PICOSAT", Config::SatSolver::PICOSAT)
       .value("CADICAL", Config::SatSolver::CADICAL);
 
-  py::enum_<Config::RunningFrequency>(m, "RunningFrequency")
-      .value("AUTO", Config::RunningFrequency::AUTO)
-      .value("NEVER", Config::RunningFrequency::NEVER)
-      .value("ON_FIXED", Config::RunningFrequency::ON_FIXED)
-      .value("ON_ITERATION", Config::RunningFrequency::ON_ITERATION)
-      .value("ALWAYS", Config::RunningFrequency::ALWAYS);
-
-  py::enum_<Config::BoundPropagationType>(m, "BoundPropagationType")
-      .value("AUTO", Config::BoundPropagationType::AUTO)
-      .value("EQ_BINOMIAL", Config::BoundPropagationType::EQ_BINOMIAL)
-      .value("EQ_POLYNOMIAL", Config::BoundPropagationType::EQ_POLYNOMIAL)
-      .value("BOUND_POLYNOMIAL", Config::BoundPropagationType::BOUND_POLYNOMIAL);
+  py::enum_<Config::ExecutionStep>(m, "ExecutionStep")
+      .value("AUTO", Config::ExecutionStep::AUTO)
+      .value("NEVER", Config::ExecutionStep::NEVER)
+      .value("ON_FIXED", Config::ExecutionStep::ON_FIXED)
+      .value("ON_ITERATION", Config::ExecutionStep::ON_ITERATION)
+      .value("ALWAYS", Config::ExecutionStep::ALWAYS);
 
   py::enum_<Config::LPMode>(m, "LPMode")
       .value("AUTO", Config::LPMode::AUTO)
@@ -79,17 +73,14 @@ void init_util(py::module_ &m) {
                     delete[] argv;
                     return argparser.ToConfig();
                   })
-      .def_property("bound_implication_frequency", &Config::bound_implication_frequency,
-                    [](Config &self, const Config::RunningFrequency &frequency) {
-                      self.m_simple_bound_propagation_frequency() = frequency;
-                    })
-      .def_property("bound_propagation_frequency", &Config::bound_propagation_frequency,
-                    [](Config &self, const Config::RunningFrequency &frequency) {
-                      self.m_bound_checking_frequency() = frequency;
-                    })
       .def_property(
-          "bound_propagation_type", &Config::bound_propagation_type,
-          [](Config &self, const Config::BoundPropagationType &type) { self.m_bound_propagation_type() = type; })
+          "simple_bound_propagation_step", &Config::simple_bound_propagation_step,
+          [](Config &self, const Config::ExecutionStep &step) { self.m_simple_bound_propagation_step() = step; })
+      .def_property("bound_preprocess_step", &Config::m_bound_preprocess_step,
+                    [](Config &self, const Config::ExecutionStep &step) { self.m_bound_preprocess_step() = step; })
+      .def_property(
+          "eq_binomial_bound_preprocess_step", &Config::eq_binomial_bound_preprocess_step,
+          [](Config &self, const Config::ExecutionStep &step) { self.m_eq_binomial_bound_preprocess_step() = step; })
       .def_property("csv", &Config::csv, [](Config &self, bool value) { self.m_csv() = value; })
       .def_property("complete", &Config::complete, [](Config &self, bool value) { self.m_complete() = value; })
       .def_property("continuous_output", &Config::continuous_output,

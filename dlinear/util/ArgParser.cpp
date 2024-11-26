@@ -156,23 +156,23 @@ void ArgParser::AddOptions() {
                            if (value == "true" || value == "2") return Config::SatDefaultPhase::True;
                            if (value == "jeroslow-wang" || value == "3") return Config::SatDefaultPhase::JeroslowWang;
                            if (value == "random" || value == "4") return Config::SatDefaultPhase::RandomInitialPhase;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, simple_bound_propagation_frequency, "--simple-bound-propagation",
+  DLINEAR_PARSE_PARAM_ENUM(parser_, simple_bound_propagation_step, "--simple-bound-propagation",
                            "[ auto | never | on-fixed | on-iteration | always ] or [ 1 | 2 | 3 | 4 | 5 ]",
-                           if (value == "auto" || value == "1") return Config::RunningFrequency::AUTO;
-                           if (value == "never" || value == "2") return Config::RunningFrequency::NEVER;
-                           if (value == "on-fixed" || value == "3") return Config::RunningFrequency::ON_FIXED;
-                           if (value == "on-iteration" || value == "4") return Config::RunningFrequency::ON_ITERATION;
-                           if (value == "always" || value == "5") return Config::RunningFrequency::ALWAYS;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_frequency, "--bound-preprocess",
+                           if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
+                           if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
+                           if (value == "on-fixed" || value == "3") return Config::ExecutionStep::ON_FIXED;
+                           if (value == "on-iteration" || value == "4") return Config::ExecutionStep::ON_ITERATION;
+                           if (value == "always" || value == "5") return Config::ExecutionStep::ALWAYS;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--bound-preprocess",
                            "[ auto | never | always ] or [ 1 | 2 | 3 ]",
-                           if (value == "auto" || value == "1") return Config::RunningFrequency::AUTO;
-                           if (value == "never" || value == "2") return Config::RunningFrequency::NEVER;
-                           if (value == "always" || value == "3") return Config::RunningFrequency::ALWAYS;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_frequency, "--eq-binomial-bound-preprocess",
+                           if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
+                           if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
+                           if (value == "always" || value == "3") return Config::ExecutionStep::ALWAYS;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--eq-binomial-bound-preprocess",
                            "[ auto | never | always ] or [ 1 | 2 | 3 ]",
-                           if (value == "auto" || value == "1") return Config::RunningFrequency::AUTO;
-                           if (value == "never" || value == "2") return Config::RunningFrequency::NEVER;
-                           if (value == "always" || value == "3") return Config::RunningFrequency::ALWAYS;);
+                           if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
+                           if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
+                           if (value == "always" || value == "3") return Config::ExecutionStep::ALWAYS;);
 
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
@@ -188,15 +188,15 @@ Config ArgParser::ToConfig() const {
     config.m_complete().SetFromCommandLine(parser_.get<bool>("complete"));
     config.m_precision().SetFromCommandLine(0.0);
   }
-  DLINEAR_PARAM_TO_CONFIG("simple-bound-propagation", simple_bound_propagation_frequency, Config::RunningFrequency);
-  DLINEAR_PARAM_TO_CONFIG("bound-preprocess", bound_preprocess_frequency, Config::RunningFrequency);
+  DLINEAR_PARAM_TO_CONFIG("simple-bound-propagation", simple_bound_propagation_step, Config::ExecutionStep);
+  DLINEAR_PARAM_TO_CONFIG("bound-preprocess", bound_preprocess_step, Config::ExecutionStep);
   DLINEAR_PARAM_TO_CONFIG("csv", csv, bool);
   DLINEAR_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
   DLINEAR_PARAM_TO_CONFIG("disable-expansion", disable_expansion, bool);
   DLINEAR_PARAM_TO_CONFIG("enforce-check-sat", enforce_check_sat, bool);
-  DLINEAR_PARAM_TO_CONFIG("eq-binomial-bound-preprocess", eq_binomial_bound_preprocess_frequency, Config::RunningFrequency);
+  DLINEAR_PARAM_TO_CONFIG("eq-binomial-bound-preprocess", eq_binomial_bound_preprocess_step, Config::ExecutionStep);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);
   DLINEAR_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);

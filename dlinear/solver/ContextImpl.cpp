@@ -558,8 +558,8 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
               << config_.precision() << ","                           //
               << output_->actual_precision.get_d() << ","             //
               << config_.simplex_sat_phase() << ","                   //
-              << config_.simple_bound_propagation_frequency() << ","  //
-              << config_.bound_checking_frequency() << ","            //
+              << config_.simple_bound_propagation_step() << ","  //
+              << config_.bound_preprocess_step() << ","            //
               << config_.sat_default_phase() << ","                   //
               << config_.actual_lp_mode() << ","                      //
               << "s" << ","                                           //

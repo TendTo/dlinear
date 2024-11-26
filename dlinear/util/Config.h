@@ -68,13 +68,13 @@ class Config {
     PURE_ITERATIVE_REFINEMENT = 2,  ///< Use the iterative refinement mode, if available
     HYBRID = 3,                     ///< Use both modes, if available
   };
-  /** Frequency at which a subprocess will run */
-  enum class RunningFrequency {
-    AUTO,          ///< Automatically select the best configuration based on expected performance. Default option
-    NEVER,         ///< Never run this subprocess, effectively disabling it
-    ON_FIXED,      ///< Run this subprocess only once, on fixed literals, before all iterations
-    ON_ITERATION,  ///< Run this subprocess only at every iteration
-    ALWAYS         /// Run this subprocess at every chance it gets. Usually combines ON_FIXED and ON_ITERATION
+  /** Steps at which a subprocess will run */
+  enum class ExecutionStep : std::uint8_t {
+    AUTO = 0b10000000,   ///< Automatically select the best configuration based on expected performance. Default option
+    NEVER = 0b00000000,  ///< Never run this subprocess, effectively disabling it
+    ON_FIXED = 0b00000001,      ///< Run this subprocess only once, on fixed literals, before all iterations
+    ON_ITERATION = 0b10000010,  ///< Run this subprocess only at every iteration
+    ALWAYS = 0b11111111,  /// Run this subprocess at every chance it gets. Usually combines ON_FIXED and ON_ITERATION
   };
 
   /** @constructor{Config} */
@@ -120,32 +120,32 @@ class Config {
    */
   [[nodiscard]] Format actual_format() const;
   /**
-   * @getter{actual `simple_bound_propagation_frequency` parameter, configuration,
-     If the bound_propagation_frequency is RunningFrequency::AUTO\,
+   * @getter{actual `simple_bound_propagation_step` parameter, configuration,
+     If the simple_bound_propagation_step is RunningFrequency::AUTO\,
      it will return the appropriate running frequency based on the actual format}
    */
-  [[nodiscard]] RunningFrequency actual_simple_bound_propagation_frequency() const;
+  [[nodiscard]] ExecutionStep actual_simple_bound_propagation_step() const;
   /**
-   * @getter{actual `bound_preprocess_frequency` parameter, configuration,
+   * @getter{actual `bound_preprocess_step` parameter, configuration,
      If the bound_implication_frequency is RunningFrequency::AUTO\,
      it will return the appropriate running frequency based on the actual format}
    */
-  [[nodiscard]] RunningFrequency actual_bound_preprocess_frequency() const;
+  [[nodiscard]] ExecutionStep actual_bound_preprocess_step() const;
   /**
-  * @getter{actual `eq_binomial_bound_preprocess_frequency` parameter, configuration,
-    If the eq_binomial_bound_preprocess_frequency is RunningFrequency::AUTO\,
+  * @getter{actual `eq_binomial_bound_preprocess_step` parameter, configuration,
+    If the eq_binomial_bound_preprocess_step is RunningFrequency::AUTO\,
     it will return the appropriate running frequency based on the actual format}
   */
-  [[nodiscard]] RunningFrequency actual_eq_binomial_bound_preprocess_frequency() const;
+  [[nodiscard]] ExecutionStep actual_eq_binomial_bound_preprocess_step() const;
 
  private:
   OptionValue<std::string> filename_{""};
   OptionValue<std::string> onnx_file_{""};
 
-  DLINEAR_PARAMETER(simple_bound_propagation_frequency, RunningFrequency, RunningFrequency::AUTO,
+  DLINEAR_PARAMETER(simple_bound_propagation_step, ExecutionStep, ExecutionStep::AUTO,
                     "How often to run the simple bound propagation preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
-  DLINEAR_PARAMETER(bound_preprocess_frequency, RunningFrequency, RunningFrequency::AUTO,
+  DLINEAR_PARAMETER(bound_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
                     "How often to run the bound checking preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), always (3)")
   DLINEAR_PARAMETER(complete, bool, false,
@@ -162,7 +162,7 @@ class Config {
   DLINEAR_PARAMETER(
       enforce_check_sat, bool, false,
       "Perform a satisfiability check at the end of parsing if the input does not contain a (check-sat) directive")
-  DLINEAR_PARAMETER(eq_binomial_bound_preprocess_frequency, RunningFrequency, RunningFrequency::AUTO,
+  DLINEAR_PARAMETER(eq_binomial_bound_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
                     "How often to run the eq binomial bound checking preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
@@ -211,7 +211,7 @@ std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);
 std::ostream &operator<<(std::ostream &os, const Config::SatSolver &mode);
 std::ostream &operator<<(std::ostream &os, const Config::Format &format);
 std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode);
-std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequency);
+std::ostream &operator<<(std::ostream &os, const Config::ExecutionStep &frequency);
 
 }  // namespace dlinear
 
@@ -224,6 +224,6 @@ OSTREAM_FORMATTER(dlinear::Config::LPSolver);
 OSTREAM_FORMATTER(dlinear::Config::SatSolver);
 OSTREAM_FORMATTER(dlinear::Config::Format);
 OSTREAM_FORMATTER(dlinear::Config::LPMode);
-OSTREAM_FORMATTER(dlinear::Config::RunningFrequency);
+OSTREAM_FORMATTER(dlinear::Config::ExecutionStep);
 
 #endif

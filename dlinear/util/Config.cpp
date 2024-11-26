@@ -46,53 +46,53 @@ Config::Format Config::actual_format() const {
   }
 }
 
-Config::RunningFrequency Config::actual_simple_bound_propagation_frequency() const {
-  switch (simple_bound_propagation_frequency_.get()) {
-    case RunningFrequency::AUTO:
+Config::ExecutionStep Config::actual_simple_bound_propagation_step() const {
+  switch (simple_bound_propagation_step_.get()) {
+    case ExecutionStep::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return RunningFrequency::ALWAYS;
+          return ExecutionStep::ALWAYS;
         case Format::MPS:
-          return RunningFrequency::NEVER;
+          return ExecutionStep::NEVER;
         case Format::VNNLIB:
-          return RunningFrequency::ALWAYS;
+          return ExecutionStep::ALWAYS;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return simple_bound_propagation_frequency_.get();
+      return simple_bound_propagation_step_.get();
   }
 }
-Config::RunningFrequency Config::actual_bound_preprocess_frequency() const {
-  switch (bound_preprocess_frequency_.get()) {
-    case RunningFrequency::AUTO:
+Config::ExecutionStep Config::actual_bound_preprocess_step() const {
+  switch (bound_preprocess_step_.get()) {
+    case ExecutionStep::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return RunningFrequency::ALWAYS;
+          return ExecutionStep::ALWAYS;
         case Format::MPS:
         case Format::VNNLIB:
-          return RunningFrequency::NEVER;
+          return ExecutionStep::NEVER;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return bound_preprocess_frequency_.get();
+      return bound_preprocess_step_.get();
   }
 }
-Config::RunningFrequency Config::actual_eq_binomial_bound_preprocess_frequency() const {
-  switch (eq_binomial_bound_preprocess_frequency_.get()) {
-    case RunningFrequency::AUTO:
+Config::ExecutionStep Config::actual_eq_binomial_bound_preprocess_step() const {
+  switch (eq_binomial_bound_preprocess_step_.get()) {
+    case ExecutionStep::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return RunningFrequency::ALWAYS;
+          return ExecutionStep::ALWAYS;
         case Format::MPS:
         case Format::VNNLIB:
-          return RunningFrequency::NEVER;
+          return ExecutionStep::NEVER;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return eq_binomial_bound_preprocess_frequency_.get();
+      return eq_binomial_bound_preprocess_step_.get();
   }
 }
 
@@ -163,17 +163,17 @@ std::ostream &operator<<(std::ostream &os, const Config::LPMode &mode) {
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequency) {
+std::ostream &operator<<(std::ostream &os, const Config::ExecutionStep &frequency) {
   switch (frequency) {
-    case Config::RunningFrequency::AUTO:
+    case Config::ExecutionStep::AUTO:
       return os << "auto";
-    case Config::RunningFrequency::NEVER:
+    case Config::ExecutionStep::NEVER:
       return os << "never";
-    case Config::RunningFrequency::ON_FIXED:
+    case Config::ExecutionStep::ON_FIXED:
       return os << "on-fixed";
-    case Config::RunningFrequency::ON_ITERATION:
+    case Config::ExecutionStep::ON_ITERATION:
       return os << "on-iteration";
-    case Config::RunningFrequency::ALWAYS:
+    case Config::ExecutionStep::ALWAYS:
       return os << "always";
     default:
       DLINEAR_UNREACHABLE();
@@ -182,8 +182,8 @@ std::ostream &operator<<(std::ostream &os, const Config::RunningFrequency &frequ
 
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
-            << "simple_bound_propagation_frequency = " << config.simple_bound_propagation_frequency() << ",\n"
-            << "bound_preprocess_frequency = " << config.bound_preprocess_frequency() << ",\n"
+            << "simple_bound_propagation_step = " << config.simple_bound_propagation_step() << ",\n"
+            << "bound_preprocess_step = " << config.bound_preprocess_step() << ",\n"
             << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
@@ -191,7 +191,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "debug_scanning = " << config.debug_scanning() << ",\n"
             << "disable_expansion = " << config.disable_expansion() << ",\n"
             << "enforce_check_sat = " << config.enforce_check_sat() << ",\n"
-            << "eq_binomial_bound_preprocess_frequency = " << config.eq_binomial_bound_preprocess_frequency() << ",\n"
+            << "eq_binomial_bound_preprocess_step = " << config.eq_binomial_bound_preprocess_step() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"
             << "lp_mode = '" << config.lp_mode() << "',\n"

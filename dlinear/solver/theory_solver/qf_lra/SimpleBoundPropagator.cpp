@@ -44,7 +44,7 @@ void SimpleBoundPropagator::AddAssertion<1>(const Formula& assertion) {
 }
 
 void SimpleBoundPropagator::Propagate(const AssertCallback& assert_cb) {
-  DLINEAR_ASSERT(theory_solver_.config().actual_simple_bound_propagation_frequency() != Config::RunningFrequency::NEVER,
+  DLINEAR_ASSERT(theory_solver_.config().actual_simple_bound_propagation_step() != Config::ExecutionStep::NEVER,
                  "Method Propagate should not be called with a frequency of NEVER");
   for (const auto& [var, assertion] : theory_solver_.predicate_abstractor().var_to_formula_map()) {
     if (!is_relational(assertion)) {
