@@ -6,6 +6,7 @@
 #include "TheoryPreprocessor.h"
 
 #include "dlinear/solver/theory_solver/TheorySolver.h"
+#include "dlinear/util/error.h"
 
 namespace dlinear {
 TheoryPreprocessor::TheoryPreprocessor(const TheorySolver &theory_solver, const std::string &class_name)
@@ -17,6 +18,7 @@ template <SizedTypedIterable<Literal> Iterable>
 void TheoryPreprocessor::AddLiterals(const Iterable &literals) {
   for (const Literal &lit : literals) AddLiteral(lit);
 }
+bool TheoryPreprocessor::WillRunOnStep(const Config::ExecutionStep step) const { return run_on_step() & step; }
 void TheoryPreprocessor::AddLiteral(const Literal &) {}
 void TheoryPreprocessor::AddVariable(const Variable &) {}
 
@@ -32,6 +34,14 @@ bool TheoryPreprocessor::EnableLiterals(const Iterable &theory_literals, const C
 bool TheoryPreprocessor::EnableLiteral(const Literal &lit, const ConflictCallback &) {
   enabled_literals_.insert(lit);
   return true;
+}
+bool TheoryPreprocessor::Process(const Config::ExecutionStep current_step, const ConflictCallback &conflict_cb) {
+  DLINEAR_ASSERT(run_on_step() != Config::ExecutionStep::NEVER, "Process should not be called if set to NEVER");
+  // In case the preprocessor is not supposed to run at this step, simply return true
+  if (!WillRunOnStep(current_step)) return true;
+  TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
+  stats_.Increase();
+  return ProcessCore(conflict_cb);
 }
 
 template void TheoryPreprocessor::AddLiterals(const std::vector<Literal> &);

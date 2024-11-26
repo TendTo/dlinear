@@ -102,7 +102,7 @@ TYPED_TEST(TestGraph, AddEdgeWeighted) {
   EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
   EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
-  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 2.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 2.0f);
 }
 
 TYPED_TEST(TestGraph, AddEdgeTwiceWeighted) {
@@ -115,7 +115,7 @@ TYPED_TEST(TestGraph, AddEdgeTwiceWeighted) {
   EXPECT_EQ(this->empty_graph_.adj_list().at(vertex).size(), 1u);
   EXPECT_EQ(this->empty_graph_.adj_list().at(other_vertex).size(), 1u);
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 4.0f);
-  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 4.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 4.0f);
 }
 
 TYPED_TEST(TestGraph, AddEdgeDirectedWeighted) {
@@ -135,7 +135,7 @@ TYPED_TEST(TestGraph, GetEdgeWeightPresent) {
   const TypeParam vertex = 0, other_vertex = 1;
   EXPECT_FALSE(this->empty_graph_.AddEdge(vertex, other_vertex, 2.0f));
   EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(vertex, other_vertex), 2.0f);
-  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 1.0f / 2.0f);
+  EXPECT_EQ(*this->empty_graph_.GetEdgeWeight(other_vertex, vertex), 2.0f);
 }
 
 TYPED_TEST(TestGraph, GetEdgeWeightAbsent) {

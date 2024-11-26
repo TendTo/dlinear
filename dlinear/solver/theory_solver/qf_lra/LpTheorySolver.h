@@ -53,7 +53,7 @@ class LpTheorySolver : public QfLraTheorySolver {
   void UpdateModelSolution() override;
   /**
    * Notify the SAT solver that the current LP problem is infeasible by calling @p conflict_cb with the explanation.
-   * @param conflict_cb conflict callback to be called with the explanation
+   * @param conflict_cb conflict callback to call with the explanation
    */
   void NotifyInfeasible(const ConflictCallback& conflict_cb) const;
 

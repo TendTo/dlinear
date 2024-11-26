@@ -205,6 +205,10 @@ class Config {
   DLINEAR_PARAMETER(with_timings, bool, false, "Report timings alongside results")
 };
 
+inline std::uint8_t operator&(Config::ExecutionStep lhs, Config::ExecutionStep rhs) {
+  return static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs);
+}
+
 std::ostream &operator<<(std::ostream &os, const Config &config);
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase);
 std::ostream &operator<<(std::ostream &os, const Config::LPSolver &lp_solver);

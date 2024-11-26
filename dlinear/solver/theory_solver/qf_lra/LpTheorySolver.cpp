@@ -10,6 +10,7 @@
 #include <map>
 #include <utility>
 
+#include "dlinear/solver/theory_solver/qf_lra/EqBinomialBoundPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/SimpleBoundPropagator.h"
 #include "dlinear/util/error.h"
 #include "dlinear/util/logging.h"
@@ -18,8 +19,16 @@ namespace dlinear {
 
 LpTheorySolver::LpTheorySolver(const PredicateAbstractor &predicate_abstractor, const std::string &class_name)
     : QfLraTheorySolver{predicate_abstractor, class_name}, lp_solver_{LpSolver::GetInstance(config_)} {
-  if (config_.simple_bound_propagation_frequency() != Config::RunningFrequency::NEVER)
+  auto env{std::make_shared<Environment>()};
+  auto var_bounds{std::make_shared<BoundVectorMap>()};
+
+  // Propagators
+  if (config_.simple_bound_propagation_step() != Config::ExecutionStep::NEVER)
     AddPropagator(std::make_unique<SimpleBoundPropagator>(*this));
+
+  // Preprocessors
+  if (config_.eq_binomial_bound_preprocess_step() != Config::ExecutionStep::NEVER)
+    AddPreprocessor(std::make_unique<EqBinomialBoundPreprocessor>(*this, var_bounds, env, class_name));
 }
 
 void LpTheorySolver::AddLiterals() {

@@ -104,7 +104,7 @@ class TheorySolver {
    * @pre the literals must have been added to the theory solver with @ref AddLiteral
    * @tparam Iterable generic iterable containing literals (i.e. std::vector, std::set, std::span)
    * @param fixed_literals set of fixed literals
-   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
+   * @param conflict_cb callback to call when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
@@ -124,7 +124,7 @@ class TheorySolver {
    * @pre the literal must have been added to the theory solver with @ref AddLiteral
    * @tparam Iterable generic iterable containing literals (i.e. std::vector, std::set, std::span)
    * @param theory_literals vector of literals to be enabled
-   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
+   * @param conflict_cb callback to call when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
@@ -138,7 +138,7 @@ class TheorySolver {
    * If that is the case, an explanation is produced and used to invoke the @p conflict_cb .
    * @pre the literal must have been added to the theory solver with @ref AddLiteral
    * @param lit new literal to be enabled
-   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
+   * @param conflict_cb callback to call when a conflict is detected. It will receive the explanation
    * @return true if no conflicts are detected at this step
    * @return false if a conflict is detected at this step
    */
@@ -167,7 +167,7 @@ class TheorySolver {
    * Otherwise, UNSAT will be returned and the explanation produced is used to invoke the @p conflict_cb .
    * In that case, the precision will remain the same as the one passed as input.
    * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
-   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
+   * @param conflict_cb callback to call when a conflict is detected. It will receive the explanation
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
@@ -183,7 +183,7 @@ class TheorySolver {
    * Otherwise, UNSAT will be returned and the explanation produced is used to invoke the @p conflict_cb .
    * In that case, the precision will remain the same as the one passed as input.
    * @param[in,out] actual_precision desired precision. It will be updated with the actual precision if SAT is returned
-   * @param conflict_cb callback to be called when a conflict is detected. It will receive the explanation
+   * @param conflict_cb callback to call when a conflict is detected. It will receive the explanation
    * @return SAT if the problem is feasible, along with the actual precision required to obtain that result and the
    * model
    * @return UNSAT if the problem is infeasible, along with an explanation of the conflict
@@ -218,7 +218,7 @@ class TheorySolver {
    * Use some cheap heuristics to propagate some theory constraints to the SAT solver by calling @p assert_db.
    *
    * This will introduce new literals helping the SAT solver avoid trivial conflicts.
-   * @param assert_cb callback to be called when a new literal is introduced
+   * @param assert_cb callback to call when a new literal is introduced
    */
   virtual void Propagate(const AssertCallback &assert_cb);
 

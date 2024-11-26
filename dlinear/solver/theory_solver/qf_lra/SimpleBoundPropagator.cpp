@@ -13,6 +13,10 @@ namespace dlinear {
 SimpleBoundPropagator::SimpleBoundPropagator(const TheorySolver& theory_solver, const std::string& class_name)
     : TheoryPropagator{theory_solver, class_name} {}
 
+Config::ExecutionStep SimpleBoundPropagator::run_on_step() const {
+  return theory_solver().config().actual_simple_bound_propagation_step();
+}
+
 template <>
 void SimpleBoundPropagator::AddAssertion<1>(const Formula& assertion) {
   DLINEAR_ASSERT(assertion.GetFreeVariables().size() == 1u, "Assertion must have exactly one free variable");
@@ -43,9 +47,7 @@ void SimpleBoundPropagator::AddAssertion<1>(const Formula& assertion) {
   }
 }
 
-void SimpleBoundPropagator::Propagate(const AssertCallback& assert_cb) {
-  DLINEAR_ASSERT(theory_solver_.config().actual_simple_bound_propagation_step() != Config::ExecutionStep::NEVER,
-                 "Method Propagate should not be called with a frequency of NEVER");
+void SimpleBoundPropagator::PropagateCore(const AssertCallback& assert_cb) {
   for (const auto& [var, assertion] : theory_solver_.predicate_abstractor().var_to_formula_map()) {
     if (!is_relational(assertion)) {
       fmt::println("Assertion must be relational. Skipping.");

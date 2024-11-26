@@ -17,9 +17,11 @@ class SimpleBoundPropagator : public TheoryPropagator {
   explicit SimpleBoundPropagator(const TheorySolver& theory_solver,
                                  const std::string& class_name = "SimpleBoundPropagator");
 
-  void Propagate(const AssertCallback& assert_cb) override;
+  [[nodiscard]] Config::ExecutionStep run_on_step() const final;
 
  private:
+  void PropagateCore(const AssertCallback& assert_cb) final;
+
   /** Bound constraint. It is a tuple of value, row_sense and boolean variable */
   struct BoundConstraint {
     mpq_class value;       ///< Value of the constraint

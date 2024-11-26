@@ -51,7 +51,7 @@ bool TheorySolver::PreprocessFixedLiterals(const Iterable &fixed_literals, const
 
   for (const std::unique_ptr<TheoryPreprocessor> &preprocessor : preprocessors_) {
     DLINEAR_DEBUG_FMT("TheorySolver::PreprocessFixedLiterals: running {}", preprocessor->stats().class_name());
-    if (!preprocessor->ProcessFixed(conflict_cb)) return false;
+    if (!preprocessor->Process(Config::ExecutionStep::ON_FIXED, conflict_cb)) return false;
   }
 
   DLINEAR_DEBUG("TheorySolver::PreprocessFixedLiterals: creating checkpoint");
@@ -81,7 +81,7 @@ TheoryResult TheorySolver::CheckSat(mpq_class *actual_precision, const ConflictC
   DLINEAR_DEV("TheorySolver::CheckSat");
   for (const std::unique_ptr<TheoryPreprocessor> &preprocessor : preprocessors_) {
     DLINEAR_DEBUG_FMT("TheorySolver::CheckSat: running {}", preprocessor->stats().class_name());
-    const bool success = preprocessor->Process(conflict_cb);
+    const bool success = preprocessor->Process(Config::ExecutionStep::ON_ITERATION, conflict_cb);
     if (!success) return TheoryResult::UNSAT;
   }
   TimerGuard timer_guard(&stats_.m_timer(), stats_.enabled());
@@ -95,7 +95,7 @@ void TheorySolver::Propagate(const AssertCallback &assert_cb) {
   // Add some theory constraints to the SAT solver (e.g. (x > 0) => (x > -1))
   for (const std::unique_ptr<TheoryPropagator> &propagator : propagators_) {
     DLINEAR_DEBUG_FMT("TheorySolver::Propagate: running {}", propagator->stats().class_name());
-    propagator->Propagate(assert_cb);
+    propagator->Propagate(Config::ExecutionStep::ON_FIXED, assert_cb);
   }
 }
 void TheorySolver::Backtrack() {
