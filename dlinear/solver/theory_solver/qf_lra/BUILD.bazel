@@ -57,19 +57,18 @@ dlinear_cc_library(
     ],
     implementation_deps = [
         ":qf_lra_theory_solver",
+        "//dlinear/libs:gmp",
         "//dlinear/util:error",
     ],
     deps = [
         ":bound_vector",
-        ":lp_sense",
-        "//dlinear/libs:gmp",
         "//dlinear/solver/theory_solver",
-        "//dlinear/symbolic",
         "//dlinear/symbolic:environment",
         "//dlinear/symbolic:literal",
+        "//dlinear/symbolic:predicate_abstractor",
+        "//dlinear/util:config",
         "//dlinear/util:graph",
         "//dlinear/util:logging",
-        "//dlinear/util:sorted_vector",
     ],
 )
 
@@ -83,8 +82,6 @@ dlinear_cc_library(
         "//dlinear/libs:gmp",
         "//dlinear/solver/theory_solver",
         "//dlinear/symbolic",
-        "//dlinear/symbolic:literal",
-        "//dlinear/util:logging",
         "//dlinear/util:sorted_vector",
     ],
 )
@@ -194,9 +191,11 @@ dlinear_cc_library(
     name = "bound",
     srcs = ["Bound.cpp"],
     hdrs = ["Bound.h"],
+    implementation_deps = ["//dlinear/util:error"],
     deps = [
         ":lp_bound",
         "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
         "//dlinear/util:logging",
     ],

@@ -184,79 +184,6 @@ class BoundPreprocessor {
   [[nodiscard]] const IterationStats& stats() const { return stats_; }
 
   /**
-   * Check whether the formula is a simple relational bound.
-   *
-   * A simple relational bound is a formula in the form:
-   * @f[
-   * a \leq b \\
-   * a < b \\
-   * a \geq b \\
-   * a > b \\
-   * a = b \\
-   * a \neq b \\
-   * @f]
-   * Where @f$ a @f$ is a variable and @f$ b @f$ is a constant or vice versa.
-   * @param formula symbolic formula to check
-   * @return true if the formula is a simple relational bound
-   * @return false if the formula is not a simple relational bound
-   */
-  static bool IsSimpleBound(const Formula& formula);
-  /**
-   * Check whether the formula is a simple relational bound with an equality operator (@f$ a = b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsEqualTo(const Formula& formula, bool truth = true);
-  /**
-   * Check whether the formula is a simple relational bound with a non-equality operator (@f$ a \neq b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsNotEqualTo(const Formula& formula, bool truth = true);
-  /**
-   * Check whether the formula is a simple relational bound with a greater than operator (@f$ a > b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsGreaterThan(const Formula& formula, bool truth = true);
-  /**
-   * Check whether the formula is a simple relational bound with a less than operator (@f$ a < b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsLessThan(const Formula& formula, bool truth = true);
-  /**
-   * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \ge b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsGreaterThanOrEqualTo(const Formula& formula, bool truth = true);
-  /**
-   * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \le b @f$).
-   * @param formula symbolic formula to check
-   * @param truth whether to consider the formula as it is (true) or to invert it (false)
-   * @return true if the formula respects the condition
-   * @return false if the formula does not respect the condition
-   * @see IsSimpleBound for more information about simple relational bounds
-   */
-  static bool IsLessThanOrEqualTo(const Formula& formula, bool truth = true);
-
-  /**
    * Propagate the bounds of the variables in the given formula.
    *
    * It only works for formulas of the form @f$ \sum_{i = 1}^n a_i x_i = c @f$
@@ -297,7 +224,6 @@ class BoundPreprocessor {
                                  const std::vector<Bound>& assumptions, Explanations& explanations);
 
   Bound GetSimpleBound(const dlinear::Literal& lit) const;
-  static Bound GetSimpleBound(const Literal& lit, const Formula& formula);
 
  protected:
   const Variable* ShouldPropagateEqPolynomial(const Literal& lit) const;

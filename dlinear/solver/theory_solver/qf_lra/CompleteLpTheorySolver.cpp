@@ -70,10 +70,10 @@ bool CompleteLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCal
   const int row = lp_solver_->lit_to_row().at(var);
 
   // Go through the simple bounds to see if there is any trivially infeasible set of bounds
-  if (BoundPreprocessor::IsSimpleBound(formula)) {
+  if (IsSimpleBound(formula)) {
     DLINEAR_TRACE_FMT("CompleteLpTheorySolver::EnableLinearLiteral: enabling simple bound ({})", lit);
-    const bool added = vars_bounds_.at(*formula.GetFreeVariables().cbegin())
-                           .AddBound(BoundPreprocessor::GetSimpleBound(lit, formula), conflict_cb);
+    const bool added =
+        vars_bounds_.at(*formula.GetFreeVariables().cbegin()).AddBound(Bound::Parse(lit, formula), conflict_cb);
     if (!added) {
       DLINEAR_TRACE_FMT("CompleteLpTheorySolver::EnableLinearLiteral: failed to add simple bound ({})", lit);
       return false;

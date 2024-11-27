@@ -22,7 +22,7 @@ void DeltaLpTheorySolver::AddLiteral(const Variable& formula_var, const Formula&
 
   // Create the LP solver variables
   for (const Variable& var : formula.GetFreeVariables()) AddVariable(var);
-  if (BoundPreprocessor::IsSimpleBound(formula)) return;
+  if (IsSimpleBound(formula)) return;
 
   lp_solver_->AddRow(formula_var, formula, ~parseLpSense(formula));
 
@@ -47,8 +47,8 @@ bool DeltaLpTheorySolver::EnableLiteral(const Literal& lit, const ConflictCallba
   if (it == lp_solver_->lit_to_row().end()) {
     DLINEAR_TRACE_FMT("DeltaLpTheorySolver::EnableLinearLiteral: enabling simple bound ({})", lit);
     const Formula& formula = pa_[lit.var];
-    const bool added = vars_bounds_.at(*formula.GetFreeVariables().cbegin())
-                           .AddBound(BoundPreprocessor::GetSimpleBound(lit, formula), conflict_cb);
+    const bool added =
+        vars_bounds_.at(*formula.GetFreeVariables().cbegin()).AddBound(Bound::Parse(lit, formula), conflict_cb);
     if (!added) DLINEAR_TRACE_FMT("DeltaLpTheorySolver::EnableLinearLiteral: failed to add simple bound ({})", lit);
     return added;
   }

@@ -47,7 +47,7 @@ void NNSoplexTheorySolver::AddLiteral(const Variable &formula_var, const Formula
 
   const int spx_row{spx_rows_.num()};
 
-  const bool is_simple_bound = BoundPreprocessor::IsSimpleBound(formula);
+  const bool is_simple_bound = IsSimpleBound(formula);
   soplex::DSVectorRational coeffs{is_simple_bound ? soplex::DSVectorRational{} : ParseRowCoeff(formula)};
   if (is_simple_bound) spx_rhs_.emplace_back(0);
   spx_rows_.add(soplex::LPRowRational(-soplex::infinity, coeffs, soplex::infinity));

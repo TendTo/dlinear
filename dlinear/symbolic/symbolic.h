@@ -49,6 +49,79 @@ using drake::symbolic::VisitFormula;
 using AssertCallback = std::function<void(const Formula &)>;
 
 /**
+ * Check whether the formula is a simple relational bound.
+ *
+ * A simple relational bound is a formula in the form:
+ * @f[
+ * a \leq b \\
+ * a < b \\
+ * a \geq b \\
+ * a > b \\
+ * a = b \\
+ * a \neq b \\
+ * @f]
+ * Where @f$ a @f$ is a variable and @f$ b @f$ is a constant or vice versa.
+ * @param formula symbolic formula to check
+ * @return true if the formula is a simple relational bound
+ * @return false if the formula is not a simple relational bound
+ */
+bool IsSimpleBound(const Formula &formula);
+/**
+ * Check whether the formula is a simple relational bound with an equality operator (@f$ a = b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsEqualTo(const Formula &formula, bool truth = true);
+/**
+ * Check whether the formula is a simple relational bound with a non-equality operator (@f$ a \neq b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsNotEqualTo(const Formula &formula, bool truth = true);
+/**
+ * Check whether the formula is a simple relational bound with a greater than operator (@f$ a > b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsGreaterThan(const Formula &formula, bool truth = true);
+/**
+ * Check whether the formula is a simple relational bound with a less than operator (@f$ a < b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsLessThan(const Formula &formula, bool truth = true);
+/**
+ * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \ge b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsGreaterThanOrEqualTo(const Formula &formula, bool truth = true);
+/**
+ * Check whether the formula is a simple relational bound with a less than or equal to operator (@f$ a \le b @f$).
+ * @param formula symbolic formula to check
+ * @param truth whether to consider the formula as it is (true) or to invert it (false)
+ * @return true if the formula respects the condition
+ * @return false if the formula does not respect the condition
+ * @see IsSimpleBound for more information about simple relational bounds
+ */
+bool IsLessThanOrEqualTo(const Formula &formula, bool truth = true);
+
+/**
  * Change the kind of the formula by multiplying all the expressions by a negative number.
  *
  * In practice this inverts the inequality from @f$ < @f$ to @f$ > @f$ and @f$ \leq @f$ to @f$ \geq @f$ and vice versa.

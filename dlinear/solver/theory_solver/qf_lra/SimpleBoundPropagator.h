@@ -12,7 +12,6 @@
 #include "dlinear/solver/theory_solver/TheoryPropagator.h"
 #include "dlinear/solver/theory_solver/TheorySolver.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpRowSense.h"
-#include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
 #include "dlinear/util/SortedVector.hpp"
 
@@ -53,6 +52,7 @@ class SimpleBoundPropagator : public TheoryPropagator {
    */
   template <int NVariables>
   void AddAssertion(const Formula& assertion);
+
   std::unordered_map<Variable, SortedVector<BoundConstraint>> constraints_;  ///< Map of constraints for each variable
 };
 

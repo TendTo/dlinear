@@ -16,6 +16,42 @@
 
 namespace dlinear {
 
+bool IsSimpleBound(const Formula &formula) {
+  // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
+  if (!is_relational(formula)) return false;
+  // The number of variables must be exactly one
+  if (formula.GetFreeVariables().size() != 1) return false;
+
+  // one between lhs and rhs must be a constant and the other must be a variable.
+  const Expression &lhs{get_lhs_expression(formula)};
+  const Expression &rhs{get_rhs_expression(formula)};
+  return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
+}
+
+bool IsEqualTo(const Formula &formula, const bool truth) {
+  return truth ? is_equal_to(formula) : is_not_equal_to(formula);
+}
+
+bool IsNotEqualTo(const Formula &formula, const bool truth) {
+  return truth ? is_not_equal_to(formula) : is_equal_to(formula);
+}
+
+bool IsGreaterThan(const Formula &formula, const bool truth) {
+  return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
+}
+
+bool IsLessThan(const Formula &formula, const bool truth) {
+  return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
+}
+
+bool IsGreaterThanOrEqualTo(const Formula &formula, const bool truth) {
+  return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
+}
+
+bool IsLessThanOrEqualTo(const Formula &formula, const bool truth) {
+  return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
+}
+
 FormulaKind operator-(const FormulaKind kind) {
   switch (kind) {
     case FormulaKind::Geq:

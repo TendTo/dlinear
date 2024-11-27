@@ -128,7 +128,7 @@ void BoundPreprocessor::EnableLiteral(const Literal& lit, std::set<LiteralSet>& 
     const Variable& var = *formula.GetFreeVariables().cbegin();
     BoundVector& bounds = theory_bounds_.at(var);
     // Add the simple bound to the theory_bound. If a violation is detected, report it immediately
-    const BoundIterator violation{bounds.AddBound(GetSimpleBound(lit, formula))};
+    const BoundIterator violation{bounds.AddBound(Bound::Parse(lit, formula))};
     if (!violation.empty()) {
       DLINEAR_DEBUG_FMT("BoundPreprocessor::EnableLiteral: {} conflict found", violation.explanation());
       violation.explanations(explanations, lit);
@@ -662,73 +662,7 @@ const mpq_class* BoundPreprocessor::StoreTemporaryMpq(const mpq_class& value) {
   return &temporary_mpq_vector_.back();
 }
 Bound BoundPreprocessor::GetSimpleBound(const dlinear::Literal& lit) const {
-  return GetSimpleBound(lit, predicate_abstractor_[lit.var]);
-}
-Bound BoundPreprocessor::GetSimpleBound(const Literal& lit, const Formula& formula) {
-  DLINEAR_ASSERT_FMT(IsSimpleBound(formula), "Expected simple bound, got {}", formula);
-  const Expression& lhs{get_lhs_expression(formula)};
-  const Expression& rhs{get_rhs_expression(formula)};
-  if (IsEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::B, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::B, lit};
-  }
-  if (IsGreaterThan(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SL, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SU, lit};
-  }
-  if (IsGreaterThanOrEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::L, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::U, lit};
-  }
-  if (IsLessThan(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::SU, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::SL, lit};
-  }
-  if (IsLessThanOrEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::U, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::L, lit};
-  }
-  if (IsNotEqualTo(formula, lit.truth)) {
-    if (is_variable(lhs) && is_constant(rhs)) return {&get_constant_value(rhs), LpColBound::D, lit};
-    if (is_constant(lhs) && is_variable(rhs)) return {&get_constant_value(lhs), LpColBound::D, lit};
-  }
-  DLINEAR_RUNTIME_ERROR_FMT("Formula {} not supported", formula);
-}
-
-bool BoundPreprocessor::IsSimpleBound(const Formula& formula) {
-  // Formula must be a relational formula: `lhs <= rhs`, `lhs >= rhs`, `lhs == rhs` or `lhs != rhs`.
-  if (!is_relational(formula)) return false;
-  // The number of variables must be exactly one
-  if (formula.GetFreeVariables().size() != 1) return false;
-
-  // one between lhs and rhs must be a constant and the other must be a variable.
-  const Expression& lhs{get_lhs_expression(formula)};
-  const Expression& rhs{get_rhs_expression(formula)};
-  return ((is_constant(lhs) && is_variable(rhs)) || (is_variable(lhs) && is_constant(rhs)));
-}
-
-bool BoundPreprocessor::IsEqualTo(const Formula& formula, const bool truth) {
-  return truth ? is_equal_to(formula) : is_not_equal_to(formula);
-}
-
-bool BoundPreprocessor::IsNotEqualTo(const Formula& formula, const bool truth) {
-  return truth ? is_not_equal_to(formula) : is_equal_to(formula);
-}
-
-bool BoundPreprocessor::IsGreaterThan(const Formula& formula, const bool truth) {
-  return truth ? is_greater_than(formula) : is_less_than_or_equal_to(formula);
-}
-
-bool BoundPreprocessor::IsLessThan(const Formula& formula, const bool truth) {
-  return truth ? is_less_than(formula) : is_greater_than_or_equal_to(formula);
-}
-
-bool BoundPreprocessor::IsGreaterThanOrEqualTo(const Formula& formula, const bool truth) {
-  return truth ? is_greater_than_or_equal_to(formula) : is_less_than(formula);
-}
-
-bool BoundPreprocessor::IsLessThanOrEqualTo(const Formula& formula, const bool truth) {
-  return truth ? is_less_than_or_equal_to(formula) : is_greater_than(formula);
+  return Bound::Parse(lit, predicate_abstractor_[lit.var]);
 }
 
 void BoundPreprocessor::GetExplanation(const Variable& var, LiteralSet& explanation) {

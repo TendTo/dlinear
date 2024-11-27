@@ -51,7 +51,6 @@ dlinear_cc_library(
     deps = [
         ":node_op_type",
         ":tensor",
-        "//dlinear/libs:gmp",
         "//dlinear/libs:onnx",
         "//dlinear/parser:driver",
         "//dlinear/symbolic",

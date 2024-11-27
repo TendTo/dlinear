@@ -13,6 +13,7 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/theory_solver/qf_lra/LpColBound.h"
 #include "dlinear/symbolic/literal.h"
+#include "dlinear/symbolic/symbolic.h"
 
 namespace dlinear {
 
@@ -32,6 +33,8 @@ struct Bound {
         explanation{std::move(explanation_)} {}
   Bound(const mpq_class* value_, LpColBound lp_bound_, Literal theory_literal_)
       : value{value_}, lp_bound{lp_bound_}, theory_literal{std::move(theory_literal_)}, explanation{} {}
+
+  static Bound Parse(const Literal& lit, const Formula& formula);
 
   const mpq_class* value;  ///< Value of the bound
   LpColBound lp_bound;     ///< Type of the bound (e.g. L, SL, U, SU)

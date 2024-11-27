@@ -166,7 +166,7 @@ bool EqBinomialBoundPreprocessor::ShouldPropagateBounds(const Formula& formula) 
 
 EqBinomialBoundPreprocessor::Edge EqBinomialBoundPreprocessor::ExtractBoundEdge(const Literal& lit) const {
   const Formula& formula = theory_solver_.predicate_abstractor()[lit.var];
-  // DLINEAR_ASSERT(BoundPreprocessor::IsEqualTo(formula, lit.truth), "Formula should be an equality relation");
+  // DLINEAR_ASSERT(IsEqualTo(formula, lit.truth), "Formula should be an equality relation");
   DLINEAR_ASSERT(is_equal_to(formula), "Formula should be an equality relation");
   DLINEAR_ASSERT(formula.GetFreeVariables().size() == 2, "Formula should have exactly two free variables");
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");

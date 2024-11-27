@@ -148,15 +148,14 @@ dlinear_cc_library(
     implementation_deps = [
         ":nnfizier",
         "//dlinear/libs:gmp",
+        "//dlinear/util:stats",
         "//dlinear/util:timer",
     ],
     deps = [
         ":expression_visitor",
         ":formula_visitor",
-        ":literal",
         ":symbolic",
         "//dlinear/util:config",
-        "//dlinear/util:stats",
     ],
 )
 
