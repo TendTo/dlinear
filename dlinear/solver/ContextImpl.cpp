@@ -557,24 +557,24 @@ void Context::Impl::UpdateAndPrintOutput(const SmtResult smt_result) const {
     std::cout << "file,complete,satSolver,lpSolver,assertions,precision,actualPrecision,simplexPhase,"
                  "simpleBoundPropagationFrequency,boundCheckingFrequency,satDefaultPhase,lpMode,"
                  "timeUnit,parserTime,satTime,preprocessorTime,theoryTime,smtTime,result\n";
-    std::cout << config_.filename() << ","                           //
-              << config_.complete() << ","                           //
-              << config_.sat_solver() << ","                         //
-              << config_.lp_solver() << ","                          //
-              << output_->n_assertions << ","                        //
-              << config_.precision() << ","                          //
-              << output_->actual_precision.get_d() << ","            //
-              << config_.simplex_sat_phase() << ","                  //
-              << config_.simple_bound_propagation_step() << ","      //
-              << config_.bound_preprocess_step() << ","              //
-              << config_.sat_default_phase() << ","                  //
-              << config_.actual_lp_mode() << ","                     //
-              << "s" << ","                                          //
-              << output_->parser_stats.timer().seconds() << ","      //
-              << sat_solver_->stats().timer().seconds() << ","       //
-              << preprocessors_total_stats.timer().seconds() << ","  //
-              << theory_solver_->stats().timer().seconds() << ","    //
-              << output_->smt_solver_timer.seconds() << ","          //
+    std::cout << config_.filename() << ","                                   //
+              << config_.complete() << ","                                   //
+              << config_.sat_solver() << ","                                 //
+              << config_.lp_solver() << ","                                  //
+              << output_->n_assertions << ","                                //
+              << config_.precision() << ","                                  //
+              << output_->actual_precision.get_d() << ","                    //
+              << config_.simplex_sat_phase() << ","                          //
+              << config_.actual_simple_bound_propagation_step() << ","       //
+              << config_.actual_bounded_polynomial_preprocess_step() << ","  //
+              << config_.sat_default_phase() << ","                          //
+              << config_.actual_lp_mode() << ","                             //
+              << "s" << ","                                                  //
+              << output_->parser_stats.timer().seconds() << ","              //
+              << sat_solver_->stats().timer().seconds() << ","               //
+              << preprocessors_total_stats.timer().seconds() << ","          //
+              << theory_solver_->stats().timer().seconds() << ","            //
+              << output_->smt_solver_timer.seconds() << ","                  //
               << output_->result << std::endl;
   } else if (!config_.silent()) {
     std::cout << *output_ << std::endl;

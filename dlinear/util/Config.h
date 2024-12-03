@@ -131,11 +131,11 @@ class Config {
    */
   [[nodiscard]] ExecutionStep actual_simple_bound_propagation_step() const;
   /**
-   * @getter{actual `bound_preprocess_step` parameter, configuration,
-     If the bound_implication_frequency is RunningFrequency::AUTO\,
-     it will return the appropriate running frequency based on the actual format}
-   */
-  [[nodiscard]] ExecutionStep actual_bound_preprocess_step() const;
+ * @getter{actual `bounded_polynomial_preprocess_step` parameter, configuration,
+   If the bounded_polynomial_preprocess_step is RunningFrequency::AUTO\,
+   it will return the appropriate running frequency based on the actual format}
+ */
+  [[nodiscard]] ExecutionStep actual_bounded_polynomial_preprocess_step() const;
   /**
    * @getter{actual `eq_binomial_preprocess_step` parameter, configuration,
      If the eq_binomial_preprocess_step is RunningFrequency::AUTO\,
@@ -167,9 +167,9 @@ class Config {
   DLINEAR_PARAMETER(simple_bound_propagation_step, ExecutionStep, ExecutionStep::AUTO,
                     "How often to run the simple bound propagation preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
-  DLINEAR_PARAMETER(bound_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
-                    "How often to run the bound checking preprocessing.\n"
-                    "\t\tOne of: auto (1), never (2), always (3)")
+  DLINEAR_PARAMETER(bounded_polynomial_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
+                    "How often to run the bound preprocessing over bounded polynomials.\n"
+                    "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
   DLINEAR_PARAMETER(complete, bool, false,
                     "Run the solver in complete mode.\n"
                     "\t\tThe precision will be set to 0 and strict inequalities will be taken into account")

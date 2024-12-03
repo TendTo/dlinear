@@ -163,16 +163,27 @@ void ArgParser::AddOptions() {
                            if (value == "on-fixed" || value == "3") return Config::ExecutionStep::ON_FIXED;
                            if (value == "on-iteration" || value == "4") return Config::ExecutionStep::ON_ITERATION;
                            if (value == "always" || value == "5") return Config::ExecutionStep::ALWAYS;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--bound-preprocess",
-                           "[ auto | never | always ] or [ 1 | 2 | 3 ]",
+  DLINEAR_PARSE_PARAM_ENUM(parser_, bounded_polynomial_preprocess_step, "--bounded-polynomial-preprocess",
+                           "[ auto | never | on-fixed | on-iteration | always ] or [ 1 | 2 | 3 | 4 | 5 ]",
                            if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
                            if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
-                           if (value == "always" || value == "3") return Config::ExecutionStep::ALWAYS;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--eq-binomial-preprocess",
-                           "[ auto | never | always ] or [ 1 | 2 | 3 ]",
+                           if (value == "on-fixed" || value == "3") return Config::ExecutionStep::ON_FIXED;
+                           if (value == "on-iteration" || value == "4") return Config::ExecutionStep::ON_ITERATION;
+                           if (value == "always" || value == "5") return Config::ExecutionStep::ALWAYS;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, eq_binomial_preprocess_step, "--eq-binomial-preprocess",
+                           "[ auto | never | on-fixed | on-iteration | always ] or [ 1 | 2 | 3 | 4 | 5 ]",
                            if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
                            if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
-                           if (value == "always" || value == "3") return Config::ExecutionStep::ALWAYS;);
+                           if (value == "on-fixed" || value == "3") return Config::ExecutionStep::ON_FIXED;
+                           if (value == "on-iteration" || value == "4") return Config::ExecutionStep::ON_ITERATION;
+                           if (value == "always" || value == "5") return Config::ExecutionStep::ALWAYS;);
+  DLINEAR_PARSE_PARAM_ENUM(parser_, formula_evaluation_preprocess_step, "--formula-evaluation-preprocess",
+                           "[ auto | never | on-fixed | on-iteration | always ] or [ 1 | 2 | 3 | 4 | 5 ]",
+                           if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
+                           if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
+                           if (value == "on-fixed" || value == "3") return Config::ExecutionStep::ON_FIXED;
+                           if (value == "on-iteration" || value == "4") return Config::ExecutionStep::ON_ITERATION;
+                           if (value == "always" || value == "5") return Config::ExecutionStep::ALWAYS;);
 
   DLINEAR_TRACE("ArgParser::ArgParser: added all arguments");
 }
@@ -189,7 +200,7 @@ Config ArgParser::ToConfig() const {
     config.m_precision().SetFromCommandLine(0.0);
   }
   DLINEAR_PARAM_TO_CONFIG("simple-bound-propagation", simple_bound_propagation_step, Config::ExecutionStep);
-  DLINEAR_PARAM_TO_CONFIG("bound-preprocess", bound_preprocess_step, Config::ExecutionStep);
+  DLINEAR_PARAM_TO_CONFIG("bounded-polynomial-preprocess", bounded_polynomial_preprocess_step, Config::ExecutionStep);
   DLINEAR_PARAM_TO_CONFIG("csv", csv, bool);
   DLINEAR_PARAM_TO_CONFIG("continuous-output", continuous_output, bool);
   DLINEAR_PARAM_TO_CONFIG("debug-parsing", debug_parsing, bool);
@@ -199,6 +210,7 @@ Config ArgParser::ToConfig() const {
   DLINEAR_PARAM_TO_CONFIG("eq-binomial-preprocess", eq_binomial_preprocess_step, Config::ExecutionStep);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);
+  DLINEAR_PARAM_TO_CONFIG("formula-evaluation-preprocess", formula_evaluation_preprocess_step, Config::ExecutionStep);
   DLINEAR_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);
   DLINEAR_PARAM_TO_CONFIG("lp-solver", lp_solver, Config::LPSolver);
   // DLINEAR_PARAM_TO_CONFIG("jobs", number_of_jobs, unsigned int);

@@ -63,20 +63,20 @@ Config::ExecutionStep Config::actual_simple_bound_propagation_step() const {
       return simple_bound_propagation_step_.get();
   }
 }
-Config::ExecutionStep Config::actual_bound_preprocess_step() const {
-  switch (bound_preprocess_step_.get()) {
+Config::ExecutionStep Config::actual_bounded_polynomial_preprocess_step() const {
+  switch (eq_binomial_preprocess_step_.get()) {
     case ExecutionStep::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
-          return ExecutionStep::ALWAYS;
         case Format::MPS:
-        case Format::VNNLIB:
           return ExecutionStep::NEVER;
+        case Format::VNNLIB:
+          return ExecutionStep::ON_FIXED;
         default:
           DLINEAR_UNREACHABLE();
       }
     default:
-      return bound_preprocess_step_.get();
+      return eq_binomial_preprocess_step_.get();
   }
 }
 Config::ExecutionStep Config::actual_eq_binomial_preprocess_step() const {
@@ -115,7 +115,8 @@ Config::ExecutionStep Config::actual_formula_evaluation_preprocess_step() const 
 void Config::SetPropagationStep(const ExecutionStep step) { simple_bound_propagation_step_ = step; }
 void Config::SetPreprocessStep(const ExecutionStep step) {
   eq_binomial_preprocess_step_ = step;
-  bound_preprocess_step_ = step;
+  bounded_polynomial_preprocess_step_ = step;
+  formula_evaluation_preprocess_step_ = step;
 }
 
 std::ostream &operator<<(std::ostream &os, const Config::SatDefaultPhase &sat_default_phase) {
@@ -204,8 +205,7 @@ std::ostream &operator<<(std::ostream &os, const Config::ExecutionStep &frequenc
 
 std::ostream &operator<<(std::ostream &os, const Config &config) {
   return os << "Config {\n"
-            << "simple_bound_propagation_step = " << config.simple_bound_propagation_step() << ",\n"
-            << "bound_preprocess_step = " << config.bound_preprocess_step() << ",\n"
+            << "bounded_polynomial_preprocess_step = " << config.bounded_polynomial_preprocess_step() << ",\n"
             << "csv = " << config.csv() << ",\n"
             << "complete = " << config.complete() << ",\n"
             << "continuous_output = " << config.continuous_output() << ",\n"
@@ -229,6 +229,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "sat_default_phase = " << config.sat_default_phase() << ",\n"
             << "sat_solver = " << config.sat_solver() << ",\n"
             << "silent = " << config.silent() << ",\n"
+            << "simple_bound_propagation_step = " << config.simple_bound_propagation_step() << ",\n"
             << "simplex_sat_phase = " << config.simplex_sat_phase() << ",\n"
             << "skip_check_sat = " << config.skip_check_sat() << ",\n"
             << "timeout = " << config.timeout() << ",\n"
