@@ -74,8 +74,8 @@ git_override(
 bazel_dep(name = "bazel_iwyu", version = "0.0.1", dev_dependency = True)
 git_override(
     module_name = "bazel_iwyu",
-    commit = "85cbd99369a3ed3f8c31234d2d887026f3e66bbc",
-    remote = "https://github.com/TendTo/bazel_iwyu",
+    commit = "1fe9048c30469ac506498c3c740ce47475ad3361",
+    remote = "https://github.com/storypku/bazel_iwyu",
 )
 
 # Repository dependencies (see WORKSPACE for more details)
