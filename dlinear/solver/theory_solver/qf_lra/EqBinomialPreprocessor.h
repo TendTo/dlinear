@@ -26,7 +26,7 @@ namespace dlinear {
 // Forward declaration
 class TheorySolver;
 
-class EqBinomialBoundPreprocessor final : public TheoryPreprocessor {
+class EqBinomialPreprocessor final : public TheoryPreprocessor {
  public:
   /** Edge value in the dependency tracking graph */
   struct EdgeValue {
@@ -48,7 +48,7 @@ class EqBinomialBoundPreprocessor final : public TheoryPreprocessor {
    * @param env environment containing the variable's values. Shared with other preprocessors
    * @param class_name name of the subclass of the theory preprocessor used
    */
-  EqBinomialBoundPreprocessor(const TheorySolver& theory_solver, const std::shared_ptr<BoundVectorMap>& var_bounds,
+  EqBinomialPreprocessor(const TheorySolver& theory_solver, const std::shared_ptr<BoundVectorMap>& var_bounds,
                               const std::shared_ptr<Environment>& env,
                               const std::string& class_name = "EqBinomialBoundPreprocessor");
 
@@ -138,14 +138,14 @@ class EqBinomialBoundPreprocessor final : public TheoryPreprocessor {
   Graph<Variable, EdgeValue> graph_;  ///< Dependency tracking graph
 };
 
-inline bool operator==(const EqBinomialBoundPreprocessor::EdgeValue& lhs,
-                       const EqBinomialBoundPreprocessor::EdgeValue& rhs) {
+inline bool operator==(const EqBinomialPreprocessor::EdgeValue& lhs,
+                       const EqBinomialPreprocessor::EdgeValue& rhs) {
   return lhs.c_from == rhs.c_from && lhs.c_to == rhs.c_to && lhs.rhs == rhs.rhs && lhs.lit == rhs.lit;
 }
 
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor& preprocessor);
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::EdgeValue& edge_value);
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::Edge& edge);
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor& preprocessor);
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor::EdgeValue& edge_value);
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor::Edge& edge);
 
 }  // namespace dlinear
 
@@ -153,8 +153,8 @@ std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::Ed
 
 #include "dlinear/util/logging.h"
 
-OSTREAM_FORMATTER(dlinear::EqBinomialBoundPreprocessor::EdgeValue)
-OSTREAM_FORMATTER(dlinear::EqBinomialBoundPreprocessor::Edge)
-OSTREAM_FORMATTER(dlinear::EqBinomialBoundPreprocessor)
+OSTREAM_FORMATTER(dlinear::EqBinomialPreprocessor::EdgeValue)
+OSTREAM_FORMATTER(dlinear::EqBinomialPreprocessor::Edge)
+OSTREAM_FORMATTER(dlinear::EqBinomialPreprocessor)
 
 #endif

@@ -79,7 +79,7 @@ void init_util(py::module_ &m) {
       .def_property("bound_preprocess_step", &Config::m_bound_preprocess_step,
                     [](Config &self, const Config::ExecutionStep &step) { self.m_bound_preprocess_step() = step; })
       .def_property(
-          "eq_binomial_bound_preprocess_step", &Config::eq_binomial_bound_preprocess_step,
+          "eq_binomial_preprocess_step", &Config::eq_binomial_preprocess_step,
           [](Config &self, const Config::ExecutionStep &step) { self.m_eq_binomial_bound_preprocess_step() = step; })
       .def_property("csv", &Config::csv, [](Config &self, bool value) { self.m_csv() = value; })
       .def_property("complete", &Config::complete, [](Config &self, bool value) { self.m_complete() = value; })

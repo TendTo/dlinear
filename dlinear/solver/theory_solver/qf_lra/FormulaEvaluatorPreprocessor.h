@@ -30,7 +30,7 @@ class TheorySolver;
 class FormulaEvaluatorPreprocessor final : public TheoryPreprocessor {
  public:
   /**
-   * Construct a new Eq Binomial Bound Checker Preprocessor object using the @p theory_solver.
+   * Construct a new FormulaEvaluatorPreprocessor object using the @p theory_solver.
    * @param theory_solver theory solver that will use this preprocessor
    * @param var_bounds bounds over each real variable. Shared with other preprocessors
    * @param env environment containing the variable's values. Shared with other preprocessors

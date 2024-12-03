@@ -79,8 +79,8 @@ Config::ExecutionStep Config::actual_bound_preprocess_step() const {
       return bound_preprocess_step_.get();
   }
 }
-Config::ExecutionStep Config::actual_eq_binomial_bound_preprocess_step() const {
-  switch (eq_binomial_bound_preprocess_step_.get()) {
+Config::ExecutionStep Config::actual_eq_binomial_preprocess_step() const {
+  switch (eq_binomial_preprocess_step_.get()) {
     case ExecutionStep::AUTO:
       switch (actual_format()) {
         case Format::SMT2:
@@ -92,7 +92,7 @@ Config::ExecutionStep Config::actual_eq_binomial_bound_preprocess_step() const {
           DLINEAR_UNREACHABLE();
       }
     default:
-      return eq_binomial_bound_preprocess_step_.get();
+      return eq_binomial_preprocess_step_.get();
   }
 }
 Config::ExecutionStep Config::actual_formula_evaluation_preprocess_step() const {
@@ -114,7 +114,7 @@ Config::ExecutionStep Config::actual_formula_evaluation_preprocess_step() const 
 
 void Config::SetPropagationStep(const ExecutionStep step) { simple_bound_propagation_step_ = step; }
 void Config::SetPreprocessStep(const ExecutionStep step) {
-  eq_binomial_bound_preprocess_step_ = step;
+  eq_binomial_preprocess_step_ = step;
   bound_preprocess_step_ = step;
 }
 
@@ -213,7 +213,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "debug_scanning = " << config.debug_scanning() << ",\n"
             << "disable_expansion = " << config.disable_expansion() << ",\n"
             << "enforce_check_sat = " << config.enforce_check_sat() << ",\n"
-            << "eq_binomial_bound_preprocess_step = " << config.eq_binomial_bound_preprocess_step() << ",\n"
+            << "eq_binomial_preprocess_step = " << config.eq_binomial_preprocess_step() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"
             << "formula_evaluation_preprocess_step = " << config.formula_evaluation_preprocess_step() << ",\n"

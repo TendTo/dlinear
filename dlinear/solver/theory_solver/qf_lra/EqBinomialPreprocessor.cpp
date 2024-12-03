@@ -3,10 +3,9 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
-#include "EqBinomialBoundPreprocessor.h"
-
 #include <unordered_set>
 
+#include "EqBinomialPreprocessor.h"
 #include "QfLraTheorySolver.h"
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/theory_solver/TheorySolver.h"
@@ -14,7 +13,7 @@
 
 namespace dlinear {
 
-EqBinomialBoundPreprocessor::EqBinomialBoundPreprocessor(const TheorySolver& theory_solver,
+EqBinomialPreprocessor::EqBinomialPreprocessor(const TheorySolver& theory_solver,
                                                          const std::shared_ptr<BoundVectorMap>& var_bounds,
                                                          const std::shared_ptr<Environment>& env,
                                                          const std::string& class_name)
@@ -23,11 +22,11 @@ EqBinomialBoundPreprocessor::EqBinomialBoundPreprocessor(const TheorySolver& the
   DLINEAR_ASSERT(env_ != nullptr, "The env must not be null");
 }
 
-Config::ExecutionStep EqBinomialBoundPreprocessor::run_on_step() const {
-  return theory_solver_.config().actual_eq_binomial_bound_preprocess_step();
+Config::ExecutionStep EqBinomialPreprocessor::run_on_step() const {
+  return theory_solver_.config().actual_eq_binomial_preprocess_step();
 }
 
-bool EqBinomialBoundPreprocessor::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
+bool EqBinomialPreprocessor::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
   DLINEAR_TRACE_FMT("EqBinomialBoundPreprocessor::EnableConstraint({})", lit);
   // If the literal does not represent an equality relation, skip
   if (!ShouldPropagateBounds(lit)) return true;
@@ -57,7 +56,7 @@ bool EqBinomialBoundPreprocessor::EnableLiteral(const Literal& lit, const Confli
   return true;
 }
 
-bool EqBinomialBoundPreprocessor::ProcessCore(const ConflictCallback& conflict_cb) {
+bool EqBinomialPreprocessor::ProcessCore(const ConflictCallback& conflict_cb) {
   DLINEAR_TRACE("EqBinomialBoundPreprocessor::Process()");
   // Sync the local var bounds with the ones from the theory solver if it is still empty
   if (var_bounds_->empty()) *var_bounds_ = static_cast<const QfLraTheorySolver&>(theory_solver_).vars_bounds();
@@ -68,13 +67,13 @@ bool EqBinomialBoundPreprocessor::ProcessCore(const ConflictCallback& conflict_c
   return no_conflict;
 }
 
-void EqBinomialBoundPreprocessor::Backtrack() {
+void EqBinomialPreprocessor::Backtrack() {
   if (!env_->empty()) *env_ = Environment{};
   var_bounds_->clear();
   graph_.ClearEdges();
 }
 
-void EqBinomialBoundPreprocessor::SetEnvironmentFromBounds() {
+void EqBinomialPreprocessor::SetEnvironmentFromBounds() {
   for (const auto& [var, bound] : *var_bounds_) {
     const mpq_class* const active_bound = bound.GetActiveEqualityBound();
     if (active_bound == nullptr) continue;
@@ -86,7 +85,7 @@ void EqBinomialBoundPreprocessor::SetEnvironmentFromBounds() {
   }
 }
 
-bool EqBinomialBoundPreprocessor::PropagateEnvironment(const ConflictCallback& conflict_cb) {
+bool EqBinomialPreprocessor::PropagateEnvironment(const ConflictCallback& conflict_cb) {
   DLINEAR_TRACE("EqBinomialBoundPreprocessor::PropagateEnvironment: start propagation");
   bool no_conflict = true;
   const std::vector<std::pair<Variable, mpq_class>> vars_in_env{env_->begin(), env_->end()};
@@ -142,7 +141,7 @@ bool EqBinomialBoundPreprocessor::PropagateEnvironment(const ConflictCallback& c
   return no_conflict;
 }
 
-bool EqBinomialBoundPreprocessor::ShouldPropagateBounds(const Literal& lit) const {
+bool EqBinomialPreprocessor::ShouldPropagateBounds(const Literal& lit) const {
   DLINEAR_TRACE_FMT("EqBinomialBoundPreprocessor::ShouldPropagateBounds({})", lit);
   const auto& [var, truth] = lit;
   const Formula& formula = theory_solver_.predicate_abstractor()[var];
@@ -151,7 +150,7 @@ bool EqBinomialBoundPreprocessor::ShouldPropagateBounds(const Literal& lit) cons
   if (!truth && !is_not_equal_to(formula)) return false;
   return ShouldPropagateBounds(formula);
 }
-bool EqBinomialBoundPreprocessor::ShouldPropagateBounds(const Formula& formula) const {
+bool EqBinomialPreprocessor::ShouldPropagateBounds(const Formula& formula) const {
   DLINEAR_TRACE_FMT("EqBinomialBoundPreprocessor::ShouldPropagateBounds({})", formula);
   DLINEAR_ASSERT(formula.IsFlattened(), "The formula must be flattened");
   // There must be exactly two free variables and an equality relation between them
@@ -169,7 +168,7 @@ bool EqBinomialBoundPreprocessor::ShouldPropagateBounds(const Formula& formula) 
          expr_to_coeff_map.cbegin()->second != 0 && std::next(expr_to_coeff_map.cbegin())->second != 0;
 }
 
-EqBinomialBoundPreprocessor::Edge EqBinomialBoundPreprocessor::ExtractBoundEdge(const Literal& lit) const {
+EqBinomialPreprocessor::Edge EqBinomialPreprocessor::ExtractBoundEdge(const Literal& lit) const {
   const Formula& formula = theory_solver_.predicate_abstractor()[lit.var];
   // DLINEAR_ASSERT(IsEqualTo(formula, lit.truth), "Formula should be an equality relation");
   DLINEAR_ASSERT(is_equal_to(formula), "Formula should be an equality relation");
@@ -187,7 +186,7 @@ EqBinomialBoundPreprocessor::Edge EqBinomialBoundPreprocessor::ExtractBoundEdge(
           {&map.cbegin()->second, &std::next(map.cbegin())->second, &rhs, lit}};
 }
 
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::EdgeValue& edge_value) {
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor::EdgeValue& edge_value) {
   os << "EdgeValue{";
   if (edge_value.c_from != nullptr) os << "coefficient from = " << *edge_value.c_from << ", ";
   if (edge_value.c_to != nullptr) os << "coefficient to = " << *edge_value.c_to << ", ";
@@ -195,14 +194,14 @@ std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::Ed
   return os << "literal = " << edge_value.lit << "}";
 }
 
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor::Edge& bound_edge) {
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor::Edge& bound_edge) {
   return os << "BoundEdge{"
             << "from = " << bound_edge.from << ", "
             << "to = " << bound_edge.to << ", "
             << "value = " << bound_edge.value << "}";
 }
 
-std::ostream& operator<<(std::ostream& os, const EqBinomialBoundPreprocessor& preprocessor) {
+std::ostream& operator<<(std::ostream& os, const EqBinomialPreprocessor& preprocessor) {
   return os << "EqBinomialBoundPreprocessor{"
             << "env_ = " << preprocessor.env() << ", "
             << "graph_ = " << preprocessor.graph() << "}";

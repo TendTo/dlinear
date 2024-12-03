@@ -168,7 +168,7 @@ void ArgParser::AddOptions() {
                            if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
                            if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
                            if (value == "always" || value == "3") return Config::ExecutionStep::ALWAYS;);
-  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--eq-binomial-bound-preprocess",
+  DLINEAR_PARSE_PARAM_ENUM(parser_, bound_preprocess_step, "--eq-binomial-preprocess",
                            "[ auto | never | always ] or [ 1 | 2 | 3 ]",
                            if (value == "auto" || value == "1") return Config::ExecutionStep::AUTO;
                            if (value == "never" || value == "2") return Config::ExecutionStep::NEVER;
@@ -196,7 +196,7 @@ Config ArgParser::ToConfig() const {
   DLINEAR_PARAM_TO_CONFIG("debug-scanning", debug_scanning, bool);
   DLINEAR_PARAM_TO_CONFIG("disable-expansion", disable_expansion, bool);
   DLINEAR_PARAM_TO_CONFIG("enforce-check-sat", enforce_check_sat, bool);
-  DLINEAR_PARAM_TO_CONFIG("eq-binomial-bound-preprocess", eq_binomial_bound_preprocess_step, Config::ExecutionStep);
+  DLINEAR_PARAM_TO_CONFIG("eq-binomial-preprocess", eq_binomial_preprocess_step, Config::ExecutionStep);
   config.m_filename().SetFromCommandLine(parser_.is_used("file") ? parser_.get<std::string>("file") : "");
   DLINEAR_PARAM_TO_CONFIG("format", format, Config::Format);
   DLINEAR_PARAM_TO_CONFIG("lp-mode", lp_mode, Config::LPMode);

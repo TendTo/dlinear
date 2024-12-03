@@ -137,11 +137,11 @@ class Config {
    */
   [[nodiscard]] ExecutionStep actual_bound_preprocess_step() const;
   /**
-   * @getter{actual `eq_binomial_bound_preprocess_step` parameter, configuration,
-     If the eq_binomial_bound_preprocess_step is RunningFrequency::AUTO\,
+   * @getter{actual `eq_binomial_preprocess_step` parameter, configuration,
+     If the eq_binomial_preprocess_step is RunningFrequency::AUTO\,
      it will return the appropriate running frequency based on the actual format}
    */
-  [[nodiscard]] ExecutionStep actual_eq_binomial_bound_preprocess_step() const;
+  [[nodiscard]] ExecutionStep actual_eq_binomial_preprocess_step() const;
   /**
    * @getter{actual `formula_evaluation_preprocess_step` parameter, configuration,
      If the formula_evaluation_preprocess_step is RunningFrequency::AUTO\,
@@ -184,7 +184,7 @@ class Config {
   DLINEAR_PARAMETER(
       enforce_check_sat, bool, false,
       "Perform a satisfiability check at the end of parsing if the input does not contain a (check-sat) directive")
-  DLINEAR_PARAMETER(eq_binomial_bound_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
+  DLINEAR_PARAMETER(eq_binomial_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
                     "How often to run the eq binomial bound checking preprocessing.\n"
                     "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
