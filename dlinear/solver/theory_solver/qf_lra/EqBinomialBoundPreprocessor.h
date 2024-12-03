@@ -26,7 +26,7 @@ namespace dlinear {
 // Forward declaration
 class TheorySolver;
 
-class EqBinomialBoundPreprocessor : public TheoryPreprocessor {
+class EqBinomialBoundPreprocessor final : public TheoryPreprocessor {
  public:
   /** Edge value in the dependency tracking graph */
   struct EdgeValue {
@@ -52,17 +52,17 @@ class EqBinomialBoundPreprocessor : public TheoryPreprocessor {
                               const std::shared_ptr<Environment>& env,
                               const std::string& class_name = "EqBinomialBoundPreprocessor");
 
-  [[nodiscard]] Config::ExecutionStep run_on_step() const final;
+  [[nodiscard]] Config::ExecutionStep run_on_step() const override;
 
-  bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) final;
-  bool ProcessCore(const ConflictCallback& conflict_cb) final;
-  void Backtrack() final;
+  bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) override;
+  bool ProcessCore(const ConflictCallback& conflict_cb) override;
+  void Backtrack() override;
 
-  /** @getter{bounds over each real variable, eq binomial bound checker preprocessor} */
+  /** @getter{bounds over each real variable, eq binomial bound preprocessor} */
   [[nodiscard]] const BoundVectorMap& var_bounds() const { return *var_bounds_; }
-  /** @getter{dependency traking graph, eq binomial bound checker preprocessor} */
+  /** @getter{dependency tracking graph, eq binomial bound preprocessor} */
   [[nodiscard]] const Graph<Variable, EdgeValue>& graph() const { return graph_; }
-  /** @getter{environment, eq binomial bound checker preprocessor} */
+  /** @getter{environment, eq binomial bound preprocessor} */
   [[nodiscard]] const Environment& env() const { return *env_; }
 
  protected:

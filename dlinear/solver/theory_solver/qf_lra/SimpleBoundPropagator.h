@@ -17,15 +17,15 @@
 
 namespace dlinear {
 
-class SimpleBoundPropagator : public TheoryPropagator {
+class SimpleBoundPropagator final : public TheoryPropagator {
  public:
   explicit SimpleBoundPropagator(const TheorySolver& theory_solver,
                                  const std::string& class_name = "SimpleBoundPropagator");
 
-  [[nodiscard]] Config::ExecutionStep run_on_step() const final;
+  [[nodiscard]] Config::ExecutionStep run_on_step() const override;
 
  private:
-  void PropagateCore(const AssertCallback& assert_cb) final;
+  void PropagateCore(const AssertCallback& assert_cb) override;
 
   /** Bound constraint. It is a tuple of value, row_sense and boolean variable */
   struct BoundConstraint {

@@ -95,6 +95,22 @@ Config::ExecutionStep Config::actual_eq_binomial_bound_preprocess_step() const {
       return eq_binomial_bound_preprocess_step_.get();
   }
 }
+Config::ExecutionStep Config::actual_formula_evaluation_preprocess_step() const {
+  switch (formula_evaluation_preprocess_step_.get()) {
+    case ExecutionStep::AUTO:
+      switch (actual_format()) {
+        case Format::SMT2:
+          return ExecutionStep::ALWAYS;
+        case Format::MPS:
+        case Format::VNNLIB:
+          return ExecutionStep::NEVER;
+        default:
+          DLINEAR_UNREACHABLE();
+      }
+    default:
+      return formula_evaluation_preprocess_step_.get();
+  }
+}
 
 void Config::SetPropagationStep(const ExecutionStep step) { simple_bound_propagation_step_ = step; }
 void Config::SetPreprocessStep(const ExecutionStep step) {
@@ -200,6 +216,7 @@ std::ostream &operator<<(std::ostream &os, const Config &config) {
             << "eq_binomial_bound_preprocess_step = " << config.eq_binomial_bound_preprocess_step() << ",\n"
             << "filename = '" << config.filename() << "',\n"
             << "format = '" << config.format() << "',\n"
+            << "formula_evaluation_preprocess_step = " << config.formula_evaluation_preprocess_step() << ",\n"
             << "lp_mode = '" << config.lp_mode() << "',\n"
             << "lp_solver = " << config.lp_solver() << ",\n"
             << "number_of_jobs = " << config.number_of_jobs() << ",\n"

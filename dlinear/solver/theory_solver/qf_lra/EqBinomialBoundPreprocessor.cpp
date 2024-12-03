@@ -61,7 +61,8 @@ bool EqBinomialBoundPreprocessor::ProcessCore(const ConflictCallback& conflict_c
   DLINEAR_TRACE("EqBinomialBoundPreprocessor::Process()");
   // Sync the local var bounds with the ones from the theory solver if it is still empty
   if (var_bounds_->empty()) *var_bounds_ = static_cast<const QfLraTheorySolver&>(theory_solver_).vars_bounds();
-  SetEnvironmentFromBounds();
+  // Sync the environment with the active equality bounds from the var bounds if it is still empty
+  if (env_->empty()) SetEnvironmentFromBounds();
   const bool no_conflict = PropagateEnvironment(conflict_cb);
   DLINEAR_DEBUG_FMT("EqBinomialBoundPreprocessor::Process no conflict found -> {}", no_conflict);
   return no_conflict;
@@ -77,6 +78,10 @@ void EqBinomialBoundPreprocessor::SetEnvironmentFromBounds() {
   for (const auto& [var, bound] : *var_bounds_) {
     const mpq_class* const active_bound = bound.GetActiveEqualityBound();
     if (active_bound == nullptr) continue;
+    if (env_->contains(var)) {
+      DLINEAR_ASSERT(env_->at(var) == *active_bound, "No conflict should arise from this assignment");
+      continue;
+    }
     (*env_)[var] = *active_bound;
   }
 }

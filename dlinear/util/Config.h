@@ -137,11 +137,17 @@ class Config {
    */
   [[nodiscard]] ExecutionStep actual_bound_preprocess_step() const;
   /**
-  * @getter{actual `eq_binomial_bound_preprocess_step` parameter, configuration,
-    If the eq_binomial_bound_preprocess_step is RunningFrequency::AUTO\,
-    it will return the appropriate running frequency based on the actual format}
-  */
+   * @getter{actual `eq_binomial_bound_preprocess_step` parameter, configuration,
+     If the eq_binomial_bound_preprocess_step is RunningFrequency::AUTO\,
+     it will return the appropriate running frequency based on the actual format}
+   */
   [[nodiscard]] ExecutionStep actual_eq_binomial_bound_preprocess_step() const;
+  /**
+   * @getter{actual `formula_evaluation_preprocess_step` parameter, configuration,
+     If the formula_evaluation_preprocess_step is RunningFrequency::AUTO\,
+     it will return the appropriate running frequency based on the actual format}
+   */
+  [[nodiscard]] ExecutionStep actual_formula_evaluation_preprocess_step() const;
 
   /**
    * Set the step at which the simple bound propagation will run.
@@ -184,6 +190,9 @@ class Config {
   DLINEAR_PARAMETER(format, Format, dlinear::Config::Format::AUTO,
                     "Input file format\n"
                     "\t\tOne of: auto (1), smt2 (2), mps (3), vnnlib (4)")
+  DLINEAR_PARAMETER(formula_evaluation_preprocess_step, ExecutionStep, ExecutionStep::AUTO,
+                    "How often to run the formula evaluation preprocessing.\n"
+                    "\t\tOne of: auto (1), never (2), on-fixed (3), on-iteration (4), always (5)")
   DLINEAR_PARAMETER(lp_mode, LPMode, dlinear::Config::LPMode::AUTO,
                     "LP mode used by the LP solver.\n"
                     "\t\tOne of: auto (1), pure-precision-boosting (2), pure-iterative-refinement (3), hybrid (4)")

@@ -11,8 +11,7 @@
 namespace dlinear {
 TheoryPreprocessor::TheoryPreprocessor(const TheorySolver &theory_solver, const std::string &class_name)
     : theory_solver_{theory_solver},
-      stats_{theory_solver.config().with_timings(), class_name, "Total time spent in Process", "Total # of Process"},
-      enabled_literals_{} {}
+      stats_{theory_solver.config().with_timings(), class_name, "Total time spent in Process", "Total # of Process"} {}
 
 template <SizedTypedIterable<Literal> Iterable>
 void TheoryPreprocessor::AddLiterals(const Iterable &literals) {
@@ -24,16 +23,11 @@ void TheoryPreprocessor::AddVariable(const Variable &) {}
 
 template <SizedTypedIterable<Literal> Iterable>
 bool TheoryPreprocessor::EnableLiterals(const Iterable &theory_literals, const ConflictCallback &conflict_cb) {
-  enabled_literals_.reserve(theory_literals.size());
   bool res = true;
   for (const Literal &lit : theory_literals) {
     res &= EnableLiteral(lit, conflict_cb);
   }
   return res;
-}
-bool TheoryPreprocessor::EnableLiteral(const Literal &lit, const ConflictCallback &) {
-  enabled_literals_.insert(lit);
-  return true;
 }
 bool TheoryPreprocessor::Process(const Config::ExecutionStep current_step, const ConflictCallback &conflict_cb) {
   DLINEAR_ASSERT(run_on_step() != Config::ExecutionStep::NEVER, "Process should not be called if set to NEVER");

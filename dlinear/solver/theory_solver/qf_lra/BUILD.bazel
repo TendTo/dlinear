@@ -50,10 +50,12 @@ dlinear_cc_library(
     srcs = [
         #        "BoundPreprocessor.cpp",
         "EqBinomialBoundPreprocessor.cpp",
+        "FormulaEvaluatorPreprocessor.cpp",
     ],
     hdrs = [
         #        "BoundPreprocessor.h",
         "EqBinomialBoundPreprocessor.h",
+        "FormulaEvaluatorPreprocessor.h",
     ],
     implementation_deps = [
         ":qf_lra_theory_solver",

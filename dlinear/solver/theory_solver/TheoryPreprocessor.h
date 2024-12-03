@@ -96,7 +96,7 @@ class TheoryPreprocessor {
    * @return true no conflicts was detected at this step
    * @return false if one or more conflicts were detected at this step
    */
-  virtual bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb);
+  virtual bool EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) = 0;
 
   /**
    * Run the preprocessing step on all the enabled literals.
@@ -127,9 +127,6 @@ class TheoryPreprocessor {
 
   const TheorySolver& theory_solver_;  ///< Theory solver containing the variables and the literals
   IterationStats stats_;               ///< Statistics for the preprocessor
-
-  std::unordered_set<Literal> enabled_literals_;             ///< Enabled literals
-  std::unordered_set<Literal> enabled_literals_checkpoint_;  ///< Enabled literals checkpoint
 };
 
 }  // namespace dlinear
