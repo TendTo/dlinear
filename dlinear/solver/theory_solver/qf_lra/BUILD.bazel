@@ -48,13 +48,13 @@ dlinear_cc_library(
 dlinear_cc_library(
     name = "preprocessors",
     srcs = [
-        #        "BoundPreprocessor.cpp",
-        "EqBinomialBoundPreprocessor.cpp",
+        "BoundedPolynomialPreprocessor.cpp",
+        "EqBinomialPreprocessor.cpp",
         "FormulaEvaluatorPreprocessor.cpp",
     ],
     hdrs = [
-        #        "BoundPreprocessor.h",
-        "EqBinomialBoundPreprocessor.h",
+        "BoundedPolynomialPreprocessor.h",
+        "EqBinomialPreprocessor.h",
         "FormulaEvaluatorPreprocessor.h",
     ],
     implementation_deps = [

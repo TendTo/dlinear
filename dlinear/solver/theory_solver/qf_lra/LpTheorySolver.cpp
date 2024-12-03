@@ -10,6 +10,7 @@
 #include <map>
 #include <utility>
 
+#include "BoundedPolynomialPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/EqBinomialPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/FormulaEvaluatorPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/SimpleBoundPropagator.h"
@@ -32,6 +33,8 @@ LpTheorySolver::LpTheorySolver(const PredicateAbstractor &predicate_abstractor, 
     AddPreprocessor(std::make_unique<EqBinomialPreprocessor>(*this, var_bounds, env, class_name));
   if (config_.actual_formula_evaluation_preprocess_step() != Config::ExecutionStep::NEVER)
     AddPreprocessor(std::make_unique<FormulaEvaluatorPreprocessor>(*this, var_bounds, env, class_name));
+  if (config_.actual_bounded_polynomial_preprocess_step() != Config::ExecutionStep::NEVER)
+    AddPreprocessor(std::make_unique<BoundedPolynomialPreprocessor>(*this, var_bounds, env, class_name));
 }
 
 void LpTheorySolver::AddLiterals() {
