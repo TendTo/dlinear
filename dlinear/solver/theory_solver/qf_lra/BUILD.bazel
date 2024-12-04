@@ -144,8 +144,8 @@ dlinear_cc_library(
         "//dlinear/util:infinity",
     ],
     deps = [
-        ":bound_preprocessor",
         ":piecewise_constraint_state",
+        ":preprocessors",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
         "//dlinear/symbolic:literal",
@@ -164,7 +164,6 @@ dlinear_cc_library(
         "//dlinear/util:logging",
     ],
     deps = [
-        ":bound_preprocessor",
         ":piecewise_linear_constraint",
         "//dlinear/libs:gmp",
         "//dlinear/symbolic",
@@ -227,26 +226,6 @@ dlinear_cc_library(
 )
 
 dlinear_cc_library(
-    name = "bound_preprocessor",
-    srcs = ["BoundPreprocessor.cpp"],
-    hdrs = ["BoundPreprocessor.h"],
-    implementation_deps = [
-        "//dlinear/util:error",
-        "//dlinear/util:infinity",
-    ],
-    deps = [
-        ":bound_vector",
-        "//dlinear/libs:gmp",
-        "//dlinear/symbolic",
-        "//dlinear/symbolic:environment",
-        "//dlinear/symbolic:literal",
-        "//dlinear/symbolic:predicate_abstractor",
-        "//dlinear/util:config",
-        "//dlinear/util:logging",
-    ],
-)
-
-dlinear_cc_library(
     name = "lp_theory_solver",
     srcs = [
         "CompleteLpTheorySolver.cpp",
@@ -259,7 +238,6 @@ dlinear_cc_library(
         "LpTheorySolver.h",
     ],
     implementation_deps = [
-        ":bound_preprocessor",
         ":preprocessors",
         ":propagators",
         "//dlinear/util:error",

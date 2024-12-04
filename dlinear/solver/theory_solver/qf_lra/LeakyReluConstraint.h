@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include "EqBinomialPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -66,7 +67,7 @@ class LeakyReluConstraint : public PiecewiseLinearConstraint {
 
   void EnableLiteral(const Variable& var);
 
-  std::set<LiteralSet> TightenBounds(BoundPreprocessor& preprocessor) override;
+  std::set<LiteralSet> TightenBounds(BoundedPolynomialPreprocessor& preprocessor) override;
 
   [[nodiscard]] LiteralSet Assumptions() const override;
 

@@ -44,19 +44,20 @@ void ReluConstraint::EnableLiteral(const Variable&) {
   // DLINEAR_ASSERT(inactive_var_.equal_to(var) || active_var_.equal_to(var), "Invalid variable");
 }
 
-std::set<LiteralSet> ReluConstraint::TightenBounds(BoundPreprocessor& preprocessor) {
+std::set<LiteralSet> ReluConstraint::TightenBounds(BoundedPolynomialPreprocessor& preprocessor) {
   std::set<LiteralSet> explanations;
-  preprocessor.PropagateBoundsPolynomial({active_var_, true}, theory_var_, explanations);
+  auto conflict_cb{[&explanations](const Explanation& explanation) { explanations.insert(explanation); }};
+  preprocessor.PropagateBoundsPolynomial({active_var_, true}, theory_var_, conflict_cb);
   // The active assignment creates a conflict. Fix the constraint to the inactive state.
   if (!explanations.empty()) {
     DLINEAR_DEV_FMT("Failed active because {}", explanations);
-    explanations = preprocessor.EnableLiteral({inactive_var_, true});
+    preprocessor.EnableLiteral({inactive_var_, true}, conflict_cb);
   }
   // Both active and inactive assignments are unsat. Return the explanation for the latter.
   if (!explanations.empty()) return explanations;
 
-  UpdateLowerBound(&preprocessor.theory_bounds().at(theory_var_).active_lower_bound());
-  UpdateUpperBound(&preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
+  UpdateLowerBound(&preprocessor.var_bounds().at(theory_var_).active_lower_bound());
+  UpdateUpperBound(&preprocessor.var_bounds().at(theory_var_).active_upper_bound());
   return {};
 }
 

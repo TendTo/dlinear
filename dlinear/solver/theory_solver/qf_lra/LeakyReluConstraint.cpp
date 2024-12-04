@@ -50,23 +50,26 @@ void LeakyReluConstraint::EnableLiteral(const Variable&) {
   // DLINEAR_ASSERT(inactive_var_.equal_to(var) || active_var_.equal_to(var), "Invalid variable");
 }
 
-std::set<LiteralSet> LeakyReluConstraint::TightenBounds(BoundPreprocessor& preprocessor) {
+std::set<LiteralSet> LeakyReluConstraint::TightenBounds(BoundedPolynomialPreprocessor& preprocessor) {
   std::set<LiteralSet> active_explanations;
   std::set<LiteralSet> inactive_explanations;
 
   const Bound inactive_upper_bound{&zero, LpColBound::U, {inactive_var_, true}, {}};
   const Bound active_lower_bound{&zero, LpColBound::L, {active_var_, true}, {}};
-  preprocessor.PropagateBoundsPolynomial({inactive_var_, true}, theory_var_, {inactive_upper_bound},
-                                         inactive_explanations);
-  preprocessor.PropagateBoundsPolynomial({active_var_, true}, theory_var_, {active_lower_bound}, active_explanations);
+  preprocessor.PropagateBoundsPolynomial(
+      {inactive_var_, true}, theory_var_, {inactive_upper_bound},
+      [&inactive_explanations](const Explanation& explanation) { inactive_explanations.insert(explanation); });
+  preprocessor.PropagateBoundsPolynomial(
+      {active_var_, true}, theory_var_, {active_lower_bound},
+      [&active_explanations](const Explanation& explanation) { active_explanations.insert(explanation); });
   if (!active_explanations.empty() && !inactive_explanations.empty()) {
     return active_explanations;
   }
 
-  DLINEAR_DEV_FMT("Bounds: [{} {}]", preprocessor.theory_bounds().at(theory_var_).active_lower_bound(),
-                  preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
-  UpdateLowerBound(&preprocessor.theory_bounds().at(theory_var_).active_lower_bound());
-  UpdateUpperBound(&preprocessor.theory_bounds().at(theory_var_).active_upper_bound());
+  DLINEAR_DEV_FMT("Bounds: [{} {}]", preprocessor.var_bounds().at(theory_var_).active_lower_bound(),
+                  preprocessor.var_bounds().at(theory_var_).active_upper_bound());
+  UpdateLowerBound(&preprocessor.var_bounds().at(theory_var_).active_lower_bound());
+  UpdateUpperBound(&preprocessor.var_bounds().at(theory_var_).active_upper_bound());
   return {};
 }
 

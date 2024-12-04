@@ -3,9 +3,10 @@
  * @copyright 2024 dlinear
  * @licence Apache-2.0 license
  */
+#include "EqBinomialPreprocessor.h"
+
 #include <unordered_set>
 
-#include "EqBinomialPreprocessor.h"
 #include "QfLraTheorySolver.h"
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/solver/theory_solver/TheorySolver.h"
@@ -14,9 +15,8 @@
 namespace dlinear {
 
 EqBinomialPreprocessor::EqBinomialPreprocessor(const TheorySolver& theory_solver,
-                                                         const std::shared_ptr<BoundVectorMap>& var_bounds,
-                                                         const std::shared_ptr<Environment>& env,
-                                                         const std::string& class_name)
+                                               const std::shared_ptr<BoundVectorMap>& var_bounds,
+                                               const std::shared_ptr<Environment>& env, const std::string& class_name)
     : TheoryPreprocessor{theory_solver, class_name}, var_bounds_{var_bounds}, env_{env}, graph_{} {
   DLINEAR_ASSERT(var_bounds_ != nullptr, "The var_bounds must not be null");
   DLINEAR_ASSERT(env_ != nullptr, "The env must not be null");

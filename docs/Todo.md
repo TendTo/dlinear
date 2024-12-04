@@ -67,7 +67,8 @@
 - [x] At the end of the introduction add a paragraph on the structure of the paper
 - [x] Add a survey of the state of the art SMT solvers
 - [x] Move current technical introduction to another section (Preliminaries)
-- [ ] Artifact evaluation
+- [x] Artifact evaluation
+- [x] Rejection
 
 ## Future work
 

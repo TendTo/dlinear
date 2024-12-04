@@ -5,7 +5,6 @@
  */
 #include "DeltaLpTheorySolver.h"
 
-#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
 #include "dlinear/util/error.h"
 
 namespace dlinear {

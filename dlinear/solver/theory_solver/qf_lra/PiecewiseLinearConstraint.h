@@ -10,7 +10,7 @@
 #include <optional>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundedPolynomialPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseConstraintState.h"
 #include "dlinear/symbolic/literal.h"
 #include "dlinear/symbolic/symbolic.h"
@@ -59,7 +59,7 @@ class PiecewiseLinearConstraint {
    * @param preprocessor preprocessor to use to tighten the bounds
    * @return explanation of why the inactive state of this constraint is unsat
    */
-  virtual std::set<LiteralSet> TightenBounds(BoundPreprocessor& preprocessor) = 0;
+  virtual std::set<LiteralSet> TightenBounds(BoundedPolynomialPreprocessor& preprocessor) = 0;
 
   /**
    * Print the constraint on the standard output

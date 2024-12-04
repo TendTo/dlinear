@@ -10,7 +10,7 @@
 #include <set>
 
 #include "dlinear/libs/libgmp.h"
-#include "dlinear/solver/theory_solver/qf_lra/BoundPreprocessor.h"
+#include "dlinear/solver/theory_solver/qf_lra/BoundedPolynomialPreprocessor.h"
 #include "dlinear/solver/theory_solver/qf_lra/PiecewiseLinearConstraint.h"
 #include "dlinear/symbolic/PredicateAbstractor.h"
 #include "dlinear/symbolic/literal.h"
@@ -66,7 +66,7 @@ class ReluConstraint : public PiecewiseLinearConstraint {
 
   void EnableLiteral(const Variable& var);
 
-  std::set<LiteralSet> TightenBounds(BoundPreprocessor& preprocessor) override;
+  std::set<LiteralSet> TightenBounds(BoundedPolynomialPreprocessor& preprocessor) override;
 
   [[nodiscard]] LiteralSet Assumptions() const override;
 

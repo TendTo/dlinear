@@ -33,7 +33,7 @@ void BoundedPolynomialPreprocessor::AddVariable(const Variable& var) {
   //                                          Infinity::infinity(predicate_abstractor_.config())});
 }
 
-bool BoundedPolynomialPreprocessor::EnableLiteral(const Literal& lit, const ConflictCallback& conflict_cb) {
+bool BoundedPolynomialPreprocessor::EnableLiteral(const Literal& lit, const ConflictCallback&) {
   DLINEAR_TRACE_FMT("BoundedPolynomialPreprocessor::EnableConstraint({})", lit);
   const Formula& formula = theory_solver_.predicate_abstractor()[lit.var];
   // If the literal only contains one variable, or it's a not-equal-to relationship there is no need to evaluate it
@@ -120,8 +120,7 @@ bool BoundedPolynomialPreprocessor::PropagateEqPolynomial(const Literal& lit, co
     bound.explanation.insert(dependency_explanation.begin(), dependency_explanation.end());
   }
 
-  const bool added = var_bounds_->at(var_to_propagate).AddBound(bound, conflict_cb);
-  if (!added) {
+  if (const bool added = var_bounds_->at(var_to_propagate).AddBound(bound, conflict_cb); !added) {
     DLINEAR_DEBUG_FMT("BoundCheckerPreprocessor::PropagateConstraints: conflict found on {}", lit);
     // Remove the propagated constraint from the environment
     env_->erase(env_it);
@@ -138,8 +137,7 @@ bool BoundedPolynomialPreprocessor::PropagateBoundsPolynomial(const Literal& lit
   BoundVector& bounds = var_bounds_->at(var_to_propagate);
   DLINEAR_DEV_FMT("Bounds initial: {}", bounds);
   for (auto assumption = assumptions.begin(); assumption != assumptions.end(); ++assumption) {
-    BoundIterator violation{bounds.AddBound(*assumption)};
-    if (!violation.empty()) {
+    if (BoundIterator violation{bounds.AddBound(*assumption)}; !violation.empty()) {
       for (auto added_assumption = assumptions.begin(); added_assumption != assumption; ++added_assumption) {
         bounds.RemoveBound(*added_assumption);
       }
@@ -214,8 +212,7 @@ bool BoundedPolynomialPreprocessor::PropagateBoundsPolynomial(const Literal& lit
       DLINEAR_ASSERT_FMT(l_explanation == u_explanation, "The explanations must be the same. {} vs {} instead",
                          l_explanation, u_explanation);
       const Bound bound{StoreTemporaryMpq(l_rhs), LpColBound::B, lit, l_explanation};
-      BoundIterator violation{var_bounds.AddBound(bound)};
-      if (!violation.empty()) {
+      if (BoundIterator violation{var_bounds.AddBound(bound)}; !violation.empty()) {
         l_explanation.insert(lit);
         // temporary_mpq_vector_.pop_back();  // Remove the unused bound
         violation.explanation(l_explanation);
@@ -232,8 +229,7 @@ bool BoundedPolynomialPreprocessor::PropagateBoundsPolynomial(const Literal& lit
     // The two bounds are different. Add the lower and upper bounds to the variable
     const Bound lower_bound{StoreTemporaryMpq(l_rhs), LpColBound::L, lit, l_explanation};
     if (l_rhs >= var_bounds.active_lower_bound()) {
-      BoundIterator violation{var_bounds.AddBound(lower_bound)};
-      if (!violation.empty()) {
+      if (BoundIterator violation{var_bounds.AddBound(lower_bound)}; !violation.empty()) {
         temporary_mpq_vector_.pop_back();  // Remove the unused lower bound
         l_explanation.insert(lit);
         violation.explanation(l_explanation);
@@ -247,8 +243,7 @@ bool BoundedPolynomialPreprocessor::PropagateBoundsPolynomial(const Literal& lit
     }
     const Bound upper_bound{StoreTemporaryMpq(u_rhs), LpColBound::U, lit, u_explanation};
     if (u_rhs <= var_bounds.active_upper_bound()) {
-      BoundIterator violation{var_bounds.AddBound(upper_bound)};
-      if (!violation.empty()) {
+      if (BoundIterator violation{var_bounds.AddBound(upper_bound)}; !violation.empty()) {
         temporary_mpq_vector_.pop_back();  // Remove the unused upper bound
         // Also remove the unused lower bound, if had been added in the previous step
         if (var_bounds.RemoveBound(lower_bound)) temporary_mpq_vector_.pop_back();
@@ -301,8 +296,7 @@ bool BoundedPolynomialPreprocessor::PropagateBoundsPolynomial(const Literal& lit
   //  fmt::println("BoundCheckerPreprocessor::PropagateConstraints: {} = [{}, {}] thanks to constraint {} and {}",
   //  var_propagated,
   //               l_rhs, u_rhs, lit, dependencies);
-  BoundIterator violation{var_bounds.AddBound(bound)};
-  if (!violation.empty()) {
+  if (BoundIterator violation{var_bounds.AddBound(bound)}; !violation.empty()) {
     bound.explanation.insert(lit);
     temporary_mpq_vector_.pop_back();  // Remove the unused bound
     violation.explanation(bound.explanation);
