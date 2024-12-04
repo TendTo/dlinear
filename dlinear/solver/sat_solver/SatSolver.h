@@ -55,10 +55,8 @@ class SatSolver {
   virtual void Pop() = 0;
   /**
    * Add a formula @p f to the solver.
-   * @note If @p f is a clause, please use @ref AddClause function. This
-   * function does not assume anything about @p f and perform
-   * pre-processing (CNFize and PredicateAbstraction).
-   *
+   * @note If @p f is a clause, please use @ref AddClause function.
+   * This function does not assume anything about @p f and perform pre-processing (CNFize and PredicateAbstraction).
    * @param f formula to add
    */
   void AddFormula(const Formula &f);
@@ -77,7 +75,7 @@ class SatSolver {
    */
   void AddClause(const Formula &f);
   /**
-   * Add a vector of formulas @p formulas to the solver.
+   * Add a vector of @p formulas to the solver.
    * Each formula must be a clause. That is, it is either a literal (b or ¬b)
    * or a disjunction of literals (l₁ ∨ ... ∨ lₙ).
    *
