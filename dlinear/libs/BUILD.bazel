@@ -15,6 +15,16 @@ dlinear_srcs(
 )
 
 dlinear_cc_library(
+    name = "eigen",
+    srcs = ["libeigen.cpp"],
+    hdrs = ["libeigen.h"],
+    deps = [
+        "@eigen",
+        "@gmp//:gmpxx",
+    ],
+)
+
+dlinear_cc_library(
     name = "gmp",
     srcs = ["libgmp.cpp"],
     hdrs = ["libgmp.h"],

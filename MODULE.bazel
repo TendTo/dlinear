@@ -47,6 +47,9 @@ bazel_dep(name = "onnx", version = "1.16.2")
 # MIT | C++ json library
 bazel_dep(name = "nlohmann_json", version = "3.11.3")
 
+# Mozilla Public License 2.0 | C++ library that handles matrices and vectors
+bazel_dep(name = "eigen", version = "3.4.0.bcr.1")
+
 # https://github.com/cpplint/cpplint/blob/develop/LICENSE | Google C++ Style Guide
 bazel_dep(name = "cpplint", version = "1.6.1", dev_dependency = True)
 
