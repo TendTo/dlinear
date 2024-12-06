@@ -12,6 +12,19 @@ dlinear_srcs(
 )
 
 dlinear_cc_library(
+    name = "tableau",
+    srcs = ["Tableau.cpp"],
+    hdrs = ["Tableau.h"],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = [
+        "//dlinear/libs:eigen",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic:literal",
+        "//dlinear/util:logging",
+    ],
+)
+
+dlinear_cc_library(
     name = "lp_sense",
     srcs = ["LpRowSense.cpp"],
     hdrs = ["LpRowSense.h"],

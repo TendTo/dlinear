@@ -33,6 +33,10 @@ std::strong_ordering operator<=>(const mpq_t &lhs, const mpq_class &rhs);
 
 namespace gmp {
 
+inline std::size_t complexity(const mpq_class &val) {
+  return mpz_size(val.get_num().get_mpz_t()) + mpz_size(val.get_den().get_mpz_t());
+}
+
 /**
  * Calculate the floor of a rational number.
  * @param val The rational number.
