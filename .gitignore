@@ -15,5 +15,6 @@ generated/
 /deps/
 .vscode
 *.pyc
-
+/cmake-build-debug/
+/.idea/
 
