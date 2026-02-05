@@ -135,6 +135,7 @@ option(USE_EDITLINE      "Use Editline for better interactive support")
 option(USE_GLPK          "Use GLPK simplex solver")
 option(USE_KISSAT        "Use Kissat SAT solver")
 option(USE_POLY          "Use LibPoly for polynomial arithmetic")
+option(USE_SOPLEX        "Use SoPlex simplex solver")
 
 # Custom install directories for dependencies
 # If no directory is provided by the user, we first check if the dependency was
@@ -566,6 +567,11 @@ if(USE_GLPK)
   set(GPL_LIBS "${GPL_LIBS} glpk")
   find_package(GLPK REQUIRED)
   add_definitions(-DCVC5_USE_GLPK)
+endif()
+
+if(USE_SOPLEX)
+  find_package(soplex REQUIRED)
+  add_definitions(-DCVC5_USE_SOPLEX)
 endif()
 
 if(USE_KISSAT)
