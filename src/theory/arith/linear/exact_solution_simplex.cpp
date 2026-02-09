@@ -54,7 +54,7 @@ bool ExactSolutionSDP::matchesNewValue(const DenseMap<DeltaRational>& nv,
   return nv[v] == d_variables.getAssignment(v);
 }
 
-Result::Status ExactSolutionSDP::attempt(const ExactSimplex::Solution& sol)
+Result::Status ExactSolutionSDP::attempt(const external::Solution& sol)
 {
   const DenseSet& newBasis = sol.newBasis;
   const DenseMap<DeltaRational>& newValues = sol.newValues;

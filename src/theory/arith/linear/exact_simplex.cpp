@@ -50,7 +50,7 @@ struct AuxInfo
   int pivotLimit;
   int branchLimit;
   int branchDepth;
-  exact::MipResult term; /* terminatation */
+  external::MipResult term; /* terminatation */
 };
 
 enum SlackReplace
@@ -159,13 +159,19 @@ class ExactSoplex : public ExactSimplex
  public:
   ExactSoplex(const ArithVariables& v, TreeLog& l, ExactStatistics& s);
 
-  exact::LinResult solveRelaxation() override;
-  Solution extractRelaxation() const override { return extractSolution(false); }
+  external::LinResult solveRelaxation() override;
+  external::Solution extractRelaxation() const override
+  {
+    return extractSolution(false);
+  }
 
   ArithRatPairVec heuristicOptCoeffs() const override;
 
-  exact::MipResult solveMIP(bool al) override;
-  Solution extractMIP() const override { return extractSolution(true); }
+  external::MipResult solveMIP(bool al) override;
+  external::Solution extractMIP() const override
+  {
+    return extractSolution(true);
+  }
   void setOptCoeffs(const ArithRatPairVec& ref) override;
   std::vector<const CutInfo*> getValidCuts(const NodeLog& nodes) override;
   ArithVar getBranchVar(const NodeLog& con) const override;
@@ -189,7 +195,7 @@ class ExactSoplex : public ExactSimplex
   bool hasStrictLb(ArithVar v) const;
   bool hasStrictUB(ArithVar v) const;
 
-  Solution extractSolution(bool mip) const;
+  external::Solution extractSolution(bool mip) const;
   int guessDir(ArithVar v) const;
 
   // get this stuff out of here
@@ -724,6 +730,9 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
   // Add both columns and rows to the LP
   d_spx.addColsRational(cols);
   d_spx.addRowsRational(rows);
+
+  d_spx.writeFile(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
 }
 
 soplex::Rational ExactSoplex::varToLb(const ArithVar v) const
@@ -1055,12 +1064,12 @@ void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
-ExactSoplex::Solution ExactSoplex::extractSolution(bool mip) const
+external::Solution ExactSoplex::extractSolution(bool mip) const
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
 
-  ExactSoplex::Solution sol;
+  external::Solution sol;
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
@@ -1288,7 +1297,7 @@ double ExactSoplex::sumInfeasibilities(SoPlex& prob, bool mip) const
   return static_cast<double>(sumRowViolation + sumBoundViolation);
 }
 
-exact::LinResult ExactSoplex::solveRelaxation()
+external::LinResult ExactSoplex::solveRelaxation()
 {
   Assert(!d_solvedRelaxation);
 
@@ -1296,20 +1305,24 @@ exact::LinResult ExactSoplex::solveRelaxation()
   // glp_copy_prob(d_realProb, d_inputProb, GLP_OFF);
 
   using SpxStatus = soplex::SPxSolverBase<double>::Status;
+  soplex::VectorRational x(d_colToArithVar.size() + 1);
+
   const SpxStatus res = d_spx.optimize();
   switch (res)
   {
     case SpxStatus::OPTIMAL:
-    case SpxStatus::UNBOUNDED:
+      d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
-      return exact::LinResult::LinFeasible;
+      return x[d_colToArithVar.size()].is_zero()
+                 ? external::LinResult::LinInfeasible
+                 : external::LinResult::LinFeasible;
     case SpxStatus::INFEASIBLE:
       d_solvedRelaxation = true;
-      return exact::LinResult::LinInfeasible;
+      return external::LinResult::LinInfeasible;
     case SpxStatus::ABORT_ITER:
     case SpxStatus::ABORT_TIME:
-    case SpxStatus::ABORT_CYCLING: return exact::LinResult::LinExhausted;
-    default: return exact::LinResult::LinUnknown;
+    case SpxStatus::ABORT_CYCLING: return external::LinResult::LinExhausted;
+    default: return external::LinResult::LinUnknown;
   }
 }
 
@@ -1812,7 +1825,7 @@ ArithVar ExactSoplex::getBranchVar(const NodeLog& con) const
   return getArithVarFromStructural(br_var);
 }
 
-exact::MipResult ExactSoplex::solveMIP(bool activelyLog)
+external::MipResult ExactSoplex::solveMIP(bool activelyLog)
 {
   Assert(d_solvedRelaxation);
   // Explicitly disable presolving
@@ -1823,7 +1836,7 @@ exact::MipResult ExactSoplex::solveMIP(bool activelyLog)
   aux.branchLimit = d_branchLimit;
   aux.branchDepth = d_maxDepth;
   aux.tl = &d_log;
-  aux.term = exact::MipResult::MipUnknown;
+  aux.term = external::MipResult::MipUnknown;
 
   // TODO: does this reset matter? or is it just logging?
   // d_log.reset(d_rootRowIds);
@@ -3660,21 +3673,6 @@ ExactStatistics::ExactStatistics(StatisticsRegistry& sr)
           sr.registerInt("z::approx::gaussianElimConstruct::calls")),
       d_averageGuesses(sr.registerAverage("z::approx::averageGuesses"))
 {
-}
-
-std::ostream& operator<<(std::ostream& out, exact::MipResult res)
-{
-  switch (res)
-  {
-    case exact::MipResult::MipUnknown: out << "MipUnknown"; break;
-    // case MipBingo: out << "MipBingo"; break;
-    // case MipClosed: out << "MipClosed"; break;
-    // case BranchesExhausted: out << "BranchesExhausted"; break;
-    // case PivotsExhauasted: out << "PivotsExhauasted"; break;
-    // case Exhausted: out << "ExecExhausted"; break;
-    default: out << "Unexpected Mip Value!"; break;
-  }
-  return out;
 }
 
 }  // namespace arith::linear

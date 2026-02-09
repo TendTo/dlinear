@@ -50,6 +50,7 @@
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/approx_simplex.h"
 #include "theory/arith/linear/exact_simplex.h"
+#include "theory/arith/linear/external_simplex.h"
 #include "theory/arith/linear/arith_static_learner.h"
 #include "theory/arith/linear/arithvar.h"
 #include "theory/arith/linear/congruence_manager.h"
@@ -82,6 +83,9 @@ using namespace cvc5::internal::kind;
 namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
+
+using external::LinResult;
+using external::MipResult;
 
 static Node toSumNode(NodeManager* nm,
                       const ArithVariables& vars,
@@ -2757,8 +2761,8 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
     approx->setBranchingDepth(maxDepthPass1);
     approx->setBranchOnVariableLimit(100);
     LinResult relaxRes = approx->solveRelaxation();
-    if( relaxRes == LinFeasible ){
-      MipResult mipRes = MipUnknown;
+    if( relaxRes == LinResult::LinFeasible ){
+      MipResult mipRes = MipResult::MipUnknown;
       {
         TimerStat::CodeTimer codeTimer1(d_statistics.d_mipTimer);
         mipRes = approx->solveMIP(false);
@@ -2766,7 +2770,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
 
       Trace("arith::solveInteger") << "mipRes " << mipRes << endl;
       switch(mipRes) {
-      case MipBingo:
+      case MipResult::MipBingo:
         // attempt the solution
         {
           ++(d_statistics.d_solveIntModelsAttempts);
@@ -2776,7 +2780,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
           d_partialModel.processBoundsQueue(utcb);
           d_linEq.startTrackingBoundCounts();
 
-          ApproximateSimplex::Solution mipSolution;
+          external::Solution mipSolution;
           mipSolution = approx->extractMIP();
           importSolution(mipSolution);
           solveRelaxationOrPanic(effortLevel);
@@ -2797,7 +2801,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
           d_partialModel.startQueueingBoundCounts();
         }
         break;
-      case MipClosed:
+      case MipResult::MipClosed:
         /* All integer branches closed */
         approx->setPivotLimit(2*mipLimit);
         {
@@ -2805,7 +2809,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
           mipRes = approx->solveMIP(true);
         }
 
-        if(mipRes == MipClosed){
+        if(mipRes == MipResult::MipClosed){
           d_likelyIntegerInfeasible = true;
           replayLog(approx);
           AlwaysAssert(anyConflict() || d_qflraStatus != Result::SAT);
@@ -2819,14 +2823,14 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
           turnOffApproxFor(options().arith.replayNumericFailurePenalty);
         }
         break;
-      case BranchesExhausted:
-      case ExecExhausted:
-      case PivotsExhauasted:
-        if(mipRes == BranchesExhausted){
+      case MipResult::BranchesExhausted:
+      case MipResult::ExecExhausted:
+      case MipResult::PivotsExhauasted:
+        if(mipRes == MipResult::BranchesExhausted){
           ++d_statistics.d_branchesExhausted;
-        }else if(mipRes == ExecExhausted){
+        }else if(mipRes == MipResult::ExecExhausted){
           ++d_statistics.d_execExhausted;
-        }else if(mipRes == PivotsExhauasted){
+        }else if(mipRes == MipResult::PivotsExhauasted){
           ++d_statistics.d_pivotsExhausted;
         }
 
@@ -2838,7 +2842,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
         }
         replayLemmas(approx);
         break;
-      case MipUnknown:
+      case MipResult::MipUnknown:
         break;
       }
     }
@@ -2891,7 +2895,7 @@ SimplexDecisionProcedure& TheoryArithPrivate::selectSimplex(bool pass1){
   }
 }
 
-void TheoryArithPrivate::importSolution(const ApproximateSimplex::Solution& solution){
+void TheoryArithPrivate::importSolution(const external::Solution& solution){
   if(TraceIsOn("arith::importSolution")){
     Trace("arith::importSolution") << "importSolution before " << d_qflraStatus << endl;
     d_partialModel.printEntireModel(Trace("arith::importSolution"));
@@ -2989,11 +2993,11 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
     ApproximateSimplex* approxSolver =
       ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
 
-    ExactSimplex* exact_simplex =
+    ExactSimplex* exactSolver =
       ExactSimplex::mkExactSimplexSolver(d_partialModel, tl, getExactStats());
 
     approxSolver->setPivotLimit(relaxationLimit);
-    exact_simplex->setPivotLimit(relaxationLimit);
+    exactSolver->setPivotLimit(relaxationLimit);
 
     if(!d_guessedCoeffSet){
       d_guessedCoeffs = approxSolver->heuristicOptCoeffs();
@@ -3005,15 +3009,42 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
 
     ++d_statistics.d_relaxCalls;
 
-    ApproximateSimplex::Solution relaxSolution;
-    LinResult relaxRes = LinUnknown;
+    external::Solution relaxSolution;
+    external::Solution exactSolution;
+    LinResult relaxRes = LinResult::LinUnknown;
+    LinResult exactRes = LinResult::LinUnknown;
     {
       TimerStat::CodeTimer codeTimer1(d_statistics.d_lpTimer);
       relaxRes = approxSolver->solveRelaxation();
     }
+    {
+      TimerStat::CodeTimer codeTimer1(d_statistics.d_lpTimer);
+      exactRes = exactSolver->solveRelaxation();
+    }
       Trace("solveRealRelaxation") << "solve relaxation? " << endl;
+      switch (exactRes){
+        case LinResult::LinFeasible:
+          Trace("solveRealRelaxation") << "exact feasible" << endl;
+          ++d_statistics.d_relaxLinFeas;
+          exactSolution = exactSolver->extractRelaxation();
+          importSolution(exactSolution);
+          if(d_qflraStatus != Result::SAT){
+            ++d_statistics.d_relaxLinFeasFailures;
+          }
+          break;
+        case LinResult::LinInfeasible:
+          Trace("solveRealRelaxation") << "exact infeasible" << endl;
+          ++d_statistics.d_relaxLinInfeas;
+          break;
+        case LinResult::LinExhausted:
+          Trace("solveRealRelaxation") << "exact exhausted" << endl;
+          ++d_statistics.d_relaxLinExhausted;
+          break;
+        default:
+          ++d_statistics.d_relaxOthers;
+      }
       switch(relaxRes){
-      case LinFeasible:
+      case LinResult::LinFeasible:
         Trace("solveRealRelaxation") << "lin feasible? " << endl;
         ++d_statistics.d_relaxLinFeas;
         relaxSolution = approxSolver->extractRelaxation();
@@ -3022,7 +3053,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
           ++d_statistics.d_relaxLinFeasFailures;
         }
         break;
-      case LinInfeasible:
+      case LinResult::LinInfeasible:
         // todo attempt to recreate approximate conflict
         ++d_statistics.d_relaxLinInfeas;
         Trace("solveRealRelaxation") << "lin infeasible " << endl;
@@ -3032,17 +3063,17 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
           ++d_statistics.d_relaxLinInfeasFailures;
         }
         break;
-      case LinExhausted:
+      case LinResult::LinExhausted:
         ++d_statistics.d_relaxLinExhausted;
         Trace("solveRealRelaxation") << "exhuasted " << endl;
         break;
-      case LinUnknown:
+      case LinResult::LinUnknown:
       default:
         ++d_statistics.d_relaxOthers;
         break;
       }
     delete approxSolver;
-
+    delete exactSolver;
   }
 
   bool emmittedConflictOrSplit = solveRelaxationOrPanic(effortLevel);

@@ -43,6 +43,10 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
+using external::MipResult;
+using external::LinResult;
+using external::Solution;
+
 struct AuxInfo {
   TreeLog* tl;
   int pivotLimit;
@@ -935,12 +939,12 @@ ApproxGLPK::~ApproxGLPK(){
 
 }
 
-ApproxGLPK::Solution ApproxGLPK::extractSolution(bool mip) const
+Solution ApproxGLPK::extractSolution(bool mip) const
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
 
-  ApproxGLPK::Solution sol;
+  Solution sol;
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
@@ -1148,22 +1152,22 @@ LinResult ApproxGLPK::solveRelaxation(){
       case GLP_FEAS:
       case GLP_UNBND:
         d_solvedRelaxation = true;
-        return LinFeasible;
+        return LinResult::LinFeasible;
       case GLP_INFEAS:
       case GLP_NOFEAS:
         d_solvedRelaxation = true;
-        return LinInfeasible;
+        return LinResult::LinInfeasible;
       default:
         {
           if(iterationcount >= d_pivotLimit){
-            return LinExhausted;
+            return LinResult::LinExhausted;
           }
-          return LinUnknown;
+          return LinResult::LinUnknown;
         }
       }
     }
   default:
-    return LinUnknown;
+    return LinResult::LinUnknown;
   }
 }
 
@@ -1562,7 +1566,7 @@ static void glpkCallback(glp_tree *tree, void *info){
   switch(glp_ios_reason(tree)){
   case GLP_IBINGO:
     Trace("approx::") << "bingo" << std::endl;
-    aux->term = MipBingo;
+    aux->term = MipResult::MipBingo;
     glp_ios_terminate(tree);
     break;
   case GLP_ICUTADDED:
@@ -1581,7 +1585,7 @@ static void glpkCallback(glp_tree *tree, void *info){
         int depth = glp_ios_node_level(tree, p);
         unsigned ubl =  (aux->branchLimit) >= 0 ? ((unsigned)(aux->branchLimit)) : 0u;
         if(tl.numBranches(v) >= ubl || depth >= (aux->branchDepth)){
-          aux->term = BranchesExhausted;
+          aux->term = MipResult::BranchesExhausted;
           glp_ios_terminate(tree);
         }
       }
@@ -1594,10 +1598,10 @@ static void glpkCallback(glp_tree *tree, void *info){
       glp_prob* prob = glp_ios_get_prob(tree);
       int iterationcount = glp_get_it_cnt(prob);
       if(exec > (aux->pivotLimit)){
-        aux->term = ExecExhausted;
+        aux->term = MipResult::ExecExhausted;
         glp_ios_terminate(tree);
       }else if(iterationcount > (aux->pivotLimit)){
-        aux->term = PivotsExhauasted;
+        aux->term = MipResult::PivotsExhauasted;
         glp_ios_terminate(tree);
       }
     }
@@ -1642,7 +1646,7 @@ MipResult ApproxGLPK::solveMIP(bool activelyLog){
   aux.branchLimit = d_branchLimit;
   aux.branchDepth = d_maxDepth;
   aux.tl = &d_log;
-  aux.term = MipUnknown;
+  aux.term = MipResult::MipUnknown;
 
   d_log.reset(d_rootRowIds);
   if(activelyLog){
@@ -1686,12 +1690,12 @@ MipResult ApproxGLPK::solveMIP(bool activelyLog){
       case GLP_FEAS:
         d_solvedMIP = true;
         Trace("approx::") << "bingo here!" << std::endl;
-        return MipBingo;
+        return MipResult::MipBingo;
       case GLP_NOFEAS:
         d_solvedMIP = true;
-        return MipClosed;
+        return MipResult::MipClosed;
       default:
-        if(aux.term == MipBingo){
+        if(aux.term == MipResult::MipBingo){
           d_solvedMIP = true;
           Trace("approx::") << "bingo here?" << std::endl;
         }
@@ -1699,7 +1703,7 @@ MipResult ApproxGLPK::solveMIP(bool activelyLog){
       }
     }
   default:
-    return MipUnknown;
+    return MipResult::MipUnknown;
   }
 }
 
@@ -3172,21 +3176,6 @@ ApproximateStatistics::ApproximateStatistics(StatisticsRegistry& sr)
           sr.registerInt("z::approx::gaussianElimConstruct::calls")),
       d_averageGuesses(sr.registerAverage("z::approx::averageGuesses"))
 {
-}
-
-std::ostream& operator<<(std::ostream& out, MipResult res)
-{
-  switch (res)
-  {
-    case MipUnknown: out << "MipUnknown"; break;
-    case MipBingo: out << "MipBingo"; break;
-    case MipClosed: out << "MipClosed"; break;
-    case BranchesExhausted: out << "BranchesExhausted"; break;
-    case PivotsExhauasted: out << "PivotsExhauasted"; break;
-    case ExecExhausted: out << "ExecExhausted"; break;
-    default: out << "Unexpected Mip Value!"; break;
-  }
-  return out;
 }
 
 }  // namespace arith::linear

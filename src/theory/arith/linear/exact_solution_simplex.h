@@ -72,7 +72,7 @@ class ExactSolutionSDP : public SimplexDecisionProcedure
                    RaiseConflict conflictChannel,
                    TempVarMalloc tvmalloc);
 
-  Result::Status attempt(const ExactSimplex::Solution& sol);
+  Result::Status attempt(const external::Solution& sol);
 
   Result::Status findModel(CVC5_UNUSED bool exactResult) override
   {

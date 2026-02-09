@@ -56,6 +56,7 @@
 #pragma once
 
 #include "theory/arith/linear/approx_simplex.h"
+#include "theory/arith/linear/external_simplex.h"
 #include "theory/arith/linear/simplex.h"
 #include "util/statistics_stats.h"
 
@@ -71,7 +72,7 @@ public:
                     RaiseConflict conflictChannel,
                     TempVarMalloc tvmalloc);
 
- Result::Status attempt(const ApproximateSimplex::Solution& sol);
+ Result::Status attempt(const external::Solution& sol);
 
  Result::Status findModel(CVC5_UNUSED bool exactResult) override
  {

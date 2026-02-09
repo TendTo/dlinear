@@ -25,6 +25,7 @@
 
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
+#include "theory/arith/linear/external_simplex.h"
 #include "util/dense_map.h"
 #include "util/rational.h"
 #include "util/statistics_stats.h"
@@ -32,23 +33,6 @@
 namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
-
-namespace exact {
-
-enum class LinResult
-{
-  LinUnknown,    /* Unknown error */
-  LinFeasible,   /* Relaxation is feasible */
-  LinInfeasible, /* Relaxation is infeasible/all integer branches closed */
-  LinExhausted
-};
-
-enum class MipResult
-{
-  MipUnknown,  /* Unknown error */
-};
-
-}
 
 class ExactStatistics
 {
@@ -84,14 +68,6 @@ class ExactSimplex
   ExactSimplex() = default;
   virtual ~ExactSimplex() {}
 
-  /** A result is either sat, unsat or unknown.*/
-  struct Solution
-  {
-    DenseSet newBasis;
-    DenseMap<DeltaRational> newValues;
-    Solution() : newBasis(), newValues() {}
-  };
-
   /* maximum branches allowed on a variable */
   virtual void setBranchingDepth(int bd) = 0;
 
@@ -122,13 +98,13 @@ class ExactSimplex
   /* maximum branches allowed on a variable */
   virtual void setBranchOnVariableLimit(int bl) = 0;
 
-  virtual exact::LinResult solveRelaxation() = 0;
+  virtual external::LinResult solveRelaxation() = 0;
 
-  virtual exact::MipResult solveMIP(bool activelyLog) = 0;
+  virtual external::MipResult solveMIP(bool activelyLog) = 0;
 
-  virtual Solution extractMIP() const = 0;
+  virtual external::Solution extractMIP() const = 0;
 
-  virtual Solution extractRelaxation() const = 0;
+  virtual external::Solution extractRelaxation() const = 0;
 }; /* class ApproximateSimplex */
 
 }  // namespace arith::linear

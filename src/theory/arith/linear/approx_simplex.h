@@ -25,6 +25,7 @@
 
 #include "theory/arith/linear/arithvar.h"
 #include "theory/arith/delta_rational.h"
+#include "theory/arith/linear/external_simplex.h"
 #include "util/dense_map.h"
 #include "util/rational.h"
 #include "util/statistics_stats.h"
@@ -32,23 +33,6 @@
 namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
-
-enum LinResult {
-  LinUnknown,  /* Unknown error */
-  LinFeasible, /* Relaxation is feasible */
-  LinInfeasible,   /* Relaxation is infeasible/all integer branches closed */
-  LinExhausted
-};
-
-enum MipResult {
-  MipUnknown,  /* Unknown error */
-  MipBingo,    /* Integer feasible */
-  MipClosed,   /* All integer branches closed */
-  BranchesExhausted, /* Exhausted number of branches */
-  PivotsExhauasted,  /* Exhausted number of pivots */
-  ExecExhausted      /* Exhausted total operations */
-};
-std::ostream& operator<<(std::ostream& out, MipResult res);
 
 class ApproximateStatistics {
  public:
@@ -82,13 +66,6 @@ class ApproximateSimplex{
   ApproximateSimplex() = default;
   virtual ~ApproximateSimplex() {}
 
-  /** A result is either sat, unsat or unknown.*/
-  struct Solution {
-    DenseSet newBasis;
-    DenseMap<DeltaRational> newValues;
-    Solution() : newBasis(), newValues(){}
-  };
-
   /* maximum branches allowed on a variable */
   virtual void setBranchingDepth(int bd) = 0;
 
@@ -119,13 +96,13 @@ class ApproximateSimplex{
   /* maximum branches allowed on a variable */
   virtual void setBranchOnVariableLimit(int bl) = 0;
 
-  virtual LinResult solveRelaxation() = 0;
+  virtual external::LinResult solveRelaxation() = 0;
 
-  virtual MipResult solveMIP(bool activelyLog) = 0;
+  virtual external::MipResult solveMIP(bool activelyLog) = 0;
 
-  virtual Solution extractMIP() const = 0;
+  virtual external::Solution extractMIP() const = 0;
 
-  virtual Solution extractRelaxation() const = 0;
+  virtual external::Solution extractRelaxation() const = 0;
 };/* class ApproximateSimplex */
 
 }  // namespace arith
