@@ -30,6 +30,7 @@
 #include "expr/node_builder.h"
 #include "proof/trust_node.h"
 #include "theory/arith/arith_utilities.h"
+#include "theory/arith/linear/exact_simplex.h"
 #include "theory/arith/branch_and_bound.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arith_static_learner.h"
@@ -735,6 +736,8 @@ private:
   /* Approximate simpplex solvers are given a copy of their stats */
   ApproximateStatistics* d_approxStats;
   ApproximateStatistics& getApproxStats();
+  ExactStatistics* d_exactStats;
+  ExactStatistics& getExactStats();
   context::CDO<int32_t> d_attemptSolveIntTurnedOff;
   void turnOffApproxFor(int32_t rounds);
   bool getSolveIntegerResource();

@@ -49,6 +49,7 @@
 #include "theory/arith/arith_utilities.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/approx_simplex.h"
+#include "theory/arith/linear/exact_simplex.h"
 #include "theory/arith/linear/arith_static_learner.h"
 #include "theory/arith/linear/arithvar.h"
 #include "theory/arith/linear/congruence_manager.h"
@@ -2575,6 +2576,13 @@ ApproximateStatistics& TheoryArithPrivate::getApproxStats(){
   return *d_approxStats;
 }
 
+ExactStatistics& TheoryArithPrivate::getExactStats(){
+  if(d_exactStats == NULL){
+    d_exactStats = new ExactStatistics(statisticsRegistry());
+  }
+  return *d_exactStats;
+}
+
 Node TheoryArithPrivate::branchToNode(ApproximateSimplex* approx,
                                       const NodeLog& bn) const
 {
@@ -2964,6 +2972,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
       << safeToCallApprox() << endl;
 
   bool noPivotLimitPass1 = noPivotLimit && !useApprox;
+  simplex.setVarOrderPivotLimit(options().arith.arithStandardCheckVarOrderPivots);
   d_qflraStatus = simplex.findModel(noPivotLimitPass1);
 
   Trace("TheoryArithPrivate::solveRealRelaxation")
@@ -2980,7 +2989,11 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
     ApproximateSimplex* approxSolver =
       ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
 
+    ExactSimplex* exact_simplex =
+      ExactSimplex::mkExactSimplexSolver(d_partialModel, tl, getExactStats());
+
     approxSolver->setPivotLimit(relaxationLimit);
+    exact_simplex->setPivotLimit(relaxationLimit);
 
     if(!d_guessedCoeffSet){
       d_guessedCoeffs = approxSolver->heuristicOptCoeffs();

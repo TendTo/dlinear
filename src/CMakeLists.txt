@@ -445,6 +445,10 @@ libcvc5_add_sources(
   theory/arith/linear/dual_simplex.h
   theory/arith/linear/error_set.cpp
   theory/arith/linear/error_set.h
+  theory/arith/linear/exact_simplex.cpp
+  theory/arith/linear/exact_simplex.h
+  theory/arith/linear/exact_solution_simplex.cpp
+  theory/arith/linear/exact_solution_simplex.h
   theory/arith/linear/fc_simplex.cpp
   theory/arith/linear/fc_simplex.h
   theory/arith/linear/infer_bounds.cpp
