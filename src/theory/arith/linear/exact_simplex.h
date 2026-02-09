@@ -52,7 +52,7 @@ class TreeLog;
 class ArithVariables;
 class CutInfo;
 
-class ExactSimplex
+class ExactSimplex : public external::ExternalSimplex
 {
  public:
   /** Is an exact solver (SoPlex or Qsopt_ex) enabled? */
@@ -61,50 +61,11 @@ class ExactSimplex
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
-  static ExactSimplex* mkExactSimplexSolver(const ArithVariables& vars,
-                                            TreeLog& l,
-                                            ExactStatistics& s);
+  static ExternalSimplex* mkExactSimplexSolver(const ArithVariables& vars,
+                                               TreeLog& l,
+                                               ExactStatistics& s);
 
   ExactSimplex() = default;
-  virtual ~ExactSimplex() {}
-
-  /* maximum branches allowed on a variable */
-  virtual void setBranchingDepth(int bd) = 0;
-
-  /* gets a branching variable */
-  virtual ArithVar getBranchVar(const NodeLog& nl) const = 0;
-
-  /**
-   * Estimates a double as a Rational using continued fraction expansion that
-   * cuts off the estimate once the value is approximately zero.
-   * This is designed for removing rounding artifacts.
-   */
-  virtual std::optional<Rational> estimateWithCFE(double d) const = 0;
-  virtual std::optional<Rational> estimateWithCFE(double d,
-                                                  const Integer& D) const = 0;
-
-  virtual void tryCut(int nid, CutInfo& cut) = 0;
-
-  virtual std::vector<const CutInfo*> getValidCuts(const NodeLog& node) = 0;
-
-  /* the maximum pivots allowed in a query. */
-  virtual void setPivotLimit(int pl) = 0;
-
-  virtual ArithRatPairVec heuristicOptCoeffs() const = 0;
-
-  /** Sets a maximization criteria for the approximate solver.*/
-  virtual void setOptCoeffs(const ArithRatPairVec& ref) = 0;
-
-  /* maximum branches allowed on a variable */
-  virtual void setBranchOnVariableLimit(int bl) = 0;
-
-  virtual external::LinResult solveRelaxation() = 0;
-
-  virtual external::MipResult solveMIP(bool activelyLog) = 0;
-
-  virtual external::Solution extractMIP() const = 0;
-
-  virtual external::Solution extractRelaxation() const = 0;
 }; /* class ApproximateSimplex */
 
 }  // namespace arith::linear

@@ -399,7 +399,7 @@ private:
    * to solve the integers.
    */
   bool attemptSolveInteger(Theory::Effort effortLevel, bool emmmittedLemmaOrSplit);
-  bool replayLemmas(ApproximateSimplex* approx);
+  bool replayLemmas(external::ExternalSimplex* approx);
   void solveInteger(Theory::Effort effortLevel);
   bool safeToCallApprox() const;
   SimplexDecisionProcedure& selectSimplex(bool pass1);
@@ -409,7 +409,7 @@ private:
   void importSolution(const external::Solution& solution);
   bool solveRelaxationOrPanic(Theory::Effort effortLevel);
   context::CDO<int> d_lastContextIntegerAttempted;
-  bool replayLog(ApproximateSimplex* approx);
+  bool replayLog(external::ExternalSimplex* approx);
 
   class ModelException : public Exception {
    public:
@@ -639,7 +639,7 @@ private:
   void subsumption(std::vector<ConstraintCPVec>& confs) const;
 
   Node cutToLiteral(const CutInfo& cut) const;
-  Node branchToNode(ApproximateSimplex* approx, const NodeLog& cut) const;
+  Node branchToNode(external::ExternalSimplex* approx, const NodeLog& cut) const;
 
   void propagateCandidates();
   void propagateCandidate(ArithVar basic);
@@ -742,12 +742,12 @@ private:
   void turnOffApproxFor(int32_t rounds);
   bool getSolveIntegerResource();
 
-  void tryBranchCut(ApproximateSimplex* approx, int nid, BranchCutInfo& bl);
-  std::vector<ConstraintCPVec> replayLogRec(ApproximateSimplex* approx, int nid, ConstraintP bc, int depth);
+  void tryBranchCut(external::ExternalSimplex* approx, int nid, BranchCutInfo& bl);
+  std::vector<ConstraintCPVec> replayLogRec(external::ExternalSimplex* approx, int nid, ConstraintP bc, int depth);
 
   std::pair<ConstraintP, ArithVar> replayGetConstraint(const CutInfo& info);
   std::pair<ConstraintP, ArithVar> replayGetConstraint(
-      ApproximateSimplex* approx, const NodeLog& nl);
+      external::ExternalSimplex* approx, const NodeLog& nl);
   std::pair<ConstraintP, ArithVar> replayGetConstraint(const DenseMap<Rational>& lhs, Kind k, const Rational& rhs, bool branch);
 
   void replayAssert(ConstraintP c);

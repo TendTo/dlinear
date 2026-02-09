@@ -1890,7 +1890,7 @@ bool TheoryArithPrivate::attemptSolveInteger(Theory::Effort effortLevel, bool em
   return false;
 }
 
-bool TheoryArithPrivate::replayLog(ApproximateSimplex* approx){
+bool TheoryArithPrivate::replayLog(external::ExternalSimplex* approx){
   TimerStat::CodeTimer codeTimer(d_statistics.d_replayLogTimer);
 
   ++d_statistics.d_mipProofsAttempted;
@@ -2034,7 +2034,7 @@ std::pair<ConstraintP, ArithVar> TheoryArithPrivate::replayGetConstraint(const D
 }
 
 std::pair<ConstraintP, ArithVar> TheoryArithPrivate::replayGetConstraint(
-    ApproximateSimplex* approx, const NodeLog& nl)
+    external::ExternalSimplex* approx, const NodeLog& nl)
 {
   Assert(nl.isBranch());
   Assert(d_lhsTmp.empty());
@@ -2125,7 +2125,7 @@ void TheoryArithPrivate::intHoleConflictToVector(ConstraintCP conflicting, Const
   Constraint::assertionFringe(conflict);
 }
 
-void TheoryArithPrivate::tryBranchCut(ApproximateSimplex* approx, int nid, BranchCutInfo& bci){
+void TheoryArithPrivate::tryBranchCut(external::ExternalSimplex* approx, int nid, BranchCutInfo& bci){
   Assert(conflictQueueEmpty());
   std::vector< ConstraintCPVec > conflicts;
 
@@ -2280,7 +2280,7 @@ void TheoryArithPrivate::subsumption(
                               << endl;
 }
 
-std::vector<ConstraintCPVec> TheoryArithPrivate::replayLogRec(ApproximateSimplex* approx, int nid, ConstraintP bc, int depth){
+std::vector<ConstraintCPVec> TheoryArithPrivate::replayLogRec(external::ExternalSimplex* approx, int nid, ConstraintP bc, int depth){
   ++(d_statistics.d_replayLogRecCount);
   Trace("approx::replayLogRec") << "replayLogRec()" << std::endl;
 
@@ -2587,7 +2587,7 @@ ExactStatistics& TheoryArithPrivate::getExactStats(){
   return *d_exactStats;
 }
 
-Node TheoryArithPrivate::branchToNode(ApproximateSimplex* approx,
+Node TheoryArithPrivate::branchToNode(external::ExternalSimplex* approx,
                                       const NodeLog& bn) const
 {
   Assert(bn.isBranch());
@@ -2629,7 +2629,7 @@ Node TheoryArithPrivate::cutToLiteral(const CutInfo& ci) const
   return Node::null();
 }
 
-bool TheoryArithPrivate::replayLemmas(ApproximateSimplex* approx){
+bool TheoryArithPrivate::replayLemmas(external::ExternalSimplex* approx){
     ++(d_statistics.d_mipReplayLemmaCalls);
     bool anythingnew = false;
 
@@ -2743,7 +2743,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel){
 
   TreeLog& tl = getTreeLog();
   ApproximateStatistics& stats = getApproxStats();
-  ApproximateSimplex* approx =
+  external::ExternalSimplex* approx =
     ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
 
     approx->setPivotLimit(mipLimit);
@@ -2986,48 +2986,49 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
   {
     // pass2: fancy-final
     static constexpr int32_t relaxationLimit = 10000;
-    Assert(ApproximateSimplex::enabled());
+    Assert(ApproximateSimplex::enabled() || ExactSimplex::enabled());
+
+    constexpr external::ExternalSolver solverType
+                  = external::ExternalSolver::SOPLEX;
 
     TreeLog& tl = getTreeLog();
     ApproximateStatistics& stats = getApproxStats();
-    ApproximateSimplex* approxSolver =
-      ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
 
-    ExactSimplex* exactSolver =
-      ExactSimplex::mkExactSimplexSolver(d_partialModel, tl, getExactStats());
-
-    approxSolver->setPivotLimit(relaxationLimit);
-    exactSolver->setPivotLimit(relaxationLimit);
+    external::ExternalSimplex* externalSolver = nullptr;
+    switch (solverType)
+    {
+      case external::ExternalSolver::SOPLEX:
+        externalSolver = ExactSimplex::mkExactSimplexSolver(d_partialModel, tl, getExactStats());
+        break;
+      case external::ExternalSolver::GPLK:
+        externalSolver = ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
+        break;
+    }
+    externalSolver->setPivotLimit(relaxationLimit);
 
     if(!d_guessedCoeffSet){
-      d_guessedCoeffs = approxSolver->heuristicOptCoeffs();
+      d_guessedCoeffs = externalSolver->heuristicOptCoeffs();
       d_guessedCoeffSet = true;
     }
     if(!d_guessedCoeffs.empty()){
-      approxSolver->setOptCoeffs(d_guessedCoeffs);
+      externalSolver->setOptCoeffs(d_guessedCoeffs);
     }
 
     ++d_statistics.d_relaxCalls;
 
-    external::Solution relaxSolution;
-    external::Solution exactSolution;
-    LinResult relaxRes = LinResult::LinUnknown;
-    LinResult exactRes = LinResult::LinUnknown;
+    external::Solution externalSolution;
+    LinResult externalResult = LinResult::LinUnknown;
     {
       TimerStat::CodeTimer codeTimer1(d_statistics.d_lpTimer);
-      relaxRes = approxSolver->solveRelaxation();
-    }
-    {
-      TimerStat::CodeTimer codeTimer1(d_statistics.d_lpTimer);
-      exactRes = exactSolver->solveRelaxation();
+      externalResult = externalSolver->solveRelaxation();
     }
       Trace("solveRealRelaxation") << "solve relaxation? " << endl;
-      switch (exactRes){
+      switch (externalResult){
         case LinResult::LinFeasible:
           Trace("solveRealRelaxation") << "exact feasible" << endl;
           ++d_statistics.d_relaxLinFeas;
-          exactSolution = exactSolver->extractRelaxation();
-          importSolution(exactSolution);
+          externalSolution = externalSolver->extractRelaxation();
+          importSolution(externalSolution);
           if(d_qflraStatus != Result::SAT){
             InternalError() << "Sat from exact solver not matching cvc5 solver";
             ++d_statistics.d_relaxLinFeasFailures;
@@ -3036,8 +3037,8 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
         case LinResult::LinInfeasible:
           Trace("solveRealRelaxation") << "exact infeasible" << endl;
           ++d_statistics.d_relaxLinInfeas;
-          relaxSolution = exactSolver->extractRelaxation();
-          importSolution(relaxSolution);
+          externalSolution = externalSolver->extractRelaxation();
+          importSolution(externalSolution);
           if(d_qflraStatus != Result::UNSAT){
             InternalError() << "Unsat from exact solver not matching cvc5 solver";
             ++d_statistics.d_relaxLinInfeasFailures;
@@ -3050,37 +3051,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
         default:
           ++d_statistics.d_relaxOthers;
       }
-      switch(relaxRes){
-      case LinResult::LinFeasible:
-        Trace("solveRealRelaxation") << "lin feasible? " << endl;
-        ++d_statistics.d_relaxLinFeas;
-        relaxSolution = approxSolver->extractRelaxation();
-        importSolution(relaxSolution);
-        if(d_qflraStatus != Result::SAT){
-          ++d_statistics.d_relaxLinFeasFailures;
-        }
-        break;
-      case LinResult::LinInfeasible:
-        // todo attempt to recreate approximate conflict
-        ++d_statistics.d_relaxLinInfeas;
-        Trace("solveRealRelaxation") << "lin infeasible " << endl;
-        relaxSolution = approxSolver->extractRelaxation();
-        importSolution(relaxSolution);
-        if(d_qflraStatus != Result::UNSAT){
-          ++d_statistics.d_relaxLinInfeasFailures;
-        }
-        break;
-      case LinResult::LinExhausted:
-        ++d_statistics.d_relaxLinExhausted;
-        Trace("solveRealRelaxation") << "exhuasted " << endl;
-        break;
-      case LinResult::LinUnknown:
-      default:
-        ++d_statistics.d_relaxOthers;
-        break;
-      }
-    delete approxSolver;
-    delete exactSolver;
+    delete externalSolver;
   }
 
   bool emmittedConflictOrSplit = solveRelaxationOrPanic(effortLevel);
