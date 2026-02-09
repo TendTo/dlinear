@@ -183,8 +183,11 @@ class ExactSoplex : public ExactSimplex
       double d, const Integer& D) const override;
 
  private:
-  soplex::Rational var_to_lb(ArithVar v) const;
-  soplex::Rational var_to_ub(ArithVar v) const;
+  soplex::Rational varToLb(ArithVar v) const;
+  soplex::Rational varToUb(ArithVar v) const;
+  bool hasStrictBound(ArithVar v) const;
+  bool hasStrictLb(ArithVar v) const;
+  bool hasStrictUB(ArithVar v) const;
 
   Solution extractSolution(bool mip) const;
   int guessDir(ArithVar v) const;
@@ -332,8 +335,8 @@ class ExactSoplex : public ExactSimplex
   // glp_prob* d_mipProb;   /* a copy of the integer prob */
   SoPlex d_spx;
 
-  DenseMap<int> d_colIndices;
-  DenseMap<int> d_rowIndices;
+  DenseMap<std::size_t> d_colIndices;
+  DenseMap<std::size_t> d_rowIndices;
 
   // NodeLog::RowIdMap d_rootRowIds;
   std::vector<ArithVar> d_rootRowIds;
@@ -593,56 +596,45 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_DEBUG);
   }
 
-  int numRows = 0;
-  int numCols = 0;
-
   d_rootRowIds.reserve(d_vars.getNumberOfVariables() / 2);
   d_colToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
 
   // Assign each variable to a row and column variable as it appears in the
   // input
-  for (ArithVariables::var_iterator vi = d_vars.var_begin(),
-                                    vi_end = d_vars.var_end();
-       vi != vi_end;
+  for (auto vi = d_vars.var_begin(), vi_end = d_vars.var_end(); vi != vi_end;
        ++vi)
   {
     ArithVar v = *vi;
 
     if (d_vars.isAuxiliary(v))
     {
-      d_rowIndices.set(v, numRows);
+      // We use the size of the vector as index. Do not reorder
+      d_rowIndices.set(v, d_rootRowIds.size());
       d_rootRowIds.emplace_back(v);
-      ++numRows;
-      Trace("approx") << "Row vars: " << v << "<->" << numRows << std::endl;
+      Trace("approx") << "Row vars: " << v << "<->" << d_rootRowIds.size() - 1
+                      << std::endl;
     }
     else
     {
-      d_colIndices.set(v, numCols);
+      // We use the size of the vector as index. Do not reorder
+      d_colIndices.set(v, d_colToArithVar.size());
       d_colToArithVar.emplace_back(v);
-      ++numCols;
-      Trace("approx") << "Col vars: " << v << "<->" << numCols << std::endl;
+      Trace("approx") << "Col vars: " << v << "<->"
+                      << d_colToArithVar.size() - 1 << std::endl;
     }
   }
-  Assert(numRows > 0);
-  Assert(numCols > 0);
+  Assert(d_rootRowIds.size() > 0);
+  Assert(d_colToArithVar.size() > 0);
 
-  soplex::LPColSetRational cols(numCols);
-  soplex::LPRowSetRational rows(numRows);
+  // The number of cols must accommodate for the non-aux varialbles as well as
+  // the additional strict variable t
+  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size() + 1));
+  // Todo: better estimation of the number of rows
+  soplex::LPRowSetRational rows(
+      static_cast<int>(d_rootRowIds.size() * 2 + d_colToArithVar.size()));
 
-  // Assign the upper/lower bounds and types to each variable
-  for (ArithVar v : d_colToArithVar)
-  {
-    assert(!d_vars.isAuxiliary(v));
-
-    if (TraceIsOn("approx-debug"))
-    {
-      Trace("approx-debug") << v << " ";
-      d_vars.printModel(v, Trace("approx-debug"));
-    }
-
-    cols.add({0.0, soplex::DSVectorRational(), var_to_ub(v), var_to_lb(v)});
-  }
-
+  // Construct the rows of the LP by parsing the polynomial constraints together
+  // with the row bounds on the auxiliary variables
   for (ArithVar v : d_rootRowIds)
   {
     assert(d_vars.isAuxiliary(v));
@@ -668,14 +660,73 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
     }
 
-    rows.add({var_to_lb(v), vec, var_to_ub(v)});
+    // If we are dealing with a row with a strict bound (< or >), then we
+    // split it in two rows.
+    // lhs + t <= lb   and   lhs - t >= ub
+    // Minimizing (-t) will produce three possible outputs:
+    // - problem is infeasible => assigment is unsat
+    // - t = 0 => assigment violates the strict bounds, unsat
+    // - t > 0 => assigment is sat
+    if (hasStrictBound(v))
+    {
+      if (d_vars.hasLowerBound(v))
+      {
+        // If strict, add t, and in any case add the split row
+        if (hasStrictLb(v)) vec.add(cols.max() - 1, 1);
+        rows.add({varToLb(v), vec, soplex::infinity});
+      }
+      if (d_vars.hasUpperBound(v))
+      {
+        // If strict, add -t, and in any case add the split row
+        if (hasStrictUB(v)) vec.add(cols.max() - 1, -1);
+        rows.add({-soplex::infinity, vec, varToUb(v)});
+      }
+    }
+    else
+    {
+      rows.add({varToLb(v), vec, varToUb(v)});
+    }
   }
 
+  // Construct the columns of the LP by assigning upper/lower bounds to each
+  // variable
+  for (ArithVar v : d_colToArithVar)
+  {
+    assert(!d_vars.isAuxiliary(v));
+
+    if (TraceIsOn("approx-debug"))
+    {
+      Trace("approx-debug") << v << " ";
+      d_vars.printModel(v, Trace("approx-debug"));
+    }
+
+    cols.add({0.0, soplex::DSVectorRational(), varToUb(v), varToLb(v)});
+
+    if (hasStrictLb(v))
+    {
+      soplex::DSVectorRational vec(2);
+      vec.add(d_colIndices[v], 1);
+      vec.add(cols.max() - 1, 1);
+      rows.add({varToLb(v), vec, soplex::infinity});
+    }
+    if (hasStrictUB(v))
+    {
+      soplex::DSVectorRational vec(2);
+      vec.add(d_colIndices[v], 1);
+      vec.add(cols.max() - 1, -1);
+      rows.add({-soplex::infinity, vec, varToUb(v)});
+    }
+  }
+
+  // Add the strict variable t
+  cols.add({-1, soplex::DSVectorRational(), 1, 0});
+
+  // Add both columns and rows to the LP
   d_spx.addColsRational(cols);
   d_spx.addRowsRational(rows);
 }
 
-soplex::Rational ExactSoplex::var_to_lb(const ArithVar v) const
+soplex::Rational ExactSoplex::varToLb(const ArithVar v) const
 {
   if (d_vars.hasLowerBound(v))
   {
@@ -687,7 +738,7 @@ soplex::Rational ExactSoplex::var_to_lb(const ArithVar v) const
   return -soplex::infinity;
 }
 
-soplex::Rational ExactSoplex::var_to_ub(const ArithVar v) const
+soplex::Rational ExactSoplex::varToUb(const ArithVar v) const
 {
   if (d_vars.hasUpperBound(v))
   {
@@ -699,36 +750,36 @@ soplex::Rational ExactSoplex::var_to_ub(const ArithVar v) const
   return soplex::infinity;
 }
 
-int ExactSoplex::guessDir(ArithVar v) const
+bool ExactSoplex::hasStrictBound(const ArithVar v) const
 {
-  if (d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v))
-  {
-    return -1;
-  }
-  else if (!d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v))
-  {
-    return 1;
-  }
-  else if (!d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v))
-  {
-    return 0;
-  }
-  else
-  {
-    int ubSgn = d_vars.getUpperBound(v).sgn();
-    int lbSgn = d_vars.getLowerBound(v).sgn();
+  return hasStrictLb(v) || hasStrictUB(v);
+}
 
-    if (ubSgn != 0 && lbSgn == 0)
-    {
-      return -1;
-    }
-    else if (ubSgn == 0 && lbSgn != 0)
-    {
-      return 1;
-    }
+bool ExactSoplex::hasStrictUB(const ArithVar v) const
+{
+  return d_vars.hasUpperBound(v)
+         && !d_vars.getUpperBound(v).getInfinitesimalPart().isZero();
+}
 
-    return 1;
-  }
+bool ExactSoplex::hasStrictLb(ArithVar v) const
+{
+  return d_vars.hasLowerBound(v)
+         && !d_vars.getLowerBound(v).getInfinitesimalPart().isZero();
+}
+
+int ExactSoplex::guessDir(const ArithVar v) const
+{
+  if (d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v)) return -1;
+  if (!d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v)) return 1;
+  if (!d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v)) return 0;
+
+  const int ubSgn = d_vars.getUpperBound(v).sgn();
+  const int lbSgn = d_vars.getLowerBound(v).sgn();
+
+  if (ubSgn != 0 && lbSgn == 0) return -1;
+  if (ubSgn == 0 && lbSgn != 0) return 1;
+
+  return 1;
 }
 
 ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
@@ -756,9 +807,7 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
 
   double sumRowLength = 0.0;
   uint32_t maxRowLength = 0;
-  for (ArithVariables::var_iterator vi = d_vars.var_begin(),
-                                    vi_end = d_vars.var_end();
-       vi != vi_end;
+  for (auto vi = d_vars.var_begin(), vi_end = d_vars.var_end(); vi != vi_end;
        ++vi)
   {
     ArithVar v = *vi;
@@ -788,9 +837,7 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
   }
 
   uint32_t maxCount = 0;
-  for (DenseMap<int>::const_iterator i = d_rowIndices.begin(),
-                                     i_end = d_rowIndices.end();
-       i != i_end;
+  for (auto i = d_rowIndices.begin(), i_end = d_rowIndices.end(); i != i_end;
        ++i)
   {
     ArithVar v = *i;
@@ -803,16 +850,10 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
       ConstraintP b = lbCap ? d_vars.getLowerBoundConstraint(v)
                             : d_vars.getUpperBoundConstraint(v);
 
-      if (!(b->getValue()).noninfinitesimalIsZero())
-      {
-        continue;
-      }
+      if (!(b->getValue()).noninfinitesimalIsZero()) continue;
 
       Polynomial poly = Polynomial::parsePolynomial(d_vars.asNode(v));
-      if (poly.size() != 2)
-      {
-        continue;
-      }
+      if (poly.size() != 2) continue;
 
       Polynomial::iterator j = poly.begin();
       Monomial first = *j;
@@ -822,10 +863,7 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
       bool firstIsPos = first.constantIsPositive();
       bool secondIsPos = second.constantIsPositive();
 
-      if (firstIsPos == secondIsPos)
-      {
-        continue;
-      }
+      if (firstIsPos == secondIsPos) continue;
 
       Monomial pos = firstIsPos == lbCap ? first : second;
       Monomial neg = firstIsPos != lbCap ? first : second;
