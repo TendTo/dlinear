@@ -160,7 +160,7 @@ class ExactSoplex : public ExactSimplex
   ExactSoplex(const ArithVariables& v, TreeLog& l, ExactStatistics& s);
 
   external::LinResult solveRelaxation() override;
-  external::Solution extractRelaxation() const override
+  external::Solution extractRelaxation() override
   {
     return extractSolution(false);
   }
@@ -168,10 +168,7 @@ class ExactSoplex : public ExactSimplex
   ArithRatPairVec heuristicOptCoeffs() const override;
 
   external::MipResult solveMIP(bool al) override;
-  external::Solution extractMIP() const override
-  {
-    return extractSolution(true);
-  }
+  external::Solution extractMIP() override { return extractSolution(true); }
   void setOptCoeffs(const ArithRatPairVec& ref) override;
   std::vector<const CutInfo*> getValidCuts(const NodeLog& nodes) override;
   ArithVar getBranchVar(const NodeLog& con) const override;
@@ -189,13 +186,15 @@ class ExactSoplex : public ExactSimplex
       double d, const Integer& D) const override;
 
  private:
+  void printSolution(const external::Solution& sol) const;
+
   soplex::Rational varToLb(ArithVar v) const;
   soplex::Rational varToUb(ArithVar v) const;
   bool hasStrictBound(ArithVar v) const;
   bool hasStrictLb(ArithVar v) const;
   bool hasStrictUB(ArithVar v) const;
 
-  external::Solution extractSolution(bool mip) const;
+  external::Solution extractSolution(bool mip);
   int guessDir(ArithVar v) const;
 
   // get this stuff out of here
@@ -342,10 +341,10 @@ class ExactSoplex : public ExactSimplex
   SoPlex d_spx;
 
   DenseMap<std::size_t> d_colIndices;
-  DenseMap<std::size_t> d_rowIndices;
 
   // NodeLog::RowIdMap d_rootRowIds;
-  std::vector<ArithVar> d_rootRowIds;
+  std::vector<ArithVar> d_auxVars;
+  std::vector<ArithVar> d_rowToArithVar;
   // DenseMap<ArithVar> d_rowToArithVar;
   std::vector<ArithVar> d_colToArithVar;
 
@@ -531,6 +530,21 @@ std::optional<Rational> ExactSoplex::estimateWithCFE(double d,
   return std::optional<Rational>();
 }
 
+void ExactSoplex::printSolution(const external::Solution& sol) const
+{
+  std::cout << "{  ";
+  for (const auto v : sol.newBasis)
+  {
+    std::cout << d_vars.asNode(v).getName() << "\n";
+  }
+  std::cout << "}\n";
+  for (const auto v : sol.newValues)
+  {
+    std::cout << d_vars.asNode(v).getName() << " = " << sol.newValues[v]
+              << "\n";
+  }
+}
+
 std::optional<Rational> ExactSoplex::estimateWithCFE(double d) const
 {
   return estimateWithCFE(d, Integer(s_defaultMaxDenom));
@@ -602,7 +616,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_DEBUG);
   }
 
-  d_rootRowIds.reserve(d_vars.getNumberOfVariables() / 2);
+  d_auxVars.reserve(d_vars.getNumberOfVariables());
   d_colToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
 
   // Assign each variable to a row and column variable as it appears in the
@@ -611,37 +625,34 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
        ++vi)
   {
     ArithVar v = *vi;
-
     if (d_vars.isAuxiliary(v))
     {
-      // We use the size of the vector as index. Do not reorder
-      d_rowIndices.set(v, d_rootRowIds.size());
-      d_rootRowIds.emplace_back(v);
-      Trace("approx") << "Row vars: " << v << "<->" << d_rootRowIds.size() - 1
+      d_auxVars.emplace_back(v);
+      Trace("approx") << "Row vars: " << v << "<->" << d_auxVars.size() - 1
                       << std::endl;
     }
     else
     {
-      // We use the size of the vector as index. Do not reorder
-      d_colIndices.set(v, d_colToArithVar.size());
       d_colToArithVar.emplace_back(v);
-      Trace("approx") << "Col vars: " << v << "<->"
-                      << d_colToArithVar.size() - 1 << std::endl;
+      d_colIndices.set(v, d_colIndices.size());
+      Trace("approx") << "Col vars: " << v << "<->" << d_colIndices.size() - 1
+                      << std::endl;
     }
   }
-  Assert(d_rootRowIds.size() > 0);
-  Assert(d_colToArithVar.size() > 0);
+  Assert(!d_auxVars.empty());
+  Assert(!d_colToArithVar.empty());
 
-  // The number of cols must accommodate for the non-aux varialbles as well as
+  // The number of cols must accommodate for the non-aux variables as well as
   // the additional strict variable t
-  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size() + 1));
   // Todo: better estimation of the number of rows
-  soplex::LPRowSetRational rows(
-      static_cast<int>(d_rootRowIds.size() * 2 + d_colToArithVar.size()));
+  soplex::LPRowSetRational rows(static_cast<int>(d_auxVars.size()) * 2);
+  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()) + 1);
+
+  d_rowToArithVar.reserve(d_auxVars.size() * 2);
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
-  for (ArithVar v : d_rootRowIds)
+  for (ArithVar v : d_auxVars)
   {
     assert(d_vars.isAuxiliary(v));
 
@@ -660,7 +671,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
 
       Assert(d_vars.hasArithVar(n));
       ArithVar av = d_vars.asArithVar(n);
-      int colIndex = d_colIndices[av];
+      int colIndex = static_cast<int>(d_colIndices[av]);
       // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
 
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
@@ -680,17 +691,20 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
         // If strict, add t, and in any case add the split row
         if (hasStrictLb(v)) vec.add(cols.max() - 1, 1);
         rows.add({varToLb(v), vec, soplex::infinity});
+        d_rowToArithVar.emplace_back(v);
       }
       if (d_vars.hasUpperBound(v))
       {
         // If strict, add -t, and in any case add the split row
         if (hasStrictUB(v)) vec.add(cols.max() - 1, -1);
         rows.add({-soplex::infinity, vec, varToUb(v)});
+        d_rowToArithVar.emplace_back(v);
       }
     }
     else
     {
       rows.add({varToLb(v), vec, varToUb(v)});
+      d_rowToArithVar.emplace_back(v);
     }
   }
 
@@ -711,16 +725,18 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     if (hasStrictLb(v))
     {
       soplex::DSVectorRational vec(2);
-      vec.add(d_colIndices[v], 1);
+      vec.add(static_cast<int>(d_colIndices[v]), 1);
       vec.add(cols.max() - 1, 1);
       rows.add({varToLb(v), vec, soplex::infinity});
+      d_rowToArithVar.emplace_back(ARITHVAR_SENTINEL);
     }
     if (hasStrictUB(v))
     {
       soplex::DSVectorRational vec(2);
-      vec.add(d_colIndices[v], 1);
+      vec.add(static_cast<int>(d_colIndices[v]), 1);
       vec.add(cols.max() - 1, -1);
       rows.add({-soplex::infinity, vec, varToUb(v)});
+      d_rowToArithVar.emplace_back(ARITHVAR_SENTINEL);
     }
   }
 
@@ -846,10 +862,9 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
   }
 
   uint32_t maxCount = 0;
-  for (auto i = d_rowIndices.begin(), i_end = d_rowIndices.end(); i != i_end;
-       ++i)
+  for (const ArithVar v : d_auxVars)
   {
-    ArithVar v = *i;
+    assert(d_vars.isAuxiliary(v));
 
     bool lbCap = d_vars.hasLowerBound(v) && !d_vars.hasUpperBound(v);
     bool ubCap = !d_vars.hasLowerBound(v) && d_vars.hasUpperBound(v);
@@ -1064,7 +1079,7 @@ void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
-external::Solution ExactSoplex::extractSolution(bool mip) const
+external::Solution ExactSoplex::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
@@ -1073,150 +1088,120 @@ external::Solution ExactSoplex::extractSolution(bool mip) const
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
-  // TODO: reimplement this
+  // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
-  //
-  // for (ArithVariables::var_iterator i = d_vars.var_begin(),
-  //                                   i_end = d_vars.var_end();
-  //      i != i_end;
-  //      ++i)
-  // {
-  //   ArithVar vi = *i;
-  //   bool isAux = d_vars.isAuxiliary(vi);
-  //   int glpk_index = isAux ? d_rowIndices[vi] : d_colIndices[vi];
-  //
-  //   int status = isAux ? glp_get_row_stat(prob, glpk_index)
-  //                      : glp_get_col_stat(prob, glpk_index);
-  //   Trace("approx-debug") << "assignment " << vi << std::endl;
-  //
-  //   bool useDefaultAssignment = false;
-  //
-  //   switch (status)
-  //   {
-  //     case GLP_BS:
-  //       Trace("approx") << "basic" << std::endl;
-  //       newBasis.add(vi);
-  //       useDefaultAssignment = true;
-  //       break;
-  //     case GLP_NL:
-  //     case GLP_NS:
-  //       if (!mip)
-  //       {
-  //         Trace("approx-debug") << "non-basic lb" << std::endl;
-  //         newValues.set(vi, d_vars.getLowerBound(vi));
-  //       }
-  //       else
-  //       {  // intentionally fall through otherwise
-  //         useDefaultAssignment = true;
-  //       }
-  //       break;
-  //     case GLP_NU:
-  //       if (!mip)
-  //       {
-  //         Trace("approx-debug") << "non-basic ub" << std::endl;
-  //         newValues.set(vi, d_vars.getUpperBound(vi));
-  //       }
-  //       else
-  //       {  // intentionally fall through otherwise
-  //         useDefaultAssignment = true;
-  //       }
-  //       break;
-  //     default:
-  //     {
-  //       useDefaultAssignment = true;
-  //     }
-  //     break;
-  //   }
-  //
-  //   if (useDefaultAssignment)
-  //   {
-  //     Trace("approx-debug") << "non-basic other" << std::endl;
-  //
-  //     double newAssign;
-  //     if (mip)
-  //     {
-  //       newAssign = (isAux ? glp_mip_row_val(prob, glpk_index)
-  //                          : glp_mip_col_val(prob, glpk_index));
-  //     }
-  //     else
-  //     {
-  //       newAssign = (isAux ? glp_get_row_prim(prob, glpk_index)
-  //                          : glp_get_col_prim(prob, glpk_index));
-  //     }
-  //     const DeltaRational& oldAssign = d_vars.getAssignment(vi);
-  //
-  //     if (d_vars.hasLowerBound(vi)
-  //         && roughlyEqual(newAssign,
-  //                         d_vars.getLowerBound(vi).approx(SMALL_FIXED_DELTA)))
-  //     {
-  //       Trace("approx") << "  to lb" << std::endl;
-  //
-  //       newValues.set(vi, d_vars.getLowerBound(vi));
-  //     }
-  //     else if (d_vars.hasUpperBound(vi)
-  //              && roughlyEqual(
-  //                  newAssign,
-  //                  d_vars.getUpperBound(vi).approx(SMALL_FIXED_DELTA)))
-  //     {
-  //       newValues.set(vi, d_vars.getUpperBound(vi));
-  //       Trace("approx") << "  to ub" << std::endl;
-  //     }
-  //     else
-  //     {
-  //       double rounded = round(newAssign);
-  //       if (roughlyEqual(newAssign, rounded))
-  //       {
-  //         Trace("approx") << "roughly equal " << rounded << " " << newAssign
-  //                         << " " << oldAssign << std::endl;
-  //         newAssign = rounded;
-  //       }
-  //       else
-  //       {
-  //         Trace("approx") << "not roughly equal " << rounded << " " <<
-  //         newAssign
-  //                         << " " << oldAssign << std::endl;
-  //       }
-  //
-  //       DeltaRational proposal;
-  //       if (std::optional<Rational> maybe_new = estimateWithCFE(newAssign))
-  //       {
-  //         proposal = *maybe_new;
-  //       }
-  //       else
-  //       {
-  //         // failed to estimate the old value. defaulting to the current.
-  //         proposal = d_vars.getAssignment(vi);
-  //       }
-  //
-  //       if (roughlyEqual(newAssign, oldAssign.approx(SMALL_FIXED_DELTA)))
-  //       {
-  //         Trace("approx") << "  to prev value" << newAssign << " " <<
-  //         oldAssign
-  //                         << std::endl;
-  //         proposal = d_vars.getAssignment(vi);
-  //       }
-  //
-  //       if (d_vars.strictlyLessThanLowerBound(vi, proposal))
-  //       {
-  //         Trace("approx") << "  round to lb " << d_vars.getLowerBound(vi)
-  //                         << std::endl;
-  //         proposal = d_vars.getLowerBound(vi);
-  //       }
-  //       else if (d_vars.strictlyGreaterThanUpperBound(vi, proposal))
-  //       {
-  //         Trace("approx") << "  round to ub " << d_vars.getUpperBound(vi)
-  //                         << std::endl;
-  //         proposal = d_vars.getUpperBound(vi);
-  //       }
-  //       else
-  //       {
-  //         Trace("approx") << "  use proposal" << proposal << " " << oldAssign
-  //                         << std::endl;
-  //       }
-  //       newValues.set(vi, proposal);
-  //     }
-  //   }
-  // }
+
+  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
+
+  std::vector<VarStatus> rows, cols;
+  rows.resize(d_spx.numRows());
+  cols.resize(d_spx.numCols());
+  d_spx.getBasis(rows.data(), cols.data());
+
+  soplex::Rational value;
+  mpq_class mpq_value;
+  std::size_t colIdx = 0;
+  for (const VarStatus colState : cols)
+  {
+    // Reached the strict var, we can stop
+    if (colIdx >= d_colToArithVar.size()) break;
+    const ArithVar v = d_colToArithVar.at(colIdx);
+    switch (colState)
+    {
+      case VarStatus::BASIC:
+        Trace("approx") << "basic" << std::endl;
+        newBasis.add(v);
+        d_spx.getColActivityRational(colIdx, value);
+        mpq_value = mpq_class{value.backend().data()};
+        if (d_vars.hasLowerBound(v)
+            && d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
+                   == mpq_value)
+        {
+          newValues.set(v, d_vars.getLowerBound(v));
+        }
+        else if (d_vars.hasUpperBound(v)
+                 && d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
+                        == mpq_value)
+        {
+          newValues.set(v, d_vars.getUpperBound(v));
+        }
+        else
+        {
+          newValues.set(v, DeltaRational(mpq_value));
+        }
+        break;
+      case VarStatus::ON_LOWER:
+      case VarStatus::FIXED:  // No need to handle the fixed case differently
+        Trace("approx-debug") << "non-basic lb" << std::endl;
+        newValues.set(v, d_vars.getLowerBound(v));
+        break;
+      case VarStatus::ON_UPPER:
+        Trace("approx-debug") << "non-basic ub" << std::endl;
+        newValues.set(v, d_vars.getUpperBound(v));
+        break;
+      case VarStatus::ZERO:
+        Trace("approx-debug") << "non-basic zero" << std::endl;
+        newValues.set(v, DeltaRational(0, 0));
+        break;
+      default:
+        d_spx.getColActivityRational(colIdx, value);
+        newValues.set(v, DeltaRational(mpq_class{value.backend().data()}));
+    }
+    colIdx++;
+  }
+
+  std::size_t rowIdx = 0;
+  for (const VarStatus rowState : rows)
+  {
+    // Reached the strict var, we can stop
+    const ArithVar v = d_rowToArithVar.at(rowIdx);
+    if (v == ARITHVAR_SENTINEL) continue;
+    switch (rowState)
+    {
+      case VarStatus::BASIC:
+        Trace("approx") << "basic" << std::endl;
+        // Multiple rows could point to the same variable, need to chek
+        if (!newBasis.isMember(v)) newBasis.add(v);
+        d_spx.getRowActivityRational(rowIdx, value);
+        mpq_value = mpq_class{value.backend().data()};
+        if (d_vars.hasLowerBound(v)
+            && d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
+                   == mpq_value)
+        {
+          newValues.set(v, d_vars.getLowerBound(v));
+        }
+        else if (d_vars.hasUpperBound(v)
+                 && d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
+                        == mpq_value)
+        {
+          newValues.set(v, d_vars.getUpperBound(v));
+        }
+        else
+        {
+          newValues.set(v, DeltaRational(mpq_value));
+        }
+        break;
+      case VarStatus::ON_LOWER:
+      case VarStatus::FIXED:  // No need to handle the fixed case differently
+        Trace("approx-debug") << "non-basic lb" << std::endl;
+        newValues.set(v, d_vars.getLowerBound(v));
+        break;
+      case VarStatus::ON_UPPER:
+        Trace("approx-debug") << "non-basic ub" << std::endl;
+        newValues.set(v, d_vars.getUpperBound(v));
+        break;
+      case VarStatus::ZERO:
+        Trace("approx-debug") << "non-basic zero" << std::endl;
+        newValues.set(v, DeltaRational(0, 0));
+        break;
+      default:
+        d_spx.getRowActivityRational(rowIdx, value);
+        newValues.set(v, DeltaRational(mpq_class{value.backend().data()}));
+    }
+    rowIdx++;
+  }
+
+  printSolution(sol);
   return sol;
 }
 

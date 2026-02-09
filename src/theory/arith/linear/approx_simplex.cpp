@@ -174,6 +174,8 @@ class ApproxGLPK : public ApproximateSimplex
       double d, const Integer& D) const override;
 
  private:
+  void printSolution(const external::Solution & sol) const;
+
   Solution extractSolution(bool mip) const;
   int guessDir(ArithVar v) const;
 
@@ -493,6 +495,21 @@ std::optional<Rational> ApproxGLPK::estimateWithCFE(double d,
     return estimateWithCFE(*from_double, D);
   }
   return std::optional<Rational>();
+}
+
+void ApproxGLPK::printSolution(const external::Solution& sol) const
+{
+  std::cout << "{  ";
+  for (const auto v : sol.newBasis)
+  {
+    std::cout << d_vars.asNode(v).getName() << "\n";
+  }
+  std::cout << "}\n";
+  for (const auto v : sol.newValues)
+  {
+    std::cout << d_vars.asNode(v).getName() << " = " << sol.newValues[v]
+              << "\n";
+  }
 }
 
 std::optional<Rational> ApproxGLPK::estimateWithCFE(double d) const
@@ -1074,6 +1091,7 @@ Solution ApproxGLPK::extractSolution(bool mip) const
       }
     }
   }
+  printSolution(sol);
   return sol;
 }
 

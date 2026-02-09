@@ -3029,12 +3029,19 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel){
           exactSolution = exactSolver->extractRelaxation();
           importSolution(exactSolution);
           if(d_qflraStatus != Result::SAT){
+            InternalError() << "Sat from exact solver not matching cvc5 solver";
             ++d_statistics.d_relaxLinFeasFailures;
           }
           break;
         case LinResult::LinInfeasible:
           Trace("solveRealRelaxation") << "exact infeasible" << endl;
           ++d_statistics.d_relaxLinInfeas;
+          relaxSolution = exactSolver->extractRelaxation();
+          importSolution(relaxSolution);
+          if(d_qflraStatus != Result::UNSAT){
+            InternalError() << "Unsat from exact solver not matching cvc5 solver";
+            ++d_statistics.d_relaxLinInfeasFailures;
+          }
           break;
         case LinResult::LinExhausted:
           Trace("solveRealRelaxation") << "exact exhausted" << endl;
