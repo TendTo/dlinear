@@ -151,12 +151,12 @@ class ApproxGLPK : public ApproximateSimplex
   ~ApproxGLPK();
 
   LinResult solveRelaxation() override;
-  Solution extractRelaxation() const override { return extractSolution(false); }
+  Solution extractRelaxation() override { return extractSolution(false); }
 
   ArithRatPairVec heuristicOptCoeffs() const override;
 
   MipResult solveMIP(bool al) override;
-  Solution extractMIP() const override { return extractSolution(true); }
+  Solution extractMIP() override { return extractSolution(true); }
   void setOptCoeffs(const ArithRatPairVec& ref) override;
   std::vector<const CutInfo*> getValidCuts(const NodeLog& nodes) override;
   ArithVar getBranchVar(const NodeLog& con) const override;
@@ -176,7 +176,7 @@ class ApproxGLPK : public ApproximateSimplex
  private:
   void printSolution(const external::Solution & sol) const;
 
-  Solution extractSolution(bool mip) const;
+  Solution extractSolution(bool mip);
   int guessDir(ArithVar v) const;
 
   // get this stuff out of here
@@ -956,7 +956,7 @@ ApproxGLPK::~ApproxGLPK(){
 
 }
 
-Solution ApproxGLPK::extractSolution(bool mip) const
+Solution ApproxGLPK::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
@@ -3164,7 +3164,7 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-ApproximateSimplex* ApproximateSimplex::mkApproximateSimplexSolver(
+external::ExternalSimplex* ApproximateSimplex::mkApproximateSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
     CVC5_UNUSED ApproximateStatistics& s)

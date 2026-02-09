@@ -21,7 +21,6 @@
 #pragma once
 
 #include "cut_log.h"
-#include "exact_simplex.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
 #include "util/dense_map.h"
@@ -30,12 +29,6 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 namespace external {
-
-enum ExternalSolver
-{
-  SOPLEX, /* Soplex exact LP solver (https://soplex.zib.de/) */
-  GPLK,   /* GPLK LP solver (https://www.gnu.org/software/glpk/) */
-};
 
 enum LinResult
 {

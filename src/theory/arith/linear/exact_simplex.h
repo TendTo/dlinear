@@ -61,11 +61,9 @@ class ExactSimplex : public external::ExternalSimplex
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
-  static ExternalSimplex* mkExactSimplexSolver(const ArithVariables& vars,
-                                               TreeLog& l,
-                                               ExactStatistics& s);
+  static external::ExternalSimplex* mkExactSimplexSolver(
+      const ArithVariables& vars, TreeLog& l, ExactStatistics& s);
 
-  ExactSimplex() = default;
 }; /* class ApproximateSimplex */
 
 }  // namespace arith::linear

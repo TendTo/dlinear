@@ -3620,15 +3620,15 @@ void ExactSoplex::tryCut(int nid, CutInfo& cut)
 }  // namespace arith::linear
 }  // namespace theory
 }  // namespace cvc5::internal
-/* End GPLK implementation. */
+/* End soplex implementation. */
 #endif /*#ifdef CVC5_USE_SOPLEX */
 
-/* Begin GPLK/NOGLPK Glue code. */
+/* Begin soplex/No soplpex Glue code. */
 namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-ExactSimplex* ExactSimplex::mkExactSimplexSolver(
+external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
     CVC5_UNUSED ExactStatistics& s)
@@ -3663,4 +3663,4 @@ ExactStatistics::ExactStatistics(StatisticsRegistry& sr)
 }  // namespace arith::linear
 }  // namespace theory
 }  // namespace cvc5::internal
-/* End GPLK/NOGLPK Glue code. */
+/* End soplex/No soplex Glue code. */
