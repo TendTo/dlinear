@@ -150,10 +150,6 @@ github_archive(
     sha256 = "0652b2b3f2dbaf19f1940cd882823bce44b6fc7a3c025066da7932254bcee237",
 )
 
-## Gitlab repositories
-
-gitlab_archive = use_repo_rule("//tools:git_archive.bzl", "gitlab_archive")
-
 ## HTTP repositories
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

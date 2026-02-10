@@ -41,6 +41,19 @@ dlinear_cc_binary(
     ],
 )
 
+dlinear_cc_binary(
+    name = "mps_to_smt2",
+    srcs = ["mps_to_smt2.cpp"],
+    deps = [
+        "//dlinear/parser/mps",
+        "//dlinear/parser/smt2",
+        "//dlinear/solver",
+        "//dlinear/solver:solver_output",
+        "//dlinear/util:argparser",
+        "//dlinear/util:config",
+    ],
+)
+
 cc_shared_library(
     name = "libdlinear.so",
     shared_lib_name = "libdlinear.so",

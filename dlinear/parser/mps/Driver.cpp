@@ -245,14 +245,22 @@ void MpsDriver::ToSmt2(std::ostream &os) const {
   for (const auto &[name, column] : columns_) {
     os << "(declare-const " << column << " Real)\n";
   }
-  for (const auto &[name, bound] : bounds_) {
+    if (bound.EqualTo(Formula::True())) continue;
     os << "(assert " << bound.to_smt2_string() << ")\n";
   }
   for (const auto &[name, row] : rhs_) {
     if (row.EqualTo(Formula::True())) continue;
     os << "(assert " << row.to_smt2_string() << ")\n";
   }
+  if (!obj_row_.empty()) {
+    Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
+    if (is_min_)
+      os << "(minimize (+ " << obj_expression.to_smt2_string() << "))\n";
+    else
+      os << "(maximize (+ " << obj_expression.to_smt2_string() << "))\n";
+  }
   os << "(check-sat)\n";
+  if (!obj_row_.empty()) os << "(get-objectives)\n";
 }
 
 }  // namespace dlinear::mps
