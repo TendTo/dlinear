@@ -136,6 +136,7 @@ option(USE_GLPK          "Use GLPK simplex solver")
 option(USE_KISSAT        "Use Kissat SAT solver")
 option(USE_POLY          "Use LibPoly for polynomial arithmetic")
 option(USE_SOPLEX        "Use SoPlex simplex solver")
+option(USE_QSOPTEX        "Use Qsopt_ex simplex solver")
 
 # Custom install directories for dependencies
 # If no directory is provided by the user, we first check if the dependency was
@@ -572,6 +573,11 @@ endif()
 if(USE_SOPLEX)
   find_package(soplex REQUIRED)
   add_definitions(-DCVC5_USE_SOPLEX)
+endif()
+
+if(USE_QSOPTEX)
+  find_package(Qsoptex REQUIRED)
+#  add_definitions(-DCVC5_USE_QSOPTEX)
 endif()
 
 if(USE_KISSAT)
