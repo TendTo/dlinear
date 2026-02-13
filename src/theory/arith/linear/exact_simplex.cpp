@@ -186,6 +186,10 @@ class ExactSoplex : public ExactSimplex
       double d, const Integer& D) const override;
 
  private:
+  void extractVarValue(ArithVar v,
+                       soplex::SPxSolverBase<double>::VarStatus varStatus,
+                       mpq_class&& value,
+                       external::Solution& sol) const;
   void printSolution(const external::Solution& sol) const;
 
   soplex::Rational varToLb(ArithVar v) const;
@@ -616,6 +620,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_DEBUG);
   }
 
+  // d_spx.clearLPRational();
   d_auxVars.reserve(d_vars.getNumberOfVariables());
   d_colToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
 
@@ -747,7 +752,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
   d_spx.addColsRational(cols);
   d_spx.addRowsRational(rows);
 
-  d_spx.writeFile(
+  d_spx.writeFileRational(
       "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
 }
 
@@ -1079,6 +1084,56 @@ void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
+void ExactSoplex::extractVarValue(
+    const ArithVar v,
+    const soplex::SPxSolverBase<double>::VarStatus varStatus,
+    mpq_class&& value,
+    external::Solution& sol) const
+{
+  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
+  DenseSet& newBasis = sol.newBasis;
+  DenseMap<DeltaRational>& newValues = sol.newValues;
+
+  switch (varStatus)
+  {
+    case VarStatus::BASIC:
+      newBasis.add(v);
+      if (d_vars.hasLowerBound(v)
+          && d_vars.getLowerBound(v).getNoninfinitesimalPart() == value)
+      {
+        newValues.set(v, d_vars.getLowerBound(v));
+      }
+      else if (d_vars.hasUpperBound(v)
+               && d_vars.getUpperBound(v).getNoninfinitesimalPart() == value)
+      {
+        newValues.set(v, d_vars.getUpperBound(v));
+      }
+      else
+      {
+        newValues.set(v, DeltaRational(value));
+      }
+      Assert(!d_vars.hasLowerBound(v)
+             || d_vars.getLowerBound(v).getNoninfinitesimalPart() <= value);
+      Assert(!d_vars.hasUpperBound(v)
+             || d_vars.getUpperBound(v).getNoninfinitesimalPart() >= value);
+      break;
+    case VarStatus::ON_LOWER:
+    case VarStatus::FIXED:  // No need to handle the fixed case differently
+      Trace("approx-debug") << "non-basic lb" << std::endl;
+      newValues.set(v, d_vars.getLowerBound(v));
+      break;
+    case VarStatus::ON_UPPER:
+      Trace("approx-debug") << "non-basic ub" << std::endl;
+      newValues.set(v, d_vars.getUpperBound(v));
+      break;
+    case VarStatus::ZERO:
+      Trace("approx-debug") << "non-basic zero" << std::endl;
+      newValues.set(v, DeltaRational(0));
+      break;
+    default: newValues.set(v, DeltaRational(value));
+  }
+}
+
 external::Solution ExactSoplex::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
@@ -1088,117 +1143,54 @@ external::Solution ExactSoplex::extractSolution(bool mip)
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
   using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
 
-  std::vector<VarStatus> rows, cols;
-  rows.resize(d_spx.numRows());
-  cols.resize(d_spx.numCols());
-  d_spx.getBasis(rows.data(), cols.data());
-
-  soplex::Rational value;
-  mpq_class mpq_value;
-  std::size_t colIdx = 0;
-  for (const VarStatus colState : cols)
+  if (d_spx.hasSol())
   {
-    // Reached the strict var, we can stop
-    if (colIdx >= d_colToArithVar.size()) break;
-    const ArithVar v = d_colToArithVar.at(colIdx);
-    switch (colState)
+    // Feasible solution
+    soplex::VectorRational primal(d_spx.numCols());
+    const bool getPrimalSuccess = d_spx.getPrimalRational(primal);
+    Assert(getPrimalSuccess);
+
+    for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
     {
-      case VarStatus::BASIC:
-        Trace("approx") << "basic" << std::endl;
-        newBasis.add(v);
-        d_spx.getColActivityRational(colIdx, value);
-        mpq_value = mpq_class{value.backend().data()};
-        if (d_vars.hasLowerBound(v)
-            && d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
-                   == mpq_value)
-        {
-          newValues.set(v, d_vars.getLowerBound(v));
-        }
-        else if (d_vars.hasUpperBound(v)
-                 && d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
-                        == mpq_value)
-        {
-          newValues.set(v, d_vars.getUpperBound(v));
-        }
-        else
-        {
-          newValues.set(v, DeltaRational(mpq_value));
-        }
-        break;
-      case VarStatus::ON_LOWER:
-      case VarStatus::FIXED:  // No need to handle the fixed case differently
-        Trace("approx-debug") << "non-basic lb" << std::endl;
-        newValues.set(v, d_vars.getLowerBound(v));
-        break;
-      case VarStatus::ON_UPPER:
-        Trace("approx-debug") << "non-basic ub" << std::endl;
-        newValues.set(v, d_vars.getUpperBound(v));
-        break;
-      case VarStatus::ZERO:
-        Trace("approx-debug") << "non-basic zero" << std::endl;
-        newValues.set(v, DeltaRational(0, 0));
-        break;
-      default:
-        d_spx.getColActivityRational(colIdx, value);
-        newValues.set(v, DeltaRational(mpq_class{value.backend().data()}));
+      // Reached the strict var, we can stop
+      if (colIdx >= d_colToArithVar.size()) break;
+
+      const ArithVar v = d_colToArithVar.at(colIdx);
+      extractVarValue(v,
+                      d_spx.basisColStatus(colIdx),
+                      mpq_class{primal[colIdx].backend().data()},
+                      sol);
     }
-    colIdx++;
+
+    soplex::Rational rowValue;
+    for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar.at(rowIdx);
+
+      // Strict bound on a variable, not a real row
+      if (v == ARITHVAR_SENTINEL) continue;
+      if (newValues.isKey(v)) continue;  // The var v has already been set
+
+      d_spx.getRowActivityRational(rowIdx, rowValue);
+      extractVarValue(v,
+                      d_spx.basisRowStatus(rowIdx),
+                      mpq_class{rowValue.backend().data()},
+                      sol);
+    }
   }
-
-  std::size_t rowIdx = 0;
-  for (const VarStatus rowState : rows)
+  else
   {
-    // Reached the strict var, we can stop
-    const ArithVar v = d_rowToArithVar.at(rowIdx);
-    if (v == ARITHVAR_SENTINEL) continue;
-    switch (rowState)
-    {
-      case VarStatus::BASIC:
-        Trace("approx") << "basic" << std::endl;
-        // Multiple rows could point to the same variable, need to chek
-        if (!newBasis.isMember(v)) newBasis.add(v);
-        d_spx.getRowActivityRational(rowIdx, value);
-        mpq_value = mpq_class{value.backend().data()};
-        if (d_vars.hasLowerBound(v)
-            && d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
-                   == mpq_value)
-        {
-          newValues.set(v, d_vars.getLowerBound(v));
-        }
-        else if (d_vars.hasUpperBound(v)
-                 && d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
-                        == mpq_value)
-        {
-          newValues.set(v, d_vars.getUpperBound(v));
-        }
-        else
-        {
-          newValues.set(v, DeltaRational(mpq_value));
-        }
-        break;
-      case VarStatus::ON_LOWER:
-      case VarStatus::FIXED:  // No need to handle the fixed case differently
-        Trace("approx-debug") << "non-basic lb" << std::endl;
-        newValues.set(v, d_vars.getLowerBound(v));
-        break;
-      case VarStatus::ON_UPPER:
-        Trace("approx-debug") << "non-basic ub" << std::endl;
-        newValues.set(v, d_vars.getUpperBound(v));
-        break;
-      case VarStatus::ZERO:
-        Trace("approx-debug") << "non-basic zero" << std::endl;
-        newValues.set(v, DeltaRational(0, 0));
-        break;
-      default:
-        d_spx.getRowActivityRational(rowIdx, value);
-        newValues.set(v, DeltaRational(mpq_class{value.backend().data()}));
-    }
-    rowIdx++;
+    // Infeasible solution.
+    Assert(d_spx.hasDualFarkas());
+    Unimplemented();
   }
 
   printSolution(sol);
@@ -1290,15 +1282,16 @@ external::LinResult ExactSoplex::solveRelaxation()
   // glp_copy_prob(d_realProb, d_inputProb, GLP_OFF);
 
   using SpxStatus = soplex::SPxSolverBase<double>::Status;
-  soplex::VectorRational x(d_colToArithVar.size() + 1);
+  soplex::VectorRational x(d_spx.numCols());
 
-  const SpxStatus res = d_spx.optimize();
-  switch (res)
+  d_spx.clearBasis();
+  switch (d_spx.optimize())
   {
     case SpxStatus::OPTIMAL:
       d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
-      return x[d_colToArithVar.size()].is_zero()
+      // Check the value of the last column (strict variable)
+      return x[d_spx.numCols() - 1].is_zero()
                  ? external::LinResult::LinInfeasible
                  : external::LinResult::LinFeasible;
     case SpxStatus::INFEASIBLE:
