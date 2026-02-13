@@ -343,6 +343,7 @@ class ExactSoplex : public ExactSimplex
   // glp_prob* d_realProb;  /* a copy of the real relaxation output */
   // glp_prob* d_mipProb;   /* a copy of the integer prob */
   SoPlex d_spx;
+  std::unordered_map<int, bool> d_strict_rows;
 
   DenseMap<std::size_t> d_colIndices;
 
@@ -695,21 +696,23 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
       {
         // If strict, add t, and in any case add the split row
         if (hasStrictLb(v)) vec.add(cols.max() - 1, 1);
-        rows.add({varToLb(v), vec, soplex::infinity});
+        d_strict_rows.emplace(rows.num(), true);
         d_rowToArithVar.emplace_back(v);
+        rows.add({varToLb(v), vec, soplex::infinity});
       }
       if (d_vars.hasUpperBound(v))
       {
         // If strict, add -t, and in any case add the split row
         if (hasStrictUB(v)) vec.add(cols.max() - 1, -1);
-        rows.add({-soplex::infinity, vec, varToUb(v)});
+        d_strict_rows.emplace(rows.num(), false);
         d_rowToArithVar.emplace_back(v);
+        rows.add({-soplex::infinity, vec, varToUb(v)});
       }
     }
     else
     {
-      rows.add({varToLb(v), vec, varToUb(v)});
       d_rowToArithVar.emplace_back(v);
+      rows.add({varToLb(v), vec, varToUb(v)});
     }
   }
 
@@ -1156,6 +1159,7 @@ external::Solution ExactSoplex::extractSolution(bool mip)
     // Feasible solution
     soplex::VectorRational primal(d_spx.numCols());
     const bool getPrimalSuccess = d_spx.getPrimalRational(primal);
+    const soplex::Rational strictVariable = primal[d_spx.numCols() - 1];
     Assert(getPrimalSuccess);
 
     for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
@@ -1180,6 +1184,19 @@ external::Solution ExactSoplex::extractSolution(bool mip)
       if (newValues.isKey(v)) continue;  // The var v has already been set
 
       d_spx.getRowActivityRational(rowIdx, rowValue);
+      // To get the real value of the row, we must remove the strict variable,
+      // if present
+      if (const auto it = d_strict_rows.find(rowIdx); it != d_strict_rows.end())
+      {
+        if (it->second)  // We added the strict variable, now we subtract it
+        {
+          rowValue -= strictVariable;
+        }
+        else  // We subtracted the strict variable, now we add it
+        {
+          rowValue += strictVariable;
+        }
+      }
       extractVarValue(v,
                       d_spx.basisRowStatus(rowIdx),
                       mpq_class{rowValue.backend().data()},
