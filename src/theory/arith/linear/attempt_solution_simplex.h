@@ -94,6 +94,7 @@ private:
     TimerStat d_searchTime;
     TimerStat d_queueTime;
     IntStat d_conflicts;
+    IntStat d_extendedSearch;
 
     Statistics(StatisticsRegistry& sr);
   } d_statistics;

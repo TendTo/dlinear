@@ -43,7 +43,8 @@ AttemptSolutionSDP::AttemptSolutionSDP(Env& env,
 AttemptSolutionSDP::Statistics::Statistics(StatisticsRegistry& sr)
     : d_searchTime(sr.registerTimer("theory::arith::attempt::searchTime")),
       d_queueTime(sr.registerTimer("theory::arith::attempt::queueTime")),
-      d_conflicts(sr.registerInt("theory::arith::attempt::conflicts"))
+      d_conflicts(sr.registerInt("theory::arith::attempt::conflicts")),
+      d_extendedSearch(sr.registerInt("theory::arith::attempt::extendedSearch"))
 {
 }
 
@@ -53,8 +54,23 @@ bool AttemptSolutionSDP::matchesNewValue(const DenseMap<DeltaRational>& nv, Arit
 
 Result::Status AttemptSolutionSDP::attempt(const external::Solution& sol)
 {
+  TimerStat::CodeTimer timer{d_statistics.d_searchTime};
   const DenseSet& newBasis = sol.newBasis;
   const DenseMap<DeltaRational>& newValues = sol.newValues;
+
+#if 0 // For debug
+  for(DenseSet::const_iterator i = newBasis.begin(), i_end = newBasis.end(); i != i_end; ++i){
+    ArithVar b = *i;
+    if(d_tableau.isBasic(b)){
+      std::cout << "Variable " << b << " => ";
+      if (d_variables.isAuxiliary(b))
+        std::cout << d_variables.asNode(b).getName();
+      else
+        d_variables.printModel(b, std::cout);
+      std::cout << " is basic" << std::endl;
+    }
+  }
+#endif
 
   DenseSet needsToBeAdded;
   for(DenseSet::const_iterator i = newBasis.begin(), i_end = newBasis.end(); i != i_end; ++i){
@@ -88,6 +104,9 @@ Result::Status AttemptSolutionSDP::attempt(const external::Solution& sol)
     Trace("arith::findModel") << "attemptSolution() fixed itself" << endl;
     return Result::SAT;
   }
+
+  // The simple assignment was not enough, extended search is needed
+  ++d_statistics.d_extendedSearch;
 
   while(!needsToBeAdded.empty() && !d_errorSet.errorEmpty()){
     ArithVar toRemove = ARITHVAR_SENTINEL;
