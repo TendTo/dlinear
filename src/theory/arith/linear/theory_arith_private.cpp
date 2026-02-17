@@ -3504,7 +3504,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         }
         break;
       case options::ExternalLPSolver::SOPLEX:
-        externalSolver = ExactSimplex::mkExactSimplexSolver(
+        externalSolver = ExactSimplex::mkExactSimplexSolver2(
             d_partialModel, tl, getExactStats());
         break;
       case options::ExternalLPSolver::GLPK:

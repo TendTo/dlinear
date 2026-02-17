@@ -198,9 +198,6 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
-  d_spx.resetSettings();
-  d_spx.clearLPReal();
-
   d_spx.setIntParam(SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE);
   d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_OFF);
   d_spx.setIntParam(SoPlex::ALGORITHM, SoPlex::ALGORITHM_PRIMAL);
@@ -316,7 +313,7 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
     {
       ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
     }
-    cols.add({0.0, soplex::DSVectorRational(), ub, lb});
+    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
   }
 
   // Add both columns and rows to the LP
@@ -419,8 +416,10 @@ ArithRatPairVec ExactSoplex2::heuristicOptCoeffs() const
       d_vars.printModel(v, Trace("approx-debug"));
     }
 
-    if (!d_vars.boundsAreEqual(v)
-        && (d_vars.hasLowerBound(v) || d_vars.hasUpperBound(v)))
+    const bool hasLb = d_vars.hasLowerBound(v);
+    const bool hasUb = d_vars.hasUpperBound(v);
+    // Variable is not fixed nor free
+    if ((hasLb || hasUb) && (!hasLb || !hasUb || !d_vars.boundsAreEqual(v)))
     {
       if (d_vars.isAuxiliary(v))
       {
@@ -440,8 +439,6 @@ ArithRatPairVec ExactSoplex2::heuristicOptCoeffs() const
   uint32_t maxCount = 0;
   for (const ArithVar v : d_rowToArithVar)
   {
-    assert(d_vars.isAuxiliary(v));
-
     bool lbCap = d_vars.hasLowerBound(v) && !d_vars.hasUpperBound(v);
     bool ubCap = !d_vars.hasLowerBound(v) && d_vars.hasUpperBound(v);
 
@@ -555,14 +552,12 @@ ArithRatPairVec ExactSoplex2::heuristicOptCoeffs() const
 
 void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
 {
-  // DenseMap<double> nbCoeffs;
-  std::unordered_map<int, soplex::Rational> nbCoeffs;
-  nbCoeffs.reserve(d_spx.numCols());
+  DenseMap<mpq_class> nbCoeffs;
 
   for (auto i = ref.begin(), iend = ref.end(); i != iend; ++i)
   {
-    const ArithVar v = i->first;
-    const Rational& q = i->second;
+    ArithVar v = (*i).first;
+    const Rational& q = (*i).second;
 
     if (d_vars.isAuxiliary(v))
     {
@@ -581,36 +576,30 @@ void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
         Assert(d_vars.hasArithVar(n));
         ArithVar av = d_vars.asArithVar(n);
         int colIndex = d_colIndices[av];
-        soplex::Rational coeff = constant.getValue().getValue().get_mpq_t();
-        const auto it = nbCoeffs.find(colIndex);
-        if (it != nbCoeffs.end())
+        mpq_class coeff = constant.getValue().getValue();
+        if (!nbCoeffs.isKey(colIndex))
         {
-          it->second += coeff;
+          nbCoeffs.set(colIndex, 0.0);
         }
-        else
-        {
-          nbCoeffs.emplace(colIndex, coeff);
-        }
+        nbCoeffs.set(colIndex, nbCoeffs[colIndex] + coeff);
       }
     }
     else
     {
       int colIndex = d_colIndices[v];
-      soplex::Rational coeff = q.getValue().get_mpq_t();
-      const auto it = nbCoeffs.find(colIndex);
-      if (it != nbCoeffs.end())
+      double coeff = q.getDouble();
+      if (!nbCoeffs.isKey(colIndex))
       {
-        it->second += coeff;
+        nbCoeffs.set(colIndex, 0.0);
       }
-      else
-      {
-        nbCoeffs.emplace(colIndex, coeff);
-      }
+      nbCoeffs.set(colIndex, nbCoeffs[colIndex] + coeff);
     }
   }
-  for (const auto& [colIndex, coeff] : nbCoeffs)
+  for (auto ci = nbCoeffs.begin(), ciend = nbCoeffs.end(); ci != ciend; ++ci)
   {
-    d_spx.changeObjRational(colIndex, coeff);
+    Index colIndex = *ci;
+    mpq_class coeff = nbCoeffs[colIndex];
+    d_spx.changeObjRational(colIndex, soplex::Rational{coeff.get_mpq_t()});
   }
 }
 
@@ -670,12 +659,12 @@ void ExactSoplex2::extractVarValue(
     case VarStatus::BASIC:
       newBasis.add(v);
       if (d_vars.hasLowerBound(v)
-          && d_vars.getLowerBound(v).getNoninfinitesimalPart() == value)
+          && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
       {
         newValues.set(v, d_vars.getLowerBound(v));
       }
       else if (d_vars.hasUpperBound(v)
-               && d_vars.getUpperBound(v).getNoninfinitesimalPart() == value)
+               && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
       {
         newValues.set(v, d_vars.getUpperBound(v));
       }
@@ -684,9 +673,9 @@ void ExactSoplex2::extractVarValue(
         newValues.set(v, DeltaRational(value));
       }
       Assert(!d_vars.hasLowerBound(v)
-             || d_vars.getLowerBound(v).getNoninfinitesimalPart() <= value);
+             || d_vars.getLowerBound(v) <= newValues.get(v));
       Assert(!d_vars.hasUpperBound(v)
-             || d_vars.getUpperBound(v).getNoninfinitesimalPart() >= value);
+             || d_vars.getUpperBound(v) >= newValues.get(v));
       break;
     case VarStatus::ON_LOWER:
     case VarStatus::FIXED:  // No need to handle the fixed case differently
@@ -705,6 +694,64 @@ void ExactSoplex2::extractVarValue(
   }
 }
 
+std::ostream& operator<<(std::ostream& out, const soplex::VectorRational& v)
+{
+  out << "[\n";
+  for (int i = 0; i < v.dim(); i++)
+  {
+    if (!v[i].is_zero()) out << i << " =>" << v[i] << "\n";
+  }
+  return out << "\n]";
+}
+
+#if 0  // For debug
+void dumpProblem(soplex::SoPlex& d_spx)
+{
+  if (d_spx.hasSol())
+  {
+    soplex::VectorRational primal(d_spx.numCols());
+    d_spx.getPrimalRational(primal);
+    std::cout << "primal: " << primal << std::endl;
+  }
+  if (d_spx.hasSol())
+  {
+    soplex::VectorRational dual(d_spx.numRows());
+    d_spx.getDualRational(dual);
+    std::cout << "dual: " << dual << std::endl;
+  }
+  if (d_spx.hasDualFarkas())
+  {
+    soplex::VectorRational dualRay(d_spx.numRows());
+    d_spx.getDualFarkasRational(dualRay);
+    std::cout << "dual ray: " << dualRay << std::endl;
+  }
+  if (d_spx.hasPrimalRay())
+  {
+    soplex::VectorRational primalRay(d_spx.numCols());
+    d_spx.getPrimalRayRational(primalRay);
+    std::cout << "primal ray: " << primalRay << std::endl;
+  }
+  try
+  {
+    soplex::Rational colValue;
+    d_spx.getColActivityRational(0, colValue);
+    std::cout << "col 0: " << colValue << std::endl;
+  }
+  catch (const std::exception&)
+  {
+  }
+  try
+  {
+    soplex::Rational rowValue;
+    d_spx.getRowActivityRational(0, rowValue);
+    std::cout << "row 0: " << rowValue << std::endl;
+  }
+  catch (const std::exception&)
+  {
+  }
+}
+#endif
+
 external::Solution ExactSoplex2::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
@@ -714,21 +761,33 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
-  d_spx.writeFileRational(
-      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+#if 0  // For debug
+  static int id = 0;
+
+  d_spx.writeFile(("/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file"
+                   + std::to_string(id) + ".lp")
+                      .c_str());
+  d_spx.writeFile(("/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file"
+                   + std::to_string(id) + ".mps")
+                      .c_str());
+  id++;
+
+  // std::cout << "Basis status: " << d_spx.basisStatus() << std::endl;
+#endif
 
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
-
-  if (d_spx.hasSol())
+  if (d_spx.status() == soplex::SPxSolverBase<double>::Status::OPTIMAL
+      || d_spx.status() == soplex::SPxSolverBase<double>::Status::UNBOUNDED)
   {
+    Assert(d_spx.hasSol());
     // Feasible solution
     soplex::VectorRational primal(d_spx.numCols());
     const bool getPrimalSuccess = d_spx.getPrimalRational(primal);
     Assert(getPrimalSuccess);
 
+    // Get the primal solution for the cols
     for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
     {
       const ArithVar v = d_colToArithVar.at(colIdx);
@@ -738,6 +797,7 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
                       sol);
     }
 
+    // Get the row activity for the rows
     soplex::Rational rowValue;
     for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
     {
@@ -749,14 +809,80 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
                       sol);
     }
   }
+  else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
+  {
+    // Infeasible solution
+    Assert(d_spx.hasDualFarkas());
+    soplex::VectorRational dualRay(d_spx.numRows());
+    const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
+    Assert(getDualRaySuccess);
+
+    // Get the last dual solution for the rows
+    for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar.at(rowIdx);
+      extractVarValue(v,
+                      d_spx.basisRowStatus(rowIdx),
+                      mpq_class{dualRay[rowIdx].backend().data()},
+                      sol);
+    }
+    // Get the col activity for each column
+    soplex::Rational colValue;
+    for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
+    {
+      const ArithVar v = d_colToArithVar.at(colIdx);
+      d_spx.getColActivityRational(colIdx, colValue);
+      extractVarValue(v,
+                      d_spx.basisColStatus(colIdx),
+                      mpq_class{colValue.backend().data()},
+                      sol);
+    }
+  }
   else
   {
-    // Infeasible solution.
-    Assert(d_spx.hasDualFarkas());
     Unimplemented();
   }
 
-  printSolution(sol);
+#if 0  // For debug
+  for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
+  {
+    soplex::LPColRational col(d_spx.numCols());
+    d_spx.getColRational(colIdx, col);
+    mpq_class val = sol.newValues[d_colToArithVar[colIdx]]
+                        .getNoninfinitesimalPart()
+                        .getValue();
+    if (val < mpq_class{col.lower().backend().data()}
+        || val > mpq_class{col.upper().backend().data()})
+    {
+      printf(
+          "Column %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+          colIdx,
+          d_colToArithVar.at(colIdx),
+          val.get_d(),
+          col.lower().convert_to<double>(),
+          col.upper().convert_to<double>());
+    }
+  }
+  for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+  {
+    soplex::LPRowRational row(d_spx.numRows());
+    d_spx.getRowRational(rowIdx, row);
+    mpq_class val = sol.newValues[d_rowToArithVar[rowIdx]]
+                        .getNoninfinitesimalPart()
+                        .getValue();
+    if (val < mpq_class{row.lhs().backend().data()}
+        || val > mpq_class{row.rhs().backend().data()})
+    {
+      printf("Row %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+             rowIdx,
+             d_rowToArithVar.at(rowIdx),
+             val.get_d(),
+             row.lhs().convert_to<double>(),
+             row.rhs().convert_to<double>());
+    }
+  }
+  // printSolution(sol);
+#endif
   return sol;
 }
 
@@ -765,11 +891,15 @@ void ExactSoplex2::printSolution(const external::Solution& sol) const
   std::cout << "{  ";
   for (const auto v : sol.newBasis)
   {
-    std::cout << d_vars.asNode(v).getName() << "\n";
+    if (d_vars.isAuxiliary(v))
+      d_vars.printModel(v, std::cout);
+    else
+      std::cout << d_vars.asNode(v).getName() << "\n";
   }
   std::cout << "}\n";
   for (const auto v : sol.newValues)
   {
+    if (sol.newValues[0].isZero()) continue;
     std::cout << d_vars.asNode(v).getName() << " = " << sol.newValues[v]
               << "\n";
   }
@@ -801,57 +931,6 @@ double ExactSoplex2::sumInfeasibilities(SoPlex& prob, bool mip) const
 {
   /* compute the sum of dual infeasibilities */
   double infeas = 0.0;
-
-  // for (ArithVariables::var_iterator i = d_vars.var_begin(),
-  //                                   i_end = d_vars.var_end();
-  //      i != i_end;
-  //      ++i)
-  // {
-  //   ArithVar vi = *i;
-  //   bool isAux = d_vars.isAuxiliary(vi);
-  //   int glpk_index = isAux ? d_rowIndices[vi] : d_colIndices[vi];
-  //
-  //   double newAssign;
-  //   if (mip)
-  //   {
-  //     Unimplemented() << "MPI is not implemented for exact solver";
-  //     // newAssign = (isAux ? glp_mip_row_val(prob, glpk_index)
-  //     //                    : glp_mip_col_val(prob, glpk_index));
-  //   }
-  //   else
-  //   {
-  //     newAssign = (isAux ? glp_get_row_prim(prob, glpk_index)
-  //                        : glp_get_col_prim(prob, glpk_index));
-  //   }
-  //
-  //   double ub = isAux ? prob.getViolation glp_get_row_ub(prob, glpk_index)
-  //                     : glp_get_col_ub(prob, glpk_index);
-  //
-  //   double lb = isAux ? glp_get_row_lb(prob, glpk_index)
-  //                     : glp_get_col_lb(prob, glpk_index);
-  //
-  //   if (ub != +DBL_MAX)
-  //   {
-  //     if (newAssign > ub)
-  //     {
-  //       double ubinf = newAssign - ub;
-  //       infeas += ubinf;
-  //       Trace("approx::soi")
-  //           << "ub inf" << vi << " " << ubinf << " " << infeas << std::endl;
-  //     }
-  //   }
-  //   if (lb != -DBL_MAX)
-  //   {
-  //     if (newAssign < lb)
-  //     {
-  //       double lbinf = lb - newAssign;
-  //       infeas += lbinf;
-  //
-  //       Trace("approx::soi")
-  //           << "lb inf" << vi << " " << lbinf << " " << infeas << std::endl;
-  //     }
-  //   }
-  // }
 
   soplex::Rational maxBoundViolation, sumBoundViolation;
   soplex::Rational maxRowViolation, sumRowViolation;
@@ -885,15 +964,17 @@ external::LinResult ExactSoplex2::solveRelaxation()
   soplex::VectorRational x(d_spx.numCols());
 
   // d_spx.clearBasis();
+  // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
   switch (d_spx.optimize())
   {
     case SpxStatus::OPTIMAL:
+    case SpxStatus::UNBOUNDED:
+      std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
+      Assert(d_spx.hasSol());
       d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
-      return x[d_spx.numCols() - 1].is_zero()
-                 ? external::LinResult::LinInfeasible
-                 : external::LinResult::LinFeasible;
+      return external::LinResult::LinFeasible;
     case SpxStatus::INFEASIBLE:
       d_solvedRelaxation = true;
       return external::LinResult::LinInfeasible;
@@ -903,104 +984,6 @@ external::LinResult ExactSoplex2::solveRelaxation()
     default: return external::LinResult::LinUnknown;
   }
 }
-
-struct MirInfo : public CutInfo
-{
-  /** a sum of input rows. */
-  PrimitiveVec row_sum;
-
-  /* the delta used */
-  double delta;
-
-  /* all of these are length vars == N+M*/
-  int nvars;
-  char* cset;
-  char* subst;
-  int* vlbRows;
-  int* vubRows;
-  MirInfo(int execOrd, int ord)
-      : CutInfo(MirCutKlass, execOrd, ord),
-        nvars(0),
-        cset(NULL),
-        subst(NULL),
-        vlbRows(NULL),
-        vubRows(NULL)
-  {
-  }
-
-  ~MirInfo() { clearSets(); }
-  void clearSets()
-  {
-    if (cset != NULL)
-    {
-      delete[] cset;
-      delete[] subst;
-      delete[] vlbRows;
-      delete[] vubRows;
-      cset = NULL;
-      nvars = 0;
-    }
-  }
-  void initSet()
-  {
-    Assert(d_N >= 0);
-    Assert(d_mAtCreation >= 0);
-    clearSets();
-
-    int vars = 1 + d_N + d_mAtCreation;
-
-    cset = new char[1 + vars];
-    subst = new char[1 + vars];
-    vlbRows = new int[1 + vars];
-    vubRows = new int[1 + vars];
-  }
-};
-
-struct GmiInfo : public CutInfo
-{
-  int basic;
-  PrimitiveVec tab_row;
-  int* tab_statuses;
-  /* has the length tab_row.length */
-
-  GmiInfo(int execOrd, int ord)
-      : CutInfo(GmiCutKlass, execOrd, ord),
-        basic(-1),
-        tab_row(),
-        tab_statuses(NULL)
-  {
-    Assert(!initialized_tab());
-  }
-
-  ~GmiInfo()
-  {
-    if (initialized_tab())
-    {
-      clear_tab();
-    }
-  }
-
-  bool initialized_tab() const { return tab_statuses != NULL; }
-
-  void init_tab(int N)
-  {
-    if (initialized_tab())
-    {
-      clear_tab();
-    }
-    tab_row.setup(N);
-    tab_statuses = new int[1 + N];
-  }
-
-  void clear_tab()
-  {
-    delete[] tab_statuses;
-    tab_statuses = NULL;
-    tab_row.clear();
-    basic = -1;
-  }
-};
-
 #if 0
 
 static void loadCut(glp_tree* tree, CutInfo* cut)
