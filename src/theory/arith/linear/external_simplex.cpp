@@ -40,14 +40,52 @@ std::ostream& operator<<(std::ostream& out, MipResult res)
 }
 
 SimplexStatistics::SimplexStatistics(StatisticsRegistry& sr)
-    : d_branchMaxDepth(sr.registerInt("z::approx::branchMaxDepth")),
-      d_branchesMaxOnAVar(sr.registerInt("z::approx::branchesMaxOnAVar")),
-      d_gaussianElimConstructTime(
-          sr.registerTimer("z::approx::gaussianElimConstruct::time")),
-      d_gaussianElimConstruct(
-          sr.registerInt("z::approx::gaussianElimConstruct::calls")),
-      d_averageGuesses(sr.registerAverage("z::approx::averageGuesses"))
+    : d_branchMaxDepth(
+          sr.registerInt("theory::arith::z::approx::branchMaxDepth")),
+      d_branchesMaxOnAVar(
+          sr.registerInt("theory::arith::z::approx::branchesMaxOnAVar")),
+      d_gaussianElimConstructTime(sr.registerTimer(
+          "theory::arith::z::approx::gaussianElimConstruct::time")),
+      d_gaussianElimConstruct(sr.registerInt(
+          "theory::arith::z::approx::gaussianElimConstruct::calls")),
+      d_averageGuesses(
+          sr.registerAverage("theory::arith::z::approx::averageGuesses")),
+      d_pivotLimit(sr.registerInt("theory::arith::z::approx::pivotLimit")),
+      d_externalSimplexType(
+          sr.registerInt("theory::arith::z::approx::externalSimplexType")),
+      d_precision(sr.registerHistogram<std::size_t>(
+          "theory::arith::z::approx::precision")),
+      d_refinements(sr.registerHistogram<std::size_t>(
+          "theory::arith::z::approx::refinements"))
 {
+}
+
+ExternalSimplex::ExternalSimplex(SimplexStatistics& s)
+    : d_stats(s),
+      d_pivotLimit(std::numeric_limits<int>::max()),
+      d_maxDepth(std::numeric_limits<int>::max()),
+      d_branchLimit(std::numeric_limits<int>::max())
+{
+  d_stats.d_pivotLimit.set(d_pivotLimit);
+}
+
+void ExternalSimplex::setPivotLimit(const int pl)
+{
+  Assert(pl >= 0);
+  d_pivotLimit = pl;
+  d_stats.d_pivotLimit.set(pl);
+}
+
+void ExternalSimplex::setBranchingDepth(int bd)
+{
+  Assert(bd >= 0);
+  d_maxDepth = bd;
+}
+
+void ExternalSimplex::setBranchOnVariableLimit(int bl)
+{
+  Assert(bl >= 0);
+  d_branchLimit = bl;
 }
 
 }  // namespace external

@@ -60,7 +60,7 @@ struct Solution
 class SimplexStatistics
 {
  public:
-  SimplexStatistics(StatisticsRegistry& sr);
+  explicit SimplexStatistics(StatisticsRegistry& sr);
 
   IntStat d_branchMaxDepth;
   IntStat d_branchesMaxOnAVar;
@@ -68,16 +68,21 @@ class SimplexStatistics
   TimerStat d_gaussianElimConstructTime;
   IntStat d_gaussianElimConstruct;
   AverageStat d_averageGuesses;
+
+  IntStat d_pivotLimit;
+  IntStat d_externalSimplexType;
+  HistogramStat<std::size_t> d_precision;
+  HistogramStat<std::size_t> d_refinements;
 };
 
 class ExternalSimplex
 {
  public:
-  explicit ExternalSimplex(SimplexStatistics& s) : d_stats(s) {}
+  explicit ExternalSimplex(SimplexStatistics& s);
   virtual ~ExternalSimplex() = default;
 
   /* maximum branches allowed on a variable */
-  virtual void setBranchingDepth(int bd) = 0;
+  void setBranchingDepth(int bd);
 
   /* gets a branching variable */
   virtual ArithVar getBranchVar(const NodeLog& nl) const = 0;
@@ -96,7 +101,7 @@ class ExternalSimplex
   virtual std::vector<const CutInfo*> getValidCuts(const NodeLog& node) = 0;
 
   /* the maximum pivots allowed in a query. */
-  virtual void setPivotLimit(int pl) = 0;
+  void setPivotLimit(int pl);
 
   virtual ArithRatPairVec heuristicOptCoeffs() const = 0;
 
@@ -104,7 +109,7 @@ class ExternalSimplex
   virtual void setOptCoeffs(const ArithRatPairVec& ref) = 0;
 
   /* maximum branches allowed on a variable */
-  virtual void setBranchOnVariableLimit(int bl) = 0;
+  void setBranchOnVariableLimit(int bl);
 
   virtual LinResult solveRelaxation() = 0;
 
@@ -116,6 +121,14 @@ class ExternalSimplex
 
  protected:
   SimplexStatistics d_stats;
+  /* the maximum pivots allowed in a query. */
+  int d_pivotLimit;
+
+  /* maxmimum branching depth allowed.*/
+  int d_maxDepth;
+
+  /* maximum branches allowed on a variable */
+  int d_branchLimit;
 }; /* class ApproximateSimplex */
 
 }  // namespace external

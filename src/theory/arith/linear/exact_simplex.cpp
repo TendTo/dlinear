@@ -26,6 +26,7 @@
 
 #include "base/cvc5config.h"
 #include "base/output.h"
+#include "options/arith_options.h"
 #include "proof/eager_proof_generator.h"
 #include "theory/arith/linear/constraint.h"
 #include "theory/arith/linear/cut_log.h"
@@ -157,7 +158,9 @@ class BranchCutInfo;
 class ExactSoplex : public ExactSimplex
 {
  public:
-  ExactSoplex(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
+  ExactSoplex(const ArithVariables& v,
+              TreeLog& l,
+              external::SimplexStatistics& s);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -174,12 +177,6 @@ class ExactSoplex : public ExactSimplex
   ArithVar getBranchVar(const NodeLog& con) const override;
 
   static void printSoplexStatus(int status, std::ostream& out);
-
-  virtual void setPivotLimit(int pl) override;
-
-  virtual void setBranchingDepth(int bd) override;
-
-  virtual void setBranchOnVariableLimit(int bl) override;
 
   virtual std::optional<Rational> estimateWithCFE(double d) const override;
   virtual std::optional<Rational> estimateWithCFE(
@@ -326,15 +323,6 @@ class ExactSoplex : public ExactSimplex
   const ArithVariables& d_vars;
   TreeLog& d_log;
 
-  /* the maximum pivots allowed in a query. */
-  int d_pivotLimit;
-
-  /* maximum branches allowed on a variable */
-  int d_branchLimit;
-
-  /* maxmimum branching depth allowed.*/
-  int d_maxDepth;
-
   /* Default denominator for diophatine approximation, 2^{26} .*/
   static constexpr uint64_t s_defaultMaxDenom = (1 << 26);
 
@@ -359,24 +347,6 @@ class ExactSoplex : public ExactSimplex
 
   std::vector<Integer> d_denomGuesses;
 };
-
-void ExactSoplex::setPivotLimit(int pl)
-{
-  Assert(pl >= 0);
-  d_pivotLimit = pl;
-}
-
-void ExactSoplex::setBranchingDepth(int bd)
-{
-  Assert(bd >= 0);
-  d_maxDepth = bd;
-}
-
-void ExactSoplex::setBranchOnVariableLimit(int bl)
-{
-  Assert(bl >= 0);
-  d_branchLimit = bl;
-}
 
 bool ExactSoplex::roughlyEqual(double a, double b)
 {
@@ -589,9 +559,6 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     : ExactSimplex(s),
       d_vars(var),
       d_log(l),
-      d_pivotLimit(std::numeric_limits<int>::max()),
-      d_branchLimit(std::numeric_limits<int>::max()),
-      d_maxDepth(std::numeric_limits<int>::max()),
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
@@ -599,6 +566,10 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
   d_denomGuesses.push_back(Integer(ExactSoplex::s_defaultMaxDenom));
   d_denomGuesses.push_back(Integer(1ul << 29));
   d_denomGuesses.push_back(Integer(1ul << 31));
+
+  d_stats.d_externalSimplexType.set(
+      static_cast<std::underlying_type_t<options::ExternalLPSolver>>(
+          options::ExternalLPSolver::SOPLEX));
 
   d_spx.setIntParam(SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE);
   d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_OFF);
@@ -3179,7 +3150,7 @@ bool ExactSoplex::gaussianElimConstructTableRow(int nid,
 
   Matrix<Rational> A;
   A.increaseSizeTo(d_vars.getNumberOfVariables());
-  std::vector<std::pair<RowIndex, ArithVar> > rows;
+  std::vector<std::pair<RowIndex, ArithVar>> rows;
   // load the rows for auxiliary variables into A
   for (ArithVar v : onrow)
   {

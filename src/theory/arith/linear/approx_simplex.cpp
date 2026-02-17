@@ -33,6 +33,7 @@
 #include "util/statistics_registry.h"
 
 #ifdef CVC5_USE_GLPK
+#include "options/arith_options.h"
 #include "theory/arith/linear/partial_model.h"
 
 extern "C" {
@@ -163,12 +164,6 @@ class ApproxGLPK : public ApproximateSimplex
 
   static void printGLPKStatus(int status, std::ostream& out);
 
-  virtual void setPivotLimit(int pl) override;
-
-  virtual void setBranchingDepth(int bd) override;
-
-  virtual void setBranchOnVariableLimit(int bl) override;
-
   virtual std::optional<Rational> estimateWithCFE(double d) const override;
   virtual std::optional<Rational> estimateWithCFE(
       double d, const Integer& D) const override;
@@ -291,15 +286,6 @@ class ApproxGLPK : public ApproximateSimplex
   const ArithVariables& d_vars;
   TreeLog& d_log;
 
-  /* the maximum pivots allowed in a query. */
-  int d_pivotLimit;
-
-  /* maximum branches allowed on a variable */
-  int d_branchLimit;
-
-  /* maxmimum branching depth allowed.*/
-  int d_maxDepth;
-
   /* Default denominator for diophatine approximation, 2^{26} .*/
   static constexpr uint64_t s_defaultMaxDenom = (1 << 26);
 
@@ -321,24 +307,6 @@ class ApproxGLPK : public ApproximateSimplex
 
   std::vector<Integer> d_denomGuesses;
 };
-
-void ApproxGLPK::setPivotLimit(int pl)
-{
-  Assert(pl >= 0);
-  d_pivotLimit = pl;
-}
-
-void ApproxGLPK::setBranchingDepth(int bd)
-{
-  Assert(bd >= 0);
-  d_maxDepth = bd;
-}
-
-void ApproxGLPK::setBranchOnVariableLimit(int bl)
-{
-  Assert(bl >= 0);
-  d_branchLimit = bl;
-}
 
 bool ApproxGLPK::roughlyEqual(double a, double b)
 {
@@ -547,9 +515,6 @@ ApproxGLPK::ApproxGLPK(const ArithVariables& var,
     : ApproximateSimplex(s),
       d_vars(var),
       d_log(l),
-      d_pivotLimit(std::numeric_limits<int>::max()),
-      d_branchLimit(std::numeric_limits<int>::max()),
-      d_maxDepth(std::numeric_limits<int>::max()),
       d_inputProb(nullptr),
       d_realProb(nullptr),
       d_mipProb(nullptr),
@@ -560,6 +525,8 @@ ApproxGLPK::ApproxGLPK(const ArithVariables& var,
   d_denomGuesses.push_back(Integer(ApproxGLPK::s_defaultMaxDenom));
   d_denomGuesses.push_back(Integer(1ul<<29));
   d_denomGuesses.push_back(Integer(1ul<<31));
+
+  d_stats.d_externalSimplexType.set(static_cast<std::underlying_type_t<options::ExternalLPSolver>>(options::ExternalLPSolver::GLPK));
 
   d_inputProb = glp_create_prob();
   d_realProb = glp_create_prob();
@@ -1192,6 +1159,9 @@ LinResult ApproxGLPK::solveRelaxation(){
   glp_copy_prob(d_realProb, d_inputProb, GLP_OFF);
 
   int res = glp_simplex(d_realProb, &parm);
+  // GLPK always uses doubles
+  d_stats.d_precision << sizeof(double) * 8;
+
   switch(res){
   case 0:
     {

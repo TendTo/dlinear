@@ -24,6 +24,7 @@
 
 #include "base/cvc5config.h"
 #include "base/output.h"
+#include "options/arith_options.h"
 #include "proof/eager_proof_generator.h"
 #include "theory/arith/linear/constraint.h"
 #include "theory/arith/linear/cut_log.h"
@@ -46,7 +47,9 @@ using soplex::SoPlex;
 class ExactSoplex2 : public ExactSimplex
 {
  public:
-  ExactSoplex2(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
+  ExactSoplex2(const ArithVariables& v,
+               TreeLog& l,
+               external::SimplexStatistics& s);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -64,15 +67,9 @@ class ExactSoplex2 : public ExactSimplex
 
   static void printSoplexStatus(int status, std::ostream& out);
 
-  virtual void setPivotLimit(int pl) override;
-
-  virtual void setBranchingDepth(int bd) override;
-
-  virtual void setBranchOnVariableLimit(int bl) override;
-
-  virtual std::optional<Rational> estimateWithCFE(double d) const override;
-  virtual std::optional<Rational> estimateWithCFE(
-      double d, const Integer& D) const override;
+  std::optional<Rational> estimateWithCFE(double d) const override;
+  std::optional<Rational> estimateWithCFE(double d,
+                                          const Integer& D) const override;
 
  private:
   void extractVarValue(ArithVar v,
@@ -138,15 +135,6 @@ class ExactSoplex2 : public ExactSimplex
   const ArithVariables& d_vars;
   TreeLog& d_log;
 
-  /* the maximum pivots allowed in a query. */
-  int d_pivotLimit;
-
-  /* maximum branches allowed on a variable */
-  int d_branchLimit;
-
-  /* maxmimum branching depth allowed.*/
-  int d_maxDepth;
-
   /* Default denominator for diophatine approximation, 2^{26} .*/
   static constexpr uint64_t s_defaultMaxDenom = (1 << 26);
 
@@ -167,36 +155,19 @@ class ExactSoplex2 : public ExactSimplex
   bool d_solvedMIP;
 };
 
-void ExactSoplex2::setPivotLimit(int pl)
-{
-  Assert(pl >= 0);
-  d_pivotLimit = pl;
-}
-
-void ExactSoplex2::setBranchingDepth(int bd)
-{
-  Assert(bd >= 0);
-  d_maxDepth = bd;
-}
-
-void ExactSoplex2::setBranchOnVariableLimit(int bl)
-{
-  Assert(bl >= 0);
-  d_branchLimit = bl;
-}
-
 ExactSoplex2::ExactSoplex2(const ArithVariables& var,
                            TreeLog& l,
                            external::SimplexStatistics& s)
     : ExactSimplex(s),
       d_vars(var),
       d_log(l),
-      d_pivotLimit(std::numeric_limits<int>::max()),
-      d_branchLimit(std::numeric_limits<int>::max()),
-      d_maxDepth(std::numeric_limits<int>::max()),
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
+  d_stats.d_externalSimplexType.set(
+      static_cast<std::underlying_type_t<options::ExternalLPSolver>>(
+          options::ExternalLPSolver::SOPLEX));
+
   d_spx.setIntParam(SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE);
   d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_OFF);
   d_spx.setIntParam(SoPlex::ALGORITHM, SoPlex::ALGORITHM_PRIMAL);
@@ -964,7 +935,19 @@ external::LinResult ExactSoplex2::solveRelaxation()
 
   // d_spx.clearBasis();
   // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
-  switch (d_spx.optimize())
+  const auto res = d_spx.optimize();
+
+  d_stats.d_refinements << d_spx.numRefinements();
+  std::size_t precision =
+      d_spx.numPrecisionBoosts() == 0 ? sizeof(double) * 8 : 167;
+  for (int i = 1; i < d_spx.numPrecisionBoosts(); i++)
+  {
+    precision = static_cast<std::size_t>(
+        precision * d_spx.realParam(SoPlex::PRECISION_BOOSTING_FACTOR));
+  }
+  d_stats.d_precision << precision;
+
+  switch (res)
   {
     case SpxStatus::OPTIMAL:
     case SpxStatus::UNBOUNDED:
