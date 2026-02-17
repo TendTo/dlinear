@@ -172,7 +172,7 @@ TheoryArithPrivate::TheoryArithPrivate(Env& env,
       d_replayVariables(),
       d_replayConstraints(),
       d_lhsTmp(),
-      d_approxStats(NULL),
+      d_simplexStats(NULL),
       d_attemptSolveIntTurnedOff(userContext(), 0),
       d_dioSolveResources(0),
       d_solveIntMaybeHelp(0u),
@@ -189,9 +189,9 @@ TheoryArithPrivate::~TheoryArithPrivate()
   {
     delete d_treeLog;
   }
-  if (d_approxStats != NULL)
+  if (d_simplexStats != NULL)
   {
-    delete d_approxStats;
+    delete d_simplexStats;
   }
 }
 
@@ -378,6 +378,7 @@ TheoryArithPrivate::Statistics::Statistics(StatisticsRegistry& reg,
           reg.registerInt(name + "zzz::solveInt::models::successful")),
       d_mipTimer(reg.registerTimer(name + "z::approx::mip::timer")),
       d_lpTimer(reg.registerTimer(name + "z::approx::lp::timer")),
+      d_lpSetupTimer(reg.registerTimer(name + "z::approx::lp::setup::timer")),
       d_mipProofsAttempted(reg.registerInt(name + "z::mip::proofs::attempted")),
       d_mipProofsSuccessful(
           reg.registerInt(name + "z::mip::proofs::successful")),
@@ -3015,22 +3016,13 @@ TreeLog& TheoryArithPrivate::getTreeLog()
   return *d_treeLog;
 }
 
-ApproximateStatistics& TheoryArithPrivate::getApproxStats()
+external::SimplexStatistics& TheoryArithPrivate::getSimplexStats()
 {
-  if (d_approxStats == NULL)
+  if (d_simplexStats == NULL)
   {
-    d_approxStats = new ApproximateStatistics(statisticsRegistry());
+    d_simplexStats = new external::SimplexStatistics(statisticsRegistry());
   }
-  return *d_approxStats;
-}
-
-ExactStatistics& TheoryArithPrivate::getExactStats()
-{
-  if (d_exactStats == NULL)
-  {
-    d_exactStats = new ExactStatistics(statisticsRegistry());
-  }
-  return *d_exactStats;
+  return *d_simplexStats;
 }
 
 Node TheoryArithPrivate::branchToNode(external::ExternalSimplex* approx,
@@ -3209,7 +3201,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel)
   static constexpr int32_t mipLimit = 200000;
 
   TreeLog& tl = getTreeLog();
-  ApproximateStatistics& stats = getApproxStats();
+  external::SimplexStatistics& stats = getSimplexStats();
   external::ExternalSimplex* approx =
       ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
 
@@ -3483,51 +3475,48 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
     static constexpr int32_t relaxationLimit = 10000;
     Assert(ApproximateSimplex::enabled() || ExactSimplex::enabled());
 
-    const options::ExternalLPSolver solverType =
-        options().arith.externalLPSolver;
+    options::ExternalLPSolver solverType = options().arith.externalLPSolver;
 
     TreeLog& tl = getTreeLog();
-    ApproximateStatistics& stats = getApproxStats();
-
     external::ExternalSimplex* externalSolver = nullptr;
-    switch (solverType)
+    // If the solver type is set to auto, look for any of the enabled solvers
+    if (solverType == options::ExternalLPSolver::AUTO)
     {
-      case  options::ExternalLPSolver::AUTO:
-        if (ApproximateSimplex::enabled()) {
+      if (ExactSimplex::enabled()) solverType =  options::ExternalLPSolver::SOPLEX;
+      else if (ApproximateSimplex::enabled()) solverType =  options::ExternalLPSolver::GLPK;
+    }
+    {
+      TimerStat::CodeTimer codeTimer1(d_statistics.d_lpSetupTimer);
+      switch (solverType)
+      {
+        case options::ExternalLPSolver::SOPLEX:
+          externalSolver = ExactSimplex::mkExactSimplexSolver2(
+              d_partialModel, tl, getSimplexStats());
+          break;
+        case options::ExternalLPSolver::GLPK:
           externalSolver = ApproximateSimplex::mkApproximateSimplexSolver(
-              d_partialModel, tl, stats);
-        }
-        else if (ExactSimplex::enabled())
-        {
-          externalSolver = ExactSimplex::mkExactSimplexSolver(
-              d_partialModel, tl, getExactStats());
-        }
-        break;
-      case options::ExternalLPSolver::SOPLEX:
-        externalSolver = ExactSimplex::mkExactSimplexSolver2(
-            d_partialModel, tl, getExactStats());
-        break;
-      case options::ExternalLPSolver::GLPK:
-        externalSolver = ApproximateSimplex::mkApproximateSimplexSolver(
-            d_partialModel, tl, stats);
-        break;
-    }
-    if (externalSolver == nullptr)
-    {
-      InternalError() << "Failed to create external simplex solver";
-    }
+              d_partialModel, tl, getSimplexStats());
+          break;
+        default:
+          externalSolver = nullptr;
+      }
+      if (externalSolver == nullptr)
+      {
+        InternalError() << "Failed to create external simplex solver";
+      }
 
-    externalSolver->setPivotLimit(relaxationLimit);
+      externalSolver->setPivotLimit(relaxationLimit);
 
-    if (!d_guessedCoeffSet)
-    {
-      d_guessedCoeffs = externalSolver->heuristicOptCoeffs();
-      d_guessedCoeffSet = true;
-    }
-    if (!d_guessedCoeffs.empty())
-    {
-      externalSolver->setOptCoeffs(d_guessedCoeffs);
-    }
+      if (!d_guessedCoeffSet)
+      {
+        d_guessedCoeffs = externalSolver->heuristicOptCoeffs();
+        d_guessedCoeffSet = true;
+      }
+      if (!d_guessedCoeffs.empty())
+      {
+        externalSolver->setOptCoeffs(d_guessedCoeffs);
+      }
+  }
 
     ++d_statistics.d_relaxCalls;
 
@@ -3547,7 +3536,6 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         importSolution(externalSolution);
         if (d_qflraStatus != Result::SAT)
         {
-          InternalError() << "Sat from exact solver not matching cvc5 solver";
           ++d_statistics.d_relaxLinFeasFailures;
         }
         break;
@@ -3558,7 +3546,6 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         importSolution(externalSolution);
         if (d_qflraStatus != Result::UNSAT)
         {
-          InternalError() << "Unsat from exact solver not matching cvc5 solver";
           ++d_statistics.d_relaxLinInfeasFailures;
         }
         break;

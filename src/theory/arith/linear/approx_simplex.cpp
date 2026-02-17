@@ -147,7 +147,7 @@ class BranchCutInfo;
 class ApproxGLPK : public ApproximateSimplex
 {
  public:
-  ApproxGLPK(const ArithVariables& v, TreeLog& l, ApproximateStatistics& s);
+  ApproxGLPK(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
   ~ApproxGLPK();
 
   LinResult solveRelaxation() override;
@@ -290,7 +290,6 @@ class ApproxGLPK : public ApproximateSimplex
  private:
   const ArithVariables& d_vars;
   TreeLog& d_log;
-  ApproximateStatistics& d_stats;
 
   /* the maximum pivots allowed in a query. */
   int d_pivotLimit;
@@ -544,10 +543,10 @@ static CutInfoKlass fromGlpkClass(int klass){
 
 ApproxGLPK::ApproxGLPK(const ArithVariables& var,
                        TreeLog& l,
-                       ApproximateStatistics& s)
-    : d_vars(var),
+                       external::SimplexStatistics& s)
+    : ApproximateSimplex(s),
+      d_vars(var),
       d_log(l),
-      d_stats(s),
       d_pivotLimit(std::numeric_limits<int>::max()),
       d_branchLimit(std::numeric_limits<int>::max()),
       d_maxDepth(std::numeric_limits<int>::max()),
@@ -1091,7 +1090,40 @@ Solution ApproxGLPK::extractSolution(bool mip)
       }
     }
   }
+
+#if 0 // For debug
+  for (int colIdx = 1; colIdx <= glp_get_num_cols(prob); colIdx++)
+  {
+    const double lb = glp_get_col_lb(prob, colIdx);
+    const double ub = glp_get_col_ub(prob, colIdx);
+    const double val = glp_get_col_prim(prob, colIdx);
+    if (val < lb || val > ub)
+    {
+      printf("Column %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+             colIdx,
+             d_colToArithVar[colIdx],
+             val,
+             lb,
+             ub);
+    }
+  }
+  for (int rowIdx = 1; rowIdx <= glp_get_num_rows(prob); rowIdx++)
+  {
+    const double lb = glp_get_row_lb(prob, rowIdx);
+    const double ub = glp_get_row_ub(prob, rowIdx);
+    const double val = glp_get_row_prim(prob, rowIdx);
+    if (val < lb || val > ub)
+    {
+      printf("Row %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+             rowIdx,
+             d_rootRowIds[rowIdx],
+             val,
+             lb,
+             ub);
+    }
+  }
   printSolution(sol);
+#endif
   return sol;
 }
 
@@ -3167,7 +3199,7 @@ namespace arith::linear {
 external::ExternalSimplex* ApproximateSimplex::mkApproximateSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
-    CVC5_UNUSED ApproximateStatistics& s)
+    CVC5_UNUSED external::SimplexStatistics& s)
 {
 #ifdef CVC5_USE_GLPK
   return new ApproxGLPK(vars, l, s);
@@ -3183,17 +3215,6 @@ bool ApproximateSimplex::enabled()
 #else
   return false;
 #endif
-}
-
-ApproximateStatistics::ApproximateStatistics(StatisticsRegistry& sr)
-    : d_branchMaxDepth(sr.registerInt("z::approx::branchMaxDepth")),
-      d_branchesMaxOnAVar(sr.registerInt("z::approx::branchesMaxOnAVar")),
-      d_gaussianElimConstructTime(
-          sr.registerTimer("z::approx::gaussianElimConstruct::time")),
-      d_gaussianElimConstruct(
-          sr.registerInt("z::approx::gaussianElimConstruct::calls")),
-      d_averageGuesses(sr.registerAverage("z::approx::averageGuesses"))
-{
 }
 
 }  // namespace arith::linear

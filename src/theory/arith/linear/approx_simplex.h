@@ -34,18 +34,6 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-class ApproximateStatistics {
- public:
-  ApproximateStatistics(StatisticsRegistry& sr);
-
-  IntStat d_branchMaxDepth;
-  IntStat d_branchesMaxOnAVar;
-
-  TimerStat d_gaussianElimConstructTime;
-  IntStat d_gaussianElimConstruct;
-  AverageStat d_averageGuesses;
-};
-
 
 class NodeLog;
 class TreeLog;
@@ -61,9 +49,9 @@ class ApproximateSimplex : public external::ExternalSimplex{
    * If GLPK is enabled, creates a GPLK-based approximating solver.
    */
   static ExternalSimplex* mkApproximateSimplexSolver(
-      const ArithVariables& vars, TreeLog& l, ApproximateStatistics& s);
+      const ArithVariables& vars, TreeLog& l, external::SimplexStatistics& s);
 
-  ApproximateSimplex() = default;
+  explicit ApproximateSimplex(external::SimplexStatistics& s) : ExternalSimplex(s) {}
 };/* class ApproximateSimplex */
 
 }  // namespace arith

@@ -24,6 +24,7 @@
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
 #include "util/dense_map.h"
+#include "util/statistics_registry.h"
 
 namespace cvc5::internal {
 namespace theory {
@@ -56,10 +57,23 @@ struct Solution
   Solution() : newBasis(), newValues() {}
 };
 
+class SimplexStatistics
+{
+ public:
+  SimplexStatistics(StatisticsRegistry& sr);
+
+  IntStat d_branchMaxDepth;
+  IntStat d_branchesMaxOnAVar;
+
+  TimerStat d_gaussianElimConstructTime;
+  IntStat d_gaussianElimConstruct;
+  AverageStat d_averageGuesses;
+};
+
 class ExternalSimplex
 {
  public:
-  ExternalSimplex() = default;
+  explicit ExternalSimplex(SimplexStatistics& s) : d_stats(s) {}
   virtual ~ExternalSimplex() = default;
 
   /* maximum branches allowed on a variable */
@@ -99,6 +113,9 @@ class ExternalSimplex
   virtual Solution extractMIP() = 0;
 
   virtual Solution extractRelaxation() = 0;
+
+ protected:
+  SimplexStatistics d_stats;
 }; /* class ApproximateSimplex */
 
 }  // namespace external

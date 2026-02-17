@@ -34,19 +34,6 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-class ExactStatistics
-{
- public:
-  ExactStatistics(StatisticsRegistry& sr);
-
-  IntStat d_branchMaxDepth;
-  IntStat d_branchesMaxOnAVar;
-
-  TimerStat d_gaussianElimConstructTime;
-  IntStat d_gaussianElimConstruct;
-  AverageStat d_averageGuesses;
-};
-
 class NodeLog;
 class TreeLog;
 class ArithVariables;
@@ -55,20 +42,24 @@ class CutInfo;
 class ExactSimplex : public external::ExternalSimplex
 {
  public:
+  using ExternalSimplex::ExternalSimplex;
+
   /** Is an exact solver (SoPlex or Qsopt_ex) enabled? */
   static bool enabled();
 
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
-  static external::ExternalSimplex* mkExactSimplexSolver(
-      const ArithVariables& vars, TreeLog& l, ExactStatistics& s);
+  static ExternalSimplex* mkExactSimplexSolver(const ArithVariables& vars,
+                                               TreeLog& l,
+                                               external::SimplexStatistics& s);
 
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
-  static external::ExternalSimplex* mkExactSimplexSolver2(
-      const ArithVariables& vars, TreeLog& l, ExactStatistics& s);
+  static ExternalSimplex* mkExactSimplexSolver2(const ArithVariables& vars,
+                                                TreeLog& l,
+                                                external::SimplexStatistics& s);
 
 }; /* class ApproximateSimplex */
 

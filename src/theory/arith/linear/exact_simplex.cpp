@@ -157,7 +157,7 @@ class BranchCutInfo;
 class ExactSoplex : public ExactSimplex
 {
  public:
-  ExactSoplex(const ArithVariables& v, TreeLog& l, ExactStatistics& s);
+  ExactSoplex(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -325,7 +325,6 @@ class ExactSoplex : public ExactSimplex
  private:
   const ArithVariables& d_vars;
   TreeLog& d_log;
-  ExactStatistics& d_stats;
 
   /* the maximum pivots allowed in a query. */
   int d_pivotLimit;
@@ -586,10 +585,10 @@ static CutInfoKlass fromGlpkClass(int klass)
 
 ExactSoplex::ExactSoplex(const ArithVariables& var,
                          TreeLog& l,
-                         ExactStatistics& s)
-    : d_vars(var),
+                         external::SimplexStatistics& s)
+    : ExactSimplex(s),
+      d_vars(var),
       d_log(l),
-      d_stats(s),
       d_pivotLimit(std::numeric_limits<int>::max()),
       d_branchLimit(std::numeric_limits<int>::max()),
       d_maxDepth(std::numeric_limits<int>::max()),
@@ -3641,7 +3640,7 @@ namespace arith::linear {
 external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
-    CVC5_UNUSED ExactStatistics& s)
+    CVC5_UNUSED external::SimplexStatistics& s)
 {
 #ifdef CVC5_USE_SOPLEX
   return new ExactSoplex(vars, l, s);
@@ -3657,17 +3656,6 @@ bool ExactSimplex::enabled()
 #else
   return false;
 #endif
-}
-
-ExactStatistics::ExactStatistics(StatisticsRegistry& sr)
-    : d_branchMaxDepth(sr.registerInt("z::approx::branchMaxDepth")),
-      d_branchesMaxOnAVar(sr.registerInt("z::approx::branchesMaxOnAVar")),
-      d_gaussianElimConstructTime(
-          sr.registerTimer("z::approx::gaussianElimConstruct::time")),
-      d_gaussianElimConstruct(
-          sr.registerInt("z::approx::gaussianElimConstruct::calls")),
-      d_averageGuesses(sr.registerAverage("z::approx::averageGuesses"))
-{
 }
 
 }  // namespace arith::linear

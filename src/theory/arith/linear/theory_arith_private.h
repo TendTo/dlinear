@@ -734,10 +734,8 @@ private:
   DenseMap<Rational> d_lhsTmp;
 
   /* Approximate simpplex solvers are given a copy of their stats */
-  ApproximateStatistics* d_approxStats;
-  ApproximateStatistics& getApproxStats();
-  ExactStatistics* d_exactStats;
-  ExactStatistics& getExactStats();
+  external::SimplexStatistics* d_simplexStats;
+  external::SimplexStatistics& getSimplexStats();
   context::CDO<int32_t> d_attemptSolveIntTurnedOff;
   void turnOffApproxFor(int32_t rounds);
   bool getSolveIntegerResource();
@@ -862,6 +860,7 @@ private:
     IntStat d_solveIntModelsSuccessful;
     TimerStat d_mipTimer;
     TimerStat d_lpTimer;
+    TimerStat d_lpSetupTimer;
 
     IntStat d_mipProofsAttempted;
     IntStat d_mipProofsSuccessful;

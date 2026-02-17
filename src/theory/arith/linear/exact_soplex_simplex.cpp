@@ -46,7 +46,7 @@ using soplex::SoPlex;
 class ExactSoplex2 : public ExactSimplex
 {
  public:
-  ExactSoplex2(const ArithVariables& v, TreeLog& l, ExactStatistics& s);
+  ExactSoplex2(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -137,7 +137,6 @@ class ExactSoplex2 : public ExactSimplex
  private:
   const ArithVariables& d_vars;
   TreeLog& d_log;
-  ExactStatistics& d_stats;
 
   /* the maximum pivots allowed in a query. */
   int d_pivotLimit;
@@ -188,10 +187,10 @@ void ExactSoplex2::setBranchOnVariableLimit(int bl)
 
 ExactSoplex2::ExactSoplex2(const ArithVariables& var,
                            TreeLog& l,
-                           ExactStatistics& s)
-    : d_vars(var),
+                           external::SimplexStatistics& s)
+    : ExactSimplex(s),
+      d_vars(var),
       d_log(l),
-      d_stats(s),
       d_pivotLimit(std::numeric_limits<int>::max()),
       d_branchLimit(std::numeric_limits<int>::max()),
       d_maxDepth(std::numeric_limits<int>::max()),
@@ -969,7 +968,7 @@ external::LinResult ExactSoplex2::solveRelaxation()
   {
     case SpxStatus::OPTIMAL:
     case SpxStatus::UNBOUNDED:
-      std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
+      // std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
       Assert(d_spx.hasSol());
       d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
@@ -1562,7 +1561,7 @@ namespace arith::linear {
 external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver2(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
-    CVC5_UNUSED ExactStatistics& s)
+    CVC5_UNUSED external::SimplexStatistics& s)
 {
 #ifdef CVC5_USE_SOPLEX
   return new ExactSoplex2(vars, l, s);
