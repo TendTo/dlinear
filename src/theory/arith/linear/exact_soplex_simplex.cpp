@@ -74,7 +74,7 @@ class ExactSoplex2 : public ExactSimplex
  private:
   void extractVarValue(ArithVar v,
                        soplex::SPxSolverBase<double>::VarStatus varStatus,
-                       mpq_class&& value,
+                       const mpq_class& value,
                        external::Solution& sol) const;
   void printSolution(const external::Solution& sol) const;
 
@@ -138,13 +138,15 @@ class ExactSoplex2 : public ExactSimplex
   /* Default denominator for diophatine approximation, 2^{26} .*/
   static constexpr uint64_t s_defaultMaxDenom = (1 << 26);
 
+  const static mpq_class s_zero;
+
   // glp_prob* d_inputProb; /* a copy of the input prob */
   // glp_prob* d_realProb;  /* a copy of the real relaxation output */
   // glp_prob* d_mipProb;   /* a copy of the integer prob */
   SoPlex d_spx;
   std::unordered_map<int, bool> d_strict_rows;
 
-  DenseMap<std::size_t> d_colIndices;
+  std::unordered_map<ArithVar, std::size_t> d_colIndices;
 
   // NodeLog::RowIdMap d_rootRowIds;
   std::vector<ArithVar> d_rowToArithVar;
@@ -154,6 +156,8 @@ class ExactSoplex2 : public ExactSimplex
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
+
+const mpq_class ExactSoplex2::s_zero{0};
 
 ExactSoplex2::ExactSoplex2(const ArithVariables& var,
                            TreeLog& l,
@@ -177,9 +181,7 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
   d_spx.setIntParam(SoPlex::CHECKMODE, SoPlex::CHECKMODE_RATIONAL);
   d_spx.setIntParam(SoPlex::SYNCMODE, SoPlex::SYNCMODE_AUTO);
   d_spx.setIntParam(SoPlex::PRICER, SoPlex::PRICER_AUTO);
-  // d_spx.setIntParam(SoPlex::RATIOTESTER, SoPlex::RATIOTESTER_BOUNDFLIPPING);
   d_spx.setIntParam(SoPlex::ITERLIMIT, d_pivotLimit);
-
   d_spx.setRealParam(SoPlex::FEASTOL, 0.0);
   d_spx.setRealParam(SoPlex::OPTTOL, 0.0);
 
@@ -188,9 +190,9 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
     d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_DEBUG);
   }
 
-  // d_spx.clearLPRational();
   d_rowToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
   d_colToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
+  d_colIndices.reserve(d_vars.getNumberOfVariables() / 2);
 
   // Assign each variable to a row and column variable as it appears in the
   // input
@@ -207,7 +209,7 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
     else
     {
       d_colToArithVar.emplace_back(v);
-      d_colIndices.set(v, d_colIndices.size());
+      d_colIndices.emplace(v, d_colIndices.size());
       Trace("approx") << "Col vars: " << v << "<->" << d_colIndices.size() - 1
                       << std::endl;
     }
@@ -217,7 +219,6 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
 
   // The number of cols must accommodate for the non-aux variables as well as
   // the additional strict variable t
-  // Todo: better estimation of the number of rows
   soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
   soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()));
 
@@ -242,7 +243,7 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
 
       Assert(d_vars.hasArithVar(n));
       ArithVar av = d_vars.asArithVar(n);
-      int colIndex = static_cast<int>(d_colIndices[av]);
+      int colIndex = static_cast<int>(d_colIndices.at(av));
       // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
 
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
@@ -290,8 +291,10 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
   d_spx.addColsRational(cols);
   d_spx.addRowsRational(rows);
 
+#if 0  // For debug
   d_spx.writeFileRational(
       "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+#endif
 }
 
 soplex::Rational ExactSoplex2::varToLb(const ArithVar v) const
@@ -545,7 +548,7 @@ void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
 
         Assert(d_vars.hasArithVar(n));
         ArithVar av = d_vars.asArithVar(n);
-        int colIndex = d_colIndices[av];
+        const int colIndex = d_colIndices.at(av);
         mpq_class coeff = constant.getValue().getValue();
         if (!nbCoeffs.isKey(colIndex))
         {
@@ -556,8 +559,8 @@ void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
     }
     else
     {
-      int colIndex = d_colIndices[v];
-      double coeff = q.getDouble();
+      const int colIndex = d_colIndices.at(v);
+      const double coeff = q.getDouble();
       if (!nbCoeffs.isKey(colIndex))
       {
         nbCoeffs.set(colIndex, 0.0);
@@ -617,7 +620,7 @@ void ExactSoplex2::printSoplexStatus(int status, std::ostream& out)
 void ExactSoplex2::extractVarValue(
     const ArithVar v,
     const soplex::SPxSolverBase<double>::VarStatus varStatus,
-    mpq_class&& value,
+    const mpq_class& value,
     external::Solution& sol) const
 {
   using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
@@ -626,8 +629,8 @@ void ExactSoplex2::extractVarValue(
 
   switch (varStatus)
   {
-    case VarStatus::BASIC:
-      newBasis.add(v);
+    case VarStatus::BASIC: newBasis.add(v); CVC5_FALLTHROUGH;
+    case VarStatus::UNDEFINED:
       if (d_vars.hasLowerBound(v)
           && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
       {
@@ -660,7 +663,7 @@ void ExactSoplex2::extractVarValue(
       Trace("approx-debug") << "non-basic zero" << std::endl;
       newValues.set(v, DeltaRational(0));
       break;
-    default: newValues.set(v, DeltaRational(value));
+    default: Unreachable();
   }
 }
 
@@ -727,6 +730,7 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
 
+  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
   external::Solution sol;
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
@@ -772,11 +776,18 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
     for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
     {
       const ArithVar v = d_rowToArithVar.at(rowIdx);
-      d_spx.getRowActivityRational(rowIdx, rowValue);
-      extractVarValue(v,
-                      d_spx.basisRowStatus(rowIdx),
-                      mpq_class{rowValue.backend().data()},
-                      sol);
+      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
+      const bool useActivity =
+          varStatus == VarStatus::BASIC || varStatus == VarStatus::UNDEFINED;
+      // Only compute the row activity for basic and undefined variables,
+      // since for non-basic variables we know the value is at a bound
+      // and we can use the d_vars bounds directly
+      if (useActivity) d_spx.getRowActivityRational(rowIdx, rowValue);
+      extractVarValue(
+          v,
+          varStatus,
+          useActivity ? mpq_class{rowValue.backend().data()} : s_zero,
+          sol);
     }
   }
   else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
@@ -801,11 +812,18 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
     for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
     {
       const ArithVar v = d_colToArithVar.at(colIdx);
-      d_spx.getColActivityRational(colIdx, colValue);
-      extractVarValue(v,
-                      d_spx.basisColStatus(colIdx),
-                      mpq_class{colValue.backend().data()},
-                      sol);
+      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
+      // Only compute the row activity for basic and undefined variables,
+      // since for non-basic variables we know the value is at a bound
+      // and we can use the d_vars bounds directly
+      const bool useActivity =
+          varStatus == VarStatus::BASIC || varStatus == VarStatus::UNDEFINED;
+      if (useActivity) d_spx.getColActivityRational(colIdx, colValue);
+      extractVarValue(
+          v,
+          varStatus,
+          useActivity ? mpq_class{colValue.backend().data()} : s_zero,
+          sol);
     }
   }
   else
