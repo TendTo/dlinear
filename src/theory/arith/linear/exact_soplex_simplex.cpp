@@ -72,6 +72,9 @@ class ExactSoplex2 : public ExactSimplex
                                           const Integer& D) const override;
 
  private:
+  void strictVariableFormulation();
+  void epsilonFormulation();
+
   void extractVarValue(ArithVar v,
                        soplex::SPxSolverBase<double>::VarStatus varStatus,
                        const mpq_class& value,
@@ -217,79 +220,7 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
   Assert(!d_rowToArithVar.empty());
   Assert(!d_colToArithVar.empty());
 
-  // The number of cols must accommodate for the non-aux variables as well as
-  // the additional strict variable t
-  soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
-  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()));
-
-  // Construct the rows of the LP by parsing the polynomial constraints together
-  // with the row bounds on the auxiliary variables
-  for (ArithVar v : d_rowToArithVar)
-  {
-    assert(d_vars.isAuxiliary(v));
-
-    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
-    // std::cout << d_vars.asNode(v).getName() << "\n\n";
-
-    soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
-
-    for (Polynomial::iterator j = p.begin(), end = p.end(); j != end; ++j)
-    {
-      const Monomial& mono = *j;
-      const Constant& constant = mono.getConstant();
-      const VarList& variable = mono.getVarList();
-
-      Node n = variable.getNode();
-
-      Assert(d_vars.hasArithVar(n));
-      ArithVar av = d_vars.asArithVar(n);
-      int colIndex = static_cast<int>(d_colIndices.at(av));
-      // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
-
-      vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
-    }
-
-    soplex::Rational lb = -soplex::infinity;
-    soplex::Rational ub = soplex::infinity;
-    if (d_vars.hasLowerBound(v))
-    {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-    }
-    if (d_vars.hasUpperBound(v))
-    {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    }
-    rows.add({lb, vec, ub});
-  }
-
-  // Construct the columns of the LP by assigning upper/lower bounds to each
-  // variable
-  for (ArithVar v : d_colToArithVar)
-  {
-    assert(!d_vars.isAuxiliary(v));
-
-    if (TraceIsOn("approx-debug"))
-    {
-      Trace("approx-debug") << v << " ";
-      d_vars.printModel(v, Trace("approx-debug"));
-    }
-
-    soplex::Rational lb = -soplex::infinity;
-    soplex::Rational ub = soplex::infinity;
-    if (d_vars.hasLowerBound(v))
-    {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-    }
-    if (d_vars.hasUpperBound(v))
-    {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    }
-    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
-  }
-
-  // Add both columns and rows to the LP
-  d_spx.addColsRational(cols);
-  d_spx.addRowsRational(rows);
+  epsilonFormulation();
 
 #if 0  // For debug
   d_spx.writeFileRational(
@@ -617,6 +548,85 @@ void ExactSoplex2::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
+void ExactSoplex2::epsilonFormulation()
+{
+  // The number of cols must accommodate for the non-aux variables as well as
+  // the additional strict variable t
+  soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
+  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()));
+
+  // Construct the rows of the LP by parsing the polynomial constraints together
+  // with the row bounds on the auxiliary variables
+  for (ArithVar v : d_rowToArithVar)
+  {
+    assert(d_vars.isAuxiliary(v));
+
+    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
+    // std::cout << d_vars.asNode(v).getName() << "\n\n";
+
+    soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
+
+    for (Polynomial::iterator j = p.begin(), end = p.end(); j != end; ++j)
+    {
+      const Monomial& mono = *j;
+      const Constant& constant = mono.getConstant();
+      const VarList& variable = mono.getVarList();
+
+      Node n = variable.getNode();
+
+      Assert(d_vars.hasArithVar(n));
+      ArithVar av = d_vars.asArithVar(n);
+      int colIndex = static_cast<int>(d_colIndices.at(av));
+      // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
+
+      vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
+    }
+
+    soplex::Rational lb = -soplex::infinity;
+    soplex::Rational ub = soplex::infinity;
+    if (d_vars.hasLowerBound(v))
+    {
+      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+    }
+    if (d_vars.hasUpperBound(v))
+    {
+      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+    }
+    rows.add({lb, vec, ub});
+  }
+
+  // Construct the columns of the LP by assigning upper/lower bounds to each
+  // variable
+  for (ArithVar v : d_colToArithVar)
+  {
+    assert(!d_vars.isAuxiliary(v));
+
+    if (TraceIsOn("approx-debug"))
+    {
+      Trace("approx-debug") << v << " ";
+      d_vars.printModel(v, Trace("approx-debug"));
+    }
+
+    soplex::Rational lb = -soplex::infinity;
+    soplex::Rational ub = soplex::infinity;
+    if (d_vars.hasLowerBound(v))
+    {
+      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+    }
+    if (d_vars.hasUpperBound(v))
+    {
+      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+    }
+    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
+  }
+
+  // Add both columns and rows to the LP
+  d_spx.addColsRational(cols);
+  d_spx.addRowsRational(rows);
+}
+
+void ExactSoplex2::strictVariableFormulation() {}
+
 void ExactSoplex2::extractVarValue(
     const ArithVar v,
     const soplex::SPxSolverBase<double>::VarStatus varStatus,
@@ -895,17 +905,13 @@ void ExactSoplex2::printSolution(const external::Solution& sol) const
 
 std::optional<Rational> ExactSoplex2::estimateWithCFE(double d) const
 {
-  return estimateWithCFE(d, Integer(s_defaultMaxDenom));
+  Unimplemented();
 }
 
 std::optional<Rational> ExactSoplex2::estimateWithCFE(double d,
                                                       const Integer& D) const
 {
-  if (std::optional<Rational> from_double = Rational::fromDouble(d))
-  {
-    return {};
-  }
-  return std::optional<Rational>();
+  Unimplemented();
 }
 
 void ExactSoplex2::tryCut(int, CutInfo&) { Unimplemented(); }
