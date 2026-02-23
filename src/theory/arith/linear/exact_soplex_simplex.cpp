@@ -78,9 +78,6 @@ class ExactSoplex : public ExactSimplex
   }
 
  protected:
-  void strictVariableFormulation();
-  void epsilonFormulation();
-
   bool extractVarValue(ArithVar v,
                        soplex::SPxSolverBase<double>::VarStatus varStatus,
                        const mpq_class& value,
@@ -189,7 +186,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
           options::ExternalLPSolver::SOPLEX));
 
   d_spx.setIntParam(SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE);
-  d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_OFF);
+  d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_INTERNAL);
   d_spx.setIntParam(SoPlex::ALGORITHM, SoPlex::ALGORITHM_PRIMAL);
   d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_ERROR);
   d_spx.setIntParam(SoPlex::READMODE, SoPlex::READMODE_RATIONAL);
@@ -281,6 +278,9 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
     {
       ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
     }
+    if (!d_vars.hasLowerBound(v) && !d_vars.hasUpperBound(v))
+      std::cout << "WARNING: row with no bounds: " << v << " => "
+                << d_vars.asNode(v).toString() << "\n";
     rows.add({lb, vec, ub});
   }
 
@@ -319,11 +319,16 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
                                      external::SimplexStatistics& s)
     : ExactSoplex(var, l, s)
 {
+  // std::ofstream out(
+  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/report.txt");
+
   // The number of cols must accommodate for the non-aux variables as well
   // as the additional strict variable t Todo: better estimation of the
   // number of rows
   soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
   soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()) + 1);
+  const int strictVarIdx = static_cast<int>(d_colToArithVar.size());
+  // std::cout << "int numCols = " << strictVarIdx + 1 << ";\n";
 
   std::vector<ArithVar> rowToArithVarStrict;
   rowToArithVarStrict.reserve(d_rowToArithVar.size() * 2);
@@ -336,6 +341,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
 
     Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
     soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
+    // out << "{\nsoplex::DSVectorRational vec(numCols);\n";
 
     for (auto j = p.begin(), end = p.end(); j != end; ++j)
     {
@@ -349,6 +355,8 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       ArithVar av = d_vars.asArithVar(n);
       int colIndex = static_cast<int>(d_colIndices[av]);
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
+      // out << "vec.add(" << colIndex << ", " << constant.getValue().getValue()
+      //     << ");\n";
     }
 
     // If we are dealing with a row with a strict bound (< or >), then we
@@ -365,29 +373,41 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
         // If strict, add t, and in any case add the split row
         if (hasStrictLb(v))
         {
-          vec.add(cols.max() - 1, 1);
-          d_strict_rows.emplace(rows.num(), true);
-        }
-        rowToArithVarStrict.emplace_back(v);
-        rows.add({varToLb(v), vec, soplex::infinity});
-      }
-      if (d_vars.hasUpperBound(v))
-      {
-        // If strict, add -t, and in any case add the split row
-        if (hasStrictUB(v))
-        {
-          vec.add(cols.max() - 1, -1);
+          vec.add(strictVarIdx, -1);
+          // out << "vec.add(" << strictVarIdx << ", 1);\n";
           d_strict_rows.emplace(rows.num(), false);
         }
         rowToArithVarStrict.emplace_back(v);
+        rows.add({varToLb(v), vec, soplex::infinity});
+        // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n";
+      }
+      if (d_vars.hasUpperBound(v))
+      {
+        // Ensure that the strict variable is present only once and with the
+        // correct coefficient in the row vector
+        if (const int idx = vec.pos(strictVarIdx); idx > -1) vec.remove(idx);
+        // out << "const int idx = vec.pos(" << strictVarIdx
+        //     << "); if ( idx > -1) vec.remove(idx);\n";
+
+        // If strict, add -t, and in any case add the split row
+        if (hasStrictUB(v))
+        {
+          vec.add(strictVarIdx, 1);
+          // out << "vec.add(" << strictVarIdx << ", -1);\n";
+          d_strict_rows.emplace(rows.num(), true);
+        }
+        rowToArithVarStrict.emplace_back(v);
         rows.add({-soplex::infinity, vec, varToUb(v)});
+        // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n";
       }
     }
     else
     {
       rowToArithVarStrict.emplace_back(v);
       rows.add({varToLb(v), vec, varToUb(v)});
+      // out << "rows.add(" << varToLb(v) << ", vec, " << varToUb(v) << ");\n";
     }
+    // out << "}\n";
   }
 
   // Construct the columns of the LP by assigning upper/lower bounds to each
@@ -403,35 +423,50 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
     }
 
     cols.add({0.0, soplex::DSVectorRational(), varToUb(v), varToLb(v)});
+    // out << "cols.add({0.0, soplex::DSVectorRational(), " << varToUb(v) << ",
+    // "
+    //     << varToLb(v) << "});\n";
 
     if (hasStrictLb(v))
     {
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
-      vec.add(cols.max() - 1, 1);
-      d_strict_rows.emplace(rows.num(), true);
+      vec.add(strictVarIdx, -1);
+      d_strict_rows.emplace(rows.num(), false);
+      // out << "{\nsoplex::DSVectorRational vec(2);\n";
+      // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
+      // out << "vec.add(" << strictVarIdx << ", 1);\n";
       rows.add({varToLb(v), vec, soplex::infinity});
+      // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n}\n";
       rowToArithVarStrict.emplace_back(v);
     }
     if (hasStrictUB(v))
     {
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
-      vec.add(cols.max() - 1, -1);
-      d_strict_rows.emplace(rows.num(), false);
+      vec.add(strictVarIdx, 1);
+      // out << "{\nsoplex::DSVectorRational vec(2);\n";
+      // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
+      // out << "vec.add(" << strictVarIdx << ", -1);\n";
+      d_strict_rows.emplace(rows.num(), true);
       rows.add({-soplex::infinity, vec, varToUb(v)});
+      // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n}\n";
       rowToArithVarStrict.emplace_back(v);
     }
   }
 
   // Add the strict variable t
   cols.add({-1, soplex::DSVectorRational(), 1, 0});
+  // out << "cols.add({-1, soplex::DSVectorRational(), soplex::infinity,
+  // 0});\n";
 
   // Add both columns and rows to the LP
   d_spx.addColsRational(cols);
   d_spx.addRowsRational(rows);
 
   d_rowToArithVar = std::move(rowToArithVarStrict);
+
+  // out.close();
 }
 
 soplex::Rational ExactSoplex::varToLb(const ArithVar v) const
@@ -767,7 +802,9 @@ bool ExactSoplex::extractVarValue(
 
   switch (varStatus)
   {
-    case VarStatus::BASIC: newBasis.add(v); CVC5_FALLTHROUGH;
+    case VarStatus::BASIC:
+      if (!newBasis.isMember(v)) newBasis.add(v);
+      CVC5_FALLTHROUGH;
     case VarStatus::UNDEFINED:
       if (d_vars.hasLowerBound(v)
           && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
@@ -1048,9 +1085,11 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const VarStatus varStatus = d_spx.basisColStatus(colIdx);
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+
       const bool isBasicAtBound = extractVarValue(
           v, varStatus, mpq_class{primal[colIdx].backend().data()}, sol);
-      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+
+      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
 
     // Get the row activity for the rows
@@ -1066,9 +1105,9 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       {
         nonBasicVars.insert(v);
       }
-      else if (nonBasicVars.count(v) > 0 || sol.newBasis.isMember(v))
+      else if (nonBasicVars.count(v) > 0)
       {
-        // We already know this row's value from the other side,
+        // We already know this row's value from some other side,
         // no need to recompute it
         continue;
       }
@@ -1085,7 +1124,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
           varStatus,
           useActivity ? mpq_class{rowValue.backend().data()} : s_zero,
           sol);
-      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
   }
   else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
@@ -1110,7 +1149,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
       const bool isBasicAtBound = extractVarValue(
           v, varStatus, mpq_class{dualRay[rowIdx].backend().data()}, sol);
-      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
 
     // Get the col activity for each column
@@ -1127,11 +1166,12 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC)
       {
+        Assert(nonBasicVars.count(v) == 0);
         nonBasicVars.insert(v);
       }
       else if (nonBasicVars.count(v) > 0 || sol.newBasis.isMember(v))
       {
-        // We already know this row's value from the other side,
+        // We already know this row's value from some other side,
         // no need to recompute it
         continue;
       }
@@ -1148,7 +1188,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
           varStatus,
           useActivity ? mpq_class{colValue.backend().data()} : s_zero,
           sol);
-      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
   }
   else
@@ -1158,12 +1198,29 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
 
   // Forcefully remove a basic variable at bound from the basis,
   // unless we know it is not needed, in which case we use ARITHVAR_SENTINEL
-  if (sol.newBasis.isMember(basicAtBound.value_or(ARITHVAR_SENTINEL)))
-    sol.newBasis.remove(basicAtBound.value_or(ARITHVAR_SENTINEL));
-  // Make sure to remove all strict rows that we know are non-basic
   for (const ArithVar v : nonBasicVars)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
+  }
+  if (basicAtBound.has_value())
+  {
+    for (ArithVar v : nonBasicVars)
+    {
+      if (!sol.newBasis.isMember(v))
+      {
+        sol.newBasis.add(v);
+        break;
+      }
+    }
+  }
+
+  // Make sure to remove all strict rows that we know are non-basic
+  if (!basicAtBound.has_value())
+  {
+    std::cout
+        << "Warning: no basic variable at bound was found, this may lead to "
+           "numerical issues since we won't have a strict variable in the basis"
+        << std::endl;
   }
   return sol;
 }
@@ -1244,9 +1301,17 @@ external::LinResult ExactSoplex::solveRelaxation()
   // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
   d_spx.writeFileRational(
       "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
-  d_spx.writeFileRational(
-      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
-  const auto res = d_spx.optimize();
+
+  soplex::SPxSolverBase<double>::Status res =
+      soplex::SPxSolverBase<double>::Status::UNKNOWN;
+  try
+  {
+    res = d_spx.optimize();
+  }
+  catch (const soplex::SPxException&)
+  {
+    return external::LinResult::LinExhausted;
+  }
 
   d_stats.d_refinements << d_spx.numRefinements();
   std::size_t precision =
@@ -1267,7 +1332,9 @@ external::LinResult ExactSoplex::solveRelaxation()
       d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
-      return external::LinResult::LinFeasible;
+      return x[d_spx.numCols() - 1].is_zero()
+                 ? external::LinResult::LinInfeasible
+                 : external::LinResult::LinFeasible;
     case SpxStatus::INFEASIBLE:
       d_solvedRelaxation = true;
       return external::LinResult::LinInfeasible;
