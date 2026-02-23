@@ -626,3 +626,10 @@ help = "Use GLPK as an external LP solver."
 name = "soplex"
 help  = "Use SoPlex as an external LP solver."
 
+[[option]]
+name       = "lpStrictVar"
+category   = "expert"
+long       = "lp-strict-var"
+type       = "bool"
+default    = "true"
+help       = "use the strict var formulation, if supported by the external LP solver, only when --use-approx is enabled"

@@ -44,12 +44,12 @@ namespace arith::linear {
 
 using soplex::SoPlex;
 
-class ExactSoplex2 : public ExactSimplex
+class ExactSoplex : public ExactSimplex
 {
  public:
-  ExactSoplex2(const ArithVariables& v,
-               TreeLog& l,
-               external::SimplexStatistics& s);
+  ExactSoplex(const ArithVariables& v,
+              TreeLog& l,
+              external::SimplexStatistics& s);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -67,15 +67,21 @@ class ExactSoplex2 : public ExactSimplex
 
   static void printSoplexStatus(int status, std::ostream& out);
 
-  std::optional<Rational> estimateWithCFE(double d) const override;
+  std::optional<Rational> estimateWithCFE(double d) const override
+  {
+    Unimplemented();
+  }
   std::optional<Rational> estimateWithCFE(double d,
-                                          const Integer& D) const override;
+                                          const Integer& D) const override
+  {
+    Unimplemented();
+  }
 
- private:
+ protected:
   void strictVariableFormulation();
   void epsilonFormulation();
 
-  void extractVarValue(ArithVar v,
+  bool extractVarValue(ArithVar v,
                        soplex::SPxSolverBase<double>::VarStatus varStatus,
                        const mpq_class& value,
                        external::Solution& sol) const;
@@ -87,7 +93,7 @@ class ExactSoplex2 : public ExactSimplex
   bool hasStrictLb(ArithVar v) const;
   bool hasStrictUB(ArithVar v) const;
 
-  external::Solution extractSolution(bool mip);
+  virtual external::Solution extractSolution(bool mip) = 0;
   int guessDir(ArithVar v) const;
 
   // get this stuff out of here
@@ -104,20 +110,11 @@ class ExactSoplex2 : public ExactSimplex
     return ARITHVAR_SENTINEL;
   }
 
-  // virtual void mapRowId(int nid, int ind, ArithVar v){
-  //   NodeLog& nl = d_log.getNode(nid);
-  //   nl.mapRowId(ind, v);
-  // }
-  // virtual void applyRowsDeleted(int nid, const RowsDeleted& rd){
-  //   NodeLog& nl = d_log.getNode(nid);
-  //   nl.applyRowsDeleted(rd);
-  // }
-
   ArithVar getArithVarFromStructural(int ind) const
   {
     if (ind >= 0)
     {
-      unsigned u = (unsigned)ind;
+      unsigned u = static_cast<unsigned>(ind);
       if (u < d_colToArithVar.size())
       {
         return d_colToArithVar[u];
@@ -126,45 +123,61 @@ class ExactSoplex2 : public ExactSimplex
     return ARITHVAR_SENTINEL;
   }
 
-  double sumInfeasibilities(/* glp_prob */ soplex::SoPlex& prob,
-                            bool mip) const;
+  double sumInfeasibilities(SoPlex& prob, bool mip) const;
 
-  /** UTILITIES FOR DEALING WITH ESTIMATES */
-
-  static constexpr double SMALL_FIXED_DELTA =
-      std::numeric_limits<double>::epsilon();
-
- private:
   const ArithVariables& d_vars;
   TreeLog& d_log;
 
-  /* Default denominator for diophatine approximation, 2^{26} .*/
-  static constexpr uint64_t s_defaultMaxDenom = (1 << 26);
-
   const static mpq_class s_zero;
 
-  // glp_prob* d_inputProb; /* a copy of the input prob */
-  // glp_prob* d_realProb;  /* a copy of the real relaxation output */
-  // glp_prob* d_mipProb;   /* a copy of the integer prob */
   SoPlex d_spx;
   std::unordered_map<int, bool> d_strict_rows;
 
   std::unordered_map<ArithVar, std::size_t> d_colIndices;
 
-  // NodeLog::RowIdMap d_rootRowIds;
   std::vector<ArithVar> d_rowToArithVar;
-  // DenseMap<ArithVar> d_rowToArithVar;
   std::vector<ArithVar> d_colToArithVar;
 
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
 
-const mpq_class ExactSoplex2::s_zero{0};
+class ExactSoplexEpsilon : public ExactSoplex
+{
+ public:
+  ExactSoplexEpsilon(const ArithVariables& v,
+                     TreeLog& l,
+                     external::SimplexStatistics& s);
 
-ExactSoplex2::ExactSoplex2(const ArithVariables& var,
-                           TreeLog& l,
-                           external::SimplexStatistics& s)
+ private:
+  /** UTILITIES FOR DEALING WITH ESTIMATES */
+
+  static constexpr double SMALL_FIXED_DELTA =
+      std::numeric_limits<double>::epsilon();
+
+  external::Solution extractSolution(bool mip) override;
+};
+
+class ExactSoplexStrict : public ExactSoplex
+{
+ public:
+  ExactSoplexStrict(const ArithVariables& v,
+                    TreeLog& l,
+                    external::SimplexStatistics& s);
+
+ private:
+  external::Solution extractSolution(bool mip) override;
+
+  void adjustValue(int rowIdx,
+                   soplex::Rational& value,
+                   const soplex::Rational& strictValue) const;
+};
+
+const mpq_class ExactSoplex::s_zero{0};
+
+ExactSoplex::ExactSoplex(const ArithVariables& var,
+                         TreeLog& l,
+                         external::SimplexStatistics& s)
     : ExactSimplex(s),
       d_vars(var),
       d_log(l),
@@ -219,16 +232,209 @@ ExactSoplex2::ExactSoplex2(const ArithVariables& var,
   }
   Assert(!d_rowToArithVar.empty());
   Assert(!d_colToArithVar.empty());
-
-  epsilonFormulation();
-
-#if 0  // For debug
-  d_spx.writeFileRational(
-      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
-#endif
 }
 
-soplex::Rational ExactSoplex2::varToLb(const ArithVar v) const
+ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
+                                       TreeLog& l,
+                                       external::SimplexStatistics& s)
+    : ExactSoplex(var, l, s)
+{
+  // The number of cols must accommodate for the non-aux variables as well as
+  // the additional strict variable t
+  soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
+  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()));
+
+  // Construct the rows of the LP by parsing the polynomial constraints together
+  // with the row bounds on the auxiliary variables
+  for (ArithVar v : d_rowToArithVar)
+  {
+    Assert(d_vars.isAuxiliary(v));
+
+    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
+    // std::cout << d_vars.asNode(v).getName() << "\n\n";
+
+    soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
+
+    for (Polynomial::iterator j = p.begin(), end = p.end(); j != end; ++j)
+    {
+      const Monomial& mono = *j;
+      const Constant& constant = mono.getConstant();
+      const VarList& variable = mono.getVarList();
+
+      Node n = variable.getNode();
+
+      Assert(d_vars.hasArithVar(n));
+      ArithVar av = d_vars.asArithVar(n);
+      int colIndex = static_cast<int>(d_colIndices.at(av));
+      // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
+
+      vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
+    }
+
+    soplex::Rational lb = -soplex::infinity;
+    soplex::Rational ub = soplex::infinity;
+    if (d_vars.hasLowerBound(v))
+    {
+      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+    }
+    if (d_vars.hasUpperBound(v))
+    {
+      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+    }
+    rows.add({lb, vec, ub});
+  }
+
+  // Construct the columns of the LP by assigning upper/lower bounds to each
+  // variable
+  for (ArithVar v : d_colToArithVar)
+  {
+    assert(!d_vars.isAuxiliary(v));
+
+    if (TraceIsOn("approx-debug"))
+    {
+      Trace("approx-debug") << v << " ";
+      d_vars.printModel(v, Trace("approx-debug"));
+    }
+
+    soplex::Rational lb = -soplex::infinity;
+    soplex::Rational ub = soplex::infinity;
+    if (d_vars.hasLowerBound(v))
+    {
+      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+    }
+    if (d_vars.hasUpperBound(v))
+    {
+      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+    }
+    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
+  }
+
+  // Add both columns and rows to the LP
+  d_spx.addColsRational(cols);
+  d_spx.addRowsRational(rows);
+}
+
+ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
+                                     TreeLog& l,
+                                     external::SimplexStatistics& s)
+    : ExactSoplex(var, l, s)
+{
+  // The number of cols must accommodate for the non-aux variables as well
+  // as the additional strict variable t Todo: better estimation of the
+  // number of rows
+  soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
+  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()) + 1);
+
+  std::vector<ArithVar> rowToArithVarStrict;
+  rowToArithVarStrict.reserve(d_rowToArithVar.size() * 2);
+
+  // Construct the rows of the LP by parsing the polynomial constraints together
+  // with the row bounds on the auxiliary variables
+  for (ArithVar v : d_rowToArithVar)
+  {
+    assert(d_vars.isAuxiliary(v));
+
+    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
+    soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
+
+    for (auto j = p.begin(), end = p.end(); j != end; ++j)
+    {
+      const Monomial& mono = *j;
+      const Constant& constant = mono.getConstant();
+      const VarList& variable = mono.getVarList();
+
+      Node n = variable.getNode();
+
+      Assert(d_vars.hasArithVar(n));
+      ArithVar av = d_vars.asArithVar(n);
+      int colIndex = static_cast<int>(d_colIndices[av]);
+      vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
+    }
+
+    // If we are dealing with a row with a strict bound (< or >), then we
+    // split it in two rows.
+    // lhs + t <= lb   and   lhs - t >= ub
+    // Minimizing (-t) will produce three possible outputs:
+    // - problem is infeasible => assigment is unsat
+    // - t = 0 => assigment violates the strict bounds, unsat
+    // - t > 0 => assigment is sat
+    if (hasStrictBound(v))
+    {
+      if (d_vars.hasLowerBound(v))
+      {
+        // If strict, add t, and in any case add the split row
+        if (hasStrictLb(v))
+        {
+          vec.add(cols.max() - 1, 1);
+          d_strict_rows.emplace(rows.num(), true);
+        }
+        rowToArithVarStrict.emplace_back(v);
+        rows.add({varToLb(v), vec, soplex::infinity});
+      }
+      if (d_vars.hasUpperBound(v))
+      {
+        // If strict, add -t, and in any case add the split row
+        if (hasStrictUB(v))
+        {
+          vec.add(cols.max() - 1, -1);
+          d_strict_rows.emplace(rows.num(), false);
+        }
+        rowToArithVarStrict.emplace_back(v);
+        rows.add({-soplex::infinity, vec, varToUb(v)});
+      }
+    }
+    else
+    {
+      rowToArithVarStrict.emplace_back(v);
+      rows.add({varToLb(v), vec, varToUb(v)});
+    }
+  }
+
+  // Construct the columns of the LP by assigning upper/lower bounds to each
+  // variable
+  for (ArithVar v : d_colToArithVar)
+  {
+    assert(!d_vars.isAuxiliary(v));
+
+    if (TraceIsOn("approx-debug"))
+    {
+      Trace("approx-debug") << v << " ";
+      d_vars.printModel(v, Trace("approx-debug"));
+    }
+
+    cols.add({0.0, soplex::DSVectorRational(), varToUb(v), varToLb(v)});
+
+    if (hasStrictLb(v))
+    {
+      soplex::DSVectorRational vec(2);
+      vec.add(static_cast<int>(d_colIndices[v]), 1);
+      vec.add(cols.max() - 1, 1);
+      d_strict_rows.emplace(rows.num(), true);
+      rows.add({varToLb(v), vec, soplex::infinity});
+      rowToArithVarStrict.emplace_back(v);
+    }
+    if (hasStrictUB(v))
+    {
+      soplex::DSVectorRational vec(2);
+      vec.add(static_cast<int>(d_colIndices[v]), 1);
+      vec.add(cols.max() - 1, -1);
+      d_strict_rows.emplace(rows.num(), false);
+      rows.add({-soplex::infinity, vec, varToUb(v)});
+      rowToArithVarStrict.emplace_back(v);
+    }
+  }
+
+  // Add the strict variable t
+  cols.add({-1, soplex::DSVectorRational(), 1, 0});
+
+  // Add both columns and rows to the LP
+  d_spx.addColsRational(cols);
+  d_spx.addRowsRational(rows);
+
+  d_rowToArithVar = std::move(rowToArithVarStrict);
+}
+
+soplex::Rational ExactSoplex::varToLb(const ArithVar v) const
 {
   if (d_vars.hasLowerBound(v))
   {
@@ -240,7 +446,7 @@ soplex::Rational ExactSoplex2::varToLb(const ArithVar v) const
   return -soplex::infinity;
 }
 
-soplex::Rational ExactSoplex2::varToUb(const ArithVar v) const
+soplex::Rational ExactSoplex::varToUb(const ArithVar v) const
 {
   if (d_vars.hasUpperBound(v))
   {
@@ -252,24 +458,24 @@ soplex::Rational ExactSoplex2::varToUb(const ArithVar v) const
   return soplex::infinity;
 }
 
-bool ExactSoplex2::hasStrictBound(const ArithVar v) const
+bool ExactSoplex::hasStrictBound(const ArithVar v) const
 {
   return hasStrictLb(v) || hasStrictUB(v);
 }
 
-bool ExactSoplex2::hasStrictUB(const ArithVar v) const
+bool ExactSoplex::hasStrictUB(const ArithVar v) const
 {
   return d_vars.hasUpperBound(v)
          && !d_vars.getUpperBound(v).getInfinitesimalPart().isZero();
 }
 
-bool ExactSoplex2::hasStrictLb(ArithVar v) const
+bool ExactSoplex::hasStrictLb(ArithVar v) const
 {
   return d_vars.hasLowerBound(v)
          && !d_vars.getLowerBound(v).getInfinitesimalPart().isZero();
 }
 
-int ExactSoplex2::guessDir(const ArithVar v) const
+int ExactSoplex::guessDir(const ArithVar v) const
 {
   if (d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v)) return -1;
   if (!d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v)) return 1;
@@ -284,7 +490,7 @@ int ExactSoplex2::guessDir(const ArithVar v) const
   return 1;
 }
 
-ArithRatPairVec ExactSoplex2::heuristicOptCoeffs() const
+ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
 {
   ArithRatPairVec ret;
 
@@ -454,7 +660,7 @@ ArithRatPairVec ExactSoplex2::heuristicOptCoeffs() const
   return ret;
 }
 
-void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
+void ExactSoplex::setOptCoeffs(const ArithRatPairVec& ref)
 {
   DenseMap<mpq_class> nbCoeffs;
 
@@ -522,7 +728,7 @@ void ExactSoplex2::setOptCoeffs(const ArithRatPairVec& ref)
  *   check with FCSimplex
  */
 
-void ExactSoplex2::printSoplexStatus(int status, std::ostream& out)
+void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
 {
   using SpxStatus = soplex::SPxSolverBase<double>::Status;
   switch (status)
@@ -548,92 +754,14 @@ void ExactSoplex2::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
-void ExactSoplex2::epsilonFormulation()
-{
-  // The number of cols must accommodate for the non-aux variables as well as
-  // the additional strict variable t
-  soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
-  soplex::LPColSetRational cols(static_cast<int>(d_colToArithVar.size()));
-
-  // Construct the rows of the LP by parsing the polynomial constraints together
-  // with the row bounds on the auxiliary variables
-  for (ArithVar v : d_rowToArithVar)
-  {
-    assert(d_vars.isAuxiliary(v));
-
-    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
-    // std::cout << d_vars.asNode(v).getName() << "\n\n";
-
-    soplex::DSVectorRational vec(static_cast<int>(p.size()) + 1);
-
-    for (Polynomial::iterator j = p.begin(), end = p.end(); j != end; ++j)
-    {
-      const Monomial& mono = *j;
-      const Constant& constant = mono.getConstant();
-      const VarList& variable = mono.getVarList();
-
-      Node n = variable.getNode();
-
-      Assert(d_vars.hasArithVar(n));
-      ArithVar av = d_vars.asArithVar(n);
-      int colIndex = static_cast<int>(d_colIndices.at(av));
-      // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
-
-      vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
-    }
-
-    soplex::Rational lb = -soplex::infinity;
-    soplex::Rational ub = soplex::infinity;
-    if (d_vars.hasLowerBound(v))
-    {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-    }
-    if (d_vars.hasUpperBound(v))
-    {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    }
-    rows.add({lb, vec, ub});
-  }
-
-  // Construct the columns of the LP by assigning upper/lower bounds to each
-  // variable
-  for (ArithVar v : d_colToArithVar)
-  {
-    assert(!d_vars.isAuxiliary(v));
-
-    if (TraceIsOn("approx-debug"))
-    {
-      Trace("approx-debug") << v << " ";
-      d_vars.printModel(v, Trace("approx-debug"));
-    }
-
-    soplex::Rational lb = -soplex::infinity;
-    soplex::Rational ub = soplex::infinity;
-    if (d_vars.hasLowerBound(v))
-    {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-    }
-    if (d_vars.hasUpperBound(v))
-    {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    }
-    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
-  }
-
-  // Add both columns and rows to the LP
-  d_spx.addColsRational(cols);
-  d_spx.addRowsRational(rows);
-}
-
-void ExactSoplex2::strictVariableFormulation() {}
-
-void ExactSoplex2::extractVarValue(
+bool ExactSoplex::extractVarValue(
     const ArithVar v,
     const soplex::SPxSolverBase<double>::VarStatus varStatus,
     const mpq_class& value,
     external::Solution& sol) const
 {
   using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
+  bool isBasicAtBound = false;
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
@@ -645,11 +773,13 @@ void ExactSoplex2::extractVarValue(
           && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
       {
         newValues.set(v, d_vars.getLowerBound(v));
+        isBasicAtBound = true;
       }
       else if (d_vars.hasUpperBound(v)
                && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
       {
         newValues.set(v, d_vars.getUpperBound(v));
+        isBasicAtBound = true;
       }
       else
       {
@@ -675,6 +805,8 @@ void ExactSoplex2::extractVarValue(
       break;
     default: Unreachable();
   }
+
+  return isBasicAtBound;
 }
 
 std::ostream& operator<<(std::ostream& out, const soplex::VectorRational& v)
@@ -735,15 +867,13 @@ void dumpProblem(soplex::SoPlex& d_spx)
 }
 #endif
 
-external::Solution ExactSoplex2::extractSolution(bool mip)
+external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
 
   using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
   external::Solution sol;
-  DenseSet& newBasis = sol.newBasis;
-  DenseMap<DeltaRational>& newValues = sol.newValues;
 
 #if 0  // For debug
   static int id = 0;
@@ -884,7 +1014,171 @@ external::Solution ExactSoplex2::extractSolution(bool mip)
   return sol;
 }
 
-void ExactSoplex2::printSolution(const external::Solution& sol) const
+external::Solution ExactSoplexStrict::extractSolution(bool mip)
+{
+  Assert(d_solvedRelaxation);
+  Assert(!mip || d_solvedMIP);
+
+  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
+  external::Solution sol;
+  std::unordered_set<ArithVar> nonBasicVars;
+  std::optional<ArithVar> basicAtBound;
+
+  // TODO: reimplement this for mip
+  // glp_prob* prob = mip ? d_mipProb : d_realProb;
+
+  if (d_spx.status() == soplex::SPxSolverBase<double>::Status::OPTIMAL
+      || d_spx.status() == soplex::SPxSolverBase<double>::Status::UNBOUNDED)
+  {
+    Assert(d_spx.hasSol());
+    // Feasible solution
+    soplex::VectorRational primal(d_spx.numCols());
+    const bool getPrimalSuccess = d_spx.getPrimalRational(primal);
+    Assert(getPrimalSuccess);
+
+    const soplex::Rational& strictValue = primal[d_spx.numCols() - 1];
+    const VarStatus strictVarStatus = d_spx.basisColStatus(d_spx.numCols() - 1);
+    // No need to forcefully convert a basic variable at bound to non-basic
+    if (strictVarStatus == VarStatus::BASIC) basicAtBound = ARITHVAR_SENTINEL;
+
+    // Get the primal solution for the cols, except for the strict variable
+    for (int colIdx = 0; colIdx < d_spx.numCols() - 1; colIdx++)
+    {
+      const ArithVar v = d_colToArithVar.at(colIdx);
+      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      const bool isBasicAtBound = extractVarValue(
+          v, varStatus, mpq_class{primal[colIdx].backend().data()}, sol);
+      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+    }
+
+    // Get the row activity for the rows
+    soplex::Rational rowValue;
+    for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar.at(rowIdx);
+      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
+      const bool useActivity =
+          varStatus == VarStatus::BASIC || varStatus == VarStatus::UNDEFINED;
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC)
+      {
+        nonBasicVars.insert(v);
+      }
+      else if (nonBasicVars.count(v) > 0 || sol.newBasis.isMember(v))
+      {
+        // We already know this row's value from the other side,
+        // no need to recompute it
+        continue;
+      }
+      // Only compute the row activity for basic and undefined variables,
+      // since for non-basic variables we know the value is at a bound
+      // and we can use the d_vars bounds directly
+      if (useActivity)
+      {
+        d_spx.getRowActivityRational(rowIdx, rowValue);
+        adjustValue(rowIdx, rowValue, strictValue);
+      }
+      const bool isBasicAtBound = extractVarValue(
+          v,
+          varStatus,
+          useActivity ? mpq_class{rowValue.backend().data()} : s_zero,
+          sol);
+      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+    }
+  }
+  else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
+  {
+    // Infeasible solution
+    Assert(d_spx.hasDualFarkas());
+    soplex::VectorRational dualRay(d_spx.numRows());
+    const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
+    Assert(getDualRaySuccess);
+
+    const soplex::Rational& strictValue = dualRay[d_spx.numCols() - 1];
+    const VarStatus strictVarStatus = d_spx.basisColStatus(d_spx.numCols() - 1);
+    // No need to forcefully convert a basic variable at bound to non-basic
+    if (strictVarStatus == VarStatus::BASIC) basicAtBound = ARITHVAR_SENTINEL;
+
+    // Get the last dual solution for the rows
+    for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar.at(rowIdx);
+      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      const bool isBasicAtBound = extractVarValue(
+          v, varStatus, mpq_class{dualRay[rowIdx].backend().data()}, sol);
+      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+    }
+
+    // Get the col activity for each column
+    soplex::Rational colValue;
+    for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
+    {
+      const ArithVar v = d_colToArithVar.at(colIdx);
+      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
+      // Only compute the row activity for basic and undefined variables,
+      // since for non-basic variables we know the value is at a bound
+      // and we can use the d_vars bounds directly
+      const bool useActivity =
+          varStatus == VarStatus::BASIC || varStatus == VarStatus::UNDEFINED;
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC)
+      {
+        nonBasicVars.insert(v);
+      }
+      else if (nonBasicVars.count(v) > 0 || sol.newBasis.isMember(v))
+      {
+        // We already know this row's value from the other side,
+        // no need to recompute it
+        continue;
+      }
+      // Only compute the row activity for basic and undefined variables,
+      // since for non-basic variables we know the value is at a bound
+      // and we can use the d_vars bounds directly
+      if (useActivity)
+      {
+        d_spx.getColActivityRational(colIdx, colValue);
+        adjustValue(colIdx, colValue, strictValue);
+      }
+      const bool isBasicAtBound = extractVarValue(
+          v,
+          varStatus,
+          useActivity ? mpq_class{colValue.backend().data()} : s_zero,
+          sol);
+      if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+    }
+  }
+  else
+  {
+    Unimplemented();
+  }
+
+  // Forcefully remove a basic variable at bound from the basis,
+  // unless we know it is not needed, in which case we use ARITHVAR_SENTINEL
+  if (sol.newBasis.isMember(basicAtBound.value_or(ARITHVAR_SENTINEL)))
+    sol.newBasis.remove(basicAtBound.value_or(ARITHVAR_SENTINEL));
+  // Make sure to remove all strict rows that we know are non-basic
+  for (const ArithVar v : nonBasicVars)
+  {
+    if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
+  }
+  return sol;
+}
+
+void ExactSoplexStrict::adjustValue(const int rowIdx,
+                                    soplex::Rational& value,
+                                    const soplex::Rational& strictValue) const
+{
+  if (const auto it = d_strict_rows.find(rowIdx); it != d_strict_rows.end())
+  {
+    value += it->second ? -strictValue : strictValue;
+  }
+}
+
+void ExactSoplex::printSolution(const external::Solution& sol) const
 {
   std::cout << "{  ";
   for (const auto v : sol.newBasis)
@@ -903,25 +1197,14 @@ void ExactSoplex2::printSolution(const external::Solution& sol) const
   }
 }
 
-std::optional<Rational> ExactSoplex2::estimateWithCFE(double d) const
-{
-  Unimplemented();
-}
+void ExactSoplex::tryCut(int, CutInfo&) { Unimplemented(); }
 
-std::optional<Rational> ExactSoplex2::estimateWithCFE(double d,
-                                                      const Integer& D) const
-{
-  Unimplemented();
-}
-
-void ExactSoplex2::tryCut(int, CutInfo&) { Unimplemented(); }
-
-external::MipResult ExactSoplex2::solveMIP(bool al)
+external::MipResult ExactSoplex::solveMIP(bool al)
 {
   return external::MipResult::MipUnknown;
 }
 
-double ExactSoplex2::sumInfeasibilities(SoPlex& prob, bool mip) const
+double ExactSoplex::sumInfeasibilities(SoPlex& prob, bool mip) const
 {
   /* compute the sum of dual infeasibilities */
   double infeas = 0.0;
@@ -947,7 +1230,7 @@ double ExactSoplex2::sumInfeasibilities(SoPlex& prob, bool mip) const
   return static_cast<double>(sumRowViolation + sumBoundViolation);
 }
 
-external::LinResult ExactSoplex2::solveRelaxation()
+external::LinResult ExactSoplex::solveRelaxation()
 {
   Assert(!d_solvedRelaxation);
 
@@ -959,6 +1242,10 @@ external::LinResult ExactSoplex2::solveRelaxation()
 
   // d_spx.clearBasis();
   // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
   const auto res = d_spx.optimize();
 
   d_stats.d_refinements << d_spx.numRefinements();
@@ -990,377 +1277,8 @@ external::LinResult ExactSoplex2::solveRelaxation()
     default: return external::LinResult::LinUnknown;
   }
 }
-#if 0
 
-static void loadCut(glp_tree* tree, CutInfo* cut)
-{
-  int ord, cut_len, cut_klass;
-  int N, M;
-  int* cut_inds;
-  double* cut_coeffs;
-  int glpk_cut_type;
-  double cut_rhs;
-  glp_prob* lp;
-
-  lp = glp_ios_get_prob(tree);
-  ord = cut->poolOrdinal();
-
-  N = glp_get_num_cols(lp);
-  M = glp_get_num_rows(lp);
-
-  cut->setDimensions(N, M);
-
-  // Get the cut
-  cut_len = glp_ios_get_cut(tree, ord, NULL, NULL, &cut_klass, NULL, NULL);
-  Assert(fromGlpkClass(cut_klass) == cut->getKlass());
-
-  PrimitiveVec& cut_vec = cut->getCutVector();
-  cut_vec.setup(cut_len);
-  cut_inds = cut_vec.inds;
-  cut_coeffs = cut_vec.coeffs;
-
-  cut_vec.len = glp_ios_get_cut(
-      tree, ord, cut_inds, cut_coeffs, &cut_klass, &glpk_cut_type, &cut_rhs);
-  Assert(fromGlpkClass(cut_klass) == cut->getKlass());
-  Assert(cut_vec.len == cut_len);
-
-  cut->setRhs(cut_rhs);
-
-  cut->setKind(glpk_type_to_kind(glpk_cut_type));
-}
-
-static MirInfo* mirCut(glp_tree* tree, int exec_ord, int cut_ord)
-{
-  Trace("approx::mirCut") << "mirCut()" << exec_ord << std::endl;
-
-  MirInfo* mir;
-  mir = new MirInfo(exec_ord, cut_ord);
-  loadCut(tree, mir);
-  mir->initSet();
-
-  int nrows = glp_ios_cut_get_aux_nrows(tree, cut_ord);
-
-  PrimitiveVec& row_sum = mir->row_sum;
-  row_sum.setup(nrows);
-  glp_ios_cut_get_aux_rows(tree, cut_ord, row_sum.inds, row_sum.coeffs);
-
-  glp_ios_cut_get_mir_cset(tree, cut_ord, mir->cset);
-  mir->delta = glp_ios_cut_get_mir_delta(tree, cut_ord);
-  glp_ios_cut_get_mir_subst(tree, cut_ord, mir->subst);
-  glp_ios_cut_get_mir_virtual_rows(tree, cut_ord, mir->vlbRows, mir->vubRows);
-
-  if (TraceIsOn("approx::mirCut"))
-  {
-    Trace("approx::mirCut") << "mir_id: " << exec_ord << std::endl;
-    row_sum.print(Trace("approx::mirCut"));
-  }
-
-  return mir;
-}
-
-static GmiInfo* gmiCut(glp_tree* tree, int exec_ord, int cut_ord)
-{
-  Trace("approx::gmiCut") << "gmiCut()" << exec_ord << std::endl;
-
-  int gmi_var;
-  int write_pos;
-  int read_pos;
-  int stat;
-  int ind;
-  int i;
-
-  GmiInfo* gmi;
-  glp_prob* lp;
-
-  gmi = new GmiInfo(exec_ord, cut_ord);
-  loadCut(tree, gmi);
-
-  lp = glp_ios_get_prob(tree);
-
-  int N = gmi->getN();
-  int M = gmi->getMAtCreation();
-
-  // Get the tableau row
-  int nrows CVC5_UNUSED = glp_ios_cut_get_aux_nrows(tree, gmi->poolOrdinal());
-  Assert(nrows == 1);
-  int rows[1 + 1];
-  glp_ios_cut_get_aux_rows(tree, gmi->poolOrdinal(), rows, NULL);
-  gmi_var = rows[1];
-
-  gmi->init_tab(N);
-  gmi->basic = M + gmi_var;
-
-  Trace("approx::gmiCut") << gmi << " " << gmi->basic << " " << cut_ord << " "
-                          << M << " " << gmi_var << std::endl;
-
-  PrimitiveVec& tab_row = gmi->tab_row;
-  Trace("approx::gmiCut") << "Is N sufficient here?" << std::endl;
-  tab_row.len = glp_eval_tab_row(lp, gmi->basic, tab_row.inds, tab_row.coeffs);
-
-  Trace("approx::gmiCut") << "gmi_var " << gmi_var << std::endl;
-
-  Trace("approx::gmiCut") << "tab_pos " << tab_row.len << std::endl;
-  write_pos = 1;
-  for (read_pos = 1; read_pos <= tab_row.len; ++read_pos)
-  {
-    if (fabs(tab_row.coeffs[read_pos]) < 1e-10)
-    {
-    }
-    else
-    {
-      tab_row.coeffs[write_pos] = tab_row.coeffs[read_pos];
-      tab_row.inds[write_pos] = tab_row.inds[read_pos];
-      ++write_pos;
-    }
-  }
-  tab_row.len = write_pos - 1;
-  Trace("approx::gmiCut") << "write_pos " << write_pos << std::endl;
-  Assert(tab_row.len > 0);
-
-  for (i = 1; i <= tab_row.len; ++i)
-  {
-    ind = tab_row.inds[i];
-    Trace("approx::gmiCut") << "ind " << i << " " << ind << std::endl;
-    stat =
-        (ind <= M) ? glp_get_row_stat(lp, ind) : glp_get_col_stat(lp, ind - M);
-
-    Trace("approx::gmiCut")
-        << "ind " << i << " " << ind << " stat " << stat << std::endl;
-    switch (stat)
-    {
-      case GLP_NL:
-      case GLP_NU:
-      case GLP_NS: gmi->tab_statuses[i] = stat; break;
-      case GLP_NF:
-      default: Unreachable();
-    }
-  }
-
-  if (TraceIsOn("approx::gmiCut"))
-  {
-    gmi->print(Trace("approx::gmiCut"));
-  }
-  return gmi;
-}
-
-static BranchCutInfo* branchCut(
-    glp_tree* tree, int exec_ord, int br_var, double br_val, bool down_bad)
-{
-  //(tree, br_var, br_val, dn < 0);
-  double rhs;
-  Kind k;
-  if (down_bad)
-  {
-    // down branch is infeasible
-    // x <= floor(v) is infeasible
-    // - so x >= ceiling(v) is implied
-    k = Kind::GEQ;
-    rhs = std::ceil(br_val);
-  }
-  else
-  {
-    // up branch is infeasible
-    // x >= ceiling(v) is infeasible
-    // - so x <= floor(v) is implied
-    k = Kind::LEQ;
-    rhs = std::floor(br_val);
-  }
-  BranchCutInfo* br_cut = new BranchCutInfo(exec_ord, br_var, k, rhs);
-  return br_cut;
-}
-
-static void glpkCallback(glp_tree* tree, void* info)
-{
-  AuxInfo* aux = (AuxInfo*)(info);
-  TreeLog& tl = *(aux->tl);
-
-  int exec = tl.getExecutionOrd();
-  int glpk_node_p = -1;
-  int node_ord = -1;
-
-  if (tl.isActivelyLogging())
-  {
-    switch (glp_ios_reason(tree))
-    {
-      case GLP_LI_DELROW:
-      {
-        glpk_node_p = glp_ios_curr_node(tree);
-        node_ord = glp_ios_node_ord(tree, glpk_node_p);
-
-        int nrows = glp_ios_rows_deleted(tree, NULL);
-        int* num = new int[1 + nrows];
-        glp_ios_rows_deleted(tree, num);
-
-        NodeLog& node = tl.getNode(node_ord);
-
-        RowsDeleted* rd = new RowsDeleted(exec, nrows, num);
-
-        node.addCut(rd);
-        delete[] num;
-      }
-      break;
-      case GLP_ICUTADDED:
-      {
-        int cut_ord = glp_ios_pool_size(tree);
-        glpk_node_p = glp_ios_curr_node(tree);
-        node_ord = glp_ios_node_ord(tree, glpk_node_p);
-        Assert(cut_ord > 0);
-        Trace("approx") << "curr node " << glpk_node_p << " cut ordinal "
-                        << cut_ord << " node depth "
-                        << glp_ios_node_level(tree, glpk_node_p) << std::endl;
-        int klass;
-        glp_ios_get_cut(tree, cut_ord, NULL, NULL, &klass, NULL, NULL);
-
-        NodeLog& node = tl.getNode(node_ord);
-        switch (klass)
-        {
-          case GLP_RF_GMI:
-          {
-            GmiInfo* gmi = gmiCut(tree, exec, cut_ord);
-            node.addCut(gmi);
-          }
-          break;
-          case GLP_RF_MIR:
-          {
-            MirInfo* mir = mirCut(tree, exec, cut_ord);
-            node.addCut(mir);
-          }
-          break;
-          case GLP_RF_COV: Trace("approx") << "GLP_RF_COV" << std::endl; break;
-          case GLP_RF_CLQ: Trace("approx") << "GLP_RF_CLQ" << std::endl; break;
-          default: break;
-        }
-      }
-      break;
-      case GLP_ICUTSELECT:
-      {
-        glpk_node_p = glp_ios_curr_node(tree);
-        node_ord = glp_ios_node_ord(tree, glpk_node_p);
-        int cuts = glp_ios_pool_size(tree);
-        int* ords = new int[1 + cuts];
-        int* rows = new int[1 + cuts];
-        int N = glp_ios_selected_cuts(tree, ords, rows);
-
-        NodeLog& nl = tl.getNode(node_ord);
-        Trace("approx") << glpk_node_p << " " << node_ord << " " << cuts << " "
-                        << N << std::endl;
-        for (int i = 1; i <= N; ++i)
-        {
-          Trace("approx") << "adding to " << node_ord << " @ i= " << i
-                          << " ords[i] = " << ords[i]
-                          << " rows[i] = " << rows[i] << std::endl;
-          nl.addSelected(ords[i], rows[i]);
-        }
-        delete[] ords;
-        delete[] rows;
-        nl.applySelected();
-      }
-      break;
-      case GLP_LI_BRANCH:
-      {
-        // a branch was just made
-        int br_var;
-        int p, dn, up;
-        int p_ord, dn_ord, up_ord;
-        double br_val;
-        br_var = glp_ios_branch_log(tree, &br_val, &p, &dn, &up);
-        p_ord = glp_ios_node_ord(tree, p);
-
-        dn_ord = (dn >= 0) ? glp_ios_node_ord(tree, dn) : -1;
-        up_ord = (up >= 0) ? glp_ios_node_ord(tree, up) : -1;
-
-        Trace("approx::") << "branch: " << br_var << " " << br_val << " tree "
-                          << p << " " << dn << " " << up << std::endl;
-        Trace("approx::") << "\t " << p_ord << " " << dn_ord << " " << up_ord
-                          << std::endl;
-        if (dn < 0 && up < 0)
-        {
-          Trace("approx::") << "branch close " << exec << std::endl;
-          NodeLog& node = tl.getNode(p_ord);
-          BranchCutInfo* cut_br = branchCut(tree, exec, br_var, br_val, dn < 0);
-          node.addCut(cut_br);
-          tl.close(p_ord);
-        }
-        else if (dn < 0 || up < 0)
-        {
-          Trace("approx::") << "branch cut" << exec << std::endl;
-          NodeLog& node = tl.getNode(p_ord);
-          BranchCutInfo* cut_br = branchCut(tree, exec, br_var, br_val, dn < 0);
-          node.addCut(cut_br);
-        }
-        else
-        {
-          Trace("approx::") << "normal branch" << std::endl;
-          tl.branch(p_ord, br_var, br_val, dn_ord, up_ord);
-        }
-      }
-      break;
-      case GLP_LI_CLOSE:
-      {
-        glpk_node_p = glp_ios_curr_node(tree);
-        node_ord = glp_ios_node_ord(tree, glpk_node_p);
-        Trace("approx::") << "close " << glpk_node_p << std::endl;
-        tl.close(node_ord);
-      }
-      break;
-      default: break;
-    }
-  }
-
-  switch (glp_ios_reason(tree))
-  {
-    case GLP_IBINGO:
-      Trace("approx::") << "bingo" << std::endl;
-      aux->term = MipBingo;
-      glp_ios_terminate(tree);
-      break;
-    case GLP_ICUTADDED:
-    {
-      tl.addCut();
-    }
-    break;
-    case GLP_LI_BRANCH:
-    {
-      int p, dn, up;
-      int br_var = glp_ios_branch_log(tree, NULL, &p, &dn, &up);
-
-      if (br_var >= 0)
-      {
-        unsigned v = br_var;
-        tl.logBranch(v);
-        int depth = glp_ios_node_level(tree, p);
-        unsigned ubl =
-            (aux->branchLimit) >= 0 ? ((unsigned)(aux->branchLimit)) : 0u;
-        if (tl.numBranches(v) >= ubl || depth >= (aux->branchDepth))
-        {
-          aux->term = BranchesExhausted;
-          glp_ios_terminate(tree);
-        }
-      }
-    }
-    break;
-    case GLP_LI_CLOSE: break;
-    default:
-    {
-      glp_prob* prob = glp_ios_get_prob(tree);
-      int iterationcount = glp_get_it_cnt(prob);
-      if (exec > (aux->pivotLimit))
-      {
-        aux->term = ExecExhausted;
-        glp_ios_terminate(tree);
-      }
-      else if (iterationcount > (aux->pivotLimit))
-      {
-        aux->term = PivotsExhauasted;
-        glp_ios_terminate(tree);
-      }
-    }
-    break;
-  }
-}
-#endif
-
-std::vector<const CutInfo*> ExactSoplex2::getValidCuts(const NodeLog& con)
+std::vector<const CutInfo*> ExactSoplex::getValidCuts(const NodeLog& con)
 {
   std::vector<const CutInfo*> proven;
   int nid = con.getNodeId();
@@ -1386,7 +1304,7 @@ std::vector<const CutInfo*> ExactSoplex2::getValidCuts(const NodeLog& con)
   return proven;
 }
 
-ArithVar ExactSoplex2::getBranchVar(const NodeLog& con) const
+ArithVar ExactSoplex::getBranchVar(const NodeLog& con) const
 {
   int br_var = con.branchVariable();
   return getArithVarFromStructural(br_var);
@@ -1538,7 +1456,7 @@ inline void removeAuxillaryVariables(const ArithVariables& vars,
   removeZeroes(vec);
 }
 
-ArithVar ExactSoplex2::_getArithVar(int nid, int M, int ind) const
+ArithVar ExactSoplex::_getArithVar(int nid, int M, int ind) const
 {
   if (ind <= 0)
   {
@@ -1565,13 +1483,15 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver2(
+external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
-    CVC5_UNUSED external::SimplexStatistics& s)
+    CVC5_UNUSED external::SimplexStatistics& s,
+    const bool useStrict)
 {
 #ifdef CVC5_USE_SOPLEX
-  return new ExactSoplex2(vars, l, s);
+  if (useStrict) return new ExactSoplexStrict(vars, l, s);
+  return new ExactSoplexEpsilon(vars, l, s);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";
 #endif
@@ -1581,3 +1501,47 @@ external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver2(
 }  // namespace theory
 }  // namespace cvc5::internal
 /* End soplex/No soplex Glue code. */
+
+void attempt()
+{
+#if 0  // For debug
+  for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
+  {
+    soplex::LPColRational col(d_spx.numCols());
+    d_spx.getColRational(colIdx, col);
+    mpq_class val = sol.newValues[d_colToArithVar[colIdx]]
+                        .getNoninfinitesimalPart()
+                        .getValue();
+    if (val < mpq_class{col.lower().backend().data()}
+        || val > mpq_class{col.upper().backend().data()})
+    {
+      printf(
+          "Column %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+          colIdx,
+          d_colToArithVar.at(colIdx),
+          val.get_d(),
+          col.lower().convert_to<double>(),
+          col.upper().convert_to<double>());
+    }
+  }
+  for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+  {
+    soplex::LPRowRational row(d_spx.numRows());
+    d_spx.getRowRational(rowIdx, row);
+    mpq_class val = sol.newValues[d_rowToArithVar[rowIdx]]
+                        .getNoninfinitesimalPart()
+                        .getValue();
+    if (val < mpq_class{row.lhs().backend().data()}
+        || val > mpq_class{row.rhs().backend().data()})
+    {
+      printf("Row %d (var %d) has value %g which is outside bounds [%g, %g]\n",
+             rowIdx,
+             d_rowToArithVar.at(rowIdx),
+             val.get_d(),
+             row.lhs().convert_to<double>(),
+             row.rhs().convert_to<double>());
+    }
+  }
+  // printSolution(sol);
+#endif
+}
