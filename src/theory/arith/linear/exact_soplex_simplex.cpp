@@ -43,6 +43,18 @@ namespace theory {
 namespace arith::linear {
 
 using soplex::SoPlex;
+using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
+using SolverStatus = soplex::SPxSolverBase<double>::Status;
+
+DeltaRational toDeltaRational(const soplex::Rational& value)
+{
+  return {mpq_class{value.backend().data()}};
+}
+
+mpq_class toMpq(const soplex::Rational& value)
+{
+  return mpq_class{value.backend().data()};
+}
 
 class ExactSoplex : public ExactSimplex
 {
@@ -78,10 +90,6 @@ class ExactSoplex : public ExactSimplex
   }
 
  protected:
-  bool extractVarValue(ArithVar v,
-                       soplex::SPxSolverBase<double>::VarStatus varStatus,
-                       const mpq_class& value,
-                       external::Solution& sol) const;
   void printSolution(const external::Solution& sol) const;
 
   soplex::Rational varToLb(ArithVar v) const;
@@ -126,6 +134,7 @@ class ExactSoplex : public ExactSimplex
   TreeLog& d_log;
 
   const static mpq_class s_zero;
+  const static soplex::Rational s_zero_rational;
 
   SoPlex d_spx;
   std::unordered_map<int, bool> d_strict_rows;
@@ -148,6 +157,10 @@ class ExactSoplexEpsilon : public ExactSoplex
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
+  void extractVarValue(ArithVar v,
+                       VarStatus varStatus,
+                       const mpq_class& value,
+                       external::Solution& sol) const;
 
   static constexpr double SMALL_FIXED_DELTA =
       std::numeric_limits<double>::epsilon();
@@ -168,9 +181,16 @@ class ExactSoplexStrict : public ExactSoplex
   void adjustValue(int rowIdx,
                    soplex::Rational& value,
                    const soplex::Rational& strictValue) const;
+  void extractVarValue(ArithVar v,
+                       VarStatus varStatus,
+                       const soplex::Rational& lb,
+                       const soplex::Rational& ub,
+                       const mpq_class& value,
+                       external::Solution& sol) const;
 };
 
 const mpq_class ExactSoplex::s_zero{0};
+const soplex::Rational ExactSoplex::s_zero_rational{0};
 
 ExactSoplex::ExactSoplex(const ArithVariables& var,
                          TreeLog& l,
@@ -765,7 +785,7 @@ void ExactSoplex::setOptCoeffs(const ArithRatPairVec& ref)
 
 void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
 {
-  using SpxStatus = soplex::SPxSolverBase<double>::Status;
+  using SpxStatus = SolverStatus;
   switch (status)
   {
     case SpxStatus::OPTIMAL: out << "SOPLEX_OPT" << std::endl; break;
@@ -789,34 +809,27 @@ void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
-bool ExactSoplex::extractVarValue(
-    const ArithVar v,
-    const soplex::SPxSolverBase<double>::VarStatus varStatus,
-    const mpq_class& value,
-    external::Solution& sol) const
+void ExactSoplexEpsilon::extractVarValue(const ArithVar v,
+                                         const VarStatus varStatus,
+                                         const mpq_class& value,
+                                         external::Solution& sol) const
 {
-  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
-  bool isBasicAtBound = false;
   DenseSet& newBasis = sol.newBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
 
   switch (varStatus)
   {
-    case VarStatus::BASIC:
-      if (!newBasis.isMember(v)) newBasis.add(v);
-      CVC5_FALLTHROUGH;
+    case VarStatus::BASIC: newBasis.add(v); CVC5_FALLTHROUGH;
     case VarStatus::UNDEFINED:
       if (d_vars.hasLowerBound(v)
           && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
       {
         newValues.set(v, d_vars.getLowerBound(v));
-        isBasicAtBound = true;
       }
       else if (d_vars.hasUpperBound(v)
                && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
       {
         newValues.set(v, d_vars.getUpperBound(v));
-        isBasicAtBound = true;
       }
       else
       {
@@ -842,8 +855,58 @@ bool ExactSoplex::extractVarValue(
       break;
     default: Unreachable();
   }
+}
 
-  return isBasicAtBound;
+void ExactSoplexStrict::extractVarValue(const ArithVar v,
+                                        const VarStatus varStatus,
+                                        const soplex::Rational& lb,
+                                        const soplex::Rational& ub,
+                                        const mpq_class& value,
+                                        external::Solution& sol) const
+{
+  DenseSet& newBasis = sol.newBasis;
+  DenseMap<DeltaRational>& newValues = sol.newValues;
+
+  switch (varStatus)
+  {
+    case VarStatus::BASIC:
+      if (!newBasis.isMember(v)) newBasis.add(v);
+      CVC5_FALLTHROUGH;
+    case VarStatus::UNDEFINED:
+      if (d_vars.hasLowerBound(v)
+          && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
+      {
+        newValues.set(v, d_vars.getLowerBound(v));
+      }
+      else if (d_vars.hasUpperBound(v)
+               && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
+      {
+        newValues.set(v, d_vars.getUpperBound(v));
+      }
+      else
+      {
+        newValues.set(v, DeltaRational(value));
+      }
+      Assert(!d_vars.hasLowerBound(v)
+             || d_vars.getLowerBound(v) <= newValues.get(v));
+      Assert(!d_vars.hasUpperBound(v)
+             || d_vars.getUpperBound(v) >= newValues.get(v));
+      break;
+    case VarStatus::ON_LOWER:
+    case VarStatus::FIXED:  // No need to handle the fixed case differently
+      Trace("approx-debug") << "non-basic lb" << std::endl;
+      newValues.set(v, d_vars.getLowerBound(v));
+      break;
+    case VarStatus::ON_UPPER:
+      Trace("approx-debug") << "non-basic ub" << std::endl;
+      newValues.set(v, d_vars.getUpperBound(v));
+      break;
+    case VarStatus::ZERO:
+      Trace("approx-debug") << "non-basic zero" << std::endl;
+      newValues.set(v, DeltaRational(0));
+      break;
+    default: Unreachable();
+  }
 }
 
 std::ostream& operator<<(std::ostream& out, const soplex::VectorRational& v)
@@ -908,8 +971,6 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
-
-  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
   external::Solution sol;
 
 #if 0  // For debug
@@ -929,8 +990,8 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  if (d_spx.status() == soplex::SPxSolverBase<double>::Status::OPTIMAL
-      || d_spx.status() == soplex::SPxSolverBase<double>::Status::UNBOUNDED)
+  if (d_spx.status() == SolverStatus::OPTIMAL
+      || d_spx.status() == SolverStatus::UNBOUNDED)
   {
     Assert(d_spx.hasSol());
     // Feasible solution
@@ -942,10 +1003,8 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
     for (int colIdx = 0; colIdx < d_spx.numCols(); colIdx++)
     {
       const ArithVar v = d_colToArithVar.at(colIdx);
-      extractVarValue(v,
-                      d_spx.basisColStatus(colIdx),
-                      mpq_class{primal[colIdx].backend().data()},
-                      sol);
+      extractVarValue(
+          v, d_spx.basisColStatus(colIdx), toMpq(primal[colIdx]), sol);
     }
 
     // Get the row activity for the rows
@@ -961,13 +1020,10 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
       // and we can use the d_vars bounds directly
       if (useActivity) d_spx.getRowActivityRational(rowIdx, rowValue);
       extractVarValue(
-          v,
-          varStatus,
-          useActivity ? mpq_class{rowValue.backend().data()} : s_zero,
-          sol);
+          v, varStatus, useActivity ? toMpq(rowValue) : s_zero, sol);
     }
   }
-  else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
+  else if (d_spx.status() == SolverStatus::INFEASIBLE)
   {
     // Infeasible solution
     Assert(d_spx.hasDualFarkas());
@@ -979,10 +1035,8 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
     for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
     {
       const ArithVar v = d_rowToArithVar.at(rowIdx);
-      extractVarValue(v,
-                      d_spx.basisRowStatus(rowIdx),
-                      mpq_class{dualRay[rowIdx].backend().data()},
-                      sol);
+      extractVarValue(
+          v, d_spx.basisRowStatus(rowIdx), toMpq(dualRay[rowIdx]), sol);
     }
     // Get the col activity for each column
     soplex::Rational colValue;
@@ -997,10 +1051,7 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
           varStatus == VarStatus::BASIC || varStatus == VarStatus::UNDEFINED;
       if (useActivity) d_spx.getColActivityRational(colIdx, colValue);
       extractVarValue(
-          v,
-          varStatus,
-          useActivity ? mpq_class{colValue.backend().data()} : s_zero,
-          sol);
+          v, varStatus, useActivity ? toMpq(colValue) : s_zero, sol);
     }
   }
   else
@@ -1056,16 +1107,18 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
 
-  using VarStatus = soplex::SPxSolverBase<double>::VarStatus;
   external::Solution sol;
   std::unordered_set<ArithVar> nonBasicVars;
-  std::optional<ArithVar> basicAtBound;
+
+  const VarStatus strictVarStatus = d_spx.basisColStatus(d_spx.numCols() - 1);
+  // No need to forcefully convert a basic variable at bound to non-basic
+  const bool isStrictBasic = strictVarStatus == VarStatus::BASIC;
 
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  if (d_spx.status() == soplex::SPxSolverBase<double>::Status::OPTIMAL
-      || d_spx.status() == soplex::SPxSolverBase<double>::Status::UNBOUNDED)
+  if (d_spx.status() == SolverStatus::OPTIMAL
+      || d_spx.status() == SolverStatus::UNBOUNDED)
   {
     Assert(d_spx.hasSol());
     // Feasible solution
@@ -1074,9 +1127,13 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     Assert(getPrimalSuccess);
 
     const soplex::Rational& strictValue = primal[d_spx.numCols() - 1];
-    const VarStatus strictVarStatus = d_spx.basisColStatus(d_spx.numCols() - 1);
-    // No need to forcefully convert a basic variable at bound to non-basic
-    if (strictVarStatus == VarStatus::BASIC) basicAtBound = ARITHVAR_SENTINEL;
+    if (!strictValue.is_zero())
+    {
+      d_spx.changeBoundsRational(
+          d_spx.numCols() - 1, s_zero_rational, s_zero_rational);
+      const SolverStatus res = d_spx.optimize();
+      Assert(res == SolverStatus::OPTIMAL);
+    }
 
     // Get the primal solution for the cols, except for the strict variable
     for (int colIdx = 0; colIdx < d_spx.numCols() - 1; colIdx++)
@@ -1086,10 +1143,12 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
 
-      const bool isBasicAtBound = extractVarValue(
-          v, varStatus, mpq_class{primal[colIdx].backend().data()}, sol);
-
-      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+      extractVarValue(v,
+                      varStatus,
+                      d_spx.lowerRational(colIdx),
+                      d_spx.upperRational(colIdx),
+                      mpq_class{primal[colIdx].backend().data()},
+                      sol);
     }
 
     // Get the row activity for the rows
@@ -1117,28 +1176,25 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       if (useActivity)
       {
         d_spx.getRowActivityRational(rowIdx, rowValue);
-        adjustValue(rowIdx, rowValue, strictValue);
+        // adjustValue(rowIdx, rowValue, strictValue);
       }
-      const bool isBasicAtBound = extractVarValue(
+      extractVarValue(
           v,
           varStatus,
+          d_spx.lhsRational(rowIdx),
+          d_spx.rhsRational(rowIdx),
           useActivity ? mpq_class{rowValue.backend().data()} : s_zero,
           sol);
-      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
   }
-  else if (d_spx.status() == soplex::SPxSolverBase<double>::Status::INFEASIBLE)
+  else if (d_spx.status() == SolverStatus::INFEASIBLE)
   {
     // Infeasible solution
     Assert(d_spx.hasDualFarkas());
     soplex::VectorRational dualRay(d_spx.numRows());
     const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
     Assert(getDualRaySuccess);
-
     const soplex::Rational& strictValue = dualRay[d_spx.numCols() - 1];
-    const VarStatus strictVarStatus = d_spx.basisColStatus(d_spx.numCols() - 1);
-    // No need to forcefully convert a basic variable at bound to non-basic
-    if (strictVarStatus == VarStatus::BASIC) basicAtBound = ARITHVAR_SENTINEL;
 
     // Get the last dual solution for the rows
     for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
@@ -1147,9 +1203,15 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
-      const bool isBasicAtBound = extractVarValue(
-          v, varStatus, mpq_class{dualRay[rowIdx].backend().data()}, sol);
-      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
+      soplex::Rational& colValue = dualRay[rowIdx];
+      adjustValue(rowIdx, colValue, strictValue);
+
+      extractVarValue(v,
+                      varStatus,
+                      d_spx.lhsRational(rowIdx),
+                      d_spx.rhsRational(rowIdx),
+                      mpq_class{colValue.backend().data()},
+                      sol);
     }
 
     // Get the col activity for each column
@@ -1181,14 +1243,14 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       if (useActivity)
       {
         d_spx.getColActivityRational(colIdx, colValue);
-        adjustValue(colIdx, colValue, strictValue);
       }
-      const bool isBasicAtBound = extractVarValue(
+      extractVarValue(
           v,
           varStatus,
+          d_spx.lowerRational(colIdx),
+          d_spx.upperRational(colIdx),
           useActivity ? mpq_class{colValue.backend().data()} : s_zero,
           sol);
-      // if (!basicAtBound.has_value() && isBasicAtBound) basicAtBound = v;
     }
   }
   else
@@ -1196,15 +1258,16 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     Unimplemented();
   }
 
-  // Forcefully remove a basic variable at bound from the basis,
-  // unless we know it is not needed, in which case we use ARITHVAR_SENTINEL
+  // Forcefully remove all non-basic variables that we identified from the basis
   for (const ArithVar v : nonBasicVars)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
   }
-  if (basicAtBound.has_value())
+  // If the strict variable is basic, we need to add some other non-basic
+  // variable to the basis to maintain the same number of basic variables
+  if (isStrictBasic)
   {
-    for (ArithVar v : nonBasicVars)
+    for (const ArithVar v : nonBasicVars)
     {
       if (!sol.newBasis.isMember(v))
       {
@@ -1215,13 +1278,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   }
 
   // Make sure to remove all strict rows that we know are non-basic
-  if (!basicAtBound.has_value())
-  {
-    std::cout
-        << "Warning: no basic variable at bound was found, this may lead to "
-           "numerical issues since we won't have a strict variable in the basis"
-        << std::endl;
-  }
   return sol;
 }
 
@@ -1294,7 +1350,7 @@ external::LinResult ExactSoplex::solveRelaxation()
   // glp_erase_prob(d_realProb);
   // glp_copy_prob(d_realProb, d_inputProb, GLP_OFF);
 
-  using SpxStatus = soplex::SPxSolverBase<double>::Status;
+  using SpxStatus = SolverStatus;
   soplex::VectorRational x(d_spx.numCols());
 
   // d_spx.clearBasis();
@@ -1302,8 +1358,7 @@ external::LinResult ExactSoplex::solveRelaxation()
   d_spx.writeFileRational(
       "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
 
-  soplex::SPxSolverBase<double>::Status res =
-      soplex::SPxSolverBase<double>::Status::UNKNOWN;
+  SolverStatus res = SolverStatus::UNKNOWN;
   try
   {
     res = d_spx.optimize();
