@@ -3533,6 +3533,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         Trace("solveRealRelaxation") << "exact feasible" << endl;
         ++d_statistics.d_relaxLinFeas;
         externalSolution = externalSolver->extractRelaxation();
+        externalSolution.linResult = externalResult;
         importSolution(externalSolution);
         if (d_qflraStatus != Result::SAT)
         {
@@ -3543,6 +3544,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         Trace("solveRealRelaxation") << "exact infeasible" << endl;
         ++d_statistics.d_relaxLinInfeas;
         externalSolution = externalSolver->extractRelaxation();
+        externalSolution.linResult = externalResult;
         importSolution(externalSolution);
         if (d_qflraStatus != Result::UNSAT)
         {

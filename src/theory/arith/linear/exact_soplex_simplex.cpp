@@ -144,6 +144,7 @@ class ExactSoplex : public ExactSimplex
   std::vector<ArithVar> d_rowToArithVar;
   std::vector<ArithVar> d_colToArithVar;
 
+ public:
   enum class VariableType
   {
     ROW,
@@ -154,7 +155,14 @@ class ExactSoplex : public ExactSimplex
     FEASIBLE,
     INFEASIBLE,
   };
+  enum class BoundViolationType
+  {
+    NONE,
+    LOWER,
+    UPPER,
+  };
 
+ protected:
   template <VariableType VarType>
   void extractVarValue(int idx,
                        external::Solution& sol,
@@ -163,6 +171,18 @@ class ExactSoplex : public ExactSimplex
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
+
+std::ostream& operator<<(std::ostream& out,
+                         const ExactSoplex::BoundViolationType v)
+{
+  switch (v)
+  {
+    case ExactSoplex::BoundViolationType::NONE: return out << "NONE";
+    case ExactSoplex::BoundViolationType::LOWER: return out << "LOWER";
+    case ExactSoplex::BoundViolationType::UPPER: return out << "UPPPER";
+    default: return out << "UNKNOWN";
+  }
+}
 
 class ExactSoplexEpsilon : public ExactSoplex
 {
@@ -1109,8 +1129,7 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  if (d_spx.status() == SolverStatus::OPTIMAL
-      || d_spx.status() == SolverStatus::UNBOUNDED)
+  if (d_spx.status() == SolverStatus::OPTIMAL)
   {
     Assert(d_spx.hasSol());
     // Feasible solution
@@ -1283,28 +1302,35 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
     Assert(getDualRaySuccess);
 
-    // Get the last dual solution for the rows
-    for (int rowIdx = 0; rowIdx < d_spx.numRows(); rowIdx++)
+    std::vector<int> nzRows;
+    nzRows.reserve(dualRay.dim());
+    for (int i = 0; i < dualRay.dim(); i++)
     {
-      const ArithVar v = d_rowToArithVar.at(rowIdx);
-      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
-      ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
+      if (dualRay[i].is_zero()) continue;
+      nzRows.emplace_back(i);
+      sol.newBasis.add(d_rowToArithVar.at(i));
     }
 
-    // Get the col activity for each column
-    for (int colIdx = 0; colIdx < d_spx.numCols() - 1; colIdx++)
+    //  Multiply the Farkas ray by the row coefficients to get the column
+    //  violations: ray * A If the result is non-zero, the sign indicates the
+    //  bound that caused the violation.
+    soplex::Rational col_violation{0};
+    for (int c = 0; c < d_spx.numColsRational() - 1; c++)
     {
-      const ArithVar v = d_colToArithVar.at(colIdx);
-      // We already know this col's value from some other side,
-      // no need to recompute it
-      if (nonBasicVars.count(v) > 0) continue;
-      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
-      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol);
+      col_violation = 0;
+      for (const int r : nzRows)
+      {
+        col_violation += dualRay[r] * d_spx.rowVectorRational(r)[c];
+      }
+      if (col_violation.is_zero()) continue;
+      const ArithVar v = d_colToArithVar.at(c);
+      sol.newNonBasis.add(v);
+      sol.newValues.set(v,
+                        col_violation > 0 ? d_vars.getLowerBound(v)
+                                          : d_vars.getUpperBound(v));
     }
+
+    return sol;
   }
   else
   {

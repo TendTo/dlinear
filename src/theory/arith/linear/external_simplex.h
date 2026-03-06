@@ -50,11 +50,33 @@ enum MipResult
 };
 std::ostream& operator<<(std::ostream& out, MipResult res);
 
+/**
+ * Store a solution obtained from the external simplex solver.
+ * It will contain all the information needed to attempt to apply the solution
+ * to the current tableau, and to extract a model if the solution is integer
+ * feasible.
+ * Note that only one between `newBasis` and `newNonBasis` will be populated,
+ * depending on the heuristic the external simplex solver wants the internal
+ * tableau to use.
+ * Moreover, only one between `linResult` and `mipResult` may differ from
+ * `Unknown`, depending on the type of solution obtained from the external
+ * simplex solver.
+ */
 struct Solution
 {
   DenseSet newBasis;
+  DenseSet newNonBasis;
   DenseMap<DeltaRational> newValues;
-  Solution() : newBasis(), newValues() {}
+  LinResult linResult;
+  MipResult mipResult;
+  Solution()
+      : newBasis(),
+        newNonBasis(),
+        newValues(),
+        linResult(LinUnknown),
+        mipResult(MipUnknown)
+  {
+  }
 };
 
 class SimplexStatistics
