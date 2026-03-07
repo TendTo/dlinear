@@ -73,7 +73,6 @@ class ExactSoplex : public ExactSimplex
 
   external::MipResult solveMIP(bool al) override;
   external::Solution extractMIP() override { return extractSolution(true); }
-  void setOptCoeffs(const ArithRatPairVec& ref) override;
   std::vector<const CutInfo*> getValidCuts(const NodeLog& nodes) override;
   ArithVar getBranchVar(const NodeLog& con) const override;
 
@@ -157,7 +156,6 @@ class ExactSoplex : public ExactSimplex
   };
   enum class BoundViolationType
   {
-    NONE,
     LOWER,
     UPPER,
   };
@@ -172,12 +170,18 @@ class ExactSoplex : public ExactSimplex
   bool d_solvedMIP;
 };
 
+ExactSoplex::BoundViolationType operator!(ExactSoplex::BoundViolationType v)
+{
+  return v == ExactSoplex::BoundViolationType::LOWER
+             ? ExactSoplex::BoundViolationType::UPPER
+             : ExactSoplex::BoundViolationType::LOWER;
+}
+
 std::ostream& operator<<(std::ostream& out,
                          const ExactSoplex::BoundViolationType v)
 {
   switch (v)
   {
-    case ExactSoplex::BoundViolationType::NONE: return out << "NONE";
     case ExactSoplex::BoundViolationType::LOWER: return out << "LOWER";
     case ExactSoplex::BoundViolationType::UPPER: return out << "UPPPER";
     default: return out << "UNKNOWN";
@@ -190,6 +194,8 @@ class ExactSoplexEpsilon : public ExactSoplex
   ExactSoplexEpsilon(const ArithVariables& v,
                      TreeLog& l,
                      external::SimplexStatistics& s);
+
+  void setOptCoeffs(const ArithRatPairVec& ref) override;
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
@@ -210,6 +216,8 @@ class ExactSoplexStrict : public ExactSoplex
   ExactSoplexStrict(const ArithVariables& v,
                     TreeLog& l,
                     external::SimplexStatistics& s);
+
+  void setOptCoeffs(const ArithRatPairVec& ref) override;
 
  private:
   external::Solution extractSolution(bool mip) override;
@@ -751,7 +759,7 @@ ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
   return ret;
 }
 
-void ExactSoplex::setOptCoeffs(const ArithRatPairVec& ref)
+void ExactSoplexEpsilon::setOptCoeffs(const ArithRatPairVec& ref)
 {
   DenseMap<mpq_class> nbCoeffs;
 
@@ -803,6 +811,8 @@ void ExactSoplex::setOptCoeffs(const ArithRatPairVec& ref)
     d_spx.changeObjRational(colIndex, soplex::Rational{coeff.get_mpq_t()});
   }
 }
+
+void ExactSoplexStrict::setOptCoeffs(const ArithRatPairVec& ref) {}
 
 /*
  * rough strategy:
@@ -1308,26 +1318,50 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     {
       if (dualRay[i].is_zero()) continue;
       nzRows.emplace_back(i);
-      sol.newBasis.add(d_rowToArithVar.at(i));
+      const ArithVar v = d_rowToArithVar.at(i);
+      sol.newNonBasis.add(v);
+      sol.newValues.set(
+          v,
+          dualRay[i] > 0 ? d_vars.getLowerBound(v) : d_vars.getUpperBound(v));
     }
 
     //  Multiply the Farkas ray by the row coefficients to get the column
     //  violations: ray * A If the result is non-zero, the sign indicates the
     //  bound that caused the violation.
-    soplex::Rational col_violation{0};
-    for (int c = 0; c < d_spx.numColsRational() - 1; c++)
+    std::unordered_map<int, soplex::Rational> colViolations;
+    for (const int r : nzRows)
     {
-      col_violation = 0;
-      for (const int r : nzRows)
+      const soplex::SVectorRational& rowVec = d_spx.rowVectorRational(r);
+      for (int cnz = 0; cnz < rowVec.size(); cnz++)
       {
-        col_violation += dualRay[r] * d_spx.rowVectorRational(r)[c];
+        const int c = rowVec.index(cnz);
+        if (c == d_spx.numCols() - 1) continue;
+        colViolations[c] += dualRay[r] * rowVec.value(cnz);
       }
-      if (col_violation.is_zero()) continue;
+    }
+    for (const auto& [c, violation] : colViolations)
+    {
       const ArithVar v = d_colToArithVar.at(c);
+      if (violation.is_zero())
+      {
+        std::cout << "col " << c << " added as basic" << std::endl;
+        sol.newBasis.add(v);
+        continue;
+      }
       sol.newNonBasis.add(v);
-      sol.newValues.set(v,
-                        col_violation > 0 ? d_vars.getLowerBound(v)
-                                          : d_vars.getUpperBound(v));
+      sol.newValues.set(
+          v, violation > 0 ? d_vars.getLowerBound(v) : d_vars.getUpperBound(v));
+      const soplex::SVectorRational colVec = d_spx.colVectorRational(c);
+      for (int rnz = 0; rnz < colVec.size(); rnz++)
+      {
+        const int r = colVec.index(rnz);
+        const ArithVar vr = d_rowToArithVar.at(r);
+        if (!sol.newBasis.isMember(vr))
+        {
+          std::cout << "row " << r << " added as basic" << std::endl;
+          sol.newBasis.add(vr);
+        }
+      }
     }
 
     return sol;
@@ -1337,7 +1371,8 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     Unimplemented();
   }
 
-  // Forcefully remove all non-basic variables that we identified from the basis
+  // Forcefully remove all non-basic variables that we identified from the
+  // basis
   for (const ArithVar v : nonBasicVars)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
@@ -1434,8 +1469,6 @@ external::LinResult ExactSoplex::solveRelaxation()
 
   // d_spx.clearBasis();
   // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
 
   SolverStatus res = SolverStatus::UNKNOWN;
   try
@@ -1446,6 +1479,11 @@ external::LinResult ExactSoplex::solveRelaxation()
   {
     return external::LinResult::LinExhausted;
   }
+
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+  // d_spx.writeFileRational(
+  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
 
   d_stats.d_refinements << d_spx.numRefinements();
   std::size_t precision =

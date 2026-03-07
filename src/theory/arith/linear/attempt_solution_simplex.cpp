@@ -273,6 +273,11 @@ Result::Status AttemptSolutionSDP::attemptPivotFirst(
         }
       }
     }
+    if (toAdd == ARITHVAR_SENTINEL)
+    {
+      Trace("arith::forceNewBasis") << "No other variable to add" << endl;
+      break;
+    }
     Assert(toRemove != ARITHVAR_SENTINEL);
     Assert(toAdd != ARITHVAR_SENTINEL);
 
@@ -311,28 +316,20 @@ Result::Status AttemptSolutionSDP::attemptPivotFirst(
       needsToBeRemoved.add(b);
     }
   }
-  auto it = d_variables.var_begin(), vi_end = d_variables.var_end();
   for (auto i = needsToBeRemoved.begin(), i_end = needsToBeRemoved.end(); i != i_end; ++i){
     ArithVar toRemove = *i;
-    for (; it != vi_end; ++it){
-      ArithVar toAdd = *it;
-      if (toAdd == toRemove) continue;
-      if (d_tableau.isBasic(toAdd)) continue;
+    Assert(d_tableau.isBasic(toRemove));
+    for (auto it = d_tableau.basicRowIterator(toRemove); !it.atEnd(); ++it){
+      Tableau::Entry entry = *it;
+      const ArithVar toAdd = entry.getColVar();
       if (needsToBeRemoved.isMember(toAdd)) continue;
-      const DeltaRational& newValue = newValues[toAdd];
-      Trace("arith::updateMany")
-        << "updateMany:" << toAdd << " "
-        << d_variables.getAssignment(toAdd) << " to "<< newValue << endl;
       Assert(toAdd != ARITHVAR_SENTINEL);
       Assert(toRemove != ARITHVAR_SENTINEL);
       Trace("arith::forceNewBasis") << toAdd << " " << toRemove << endl;
 
-
       d_linEq.pivotAndUpdate(toRemove, toAdd, newValues[toRemove]);
-      Assert(
-        !d_variables.hasEitherBound(toRemove) ||
-        (d_variables.atBoundCounts(toRemove).upperBoundCount() > 0
-          || d_variables.atBoundCounts(toRemove).lowerBoundCount() > 0));
+      Assert(d_variables.atBoundCounts(toRemove).upperBoundCount() > 0
+          || d_variables.atBoundCounts(toRemove).lowerBoundCount() > 0);
 
       if(processSignals()){
         d_errorSet.reduceToSignals();
