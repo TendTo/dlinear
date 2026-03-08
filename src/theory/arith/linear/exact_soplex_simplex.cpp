@@ -190,7 +190,7 @@ std::ostream& operator<<(std::ostream& out,
 class ExactSoplexEpsilon : public ExactSoplex
 {
  public:
-  ExactSoplexEpsilon(const ArithVariables& v,
+  ExactSoplexEpsilon(const ArithVariables& vars,
                      TreeLog& l,
                      external::SimplexStatistics& s);
 
@@ -233,8 +233,6 @@ class ExactSoplexStrict : public ExactSoplex
     }
     return false;
   }
-
-  DeltaRational getRowActivity(int rowIdx) const;
 };
 
 const mpq_class ExactSoplex::s_zero_mpq{0};
@@ -298,10 +296,10 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
   Assert(!d_colToArithVar.empty());
 }
 
-ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
+ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
                                        TreeLog& l,
                                        external::SimplexStatistics& s)
-    : ExactSoplex(var, l, s)
+    : ExactSoplex(vars, l, s)
 {
   // The number of cols must accommodate for the non-aux variables as well as
   // the additional strict variable t
@@ -310,7 +308,7 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
-  for (ArithVar v : d_rowToArithVar)
+  for (const ArithVar v : d_rowToArithVar)
   {
     Assert(d_vars.isAuxiliary(v));
 
@@ -1691,7 +1689,7 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-external::ExternalSimplex* ExactSimplex::mkExactSimplexSolver(
+external::ExternalSimplex* ExactSimplex::mkExactSoplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
     CVC5_UNUSED external::SimplexStatistics& s,

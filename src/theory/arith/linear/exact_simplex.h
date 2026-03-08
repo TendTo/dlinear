@@ -50,7 +50,14 @@ class ExactSimplex : public external::ExternalSimplex
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
-  static ExternalSimplex* mkExactSimplexSolver(const ArithVariables& vars,
+  static ExternalSimplex* mkExactSoplexSolver(const ArithVariables& vars,
+                                              TreeLog& l,
+                                              external::SimplexStatistics& s,
+                                              bool useStrict);
+  /**
+   * If an exact solver is enabled, creates a lp-based exact solver.
+   */
+  static ExternalSimplex* mkExactQsoptexSolver(const ArithVariables& vars,
                                                TreeLog& l,
                                                external::SimplexStatistics& s,
                                                bool useStrict);
