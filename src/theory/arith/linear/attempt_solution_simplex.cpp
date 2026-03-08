@@ -85,7 +85,7 @@ Result::Status AttemptSolutionSDP::attempt(const external::Solution& sol)
   TimerStat::CodeTimer timer{d_statistics.d_searchTime};
 
   if (options().arith.externalLPSolver == options::ExternalLPSolver::SOPLEX
-    && sol.linResult == external::LinResult::LinInfeasible)
+    && sol.newNonBasis.size() > 0)
   {
     return attemptPivotFirst(sol);
   }
