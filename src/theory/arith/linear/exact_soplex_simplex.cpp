@@ -238,9 +238,9 @@ class ExactSoplexStrict : public ExactSoplex
   {
     if (d_spx.hasPrimal())
     {
-      soplex::VectorRational primal;
+      soplex::VectorRational primal(d_spx.numColsRational());
       d_spx.getPrimalRational(primal);
-      return primal[d_spx.numCols() - 1].is_zero();
+      return primal[d_spx.numColsRational() - 1].is_zero();
     }
     return false;
   }
@@ -265,7 +265,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
           options::ExternalLPSolver::SOPLEX));
 
   d_spx.setIntParam(SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE);
-  d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_INTERNAL);
+  d_spx.setIntParam(SoPlex::SIMPLIFIER, SoPlex::SIMPLIFIER_OFF);
   d_spx.setIntParam(SoPlex::ALGORITHM, SoPlex::ALGORITHM_PRIMAL);
   d_spx.setIntParam(SoPlex::VERBOSITY, SoPlex::VERBOSITY_ERROR);
   d_spx.setIntParam(SoPlex::READMODE, SoPlex::READMODE_RATIONAL);
@@ -385,7 +385,7 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
     {
       ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
     }
-    cols.add({0.0, soplex::DSVectorRational(), ub, lb});
+    cols.add({1.0, soplex::DSVectorRational(), ub, lb});
   }
 
   // Add both columns and rows to the LP
@@ -501,12 +501,9 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       d_vars.printModel(v, Trace("approx-debug"));
     }
 
-    cols.add({0.0, soplex::DSVectorRational(), varToUb(v), varToLb(v)});
-    // out << "cols.add({0.0, soplex::DSVectorRational(), " << varToUb(v) << ",
-    // "
-    //     << varToLb(v) << "});\n";
-
-    if (hasStrictLb(v))
+    bool isLbStrict = hasStrictLb(v);
+    bool isUbStrict = hasStrictUB(v);
+    if (isLbStrict)
     {
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
@@ -519,7 +516,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n}\n";
       rowToArithVarStrict.emplace_back(v);
     }
-    if (hasStrictUB(v))
+    if (isUbStrict)
     {
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
@@ -532,6 +529,11 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n}\n";
       rowToArithVarStrict.emplace_back(v);
     }
+
+    cols.add({0.0,
+              soplex::DSVectorRational(),
+              isUbStrict ? soplex::infinity : varToUb(v),
+              isLbStrict ? -soplex::infinity : varToLb(v)});
   }
 
   // Add the strict variable t
@@ -607,6 +609,7 @@ int ExactSoplex::guessDir(const ArithVar v) const
 ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
 {
   ArithRatPairVec ret;
+  return ret;
 
   // Strategies are guess:
   // 1 simple shared "ceiling" variable: danoint, pk1
@@ -930,12 +933,12 @@ void ExactSoplex::extractVarValue(const int idx,
 
   if constexpr (VarType == VariableType::COL)
   {
-    v = d_colToArithVar[idx];
+    v = d_colToArithVar.at(idx);
     varStatus = d_spx.basisColStatus(idx);
   }
   if constexpr (VarType == VariableType::ROW)
   {
-    v = d_rowToArithVar[idx];
+    v = d_rowToArithVar.at(idx);
     varStatus = d_spx.basisRowStatus(idx);
   }
   Assert(v != ARITHVAR_SENTINEL);
@@ -994,26 +997,20 @@ void ExactSoplex::extractVarValue(const int idx,
     case VarStatus::ON_LOWER:
       Assert(d_vars.hasLowerBound(v));
       Trace("approx-debug") << "non-basic lb" << std::endl;
-      if constexpr (VarType == VariableType::COL)
-        lb = toMpq(d_spx.lowerRational(idx));
-      if constexpr (VarType == VariableType::ROW)
-        lb = toMpq(d_spx.lhsRational(idx));
-      newValues.set(v,
-                    d_vars.getLowerBound(v).getNoninfinitesimalPart() >= lb
-                        ? d_vars.getLowerBound(v)
-                        : DeltaRational(lb));
+      // if constexpr (VarType == VariableType::COL)
+      //   lb = toMpq(d_spx.lowerRational(idx));
+      // if constexpr (VarType == VariableType::ROW)
+      //   lb = toMpq(d_spx.lhsRational(idx));
+      newValues.set(v, d_vars.getLowerBound(v));
       break;
     case VarStatus::ON_UPPER:
       Trace("approx-debug") << "non-basic ub" << std::endl;
       Assert(d_vars.hasUpperBound(v));
-      if constexpr (VarType == VariableType::COL)
-        ub = toMpq(d_spx.upperRational(idx));
-      if constexpr (VarType == VariableType::ROW)
-        ub = toMpq(d_spx.rhsRational(idx));
-      newValues.set(v,
-                    d_vars.getUpperBound(v).getNoninfinitesimalPart() <= ub
-                        ? d_vars.getUpperBound(v)
-                        : DeltaRational(ub));
+      // if constexpr (VarType == VariableType::COL)
+      //   ub = toMpq(d_spx.upperRational(idx));
+      // if constexpr (VarType == VariableType::ROW)
+      //   ub = toMpq(d_spx.rhsRational(idx));
+      newValues.set(v, d_vars.getUpperBound(v));
       break;
     case VarStatus::ZERO:
       Trace("approx-debug") << "non-basic zero" << std::endl;
@@ -1154,7 +1151,8 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  if (d_spx.status() == SolverStatus::OPTIMAL)
+  if (d_spx.status() == SolverStatus::OPTIMAL
+      || d_spx.status() == SolverStatus::UNBOUNDED)
   {
     Assert(d_spx.hasSol());
     // Feasible solution
@@ -1540,7 +1538,6 @@ external::LinResult ExactSoplex::solveRelaxation()
   // glp_copy_prob(d_realProb, d_inputProb, GLP_OFF);
 
   using SpxStatus = SolverStatus;
-  soplex::VectorRational x(d_spx.numColsRational());
 
   // d_spx.clearBasis();
   // std::cout << "OBJ:" << d_spx.objValueReal() << std::endl;
@@ -1555,8 +1552,8 @@ external::LinResult ExactSoplex::solveRelaxation()
     return external::LinResult::LinExhausted;
   }
 
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
   // d_spx.writeFileRational(
   //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
 
@@ -1576,7 +1573,6 @@ external::LinResult ExactSoplex::solveRelaxation()
     case SpxStatus::UNBOUNDED:
       // std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
       Assert(d_spx.hasSol());
-      d_spx.getPrimalRational(x);
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
       return isStrictVarZero() ? external::LinResult::LinInfeasible
