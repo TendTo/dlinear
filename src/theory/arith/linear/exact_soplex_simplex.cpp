@@ -19,8 +19,6 @@
 
 #include <cfloat>
 #include <cmath>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "base/cvc5config.h"
 #include "base/output.h"
@@ -136,9 +134,8 @@ class ExactSoplex : public ExactSimplex
   const static soplex::Rational s_zero_rational;
 
   SoPlex d_spx;
-  std::unordered_map<int, bool> d_strict_rows;
 
-  std::unordered_map<ArithVar, std::size_t> d_colIndices;
+  DenseMap<std::size_t> d_colIndices;
 
   std::vector<ArithVar> d_rowToArithVar;
   std::vector<ArithVar> d_colToArithVar;
@@ -276,7 +273,6 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
 
   d_rowToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
   d_colToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
-  d_colIndices.reserve(d_vars.getNumberOfVariables() / 2);
 
   // Assign each variable to a row and column variable as it appears in the
   // input
@@ -293,7 +289,7 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
     else
     {
       d_colToArithVar.emplace_back(v);
-      d_colIndices.emplace(v, d_colIndices.size());
+      d_colIndices.set(v, d_colIndices.size());
       Trace("approx") << "Col vars: " << v << "<->" << d_colIndices.size() - 1
                       << std::endl;
     }
@@ -333,7 +329,7 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
 
       Assert(d_vars.hasArithVar(n));
       ArithVar av = d_vars.asArithVar(n);
-      int colIndex = static_cast<int>(d_colIndices.at(av));
+      int colIndex = static_cast<int>(d_colIndices[av]);
       // std::cout << d_vars.asNode(av).getName() << " => " << colIndex << "\n";
 
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
@@ -443,7 +439,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
         {
           vec.add(strictVarIdx, -1);
           // out << "vec.add(" << strictVarIdx << ", 1);\n";
-          d_strict_rows.emplace(rows.num(), false);
         }
         rowToArithVarStrict.emplace_back(v);
         rows.add({varToLb(v), vec, soplex::infinity});
@@ -462,7 +457,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
         {
           vec.add(strictVarIdx, 1);
           // out << "vec.add(" << strictVarIdx << ", -1);\n";
-          d_strict_rows.emplace(rows.num(), true);
         }
         rowToArithVarStrict.emplace_back(v);
         rows.add({-soplex::infinity, vec, varToUb(v)});
@@ -497,7 +491,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
       vec.add(strictVarIdx, -1);
-      d_strict_rows.emplace(rows.num(), false);
       // out << "{\nsoplex::DSVectorRational vec(2);\n";
       // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
       // out << "vec.add(" << strictVarIdx << ", 1);\n";
@@ -513,7 +506,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       // out << "{\nsoplex::DSVectorRational vec(2);\n";
       // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
       // out << "vec.add(" << strictVarIdx << ", -1);\n";
-      d_strict_rows.emplace(rows.num(), true);
       rows.add({-soplex::infinity, vec, varToUb(v)});
       // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n}\n";
       rowToArithVarStrict.emplace_back(v);
@@ -791,7 +783,7 @@ void ExactSoplexEpsilon::setOptCoeffs(const ArithRatPairVec& ref)
 
         Assert(d_vars.hasArithVar(n));
         ArithVar av = d_vars.asArithVar(n);
-        const int colIndex = d_colIndices.at(av);
+        const int colIndex = d_colIndices[av];
         mpq_class coeff = constant.getValue().getValue();
         if (!nbCoeffs.isKey(colIndex))
         {
@@ -802,7 +794,7 @@ void ExactSoplexEpsilon::setOptCoeffs(const ArithRatPairVec& ref)
     }
     else
     {
-      const int colIndex = d_colIndices.at(v);
+      const int colIndex = d_colIndices[v];
       const double coeff = q.getDouble();
       if (!nbCoeffs.isKey(colIndex))
       {
@@ -1130,7 +1122,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   Assert(!mip || d_solvedMIP);
 
   external::Solution sol;
-  std::unordered_set<ArithVar> nonBasicVars;
+  DenseSet nonBasicVars;
 
   // No need to forcefully convert a basic variable at bound to non-basic
   bool isStrictBasic =
@@ -1168,7 +1160,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_colToArithVar.at(colIdx);
       const VarStatus varStatus = d_spx.basisColStatus(colIdx);
       // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &primal);
     }
 
@@ -1178,11 +1170,11 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_rowToArithVar.at(rowIdx);
       // We already know this row's value from some other side,
       // no need to recompute it
-      if (nonBasicVars.count(v) > 0) continue;
+      if (nonBasicVars.isMember(v) > 0) continue;
 
       const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
       // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol);
     }
   }
@@ -1214,7 +1206,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_rowToArithVar.at(rowIdx);
       const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
       // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
     }
 
@@ -1224,11 +1216,11 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_colToArithVar.at(colIdx);
       // We already know this col's value from some other side,
       // no need to recompute it
-      if (nonBasicVars.count(v) > 0) continue;
+      if (nonBasicVars.isMember(v) > 0) continue;
 
       const VarStatus varStatus = d_spx.basisColStatus(colIdx);
       // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol);
     }
 
@@ -1382,10 +1374,7 @@ void ExactSoplexStrict::adjustValue(const int rowIdx,
                                     soplex::Rational& value,
                                     const soplex::Rational& strictValue) const
 {
-  if (const auto it = d_strict_rows.find(rowIdx); it != d_strict_rows.end())
-  {
-    value += it->second ? -strictValue : strictValue;
-  }
+  Unimplemented();
 }
 
 void ExactSoplex::printSolution(const external::Solution& sol) const
