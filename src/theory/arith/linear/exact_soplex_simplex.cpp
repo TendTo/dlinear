@@ -1201,7 +1201,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     Assert(getDualRaySuccess);
 
     // Get the primal solution for the rows, except for the strict variable
-    for (int rowIdx = 0; rowIdx < d_spx.numRowsRational() - 1; rowIdx++)
+    for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
     {
       const ArithVar v = d_rowToArithVar.at(rowIdx);
       const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
@@ -1211,7 +1211,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     }
 
     // Get the col activity for the cols
-    for (int colIdx = 0; colIdx < d_spx.numColsRational(); colIdx++)
+    for (int colIdx = 0; colIdx < d_spx.numColsRational() - 1; colIdx++)
     {
       const ArithVar v = d_colToArithVar.at(colIdx);
       // We already know this col's value from some other side,
