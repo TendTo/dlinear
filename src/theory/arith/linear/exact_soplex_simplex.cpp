@@ -201,10 +201,6 @@ class ExactSoplexEpsilon : public ExactSoplex
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
-  void extractVarValue(ArithVar v,
-                       VarStatus varStatus,
-                       const mpq_class& value,
-                       external::Solution& sol) const;
 
   static constexpr double SMALL_FIXED_DELTA =
       std::numeric_limits<double>::epsilon();
@@ -229,10 +225,6 @@ class ExactSoplexStrict : public ExactSoplex
   void adjustValue(int rowIdx,
                    soplex::Rational& value,
                    const soplex::Rational& strictValue) const;
-  void extractVarValue(ArithVar v,
-                       VarStatus varStatus,
-                       const mpq_class& value,
-                       external::Solution& sol) const;
 
   bool isStrictVarZero() override
   {
@@ -357,9 +349,6 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& var,
     {
       ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
     }
-    if (!d_vars.hasLowerBound(v) && !d_vars.hasUpperBound(v))
-      std::cout << "WARNING: row with no bounds: " << v << " => "
-                << d_vars.asNode(v).toString() << "\n";
     rows.add({lb, vec, ub});
   }
 
@@ -873,54 +862,6 @@ void ExactSoplex::printSoplexStatus(int status, std::ostream& out)
   }
 }
 
-void ExactSoplexEpsilon::extractVarValue(const ArithVar v,
-                                         const VarStatus varStatus,
-                                         const mpq_class& value,
-                                         external::Solution& sol) const
-{
-  DenseSet& newBasis = sol.newBasis;
-  DenseMap<DeltaRational>& newValues = sol.newValues;
-
-  switch (varStatus)
-  {
-    case VarStatus::BASIC: newBasis.add(v); CVC5_FALLTHROUGH;
-    case VarStatus::UNDEFINED:
-      if (d_vars.hasLowerBound(v)
-          && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
-      {
-        newValues.set(v, d_vars.getLowerBound(v));
-      }
-      else if (d_vars.hasUpperBound(v)
-               && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
-      {
-        newValues.set(v, d_vars.getUpperBound(v));
-      }
-      else
-      {
-        newValues.set(v, DeltaRational(value));
-      }
-      Assert(!d_vars.hasLowerBound(v)
-             || d_vars.getLowerBound(v) <= newValues.get(v));
-      Assert(!d_vars.hasUpperBound(v)
-             || d_vars.getUpperBound(v) >= newValues.get(v));
-      break;
-    case VarStatus::ON_LOWER:
-    case VarStatus::FIXED:  // No need to handle the fixed case differently
-      Trace("approx-debug") << "non-basic lb" << std::endl;
-      newValues.set(v, d_vars.getLowerBound(v));
-      break;
-    case VarStatus::ON_UPPER:
-      Trace("approx-debug") << "non-basic ub" << std::endl;
-      newValues.set(v, d_vars.getUpperBound(v));
-      break;
-    case VarStatus::ZERO:
-      Trace("approx-debug") << "non-basic zero" << std::endl;
-      newValues.set(v, DeltaRational(0));
-      break;
-    default: Unreachable();
-  }
-}
-
 template <ExactSoplex::VariableType VarType>
 void ExactSoplex::extractVarValue(const int idx,
                                   external::Solution& sol,
@@ -943,7 +884,7 @@ void ExactSoplex::extractVarValue(const int idx,
   }
   Assert(v != ARITHVAR_SENTINEL);
 
-  mpq_class value, lb, ub;
+  mpq_class value;
   switch (varStatus)
   {
     // If we are dealing with a basic variable, we necessarily need to get its
@@ -997,69 +938,11 @@ void ExactSoplex::extractVarValue(const int idx,
     case VarStatus::ON_LOWER:
       Assert(d_vars.hasLowerBound(v));
       Trace("approx-debug") << "non-basic lb" << std::endl;
-      // if constexpr (VarType == VariableType::COL)
-      //   lb = toMpq(d_spx.lowerRational(idx));
-      // if constexpr (VarType == VariableType::ROW)
-      //   lb = toMpq(d_spx.lhsRational(idx));
       newValues.set(v, d_vars.getLowerBound(v));
       break;
     case VarStatus::ON_UPPER:
       Trace("approx-debug") << "non-basic ub" << std::endl;
       Assert(d_vars.hasUpperBound(v));
-      // if constexpr (VarType == VariableType::COL)
-      //   ub = toMpq(d_spx.upperRational(idx));
-      // if constexpr (VarType == VariableType::ROW)
-      //   ub = toMpq(d_spx.rhsRational(idx));
-      newValues.set(v, d_vars.getUpperBound(v));
-      break;
-    case VarStatus::ZERO:
-      Trace("approx-debug") << "non-basic zero" << std::endl;
-      newValues.set(v, DeltaRational(0));
-      break;
-    default: Unreachable();
-  }
-}
-
-void ExactSoplexStrict::extractVarValue(const ArithVar v,
-                                        const VarStatus varStatus,
-                                        const mpq_class& value,
-                                        external::Solution& sol) const
-{
-  DenseSet& newBasis = sol.newBasis;
-  DenseMap<DeltaRational>& newValues = sol.newValues;
-
-  switch (varStatus)
-  {
-    case VarStatus::BASIC:
-      if (!newBasis.isMember(v)) newBasis.add(v);
-      CVC5_FALLTHROUGH;
-    case VarStatus::UNDEFINED:
-      if (d_vars.hasLowerBound(v)
-          && d_vars.getLowerBound(v).getNoninfinitesimalPart() >= value)
-      {
-        newValues.set(v, d_vars.getLowerBound(v));
-      }
-      else if (d_vars.hasUpperBound(v)
-               && d_vars.getUpperBound(v).getNoninfinitesimalPart() <= value)
-      {
-        newValues.set(v, d_vars.getUpperBound(v));
-      }
-      else
-      {
-        newValues.set(v, DeltaRational(value));
-      }
-      Assert(!d_vars.hasLowerBound(v)
-             || d_vars.getLowerBound(v) <= newValues.get(v));
-      Assert(!d_vars.hasUpperBound(v)
-             || d_vars.getUpperBound(v) >= newValues.get(v));
-      break;
-    case VarStatus::ON_LOWER:
-    case VarStatus::FIXED:  // No need to handle the fixed case differently
-      Trace("approx-debug") << "non-basic lb" << std::endl;
-      newValues.set(v, d_vars.getLowerBound(v));
-      break;
-    case VarStatus::ON_UPPER:
-      Trace("approx-debug") << "non-basic ub" << std::endl;
       newValues.set(v, d_vars.getUpperBound(v));
       break;
     case VarStatus::ZERO:
@@ -1325,6 +1208,32 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
     Assert(getDualRaySuccess);
 
+    // Get the primal solution for the rows, except for the strict variable
+    for (int rowIdx = 0; rowIdx < d_spx.numRowsRational() - 1; rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar.at(rowIdx);
+      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
+    }
+
+    // Get the col activity for the cols
+    for (int colIdx = 0; colIdx < d_spx.numColsRational(); colIdx++)
+    {
+      const ArithVar v = d_colToArithVar.at(colIdx);
+      // We already know this col's value from some other side,
+      // no need to recompute it
+      if (nonBasicVars.count(v) > 0) continue;
+
+      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
+      // We now know that this variable is non-basic
+      if (varStatus != VarStatus::BASIC) nonBasicVars.insert(v);
+      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol);
+    }
+
+#if 0
+
     // For efficiency in the following iterations, we make sure
     // to only iterate over the non-zero rows of the dual ray
     std::vector<int> nzRows;
@@ -1436,6 +1345,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     // }
     // newSpx.writeFileRational(
     //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.ilp");
+#endif
 
     return sol;
   }
@@ -1552,8 +1462,8 @@ external::LinResult ExactSoplex::solveRelaxation()
     return external::LinResult::LinExhausted;
   }
 
-  d_spx.writeFileRational(
-      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
+  // d_spx.writeFileRational(
+  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
   // d_spx.writeFileRational(
   //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
 
