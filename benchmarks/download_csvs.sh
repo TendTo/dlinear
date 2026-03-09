@@ -1,0 +1,2 @@
+scp Comet:comet_lfplpsmf/soplex_i100.csv Comet:comet_lfplpsmf/soplex_i10.csv Comet:comet_lfplpsmf/soplex_i200.csv Comet:comet_lfplpsmf/cvc5.csv Comet:comet_lfplpsmf/glpk_i200.csv Comet:comet_lfplpsmf/z3.csv Comet:comet_lfplpsmf/yices.csv .
+ 
