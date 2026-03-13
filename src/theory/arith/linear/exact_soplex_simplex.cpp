@@ -1040,7 +1040,6 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
     }
 
     // Get the row activity for the rows
-    soplex::Rational rowValue;
     for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
     {
       ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol);
@@ -1057,13 +1056,12 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
     // Get the last dual solution for the rows
     for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
     {
-      ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
+      extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
     }
     // Get the col activity for each column
-    soplex::Rational colValue;
     for (int colIdx = 0; colIdx < d_spx.numColsRational(); colIdx++)
     {
-      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol);
+      extractVarValue<VariableType::COL>(colIdx, sol);
     }
   }
   else
