@@ -607,13 +607,13 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
         d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v);
     if (hasBothBounds)
     {
-      numNonZeroPerRow.emplace_back(numNonZeroPerRow.back());
       beginRowIdx.emplace_back(colIdxs.size());
       colIdxs.insert(colIdxs.end(),
                      colIdxs.end() - numNonZeroPerRow.back(),
                      colIdxs.end());
       values.insert(
           values.end(), values.end() - numNonZeroPerRow.back(), values.end());
+      numNonZeroPerRow.emplace_back(numNonZeroPerRow.back());
     }
     if (d_vars.hasLowerBound(v))
     {
@@ -633,13 +633,6 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     }
   }
 
-  // std::vector<int> cmatcnt;
-  // std::vector<int> cmatbeg;
-  // std::vector<int> cmatind;
-  // std::vector<mpq_class> cmatval;
-  // std::vector<mpq_class> obj;
-  // std::vector<mpq_class> lower;
-  // std::vector<mpq_class> upper;
   // Construct the columns of the LP by assigning upper/lower bounds to each
   // variable
   for (ArithVar v : d_colToArithVar)
@@ -656,6 +649,181 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     mpq_class ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
     mpq_QSnew_col(d_qsx, mpq_oneLpNum, lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
   }
+
+  static_assert(sizeof(mpq_class) == sizeof(mpq_t),
+                "mpq_class layout assumption broken");
+  mpq_QSadd_rows(d_qsx,
+                 static_cast<int>(numNonZeroPerRow.size()),
+                 numNonZeroPerRow.data(),
+                 beginRowIdx.data(),
+                 colIdxs.data(),
+                 reinterpret_cast<const mpq_t*>(values.data()),
+                 reinterpret_cast<const mpq_t*>(d_rhs.data()),
+                 d_sense.data(),
+                 nullptr);
+
+  d_rowToArithVar = std::move(rowToArithVarSplit);
+}
+
+ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
+                                       TreeLog& l,
+                                       external::SimplexStatistics& s)
+    : ExactQsoptex(vars, l, s)
+{
+  // Assign each variable to a row and column variable as it appears in the
+  // input
+  std::vector<int> numNonZeroPerRow;
+  std::vector<int> beginRowIdx;
+  std::vector<int> colIdxs;
+  std::vector<mpq_class> values;
+
+  d_rhs.reserve(d_rowToArithVar.size() * 2);
+  numNonZeroPerRow.reserve(d_rowToArithVar.size() * 2);
+  beginRowIdx.reserve(d_rowToArithVar.size() * 2);
+  colIdxs.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
+  values.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
+  d_sense.reserve(d_rowToArithVar.size() * 2);
+
+  std::vector<ArithVar> rowToArithVarSplit;
+  rowToArithVarSplit.reserve(d_rowToArithVar.size() * 2);
+
+  // Construct the rows of the LP by parsing the polynomial constraints together
+  // with the row bounds on the auxiliary variables
+  for (const ArithVar v : d_rowToArithVar)
+  {
+    Assert(d_vars.isAuxiliary(v));
+
+    Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
+
+    numNonZeroPerRow.emplace_back(p.size());
+    beginRowIdx.emplace_back(colIdxs.size());
+
+    for (Polynomial::iterator j = p.begin(), end = p.end(); j != end; ++j)
+    {
+      const Monomial& mono = *j;
+      const Constant& constant = mono.getConstant();
+      const VarList& variable = mono.getVarList();
+
+      Node n = variable.getNode();
+
+      Assert(d_vars.hasArithVar(n));
+      ArithVar av = d_vars.asArithVar(n);
+      const int colIdx = static_cast<int>(d_colIndices[av]);
+
+      colIdxs.emplace_back(colIdx);
+      // TODO: maybe we can just borrow the reference?
+      values.emplace_back(constant.getValue().getValue().get_mpq_t());
+    }
+
+    // Case I: we are dealing with a free row. Just add it to capture its
+    // behaviour, but set it to -inf
+    if (!d_vars.hasEitherBound(v))
+    {
+      d_rhs.emplace_back(mpq_NINFTY);
+      d_sense.emplace_back('G');
+      rowToArithVarSplit.emplace_back(v);
+      continue;
+    }
+
+    const bool isLbStrict = hasStrictLb(v);
+
+    if (d_vars.hasLowerBound(v))
+    {
+      if (isLbStrict)
+      {
+        numNonZeroPerRow.back()++;
+        colIdxs.emplace_back(d_colToArithVar.size());
+        values.emplace_back(-1);
+      }
+      d_rhs.emplace_back(varToLb(v));
+      d_sense.emplace_back('G');
+      rowToArithVarSplit.emplace_back(v);
+    }
+
+    // Case II: we are dealing with a row with at least one bound. If both
+    // bounds are set, we add the row twice, once for the lower bound and once
+    // for the upper bound.
+    const bool hasBothBounds =
+        d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v);
+    if (hasBothBounds)
+    {
+      // Insert all cols (except strict col, if present)
+      beginRowIdx.emplace_back(colIdxs.size());
+      colIdxs.insert(colIdxs.end(),
+                     colIdxs.end() - numNonZeroPerRow.back(),
+                     isLbStrict ? colIdxs.end() - 1 : colIdxs.end());
+      // Insert all values (except strict col, if present)
+      values.insert(values.end(),
+                    values.end() - numNonZeroPerRow.back(),
+                    isLbStrict ? values.end() - 1 : values.end());
+      numNonZeroPerRow.emplace_back(isLbStrict ? numNonZeroPerRow.back() - 1
+                                               : numNonZeroPerRow.back());
+    }
+
+    if (d_vars.hasUpperBound(v))
+    {
+      if (hasStrictUB(v))
+      {
+        numNonZeroPerRow.back()++;
+        colIdxs.emplace_back(d_colToArithVar.size());
+        values.emplace_back(1);
+      }
+      d_rhs.emplace_back(varToUb(v));
+      d_sense.emplace_back('L');
+      rowToArithVarSplit.emplace_back(v);
+    }
+  }
+
+  // Construct the columns of the LP by assigning upper/lower bounds to each
+  // variable
+  for (ArithVar v : d_colToArithVar)
+  {
+    Assert(!d_vars.isAuxiliary(v));
+
+    if (TraceIsOn("approx-debug"))
+    {
+      Trace("approx-debug") << v << " ";
+      d_vars.printModel(v, Trace("approx-debug"));
+    }
+
+    const bool isLbStrict = hasStrictLb(v);
+    const bool isUbStrict = hasStrictUB(v);
+
+    if (isLbStrict)
+    {
+      numNonZeroPerRow.emplace_back(2);
+      beginRowIdx.emplace_back(colIdxs.size());
+      colIdxs.emplace_back(d_colIndices[v]);
+      colIdxs.emplace_back(d_colToArithVar.size());
+      values.emplace_back(1);
+      values.emplace_back(-1);
+      d_sense.emplace_back('G');
+      d_rhs.emplace_back(varToLb(v));
+      rowToArithVarSplit.emplace_back(v);
+    }
+
+    if (isUbStrict)
+    {
+      numNonZeroPerRow.emplace_back(2);
+      beginRowIdx.emplace_back(colIdxs.size());
+      colIdxs.emplace_back(d_colIndices[v]);
+      colIdxs.emplace_back(d_colToArithVar.size());
+      values.emplace_back(1);
+      values.emplace_back(1);
+      d_sense.emplace_back('L');
+      d_rhs.emplace_back(varToLb(v));
+      rowToArithVarSplit.emplace_back(v);
+    }
+
+    mpq_QSnew_col(d_qsx,
+                  mpq_zeroLpNum,
+                  isLbStrict ? mpq_NINFTY : varToLb(v).get_mpq_t(),
+                  isUbStrict ? mpq_INFTY : varToUb(v).get_mpq_t(),
+                  nullptr);
+  }
+
+  mpq_QSnew_col(
+      d_qsx, mpq_class{-1}.get_mpq_t(), mpq_zeroLpNum, mpq_oneLpNum, nullptr);
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
                 "mpq_class layout assumption broken");
@@ -1096,6 +1264,7 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
     default: Unreachable();
   }
 }
+
 external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
@@ -1133,6 +1302,62 @@ external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
   for (const ArithVar v : sol.newNonBasis)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
+  }
+
+  return sol;
+}
+
+external::Solution ExactQsoptexStrict::extractSolution(bool mip)
+{
+  Assert(d_solvedRelaxation);
+  Assert(!mip || d_solvedMIP);
+  external::Solution sol;
+
+  // TODO: reimplement this for mip
+  // glp_prob* prob = mip ? d_mipProb : d_realProb;
+  const bool isStrictBasic = d_basis.cstat[numCols() - 1] == QS_COL_BSTAT_BASIC;
+
+  if (d_status == QS_LP_OPTIMAL || d_status == QS_LP_DELTA_OPTIMAL
+      || d_status == QS_LP_FEASIBLE || d_status == QS_LP_DELTA_FEASIBLE
+      || d_status == QS_LP_UNBOUNDED || d_status == QS_LP_INFEASIBLE)
+  {
+    for (int colIdx = 0; colIdx < numCols() - 1; colIdx++)
+    {
+      extractVarValue<VariableType::COL>(colIdx, sol);
+    }
+
+    for (int rowIdx = 0; rowIdx < numRows(); rowIdx++)
+    {
+      const ArithVar v = d_rowToArithVar[rowIdx];
+      // We already encountered the nonbasic version of this row, we can skip it
+      if (sol.newNonBasis.isMember(v)) continue;
+      extractVarValue<VariableType::ROW>(rowIdx, sol);
+    }
+  }
+  else
+  {
+    // Infeasible solution.
+    Unimplemented();
+  }
+
+  // Since we have to split range rows, we have to remove those that we
+  // erroneously marked as basic and then discovered to be nonbasic
+  for (const ArithVar v : sol.newNonBasis)
+  {
+    if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
+  }
+  // If the strict variable is basic, we need to add some other non-basic
+  // variable to the basis to maintain the same number of basic variables
+  if (isStrictBasic)
+  {
+    for (const ArithVar v : sol.newNonBasis)
+    {
+      if (!sol.newBasis.isMember(v))
+      {
+        sol.newBasis.add(v);
+        break;
+      }
+    }
   }
 
   return sol;
@@ -1217,7 +1442,7 @@ external::ExternalSimplex* ExactSimplex::mkExactQsoptexSolver(
     CVC5_UNUSED const bool useStrict)
 {
 #ifdef CVC5_USE_QSOPTEX
-  // if (useStrict) return new ExactQsoptexStrict(vars, l, s);
+  if (useStrict) return new ExactQsoptexStrict(vars, l, s);
   return new ExactQsoptexEpsilon(vars, l, s);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";

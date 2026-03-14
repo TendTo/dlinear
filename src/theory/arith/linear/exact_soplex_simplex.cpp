@@ -381,9 +381,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
                                      external::SimplexStatistics& s)
     : ExactSoplex(var, l, s)
 {
-  // std::ofstream out(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/report.txt");
-
   // The number of cols must accommodate for the non-aux variables as well
   // as the additional strict variable t Todo: better estimation of the
   // number of rows
@@ -417,8 +414,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       ArithVar av = d_vars.asArithVar(n);
       int colIndex = static_cast<int>(d_colIndices[av]);
       vec.add(colIndex, constant.getValue().getValue().get_mpq_t());
-      // out << "vec.add(" << colIndex << ", " << constant.getValue().getValue()
-      //     << ");\n";
     }
 
     // If we are dealing with a row with a strict bound (< or >), then we
@@ -433,29 +428,17 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       if (d_vars.hasLowerBound(v))
       {
         // If strict, add t, and in any case add the split row
-        if (hasStrictLb(v))
-        {
-          vec.add(strictVarIdx, -1);
-          // out << "vec.add(" << strictVarIdx << ", 1);\n";
-        }
+        if (hasStrictLb(v)) vec.add(strictVarIdx, -1);
         rowToArithVarStrict.emplace_back(v);
         rows.add({varToLb(v), vec, soplex::infinity});
-        // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n";
       }
       if (d_vars.hasUpperBound(v))
       {
         // Ensure that the strict variable is present only once and with the
         // correct coefficient in the row vector
         if (const int idx = vec.pos(strictVarIdx); idx > -1) vec.remove(idx);
-        // out << "const int idx = vec.pos(" << strictVarIdx
-        //     << "); if ( idx > -1) vec.remove(idx);\n";
-
         // If strict, add -t, and in any case add the split row
-        if (hasStrictUB(v))
-        {
-          vec.add(strictVarIdx, 1);
-          // out << "vec.add(" << strictVarIdx << ", -1);\n";
-        }
+        if (hasStrictUB(v)) vec.add(strictVarIdx, 1);
         rowToArithVarStrict.emplace_back(v);
         rows.add({-soplex::infinity, vec, varToUb(v)});
         // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n";
@@ -1097,6 +1080,7 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
 #endif
   return sol;
 }
+
 
 external::Solution ExactSoplexStrict::extractSolution(bool mip)
 {
