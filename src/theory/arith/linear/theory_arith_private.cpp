@@ -3482,7 +3482,8 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
     // If the solver type is set to auto, look for any of the enabled solvers
     if (solverType == options::ExternalLPSolver::AUTO)
     {
-      if (ExactSimplex::enabled()) solverType =  options::ExternalLPSolver::SOPLEX;
+      if (ExactSimplex::soplexEnabled()) solverType =  options::ExternalLPSolver::SOPLEX;
+      else if (ExactSimplex::qsoptexEnabled()) solverType =  options::ExternalLPSolver::QSOPTEX;
       else if (ApproximateSimplex::enabled()) solverType =  options::ExternalLPSolver::GLPK;
     }
     {
@@ -3491,6 +3492,10 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
       {
         case options::ExternalLPSolver::SOPLEX:
           externalSolver = ExactSimplex::mkExactSoplexSolver(
+              d_partialModel, tl, getSimplexStats(), options().arith.lpStrictVar);
+          break;
+        case options::ExternalLPSolver::QSOPTEX:
+          externalSolver = ExactSimplex::mkExactQsoptexSolver(
               d_partialModel, tl, getSimplexStats(), options().arith.lpStrictVar);
           break;
         case options::ExternalLPSolver::GLPK:

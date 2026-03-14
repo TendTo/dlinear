@@ -45,7 +45,9 @@ class ExactSimplex : public external::ExternalSimplex
   using ExternalSimplex::ExternalSimplex;
 
   /** Is an exact solver (SoPlex or Qsopt_ex) enabled? */
-  static bool enabled();
+  static bool soplexEnabled();
+  static bool qsoptexEnabled();
+  static bool enabled() { return soplexEnabled() || qsoptexEnabled(); }
 
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.

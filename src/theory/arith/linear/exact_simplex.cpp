@@ -21,9 +21,18 @@ namespace cvc5::internal {
 namespace theory {
 namespace arith::linear {
 
-bool ExactSimplex::enabled()
+bool ExactSimplex::soplexEnabled()
 {
 #ifdef CVC5_USE_SOPLEX
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool ExactSimplex::qsoptexEnabled()
+{
+#ifdef CVC5_USE_QSOPTEX
   return true;
 #else
   return false;
