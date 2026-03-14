@@ -577,7 +577,7 @@ endif()
 
 if(USE_QSOPTEX)
   find_package(Qsoptex REQUIRED)
-#  add_definitions(-DCVC5_USE_QSOPTEX)
+  add_definitions(-DCVC5_USE_QSOPTEX)
 endif()
 
 if(USE_KISSAT)

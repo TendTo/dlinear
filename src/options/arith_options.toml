@@ -625,6 +625,9 @@ help = "Use GLPK as an external LP solver."
 [[option.mode.SOPLEX]]
 name = "soplex"
 help  = "Use SoPlex as an external LP solver."
+[[option.mode.QSOPTEX]]
+name = "qsoptex"
+help  = "Use QSopt_ex as an external LP solver."
 
 [[option]]
 name       = "lpStrictVar"

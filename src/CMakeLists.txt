@@ -445,6 +445,7 @@ libcvc5_add_sources(
   theory/arith/linear/dual_simplex.h
   theory/arith/linear/error_set.cpp
   theory/arith/linear/error_set.h
+  theory/arith/linear/exact_qsoptex_simplex.cpp
   theory/arith/linear/exact_simplex.cpp
   theory/arith/linear/exact_simplex.h
   theory/arith/linear/exact_solution_simplex.cpp
@@ -1584,9 +1585,13 @@ if(USE_SOPLEX)
     target_link_libraries(cvc5 PRIVATE $<BUILD_INTERFACE:libsoplex> $<INSTALL_INTERFACE:libsoplex>)
 endif()
 if(USE_QSOPTEX)
+    find_package(ZLIB REQUIRED)
+    find_package(BZip2 REQUIRED)
     add_dependencies(cvc5-obj Qsoptex::qsoptex)
     target_include_directories(cvc5-obj SYSTEM PRIVATE ${QSOPTEX_INCLUDE_DIR})
     target_link_libraries(cvc5 PRIVATE $<BUILD_INTERFACE:Qsoptex::qsoptex> $<INSTALL_INTERFACE:Qsoptex::qsoptex>)
+    target_link_libraries(cvc5 PRIVATE ZLIB::ZLIB)
+    target_link_libraries(cvc5 PRIVATE BZip2::BZip2)
 endif()
 if(USE_POLY)
   add_dependencies(cvc5-obj Polyxx)
