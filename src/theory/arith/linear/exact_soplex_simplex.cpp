@@ -1007,20 +1007,6 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   Assert(!mip || d_solvedMIP);
   external::Solution sol;
 
-#if 0  // For debug
-  static int id = 0;
-
-  d_spx.writeFile(("/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file"
-                   + std::to_string(id) + ".lp")
-                      .c_str());
-  d_spx.writeFile(("/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file"
-                   + std::to_string(id) + ".mps")
-                      .c_str());
-  id++;
-
-  // std::cout << "Basis status: " << d_spx.basisStatus() << std::endl;
-#endif
-
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
@@ -1447,10 +1433,10 @@ external::LinResult ExactSoplex::solveRelaxation()
     return external::LinResult::LinExhausted;
   }
 
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
+#ifndef NDEBUG
+  d_spx.writeFileRational(
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/spxfile.lp");
+#endif
 
   d_stats.d_refinements << d_spx.numRefinements();
   std::size_t precision =

@@ -298,7 +298,13 @@ void MpqArray::Resize(size_t nElements)
   }
 }
 
-void QSXStart() { QSexactStart(); }
+void QSXStart()
+{
+  static bool started = false;
+  if (started) return;
+  started = true;
+  QSexactStart();
+}
 
 void QSXFinish() { QSexactClear(); }
 
@@ -406,6 +412,7 @@ class ExactQsoptex : public ExactSimplex
 
   SolverStatus d_status;
   std::vector<mpq_class> d_rhs;
+  std::vector<char> d_sense;
   qsopt_ex::MpqArray d_x;
   qsopt_ex::MpqArray d_y;
   QSbasis d_basis;
@@ -503,7 +510,7 @@ ExactQsoptex::ExactQsoptex(const ArithVariables& var,
 
   if (TraceIsOn("approx-debug"))
   {
-    mpq_QSset_param(d_qsx, QS_PARAM_SIMPLEX_DISPLAY, 3);
+    mpq_QSset_param(d_qsx, QS_PARAM_SIMPLEX_DISPLAY, 2);
   }
 
   d_rowToArithVar.reserve(d_vars.getNumberOfVariables() / 2);
@@ -544,14 +551,13 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
   std::vector<int> beginRowIdx;
   std::vector<int> colIdxs;
   std::vector<mpq_class> values;
-  std::vector<char> sense;
 
   d_rhs.reserve(d_rowToArithVar.size() * 2);
   numNonZeroPerRow.reserve(d_rowToArithVar.size() * 2);
   beginRowIdx.reserve(d_rowToArithVar.size() * 2);
   colIdxs.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
   values.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
-  sense.reserve(d_rowToArithVar.size() * 2);
+  d_sense.reserve(d_rowToArithVar.size() * 2);
 
   std::vector<ArithVar> rowToArithVarSplit;
   rowToArithVarSplit.reserve(d_rowToArithVar.size() * 2);
@@ -589,7 +595,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     if (!d_vars.hasEitherBound(v))
     {
       d_rhs.emplace_back(mpq_NINFTY);
-      sense.emplace_back('G');
+      d_sense.emplace_back('G');
       rowToArithVarSplit.emplace_back(v);
       continue;
     }
@@ -614,7 +620,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
       mpq_class lb =
           hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
       d_rhs.emplace_back(lb);
-      sense.emplace_back('G');
+      d_sense.emplace_back('G');
       rowToArithVarSplit.emplace_back(v);
     }
     if (d_vars.hasUpperBound(v))
@@ -622,7 +628,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
       mpq_class ub =
           hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
       d_rhs.emplace_back(ub);
-      sense.emplace_back('L');
+      d_sense.emplace_back('L');
       rowToArithVarSplit.emplace_back(v);
     }
   }
@@ -648,8 +654,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
     mpq_class lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
     mpq_class ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    mpq_QSnew_col(
-        d_qsx, mpq_zeroLpNum, lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
+    mpq_QSnew_col(d_qsx, mpq_oneLpNum, lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
   }
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
@@ -661,7 +666,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
                  colIdxs.data(),
                  reinterpret_cast<const mpq_t*>(values.data()),
                  reinterpret_cast<const mpq_t*>(d_rhs.data()),
-                 sense.data(),
+                 d_sense.data(),
                  nullptr);
 
   d_rowToArithVar = std::move(rowToArithVarSplit);
@@ -1004,7 +1009,9 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
     case QS_COL_BSTAT_FREE:  // Shared with basic
       if (VarType == VariableType::ROW)
       {
-        rhs = d_rhs[idx] + toMpqClass(d_y[idx]);
+        rhs = d_rhs[idx]
+              + (d_sense[idx] == 'G' ? toMpqClass(d_y[idx])
+                                     : -toMpqClass(d_y[idx]));
         value = &toMpq(rhs);
       }
       else if (VarType == VariableType::COL)
@@ -1038,11 +1045,13 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
     case QS_COL_BSTAT_LOWER:
       Trace("approx-debug") << "non-basic lb" << std::endl;
       // Free rows are set to lower bound, handle them accordingly
-      if (!d_vars.hasLowerBound(v))
+      if (!d_vars.hasEitherBound(v))
       {
         if (VarType == VariableType::ROW)
         {
-          rhs = d_rhs[idx] + toMpqClass(d_y[idx]);
+          rhs = d_rhs[idx]
+                + (d_sense[idx] == 'G' ? toMpqClass(d_y[idx])
+                                       : -toMpqClass(d_y[idx]));
           value = &toMpq(rhs);
         }
         else if (VarType == VariableType::COL)
@@ -1052,9 +1061,31 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
         Assert(value != nullptr);
         newValues.set(v, DeltaRational(toMpqClass(*value)));
       }
+      else if (VarType == VariableType::ROW)
+      {
+        if (d_sense[idx] == 'G')
+        {
+          Assert(d_vars.hasLowerBound(v));
+          newValues.set(v, d_vars.getLowerBound(v));
+        }
+        else if (d_sense[idx] == 'L')
+        {
+          Assert(d_vars.hasUpperBound(v));
+          newValues.set(v, d_vars.getUpperBound(v));
+        }
+        else
+        {
+          Unreachable();
+        }
+      }
+      else if (VarType == VariableType::COL)
+      {
+        Assert(d_vars.hasLowerBound(v));
+        newValues.set(v, d_vars.getLowerBound(v));
+      }
       else
       {
-        newValues.set(v, d_vars.getLowerBound(v));
+        Unreachable();
       }
       break;
     case QS_COL_BSTAT_UPPER:
@@ -1070,11 +1101,6 @@ external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
   Assert(d_solvedRelaxation);
   Assert(!mip || d_solvedMIP);
   external::Solution sol;
-
-  mpq_QSwrite_prob(
-      d_qsx,
-      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp",
-      "LP");
 
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
@@ -1109,7 +1135,6 @@ external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
   }
 
-  printSolution(sol);
   return sol;
 }
 
@@ -1117,9 +1142,16 @@ external::LinResult ExactQsoptex::solveRelaxation()
 {
   Assert(!d_solvedRelaxation);
 
+#ifndef NDEBUG
+  mpq_QSwrite_prob(
+      d_qsx,
+      "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/qsfile.lp",
+      "LP");
+#endif
+
   // Should have room for the (rowcount) "logical" variables, which come after
   // the (colcount) "structural" variables.
-  d_x.Resize(static_cast<size_t>(numCols() + numRows()));
+  d_x.Resize(static_cast<size_t>(numCols()));
   d_y.Resize(static_cast<size_t>(numRows()));
   unsigned int precision = 0;
   mpq_class delta = 0;
@@ -1136,11 +1168,6 @@ external::LinResult ExactQsoptex::solveRelaxation()
   Assert(res == 0);
 
   d_stats.d_precision << precision;
-
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.lp");
-  // d_spx.writeFileRational(
-  //     "/home/campus.ncl.ac.uk/c3054737/Programming/phd/cvc5/file.mps");
 
   switch (d_status)
   {

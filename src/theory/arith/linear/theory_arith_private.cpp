@@ -3482,28 +3482,34 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
     // If the solver type is set to auto, look for any of the enabled solvers
     if (solverType == options::ExternalLPSolver::AUTO)
     {
-      if (ExactSimplex::soplexEnabled()) solverType =  options::ExternalLPSolver::SOPLEX;
-      else if (ExactSimplex::qsoptexEnabled()) solverType =  options::ExternalLPSolver::QSOPTEX;
-      else if (ApproximateSimplex::enabled()) solverType =  options::ExternalLPSolver::GLPK;
+      if (ExactSimplex::soplexEnabled())
+        solverType = options::ExternalLPSolver::SOPLEX;
+      else if (ExactSimplex::qsoptexEnabled())
+        solverType = options::ExternalLPSolver::QSOPTEX;
+      else if (ApproximateSimplex::enabled())
+        solverType = options::ExternalLPSolver::GLPK;
     }
     {
       TimerStat::CodeTimer codeTimer1(d_statistics.d_lpSetupTimer);
       switch (solverType)
       {
         case options::ExternalLPSolver::SOPLEX:
-          externalSolver = ExactSimplex::mkExactSoplexSolver(
-              d_partialModel, tl, getSimplexStats(), options().arith.lpStrictVar);
+          externalSolver = ExactSimplex::mkExactSoplexSolver(d_partialModel,
+                                                tl,
+                                                getSimplexStats(),
+                                                options().arith.lpStrictVar);
           break;
         case options::ExternalLPSolver::QSOPTEX:
-          externalSolver = ExactSimplex::mkExactQsoptexSolver(
-              d_partialModel, tl, getSimplexStats(), options().arith.lpStrictVar);
+          externalSolver = ExactSimplex::mkExactQsoptexSolver(d_partialModel,
+                                                 tl,
+                                                 getSimplexStats(),
+                                                 options().arith.lpStrictVar);
           break;
         case options::ExternalLPSolver::GLPK:
           externalSolver = ApproximateSimplex::mkApproximateSimplexSolver(
               d_partialModel, tl, getSimplexStats());
           break;
-        default:
-          externalSolver = nullptr;
+        default: externalSolver = nullptr;
       }
       if (externalSolver == nullptr)
       {
@@ -3521,9 +3527,14 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
       {
         externalSolver->setOptCoeffs(d_guessedCoeffs);
       }
-  }
+    }
 
     ++d_statistics.d_relaxCalls;
+
+#ifndef NDEBUG
+    static int counter = 0;
+    std::cout << "Iteration n: " << counter++ << std::endl;
+#endif
 
     external::Solution externalSolution;
     LinResult externalResult = LinResult::LinUnknown;
