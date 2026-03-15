@@ -350,8 +350,8 @@ class ExactQsoptex : public ExactSimplex
 
   int numCols() const { return mpq_QSget_colcount(d_qsx); }
   int numRows() const { return mpq_QSget_rowcount(d_qsx); }
-  mpq_class varToLb(ArithVar v) const;
-  mpq_class varToUb(ArithVar v) const;
+  const mpq_class& varToLb(ArithVar v) const;
+  const mpq_class& varToUb(ArithVar v) const;
   bool hasStrictBound(ArithVar v) const;
   bool hasStrictLb(ArithVar v) const;
   bool hasStrictUB(ArithVar v) const;
@@ -398,8 +398,6 @@ class ExactQsoptex : public ExactSimplex
   const ArithVariables& d_vars;
   TreeLog& d_log;
 
-  const static mpq_class s_zero_mpq;
-
   // glp_prob* d_inputProb; /* a copy of the input prob */
   // glp_prob* d_realProb;  /* a copy of the real relaxation output */
   // glp_prob* d_mipProb;   /* a copy of the integer prob */
@@ -417,6 +415,9 @@ class ExactQsoptex : public ExactSimplex
   qsopt_ex::MpqArray d_y;
   QSbasis d_basis;
 
+  static const mpq_class s_inf_mpq;
+  static const mpq_class s_ninf_mpq;
+
  public:
   enum class VariableType
   {
@@ -433,6 +434,9 @@ class ExactQsoptex : public ExactSimplex
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
+
+const mpq_class ExactQsoptex::s_inf_mpq = mpq_class(mpq_INFTY);
+const mpq_class ExactQsoptex::s_ninf_mpq = mpq_class(mpq_NINFTY);
 
 class ExactQsoptexEpsilon : public ExactQsoptex
 {
@@ -811,7 +815,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       values.emplace_back(1);
       values.emplace_back(1);
       d_sense.emplace_back('L');
-      d_rhs.emplace_back(varToLb(v));
+      d_rhs.emplace_back(varToUb(v));
       rowToArithVarSplit.emplace_back(v);
     }
 
@@ -846,28 +850,18 @@ ExactQsoptex::~ExactQsoptex()
   // qsopt_ex::QSXFinish();
 }
 
-mpq_class ExactQsoptex::varToLb(const ArithVar v) const
+const mpq_class& ExactQsoptex::varToLb(const ArithVar v) const
 {
-  if (d_vars.hasLowerBound(v))
-  {
-    return mpq_class{d_vars.getLowerBound(v)
-                         .getNoninfinitesimalPart()
-                         .getValue()
-                         .get_mpq_t()};
-  }
-  return mpq_class{mpq_NINFTY};
+  return d_vars.hasLowerBound(v)
+             ? d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
+             : s_ninf_mpq;
 }
 
-mpq_class ExactQsoptex::varToUb(const ArithVar v) const
+const mpq_class& ExactQsoptex::varToUb(const ArithVar v) const
 {
-  if (d_vars.hasUpperBound(v))
-  {
-    return mpq_class{d_vars.getUpperBound(v)
-                         .getNoninfinitesimalPart()
-                         .getValue()
-                         .get_mpq_t()};
-  }
-  return mpq_class{mpq_INFTY};
+  return d_vars.hasUpperBound(v)
+             ? d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
+             : s_inf_mpq;
 }
 
 bool ExactQsoptex::hasStrictBound(const ArithVar v) const
