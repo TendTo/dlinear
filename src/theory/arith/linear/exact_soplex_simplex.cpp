@@ -268,6 +268,8 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
                                        external::SimplexStatistics& s)
     : ExactSoplex(vars, l, s)
 {
+  d_stats.d_strict.set(0);
+
   // The number of cols must accommodate for the non-aux variables as well as
   // the additional strict variable t
   soplex::LPRowSetRational rows(static_cast<int>(d_rowToArithVar.size()));
@@ -348,6 +350,8 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
                                      external::SimplexStatistics& s)
     : ExactSoplex(var, l, s)
 {
+  d_stats.d_strict.set(1);
+
   // The number of cols must accommodate for the non-aux variables as well
   // as the additional strict variable t Todo: better estimation of the
   // number of rows

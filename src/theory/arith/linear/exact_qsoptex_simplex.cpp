@@ -24,6 +24,7 @@
 
 #include "base/cvc5config.h"
 #include "base/output.h"
+#include "options/arith_options.h"
 #include "proof/eager_proof_generator.h"
 #include "theory/arith/linear/constraint.h"
 #include "theory/arith/linear/cut_log.h"
@@ -504,6 +505,10 @@ ExactQsoptex::ExactQsoptex(const ArithVariables& var,
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
+  d_stats.d_externalSimplexType.set(
+      static_cast<std::underlying_type_t<options::ExternalLPSolver>>(
+          options::ExternalLPSolver::QSOPTEX));
+
   qsopt_ex::QSXStart();
   d_qsx = mpq_QScreate_prob(nullptr, QS_MIN);
 
@@ -546,6 +551,8 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
                                          external::SimplexStatistics& s)
     : ExactQsoptex(vars, l, s)
 {
+  d_stats.d_strict.set(0);
+
   // Assign each variable to a row and column variable as it appears in the
   // input
   std::vector<int> numNonZeroPerRow;
@@ -671,6 +678,8 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
                                        external::SimplexStatistics& s)
     : ExactQsoptex(vars, l, s)
 {
+  d_stats.d_strict.set(1);
+
   // Assign each variable to a row and column variable as it appears in the
   // input
   std::vector<int> numNonZeroPerRow;
