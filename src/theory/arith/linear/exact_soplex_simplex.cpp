@@ -216,14 +216,12 @@ class ExactSoplexStrict : public ExactSoplex
                     TreeLog& l,
                     external::SimplexStatistics& s);
 
-  void setOptCoeffs(const ArithRatPairVec& ref) override;
+  void setOptCoeffs(const ArithRatPairVec& ref) override {}
 
  private:
-  external::Solution extractSolution(bool mip) override;
+  std::vector<ArithVar> d_strictVars;  ///< Note that it may contain dup entries
 
-  void adjustValue(int rowIdx,
-                   soplex::Rational& value,
-                   const soplex::Rational& strictValue) const;
+  external::Solution extractSolution(bool mip) override;
 
   bool isStrictVarZero() override
   {
@@ -388,6 +386,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
 
   std::vector<ArithVar> rowToArithVarStrict;
   rowToArithVarStrict.reserve(d_rowToArithVar.size() * 2);
+  d_strictVars.reserve(d_rowToArithVar.size() / 2);
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
@@ -425,7 +424,11 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       if (d_vars.hasLowerBound(v))
       {
         // If strict, add t, and in any case add the split row
-        if (hasStrictLb(v)) vec.add(strictVarIdx, -1);
+        if (hasStrictLb(v))
+        {
+          vec.add(strictVarIdx, -1);
+          d_strictVars.emplace_back(v);
+        }
         rowToArithVarStrict.emplace_back(v);
         rows.add({varToLb(v), vec, soplex::infinity});
       }
@@ -435,7 +438,11 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
         // correct coefficient in the row vector
         if (const int idx = vec.pos(strictVarIdx); idx > -1) vec.remove(idx);
         // If strict, add -t, and in any case add the split row
-        if (hasStrictUB(v)) vec.add(strictVarIdx, 1);
+        if (hasStrictUB(v))
+        {
+          vec.add(strictVarIdx, 1);
+          d_strictVars.emplace_back(v);
+        }
         rowToArithVarStrict.emplace_back(v);
         rows.add({-soplex::infinity, vec, varToUb(v)});
         // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n";
@@ -475,6 +482,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       rows.add({varToLb(v), vec, soplex::infinity});
       // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n}\n";
       rowToArithVarStrict.emplace_back(v);
+      d_strictVars.emplace_back(v);
     }
     if (isUbStrict)
     {
@@ -487,6 +495,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       rows.add({-soplex::infinity, vec, varToUb(v)});
       // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n}\n";
       rowToArithVarStrict.emplace_back(v);
+      d_strictVars.emplace_back(v);
     }
 
     cols.add({0.0,
@@ -788,8 +797,6 @@ void ExactSoplexEpsilon::setOptCoeffs(const ArithRatPairVec& ref)
     d_spx.changeObjRational(colIndex, soplex::Rational{coeff.get_mpq_t()});
   }
 }
-
-void ExactSoplexStrict::setOptCoeffs(const ArithRatPairVec& ref) {}
 
 /*
  * rough strategy:
@@ -1105,13 +1112,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
           d_spx.basisColStatus(d_spx.numColsRational() - 1) == VarStatus::BASIC;
     }
 
-    if (isStrictBasic && d_primal[d_spx.numColsRational() - 1].is_zero())
-    {
-      InternalError() << "ERROR: the strict variable it's at its lower bound "
-                         "but it is basic"
-                      << std::endl;
-    }
-
     // Get the primal solution for the cols, except for the strict variable
     for (int colIdx = 0; colIdx < d_spx.numColsRational() - 1; colIdx++)
     {
@@ -1153,6 +1153,10 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
           d_spx.basisColStatus(d_spx.numColsRational() - 1) == VarStatus::BASIC;
       d_spx.getColActivityRational(d_spx.numColsRational() - 1, strictValue);
     }
+
+    // By this point, either the strict variable is basic and at 0,
+    // or it is non-basic and we don't care about its value
+    Assert(!isStrictBasic || strictValue.is_zero());
 
     if (isStrictBasic && strictValue.is_zero())
     {
@@ -1321,25 +1325,23 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   // variable to the basis to maintain the same number of basic variables
   if (isStrictBasic)
   {
-    for (const ArithVar v : nonBasicVars)
+    bool added = false;
+    for (const ArithVar v : d_strictVars)
     {
-      if (!sol.newBasis.isMember(v))
+      if (!sol.newBasis.isMember(v)
+          && (d_vars.cmpToLowerBound(v, sol.newValues.get(v)) == 0
+              || d_vars.cmpToUpperBound(v, sol.newValues.get(v)) == 0))
       {
+        added = true;
         sol.newBasis.add(v);
         break;
       }
     }
+    Assert(added);
   }
 
   // Make sure to remove all strict rows that we know are non-basic
   return sol;
-}
-
-void ExactSoplexStrict::adjustValue(const int rowIdx,
-                                    soplex::Rational& value,
-                                    const soplex::Rational& strictValue) const
-{
-  Unimplemented();
 }
 
 void ExactSoplex::printSolution(const external::Solution& sol) const

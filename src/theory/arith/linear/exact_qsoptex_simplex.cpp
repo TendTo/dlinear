@@ -467,9 +467,7 @@ class ExactQsoptexStrict : public ExactQsoptex
   external::Solution extractSolution(bool mip) override;
 
  private:
-  void adjustValue(int rowIdx,
-                   mpq_class& value,
-                   const mpq_class& strictValue) const;
+  std::vector<ArithVar> d_strictVars;
 
   bool isStrictVarZero() override
   {
@@ -689,6 +687,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
 
   std::vector<ArithVar> rowToArithVarSplit;
   rowToArithVarSplit.reserve(d_rowToArithVar.size() * 2);
+  d_strictVars.reserve(d_rowToArithVar.size() / 2);
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
@@ -737,6 +736,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
         numNonZeroPerRow.back()++;
         colIdxs.emplace_back(d_colToArithVar.size());
         values.emplace_back(-1);
+        d_strictVars.emplace_back(v);
       }
       d_rhs.emplace_back(varToLb(v));
       d_sense.emplace_back('G');
@@ -770,6 +770,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
         numNonZeroPerRow.back()++;
         colIdxs.emplace_back(d_colToArithVar.size());
         values.emplace_back(1);
+        d_strictVars.emplace_back(v);
       }
       d_rhs.emplace_back(varToUb(v));
       d_sense.emplace_back('L');
@@ -803,6 +804,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       d_sense.emplace_back('G');
       d_rhs.emplace_back(varToLb(v));
       rowToArithVarSplit.emplace_back(v);
+      d_strictVars.emplace_back(v);
     }
 
     if (isUbStrict)
@@ -816,6 +818,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       d_sense.emplace_back('L');
       d_rhs.emplace_back(varToUb(v));
       rowToArithVarSplit.emplace_back(v);
+      d_strictVars.emplace_back(v);
     }
 
     mpq_QSnew_col(d_qsx,
@@ -1335,12 +1338,9 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
     isStrictBasic = d_basis.cstat[numCols() - 1] == QS_COL_BSTAT_BASIC;
   }
 
-  if (isStrictBasic && toMpqClass(d_x[numCols() - 1]) == 0)
-  {
-    InternalError()
-        << "ERROR: the strict variable it's at its lower bound but it is basic"
-        << std::endl;
-  }
+  // By this point, either the strict variable is basic and at 0,
+  // or it is non-basic and we don't care about its value
+  Assert(!isStrictBasic || toMpqClass(d_x[numCols() - 1]) == 0);
 
   if (d_status == QS_LP_OPTIMAL || d_status == QS_LP_DELTA_OPTIMAL
       || d_status == QS_LP_FEASIBLE || d_status == QS_LP_DELTA_FEASIBLE
@@ -1375,14 +1375,19 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
   // variable to the basis to maintain the same number of basic variables
   if (isStrictBasic)
   {
-    for (const ArithVar v : sol.newNonBasis)
+    bool added = false;
+    for (const ArithVar v : d_strictVars)
     {
-      if (!sol.newBasis.isMember(v))
+      if (!sol.newBasis.isMember(v)
+          && (d_vars.cmpToLowerBound(v, sol.newValues.get(v)) == 0
+              || d_vars.cmpToUpperBound(v, sol.newValues.get(v)) == 0))
       {
+        added = true;
         sol.newBasis.add(v);
         break;
       }
     }
+    Assert(added);
   }
 
   return sol;
