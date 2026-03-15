@@ -491,6 +491,14 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
 
   d_rowToArithVar = std::move(rowToArithVarStrict);
 
+  if (d_strictVars.empty())
+  {
+    for (int colIdx = 0; colIdx < d_spx.numColsRational() - 1; colIdx++)
+    {
+      d_spx.changeObjRational(colIdx, 1);
+    }
+  }
+
   // out.close();
 }
 
@@ -821,6 +829,7 @@ void ExactSoplex::extractVarValue(const int idx,
                                   const soplex::VectorRational* const values)
 {
   DenseSet& newBasis = sol.newBasis;
+  DenseSet& newNonBasis = sol.newNonBasis;
   DenseMap<DeltaRational>& newValues = sol.newValues;
   ArithVar v = ARITHVAR_SENTINEL;
   VarStatus varStatus = VarStatus::UNDEFINED;
@@ -837,14 +846,17 @@ void ExactSoplex::extractVarValue(const int idx,
   }
   Assert(v != ARITHVAR_SENTINEL);
 
+  if (varStatus == VarStatus::BASIC && !newBasis.isMember(v))
+    newBasis.add(v);
+  else if (varStatus != VarStatus::BASIC && !newNonBasis.isMember(v))
+    newNonBasis.add(v);
+
   mpq_class value;
   switch (varStatus)
   {
     // If we are dealing with a basic variable, we necessarily need to get its
     // value from the solved problem.
     case VarStatus::BASIC:
-      if (!newBasis.isMember(v)) newBasis.add(v);
-      CVC5_FALLTHROUGH;
     case VarStatus::UNDEFINED:
       if (values != nullptr)
       {
@@ -1061,7 +1073,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   Assert(!mip || d_solvedMIP);
 
   external::Solution sol;
-  DenseSet nonBasicVars;
 
   // No need to forcefully convert a basic variable at bound to non-basic
   bool isStrictBasic =
@@ -1074,6 +1085,11 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   {
     Assert(d_spx.hasSol());
     Assert(d_primal.dim() == d_spx.numColsRational());
+
+#ifndef NDEBUG
+    std::cout << "Strict var value: " << d_primal[d_spx.numColsRational() - 1]
+              << std::endl;
+#endif
 
     // Feasible solution
     if (isStrictBasic && !d_primal[d_spx.numColsRational() - 1].is_zero())
@@ -1091,10 +1107,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     // Get the primal solution for the cols, except for the strict variable
     for (int colIdx = 0; colIdx < d_spx.numColsRational() - 1; colIdx++)
     {
-      const ArithVar v = d_colToArithVar.at(colIdx);
-      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &d_primal);
     }
 
@@ -1104,11 +1116,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_rowToArithVar.at(rowIdx);
       // We already know this row's value from some other side,
       // no need to recompute it
-      if (nonBasicVars.isMember(v) > 0) continue;
-
-      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
+      if (sol.newNonBasis.isMember(v)) continue;
       ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol);
     }
   }
@@ -1116,6 +1124,10 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   {
     soplex::Rational strictValue;
     d_spx.getColActivityRational(d_spx.numColsRational() - 1, strictValue);
+
+#ifndef NDEBUG
+    std::cout << "Strict var value: " << strictValue << std::endl;
+#endif
 
     if (isStrictBasic && !strictValue.is_zero())
     {
@@ -1134,13 +1146,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     // or it is non-basic and we don't care about its value
     Assert(!isStrictBasic || strictValue.is_zero());
 
-    if (isStrictBasic && strictValue.is_zero())
-    {
-      InternalError() << "ERROR: the strict variable it's at its lower bound "
-                         "but it is basic"
-                      << std::endl;
-    }
-
     // Infeasible solution
     Assert(d_spx.hasDualFarkas());
     Assert(d_dual.dim() == d_spx.numRowsRational());
@@ -1148,10 +1153,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     // Get the primal solution for the rows, except for the strict variable
     for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
     {
-      const ArithVar v = d_rowToArithVar.at(rowIdx);
-      const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
       ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &d_dual);
     }
 
@@ -1161,11 +1162,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const ArithVar v = d_colToArithVar.at(colIdx);
       // We already know this col's value from some other side,
       // no need to recompute it
-      if (nonBasicVars.isMember(v) > 0) continue;
-
-      const VarStatus varStatus = d_spx.basisColStatus(colIdx);
-      // We now know that this variable is non-basic
-      if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
+      if (sol.newNonBasis.isMember(v)) continue;
       ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol);
     }
 
@@ -1293,7 +1290,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
 
   // Forcefully remove all non-basic variables that we identified from the
   // basis
-  for (const ArithVar v : nonBasicVars)
+  for (const ArithVar v : sol.newNonBasis)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
   }

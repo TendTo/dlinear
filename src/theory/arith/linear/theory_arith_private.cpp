@@ -3533,7 +3533,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
 
 #ifndef NDEBUG
     static int counter = 0;
-    std::cout << "Iteration n: " << counter++ << std::endl;
+    std::cout << "Iteration n: " << ++counter << std::endl;
 #endif
 
     external::Solution externalSolution;
