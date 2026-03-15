@@ -1308,7 +1308,39 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
 
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
-  const bool isStrictBasic = d_basis.cstat[numCols() - 1] == QS_COL_BSTAT_BASIC;
+  bool isStrictBasic = d_basis.cstat[numCols() - 1] == QS_COL_BSTAT_BASIC;
+
+#ifndef NDEBUG
+  std::cout << "Strict var value: " << d_x[numCols() - 1] << std::endl;
+#endif
+
+  if (isStrictBasic && toMpqClass(d_x[numCols() - 1]) > 0)
+  {
+    int res = mpq_QSchange_bound(d_qsx, numCols() - 1, 'U', mpq_zeroLpNum);
+    Assert(res == 0);
+    mpq_class delta = 0;
+    res = QSdelta_solver(d_qsx,
+                         delta.get_mpq_t(),
+                         static_cast<mpq_t*>(d_x),
+                         static_cast<mpq_t*>(d_y),
+                         &d_basis,
+                         nullptr,
+                         PRIMAL_SIMPLEX,
+                         &d_status,
+                         nullptr,
+                         nullptr);
+    Assert(res == 0);
+    Assert(d_status == QS_LP_OPTIMAL || d_status == QS_LP_DELTA_OPTIMAL
+           || d_status == QS_LP_FEASIBLE || d_status == QS_LP_DELTA_FEASIBLE);
+    isStrictBasic = d_basis.cstat[numCols() - 1] == QS_COL_BSTAT_BASIC;
+  }
+
+  if (isStrictBasic && toMpqClass(d_x[numCols() - 1]) == 0)
+  {
+    InternalError()
+        << "ERROR: the strict variable it's at its lower bound but it is basic"
+        << std::endl;
+  }
 
   if (d_status == QS_LP_OPTIMAL || d_status == QS_LP_DELTA_OPTIMAL
       || d_status == QS_LP_FEASIBLE || d_status == QS_LP_DELTA_FEASIBLE
