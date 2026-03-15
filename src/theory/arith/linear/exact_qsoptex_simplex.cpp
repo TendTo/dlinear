@@ -595,7 +595,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
       colIdxs.emplace_back(colIdx);
       // TODO: maybe we can just borrow the reference?
-      values.emplace_back(constant.getValue().getValue().get_mpq_t());
+      values.emplace_back(constant.getValue().getValue());
     }
 
     // Case I: we are dealing with a free row. Just add it to capture its
@@ -627,7 +627,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     {
       mpq_class lb =
           hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-      d_rhs.emplace_back(lb);
+      d_rhs.emplace_back(std::move(lb));
       d_sense.emplace_back('G');
       rowToArithVarSplit.emplace_back(v);
     }
@@ -635,7 +635,7 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     {
       mpq_class ub =
           hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-      d_rhs.emplace_back(ub);
+      d_rhs.emplace_back(std::move(ub));
       d_sense.emplace_back('L');
       rowToArithVarSplit.emplace_back(v);
     }
@@ -722,8 +722,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       const int colIdx = static_cast<int>(d_colIndices[av]);
 
       colIdxs.emplace_back(colIdx);
-      // TODO: maybe we can just borrow the reference?
-      values.emplace_back(constant.getValue().getValue().get_mpq_t());
+      values.emplace_back(constant.getValue().getValue());
     }
 
     // Case I: we are dealing with a free row. Just add it to capture its
