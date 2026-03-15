@@ -222,6 +222,21 @@ class MpqArray
 void QSXStart();
 void QSXFinish();
 
+mpq_class inf_mpq{0, 0};
+mpq_class ninf_mpq{0, 0};
+
+void QSXStart()
+{
+  static bool started = false;
+  if (started) return;
+  started = true;
+  QSexactStart();
+  inf_mpq = mpq_class(mpq_INFTY);
+  ninf_mpq = mpq_class(mpq_NINFTY);
+}
+
+void QSXFinish() { QSexactClear(); }
+
 mpq_class* StringToMpqPtr(const std::string& str)
 {
   return CStringToMpqPtr(str.c_str());
@@ -297,16 +312,6 @@ void MpqArray::Resize(size_t nElements)
     AllocateMpqArray(nElements);
   }
 }
-
-void QSXStart()
-{
-  static bool started = false;
-  if (started) return;
-  started = true;
-  QSexactStart();
-}
-
-void QSXFinish() { QSexactClear(); }
 
 }  // namespace qsopt_ex
 
@@ -415,9 +420,6 @@ class ExactQsoptex : public ExactSimplex
   qsopt_ex::MpqArray d_y;
   QSbasis d_basis;
 
-  static const mpq_class s_inf_mpq;
-  static const mpq_class s_ninf_mpq;
-
  public:
   enum class VariableType
   {
@@ -434,9 +436,6 @@ class ExactQsoptex : public ExactSimplex
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
-
-const mpq_class ExactQsoptex::s_inf_mpq = mpq_class(mpq_INFTY);
-const mpq_class ExactQsoptex::s_ninf_mpq = mpq_class(mpq_NINFTY);
 
 class ExactQsoptexEpsilon : public ExactQsoptex
 {
@@ -854,14 +853,14 @@ const mpq_class& ExactQsoptex::varToLb(const ArithVar v) const
 {
   return d_vars.hasLowerBound(v)
              ? d_vars.getLowerBound(v).getNoninfinitesimalPart().getValue()
-             : s_ninf_mpq;
+             : qsopt_ex::ninf_mpq;
 }
 
 const mpq_class& ExactQsoptex::varToUb(const ArithVar v) const
 {
   return d_vars.hasUpperBound(v)
              ? d_vars.getUpperBound(v).getNoninfinitesimalPart().getValue()
-             : s_inf_mpq;
+             : qsopt_ex::inf_mpq;
 }
 
 bool ExactQsoptex::hasStrictBound(const ArithVar v) const
