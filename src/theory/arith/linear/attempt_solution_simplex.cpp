@@ -83,12 +83,6 @@ bool AttemptSolutionSDP::matchesNewValue(const DenseMap<DeltaRational>& nv, Arit
 Result::Status AttemptSolutionSDP::attempt(const external::Solution& sol)
 {
   TimerStat::CodeTimer timer{d_statistics.d_searchTime};
-
-  if (options().arith.externalLPSolver == options::ExternalLPSolver::SOPLEX
-    && sol.newNonBasis.size() > 0)
-  {
-    return attemptPivotFirst(sol);
-  }
   return attemptOptimistic(sol);
 }
 
