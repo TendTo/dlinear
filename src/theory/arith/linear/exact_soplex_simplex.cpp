@@ -148,16 +148,6 @@ class ExactSoplex : public ExactSimplex
     ROW,
     COL,
   };
-  enum class FeasibilityType
-  {
-    FEASIBLE,
-    INFEASIBLE,
-  };
-  enum class BoundViolationType
-  {
-    LOWER,
-    UPPER,
-  };
 
  protected:
   template <VariableType VarType>
@@ -170,24 +160,6 @@ class ExactSoplex : public ExactSimplex
   bool d_solvedRelaxation;
   bool d_solvedMIP;
 };
-
-ExactSoplex::BoundViolationType operator!(ExactSoplex::BoundViolationType v)
-{
-  return v == ExactSoplex::BoundViolationType::LOWER
-             ? ExactSoplex::BoundViolationType::UPPER
-             : ExactSoplex::BoundViolationType::LOWER;
-}
-
-std::ostream& operator<<(std::ostream& out,
-                         const ExactSoplex::BoundViolationType v)
-{
-  switch (v)
-  {
-    case ExactSoplex::BoundViolationType::LOWER: return out << "LOWER";
-    case ExactSoplex::BoundViolationType::UPPER: return out << "UPPPER";
-    default: return out << "UNKNOWN";
-  }
-}
 
 class ExactSoplexEpsilon : public ExactSoplex
 {
