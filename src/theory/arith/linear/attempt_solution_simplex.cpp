@@ -83,6 +83,9 @@ bool AttemptSolutionSDP::matchesNewValue(const DenseMap<DeltaRational>& nv, Arit
 Result::Status AttemptSolutionSDP::attempt(const external::Solution& sol)
 {
   TimerStat::CodeTimer timer{d_statistics.d_searchTime};
+#ifndef NDEBUG
+  // debugSol(d_variables, sol);
+#endif
   return attemptOptimistic(sol);
 }
 
@@ -186,156 +189,6 @@ Result::Status AttemptSolutionSDP::attemptOptimistic(
       return Result::UNSAT;
     }
   }
-  Assert(d_conflictVariables.empty());
-
-  if(d_errorSet.errorEmpty()){
-    return Result::SAT;
-  }else{
-    d_errorSet.reduceToSignals();
-    return Result::UNKNOWN;
-  }
-}
-
-Result::Status AttemptSolutionSDP::attemptPivotFirst(
-    const external::Solution& sol)
-{
-  const DenseSet& newBasis = sol.newBasis;
-  const DenseSet& newNonBasis = sol.newNonBasis;
-  const DenseMap<DeltaRational>& newValues = sol.newValues;
-
-  DenseMap<DeltaRational>::const_iterator nvi = newValues.begin(), nvi_end = newValues.end();
-  for(; nvi != nvi_end; ++nvi){
-    ArithVar currentlyNb = *nvi;
-    if(!d_tableau.isBasic(currentlyNb) && newNonBasis.isMember(currentlyNb) && !matchesNewValue(newValues, currentlyNb)){
-      const DeltaRational& newValue = newValues[currentlyNb];
-      Trace("arith::updateMany")
-        << "updateMany:" << currentlyNb << " "
-        << d_variables.getAssignment(currentlyNb) << " to "<< newValue << endl;
-      d_linEq.update(currentlyNb, newValue);
-      Assert(d_variables.assignmentIsConsistent(currentlyNb));
-      Assert(
-      !d_variables.hasEitherBound(currentlyNb) ||
-      (d_variables.atBoundCounts(currentlyNb).upperBoundCount() > 0
-        || d_variables.atBoundCounts(currentlyNb).lowerBoundCount() > 0));
-    }
-  }
-  d_errorSet.reduceToSignals();
-  d_errorSet.setSelectionRule(options::ErrorSelectionRule::VAR_ORDER);
-
-  if(processSignals()){
-    Trace("arith::findModel") << "attemptSolution() early conflict" << endl;
-    d_conflictVariables.purge();
-    return Result::UNSAT;
-  }else if(d_errorSet.errorEmpty()){
-    Trace("arith::findModel") << "attemptSolution() fixed itself" << endl;
-    return Result::SAT;
-  }
-
-  // The simple assignment was not enough, extended search is needed
-  ++d_statistics.d_extendedSearch;
-
-  DenseSet needsToBeAdded;
-  for(DenseSet::const_iterator i = newBasis.begin(), i_end = newBasis.end(); i != i_end; ++i){
-    ArithVar b = *i;
-    if(!d_tableau.isBasic(b)){
-      needsToBeAdded.add(b);
-    }
-  }
-  while(!needsToBeAdded.empty() && !d_errorSet.errorEmpty()){
-    ArithVar toRemove = ARITHVAR_SENTINEL;
-    ArithVar toAdd = ARITHVAR_SENTINEL;
-    DenseSet::const_iterator i = needsToBeAdded.begin(), i_end = needsToBeAdded.end();
-    for(; toAdd == ARITHVAR_SENTINEL && i != i_end; ++i){
-      ArithVar v = *i;
-
-      Tableau::ColIterator colIter = d_tableau.colIterator(v);
-      for(; !colIter.atEnd(); ++colIter){
-        const Tableau::Entry& entry = *colIter;
-        Assert(entry.getColVar() == v);
-        ArithVar b = d_tableau.rowIndexToBasic(entry.getRowIndex());
-        if(!newBasis.isMember(b)){
-          toAdd = v;
-
-          bool favorBOverToRemove =
-            (toRemove == ARITHVAR_SENTINEL) ||
-            (newValues.isKey(b) && !newValues.isKey(toRemove)) ||
-            (d_tableau.basicRowLength(toRemove) > d_tableau.basicRowLength(b));
-
-          if(favorBOverToRemove){
-            toRemove = b;
-          }
-        }
-      }
-    }
-    if (toAdd == ARITHVAR_SENTINEL)
-    {
-      Trace("arith::forceNewBasis") << "No other variable to add" << endl;
-      break;
-    }
-    Assert(toRemove != ARITHVAR_SENTINEL);
-    Assert(toAdd != ARITHVAR_SENTINEL);
-
-    Trace("arith::forceNewBasis") << toRemove << " " << toAdd << endl;
-
-    if (newValues.isKey(toRemove))
-    {
-      d_linEq.pivotAndUpdate(toRemove, toAdd, newValues[toRemove]);
-    } else
-    {
-      d_linEq.pivotAndUpdate(toRemove,
-                       toAdd,
-                       d_variables.hasLowerBound(toRemove)
-                           ? d_variables.getLowerBound(toRemove)
-                       : d_variables.hasUpperBound(toRemove)
-                           ? d_variables.getUpperBound(toRemove)
-                           : d_variables.getAssignment(toRemove));
-    }
-
-    Trace("arith::forceNewBasis") << needsToBeAdded.size() << "to go" << endl;
-    needsToBeAdded.remove(toAdd);
-
-    if(processSignals()){
-      d_errorSet.reduceToSignals();
-      d_conflictVariables.purge();
-
-      return Result::UNSAT;
-    }
-  }
-  Assert(d_conflictVariables.empty());
-
-  DenseSet needsToBeRemoved;
-  for(DenseSet::const_iterator i = newNonBasis.begin(), i_end = newNonBasis.end(); i != i_end; ++i){
-    ArithVar b = *i;
-    if(d_tableau.isBasic(b)){
-      needsToBeRemoved.add(b);
-    }
-  }
-  for (auto i = needsToBeRemoved.begin(), i_end = needsToBeRemoved.end(); i != i_end; ++i){
-    ArithVar toRemove = *i;
-    Assert(d_tableau.isBasic(toRemove));
-    for (auto it = d_tableau.basicRowIterator(toRemove); !it.atEnd(); ++it){
-      Tableau::Entry entry = *it;
-      const ArithVar toAdd = entry.getColVar();
-      if (needsToBeRemoved.isMember(toAdd)) continue;
-      Assert(toAdd != ARITHVAR_SENTINEL);
-      Assert(toRemove != ARITHVAR_SENTINEL);
-      Trace("arith::forceNewBasis") << toAdd << " " << toRemove << endl;
-
-      d_linEq.pivotAndUpdate(toRemove, toAdd, newValues[toRemove]);
-      Assert(d_variables.atBoundCounts(toRemove).upperBoundCount() > 0
-          || d_variables.atBoundCounts(toRemove).lowerBoundCount() > 0);
-
-      if(processSignals()){
-        d_errorSet.reduceToSignals();
-        d_conflictVariables.purge();
-
-        return Result::UNSAT;
-      }
-
-      break;
-    }
-  }
-
   Assert(d_conflictVariables.empty());
 
   if(d_errorSet.errorEmpty()){

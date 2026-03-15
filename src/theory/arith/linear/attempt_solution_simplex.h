@@ -81,7 +81,6 @@ public:
 
 private:
   Result::Status attemptOptimistic(const external::Solution& sol);
-  Result::Status attemptPivotFirst(const external::Solution& sol);
 
  bool matchesNewValue(const DenseMap<DeltaRational>& nv, ArithVar v) const;
 
