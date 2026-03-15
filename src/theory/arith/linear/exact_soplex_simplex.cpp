@@ -134,6 +134,8 @@ class ExactSoplex : public ExactSimplex
   const static soplex::Rational s_zero_rational;
 
   SoPlex d_spx;
+  soplex::VectorRational d_primal;
+  soplex::VectorRational d_dual;
 
   DenseMap<std::size_t> d_colIndices;
 
@@ -225,13 +227,8 @@ class ExactSoplexStrict : public ExactSoplex
 
   bool isStrictVarZero() override
   {
-    if (d_spx.hasPrimal())
-    {
-      soplex::VectorRational primal(d_spx.numColsRational());
-      d_spx.getPrimalRational(primal);
-      return primal[d_spx.numColsRational() - 1].is_zero();
-    }
-    return false;
+    return d_spx.hasSol() ? d_primal[d_spx.numColsRational() - 1].is_zero()
+                          : false;
   }
 };
 
@@ -997,15 +994,11 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
       || d_spx.status() == SolverStatus::UNBOUNDED)
   {
     Assert(d_spx.hasSol());
-    // Feasible solution
-    soplex::VectorRational primal(d_spx.numColsRational());
-    const bool getPrimalSuccess = d_spx.getPrimalRational(primal);
-    Assert(getPrimalSuccess);
-
+    Assert(d_primal.dim() == d_spx.numColsRational());
     // Get the primal solution for the cols
     for (int colIdx = 0; colIdx < d_spx.numColsRational(); colIdx++)
     {
-      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &primal);
+      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &d_primal);
     }
 
     // Get the row activity for the rows
@@ -1018,14 +1011,12 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   {
     // Infeasible solution
     Assert(d_spx.hasDualFarkas());
-    soplex::VectorRational dualRay(d_spx.numRowsRational());
-    const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
-    Assert(getDualRaySuccess);
+    Assert(d_dual.dim() == d_spx.numRowsRational());
 
     // Get the last dual solution for the rows
     for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
     {
-      extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
+      extractVarValue<VariableType::ROW>(rowIdx, sol, &d_dual);
     }
     // Get the col activity for each column
     for (int colIdx = 0; colIdx < d_spx.numColsRational(); colIdx++)
@@ -1081,7 +1072,6 @@ external::Solution ExactSoplexEpsilon::extractSolution(bool mip)
   return sol;
 }
 
-
 external::Solution ExactSoplexStrict::extractSolution(bool mip)
 {
   Assert(d_solvedRelaxation);
@@ -1100,24 +1090,26 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   if (d_spx.status() == SolverStatus::OPTIMAL)
   {
     Assert(d_spx.hasSol());
-    // Feasible solution
-    soplex::VectorRational primal(d_spx.numColsRational());
-    bool getPrimalSuccess = d_spx.getPrimalRational(primal);
-    Assert(getPrimalSuccess);
-    // std::cout << "Initial solution: " << primal << std::endl;
+    Assert(d_primal.dim() == d_spx.numColsRational());
 
-    const soplex::Rational& strictValue = primal[d_spx.numColsRational() - 1];
-    if (!strictValue.is_zero())
+    // Feasible solution
+    if (isStrictBasic && !d_primal[d_spx.numColsRational() - 1].is_zero())
     {
       d_spx.changeBoundsRational(
           d_spx.numColsRational() - 1, s_zero_rational, s_zero_rational);
       const SolverStatus res = d_spx.optimize();
       Assert(res == SolverStatus::OPTIMAL);
+      const bool getPrimalSuccess = d_spx.getPrimalRational(d_primal);
+      Assert(getPrimalSuccess);
       isStrictBasic =
           d_spx.basisColStatus(d_spx.numColsRational() - 1) == VarStatus::BASIC;
-      getPrimalSuccess = d_spx.getPrimalRational(primal);
-      Assert(getPrimalSuccess);
-      // std::cout << "Updated solution: " << primal << std::endl;
+    }
+
+    if (isStrictBasic && d_primal[d_spx.numColsRational() - 1].is_zero())
+    {
+      InternalError() << "ERROR: the strict variable it's at its lower bound "
+                         "but it is basic"
+                      << std::endl;
     }
 
     // Get the primal solution for the cols, except for the strict variable
@@ -1127,7 +1119,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const VarStatus varStatus = d_spx.basisColStatus(colIdx);
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
-      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &primal);
+      ExactSoplex::extractVarValue<VariableType::COL>(colIdx, sol, &d_primal);
     }
 
     // Get the row activity for the rows
@@ -1149,22 +1141,29 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
     soplex::Rational strictValue;
     d_spx.getColActivityRational(d_spx.numColsRational() - 1, strictValue);
 
-    if (!strictValue.is_zero())
+    if (isStrictBasic && !strictValue.is_zero())
     {
       d_spx.changeBoundsRational(
           d_spx.numColsRational() - 1, s_zero_rational, s_zero_rational);
       const SolverStatus res = d_spx.optimize();
       Assert(res == SolverStatus::INFEASIBLE);
+      const bool getDualSuccess = d_spx.getDualRational(d_dual);
+      Assert(getDualSuccess);
       isStrictBasic =
           d_spx.basisColStatus(d_spx.numColsRational() - 1) == VarStatus::BASIC;
-      // std::cout << "Updated solution: " << primal << std::endl;
+      d_spx.getColActivityRational(d_spx.numColsRational() - 1, strictValue);
+    }
+
+    if (isStrictBasic && strictValue.is_zero())
+    {
+      InternalError() << "ERROR: the strict variable it's at its lower bound "
+                         "but it is basic"
+                      << std::endl;
     }
 
     // Infeasible solution
     Assert(d_spx.hasDualFarkas());
-    soplex::VectorRational dualRay(d_spx.numRowsRational());
-    const bool getDualRaySuccess = d_spx.getDualFarkasRational(dualRay);
-    Assert(getDualRaySuccess);
+    Assert(d_dual.dim() == d_spx.numRowsRational());
 
     // Get the primal solution for the rows, except for the strict variable
     for (int rowIdx = 0; rowIdx < d_spx.numRowsRational(); rowIdx++)
@@ -1173,7 +1172,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
       const VarStatus varStatus = d_spx.basisRowStatus(rowIdx);
       // We now know that this variable is non-basic
       if (varStatus != VarStatus::BASIC) nonBasicVars.add(v);
-      ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &dualRay);
+      ExactSoplex::extractVarValue<VariableType::ROW>(rowIdx, sol, &d_dual);
     }
 
     // Get the col activity for the cols
@@ -1438,11 +1437,16 @@ external::LinResult ExactSoplex::solveRelaxation()
     case SpxStatus::UNBOUNDED:
       // std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
       Assert(d_spx.hasSol());
+      d_primal.reDim(d_spx.numColsRational());
+      d_spx.getPrimalRational(d_primal);
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
       return isStrictVarZero() ? external::LinResult::LinInfeasible
                                : external::LinResult::LinFeasible;
     case SpxStatus::INFEASIBLE:
+      Assert(d_spx.hasDualFarkas());
+      d_dual.reDim(d_spx.numRowsRational());
+      d_spx.getDualFarkasRational(d_dual);
       d_solvedRelaxation = true;
       return external::LinResult::LinInfeasible;
     case SpxStatus::ABORT_ITER:
