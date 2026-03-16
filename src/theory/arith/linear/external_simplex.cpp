@@ -53,8 +53,10 @@ SimplexStatistics::SimplexStatistics(StatisticsRegistry& sr)
       d_pivotLimit(sr.registerInt("theory::arith::z::approx::pivotLimit")),
       d_externalSimplexType(
           sr.registerInt("theory::arith::z::approx::externalSimplexType")),
-      d_strict(
-          sr.registerInt("theory::arith::z::approx::strictVar")),
+      d_strict(sr.registerInt("theory::arith::z::approx::strictVar")),
+      d_externalAdjustmentPivots(
+          sr.registerInt("theory::arith::z::approx::externalAdjustmentPivots")),
+      d_delta(sr.registerInt("theory::arith::z::approx::delta")),
       d_precision(sr.registerHistogram<std::size_t>(
           "theory::arith::z::approx::precision")),
       d_refinements(sr.registerHistogram<std::size_t>(

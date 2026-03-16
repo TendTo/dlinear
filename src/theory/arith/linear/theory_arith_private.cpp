@@ -3413,6 +3413,7 @@ bool TheoryArithPrivate::solveRelaxationOrPanic(Theory::Effort effortLevel)
   if (d_qflraStatus == Result::UNKNOWN)
   {
     d_qflraStatus = selectSimplex(true).findModel(false);
+    d_simplexStats->d_externalAdjustmentPivots += selectSimplex(true).getPivots();
   }
 
   if (Theory::fullEffort(effortLevel) && d_qflraStatus == Result::UNKNOWN)
