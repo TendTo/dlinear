@@ -362,6 +362,11 @@ class ExactQsoptex : public ExactSimplex
   bool hasStrictLb(ArithVar v) const;
   bool hasStrictUB(ArithVar v) const;
 
+  const mpq_class& getY(const int rowIdx) const
+  {
+    Assert(d_qsx && d_qsx->lp && d_qsx->lp->pIpiz);
+    return toMpqClass(d_qsx->lp->pIpiz[rowIdx]);
+  }
   virtual external::Solution extractSolution(bool mip) = 0;
   int guessDir(ArithVar v) const;
 
@@ -418,7 +423,6 @@ class ExactQsoptex : public ExactSimplex
   std::vector<mpq_class> d_rhs;
   std::vector<char> d_sense;
   qsopt_ex::MpqArray d_x;
-  qsopt_ex::MpqArray d_y;
   QSbasis d_basis;
 
  public:
@@ -500,7 +504,6 @@ ExactQsoptex::ExactQsoptex(const ArithVariables& var,
       d_log(l),
       d_status(-1),
       d_x(0),
-      d_y(0),
       d_basis{.nstruct = 0, .nrows = 0, .cstat = nullptr, .rstat = nullptr},
       d_solvedRelaxation(false),
       d_solvedMIP(false)
@@ -1336,7 +1339,7 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
     res = QSdelta_solver(d_qsx,
                          delta.get_mpq_t(),
                          static_cast<mpq_t*>(d_x),
-                         static_cast<mpq_t*>(d_y),
+                         nullptr,
                          &d_basis,
                          nullptr,
                          PRIMAL_SIMPLEX,
@@ -1418,13 +1421,12 @@ external::LinResult ExactQsoptex::solveRelaxation()
   // Should have room for the (rowcount) "logical" variables, which come after
   // the (colcount) "structural" variables.
   d_x.Resize(static_cast<size_t>(numCols()));
-  d_y.Resize(static_cast<size_t>(numRows()));
   unsigned int precision = 0;
   mpq_class delta = 0;
   const int res = QSdelta_solver(d_qsx,
                                  delta.get_mpq_t(),
                                  static_cast<mpq_t*>(d_x),
-                                 static_cast<mpq_t*>(d_y),
+                                 nullptr,
                                  &d_basis,
                                  &precision,
                                  PRIMAL_SIMPLEX,
