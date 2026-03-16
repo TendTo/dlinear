@@ -1135,7 +1135,7 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
           d_spx.numColsRational() - 1, s_zero_rational, s_zero_rational);
       const SolverStatus res = d_spx.optimize();
       Assert(res == SolverStatus::INFEASIBLE);
-      const bool getDualSuccess = d_spx.getDualRational(d_dual);
+      const bool getDualSuccess = d_spx.getDualFarkasRational(d_dual);
       Assert(getDualSuccess);
       isStrictBasic =
           d_spx.basisColStatus(d_spx.numColsRational() - 1) == VarStatus::BASIC;

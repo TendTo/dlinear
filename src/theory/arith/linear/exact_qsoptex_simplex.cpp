@@ -625,17 +625,15 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
     }
     if (d_vars.hasLowerBound(v))
     {
-      mpq_class lb =
-          hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-      d_rhs.emplace_back(std::move(lb));
+      d_rhs.emplace_back(hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA
+                                        : varToLb(v));
       d_sense.emplace_back('G');
       rowToArithVarSplit.emplace_back(v);
     }
     if (d_vars.hasUpperBound(v))
     {
-      mpq_class ub =
-          hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-      d_rhs.emplace_back(std::move(ub));
+      d_rhs.emplace_back(hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA
+                                        : varToUb(v));
       d_sense.emplace_back('L');
       rowToArithVarSplit.emplace_back(v);
     }
@@ -653,9 +651,14 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
       d_vars.printModel(v, Trace("approx-debug"));
     }
 
-    mpq_class lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
-    mpq_class ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
-    mpq_QSnew_col(d_qsx, mpq_oneLpNum, lb.get_mpq_t(), ub.get_mpq_t(), nullptr);
+    mpq_QSnew_col(
+        d_qsx,
+        mpq_oneLpNum,
+        hasStrictLb(v) ? mpq_class(varToLb(v) + SMALL_FIXED_DELTA).get_mpq_t()
+                       : varToLb(v).get_mpq_t(),
+        hasStrictUB(v) ? mpq_class(varToUb(v) - SMALL_FIXED_DELTA).get_mpq_t()
+                       : varToUb(v).get_mpq_t(),
+        nullptr);
   }
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
