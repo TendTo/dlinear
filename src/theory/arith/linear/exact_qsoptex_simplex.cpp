@@ -1363,11 +1363,34 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
   // or it is non-basic and we don't care about its value
   Assert(!isStrictBasic || toMpqClass(d_x[numCols() - 1]) == 0);
 
+  // TODO: for now, disable this. Maybe it could be work activating
+  // if (d_status == QS_LP_INFEASIBLE)
+  // {
+  //   freeBasis();
+  //   int res = mpq_QSdelete_col(d_qsx, numCols() - 1);
+  //   Assert(res == 0);
+  //   mpq_class delta = 0;
+  //   res = QSdelta_solver(d_qsx,
+  //                        delta.get_mpq_t(),
+  //                        static_cast<mpq_t*>(d_x),
+  //                        nullptr,
+  //                        &d_basis,
+  //                        nullptr,
+  //                        PRIMAL_SIMPLEX,
+  //                        &d_status,
+  //                        nullptr,
+  //                        nullptr);
+  //   Assert(res == 0);
+  //   Assert(d_status == QS_LP_INFEASIBLE);
+  //   isStrictBasic = false;
+  // }
+
   if (d_status == QS_LP_OPTIMAL || d_status == QS_LP_DELTA_OPTIMAL
       || d_status == QS_LP_FEASIBLE || d_status == QS_LP_DELTA_FEASIBLE
       || d_status == QS_LP_UNBOUNDED || d_status == QS_LP_INFEASIBLE)
   {
-    for (int colIdx = 0; colIdx < numCols() - 1; colIdx++)
+    for (int colIdx = 0; colIdx < static_cast<int>(d_colToArithVar.size());
+         colIdx++)
     {
       extractVarValue<VariableType::COL>(colIdx, sol);
     }
