@@ -353,6 +353,7 @@ class ExactQsoptex : public ExactSimplex
 
  protected:
   void printSolution(const external::Solution& sol) const;
+  void freeBasis();
 
   int numCols() const { return mpq_QSget_colcount(d_qsx); }
   int numRows() const { return mpq_QSget_rowcount(d_qsx); }
@@ -863,7 +864,17 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
 ExactQsoptex::~ExactQsoptex()
 {
   mpq_QSfree_prob(d_qsx);
-  // qsopt_ex::QSXFinish();
+  freeBasis();
+}
+
+void ExactQsoptex::freeBasis()
+{
+  if (d_basis.cstat != nullptr) free(d_basis.cstat);
+  if (d_basis.rstat != nullptr) free(d_basis.rstat);
+  d_basis.cstat = nullptr;
+  d_basis.rstat = nullptr;
+  d_basis.nstruct = 0;
+  d_basis.nrows = 0;
 }
 
 const mpq_class& ExactQsoptex::varToLb(const ArithVar v) const
@@ -1187,9 +1198,7 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
     case QS_COL_BSTAT_FREE:  // Shared with basic
       if (VarType == VariableType::ROW)
       {
-        rhs = d_rhs[idx]
-              + (d_sense[idx] == 'G' ? toMpqClass(d_y[idx])
-                                     : -toMpqClass(d_y[idx]));
+        rhs = d_rhs[idx] + (d_sense[idx] == 'G' ? getY(idx) : -getY(idx));
         value = &toMpq(rhs);
       }
       else if (VarType == VariableType::COL)
@@ -1227,9 +1236,7 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
       {
         if (VarType == VariableType::ROW)
         {
-          rhs = d_rhs[idx]
-                + (d_sense[idx] == 'G' ? toMpqClass(d_y[idx])
-                                       : -toMpqClass(d_y[idx]));
+          rhs = d_rhs[idx] + (d_sense[idx] == 'G' ? getY(idx) : -getY(idx));
           value = &toMpq(rhs);
         }
         else if (VarType == VariableType::COL)
