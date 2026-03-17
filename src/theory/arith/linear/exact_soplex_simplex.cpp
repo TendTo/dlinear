@@ -197,6 +197,7 @@ class ExactSoplexStrict : public ExactSoplex
 
   bool isStrictVarZero() override
   {
+    if (d_strictVars.empty()) return false;
     return d_spx.hasSol() ? d_primal[d_spx.numColsRational() - 1].is_zero()
                           : false;
   }
@@ -1081,7 +1082,8 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   // TODO: reimplement this for mip
   // glp_prob* prob = mip ? d_mipProb : d_realProb;
 
-  if (d_spx.status() == SolverStatus::OPTIMAL)
+  if (d_spx.status() == SolverStatus::OPTIMAL
+      || d_spx.status() == SolverStatus::UNBOUNDED)
   {
     Assert(d_spx.hasSol());
     Assert(d_primal.dim() == d_spx.numColsRational());
