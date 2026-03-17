@@ -1640,10 +1640,10 @@ external::ExternalSimplex* ExactSimplex::mkExactSoplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
     CVC5_UNUSED external::SimplexStatistics& s,
-    const bool useStrict)
+    const Options& o)
 {
 #ifdef CVC5_USE_SOPLEX
-  if (useStrict) return new ExactSoplexStrict(vars, l, s);
+  if (o.arith.lpStrictVar) return new ExactSoplexStrict(vars, l, s);
   return new ExactSoplexEpsilon(vars, l, s);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";

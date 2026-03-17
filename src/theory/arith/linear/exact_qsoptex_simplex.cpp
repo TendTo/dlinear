@@ -1512,10 +1512,10 @@ external::ExternalSimplex* ExactSimplex::mkExactQsoptexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
     CVC5_UNUSED external::SimplexStatistics& s,
-    CVC5_UNUSED const bool useStrict)
+    CVC5_UNUSED const Options& o)
 {
 #ifdef CVC5_USE_QSOPTEX
-  if (useStrict) return new ExactQsoptexStrict(vars, l, s);
+  if (o.arith.lpStrictVar) return new ExactQsoptexStrict(vars, l, s);
   return new ExactQsoptexEpsilon(vars, l, s);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";

@@ -56,7 +56,7 @@ SimplexStatistics::SimplexStatistics(StatisticsRegistry& sr)
       d_strict(sr.registerInt("theory::arith::z::approx::strictVar")),
       d_externalAdjustmentPivots(
           sr.registerInt("theory::arith::z::approx::externalAdjustmentPivots")),
-      d_delta(sr.registerInt("theory::arith::z::approx::delta")),
+      d_delta(sr.registerValue<double>("theory::arith::z::approx::delta")),
       d_precision(sr.registerHistogram<std::size_t>(
           "theory::arith::z::approx::precision")),
       d_refinements(sr.registerHistogram<std::size_t>(

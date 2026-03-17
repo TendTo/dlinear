@@ -23,6 +23,7 @@
 #include <optional>
 #include <vector>
 
+#include "options/options.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
 #include "theory/arith/linear/external_simplex.h"
@@ -55,14 +56,14 @@ class ExactSimplex : public external::ExternalSimplex
   static ExternalSimplex* mkExactSoplexSolver(const ArithVariables& vars,
                                               TreeLog& l,
                                               external::SimplexStatistics& s,
-                                              bool useStrict);
+                                              const Options& o);
   /**
    * If an exact solver is enabled, creates a lp-based exact solver.
    */
   static ExternalSimplex* mkExactQsoptexSolver(const ArithVariables& vars,
                                                TreeLog& l,
                                                external::SimplexStatistics& s,
-                                               bool useStrict);
+                                               const Options& o);
 
 }; /* class ApproximateSimplex */
 

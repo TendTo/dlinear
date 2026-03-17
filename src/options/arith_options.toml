@@ -636,3 +636,11 @@ long       = "lp-strict-var"
 type       = "bool"
 default    = "true"
 help       = "use the strict var formulation, if supported by the external LP solver, only when --use-approx is enabled"
+
+[[option]]
+name       = "delta"
+category   = "expert"
+long       = "delta=DELTA"
+type       = "double"
+default    = "-1.0"
+help       = "If set to any non-negative value, it will enable delta-satisfiability solving for linear arithmetic, treating constraints as being satisfied if they are within the given delta of being satisfied. If this is not set by the user, different logics are free to chose different defaults."
