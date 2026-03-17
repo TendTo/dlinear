@@ -321,7 +321,8 @@ class ExactQsoptex : public ExactSimplex
  public:
   ExactQsoptex(const ArithVariables& v,
                TreeLog& l,
-               external::SimplexStatistics& s);
+               external::SimplexStatistics& s,
+               double delta = -1.0);
   virtual ~ExactQsoptex();
 
   external::LinResult solveRelaxation() override;
@@ -352,7 +353,6 @@ class ExactQsoptex : public ExactSimplex
   }
 
  protected:
-  void printSolution(const external::Solution& sol) const;
   void freeBasis();
 
   int numCols() const { return mpq_QSget_colcount(d_qsx); }
@@ -426,6 +426,8 @@ class ExactQsoptex : public ExactSimplex
   qsopt_ex::MpqArray d_x;
   QSbasis d_basis;
 
+  mpq_class d_delta;
+
  public:
   enum class VariableType
   {
@@ -448,7 +450,8 @@ class ExactQsoptexEpsilon : public ExactQsoptex
  public:
   ExactQsoptexEpsilon(const ArithVariables& vars,
                       TreeLog& l,
-                      external::SimplexStatistics& s);
+                      external::SimplexStatistics& s,
+                      double delta = -1.0);
 
   external::Solution extractSolution(bool mip) override;
 
@@ -466,7 +469,8 @@ class ExactQsoptexStrict : public ExactQsoptex
  public:
   ExactQsoptexStrict(const ArithVariables& v,
                      TreeLog& l,
-                     external::SimplexStatistics& s);
+                     external::SimplexStatistics& s,
+                     double delta = -1.0);
 
   void setOptCoeffs(const ArithRatPairVec& ref) override {}
 
@@ -482,30 +486,17 @@ class ExactQsoptexStrict : public ExactQsoptex
   }
 };
 
-void ExactQsoptex::printSolution(const external::Solution& sol) const
-{
-  std::cout << "{  ";
-  for (const auto v : sol.newBasis)
-  {
-    std::cout << d_vars.asNode(v).getName() << "\n";
-  }
-  std::cout << "}\n";
-  for (const auto v : sol.newValues)
-  {
-    std::cout << d_vars.asNode(v).getName() << " = " << sol.newValues[v]
-              << "\n";
-  }
-}
-
 ExactQsoptex::ExactQsoptex(const ArithVariables& var,
                            TreeLog& l,
-                           external::SimplexStatistics& s)
+                           external::SimplexStatistics& s,
+                           const double delta)
     : ExactSimplex(s),
       d_vars(var),
       d_log(l),
       d_status(-1),
       d_x(0),
       d_basis{.nstruct = 0, .nrows = 0, .cstat = nullptr, .rstat = nullptr},
+      d_delta(delta),
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
@@ -552,8 +543,9 @@ ExactQsoptex::ExactQsoptex(const ArithVariables& var,
 
 ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
                                          TreeLog& l,
-                                         external::SimplexStatistics& s)
-    : ExactQsoptex(vars, l, s)
+                                         external::SimplexStatistics& s,
+                                         const double delta)
+    : ExactQsoptex(vars, l, s, delta)
 {
   d_stats.d_strict.set(0);
 
@@ -682,8 +674,9 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
 ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
                                        TreeLog& l,
-                                       external::SimplexStatistics& s)
-    : ExactQsoptex(vars, l, s)
+                                       external::SimplexStatistics& s,
+                                       const double delta)
+    : ExactQsoptex(vars, l, s, delta)
 {
   d_stats.d_strict.set(1);
 
@@ -1342,7 +1335,7 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
   {
     int res = mpq_QSchange_bound(d_qsx, numCols() - 1, 'U', mpq_zeroLpNum);
     Assert(res == 0);
-    mpq_class delta = 0;
+    mpq_class delta = d_delta >= 0 ? d_delta : 0;
     res = QSdelta_solver(d_qsx,
                          delta.get_mpq_t(),
                          static_cast<mpq_t*>(d_x),
@@ -1417,22 +1410,6 @@ external::Solution ExactQsoptexStrict::extractSolution(bool mip)
   }
   // If the strict variable is basic, we need to add some other non-basic
   // variable to the basis to maintain the same number of basic variables
-  if (isStrictBasic)
-  {
-    bool added = false;
-    for (const ArithVar v : d_strictVars)
-    {
-      if (!sol.newBasis.isMember(v)
-          && (d_vars.cmpToLowerBound(v, sol.newValues.get(v)) == 0
-              || d_vars.cmpToUpperBound(v, sol.newValues.get(v)) == 0))
-      {
-        added = true;
-        sol.newBasis.add(v);
-        break;
-      }
-    }
-    Assert(added);
-  }
 
   return sol;
 }
@@ -1452,7 +1429,8 @@ external::LinResult ExactQsoptex::solveRelaxation()
   // the (colcount) "structural" variables.
   d_x.Resize(static_cast<size_t>(numCols()));
   unsigned int precision = 0;
-  mpq_class delta = 0;
+  mpq_class delta = d_delta >= 0 ? d_delta : 0;
+
   const int res = QSdelta_solver(d_qsx,
                                  delta.get_mpq_t(),
                                  static_cast<mpq_t*>(d_x),
@@ -1466,6 +1444,8 @@ external::LinResult ExactQsoptex::solveRelaxation()
   Assert(res == 0);
 
   d_stats.d_precision << precision;
+  d_stats.d_delta =
+      d_delta >= 0 ? std::max(d_stats.d_delta.get(), delta.get_d()) : -1.0;
 
   switch (d_status)
   {
@@ -1515,8 +1495,9 @@ external::ExternalSimplex* ExactSimplex::mkExactQsoptexSolver(
     CVC5_UNUSED const Options& o)
 {
 #ifdef CVC5_USE_QSOPTEX
-  if (o.arith.lpStrictVar) return new ExactQsoptexStrict(vars, l, s);
-  return new ExactQsoptexEpsilon(vars, l, s);
+  if (o.arith.lpStrictVar)
+    return new ExactQsoptexStrict(vars, l, s, o.arith.delta);
+  return new ExactQsoptexEpsilon(vars, l, s, o.arith.delta);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";
 #endif
