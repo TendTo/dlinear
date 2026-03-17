@@ -3021,6 +3021,7 @@ external::SimplexStatistics& TheoryArithPrivate::getSimplexStats()
   if (d_simplexStats == NULL)
   {
     d_simplexStats = new external::SimplexStatistics(statisticsRegistry());
+    d_simplexStats->d_delta = options().arith.delta;
   }
   return *d_simplexStats;
 }
@@ -3396,6 +3397,7 @@ void TheoryArithPrivate::importSolution(const external::Solution& solution)
     SimplexDecisionProcedure& simplex = selectSimplex(false);
     simplex.setVarOrderPivotLimit(pass2Limit);
     d_qflraStatus = simplex.findModel(false);
+    d_simplexStats->d_externalAdjustmentPivots += simplex.getPivots();
   }
 
   if (TraceIsOn("arith::importSolution"))
