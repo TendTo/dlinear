@@ -385,15 +385,6 @@ class ExactQsoptex : public ExactSimplex
     return ARITHVAR_SENTINEL;
   }
 
-  // virtual void mapRowId(int nid, int ind, ArithVar v){
-  //   NodeLog& nl = d_log.getNode(nid);
-  //   nl.mapRowId(ind, v);
-  // }
-  // virtual void applyRowsDeleted(int nid, const RowsDeleted& rd){
-  //   NodeLog& nl = d_log.getNode(nid);
-  //   nl.applyRowsDeleted(rd);
-  // }
-
   ArithVar getArithVarFromStructural(int ind) const
   {
     if (ind >= 0)
@@ -422,6 +413,7 @@ class ExactQsoptex : public ExactSimplex
 
   SolverStatus d_status;
   std::vector<mpq_class> d_rhs;
+  std::vector<mpq_class> d_range;
   std::vector<char> d_sense;
   qsopt_ex::MpqArray d_x;
   QSbasis d_basis;
@@ -556,15 +548,13 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
   std::vector<int> colIdxs;
   std::vector<mpq_class> values;
 
-  d_rhs.reserve(d_rowToArithVar.size() * 2);
+  d_rhs.reserve(d_rowToArithVar.size());
+  d_range.reserve(d_rowToArithVar.size());
   numNonZeroPerRow.reserve(d_rowToArithVar.size() * 2);
   beginRowIdx.reserve(d_rowToArithVar.size() * 2);
   colIdxs.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
   values.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
   d_sense.reserve(d_rowToArithVar.size() * 2);
-
-  std::vector<ArithVar> rowToArithVarSplit;
-  rowToArithVarSplit.reserve(d_rowToArithVar.size() * 2);
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
@@ -594,44 +584,34 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
       values.emplace_back(constant.getValue().getValue());
     }
 
-    // Case I: we are dealing with a free row. Just add it to capture its
-    // behaviour, but set it to -inf
-    if (!d_vars.hasEitherBound(v))
-    {
-      d_rhs.emplace_back(mpq_NINFTY);
-      d_sense.emplace_back('G');
-      rowToArithVarSplit.emplace_back(v);
-      continue;
-    }
-
-    // Case II: we are dealing with a row with at least one bound. If both
-    // bounds are set, we add the row twice, once for the lower bound and once
-    // for the upper bound.
-    const bool hasBothBounds =
-        d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v);
-    if (hasBothBounds)
-    {
-      beginRowIdx.emplace_back(colIdxs.size());
-      colIdxs.insert(colIdxs.end(),
-                     colIdxs.end() - numNonZeroPerRow.back(),
-                     colIdxs.end());
-      values.insert(
-          values.end(), values.end() - numNonZeroPerRow.back(), values.end());
-      numNonZeroPerRow.emplace_back(numNonZeroPerRow.back());
-    }
-    if (d_vars.hasLowerBound(v))
+    if (d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v))  // Bounded
     {
       d_rhs.emplace_back(hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA
                                         : varToLb(v));
-      d_sense.emplace_back('G');
-      rowToArithVarSplit.emplace_back(v);
+      d_range.emplace_back(hasStrictUB(v) ? mpq_class{varToUb(v) - varToLb(v)
+                                                      - SMALL_FIXED_DELTA}
+                                          : mpq_class{varToUb(v) - varToLb(v)});
+      d_sense.emplace_back('R');
     }
-    if (d_vars.hasUpperBound(v))
+    else if (d_vars.hasLowerBound(v))  // Only lower bound
+    {
+      d_rhs.emplace_back(hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA
+                                        : varToLb(v));
+      d_range.emplace_back(0);
+      d_sense.emplace_back('G');
+    }
+    else if (d_vars.hasUpperBound(v))  // Only upper bound
     {
       d_rhs.emplace_back(hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA
                                         : varToUb(v));
+      d_range.emplace_back(0);
       d_sense.emplace_back('L');
-      rowToArithVarSplit.emplace_back(v);
+    }
+    else  // Unbounded
+    {
+      d_rhs.emplace_back(mpq_NINFTY);
+      d_range.emplace_back(0);
+      d_sense.emplace_back('G');
     }
   }
 
@@ -659,17 +639,16 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
                 "mpq_class layout assumption broken");
-  mpq_QSadd_rows(d_qsx,
-                 static_cast<int>(numNonZeroPerRow.size()),
-                 numNonZeroPerRow.data(),
-                 beginRowIdx.data(),
-                 colIdxs.data(),
-                 reinterpret_cast<const mpq_t*>(values.data()),
-                 reinterpret_cast<const mpq_t*>(d_rhs.data()),
-                 d_sense.data(),
-                 nullptr);
-
-  d_rowToArithVar = std::move(rowToArithVarSplit);
+  mpq_QSadd_ranged_rows(d_qsx,
+                        static_cast<int>(numNonZeroPerRow.size()),
+                        numNonZeroPerRow.data(),
+                        beginRowIdx.data(),
+                        colIdxs.data(),
+                        reinterpret_cast<const mpq_t*>(values.data()),
+                        reinterpret_cast<const mpq_t*>(d_rhs.data()),
+                        d_sense.data(),
+                        reinterpret_cast<const mpq_t*>(d_range.data()),
+                        nullptr);
 }
 
 ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
@@ -1191,7 +1170,14 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
     case QS_COL_BSTAT_FREE:  // Shared with basic
       if (VarType == VariableType::ROW)
       {
-        rhs = d_rhs[idx] + (d_sense[idx] == 'G' ? getY(idx) : -getY(idx));
+        rhs = d_rhs[idx] + (d_sense[idx] == 'L' ? -getY(idx) : getY(idx));
+#ifndef NDEBUG
+        if (d_sense[idx] == 'R')
+        {
+          std::cout << "RHS: " << rhs << " Range: " << d_range[idx]
+                    << " Y: " << getY(idx) << std::endl;
+        }
+#endif
         value = &toMpq(rhs);
       }
       else if (VarType == VariableType::COL)
@@ -1241,7 +1227,7 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
       }
       else if (VarType == VariableType::ROW)
       {
-        if (d_sense[idx] == 'G')
+        if (d_sense[idx] == 'G' || d_sense[idx] == 'R')
         {
           Assert(d_vars.hasLowerBound(v));
           newValues.set(v, d_vars.getLowerBound(v));
@@ -1295,9 +1281,6 @@ external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
 
     for (int rowIdx = 0; rowIdx < numRows(); rowIdx++)
     {
-      const ArithVar v = d_rowToArithVar[rowIdx];
-      // We already encountered the nonbasic version of this row, we can skip it
-      if (sol.newNonBasis.isMember(v)) continue;
       extractVarValue<VariableType::ROW>(rowIdx, sol);
     }
   }
@@ -1305,13 +1288,6 @@ external::Solution ExactQsoptexEpsilon::extractSolution(bool mip)
   {
     // Infeasible solution.
     Unimplemented();
-  }
-
-  // Since we have to split range rows, we have to remove those that we
-  // erroneously marked as basic and then discovered to be nonbasic
-  for (const ArithVar v : sol.newNonBasis)
-  {
-    if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
   }
 
   return sol;
