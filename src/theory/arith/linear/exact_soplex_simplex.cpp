@@ -1378,14 +1378,15 @@ external::LinResult ExactSoplex::solveRelaxation()
   }
   d_stats.d_precision << precision;
 
+  bool status = false;
   switch (res)
   {
     case SpxStatus::OPTIMAL:
     case SpxStatus::UNBOUNDED:
-      // std::cout << "OBJ" << d_spx.objValueReal() << std::endl;
       Assert(d_spx.hasSol());
       d_primal.reDim(d_spx.numColsRational());
-      d_spx.getPrimalRational(d_primal);
+      status = d_spx.getPrimalRational(d_primal);
+      Assert(status);
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
       return isStrictVarZero() ? external::LinResult::LinInfeasible
@@ -1393,7 +1394,8 @@ external::LinResult ExactSoplex::solveRelaxation()
     case SpxStatus::INFEASIBLE:
       Assert(d_spx.hasDualFarkas());
       d_dual.reDim(d_spx.numRowsRational());
-      d_spx.getDualFarkasRational(d_dual);
+      status = d_spx.getDualRational(d_dual);
+      Assert(status);
       d_solvedRelaxation = true;
       return external::LinResult::LinInfeasible;
     case SpxStatus::ABORT_ITER:

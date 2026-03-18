@@ -3549,7 +3549,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
     switch (externalResult)
     {
       case LinResult::LinFeasible:
-        Trace("solveRealRelaxation") << "exact feasible" << endl;
+        Trace("solveRealRelaxation") << "external feasible" << endl;
         ++d_statistics.d_relaxLinFeas;
         externalSolution = externalSolver->extractRelaxation();
         externalSolution.linResult = externalResult;
@@ -3560,7 +3560,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         }
         break;
       case LinResult::LinInfeasible:
-        Trace("solveRealRelaxation") << "exact infeasible" << endl;
+        Trace("solveRealRelaxation") << "external infeasible" << endl;
         ++d_statistics.d_relaxLinInfeas;
         externalSolution = externalSolver->extractRelaxation();
         externalSolution.linResult = externalResult;
@@ -3571,7 +3571,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         }
         break;
       case LinResult::LinExhausted:
-        Trace("solveRealRelaxation") << "exact exhausted" << endl;
+        Trace("solveRealRelaxation") << "external exhausted" << endl;
         ++d_statistics.d_relaxLinExhausted;
         break;
       default: ++d_statistics.d_relaxOthers;
