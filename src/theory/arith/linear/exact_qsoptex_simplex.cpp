@@ -667,6 +667,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
   std::vector<mpq_class> values;
 
   d_rhs.reserve(d_rowToArithVar.size() * 2);
+  d_range.reserve(d_rowToArithVar.size() * 2);
   numNonZeroPerRow.reserve(d_rowToArithVar.size() * 2);
   beginRowIdx.reserve(d_rowToArithVar.size() * 2);
   colIdxs.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
@@ -704,64 +705,88 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       values.emplace_back(constant.getValue().getValue());
     }
 
-    // Case I: we are dealing with a free row. Just add it to capture its
-    // behaviour, but set it to -inf
-    if (!d_vars.hasEitherBound(v))
+    if (hasStrictBound(v))
     {
-      d_rhs.emplace_back(mpq_NINFTY);
-      d_sense.emplace_back('G');
-      rowToArithVarSplit.emplace_back(v);
-      continue;
-    }
+      const bool isLbStrict = hasStrictLb(v);
 
-    const bool isLbStrict = hasStrictLb(v);
-
-    if (d_vars.hasLowerBound(v))
-    {
-      if (isLbStrict)
+      if (d_vars.hasLowerBound(v))
       {
-        numNonZeroPerRow.back()++;
-        colIdxs.emplace_back(d_colToArithVar.size());
-        values.emplace_back(-1);
-        d_strictVars.emplace_back(v);
+        if (isLbStrict)
+        {
+          numNonZeroPerRow.back()++;
+          colIdxs.emplace_back(d_colToArithVar.size());
+          values.emplace_back(-1);
+          d_strictVars.emplace_back(v);
+        }
+        d_rhs.emplace_back(varToLb(v));
+        d_range.emplace_back(0);
+        d_sense.emplace_back('G');
+        rowToArithVarSplit.emplace_back(v);
       }
-      d_rhs.emplace_back(varToLb(v));
-      d_sense.emplace_back('G');
-      rowToArithVarSplit.emplace_back(v);
-    }
 
-    // Case II: we are dealing with a row with at least one bound. If both
-    // bounds are set, we add the row twice, once for the lower bound and once
-    // for the upper bound.
-    const bool hasBothBounds =
-        d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v);
-    if (hasBothBounds)
-    {
-      // Insert all cols (except strict col, if present)
-      beginRowIdx.emplace_back(colIdxs.size());
-      colIdxs.insert(colIdxs.end(),
-                     colIdxs.end() - numNonZeroPerRow.back(),
-                     isLbStrict ? colIdxs.end() - 1 : colIdxs.end());
-      // Insert all values (except strict col, if present)
-      values.insert(values.end(),
-                    values.end() - numNonZeroPerRow.back(),
-                    isLbStrict ? values.end() - 1 : values.end());
-      numNonZeroPerRow.emplace_back(isLbStrict ? numNonZeroPerRow.back() - 1
-                                               : numNonZeroPerRow.back());
-    }
-
-    if (d_vars.hasUpperBound(v))
-    {
-      if (hasStrictUB(v))
+      // Case II: we are dealing with a row with at least one bound. If both
+      // bounds are set, we add the row twice, once for the lower bound and once
+      // for the upper bound.
+      const bool hasBothBounds =
+          d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v);
+      if (hasBothBounds)
       {
-        numNonZeroPerRow.back()++;
-        colIdxs.emplace_back(d_colToArithVar.size());
-        values.emplace_back(1);
-        d_strictVars.emplace_back(v);
+        // Insert all cols (except strict col, if present)
+        beginRowIdx.emplace_back(colIdxs.size());
+        colIdxs.insert(colIdxs.end(),
+                       colIdxs.end() - numNonZeroPerRow.back(),
+                       isLbStrict ? colIdxs.end() - 1 : colIdxs.end());
+        // Insert all values (except strict col, if present)
+        values.insert(values.end(),
+                      values.end() - numNonZeroPerRow.back(),
+                      isLbStrict ? values.end() - 1 : values.end());
+        numNonZeroPerRow.emplace_back(isLbStrict ? numNonZeroPerRow.back() - 1
+                                                 : numNonZeroPerRow.back());
       }
-      d_rhs.emplace_back(varToUb(v));
-      d_sense.emplace_back('L');
+
+      if (d_vars.hasUpperBound(v))
+      {
+        if (hasStrictUB(v))
+        {
+          numNonZeroPerRow.back()++;
+          colIdxs.emplace_back(d_colToArithVar.size());
+          values.emplace_back(1);
+          d_strictVars.emplace_back(v);
+        }
+        d_rhs.emplace_back(varToUb(v));
+        d_range.emplace_back(0);
+        d_sense.emplace_back('L');
+        rowToArithVarSplit.emplace_back(v);
+      }
+    }
+    else
+    {
+      Assert(!hasStrictLb(v) && !hasStrictUB(v));
       rowToArithVarSplit.emplace_back(v);
+      if (d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v))  // Bounded
+      {
+        d_rhs.emplace_back(varToLb(v));
+        d_range.emplace_back(varToUb(v) - varToLb(v));
+        d_sense.emplace_back('R');
+      }
+      else if (d_vars.hasLowerBound(v))  // Only lower bound
+      {
+        d_rhs.emplace_back(varToLb(v));
+        d_range.emplace_back(0);
+        d_sense.emplace_back('G');
+      }
+      else if (d_vars.hasUpperBound(v))  // Only upper bound
+      {
+        d_rhs.emplace_back(varToUb(v));
+        d_range.emplace_back(0);
+        d_sense.emplace_back('L');
+      }
+      else  // Unbounded
+      {
+        d_rhs.emplace_back(mpq_NINFTY);
+        d_range.emplace_back(0);
+        d_sense.emplace_back('G');
+      }
     }
   }
 
@@ -790,6 +815,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       values.emplace_back(-1);
       d_sense.emplace_back('G');
       d_rhs.emplace_back(varToLb(v));
+      d_range.emplace_back(0);
       rowToArithVarSplit.emplace_back(v);
       d_strictVars.emplace_back(v);
     }
@@ -804,6 +830,7 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
       values.emplace_back(1);
       d_sense.emplace_back('L');
       d_rhs.emplace_back(varToUb(v));
+      d_range.emplace_back(0);
       rowToArithVarSplit.emplace_back(v);
       d_strictVars.emplace_back(v);
     }
@@ -820,15 +847,16 @@ ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
                 "mpq_class layout assumption broken");
-  mpq_QSadd_rows(d_qsx,
-                 static_cast<int>(numNonZeroPerRow.size()),
-                 numNonZeroPerRow.data(),
-                 beginRowIdx.data(),
-                 colIdxs.data(),
-                 reinterpret_cast<const mpq_t*>(values.data()),
-                 reinterpret_cast<const mpq_t*>(d_rhs.data()),
-                 d_sense.data(),
-                 nullptr);
+  mpq_QSadd_ranged_rows(d_qsx,
+                        static_cast<int>(numNonZeroPerRow.size()),
+                        numNonZeroPerRow.data(),
+                        beginRowIdx.data(),
+                        colIdxs.data(),
+                        reinterpret_cast<const mpq_t*>(values.data()),
+                        reinterpret_cast<const mpq_t*>(d_rhs.data()),
+                        d_sense.data(),
+                        reinterpret_cast<const mpq_t*>(d_range.data()),
+                        nullptr);
 
   d_rowToArithVar = std::move(rowToArithVarSplit);
 }
