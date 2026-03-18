@@ -12,6 +12,15 @@ GLPK = 1
 SOPLEX = 2
 QSOPTEX = 3
 
+plt.rcParams.update({
+    "font.size": 11,
+    "axes.titlesize": 12,
+    "axes.labelsize": 11,
+    "legend.fontsize": 10,
+    "xtick.labelsize": 10,
+    "ytick.labelsize": 10,
+})
+
 
 def parse_duration_to_ms(value):
     """
@@ -237,7 +246,7 @@ def plot_performance_profiles(
     max_tau: float = None,
     num_points: int = 1000,
     metric_add: float | int | list[float] | list[int] = 0,
-    title="Performance profiles",
+    title="",
     ax=None,
 ):
     """Plot Dolan–Moré performance profiles for an arbitrary number of solver results.
@@ -366,14 +375,15 @@ def plot_performance_profiles(
         profile_df[result.solver_name] = [float(np.mean(r <= tau) * 100) for tau in tau_values]
 
     if ax is None:
-        _, ax = plt.subplots(figsize=(8, 5))
+        _, ax = plt.subplots(figsize=(6.4, 4.8))
 
     for result in results:
         ax.step(profile_df.index, profile_df[result.solver_name], where="post", label=result.solver_name)
 
-    ax.set_xlabel("Factor distance from the best (log scale)")
+    ax.set_xlabel("Factor distance from the best")
     ax.set_ylabel("Percentage of instances solved")
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.set_xlim(1.0, max_tau)
     ax.set_ylim(0.0, 100.0)
     ax.set_xscale(value="log")
@@ -507,7 +517,7 @@ def plot_time_histogram(
     bin_edges = np.linspace(min_bin, max_bin, max(bins) + 1)
 
     if ax is None:
-        _, ax = plt.subplots(figsize=(8, 5))
+        _, ax = plt.subplots(figsize=(3.2, 2.4))
     for i, result in enumerate(results):
         solver_metric_col = f"{metric_cols[i]}{result.solver_id}"
         times = df_all[solver_metric_col].replace([np.inf, -np.inf], np.nan).dropna()
