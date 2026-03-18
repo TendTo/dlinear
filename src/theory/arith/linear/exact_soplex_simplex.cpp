@@ -453,11 +453,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
       vec.add(strictVarIdx, -1);
-      // out << "{\nsoplex::DSVectorRational vec(2);\n";
-      // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
-      // out << "vec.add(" << strictVarIdx << ", 1);\n";
       rows.add({varToLb(v), vec, soplex::infinity});
-      // out << "rows.add(" << varToLb(v) << ", vec, soplex::infinity);\n}\n";
       rowToArithVarStrict.emplace_back(v);
       d_strictVars.emplace_back(v);
     }
@@ -466,11 +462,7 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       soplex::DSVectorRational vec(2);
       vec.add(static_cast<int>(d_colIndices[v]), 1);
       vec.add(strictVarIdx, 1);
-      // out << "{\nsoplex::DSVectorRational vec(2);\n";
-      // out << "vec.add(" << static_cast<int>(d_colIndices[v]) << ", 1);\n";
-      // out << "vec.add(" << strictVarIdx << ", -1);\n";
       rows.add({-soplex::infinity, vec, varToUb(v)});
-      // out << "rows.add(-soplex::infinity, vec, " << varToUb(v) << ");\n}\n";
       rowToArithVarStrict.emplace_back(v);
       d_strictVars.emplace_back(v);
     }
@@ -483,8 +475,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
 
   // Add the strict variable t
   cols.add({-1, soplex::DSVectorRational(), 1, 0});
-  // out << "cols.add({-1, soplex::DSVectorRational(), soplex::infinity,
-  // 0});\n";
 
   // Add both columns and rows to the LP
   d_spx.addColsRational(cols);
@@ -499,8 +489,6 @@ ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
       d_spx.changeObjRational(colIdx, 1);
     }
   }
-
-  // out.close();
 }
 
 soplex::Rational ExactSoplex::varToLb(const ArithVar v) const
@@ -1295,24 +1283,6 @@ external::Solution ExactSoplexStrict::extractSolution(bool mip)
   for (const ArithVar v : sol.newNonBasis)
   {
     if (sol.newBasis.isMember(v)) sol.newBasis.remove(v);
-  }
-  // If the strict variable is basic, we need to add some other non-basic
-  // variable to the basis to maintain the same number of basic variables
-  if (isStrictBasic)
-  {
-    bool added = false;
-    for (const ArithVar v : d_strictVars)
-    {
-      if (!sol.newBasis.isMember(v)
-          && (d_vars.cmpToLowerBound(v, sol.newValues.get(v)) == 0
-              || d_vars.cmpToUpperBound(v, sol.newValues.get(v)) == 0))
-      {
-        added = true;
-        sol.newBasis.add(v);
-        break;
-      }
-    }
-    Assert(added);
   }
 
   // Make sure to remove all strict rows that we know are non-basic
