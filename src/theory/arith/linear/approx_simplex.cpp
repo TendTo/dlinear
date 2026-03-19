@@ -526,6 +526,7 @@ ApproxGLPK::ApproxGLPK(const ArithVariables& var,
   d_denomGuesses.push_back(Integer(1ul<<29));
   d_denomGuesses.push_back(Integer(1ul<<31));
 
+  d_stats.d_strict.set(0);
   d_stats.d_externalSimplexType.set(static_cast<std::underlying_type_t<options::ExternalLPSolver>>(options::ExternalLPSolver::GLPK));
 
   d_inputProb = glp_create_prob();
