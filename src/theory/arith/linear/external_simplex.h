@@ -21,6 +21,7 @@
 #pragma once
 
 #include "cut_log.h"
+#include "options/options.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
 #include "util/dense_map.h"
@@ -103,7 +104,7 @@ class SimplexStatistics
 class ExternalSimplex
 {
  public:
-  explicit ExternalSimplex(SimplexStatistics& s);
+  explicit ExternalSimplex(SimplexStatistics& s, const Options& o);
   virtual ~ExternalSimplex() = default;
 
   /* maximum branches allowed on a variable */
@@ -144,6 +145,8 @@ class ExternalSimplex
 
   virtual Solution extractRelaxation() = 0;
 
+  bool useDelta() const { return d_useDelta; }
+
  protected:
   SimplexStatistics d_stats;
   /* the maximum pivots allowed in a query. */
@@ -154,6 +157,9 @@ class ExternalSimplex
 
   /* maximum branches allowed on a variable */
   int d_branchLimit;
+
+  const double d_delta;
+  const bool d_useDelta;
 }; /* class ApproximateSimplex */
 
 }  // namespace external

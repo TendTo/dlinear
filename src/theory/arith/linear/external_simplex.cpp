@@ -16,6 +16,7 @@
  * \todo document this file
  */
 #include "theory/arith/linear/external_simplex.h"
+#include "options/arith_options.h"
 
 #include <ostream>
 
@@ -64,11 +65,13 @@ SimplexStatistics::SimplexStatistics(StatisticsRegistry& sr)
 {
 }
 
-ExternalSimplex::ExternalSimplex(SimplexStatistics& s)
+ExternalSimplex::ExternalSimplex(SimplexStatistics& s, const Options& o)
     : d_stats(s),
       d_pivotLimit(std::numeric_limits<int>::max()),
       d_maxDepth(std::numeric_limits<int>::max()),
-      d_branchLimit(std::numeric_limits<int>::max())
+      d_branchLimit(std::numeric_limits<int>::max()),
+      d_delta(o.arith.delta),
+      d_useDelta(o.arith.delta >= 0)
 {
   d_stats.d_pivotLimit.set(d_pivotLimit);
 }

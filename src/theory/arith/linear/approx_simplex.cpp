@@ -148,7 +148,7 @@ class BranchCutInfo;
 class ApproxGLPK : public ApproximateSimplex
 {
  public:
-  ApproxGLPK(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s);
+  ApproxGLPK(const ArithVariables& v, TreeLog& l, external::SimplexStatistics& s, const Options& o);
   ~ApproxGLPK();
 
   LinResult solveRelaxation() override;
@@ -262,11 +262,11 @@ class ApproxGLPK : public ApproximateSimplex
 
   /** UTILITIES FOR DEALING WITH ESTIMATES */
 
-  static constexpr double SMALL_FIXED_DELTA = .000000001;
+  static constexpr double SMALL_FIXED_EPSILON = .000000001;
   static constexpr double TOLERENCE = 1 + .000000001;
 
-  /** Returns true if two doubles are roughly equal based on TOLERENCE and
-   * SMALL_FIXED_DELTA.*/
+  /** Returns true if two doubles are roughly equal based on TOLERANCE and
+   * SMALL_FIXED_EPSILON.*/
   static bool roughlyEqual(double a, double b);
 
   /**
@@ -312,11 +312,11 @@ bool ApproxGLPK::roughlyEqual(double a, double b)
 {
   if (a == 0)
   {
-    return -SMALL_FIXED_DELTA <= b && b <= SMALL_FIXED_DELTA;
+    return -SMALL_FIXED_EPSILON <= b && b <= SMALL_FIXED_EPSILON;
   }
   else if (b == 0)
   {
-    return -SMALL_FIXED_DELTA <= a && a <= SMALL_FIXED_DELTA;
+    return -SMALL_FIXED_EPSILON <= a && a <= SMALL_FIXED_EPSILON;
   }
   else
   {
@@ -511,8 +511,8 @@ static CutInfoKlass fromGlpkClass(int klass){
 
 ApproxGLPK::ApproxGLPK(const ArithVariables& var,
                        TreeLog& l,
-                       external::SimplexStatistics& s)
-    : ApproximateSimplex(s),
+                       external::SimplexStatistics& s, const Options& o)
+    : ApproximateSimplex(s, o),
       d_vars(var),
       d_log(l),
       d_inputProb(nullptr),
@@ -581,14 +581,14 @@ ApproxGLPK::ApproxGLPK(const ArithVariables& var,
       }else{
         type = GLP_DB;
       }
-      lb = d_vars.getLowerBound(v).approx(SMALL_FIXED_DELTA);
-      ub = d_vars.getUpperBound(v).approx(SMALL_FIXED_DELTA);
+      lb = d_vars.getLowerBound(v).approx(SMALL_FIXED_EPSILON);
+      ub = d_vars.getUpperBound(v).approx(SMALL_FIXED_EPSILON);
     }else if(d_vars.hasUpperBound(v) && !d_vars.hasLowerBound(v)){
       type = GLP_UP;
-      ub = d_vars.getUpperBound(v).approx(SMALL_FIXED_DELTA);
+      ub = d_vars.getUpperBound(v).approx(SMALL_FIXED_EPSILON);
     }else if(!d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v)){
       type = GLP_LO;
-      lb = d_vars.getLowerBound(v).approx(SMALL_FIXED_DELTA);
+      lb = d_vars.getLowerBound(v).approx(SMALL_FIXED_EPSILON);
     }else{
       type = GLP_FR;
     }
@@ -990,7 +990,7 @@ Solution ApproxGLPK::extractSolution(bool mip)
 
       if (d_vars.hasLowerBound(vi)
           && roughlyEqual(newAssign,
-                          d_vars.getLowerBound(vi).approx(SMALL_FIXED_DELTA)))
+                          d_vars.getLowerBound(vi).approx(SMALL_FIXED_EPSILON)))
       {
         Trace("approx") << "  to lb" << std::endl;
 
@@ -999,7 +999,7 @@ Solution ApproxGLPK::extractSolution(bool mip)
       else if (d_vars.hasUpperBound(vi)
                && roughlyEqual(
                    newAssign,
-                   d_vars.getUpperBound(vi).approx(SMALL_FIXED_DELTA)))
+                   d_vars.getUpperBound(vi).approx(SMALL_FIXED_EPSILON)))
       {
         newValues.set(vi, d_vars.getUpperBound(vi));
         Trace("approx") << "  to ub" << std::endl;
@@ -1030,7 +1030,7 @@ Solution ApproxGLPK::extractSolution(bool mip)
           proposal = d_vars.getAssignment(vi);
         }
 
-        if (roughlyEqual(newAssign, oldAssign.approx(SMALL_FIXED_DELTA)))
+        if (roughlyEqual(newAssign, oldAssign.approx(SMALL_FIXED_EPSILON)))
         {
           Trace("approx") << "  to prev value" << newAssign << " " << oldAssign
                           << std::endl;
@@ -3170,10 +3170,12 @@ namespace arith::linear {
 external::ExternalSimplex* ApproximateSimplex::mkApproximateSimplexSolver(
     CVC5_UNUSED const ArithVariables& vars,
     CVC5_UNUSED TreeLog& l,
-    CVC5_UNUSED external::SimplexStatistics& s)
+    CVC5_UNUSED external::SimplexStatistics& s,
+    CVC5_UNUSED const Options& o
+    )
 {
 #ifdef CVC5_USE_GLPK
-  return new ApproxGLPK(vars, l, s);
+  return new ApproxGLPK(vars, l, s, o);
 #else
   Unimplemented() << "Approximate simplex solver requires GLPK";
 #endif

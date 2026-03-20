@@ -42,6 +42,7 @@ class CutInfo;
 
 class ApproximateSimplex : public external::ExternalSimplex{
  public:
+  using ExternalSimplex::ExternalSimplex;
   /** Is GLPK enabled? */
   static bool enabled();
 
@@ -49,9 +50,9 @@ class ApproximateSimplex : public external::ExternalSimplex{
    * If GLPK is enabled, creates a GPLK-based approximating solver.
    */
   static ExternalSimplex* mkApproximateSimplexSolver(
-      const ArithVariables& vars, TreeLog& l, external::SimplexStatistics& s);
+      const ArithVariables& vars, TreeLog& l, external::SimplexStatistics& s, const Options& o);
 
-  explicit ApproximateSimplex(external::SimplexStatistics& s) : ExternalSimplex(s) {}
+  explicit ApproximateSimplex(external::SimplexStatistics& s, const Options& o) : ExternalSimplex(s, o) {}
 };/* class ApproximateSimplex */
 
 }  // namespace arith

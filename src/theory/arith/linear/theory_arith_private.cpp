@@ -3204,7 +3204,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel)
   TreeLog& tl = getTreeLog();
   external::SimplexStatistics& stats = getSimplexStats();
   external::ExternalSimplex* approx =
-      ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats);
+      ApproximateSimplex::mkApproximateSimplexSolver(d_partialModel, tl, stats, options());
 
   approx->setPivotLimit(mipLimit);
   if (!d_guessedCoeffSet)
@@ -3510,7 +3510,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
           break;
         case options::ExternalLPSolver::GLPK:
           externalSolver = ApproximateSimplex::mkApproximateSimplexSolver(
-              d_partialModel, tl, getSimplexStats());
+              d_partialModel, tl, getSimplexStats(), options());
           break;
         default: externalSolver = nullptr;
       }

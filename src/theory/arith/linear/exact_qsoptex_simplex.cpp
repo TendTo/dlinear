@@ -322,7 +322,7 @@ class ExactQsoptex : public ExactSimplex
   ExactQsoptex(const ArithVariables& v,
                TreeLog& l,
                external::SimplexStatistics& s,
-               double delta = -1.0);
+               const Options& o);
   virtual ~ExactQsoptex();
 
   external::LinResult solveRelaxation() override;
@@ -351,6 +351,10 @@ class ExactQsoptex : public ExactSimplex
   {
     Unimplemented();
   }
+
+  bool useDelta() const { return d_useDelta; }
+  const external::SimplexStatistics& stats() const { return d_stats; }
+  external::SimplexStatistics& stats() { return d_stats; }
 
  protected:
   void freeBasis();
@@ -418,8 +422,6 @@ class ExactQsoptex : public ExactSimplex
   qsopt_ex::MpqArray d_x;
   QSbasis d_basis;
 
-  mpq_class d_delta;
-
  public:
   enum class VariableType
   {
@@ -443,14 +445,14 @@ class ExactQsoptexEpsilon : public ExactQsoptex
   ExactQsoptexEpsilon(const ArithVariables& vars,
                       TreeLog& l,
                       external::SimplexStatistics& s,
-                      double delta = -1.0);
+                      const Options& o);
 
   external::Solution extractSolution(bool mip) override;
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
 
-  static constexpr double SMALL_FIXED_DELTA = .000000001;
+  static constexpr double SMALL_FIXED_EPSILON = .000000001;
 
   bool isStrictVarZero() override { return false; }
 };
@@ -461,7 +463,7 @@ class ExactQsoptexStrict : public ExactQsoptex
   ExactQsoptexStrict(const ArithVariables& v,
                      TreeLog& l,
                      external::SimplexStatistics& s,
-                     double delta = -1.0);
+                     const Options& o);
 
   void setOptCoeffs(const ArithRatPairVec& ref) override {}
 
@@ -480,14 +482,13 @@ class ExactQsoptexStrict : public ExactQsoptex
 ExactQsoptex::ExactQsoptex(const ArithVariables& var,
                            TreeLog& l,
                            external::SimplexStatistics& s,
-                           const double delta)
-    : ExactSimplex(s),
+                           const Options& o)
+    : ExactSimplex(s, o),
       d_vars(var),
       d_log(l),
       d_status(-1),
       d_x(0),
       d_basis{.nstruct = 0, .nrows = 0, .cstat = nullptr, .rstat = nullptr},
-      d_delta(delta),
       d_solvedRelaxation(false),
       d_solvedMIP(false)
 {
@@ -535,8 +536,8 @@ ExactQsoptex::ExactQsoptex(const ArithVariables& var,
 ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
                                          TreeLog& l,
                                          external::SimplexStatistics& s,
-                                         const double delta)
-    : ExactQsoptex(vars, l, s, delta)
+                                         const Options& o)
+    : ExactQsoptex(vars, l, s, o)
 {
   d_stats.d_strict.set(0);
 
@@ -549,11 +550,11 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
   d_rhs.reserve(d_rowToArithVar.size());
   d_range.reserve(d_rowToArithVar.size());
-  numNonZeroPerRow.reserve(d_rowToArithVar.size() * 2);
-  beginRowIdx.reserve(d_rowToArithVar.size() * 2);
+  numNonZeroPerRow.reserve(d_rowToArithVar.size());
+  beginRowIdx.reserve(d_rowToArithVar.size());
   colIdxs.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
   values.reserve((d_colToArithVar.size() + d_rowToArithVar.size()) * 2);
-  d_sense.reserve(d_rowToArithVar.size() * 2);
+  d_sense.reserve(d_rowToArithVar.size());
 
   // Construct the rows of the LP by parsing the polynomial constraints together
   // with the row bounds on the auxiliary variables
@@ -585,24 +586,28 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 
     if (d_vars.hasUpperBound(v) && d_vars.hasLowerBound(v))  // Bounded
     {
-      d_rhs.emplace_back(hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA
-                                        : varToLb(v));
-      d_range.emplace_back(hasStrictUB(v) ? mpq_class{varToUb(v) - varToLb(v)
-                                                      - SMALL_FIXED_DELTA}
-                                          : mpq_class{varToUb(v) - varToLb(v)});
+      d_rhs.emplace_back(!d_useDelta && hasStrictLb(v)
+                             ? varToLb(v) + SMALL_FIXED_EPSILON
+                             : varToLb(v));
+      d_range.emplace_back(
+          !d_useDelta && hasStrictUB(v)
+              ? mpq_class{varToUb(v) - varToLb(v) - SMALL_FIXED_EPSILON}
+              : mpq_class{varToUb(v) - varToLb(v)});
       d_sense.emplace_back('R');
     }
     else if (d_vars.hasLowerBound(v))  // Only lower bound
     {
-      d_rhs.emplace_back(hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA
-                                        : varToLb(v));
+      d_rhs.emplace_back(!d_useDelta && hasStrictLb(v)
+                             ? varToLb(v) + SMALL_FIXED_EPSILON
+                             : varToLb(v));
       d_range.emplace_back(0);
       d_sense.emplace_back('G');
     }
     else if (d_vars.hasUpperBound(v))  // Only upper bound
     {
-      d_rhs.emplace_back(hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA
-                                        : varToUb(v));
+      d_rhs.emplace_back(!d_useDelta && hasStrictUB(v)
+                             ? varToUb(v) - SMALL_FIXED_EPSILON
+                             : varToUb(v));
       d_range.emplace_back(0);
       d_sense.emplace_back('L');
     }
@@ -626,14 +631,15 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
       d_vars.printModel(v, Trace("approx-debug"));
     }
 
-    mpq_QSnew_col(
-        d_qsx,
-        mpq_oneLpNum,
-        hasStrictLb(v) ? mpq_class(varToLb(v) + SMALL_FIXED_DELTA).get_mpq_t()
-                       : varToLb(v).get_mpq_t(),
-        hasStrictUB(v) ? mpq_class(varToUb(v) - SMALL_FIXED_DELTA).get_mpq_t()
-                       : varToUb(v).get_mpq_t(),
-        nullptr);
+    mpq_QSnew_col(d_qsx,
+                  mpq_oneLpNum,
+                  !d_useDelta && hasStrictLb(v)
+                      ? mpq_class(varToLb(v) + SMALL_FIXED_EPSILON).get_mpq_t()
+                      : varToLb(v).get_mpq_t(),
+                  !d_useDelta && hasStrictUB(v)
+                      ? mpq_class(varToUb(v) - SMALL_FIXED_EPSILON).get_mpq_t()
+                      : varToUb(v).get_mpq_t(),
+                  nullptr);
   }
 
   static_assert(sizeof(mpq_class) == sizeof(mpq_t),
@@ -653,8 +659,8 @@ ExactQsoptexEpsilon::ExactQsoptexEpsilon(const ArithVariables& vars,
 ExactQsoptexStrict::ExactQsoptexStrict(const ArithVariables& vars,
                                        TreeLog& l,
                                        external::SimplexStatistics& s,
-                                       const double delta)
-    : ExactQsoptex(vars, l, s, delta)
+                                       const Options& o)
+    : ExactQsoptex(vars, l, s, o)
 {
   d_stats.d_strict.set(1);
 
@@ -1498,9 +1504,8 @@ external::ExternalSimplex* ExactSimplex::mkExactQsoptexSolver(
     CVC5_UNUSED const Options& o)
 {
 #ifdef CVC5_USE_QSOPTEX
-  if (o.arith.lpStrictVar)
-    return new ExactQsoptexStrict(vars, l, s, o.arith.delta);
-  return new ExactQsoptexEpsilon(vars, l, s, o.arith.delta);
+  if (o.arith.lpStrictVar) return new ExactQsoptexStrict(vars, l, s, o);
+  return new ExactQsoptexEpsilon(vars, l, s, o);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";
 #endif

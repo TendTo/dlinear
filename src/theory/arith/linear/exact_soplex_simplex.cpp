@@ -59,7 +59,8 @@ class ExactSoplex : public ExactSimplex
  public:
   ExactSoplex(const ArithVariables& v,
               TreeLog& l,
-              external::SimplexStatistics& s);
+              external::SimplexStatistics& s,
+              const Options& o);
 
   external::LinResult solveRelaxation() override;
   external::Solution extractRelaxation() override
@@ -166,14 +167,15 @@ class ExactSoplexEpsilon : public ExactSoplex
  public:
   ExactSoplexEpsilon(const ArithVariables& vars,
                      TreeLog& l,
-                     external::SimplexStatistics& s);
+                     external::SimplexStatistics& s,
+                     const Options& o);
 
   void setOptCoeffs(const ArithRatPairVec& ref) override;
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
 
-  static constexpr double SMALL_FIXED_DELTA = .000000001;
+  static constexpr double SMALL_FIXED_EPSILON = .000000001;
 
   bool isStrictVarZero() override { return false; }
 
@@ -185,7 +187,8 @@ class ExactSoplexStrict : public ExactSoplex
  public:
   ExactSoplexStrict(const ArithVariables& v,
                     TreeLog& l,
-                    external::SimplexStatistics& s);
+                    external::SimplexStatistics& s,
+                    const Options& o);
 
   void setOptCoeffs(const ArithRatPairVec& ref) override {}
 
@@ -207,8 +210,9 @@ const soplex::Rational ExactSoplex::s_zero_rational{0};
 
 ExactSoplex::ExactSoplex(const ArithVariables& var,
                          TreeLog& l,
-                         external::SimplexStatistics& s)
-    : ExactSimplex(s),
+                         external::SimplexStatistics& s,
+                         const Options& o)
+    : ExactSimplex(s, o),
       d_vars(var),
       d_log(l),
       d_solvedRelaxation(false),
@@ -265,8 +269,9 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
 
 ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
                                        TreeLog& l,
-                                       external::SimplexStatistics& s)
-    : ExactSoplex(vars, l, s)
+                                       external::SimplexStatistics& s,
+                                       const Options& o)
+    : ExactSoplex(vars, l, s, o)
 {
   d_stats.d_strict.set(0);
 
@@ -306,11 +311,13 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
     soplex::Rational ub = soplex::infinity;
     if (d_vars.hasLowerBound(v))
     {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+      lb = !d_useDelta && hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_EPSILON
+                                         : varToLb(v);
     }
     if (d_vars.hasUpperBound(v))
     {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+      ub = !d_useDelta && hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_EPSILON
+                                         : varToUb(v);
     }
     rows.add({lb, vec, ub});
   }
@@ -331,11 +338,13 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
     soplex::Rational ub = soplex::infinity;
     if (d_vars.hasLowerBound(v))
     {
-      lb = hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_DELTA : varToLb(v);
+      lb = !d_useDelta && hasStrictLb(v) ? varToLb(v) + SMALL_FIXED_EPSILON
+                                         : varToLb(v);
     }
     if (d_vars.hasUpperBound(v))
     {
-      ub = hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_DELTA : varToUb(v);
+      ub = !d_useDelta && hasStrictUB(v) ? varToUb(v) - SMALL_FIXED_EPSILON
+                                         : varToUb(v);
     }
     cols.add({1.0, soplex::DSVectorRational(), ub, lb});
   }
@@ -347,8 +356,9 @@ ExactSoplexEpsilon::ExactSoplexEpsilon(const ArithVariables& vars,
 
 ExactSoplexStrict::ExactSoplexStrict(const ArithVariables& var,
                                      TreeLog& l,
-                                     external::SimplexStatistics& s)
-    : ExactSoplex(var, l, s)
+                                     external::SimplexStatistics& s,
+                                     const Options& o)
+    : ExactSoplex(var, l, s, o)
 {
   d_stats.d_strict.set(1);
 
@@ -1616,8 +1626,8 @@ external::ExternalSimplex* ExactSimplex::mkExactSoplexSolver(
     const Options& o)
 {
 #ifdef CVC5_USE_SOPLEX
-  if (o.arith.lpStrictVar) return new ExactSoplexStrict(vars, l, s);
-  return new ExactSoplexEpsilon(vars, l, s);
+  if (o.arith.lpStrictVar) return new ExactSoplexStrict(vars, l, s, o);
+  return new ExactSoplexEpsilon(vars, l, s, o);
 #else
   Unimplemented() << "Exact simplex solver requires SoPlex";
 #endif
