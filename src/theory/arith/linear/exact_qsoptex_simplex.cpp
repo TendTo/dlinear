@@ -450,8 +450,7 @@ class ExactQsoptexEpsilon : public ExactQsoptex
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
 
-  static constexpr double SMALL_FIXED_DELTA =
-      std::numeric_limits<double>::epsilon();
+  static constexpr double SMALL_FIXED_DELTA = .000000001;
 
   bool isStrictVarZero() override { return false; }
 };
