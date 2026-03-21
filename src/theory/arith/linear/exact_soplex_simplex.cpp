@@ -232,7 +232,8 @@ ExactSoplex::ExactSoplex(const ArithVariables& var,
   d_spx.setIntParam(SoPlex::SYNCMODE, SoPlex::SYNCMODE_AUTO);
   d_spx.setIntParam(SoPlex::PRICER, SoPlex::PRICER_AUTO);
   d_spx.setIntParam(SoPlex::ITERLIMIT, d_pivotLimit);
-  d_spx.setRealParam(SoPlex::FEASTOL, 0.0);
+  // If delta, allow for feasibility tolerance
+  d_spx.setRealParam(SoPlex::FEASTOL, std::max(d_delta, 0.0));
   d_spx.setRealParam(SoPlex::OPTTOL, 0.0);
 
   if (TraceIsOn("approx-debug"))
@@ -1386,6 +1387,25 @@ external::LinResult ExactSoplex::solveRelaxation()
         precision * d_spx.realParam(SoPlex::PRECISION_BOOSTING_FACTOR));
   }
   d_stats.d_precision << precision;
+  if (d_useDelta)
+  {
+    soplex::Rational maxBoundViolation, sumBoundViolation;
+    soplex::Rational maxRowViolation, sumRowViolation;
+    d_spx.getBoundViolationRational(maxBoundViolation, sumBoundViolation);
+    d_spx.getRowViolationRational(maxRowViolation, sumRowViolation);
+    const double delta = std::max(maxBoundViolation.convert_to<double>(),
+                                  maxRowViolation.convert_to<double>());
+    d_stats.d_maxDelta = std::max(d_stats.d_maxDelta.get(), delta);
+    if (res == SpxStatus::OPTIMAL || res == SpxStatus::UNBOUNDED)
+      ++d_stats.d_deltaResults;
+#ifndef NDEBUG
+    std::cout << "Max bound violation: " << maxBoundViolation << std::endl;
+    std::cout << "Sum bound violation: " << sumBoundViolation << std::endl;
+    std::cout << "Max row violation: " << maxRowViolation << std::endl;
+    std::cout << "Sum row violation: " << sumRowViolation << std::endl;
+    std::cout << "The total infeas is " << delta << std::endl;
+#endif
+  }
 
   bool status = false;
   switch (res)

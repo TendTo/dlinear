@@ -16,9 +16,10 @@
  * \todo document this file
  */
 #include "theory/arith/linear/external_simplex.h"
-#include "options/arith_options.h"
 
 #include <ostream>
+
+#include "options/arith_options.h"
 
 namespace cvc5::internal {
 namespace theory {
@@ -57,7 +58,8 @@ SimplexStatistics::SimplexStatistics(StatisticsRegistry& sr)
       d_strict(sr.registerInt("theory::arith::z::approx::strictVar")),
       d_externalAdjustmentPivots(
           sr.registerInt("theory::arith::z::approx::externalAdjustmentPivots")),
-      d_delta(sr.registerValue<double>("theory::arith::z::approx::delta")),
+      d_deltaResults(sr.registerInt("theory::arith::z::approx::deltaResults")),
+      d_maxDelta(sr.registerValue<double>("theory::arith::z::approx::delta")),
       d_precision(sr.registerHistogram<std::size_t>(
           "theory::arith::z::approx::precision")),
       d_refinements(sr.registerHistogram<std::size_t>(

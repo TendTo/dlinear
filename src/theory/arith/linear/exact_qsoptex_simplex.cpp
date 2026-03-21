@@ -1204,13 +1204,6 @@ void ExactQsoptex::extractVarValue(const int idx, external::Solution& sol)
       if (VarType == VariableType::ROW)
       {
         rhs = d_rhs[idx] + (d_sense[idx] == 'L' ? -getY(idx) : getY(idx));
-#ifndef NDEBUG
-        if (d_sense[idx] == 'R')
-        {
-          std::cout << "RHS: " << rhs << " Range: " << d_range[idx]
-                    << " Y: " << getY(idx) << std::endl;
-        }
-#endif
         value = &toMpq(rhs);
       }
       else if (VarType == VariableType::COL)
@@ -1438,7 +1431,7 @@ external::LinResult ExactQsoptex::solveRelaxation()
   // the (colcount) "structural" variables.
   d_x.Resize(static_cast<size_t>(numCols()));
   unsigned int precision = 0;
-  mpq_class delta = d_delta >= 0 ? d_delta : 0;
+  mpq_class delta = std::max(0.0, d_delta);
 
   const int res = QSdelta_solver(d_qsx,
                                  delta.get_mpq_t(),
@@ -1453,8 +1446,17 @@ external::LinResult ExactQsoptex::solveRelaxation()
   Assert(res == 0);
 
   d_stats.d_precision << precision;
-  d_stats.d_delta =
-      d_delta >= 0 ? std::max(d_stats.d_delta.get(), delta.get_d()) : -1.0;
+  if (d_useDelta)
+  {
+    d_stats.d_maxDelta = std::max(d_stats.d_maxDelta.get(), delta.get_d());
+    if (d_status == QS_LP_OPTIMAL || d_status == QS_LP_FEASIBLE
+        || d_status == QS_LP_DELTA_OPTIMAL || d_status == QS_LP_DELTA_FEASIBLE
+        || d_status == QS_LP_UNBOUNDED)
+      ++d_stats.d_deltaResults;
+#ifndef NDEBUG
+    std::cout << "The total infeas is " << delta << std::endl;
+#endif
+  }
 
   switch (d_status)
   {
@@ -1462,6 +1464,7 @@ external::LinResult ExactQsoptex::solveRelaxation()
     case QS_LP_FEASIBLE:
     case QS_LP_DELTA_OPTIMAL:
     case QS_LP_DELTA_FEASIBLE:
+    case QS_LP_UNBOUNDED:
       d_solvedRelaxation = true;
       // Check the value of the last column (strict variable)
       return isStrictVarZero() ? external::LinResult::LinInfeasible

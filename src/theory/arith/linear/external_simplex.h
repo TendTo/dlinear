@@ -96,7 +96,8 @@ class SimplexStatistics
   IntStat d_externalSimplexType;
   IntStat d_strict;
   IntStat d_externalAdjustmentPivots;
-  ValueStat<double> d_delta;
+  IntStat d_deltaResults;
+  ValueStat<double> d_maxDelta;
   HistogramStat<std::size_t> d_precision;
   HistogramStat<std::size_t> d_refinements;
 };

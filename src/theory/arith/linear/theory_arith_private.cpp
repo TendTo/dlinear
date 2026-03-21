@@ -3021,7 +3021,7 @@ external::SimplexStatistics& TheoryArithPrivate::getSimplexStats()
   if (d_simplexStats == NULL)
   {
     d_simplexStats = new external::SimplexStatistics(statisticsRegistry());
-    d_simplexStats->d_delta = options().arith.delta;
+    d_simplexStats->d_maxDelta = options().arith.delta >= 0 ? 0 : -1;
   }
   return *d_simplexStats;
 }
@@ -3382,6 +3382,7 @@ void TheoryArithPrivate::importSolution(const external::Solution& solution)
     d_partialModel.printEntireModel(Trace("arith::importSolution"));
   }
 
+
   d_qflraStatus = d_attemptSolSimplex.attempt(solution);
 
   if (TraceIsOn("arith::importSolution"))
@@ -3389,6 +3390,14 @@ void TheoryArithPrivate::importSolution(const external::Solution& solution)
     Trace("arith::importSolution")
         << "importSolution intermediate " << d_qflraStatus << endl;
     d_partialModel.printEntireModel(Trace("arith::importSolution"));
+  }
+
+  if (options().arith.delta >= 0 && solution.linResult == LinResult::LinFeasible)
+  {
+    // If we are working with a delta result, after applying the assignment,
+    // trust the LP solver and return SAT
+    d_qflraStatus = Result::SAT;
+    return;
   }
 
   if (d_qflraStatus != Result::UNSAT)
@@ -3545,6 +3554,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
       TimerStat::CodeTimer codeTimer1(d_statistics.d_lpTimer);
       externalResult = externalSolver->solveRelaxation();
     }
+
     Trace("solveRealRelaxation") << "solve relaxation? " << endl;
     switch (externalResult)
     {
