@@ -12,15 +12,19 @@ GLPK = 1
 SOPLEX = 2
 QSOPTEX = 3
 
-plt.rcParams.update({
-    "font.size": 11,
-    "axes.titlesize": 12,
-    "axes.labelsize": 11,
-    "legend.fontsize": 10,
-    "xtick.labelsize": 10,
-    "ytick.labelsize": 10,
-})
-
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.size": 11,
+        "axes.titlesize": 12,
+        "axes.labelsize": 11,
+        "legend.fontsize": 10,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "font.family": "serif",
+        "font.serif": ["Times New Roman"]
+    }
+)
 
 def parse_duration_to_ms(value):
     """
@@ -105,6 +109,13 @@ class SolverResult:
     @property
     def result_key(self) -> str:
         return f"result{self.solver_id}"
+
+    def apply_filter(self, filter_func):
+        filtered_df = self.dataframe[filter_func(self.dataframe)]
+        return SolverResult(dataframe=filtered_df, solver_name=self.solver_name, solver_id=self.solver_id)
+
+    def replace_df(self, new_df: pd.DataFrame):
+        return SolverResult(dataframe=new_df, solver_name=self.solver_name, solver_id=self.solver_id)
 
 
 def query_time(*results: SolverResult, instances: str | tuple[str]):
@@ -247,6 +258,8 @@ def plot_performance_profiles(
     num_points: int = 1000,
     metric_add: float | int | list[float] | list[int] = 0,
     title="",
+    shrink_width: float = 0.8,
+    shrink_height: float = 1.0,
     ax=None,
 ):
     """Plot Dolan–Moré performance profiles for an arbitrary number of solver results.
@@ -375,20 +388,25 @@ def plot_performance_profiles(
         profile_df[result.solver_name] = [float(np.mean(r <= tau) * 100) for tau in tau_values]
 
     if ax is None:
-        _, ax = plt.subplots(figsize=(6.4, 4.8))
-
+        _, ax = plt.subplots()
     for result in results:
         ax.step(profile_df.index, profile_df[result.solver_name], where="post", label=result.solver_name)
 
-    ax.set_xlabel("Factor distance from the best")
-    ax.set_ylabel("Percentage of instances solved")
+    ax.set_xlabel("Ratio to best time (log scale)")
+    ax.set_ylabel("Percentage of instances")
     if title:
         ax.set_title(title)
     ax.set_xlim(1.0, max_tau)
     ax.set_ylim(0.0, 100.0)
     ax.set_xscale(value="log")
     ax.grid(True, linestyle="--", alpha=0.4)
-    ax.legend()
+    ax.figure.tight_layout()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * shrink_width, box.height * shrink_height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     return ax, profile_df
 
@@ -517,13 +535,13 @@ def plot_time_histogram(
     bin_edges = np.linspace(min_bin, max_bin, max(bins) + 1)
 
     if ax is None:
-        _, ax = plt.subplots(figsize=(3.2, 2.4))
+        _, ax = plt.subplots()
     for i, result in enumerate(results):
         solver_metric_col = f"{metric_cols[i]}{result.solver_id}"
         times = df_all[solver_metric_col].replace([np.inf, -np.inf], np.nan).dropna()
         ax.hist(times, bins=bin_edges, alpha=0.5, label=result.solver_name)
-    ax.set_xlabel("Time (ms)")
-    ax.set_ylabel("Number of instances")
+    ax.set_xlabel(r"Time (ms)")
+    ax.set_ylabel(r"Number of instances")
     ax.yaxis.get_major_locator().set_params(integer=True)
     ax.set_title(title)
     ax.legend()
