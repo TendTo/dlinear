@@ -105,17 +105,17 @@ class SolverResult:
     dataframe: pd.DataFrame
     solver_name: str
     solver_id: str
+    iterations: int = -1
 
     @property
     def result_key(self) -> str:
         return f"result{self.solver_id}"
 
     def apply_filter(self, filter_func):
-        filtered_df = self.dataframe[filter_func(self.dataframe)]
-        return SolverResult(dataframe=filtered_df, solver_name=self.solver_name, solver_id=self.solver_id)
+        return SolverResult(dataframe=filter_func(self.dataframe), solver_name=self.solver_name, solver_id=self.solver_id, iterations=self.iterations)
 
     def replace_df(self, new_df: pd.DataFrame):
-        return SolverResult(dataframe=new_df, solver_name=self.solver_name, solver_id=self.solver_id)
+        return SolverResult(dataframe=new_df, solver_name=self.solver_name, solver_id=self.solver_id, iterations=self.iterations)
 
 
 def query_time(*results: SolverResult, instances: str | tuple[str]):
