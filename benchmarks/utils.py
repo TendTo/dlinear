@@ -480,7 +480,7 @@ def print_stats(soplex_configs: list[SolverResult]):
         float_format="%.2f",
         columns=list(renames.values()),
     )
-    with open("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex", "r+") as f:
+    with open("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex", "r+", encoding="utf-8") as f:
         text = f.read()
         f.seek(0)
         f.write(
@@ -496,13 +496,13 @@ def print_stats(soplex_configs: list[SolverResult]):
     rows = []
     for config_name in summary_df.index:
         row = summary_df.loc[config_name]
-        failures = int(row["feasible_failures"] + row["infeasible_failures"])
+        # failures = int(row["feasible_failures"] + row["infeasible_failures"])
         rows.append(
-            f"| {config_name} | {int(row['external_calls'])} | {int(row['solved'])} | {int(row['unknown'])} | {int(row['tot_time_external'])} | {row['avg_time_external']:<15.2f}  | {row['lp_time']:<15.2f} | {row['lp_setup_time']:<15.2f} | {int(row['feasible_failures'])} | {int(row['infeasible_failures'])} | {failures} | {failures / row.external_calls * 100:.2f}% | {int(row['adjustment_calls'])} | {row['avg_adjustment_calls']:<15.2f} | {int(row['at_least_one_adjustment_call'])} |"
+            f"| {config_name} | {int(row['external_calls'])} | {int(row['solved'])} | {int(row['unknown'])} | {int(row['tot_time_external'])} | {row['avg_time_external']:<15.2f}  | {row['lp_time']:<15.2f} | {row['lp_setup_time']:<15.2f} | {int(row['adjustment_calls'])} | {row['avg_adjustment_calls']:<15.2f} | {int(row['at_least_one_adjustment_call'])} |"
         )
     return f"""### Summary statistics by SoPlex pivot limit
-| Config       | Registered results | Solved | Unknown | Tot Time | Med Time | Med LP Time | Med LP Setup Time | Feasible failures | Infeasible failures | Tot Failures | Failure rate | Adjustment calls | Med Adjustment calls | $>1$ Adj. Pivot |
-| ------------ | -------------- | ------ | ------- | ---------- | --------- | ---- | ---- | ------------- | ------------------- | ------------ | ------------ | ---------------- | ---------------------- | ----------------- |
+| Config       | Registered results | Solved | Unknown | Tot Time | Med Time | Med LP Time | Med LP Setup Time | Adjustment calls | Med Adjustment calls | $>1$ Adj. Pivot |
+| ------------ | -------------- | ------ | ------- | ---------- | --------- | ---- | ---- | ---------------- | ---------------------- | ----------------- |
 {"\n".join(rows)}
     """
 
