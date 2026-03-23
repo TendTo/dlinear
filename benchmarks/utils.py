@@ -4,9 +4,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-from itertools import combinations
+from itertools import combinations, product
 from functools import reduce
-
+import random
 
 GLPK = 1
 SOPLEX = 2
@@ -15,18 +15,561 @@ QSOPTEX = 3
 plt.rcParams.update(
     {
         "text.usetex": True,
-        "font.size": 11,
+        "font.size": 10,
         "axes.titlesize": 12,
-        "axes.labelsize": 11,
+        "axes.labelsize": 10,
         "legend.fontsize": 10,
         "xtick.labelsize": 10,
         "ytick.labelsize": 10,
         "font.family": "serif",
-        "font.serif": ["Times New Roman"]
+        "font.serif": ["Times New Roman"],
+        "figure.figsize": (12.19826 / 2.54, 6.5 / 2.54),  # Convert from cm to inches
     }
 )
 
-def parse_duration_to_ms(value):
+
+@dataclass
+class SolverResult:
+    dataframe: pd.DataFrame
+    solver_name: str
+    solver_id: str
+    iterations: int = -1
+
+    @property
+    def result_key(self) -> str:
+        return f"result{self.solver_id}"
+
+    def apply_filter(self, filter_func):
+        return SolverResult(
+            dataframe=filter_func(self.dataframe),
+            solver_name=self.solver_name,
+            solver_id=self.solver_id,
+            iterations=self.iterations,
+        )
+
+    def replace_df(self, new_df: pd.DataFrame):
+        return SolverResult(
+            dataframe=new_df, solver_name=self.solver_name, solver_id=self.solver_id, iterations=self.iterations
+        )
+
+
+def difficulty_analysis(solvers_analysis: list[SolverResult], total_count: int, group_name="all"):
+    # Instance difficulty categorization
+    text = f"""## Difficulty analysis on {group_name}
+
+All problems are divided into buckets depending on the time taken by the solver to solve them.
+
+| Solver | Strict | Pivots | Very Fast (<0.1s) | Fast (0.1-1s) | Medium (1-10s) | Hard (10-100s) | Very Hard (>100s) | Total |
+| ------ | ------ | ------ | ----------------- | ------------- | -------------- | -------------- | ----------------- | ----- |
+"""
+
+    # Categorize instances by time range
+    def categorize_time(time_val):
+        if time_val < 0.1:
+            return "Very Fast (<0.1s)"
+        elif time_val < 1:
+            return "Fast (0.1-1s)"
+        elif time_val < 10:
+            return "Medium (1-10s)"
+        elif time_val < 100:
+            return "Hard (10-100s)"
+        else:
+            return "Very Hard (>100s)"
+
+    # Analyze institution distribution for each solver
+
+    rows = []
+    data = {}
+
+    categories = ["Very Fast (<0.1s)", "Fast (0.1-1s)", "Medium (1-10s)", "Hard (10-100s)", "Very Hard (>100s)"]
+    latex_categories = ["$[0, 0.1)$s", "$[0.1, 1)$s", "$[1, 10)$s", "$[10, 100)$s", r"$[100, \infty)$s"]
+    for solver in solvers_analysis:
+        solver_name = solver.solver_name
+        df = solver.dataframe
+        solver_id = solver.solver_id
+        df_copy = (
+            df.copy()
+            if "theory::arith::z::arith::relax::calls" not in df.columns
+            else df[df["theory::arith::z::arith::relax::calls"] > 0].copy()
+        )
+        df_copy = df_copy[df_copy[f"result{solver_id}"].isin(["sat", "unsat"])]
+
+        df_copy["category"] = df_copy[f"time{solver_id}"].apply(categorize_time)
+        assert (
+            len(df_copy["options::pivots"].unique()) == 1 if "options::pivots" in df_copy.columns else True
+        ), f"Expected only one pivot limit per solver in the analysis, but got {df_copy['options::pivots'].unique()} on solver {solver_name}"
+        pivot_limit = int(df_copy["options::pivots"].iloc[0]) if "options::pivots" in df_copy.columns else 0
+
+        row = f"| {solver_name} | {'✔' if "options::strict" in df_copy.columns and  df_copy['options::strict'].iloc[0] else ''} | {pivot_limit}"
+
+        data[solver_name] = {
+            r"\# Sol. / \# Tot.": f"{len(df_copy)} / {total_count} ({100 * len(df_copy) / total_count:.1f}\\%)"
+        }
+        data[solver_name]["solved"] = len(df_copy)
+        data[solver_name]["total"] = total_count
+
+        for category, latex_category in zip(categories, latex_categories):
+            count = (df_copy["category"] == category).sum()
+            if count > 0:
+                pct = 100 * count / len(df_copy)
+                row += f" | {count} ({pct:.1f}%)"
+                data[solver_name][latex_category] = int(count)
+            else:
+                row += " | 0"
+        row += f" | {len(df_copy)} / {total_count} ({100 * len(df_copy) / total_count:.1f}%)"
+        rows.append(row)
+
+    data_df = pd.DataFrame(data).T
+    for col in data_df.columns:
+        if col != r"\# Sol. / \# Tot.":
+            data_df[col] = data_df[col].fillna(0).astype(int)
+    data_df.sort_values(by=["solved"] + latex_categories, inplace=True, ascending=False)
+    data_df.drop(columns=["solved", "total"]).to_latex(
+        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/difficulty_analysis_{group_name.lower().replace(' ', '_')}.tex",
+        float_format="%.2f",
+    )
+
+    ax = data_df[latex_categories].plot(
+        kind="bar",
+        stacked=True,
+        colormap="tab20",
+    )
+    ax.set_ylabel("Solved instances")
+    ax.grid(axis="y", alpha=0.3)
+    plt.xticks(rotation=25, ha="center")
+    plt.tight_layout()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height * 0.8])
+
+    # Put a legend to the right of the current axis
+    ax.legend(title="Category", loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.show()
+
+    ax.figure.savefig(
+        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/img/difficulty_analysis_{group_name.lower().replace(' ', '_')}.pgf",
+        bbox_inches="tight",
+    )
+
+    return f"""{text}{"\n".join(rows)}
+"""
+
+
+def external_solver_impact(solvers_analysis: list[SolverResult]):
+    # Instance difficulty categorization
+    text = """## External solver impact
+
+Analysis on the impact of the external simplex solver on the overall performance of the SMT solver, based on the number of calls to the external simplex and the techniques used to obtain the exact solution (precision boosting and iterative refinements).
+    
+| Solver | Calls |"""
+    precisions = set()
+    refinements = set()
+
+    solvers_analysis = [
+        (
+            solver.solver_name,
+            solver.dataframe[solver.dataframe[f"result{solver.solver_id}"].isin(["sat", "unsat"])],
+            solver.solver_id,
+        )
+        for solver in solvers_analysis
+        if "theory::arith::z::arith::relax::calls" in solver.dataframe.columns
+    ]
+
+    data = {}
+
+    for solver_name, df, solver_id in solvers_analysis:
+        assert "theory::arith::z::arith::relax::calls" in df.columns
+        assert df[f"result{solver_id}"].isin(["sat", "unsat"]).all()
+        for col in df.columns:
+            if col.startswith("precision_") and df[col].sum() > 0:
+                precisions.add(col[len("precision_") :])
+        for col in df.columns:
+            if col.startswith("refinements_") and df[col].sum() > 0:
+                refinements.add(col[len("refinements_") :])
+
+    precisions = sorted(precisions, key=lambda x: int(x))
+    refinements = sorted(refinements, key=lambda x: int(x))
+
+    for precision in precisions:
+        text += f" $p_{{{precision}}}$ |"
+    for refinement in refinements:
+        text += f" $r_{{{refinement}}}$ |"
+
+    text += "\n| ------ | ----- |"
+
+    for precision in precisions:
+        text += f" {'-' * 3} |"
+    for refinement in refinements:
+        text += f" {'-' * 3} |"
+
+    text += "\n"
+
+    for solver_name, df, solver_id in solvers_analysis:
+
+        calls = int(df["theory::arith::z::arith::relax::calls"].sum())
+
+        # Consistency checks requested: present precision/refinement counters should sum to calls.
+        precision_cols = [c for c in df.columns if c.startswith("precision_")]
+        refinement_cols = [c for c in df.columns if c.startswith("refinements_")]
+
+        if precision_cols:
+            precision_sum = int(df[precision_cols].sum().sum())
+            assert precision_sum == calls, (
+                f"Precision totals do not match calls for {solver_name}: "
+                f"precision_sum={precision_sum}, calls={calls}"
+            )
+        if refinement_cols:
+            refinement_sum = int(df[refinement_cols].sum().sum())
+            assert refinement_sum == calls, (
+                f"Refinement totals do not match calls for {solver_name}: "
+                f"refinement_sum={refinement_sum}, calls={calls}"
+            )
+
+        row = f"| {solver_name} | {calls} |"
+        for precision in precisions:
+            if f"precision_{precision}" in df.columns:
+                row += f" {int(df[f'precision_{precision}'].sum())} |"
+            else:
+                row += " |"
+        for refinement in refinements:
+            if f"refinements_{refinement}" in df.columns:
+                row += f" {int(df[f'refinements_{refinement}'].sum())} |"
+            else:
+                row += " |"
+        data[solver_name] = {
+            r"\# Calls": calls,
+            **{
+                f"$p_{{{precision}}}$": int(df[f"precision_{precision}"].sum())
+                for precision in precisions
+                if f"precision_{precision}" in df.columns
+            },
+            **{
+                f"$r_{{{refinement}}}$": int(df[f"refinements_{refinement}"].sum())
+                for refinement in refinements
+                if f"refinements_{refinement}" in df.columns
+            },
+        }
+        text += row + "\n"
+
+    df = pd.DataFrame(data).T
+    for col in df.columns:
+        df[col] = df[col].fillna(0).astype(int)
+
+    # Keep a numeric copy for plotting before turning empty values into strings for LaTeX aesthetics.
+    plot_df = df.copy()
+
+    df_for_latex = df.copy()
+    for col in df_for_latex.columns:
+        df_for_latex[col] = df_for_latex[col].apply(lambda x: f"{x}" if x > 0 else "")
+
+    df_for_latex[
+        [r"\# Calls"]
+        + [f"$p_{{{precision}}}$" for precision in precisions]
+        + [f"$r_{{{refinement}}}$" for refinement in refinements]
+    ].T.to_latex(
+        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_exact_solver_impact.tex",
+        float_format="%.2f",
+    )
+
+    # Plot precision/refinement contributions and compare against calls with dotted markers.
+    precision_plot_cols = [f"$p_{{{precision}}}$" for precision in precisions]
+    refinement_plot_cols = [f"$r_{{{refinement}}}$" for refinement in refinements]
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4), sharey=True)
+
+    # Precision subplot.
+    ax_p = axes[0]
+    if precision_plot_cols:
+        precision_df = plot_df[[r"\# Calls"] + precision_plot_cols].sort_values(by=r"\# Calls")
+        # Show only bars with non-zero precision contribution.
+        precision_df = precision_df[precision_df[precision_plot_cols].sum(axis=1) > 0]
+        if len(precision_df) > 0:
+            precision_df[precision_plot_cols].plot(
+                kind="bar",
+                stacked=True,
+                colormap="tab20",
+                ax=ax_p,
+                legend=False,
+            )
+            bar_width = 0.8
+            for i, calls in enumerate(precision_df[r"\# Calls"].astype(float).to_numpy()):
+                ax_p.hlines(
+                    y=calls,
+                    xmin=i - bar_width / 2,
+                    xmax=i + bar_width / 2,
+                    colors="black",
+                    linestyles="dotted",
+                    linewidth=1.2,
+                    zorder=5,
+                )
+        else:
+            ax_p.text(0.5, 0.5, "No non-zero precision bars", ha="center", va="center", transform=ax_p.transAxes)
+            ax_p.set_xticks([])
+    else:
+        ax_p.text(0.5, 0.5, "No precision columns", ha="center", va="center", transform=ax_p.transAxes)
+        ax_p.set_xticks([])
+
+    ax_p.set_title("Precision contributions")
+    ax_p.set_xlabel("Solver")
+    ax_p.set_ylabel("Calls")
+    ax_p.grid(axis="y", alpha=0.3)
+    ax_p.tick_params(axis="x", labelrotation=25)
+
+    # Refinement subplot.
+    ax_r = axes[1]
+    if refinement_plot_cols:
+        refinement_df = plot_df[[r"\# Calls"] + refinement_plot_cols].sort_values(by=r"\# Calls")
+        # Show only bars with non-zero refinement contribution.
+        refinement_df = refinement_df[refinement_df[refinement_plot_cols].sum(axis=1) > 0]
+        if len(refinement_df) > 0:
+            refinement_df[refinement_plot_cols].plot(
+                kind="bar",
+                stacked=True,
+                colormap="tab20",
+                ax=ax_r,
+                legend=False,
+            )
+            bar_width = 0.8
+            for i, calls in enumerate(refinement_df[r"\# Calls"].astype(float).to_numpy()):
+                ax_r.hlines(
+                    y=calls,
+                    xmin=i - bar_width / 2,
+                    xmax=i + bar_width / 2,
+                    colors="black",
+                    linestyles="dotted",
+                    linewidth=1.2,
+                    zorder=5,
+                )
+        else:
+            ax_r.text(0.5, 0.5, "No non-zero refinement bars", ha="center", va="center", transform=ax_r.transAxes)
+            ax_r.set_xticks([])
+    else:
+        ax_r.text(0.5, 0.5, "No refinement columns", ha="center", va="center", transform=ax_r.transAxes)
+        ax_r.set_xticks([])
+
+    ax_r.set_title("Refinement contributions")
+    ax_r.set_xlabel("Solver")
+    ax_r.grid(axis="y", alpha=0.3)
+    ax_r.tick_params(axis="x", labelrotation=25)
+
+    # Build a combined legend once.
+    handles, labels = [], []
+    for ax in axes:
+        h, l = ax.get_legend_handles_labels()
+        handles.extend(h)
+        labels.extend(l)
+    if handles:
+        by_label = dict(zip(labels, handles))
+        fig.legend(
+            by_label.values(),
+            by_label.keys(),
+            title="Category",
+            ncols=3,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.08),
+        )
+
+    fig.suptitle("Exact solver impact (dotted line = calls)")
+    plt.tight_layout()
+    plt.show()
+
+    return text
+
+
+def print_stats(soplex_configs: list[SolverResult]):
+    summary_stats = {}
+    for solver_result in soplex_configs:
+        df = solver_result.dataframe
+        assert all(df["theory::arith::z::arith::relax::calls"] > 0)
+
+        df = df.copy()
+        df["global::totalTime"] = df["global::totalTime"].apply(convert_to_numeric) / 1000
+        df["theory::arith::z::approx::lp::timer"] = df["theory::arith::z::approx::lp::timer"].apply(convert_to_numeric)
+        df["theory::arith::z::approx::lp::setup::timer"] = (
+            df["theory::arith::z::approx::lp::setup::timer"].apply(convert_to_numeric)
+            if "theory::arith::z::approx::lp::setup::timer" in df.columns
+            else pd.Series(0, index=df.index)
+        )
+
+        solved_df = pd.DataFrame()
+        unknown_df = pd.DataFrame()
+        if "resultS" in df.columns:
+            solved_df = df[df["resultS"].isin(["sat", "unsat"])]
+            unknown_df = df[~df["resultS"].isin(["sat", "unsat"])]
+        if "resultQ" in df.columns:
+            solved_df = df[df["resultQ"].isin(["sat", "unsat"])]
+            unknown_df = df[~df["resultQ"].isin(["sat", "unsat"])]
+        if "resultG" in df.columns:
+            solved_df = df[df["resultG"].isin(["sat", "unsat"])]
+            unknown_df = df[~df["resultG"].isin(["sat", "unsat"])]
+
+        external_calls = len(df)
+        solved = len(solved_df)
+        unknown = len(unknown_df)
+        feasible_failures = df[df["theory::arith::z::arith::relax::feasible::failures"] > 0].shape[0]
+        infeasible_failures = df[df["theory::arith::z::arith::relax::infeasible::failures"] > 0].shape[0]
+
+        avg_time_external = df["global::totalTime"].median() if external_calls > 0 else 0
+        tot_time_external = df["global::totalTime"].sum() if external_calls > 0 else 0
+        time_variance_external = df["global::totalTime"].var() if external_calls > 0 else 0
+        lp_time = df["theory::arith::z::approx::lp::timer"].median() if external_calls > 0 else 0
+        lp_setup_time = df["theory::arith::z::approx::lp::setup::timer"].median() if external_calls > 0 else 0
+
+        adjustment_calls = int(
+            df[df["theory::arith::z::approx::externalAdjustmentPivots"] > 0][
+                "theory::arith::z::approx::externalAdjustmentPivots"
+            ].sum()
+            if "theory::arith::z::approx::externalAdjustmentPivots" in df.columns
+            else -1
+        )
+
+        at_least_one_adjustment_call = (
+            df[df["theory::arith::z::approx::externalAdjustmentPivots"] > 0].shape[0]
+            if "theory::arith::z::approx::externalAdjustmentPivots" in df.columns
+            else -1
+        )
+
+        avg_adjustment_calls = (
+            df[df["theory::arith::z::approx::externalAdjustmentPivots"] > 0][
+                "theory::arith::z::approx::externalAdjustmentPivots"
+            ].median()
+            if "theory::arith::z::approx::externalAdjustmentPivots" in df.columns and adjustment_calls > 0
+            else -1
+        )
+
+        summary_stats[solver_result.solver_name] = {
+            "solved": solved,
+            "unknown": unknown,
+            "external_calls": external_calls,
+            "feasible_failures": feasible_failures,
+            "infeasible_failures": infeasible_failures,
+            "avg_time_external": avg_time_external,
+            "tot_time_external": tot_time_external,
+            "time_variance_external": time_variance_external,
+            "lp_time": lp_time,
+            "lp_setup_time": lp_setup_time,
+            "adjustment_calls": adjustment_calls,
+            "avg_adjustment_calls": avg_adjustment_calls,
+            "at_least_one_adjustment_call": at_least_one_adjustment_call,
+        }
+
+    summary_df = pd.DataFrame(summary_stats).T
+    summary_df["external_calls"] = summary_df["external_calls"].astype(int)
+    summary_df["unknown"] = summary_df["unknown"].astype(int)
+    summary_df["solved"] = summary_df["solved"].astype(int)
+    summary_df["feasible_failures"] = summary_df["feasible_failures"].astype(int)
+    summary_df["infeasible_failures"] = summary_df["infeasible_failures"].astype(int)
+    summary_df["adjustment_calls"] = summary_df["adjustment_calls"].astype(int)
+    summary_df["avg_adjustment_calls"] = summary_df["avg_adjustment_calls"].astype(int)
+    summary_df["at_least_one_adjustment_call"] = summary_df["at_least_one_adjustment_call"].astype(int)
+    summary_df["lp_setup_time"] = summary_df["lp_setup_time"].astype(int)
+    summary_df["lp_time"] = summary_df["lp_time"].astype(int)
+    renames = {
+        # "solved": "Solved",
+        # "unknown": "Unknown",
+        "external_calls": r"\# Inst.",
+        # "avg_time_external": "Med. Time (s)",
+        # "adjustment_calls": "Adjustment Pivots",
+        "lp_setup_time": "Setup Time (s)",
+        "lp_time": "Run Time (s)",
+        "avg_adjustment_calls": "Adj. Piv.",
+        "at_least_one_adjustment_call": r"\# Adj. Piv. $\ge1$",
+    }
+    # Reorder columns according to the order in renames, and rename them for the LaTeX table.
+    summary_df[list(renames.keys())].rename(columns=renames).to_latex(
+        "/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex",
+        float_format="%.2f",
+        columns=list(renames.values()),
+    )
+    with open("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex", "r+") as f:
+        text = f.read()
+        f.seek(0)
+        f.write(
+            text.replace(
+                "\\toprule",
+                r"""\toprule
+    & & \multicolumn{3}{c}{Median} & \\
+        \cmidrule(l){3-5}
+    """,
+            )
+        )
+
+    rows = []
+    for config_name in summary_df.index:
+        row = summary_df.loc[config_name]
+        failures = int(row["feasible_failures"] + row["infeasible_failures"])
+        rows.append(
+            f"| {config_name} | {int(row['external_calls'])} | {int(row['solved'])} | {int(row['unknown'])} | {int(row['tot_time_external'])} | {row['avg_time_external']:<15.2f}  | {row['lp_time']:<15.2f} | {row['lp_setup_time']:<15.2f} | {int(row['feasible_failures'])} | {int(row['infeasible_failures'])} | {failures} | {failures / row.external_calls * 100:.2f}% | {int(row['adjustment_calls'])} | {row['avg_adjustment_calls']:<15.2f} | {int(row['at_least_one_adjustment_call'])} |"
+        )
+    return f"""### Summary statistics by SoPlex pivot limit
+| Config       | Registered results | Solved | Unknown | Tot Time | Med Time | Med LP Time | Med LP Setup Time | Feasible failures | Infeasible failures | Tot Failures | Failure rate | Adjustment calls | Med Adjustment calls | $>1$ Adj. Pivot |
+| ------------ | -------------- | ------ | ------- | ---------- | --------- | ---- | ---- | ------------- | ------------------- | ------------ | ------------ | ---------------- | ---------------------- | ----------------- |
+{"\n".join(rows)}
+    """
+
+
+def write_instances(instances_100: pd.DataFrame, instances_200: pd.DataFrame, instances_300: pd.DataFrame):
+    instances_100_list = instances_100.index.tolist()
+    random.seed(42)
+    random.shuffle(instances_100_list)
+    with open("100_instances.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(f"/nobackup/proj/comet_lfplpsmf/QF_LRA/all/{u}" for u in instances_100_list))
+    instances_200_list = instances_200.index.tolist()
+    random.seed(42)
+    random.shuffle(instances_200_list)
+    with open("200_instances.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(f"/nobackup/proj/comet_lfplpsmf/QF_LRA/all/{u}" for u in instances_200_list))
+    instances_300_list = instances_300.index.tolist()
+    random.seed(42)
+    random.shuffle(instances_300_list)
+    with open("300_instances.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(f"/nobackup/proj/comet_lfplpsmf/QF_LRA/all/{u}" for u in instances_300_list))
+
+
+def sanitize(df: pd.DataFrame):
+    for col in df.columns:
+        df[col] = df[col].apply(convert_to_numeric)
+
+    if "theory::arith::z::approx::deltaResults" not in df.columns:
+        df["theory::arith::z::approx::deltaResults"] = 0
+    if "theory::arith::z::approx::delta" not in df.columns:
+        df["theory::arith::z::approx::delta"] = -1
+    if "options::delta" not in df.columns:
+        df["options::delta"] = -1.0
+    df["theory::arith::z::approx::externalSimplexType"] = (
+        df["theory::arith::z::approx::externalSimplexType"]
+        .map({SOPLEX: "SOPLEX", GLPK: "GLPK", QSOPTEX: "QSOPTEX"})
+        .astype("category")
+    )
+    if "resultS" in df.columns:
+        df["result"] = df["resultS"]
+    elif "resultG" in df.columns:
+        df["result"] = df["resultG"]
+    elif "resultQ" in df.columns:
+        df["result"] = df["resultQ"]
+    else:
+        raise KeyError("No result column found with expected suffixes 'S', 'G', or 'Q'")
+
+    precision_df = df["theory::arith::z::approx::precision"].apply(lambda x: split_dict_columns(x, "precision"))
+    refinements = df["theory::arith::z::approx::refinements"].apply(lambda x: split_dict_columns(x, "refinements"))
+
+    # All instances with at least a call to the external simplex should have a value for the external simplex type
+    assert (
+        len(
+            df[
+                (df["theory::arith::z::arith::relax::calls"] > 0)
+                & (df["theory::arith::z::approx::externalSimplexType"].isna())
+            ]
+        )
+        == 0
+    )
+    assert len(df[df["theory::arith::z::approx::externalSimplexType"].notna()]) == len(
+        df[(df["theory::arith::z::arith::relax::calls"] > 0)]
+    )
+    assert len(df["theory::arith::z::approx::externalSimplexType"].unique()) == 1
+    return pd.concat([df, precision_df, refinements], axis=1)
+
+
+def parse_duration_to_ms(value: str):
     """
     Convert duration strings like '5707ms', '1.5s', '2m', '1h' to milliseconds.
     Returns the value as float if it's a duration, otherwise returns the original value.
@@ -98,24 +641,6 @@ def split_dict_columns(value: str, prefix: str) -> pd.Series:
             precision, count = f"{prefix}_{entry.split(':')[0].strip()}", int(entry.split(":")[1].strip())
             precision_dict[precision] = count
     return pd.Series(precision_dict)
-
-
-@dataclass
-class SolverResult:
-    dataframe: pd.DataFrame
-    solver_name: str
-    solver_id: str
-    iterations: int = -1
-
-    @property
-    def result_key(self) -> str:
-        return f"result{self.solver_id}"
-
-    def apply_filter(self, filter_func):
-        return SolverResult(dataframe=filter_func(self.dataframe), solver_name=self.solver_name, solver_id=self.solver_id, iterations=self.iterations)
-
-    def replace_df(self, new_df: pd.DataFrame):
-        return SolverResult(dataframe=new_df, solver_name=self.solver_name, solver_id=self.solver_id, iterations=self.iterations)
 
 
 def query_time(*results: SolverResult, instances: str | tuple[str]):
@@ -389,8 +914,30 @@ def plot_performance_profiles(
 
     if ax is None:
         _, ax = plt.subplots()
-    for result in results:
-        ax.step(profile_df.index, profile_df[result.solver_name], where="post", label=result.solver_name)
+
+    # Black-and-white-friendly styling: cycle line styles and markers so that
+    # curves stay distinguishable even when colors are not.
+    line_styles = ["-", "--", ":", "-."]
+    # Marker choice intentionally avoids very small/ambiguous markers.
+    markers = ["o", "s", "^", "D", "v", ">", "<", "P", "X", "*"]
+    style_cycle = list(product(line_styles, markers))
+
+    plotted_lines = []
+    for i, result in enumerate(results):
+        linestyle, marker = style_cycle[i % len(style_cycle)]
+        # markevery keeps the plot readable with many points.
+        (line,) = ax.semilogx(
+            profile_df.index,
+            profile_df[result.solver_name],
+            # where="post",
+            label=result.solver_name,
+            linestyle=linestyle,
+            marker=marker,
+            markersize=2.5,
+            markevery=0.1,
+            linewidth=1.3,
+        )
+        plotted_lines.append((result.solver_name, line))
 
     ax.set_xlabel("Ratio to best time (log scale)")
     ax.set_ylabel("Percentage of instances")
@@ -398,7 +945,6 @@ def plot_performance_profiles(
         ax.set_title(title)
     ax.set_xlim(1.0, max_tau)
     ax.set_ylim(0.0, 100.0)
-    ax.set_xscale(value="log")
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.figure.tight_layout()
 
@@ -406,7 +952,7 @@ def plot_performance_profiles(
     ax.set_position([box.x0, box.y0, box.width * shrink_width, box.height * shrink_height])
 
     # Put a legend to the right of the current axis
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     return ax, profile_df
 
