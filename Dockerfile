@@ -53,10 +53,9 @@ RUN sed -i -re 's/\.so([^.])/\.a\1/g' /usr/local/lib/cmake/soplex/soplex-targets
 
 WORKDIR /src/cvc5
 
-COPY --exclude=benchmarks . /src/cvc5
+COPY . /src/cvc5
 
-## Configure and build cvc5 as a static binary.
-## Keeping tests/docs/bindings off to keep build time and image size reasonable.
+# Configure and build cvc5 as a static binary.
 RUN cmake -S . -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Production \
     -DBUILD_SHARED_LIBS=OFF \
@@ -75,21 +74,20 @@ RUN cmake -S . -B build -G Ninja \
 ENTRYPOINT ["/bin/bash"]
 
 # -------- Runtime stage --------
-FROM ubuntu:24.04 AS runtime
+FROM quay.io/jupyter/scipy-notebook AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    zstd \
- && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /work
 
-# Copy the cvc5 binary and benchmarks into runtime image
-COPY --from=builder /src/cvc5/build/bin/cvc5 /usr/local/bin/cvc5
-COPY --from=builder /opt/benchmarks /benchmarks
+RUN touch .dockerenv
 
-# Default command: print version to confirm binary is runnable
-ENTRYPOINT ["/usr/local/bin/cvc5"]
-CMD ["--version"]
+COPY --from=builder --chown=jovyan --chmod=777 /src/cvc5/build/bin/cvc5 /usr/local/bin/cvc5
+COPY --chown=jovyan --chmod=777 --from=builder /opt/benchmarks /benchmarks
+# Move all .smt2 files to /benchmarks
+RUN find /benchmarks -type f -name "*.smt2" -exec mv {} /benchmarks/ \;
+
+COPY benchmarks .
+
+COPY artifact/scripts .
+
