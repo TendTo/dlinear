@@ -2,11 +2,12 @@ name: Docker CI
 
 on:
   push:
-    branches: [main]
+    branches: [feat/exact-lp, main]
     paths:
       - "src/**"
       - "benchmarks/**"
       - "Dockerfile"
+      - ".github/workflows/docker.yml"
     tags:
       - "*.*.*"
   workflow_dispatch:
