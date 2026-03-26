@@ -3406,7 +3406,7 @@ void TheoryArithPrivate::importSolution(const external::Solution& solution)
     SimplexDecisionProcedure& simplex = selectSimplex(false);
     simplex.setVarOrderPivotLimit(pass2Limit);
     d_qflraStatus = simplex.findModel(false);
-    d_simplexStats->d_externalAdjustmentPivots += simplex.getPivots();
+    getSimplexStats().d_externalAdjustmentPivots += simplex.getPivots();
   }
 
   if (TraceIsOn("arith::importSolution"))
@@ -3424,7 +3424,7 @@ bool TheoryArithPrivate::solveRelaxationOrPanic(Theory::Effort effortLevel)
   if (d_qflraStatus == Result::UNKNOWN)
   {
     d_qflraStatus = selectSimplex(true).findModel(false);
-    d_simplexStats->d_externalAdjustmentPivots += selectSimplex(true).getPivots();
+    getSimplexStats().d_externalAdjustmentPivots += selectSimplex(true).getPivots();
   }
 
   if (Theory::fullEffort(effortLevel) && d_qflraStatus == Result::UNKNOWN)
