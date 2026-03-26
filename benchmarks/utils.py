@@ -7,6 +7,13 @@ from dataclasses import dataclass
 from itertools import combinations, product
 from functools import reduce
 import random
+from pathlib import Path
+
+def is_docker():
+    cgroup = Path('/proc/self/cgroup')
+    return Path('/work/.dockerenv').is_file() or (cgroup.is_file() and 'docker' in cgroup.read_text())
+
+SAVE = not is_docker()
 
 GLPK = 1
 SOPLEX = 2
@@ -34,6 +41,10 @@ class SolverResult:
     solver_name: str
     solver_id: str
     iterations: int = -1
+
+    @staticmethod
+    def empty():
+        return SolverResult(dataframe=pd.DataFrame(), solver_name="", solver_id="")
 
     @property
     def result_key(self) -> str:
@@ -82,8 +93,10 @@ All problems are divided into buckets depending on the time taken by the solver 
     data = {}
 
     categories = ["Very Fast (<0.1s)", "Fast (0.1-1s)", "Medium (1-10s)", "Hard (10-100s)", "Very Hard (>100s)"]
-    latex_categories = ["$[0, 0.1)$s", "$[0.1, 1)$s", "$[1, 10)$s", "$[10, 100)$s", r"$[100, \infty)$s"]
+    latex_categories = ["$[0s, 0.1s)$", "$[0.1s, 1s)$", "$[1s, 10s)$", "$[10s, 100s)$", r"$[100s, 6h)$"]
     for solver in solvers_analysis:
+        if solver.dataframe.empty:
+            continue
         solver_name = solver.solver_name
         df = solver.dataframe
         solver_id = solver.solver_id
@@ -113,21 +126,25 @@ All problems are divided into buckets depending on the time taken by the solver 
             if count > 0:
                 pct = 100 * count / len(df_copy)
                 row += f" | {count} ({pct:.1f}%)"
-                data[solver_name][latex_category] = int(count)
             else:
                 row += " | 0"
+            data[solver_name][latex_category] = int(count)
         row += f" | {len(df_copy)} / {total_count} ({100 * len(df_copy) / total_count:.1f}%)"
         rows.append(row)
+
+    if len(data) == 0:
+        return "No data available for difficulty analysis."
 
     data_df = pd.DataFrame(data).T
     for col in data_df.columns:
         if col != r"\# Sol. / \# Tot.":
             data_df[col] = data_df[col].fillna(0).astype(int)
     data_df.sort_values(by=["solved"] + latex_categories, inplace=True, ascending=False)
-    data_df.drop(columns=["solved", "total"]).to_latex(
-        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/difficulty_analysis_{group_name.lower().replace(' ', '_')}.tex",
-        float_format="%.2f",
-    )
+    if SAVE:
+        data_df.drop(columns=["solved", "total"]).to_latex(
+            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/difficulty_analysis_{group_name.lower().replace(' ', '_')}.tex",
+            float_format="%.2f",
+        )
 
     ax = data_df[latex_categories].plot(
         kind="bar",
@@ -145,16 +162,17 @@ All problems are divided into buckets depending on the time taken by the solver 
     ax.legend(title="Category", loc="center left", bbox_to_anchor=(1, 0.5))
     plt.show()
 
-    ax.figure.savefig(
-        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/img/difficulty_analysis_{group_name.lower().replace(' ', '_')}.pgf",
-        bbox_inches="tight",
-    )
+    if SAVE:
+        ax.figure.savefig(
+            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/img/difficulty_analysis_{group_name.lower().replace(' ', '_')}.pgf",
+            bbox_inches="tight",
+        )
 
     return f"""{text}{"\n".join(rows)}
 """
 
 
-def external_solver_impact(solvers_analysis: list[SolverResult]):
+def external_solver_impact(solvers_analysis: list[SolverResult], filename: str = ""):
     # Instance difficulty categorization
     text = """## External solver impact
 
@@ -257,18 +275,20 @@ Analysis on the impact of the external simplex solver on the overall performance
     # Keep a numeric copy for plotting before turning empty values into strings for LaTeX aesthetics.
     plot_df = df.copy()
 
-    df_for_latex = df.copy()
-    for col in df_for_latex.columns:
-        df_for_latex[col] = df_for_latex[col].apply(lambda x: f"{x}" if x > 0 else "")
+    if filename and SAVE:
 
-    df_for_latex[
-        [r"\# Calls"]
-        + [f"$p_{{{precision}}}$" for precision in precisions]
-        + [f"$r_{{{refinement}}}$" for refinement in refinements]
-    ].T.to_latex(
-        f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_exact_solver_impact.tex",
-        float_format="%.2f",
-    )
+        df_for_latex = df.copy()
+        for col in df_for_latex.columns:
+            df_for_latex[col] = df_for_latex[col].apply(lambda x: f"{x}" if x > 0 else "")
+
+        df_for_latex[
+            [r"\# Calls"]
+            + [f"$p_{{{precision}}}$" for precision in precisions]
+            + [f"$r_{{{refinement}}}$" for refinement in refinements]
+        ].T.to_latex(
+            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex",
+            float_format="%.2f",
+        )
 
     # Plot precision/refinement contributions and compare against calls with dotted markers.
     precision_plot_cols = [f"$p_{{{precision}}}$" for precision in precisions]
@@ -375,7 +395,7 @@ Analysis on the impact of the external simplex solver on the overall performance
     return text
 
 
-def print_stats(soplex_configs: list[SolverResult]):
+def print_stats(soplex_configs: list[SolverResult], filename: str = ""):
     summary_stats = {}
     for solver_result in soplex_configs:
         df = solver_result.dataframe
@@ -383,12 +403,12 @@ def print_stats(soplex_configs: list[SolverResult]):
 
         df = df.copy()
         df["global::totalTime"] = df["global::totalTime"].apply(convert_to_numeric) / 1000
-        df["theory::arith::z::approx::lp::timer"] = df["theory::arith::z::approx::lp::timer"].apply(convert_to_numeric)
+        df["theory::arith::z::approx::lp::timer"] = df["theory::arith::z::approx::lp::timer"].apply(convert_to_numeric) / 1000
         df["theory::arith::z::approx::lp::setup::timer"] = (
             df["theory::arith::z::approx::lp::setup::timer"].apply(convert_to_numeric)
             if "theory::arith::z::approx::lp::setup::timer" in df.columns
             else pd.Series(0, index=df.index)
-        )
+        ) / 1000
 
         solved_df = pd.DataFrame()
         unknown_df = pd.DataFrame()
@@ -474,24 +494,27 @@ def print_stats(soplex_configs: list[SolverResult]):
         "avg_adjustment_calls": "Adj. Piv.",
         "at_least_one_adjustment_call": r"\# Adj. Piv. $\ge1$",
     }
-    # Reorder columns according to the order in renames, and rename them for the LaTeX table.
-    summary_df[list(renames.keys())].rename(columns=renames).to_latex(
-        "/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex",
-        float_format="%.2f",
-        columns=list(renames.values()),
-    )
-    with open("/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/summary_stats.tex", "r+", encoding="utf-8") as f:
-        text = f.read()
-        f.seek(0)
-        f.write(
-            text.replace(
-                "\\toprule",
-                r"""\toprule
-    & & \multicolumn{3}{c}{Median} & \\
-        \cmidrule(l){3-5}
-    """,
-            )
+    if filename and SAVE:
+        # Reorder columns according to the order in renames, and rename them for the LaTeX table.
+        summary_df[list(renames.keys())].rename(columns=renames).to_latex(
+            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex",
+            float_format="%.2f",
+            columns=list(renames.values()),
         )
+        with open(
+            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex", "r+", encoding="utf-8"
+        ) as f:
+            text = f.read()
+            f.seek(0)
+            f.write(
+                text.replace(
+                    "\\toprule",
+                    r"""\toprule
+        & & \multicolumn{3}{c}{Median} & \\
+            \cmidrule(l){3-5}
+        """,
+                )
+            )
 
     rows = []
     for config_name in summary_df.index:
@@ -782,9 +805,10 @@ def plot_performance_profiles(
     max_tau: float = None,
     num_points: int = 1000,
     metric_add: float | int | list[float] | list[int] = 0,
+    zoom_max_tau: float | None = None,
     title="",
-    shrink_width: float = 0.8,
-    shrink_height: float = 1.0,
+    shrink_width: float = 1.1,
+    shrink_height: float = 0.8,
     ax=None,
 ):
     """Plot Dolan–Moré performance profiles for an arbitrary number of solver results.
@@ -855,17 +879,27 @@ def plot_performance_profiles(
         result_cols = None
     elif isinstance(result_cols, str):
         result_cols = [result_cols] * len(results)
-    elif isinstance(result_cols, list) and len(result_cols) != len(results):
-        raise ValueError("result_cols list must have same length as results")
+    elif isinstance(result_cols, list):
+        if len(result_cols) != len(results):
+            raise ValueError("result_cols list must have same length as results")
     else:
         raise TypeError("result_cols must be either a string, a list of strings, or None")
 
     if isinstance(metric_cols, str):
         metric_cols = [metric_cols] * len(results)
-    elif isinstance(metric_cols, list) and len(metric_cols) != len(results):
-        raise ValueError("time_col list must have same length as dataframes")
+    elif isinstance(metric_cols, list):
+        if len(metric_cols) != len(results):
+            raise ValueError("metric_cols list must have same length as results")
     else:
-        raise TypeError("time_col must be either a string or a list of strings")
+        raise TypeError("metric_cols must be either a string or a list of strings")
+
+    if isinstance(metric_add, (int, float)):
+        metric_add = [metric_add] * len(results)
+    elif isinstance(metric_add, list):
+        if len(metric_add) != len(results):
+            raise ValueError("metric_add list must have same length as results")
+    else:
+        raise TypeError("metric_add must be either a number or a list of numbers")
 
     dataframes = (result.dataframe for result in results)
     df_all = reduce(
@@ -879,7 +913,7 @@ def plot_performance_profiles(
         df_all[solver_metric_col] = df_all[solver_metric_col].astype(float).fillna(np.inf)
 
         if metric_add != 0:
-            df_all[solver_metric_col] += metric_add
+            df_all[solver_metric_col] += metric_add[i]
 
         if result_cols is not None and len(accepted_results) > 0:
             solver_result_col = f"{result_cols[i]}{result.solver_id}"
@@ -913,7 +947,9 @@ def plot_performance_profiles(
         profile_df[result.solver_name] = [float(np.mean(r <= tau) * 100) for tau in tau_values]
 
     if ax is None:
-        _, ax = plt.subplots()
+        current_figsize = plt.rcParams.get("figure.figsize")
+        new_figsize = (current_figsize[0] / shrink_width, current_figsize[1] / (shrink_height + 0.1))
+        _, ax = plt.subplots(figsize=new_figsize)
 
     # Black-and-white-friendly styling: cycle line styles and markers so that
     # curves stay distinguishable even when colors are not.
@@ -946,13 +982,62 @@ def plot_performance_profiles(
     ax.set_xlim(1.0, max_tau)
     ax.set_ylim(0.0, 100.0)
     ax.grid(True, linestyle="--", alpha=0.4)
+
+    ax_zoom = ax.inset_axes([1.1, 0.0, 0.2, 1.0])
+
+    zoom_max_tau = float(zoom_max_tau or max_tau)
+    zoom_df = profile_df.loc[profile_df.index <= zoom_max_tau]
+    for i, result in enumerate(results):
+        linestyle, marker = style_cycle[i % len(style_cycle)]
+        ax_zoom.plot(
+            zoom_df.index,
+            zoom_df[result.solver_name],
+            linestyle=linestyle,
+            marker=marker,
+            markersize=2.5,
+            markevery=0.1,
+            linewidth=1.3,
+        )
+
+    ax_zoom.set_xlim(zoom_max_tau - zoom_max_tau / 10, zoom_max_tau)
+    ax_zoom.set_ylim(profile_df.loc[zoom_max_tau].min() - 2, profile_df.loc[zoom_max_tau].max() + 2)
+    ax_zoom.yaxis.set_label_position("right")
+    ax_zoom.yaxis.tick_right()
+    ax_zoom.grid(True, linestyle="--", alpha=0.4)
+
+    inset_indicator = ax.indicate_inset_zoom(ax_zoom)
+    for i, line in enumerate(inset_indicator.connectors):
+        if i == 0 or i == 3:
+            line.set_linestyle("--")
+            line.set_color("gray")
+            line.set_alpha(0.8)
+            line.set_visible(True)
+        else:
+            line.set_visible(False)
+
+    # Legend: place at top, with at most 2 rows.
+    handles, labels = ax.get_legend_handles_labels()
+    n_items = len(labels)
+    if n_items > 0:
+        import math
+
+        ncol = n_items if n_items <= 5 else int(math.ceil(n_items / 2))
+        ax.figure.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.015),
+            ncol=ncol,
+            # frameon=False,
+        )
+
     ax.figure.tight_layout()
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * shrink_width, box.height * shrink_height])
 
     # Put a legend to the right of the current axis
-    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    # ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 
     return ax, profile_df
 
