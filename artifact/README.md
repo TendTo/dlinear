@@ -15,6 +15,10 @@ To run the experiments, reviewers will need:
 - Docker (tested with Docker version 29.3.0)
 - ~10 GB free disk space for the image + results (depends on compression)
 
+The full setup has been tested on Linux, but should work on any platform that supports Docker (e.g., Windows, macOS).  
+By default, only 6 fast benchmarks are run for each suite, so each experiment should complete within a few seconds to a few minutes, depending on the configuration and machine performance.
+The evaluator is free to change this number and run all 1753 benchmarks, but note that this may take several hours (even days) to complete.
+
 ## Configurations
 
 By default, all experiments (i.e., each benchmark instance) will be run with the following configurations:
@@ -36,7 +40,7 @@ bash ./run.sh
 
 #### Expected outputs
 
-On the first run, the script will load the Docker image from `qest-formats-ae-image.tar.gz` (if it is not already present locally). 
+On the first run, the script will load the Docker image from `qest-formats-ae-image.tar.gz` (if it is not already present locally).
 It will then launch a container and solve one benchmark with all configurations.
 
 The output will look similar to:
@@ -92,10 +96,18 @@ Select the `results.ipynb` notebook, and click on `Run > Run All Cells` to execu
 
 ### Running the tool
 
-By default, `run.sh` runs the smoke test suite, named `smoke`. 
+By default, `run.sh` runs the smoke test suite, named `smoke`.
 You can run a different benchmark suite by passing the suite name `<suite>` and an optional per-configuration limit:
 
-- The suite name corresponds to a CSV file in `instances/` (without the `.csv` extension).
+- The suite name corresponds to a CSV file in `instances/` (without the `.csv` extension). The list includes
+  - `smoke` (1 instance, for a quick test),
+  - `100_instances` (319 instances among those that trigger at least one external LP call with a pivot threshold of 100),
+  - `200_instances` (177 instances among those that trigger at least one external LP call with a pivot threshold of 200),
+  - `300_instances` (125 instances among those that trigger at least one external LP call with a pivot threshold of 300),
+  - `lanteresse` (a subset of 18 instances),
+  - `mplib` (a subset of 42 instances),
+  - `dtp-scheduling` (a subset of 91 instances), and
+  - `all_instances` (the full set of 1753 QF_LRA instances from the SMT-LIB release 2025 of non-incremental benchmarks).
 - The run script will load the specified CSV file and run all benchmarks listed in it, with all configurations.
 - By default, the script only executes the first 6 instances per configuration.
 
@@ -136,4 +148,30 @@ A Jupyter notebook is provided to explore these results and regenerate the table
 
 ```bash
 bash ./explore.sh
+```
+
+### Running the binary
+
+To achieve maximum flexibility, the `single.sh` script interfaces directly with the `cvc5/dlinear` binary inside the Docker container, allowing you to run any command with any configuration on any benchmark instance.
+
+```bash
+# Get all the available options from cvc5/dlinear
+bash ./single.sh --help
+```
+
+For example
+
+```bash
+# E.g. run dlinear with soplex, 100 iterations threshold, strict mode, and a 10s time limit
+bash ./single.sh  --use-approx --external-lp-solver=soplex --standard-effort-variable-order-pivots=100  --lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
+```
+
+```bash
+# E.g. run dlinear with qsoptex, 200 iterations threshold, epsilon mode, and a 10s time limit
+bash ./single.sh  --use-approx --external-lp-solver=qsoptex --standard-effort-variable-order-pivots=200  --no-lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
+```
+
+```bash
+# E.g. run cvc5 with glpk, 150 iterations threshold, strict mode, and a 10s time limit
+bash ./single.sh  --use-approx --external-lp-solver=glpk --standard-effort-variable-order-pivots=150 --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
 ```

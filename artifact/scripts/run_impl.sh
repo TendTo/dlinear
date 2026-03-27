@@ -10,8 +10,8 @@ readonly modes=("" "strict" "delta")
 readonly instances_file="/instances/${run_name}.csv"
 readonly common_args="--instances ${instances_file} --instances-prefix /benchmarks/ --skip-first-line --local-limit ${local_limit}"
 
+echo "[artifact] Running ${run_name} suite"
 echo "[artifact] Using benchmark listed in ${instances_file}"
-echo "[artifact] Running smoke test"
 cvc5 --version
 echo "[artifact] Running cvc5 baseline"
 echo "[artifact] Running cvc5"
@@ -36,4 +36,4 @@ for iteration in "${iterations[@]}"; do
     done
   done
 done
-echo "[artifact] Smoke test complete."
+echo "[artifact] ${run_name} suite complete."

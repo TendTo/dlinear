@@ -82,12 +82,12 @@ WORKDIR /work
 
 RUN touch .dockerenv
 
-COPY --from=builder --chown=jovyan --chmod=777 /src/cvc5/build/bin/cvc5 /usr/local/bin/cvc5
-COPY --chown=jovyan --chmod=777 --from=builder /opt/benchmarks /benchmarks
 # Move all .smt2 files to /benchmarks
+COPY --chown=jovyan --chmod=777 --from=builder /opt/benchmarks /benchmarks
 RUN find /benchmarks -type f -name "*.smt2" -exec mv {} /benchmarks/ \;
+
+COPY --from=builder --chown=jovyan --chmod=777 /src/cvc5/build/bin/cvc5 /usr/local/bin/cvc5
 
 COPY benchmarks .
 
 COPY artifact/scripts .
-

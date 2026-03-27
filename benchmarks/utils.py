@@ -140,11 +140,7 @@ All problems are divided into buckets depending on the time taken by the solver 
         if col != r"\# Sol. / \# Tot.":
             data_df[col] = data_df[col].fillna(0).astype(int)
     data_df.sort_values(by=["solved"] + latex_categories, inplace=True, ascending=False)
-    if SAVE:
-        data_df.drop(columns=["solved", "total"]).to_latex(
-            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/difficulty_analysis_{group_name.lower().replace(' ', '_')}.tex",
-            float_format="%.2f",
-        )
+
 
     ax = data_df[latex_categories].plot(
         kind="bar",
@@ -162,11 +158,6 @@ All problems are divided into buckets depending on the time taken by the solver 
     ax.legend(title="Category", loc="center left", bbox_to_anchor=(1, 0.5))
     plt.show()
 
-    if SAVE:
-        ax.figure.savefig(
-            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/img/difficulty_analysis_{group_name.lower().replace(' ', '_')}.pgf",
-            bbox_inches="tight",
-        )
 
     return f"""{text}{"\n".join(rows)}
 """
@@ -274,21 +265,6 @@ Analysis on the impact of the external simplex solver on the overall performance
 
     # Keep a numeric copy for plotting before turning empty values into strings for LaTeX aesthetics.
     plot_df = df.copy()
-
-    if filename and SAVE:
-
-        df_for_latex = df.copy()
-        for col in df_for_latex.columns:
-            df_for_latex[col] = df_for_latex[col].apply(lambda x: f"{x}" if x > 0 else "")
-
-        df_for_latex[
-            [r"\# Calls"]
-            + [f"$p_{{{precision}}}$" for precision in precisions]
-            + [f"$r_{{{refinement}}}$" for refinement in refinements]
-        ].T.to_latex(
-            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex",
-            float_format="%.2f",
-        )
 
     # Plot precision/refinement contributions and compare against calls with dotted markers.
     precision_plot_cols = [f"$p_{{{precision}}}$" for precision in precisions]
@@ -399,6 +375,8 @@ def print_stats(soplex_configs: list[SolverResult], filename: str = ""):
     summary_stats = {}
     for solver_result in soplex_configs:
         df = solver_result.dataframe
+        if df.empty:
+            continue
         assert all(df["theory::arith::z::arith::relax::calls"] > 0)
 
         df = df.copy()
@@ -494,27 +472,6 @@ def print_stats(soplex_configs: list[SolverResult], filename: str = ""):
         "avg_adjustment_calls": "Adj. Piv.",
         "at_least_one_adjustment_call": r"\# Adj. Piv. $\ge1$",
     }
-    if filename and SAVE:
-        # Reorder columns according to the order in renames, and rename them for the LaTeX table.
-        summary_df[list(renames.keys())].rename(columns=renames).to_latex(
-            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex",
-            float_format="%.2f",
-            columns=list(renames.values()),
-        )
-        with open(
-            f"/home/campus.ncl.ac.uk/c3054737/Programming/phd/dlinear-paper/tables/{filename}.tex", "r+", encoding="utf-8"
-        ) as f:
-            text = f.read()
-            f.seek(0)
-            f.write(
-                text.replace(
-                    "\\toprule",
-                    r"""\toprule
-        & & \multicolumn{3}{c}{Median} & \\
-            \cmidrule(l){3-5}
-        """,
-                )
-            )
 
     rows = []
     for config_name in summary_df.index:
@@ -713,16 +670,6 @@ def get_tot_results_compare(ours: SolverResult, other: SolverResult) -> int:
 | ---------- | ------------------- | ---------------- | ------------------ | ---------------------- | -------------- | ------------- | -------------- |
 | **QF_LRA** | {tot}               | {solved}         | {not_solved}       | {not_matching_results} | {in_common}    | {ours_better} | {other_vetter} |
 """
-
-
-def copy_instances(df: pd.DataFrame, base_dir: str = "/home/campus.ncl.ac.uk/c3054737/Downloads/QF_LRA"):
-    """
-    Copy rows from the dataframe that match the instance names in the instance_list.
-    """
-    cmds = df["file"].apply(lambda x: f"find {base_dir} -name '*{x}' -exec cp {{}} QF_LRA \\;").to_list()
-    for cmd in cmds:
-        subprocess.run(cmd, shell=True, check=True)
-
 
 def compare_unique_solved_instances(*solvers: SolverResult) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
