@@ -36,7 +36,8 @@ bash ./run.sh
 
 #### Expected outputs
 
-On the first run, the script will load the Docker image from `qest-formats-ae-image.tar.gz` (if it is not already present locally). It will then launch a container and solve one benchmark with all configurations.
+On the first run, the script will load the Docker image from `qest-formats-ae-image.tar.gz` (if it is not already present locally). 
+It will then launch a container and solve one benchmark with all configurations.
 
 The output will look similar to:
 
@@ -91,24 +92,31 @@ Select the `results.ipynb` notebook, and click on `Run > Run All Cells` to execu
 
 ### Running the tool
 
-By default, `run.sh` runs the smoke test (suite name `smoke`). You can run a different benchmark suite by passing the suite name and an optional per-configuration limit:
+By default, `run.sh` runs the smoke test suite, named `smoke`. 
+You can run a different benchmark suite by passing the suite name `<suite>` and an optional per-configuration limit:
 
 - The suite name corresponds to a CSV file in `instances/` (without the `.csv` extension).
-- The CSV is read from `/instances/<suite>.csv` volume inside the container.
-- By default, the script runs the first 6 instances per configuration.
+- The run script will load the specified CSV file and run all benchmarks listed in it, with all configurations.
+- By default, the script only executes the first 6 instances per configuration.
 
 Results are written to `results-<suite>/` in this folder, and JupyterLab is launched afterward (same as the smoke test).
 
 ```bash
 bash ./run.sh [benchmark suite name, default: smoke] [limit of instances to run per configuration, default: 6]
-# E.g.,
+```
+
+For example, running
+
+```bash
 bash ./run.sh lanteresse 3
 ```
+
+will run the first 3 instances listed in `instances/lanteresse.csv` with all configurations, and write the results to `results-lanteresse`.
 
 You are free to modify any of the CSV files in `instances/` to run different sets of benchmarks.
 We recommend editing `instances/custom.csv` to keep the original files intact.
 
-The first line is treated as a header and skipped; each subsequent row should provide a file name relative to the SMT-LIB benchmark directory in the image.
+Following the CSV tradition, the first line is treated as a header and must be `file`; each subsequent row should indicate the file name with the `.smt2` extension.
 Keep in mind that only [QF_LRA](https://smt-lib.org/logics-all.shtml#QF_LRA) theory benchmarks from the [SMT-LIB release 2025 of non-incremental benchmarks](https://zenodo.org/records/16740866) are available.
 
 ```csv
