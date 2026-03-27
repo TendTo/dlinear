@@ -13,8 +13,8 @@ cc_library(
         "//conditions:default": True,
     }),
     local_defines = select({
-        "@dlinear//tools:debug": ["LOGGING", "TRACING", "NBUILD"],
-        "@dlinear//tools:release": ["NDEBUG", "QUIET", "NBUILD"],
+        "@dlinear//tools:debug_build": ["LOGGING", "TRACING", "NBUILD"],
+        "@dlinear//tools:release_build": ["NDEBUG", "QUIET", "NBUILD"],
         "//conditions:default": ["NBUILD"],
     }),
     visibility = ["//visibility:public"],

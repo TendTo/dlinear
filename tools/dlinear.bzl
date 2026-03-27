@@ -71,7 +71,8 @@ GCC_FLAGS = CXX_FLAGS + [
 
 # The GCC_CC_TEST_FLAGS will be enabled for all cc_test rules in the project
 # when building with gcc.
-GCC_CC_TEST_FLAGS = []
+GCC_TEST_FLAGS = []
+CLANG_TEST_FLAGS = []
 
 # Default defines for all C++ rules in the project.
 DLINEAR_DEFINES = ["DLINEAR_INCLUDE_FMT"]
@@ -79,7 +80,7 @@ DLINEAR_DEFINES = ["DLINEAR_INCLUDE_FMT"]
 def _get_copts(rule_copts, cc_test = False):
     """Alter the provided rule specific copts, adding the platform-specific ones.
 
-    When cc_test is True, the GCC_CC_TEST_FLAGS will be added.
+    When cc_test is True, the corresponding test flags will be added.
     It should only be set on cc_test rules or rules that are boil down to cc_test rules.
 
     Args:
@@ -89,11 +90,32 @@ def _get_copts(rule_copts, cc_test = False):
     Returns:
         A list of copts.
     """
-    extra_gcc_flags = GCC_CC_TEST_FLAGS if cc_test else []
-    return select({
-        "//tools:gcc_build": GCC_FLAGS + extra_gcc_flags + rule_copts,
-        "//tools:clang_build": CLANG_FLAGS + rule_copts,
-        "//conditions:default": CXX_FLAGS + rule_copts,
+    return rule_copts + select({
+        "//tools:gcc_build": GCC_FLAGS + (GCC_TEST_FLAGS if cc_test else []),
+        "//tools:clang_build": CLANG_FLAGS + (CLANG_TEST_FLAGS if cc_test else []),
+        "//conditions:default": CXX_FLAGS,
+    }) + select({
+        "//tools:gcc_omp_build": ["-fopenmp"],
+        "//tools:clang_omp_build": ["-fopenmp"],
+        "//conditions:default": [],
+    })
+
+def _get_linkopts(rule_linkopts, cc_test = False):
+    """Alter the provided rule specific linkopts, adding the platform-specific ones.
+
+    When cc_test is True, the corresponding test flags will be added.
+    It should only be set on cc_test rules or rules that are boil down to cc_test rules.
+
+    Args:
+        rule_linkopts: The linkopts passed to the rule.
+        cc_test: Whether the rule is a cc_test rule.
+
+    Returns:
+        A list of linkopts.
+    """
+    return rule_linkopts + select({
+        "//tools:gcc_omp_build": ["-lgomp"],
+        "//conditions:default": [],
     })
 
 def _get_defines(rule_defines):
@@ -165,21 +187,25 @@ def dlinear_cc_library(
         srcs = None,
         deps = None,
         copts = [],
+        linkopts = [],
         linkstatic = None,
         defines = [],
         implementation_deps = [],
+        features = [],
         **kwargs):
     """Creates a rule to declare a C++ library.
 
     Args:
         name: The name of the library.
-        hdrs: A list of header files to compile.
+        hdrs: A list of header files to add. Will be inherited by dependents.
         srcs: A list of source files to compile.
-        deps: A list of dependencies.
-        implementation_deps: A list of dependencies that are only needed for the implementation.
+        deps: A list of dependencies. Will be inherited by dependents.
+        implementation_deps: A list of dependencies that are only needed for this target.
         copts: A list of compiler options.
+        linkopts: A list of linker options.
         linkstatic: Whether to link statically.
-        defines: A list of defines to add to the library.
+        defines: A list of compiler defines used when compiling this target and its dependents.
+        features: A list of features to add to the library.
         **kwargs: Additional arguments to pass to cc_library.
     """
     cc_library(
@@ -189,8 +215,10 @@ def dlinear_cc_library(
         deps = deps,
         implementation_deps = implementation_deps,
         copts = _get_copts(copts),
+        linkopts = _get_linkopts(linkopts),
         linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
+        features = _get_features(features),
         **kwargs
     )
 
@@ -199,6 +227,7 @@ def dlinear_cc_binary(
         srcs = None,
         deps = None,
         copts = [],
+        linkopts = [],
         linkstatic = None,
         defines = [],
         features = [],
@@ -211,7 +240,8 @@ def dlinear_cc_binary(
         deps: A list of dependencies.
         copts: A list of compiler options.
         linkstatic: Whether to link statically.
-        defines: A list of defines to add to the binary.
+        linkopts: A list of linker options.
+        defines: A list of compiler defines used when compiling this target.
         features: A list of features to add to the binary.
         **kwargs: Additional arguments to pass to cc_binary.
     """
@@ -220,6 +250,7 @@ def dlinear_cc_binary(
         srcs = srcs,
         deps = deps,
         copts = _get_copts(copts),
+        linkopts = _get_linkopts(linkopts),
         linkstatic = _get_static(linkstatic),
         defines = _get_defines(defines),
         features = _get_features(features),
@@ -283,7 +314,10 @@ def dlinear_pybind_extension(name, srcs, deps = [], copts = [], linkstatic = Non
 def dlinear_cc_test(
         name,
         srcs = None,
+        data = [],
+        deps = None,
         copts = [],
+        linkopts = [],
         tags = [],
         defines = [],
         **kwargs):
@@ -294,21 +328,32 @@ def dlinear_cc_test(
     By default, sets size="small" because that indicates a unit test.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
     For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
+    Furthermore, a tag will be added for the test, based on the name, by converting the name to lowercase and removing the "test_" prefix.
 
     Args:
         name: The name of the test.
         srcs: A list of source files to compile.
+        data: A list of data files to include in the test. Can be used to provide input files.
+        deps: A list of dependencies.
         copts: A list of compiler options.
+        linkopts: A list of linker options.
         tags: A list of tags to add to the test. Allows for test filtering.
-        defines: A list of defines to add to the test.
+        defines: A list of compiler defines used when compiling this target.
         **kwargs: Additional arguments to pass to cc_test.
     """
     if srcs == None:
         srcs = ["".join([word.capitalize() for word in name.split("_")]) + ".cpp"]
+    if deps == None:
+        deps = []
+    if data:
+        deps.append("@rules_cc//cc/runfiles")
     cc_test(
         name = name,
         srcs = srcs,
+        data = data,
+        deps = deps,
         copts = _get_copts(copts, cc_test = True),
+        linkopts = _get_linkopts(linkopts, cc_test = True),
         linkstatic = True,
         tags = tags + ["dlinear", "".join([word.lower() for word in name.split("_")][1:])],
         defines = _get_defines(defines),
@@ -329,11 +374,12 @@ def dlinear_cc_googletest(
     Always adds a deps= entry for googletest main
     (@googletest//:gtest_main).
 
-    By default, sets size="small" because that indicates a unit test.
-    By default, sets use_default_main=True to use GTest's main, via @googletest//:gtest_main.
-    Otherwise, it will depend on @googletest//:gtest.
+    By default, it uses size="small" because that indicates a unit test.
+    By default, it uses use_default_main=True to use GTest's main, via @googletest//:gtest_main.
+    If use_default_main is False, it will depend on @googletest//:gtest instead.
     If a list of srcs is not provided, it will be inferred from the name, by capitalizing each _-separated word and appending .cpp.
-    For example, dlinear_cc_test(name = "test_foo_bar") will look for TestFooBar.cpp.
+    For example, dlinear_cc_googletest(name = "test_foo_bar") will look for TestFooBar.cpp.
+    Furthermore, a tag will be added for the test, based on the name, by converting the name to lowercase and removing the "test_" prefix.
 
     Args:
         name: The name of the test.
@@ -342,19 +388,18 @@ def dlinear_cc_googletest(
         size: The size of the test.
         tags: A list of tags to add to the test. Allows for test filtering.
         use_default_main: Whether to use googletest's main.
-        defines: A list of defines to add to the test.
+        defines: A list of compiler defines used when compiling this target.
         **kwargs: Additional arguments to pass to dlinear_cc_test.
     """
     if deps == None:
         deps = []
     if type(deps) == "select":
         if use_default_main:
-            deps += select({"//conditions:default": ["//test:test_main", "@googletest//:gtest"]})
+            deps += select({"//conditions:default": ["@googletest//:gtest_main"]})
         else:
             deps += select({"//conditions:default": ["@googletest//:gtest"]})
     elif use_default_main:
-        deps.append("//test:test_main")
-        deps.append("@googletest//:gtest")
+        deps.append("@googletest//:gtest_main")
     else:
         deps.append("@googletest//:gtest")
     dlinear_cc_test(
@@ -380,9 +425,9 @@ def dlinear_srcs(name, srcs = None, hdrs = None, deps = [], subfolder = "", visi
     """
     srcs_name, hdrs_name, all_srcs_name, hdrs_tar_name = "srcs", "hdrs", "all_srcs", "hdrs_tar"
     if srcs == None:
-        srcs = native.glob(["*.cpp", "*.cc", "*.cxx", "*.c"])
+        srcs = native.glob(["*.cpp", "*.cc", "*.cxx", "*.c"], allow_empty = True)
     if hdrs == None:
-        hdrs = native.glob(["*.h", "*.hpp"])
+        hdrs = native.glob(["*.h", "*.hpp"], allow_empty = True)
     srcs_deps = ["%s:%s" % (dep.split(":")[0], all_srcs_name) for dep in deps]
     tar_deps = ["%s:%s" % (dep.split(":")[0], hdrs_tar_name) for dep in deps]
     native.filegroup(

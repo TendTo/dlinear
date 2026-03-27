@@ -7,7 +7,6 @@
 
 #include <fmt/core.h>
 
-#include <execution>
 #include <numeric>
 #include <ostream>
 #include <span>
@@ -284,7 +283,7 @@ Tensor Tensor::Gather(const dlinear::onnx::Tensor &indices, std::int64_t axis) {
     for (size_t i = 1; i < indices.ndim(); ++i) {
       new_values_slices.emplace_back(0);
     }
-    data_slices.emplace_back(get_constant_value(index).get_num().get_ui());
+    data_slices.emplace_back(static_cast<int>(get_constant_value(index).get_num().get_ui()));
     new_values_slices.emplace_back(counter++);
     data_slices.emplace_back(xt::ellipsis());
     new_values_slices.emplace_back(xt::ellipsis());

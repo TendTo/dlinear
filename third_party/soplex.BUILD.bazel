@@ -65,7 +65,13 @@ cc_library(
     copts = ["-Wno-error"],
     includes = ["src"],
     include_prefix = "soplex",
-    deps = ["@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr", "@fmt"],
+    deps = [
+        "@gmp//:gmpxx",
+        "@boost.multiprecision",
+        "@boost.serialization",
+        "@mpfr",
+        "@fmt",
+    ],
 )
 
 filegroup(

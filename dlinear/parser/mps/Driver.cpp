@@ -245,6 +245,7 @@ void MpsDriver::ToSmt2(std::ostream &os) const {
   for (const auto &[name, column] : columns_) {
     os << "(declare-const " << column << " Real)\n";
   }
+  for (const auto &[name, bound] : bounds_) {
     if (bound.EqualTo(Formula::True())) continue;
     os << "(assert " << bound.to_smt2_string() << ")\n";
   }

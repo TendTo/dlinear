@@ -9,10 +9,13 @@ package(default_visibility = [
 
 dlinear_srcs(
     name = "srcs",
-    hdrs = glob([
-        "*.h",
-        "*.hpp",
-    ]) + ["//third_party/com_github_robotlocomotion_drake:hdrs"],
+    hdrs = glob(
+        [
+            "*.h",
+            "*.hpp",
+        ],
+        allow_empty = True,
+    ) + ["//third_party/com_github_robotlocomotion_drake:hdrs"],
     subfolder = "symbolic",
 )
 

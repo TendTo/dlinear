@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
-load("//tools:var.bzl", "make_var_substitution")
 load("@pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary")
+load("//tools:var.bzl", "make_var_substitution")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -32,6 +32,11 @@ bool_flag(
 
 bool_flag(
     name = "enable_static_build",
+    build_setting_default = False,
+)
+
+bool_flag(
+    name = "enable_omp_build",
     build_setting_default = False,
 )
 
@@ -90,6 +95,27 @@ config_setting(
 )
 
 config_setting(
+    name = "omp_build",
+    flag_values = {":enable_omp_build": "True"},
+)
+
+config_setting(
+    name = "gcc_omp_build",
+    flag_values = {
+        ":enable_omp_build": "True",
+        "@bazel_tools//tools/cpp:compiler": "gcc",
+    },
+)
+
+config_setting(
+    name = "clang_omp_build",
+    flag_values = {
+        ":enable_omp_build": "True",
+        "@bazel_tools//tools/cpp:compiler": "clang",
+    },
+)
+
+config_setting(
     name = "pydlinear_build",
     flag_values = {":enable_pydlinear_build": "True"},
 )
@@ -144,12 +170,12 @@ config_setting(
 )
 
 config_setting(
-    name = "debug",
+    name = "debug_build",
     values = {"compilation_mode": "dbg"},
 )
 
 config_setting(
-    name = "release",
+    name = "release_build",
     values = {"compilation_mode": "opt"},
 )
 

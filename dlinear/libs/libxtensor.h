@@ -6,8 +6,12 @@
  */
 #pragma once
 
-#include <xtensor/xarray.hpp>
-#include <xtensor/xio.hpp>
-#include <xtensor/xview.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wshadow"
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/io/xio.hpp>
+#include <xtensor/views/xview.hpp>
+#pragma GCC diagnostic pop
 
 namespace xt {}  // namespace xt
