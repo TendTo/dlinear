@@ -481,8 +481,8 @@ def print_stats(soplex_configs: list[SolverResult], filename: str = ""):
     summary_df["adjustment_calls"] = summary_df["adjustment_calls"].astype(int)
     summary_df["avg_adjustment_calls"] = summary_df["avg_adjustment_calls"].astype(int)
     summary_df["at_least_one_adjustment_call"] = summary_df["at_least_one_adjustment_call"].astype(int)
-    summary_df["lp_setup_time"] = summary_df["lp_setup_time"].astype(int)
-    summary_df["lp_time"] = summary_df["lp_time"].astype(int)
+    summary_df["lp_setup_time"] = summary_df["lp_setup_time"].astype(float)
+    summary_df["lp_time"] = summary_df["lp_time"].astype(float)
     renames = {
         # "solved": "Solved",
         # "unknown": "Unknown",
@@ -549,6 +549,13 @@ def write_instances(instances_100: pd.DataFrame, instances_200: pd.DataFrame, in
 
 
 def sanitize(df: pd.DataFrame):
+    if df.empty:
+        return df
+
+    df = df.copy()
+    df = df[df["theory::arith::z::arith::relax::calls"] > 0]
+    if df.empty:
+        return df
     for col in df.columns:
         df[col] = df[col].apply(convert_to_numeric)
 
@@ -585,10 +592,11 @@ def sanitize(df: pd.DataFrame):
         )
         == 0
     )
+    assert all(df["theory::arith::z::arith::relax::calls"] > 0)
     assert len(df[df["theory::arith::z::approx::externalSimplexType"].notna()]) == len(
         df[(df["theory::arith::z::arith::relax::calls"] > 0)]
     )
-    assert len(df["theory::arith::z::approx::externalSimplexType"].unique()) == 1
+    assert df["theory::arith::z::approx::externalSimplexType"].nunique() == 1
     return pd.concat([df, precision_df, refinements], axis=1)
 
 
