@@ -30,12 +30,17 @@ By default, all experiments (i.e., each benchmark instance) will be run with the
 
 ## Experiments
 
+In this README, all experiment are launched by running a bash script (with the extension `.sh`).
+The artifact also contains equivalent powershell scripts (replace the file extension with `.ps1`) and cmd scripts (replace the extension with `.bat`), if you wish to use those shells (e.g., you are using Windows).
+
+If you are using Linux and run into a permission errror when running the scripts, try invoking them with `bash <scriptname>.sh` instead.
+
 ### Smoke test
 
 The smoke test is a quick sanity check that runs a single benchmark instance with all configurations, to verify that the image is functional and the expected outputs are produced.
 
 ```bash
-bash ./run.sh
+./run.sh
 ```
 
 #### Expected outputs
@@ -96,7 +101,7 @@ Select the `results.ipynb` notebook, and click on `Run > Run All Cells` to execu
 
 ### Running the tool
 
-By default, `run.sh` runs the smoke test suite, named `smoke`.
+By default, `run.sh` runs the smoke test suite, named `smoke`. 
 You can run a different benchmark suite by passing the suite name `<suite>` and an optional per-configuration limit:
 
 - The suite name corresponds to a CSV file in `instances/` (without the `.csv` extension). The list includes
@@ -114,13 +119,13 @@ You can run a different benchmark suite by passing the suite name `<suite>` and 
 Results are written to `results-<suite>/` in this folder, and JupyterLab is launched afterward (same as the smoke test).
 
 ```bash
-bash ./run.sh [benchmark suite name, default: smoke] [limit of instances to run per configuration, default: 6]
+./run.sh [benchmark suite name, default: smoke] [limit of instances to run per configuration, default: 6]
 ```
 
 For example, running
 
 ```bash
-bash ./run.sh lanteresse 3
+./run.sh lanteresse 3
 ```
 
 will run the first 3 instances listed in `instances/lanteresse.csv` with all configurations, and write the results to `results-lanteresse`.
@@ -138,7 +143,7 @@ my_benchmark_2_from_smtlib.smt2
 ```
 
 ```bash
-bash ./run.sh custom 2
+./run.sh custom 2
 ```
 
 ### Exploring the results from the paper
@@ -147,31 +152,31 @@ All results from the **Benchmark** section of the paper are included in the arti
 A Jupyter notebook is provided to explore these results and regenerate the tables and plots.
 
 ```bash
-bash ./explore.sh
+./explore.sh
 ```
 
 ### Running the binary
 
-To achieve maximum flexibility, the `single.sh` script interfaces directly with the `cvc5/dlinear` binary inside the Docker container, allowing you to run any command with any configuration on any benchmark instance.
+To achieve maximum flexibility, the `binary.sh` script interfaces directly with the `cvc5/dlinear` binary inside the Docker container, allowing you to run any command with any configuration on any benchmark instance.
 
 ```bash
 # Get all the available options from cvc5/dlinear
-bash ./single.sh --help
+./binary.sh --help
 ```
 
 For example
 
 ```bash
 # E.g. run dlinear with soplex, 100 iterations threshold, strict mode, and a 10s time limit
-bash ./single.sh  --use-approx --external-lp-solver=soplex --standard-effort-variable-order-pivots=100  --lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
+./binary.sh  --use-approx --external-lp-solver=soplex --standard-effort-variable-order-pivots=100  --lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
 ```
 
 ```bash
 # E.g. run dlinear with qsoptex, 200 iterations threshold, epsilon mode, and a 10s time limit
-bash ./single.sh  --use-approx --external-lp-solver=qsoptex --standard-effort-variable-order-pivots=200  --no-lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
+./binary.sh  --use-approx --external-lp-solver=qsoptex --standard-effort-variable-order-pivots=200  --no-lp-strict-var --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
 ```
 
 ```bash
 # E.g. run cvc5 with glpk, 150 iterations threshold, strict mode, and a 10s time limit
-bash ./single.sh  --use-approx --external-lp-solver=glpk --standard-effort-variable-order-pivots=150 --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
+./binary.sh  --use-approx --external-lp-solver=glpk --standard-effort-variable-order-pivots=150 --tlimit-per=10000 --stats-all --stats-internal /benchmarks/constraints-tms-2-3-light-40.smt2
 ```
