@@ -6,7 +6,7 @@
   https://img.shields.io/endpoint?url=https://cvc5.stanford.edu/downloads/builds/coverage/nightly-coverage.json)](
     https://cvc5.stanford.edu/downloads/builds/coverage)
 
-cvc5
+dlinear (cvc5 extension)
 ===============================================================================
 
 cvc5 is a tool for determining the satisfiability of a first order formula
@@ -14,6 +14,16 @@ modulo a first order theory (or a combination of such theories).  It is the
 fifth in the Cooperating Validity Checker family of tools (CVC, CVC Lite,
 CVC3, CVC4) but does not directly incorporate code from any previous version
 prior to CVC4.
+
+dlinear is a CVC5 extension that adds support for floating point exact solvers
+to be used for the QF\_LRA theory.
+The goal is to leverage their efficiency to tackle complex linear constraints 
+that would take much more time to solve using the existing simplex implementations 
+in rational (or delta-rational) arithmetic.
+When compared with the floating LP solver [GLPK](https://www.gnu.org/software/glpk/), 
+already available in cvc5, we measured a noticeable speedup: the results produced 
+by dlinear are exact by design, while GLPK's outputs often require additional pivoting 
+to reach a valid solution due to the errors introduced by floating point arithmetic.
 
 If you are using cvc5 in your work, or incorporating it into software of your
 own, we invite you to send us a description and link to your
