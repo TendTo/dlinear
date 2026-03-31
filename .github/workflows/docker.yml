@@ -2,7 +2,7 @@ name: Docker CI
 
 on:
   push:
-    branches: [feat/exact-lp]
+    branches: [feat/exact-lp, cvc5]
     paths:
       - "src/**"
       - "benchmarks/**"
