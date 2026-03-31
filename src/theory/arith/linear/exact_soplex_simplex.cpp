@@ -68,8 +68,6 @@ class ExactSoplex : public ExactSimplex
     return extractSolution(false);
   }
 
-  ArithRatPairVec heuristicOptCoeffs() const override;
-
   external::MipResult solveMIP(bool al) override;
   external::Solution extractMIP() override { return extractSolution(true); }
   std::vector<const CutInfo*> getValidCuts(const NodeLog& nodes) override;
@@ -172,6 +170,11 @@ class ExactSoplexEpsilon : public ExactSoplex
 
   void setOptCoeffs(const ArithRatPairVec& ref) override;
 
+  ArithRatPairVec heuristicOptCoeffs() const override
+  {
+    return ExternalSimplex::heuristicOptCoeffs(d_vars, d_rowToArithVar);
+  }
+
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
 
@@ -191,6 +194,8 @@ class ExactSoplexStrict : public ExactSoplex
                     const Options& o);
 
   void setOptCoeffs(const ArithRatPairVec& ref) override {}
+
+  ArithRatPairVec heuristicOptCoeffs() const override { return {}; }
 
  private:
   std::vector<ArithVar> d_strictVars;  ///< Note that it may contain dup entries
@@ -555,177 +560,6 @@ int ExactSoplex::guessDir(const ArithVar v) const
   if (ubSgn == 0 && lbSgn != 0) return 1;
 
   return 1;
-}
-
-ArithRatPairVec ExactSoplex::heuristicOptCoeffs() const
-{
-  ArithRatPairVec ret;
-  return ret;
-
-  // Strategies are guess:
-  // 1 simple shared "ceiling" variable: danoint, pk1
-  //  x1 >= c, x1 >= tmp1, x1 >= tmp2, ...
-  // 1 large row: fixnet, vpm2, pp08a
-  //  (+ .......... ) <= c
-  // Not yet supported:
-  // 1 complex shared "ceiling" variable: opt1217
-  //  x1 >= c, x1 >= (+ ..... ), x1 >= (+ ..... )
-  //  and all of the ... are the same sign
-
-  // Candidates:
-  // 1) Upper and lower bounds are not equal.
-  // 2) The variable is not integer
-  // 3a) For columns look for a ceiling variable
-  // 3B) For rows look for a large row with
-
-  DenseMap<BoundCounts> d_colCandidates;
-  DenseMap<uint32_t> d_rowCandidates;
-
-  double sumRowLength = 0.0;
-  uint32_t maxRowLength = 0;
-  for (auto vi = d_vars.var_begin(), vi_end = d_vars.var_end(); vi != vi_end;
-       ++vi)
-  {
-    ArithVar v = *vi;
-
-    if (TraceIsOn("approx-debug"))
-    {
-      Trace("approx-debug") << v << " ";
-      d_vars.printModel(v, Trace("approx-debug"));
-    }
-
-    const bool hasLb = d_vars.hasLowerBound(v);
-    const bool hasUb = d_vars.hasUpperBound(v);
-    // Variable is not fixed nor free
-    if ((hasLb || hasUb) && (!hasLb || !hasUb || !d_vars.boundsAreEqual(v)))
-    {
-      if (d_vars.isAuxiliary(v))
-      {
-        Polynomial p = Polynomial::parsePolynomial(d_vars.asNode(v));
-        uint32_t len = p.size();
-        d_rowCandidates.set(v, len);
-        sumRowLength += len;
-        maxRowLength = std::max(maxRowLength, len);
-      }
-      else if (!d_vars.isInteger(v))
-      {
-        d_colCandidates.set(v, BoundCounts());
-      }
-    }
-  }
-
-  uint32_t maxCount = 0;
-  for (const ArithVar v : d_rowToArithVar)
-  {
-    bool lbCap = d_vars.hasLowerBound(v) && !d_vars.hasUpperBound(v);
-    bool ubCap = !d_vars.hasLowerBound(v) && d_vars.hasUpperBound(v);
-
-    if (lbCap || ubCap)
-    {
-      ConstraintP b = lbCap ? d_vars.getLowerBoundConstraint(v)
-                            : d_vars.getUpperBoundConstraint(v);
-
-      if (!(b->getValue()).noninfinitesimalIsZero()) continue;
-
-      Polynomial poly = Polynomial::parsePolynomial(d_vars.asNode(v));
-      if (poly.size() != 2) continue;
-
-      Polynomial::iterator j = poly.begin();
-      Monomial first = *j;
-      ++j;
-      Monomial second = *j;
-
-      bool firstIsPos = first.constantIsPositive();
-      bool secondIsPos = second.constantIsPositive();
-
-      if (firstIsPos == secondIsPos) continue;
-
-      Monomial pos = firstIsPos == lbCap ? first : second;
-      Monomial neg = firstIsPos != lbCap ? first : second;
-      // pos >= neg
-      VarList p = pos.getVarList();
-      VarList n = neg.getVarList();
-      if (d_vars.hasArithVar(p.getNode()))
-      {
-        ArithVar ap = d_vars.asArithVar(p.getNode());
-        if (d_colCandidates.isKey(ap))
-        {
-          BoundCounts bc = d_colCandidates.get(ap);
-          bc = BoundCounts(bc.lowerBoundCount(), bc.upperBoundCount() + 1);
-          maxCount = std::max(maxCount, bc.upperBoundCount());
-          d_colCandidates.set(ap, bc);
-        }
-      }
-      if (d_vars.hasArithVar(n.getNode()))
-      {
-        ArithVar an = d_vars.asArithVar(n.getNode());
-        if (d_colCandidates.isKey(an))
-        {
-          BoundCounts bc = d_colCandidates.get(an);
-          bc = BoundCounts(bc.lowerBoundCount() + 1, bc.upperBoundCount());
-          maxCount = std::max(maxCount, bc.lowerBoundCount());
-          d_colCandidates.set(an, bc);
-        }
-      }
-    }
-  }
-
-  // Attempt row
-  double avgRowLength = d_rowCandidates.size() >= 1
-                            ? (sumRowLength / d_rowCandidates.size())
-                            : 0.0;
-
-  // There is a large row among the candidates
-  bool guessARowCandidate = maxRowLength >= (10.0 * avgRowLength);
-
-  double rowLengthReq = (maxRowLength * .9);
-
-  if (guessARowCandidate)
-  {
-    for (ArithVar r : d_rowCandidates)
-    {
-      uint32_t len = d_rowCandidates[r];
-
-      int dir = guessDir(r);
-      if (len >= rowLengthReq)
-      {
-        if (TraceIsOn("approx-debug"))
-        {
-          Trace("approx-debug") << "high row " << r << " " << len << " "
-                                << avgRowLength << " " << dir << std::endl;
-          d_vars.printModel(r, Trace("approx-debug"));
-        }
-        ret.push_back(ArithRatPair(r, Rational(dir)));
-      }
-    }
-  }
-
-  // Attempt columns
-  bool guessAColCandidate = maxCount >= 4;
-  if (guessAColCandidate)
-  {
-    for (ArithVar c : d_colCandidates)
-    {
-      BoundCounts bc = d_colCandidates[c];
-
-      int dir = guessDir(c);
-      double ubScore = double(bc.upperBoundCount()) / maxCount;
-      double lbScore = double(bc.lowerBoundCount()) / maxCount;
-      if (ubScore >= .9 || lbScore >= .9)
-      {
-        if (TraceIsOn("approx-debug"))
-        {
-          Trace("approx-debug")
-              << "high col " << c << " " << bc << " " << ubScore << " "
-              << lbScore << " " << dir << std::endl;
-          d_vars.printModel(c, Trace("approx-debug"));
-        }
-        ret.push_back(ArithRatPair(c, Rational(c)));
-      }
-    }
-  }
-
-  return ret;
 }
 
 void ExactSoplexEpsilon::setOptCoeffs(const ArithRatPairVec& ref)

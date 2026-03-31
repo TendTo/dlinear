@@ -24,6 +24,7 @@
 #include "options/options.h"
 #include "theory/arith/delta_rational.h"
 #include "theory/arith/linear/arithvar.h"
+#include "theory/arith/linear/partial_model.h"
 #include "util/dense_map.h"
 #include "util/statistics_registry.h"
 
@@ -130,7 +131,12 @@ class ExternalSimplex
   /* the maximum pivots allowed in a query. */
   void setPivotLimit(int pl);
 
+  static int guessDir(const ArithVariables& vars, ArithVar v);
+
   virtual ArithRatPairVec heuristicOptCoeffs() const = 0;
+  ArithRatPairVec heuristicOptCoeffs(
+      const ArithVariables& vars,
+      const std::vector<ArithVar>& rowToArithVar) const;
 
   /** Sets a maximization criteria for the approximate solver.*/
   virtual void setOptCoeffs(const ArithRatPairVec& ref) = 0;
