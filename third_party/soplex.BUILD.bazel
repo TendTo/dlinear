@@ -1,44 +1,8 @@
 """Include the soplex LP solver library in the build."""
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 licenses(["notice"])  # Apache 2.0 License
-
-cmake(
-    name = "soplex_cmake",
-    lib_source = ":all_srcs",
-    lib_name = "libsoplex",
-    cache_entries = {
-        "GMP": "on",
-        "BOOST": "on",
-        "EXTERNAL_FMT": "on",
-        "CMAKE_BUILD_TYPE": "Release",
-        "GMP_DIR": "$EXT_BUILD_DEPS/libgmpxx",
-        "MPFR_INCLUDE_DIRS": "$EXT_BUILD_DEPS/libmpfr/include",  # Hack to force boost to find mpfr
-    },
-    env = {
-        "GMPDIR": "$$EXT_BUILD_DEPS/libmpfr/lib",  # Hack to find the mpfr library
-        "MPFRDIR": "$$EXT_BUILD_DEPS/libmpfr/include",  # Hack to find the mpfr headers
-    },
-    targets = ["soplex", "libsoplex", "libsoplex-pic", "libsoplexshared"],
-    out_binaries = ["soplex"],
-    out_static_libs = select(
-        {
-            "@dlinear//tools:fpic_build": ["libsoplex-pic.a"],
-            "//conditions:default": ["libsoplex.a"],
-        },
-    ),
-    out_shared_libs = ["libsoplex.so"],
-    deps = ["@zlib", "@gmp//:gmpxx", "@boost//:multiprecision", "@mpfr", "@fmt"],
-    visibility = ["//visibility:public"],
-    defines = ["SOPLEX_WITH_GMP", "SOPLEX_EXTERNAL_FMT"],
-    postfix_script = """find $INSTALLDIR -type l -exec sh -c 'for i in "$@"; do cp --preserve --remove-destination "$(readlink -f "$i")" "$i"; done' sh {} +
-                       cp -L $INSTALLDIR/lib/libsoplex.so.8.0.0.0 $INSTALLDIR/lib/libsoplex.so""" + select({
-        "@dlinear//tools:enabled_patchelf": " && patchelf --set-soname libsoplex.so $INSTALLDIR/lib/libsoplex.so",
-        "//conditions:default": "",
-    }),
-)
 
 cc_library(
     visibility = ["//visibility:public"],
@@ -62,7 +26,10 @@ cc_library(
         "//conditions:default": True,
     }),
     strip_include_prefix = "src",
-    copts = ["-Wno-error"],
+    copts = ["-Wno-error"] + select({
+        "@platforms//os:windows": ["/utf-8"],
+        "//conditions:default": [],
+    }),
     includes = ["src"],
     include_prefix = "soplex",
     deps = [
