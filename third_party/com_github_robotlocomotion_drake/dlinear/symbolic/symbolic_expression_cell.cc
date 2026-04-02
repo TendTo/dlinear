@@ -44,12 +44,13 @@ namespace {
 std::string mpq_to_string(const mpq_class &value) {
   if (value == 0) return "0";
 
+  mpq_class temp = value >= 0 ? value : -value;
   std::string ret;
   if (value < 0) ret += "(- ";
   if (value.get_den() == 1) {
-    ret += std::to_string(std::abs(value.get_num().get_si()));
+    ret += temp.get_num().get_str();
   } else {
-    ret += "(/ " + std::to_string(value.get_num().get_ui()) + " " + std::to_string(value.get_den().get_ui()) + ")";
+    ret += "(/ " + temp.get_num().get_str() + " " + temp.get_den().get_str() + ")";
   }
   if (value < 0) ret += ")";
   return ret;
