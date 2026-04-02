@@ -63,50 +63,53 @@ void MpsDriver::ObjectiveName(const std::string &row) {
   obj_row_ = row;
 }
 
-void MpsDriver::AddRow(Sense sense, const std::string &row) {
+void MpsDriver::AddRow(const Sense sense, const std::string &row) {
   DLINEAR_TRACE_FMT("Driver::AddRow {} {}", sense, row);
   if (sense == Sense::N && obj_row_.empty()) {
-    DLINEAR_DEBUG("Objective row not found. Adding the first row with sense N as objective row");
+    DLINEAR_DEBUG("Objective row name not found. Adding the first row with sense N as objective row");
     obj_row_ = row;
+    return;
   }
-  row_senses_[row] = sense;
+  rows_.emplace(row, Row{sense});
 }
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
   auto it = columns_.find(column);
-  if (it == columns_.end()) {
+  if (columns_.end() == it) {
     DLINEAR_TRACE_FMT("Added column {}", column);
-    // TODO(tend): choose if the name of the variable should be the column name or index
-    // const Variable var{"x" + std::to_string(columns_.size())};
-    const Variable var{column};
-    auto [insert_it, added] = columns_.emplace(column, var);  // If not already in the map, add the variable
+    // Integer columns are added with an implicit lower bound of 0 and upper bound of 1.
+    // Non integer columns are added with an implicit lower bound of 0 and no upper bound.
+    Variable var{column};
     context_.DeclareVariable(var);
+    auto [insert_it, val] = columns_.emplace(column, Column{var, integer_columns_});
     it = insert_it;
   }
-  if (!context_.config().optimize() && row == obj_row_) return;
-  rows_[row].emplace(it->second, value);
+  if (row == obj_row_) {
+    obj_.emplace(it->second.var, std::move(value));
+    DLINEAR_TRACE_FMT("Updated obj function {}", row);
+    return;
+  }
+  rows_.at(row).addends.emplace(it->second.var, std::move(value));
   DLINEAR_TRACE_FMT("Updated row {}", row);
 }
 
 void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddRhs {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
-  rhs_values_[row] = value;
-  Expression row_expression = ExpressionAddFactory{0, rows_[row]}.GetExpression();
   try {
-    switch (row_senses_.at(row)) {
+    switch (Row &row_data = rows_.at(row); row_data.sense) {
       case Sense::L:
-        rhs_[row] = row_expression <= value;
+        row_data.ub = std::move(value);
         break;
       case Sense::G:
-        rhs_[row] = row_expression >= value;
+        row_data.lb = std::move(value);
         break;
       case Sense::E:
-        rhs_[row] = row_expression == value;
+        row_data.lb = row_data.ub = std::move(value);
         break;
       case Sense::N:
-        DLINEAR_WARN("Sense N is used only for objective function. No action to take");
+        DLINEAR_WARN("SenseType N is used only for objective function. No action to take");
         break;
       default:
         DLINEAR_UNREACHABLE();
@@ -114,27 +117,32 @@ void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class
   } catch (const std::out_of_range &) {
     DLINEAR_RUNTIME_ERROR_FMT("Row {} not found", row);
   }
-  DLINEAR_TRACE_FMT("Updated rhs {}", rhs_[row]);
+  DLINEAR_TRACE_FMT("Updated rhs {}", row);
 }
 
 void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddRange {} {} {}", rhs, row, value);
   if (!VerifyStrictRhs(rhs)) return;
   try {
-    Expression row_expression = ExpressionAddFactory{0, rows_[row]}.GetExpression();
-    switch (row_senses_.at(row)) {
+    switch (Row &row_data = rows_.at(row); row_data.sense) {
       case Sense::L:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
-        rhs_[row] &= row_expression >= mpq_class{rhs_values_[row] - value};
+        row_data.lb = row_data.ub.value_or(0) - value;
+        if (!row_data.ub.has_value()) row_data.ub = 0;  // If there was no upper bound, set it to 0
         break;
       case Sense::G:
         mpq_abs(value.get_mpq_t(), value.get_mpq_t());
-        rhs_[row] &= row_expression <= mpq_class{rhs_values_[row] + value};
+        row_data.ub = row_data.lb.value_or(0) + value;
+        if (!row_data.lb.has_value()) row_data.lb = 0;  // If there was no lower bound, set it to 0
         break;
       case Sense::E:
-        rhs_[row] = value > 0
-                        ? row_expression >= rhs_values_[row] && row_expression <= mpq_class(rhs_values_[row] + value)
-                        : row_expression >= mpq_class(rhs_values_[row] + value) && row_expression <= rhs_values_[row];
+        if (value > 0) {
+          row_data.ub = row_data.ub.value_or(0) + value;
+          if (!row_data.lb.has_value()) row_data.lb = 0;  // If there was no lower bound, set it to 0
+        } else {
+          row_data.lb = row_data.lb.value_or(0) + value;
+          if (!row_data.ub.has_value()) row_data.ub = 0;  // If there was no upper bound, set it to 0
+        }
         break;
       case Sense::N:
         DLINEAR_WARN("Sense N is used only for objective function. No action to take");
@@ -147,24 +155,26 @@ void MpsDriver::AddRange(const std::string &rhs, const std::string &row, mpq_cla
   }
 }
 
-void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column, mpq_class value) {
-  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", bound_type, bound, column, value);
+void MpsDriver::AddBound(const BoundType type, const std::string &bound, const std::string &column, mpq_class value) {
+  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {} {}", type, bound, column, value);
   if (!VerifyStrictBound(bound)) return;
   try {
-    switch (bound_type) {
-      case BoundType::UP:
+    switch (Column &column_data = columns_.at(column); type) {
       case BoundType::UI:
-        bounds_[column] &= columns_.at(column) <= value;
-        if (value <= 0) skip_lower_bound_[column] = true;
+        column_data.is_integer = true;
+        [[fallthrough]];
+      case BoundType::UP:
+        column_data.ub = std::move(value);
         break;
-      case BoundType::LO:
       case BoundType::LI:
-        bounds_[column] &= columns_.at(column) >= value;
-        skip_lower_bound_[column] = true;
+        column_data.is_integer = true;
+        column_data.is_infinite_ub_integer = true;
+        [[fallthrough]];
+      case BoundType::LO:
+        column_data.lb = std::move(value);
         break;
       case BoundType::FX:
-        bounds_[column] &= columns_.at(column) == value;
-        skip_lower_bound_[column] = true;
+        column_data.lb = column_data.ub = std::move(value);
         break;
       default:
         DLINEAR_UNREACHABLE();
@@ -173,24 +183,24 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
     DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
   }
 
-  DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
+  DLINEAR_TRACE_FMT("Updated bound {}", column);
 }
 
-void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const std::string &column) {
-  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {}", bound_type, bound, column);
+void MpsDriver::AddBound(const BoundType type, const std::string &bound, const std::string &column) {
+  DLINEAR_TRACE_FMT("Driver::AddBound {} {} {}", type, bound, column);
   if (!VerifyStrictBound(bound)) return;
   try {
-    switch (bound_type) {
+    switch (Column &column_data = columns_.at(column); type) {
       case BoundType::BV:
-        bounds_[column] = (columns_.at(column) >= 0) && (columns_.at(column) <= 1);
-        skip_lower_bound_[column] = true;
+        column_data.lb = 0;
+        column_data.ub = 1;
         break;
       case BoundType::FR:
       case BoundType::MI:
-        skip_lower_bound_[column] = true;
+        column_data.is_infinite_lb = true;
         break;
       case BoundType::PL:
-        DLINEAR_DEBUG("Infinity bound, no action to take");
+        column_data.is_infinite_ub_integer = true;
         break;
       default:
         DLINEAR_UNREACHABLE();
@@ -199,7 +209,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
     DLINEAR_RUNTIME_ERROR_FMT("Column {} not found", column);
   }
 
-  DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
+  DLINEAR_TRACE_FMT("Updated bound {}", column);
 }
 
 void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::string &keyword) {
@@ -219,36 +229,55 @@ void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::s
 
 void MpsDriver::End() {
   DLINEAR_DEBUG_FMT("Driver::EndData reached end of file {}", problem_name_);
-  for (const auto &[row, sense] : row_senses_) {
-    if (sense != Sense::N && rhs_.find(row) == rhs_.end()) {
+  DLINEAR_DEBUG_FMT("Found {} variables and {} constraints", columns_.size(), rows_.size());
+
+  // Add colomn bounds
+  for (const auto &[name, column_data] : columns_) {
+    const mpq_class *const lb = column_data.ComputeLb();
+    const mpq_class *const ub = column_data.ComputeUb();
+
+    // Case I - Fixed bound
+    if (lb != nullptr && ub != nullptr && *lb == *ub) {
+      DLINEAR_TRACE_FMT("Column {} == {}", name, *lb);
+      context_.Assert(column_data.var == *lb);
+      continue;
+    }
+    // Case II: The bounds are different or only one is set
+    if (lb != nullptr) {
+      DLINEAR_TRACE_FMT("Column {} >= {}", name, *lb);
+      context_.Assert(column_data.var >= *lb);
+    }
+    if (ub != nullptr) {
+      DLINEAR_TRACE_FMT("Column {} <= {}", name, *ub);
+      context_.Assert(column_data.var <= *ub);
+    }
+  }
+
+  for (auto &[row, row_data] : rows_) {
+    DLINEAR_ASSERT(row_data.sense != Sense::N, "Only the objective row can have sense N");
+    if (row_data.addends.empty()) continue;  // No point in adding empty rows
+    if (!row_data.lb.has_value() && !row_data.ub.has_value()) {
       DLINEAR_TRACE_FMT("Row {} has no RHS. Adding 0", row);
       AddRhs(rhs_name_, row, 0);
     }
-  }
-  for (const auto &[column, var] : columns_) {
-    if (skip_lower_bound_.find(column) == skip_lower_bound_.end()) {
-      DLINEAR_TRACE_FMT("Column has no lower bound. Adding 0 <= {}", column);
-      AddBound(BoundType::LO, bound_name_, column, 0);
+    const Expression constr = ExpressionAddFactory{0, std::move(row_data.addends)}.GetExpression();
+
+    // Case I - Fixed row
+    if (row_data.lb.has_value() && row_data.ub.has_value() && row_data.lb.value() == row_data.ub.value()) {
+      context_.Assert(constr == row_data.lb.value());
+      continue;
+    }
+    // Case II: The bounds are different or only one is set
+    if (row_data.lb.has_value()) {
+      context_.Assert(constr >= row_data.lb.value());
+    }
+    if (row_data.ub.has_value()) {
+      context_.Assert(constr <= row_data.ub.value());
     }
   }
-  DLINEAR_DEBUG_FMT("Found {} assertions", n_assertions());
-  for (const auto &[name, bound] : bounds_) {
-    if (is_conjunction(bound)) {
-      for (const Formula &sub_bound : get_operands(bound)) context_.Assert(sub_bound);
-    } else {
-      context_.Assert(bound);
-    }
-  }
-  for (const auto &[name, row] : rhs_) {
-    if (row.EqualTo(Formula::True())) continue;
-    if (is_conjunction(row)) {
-      for (const Formula &sub_row : get_operands(row)) context_.Assert(sub_row);
-    } else {
-      context_.Assert(row);
-    }
-  }
+
   if (context_.config().optimize() && !obj_row_.empty()) {
-    Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
+    Expression obj_expression = ExpressionAddFactory{0, obj_}.GetExpression();
     if (is_min_) {
       context_.Minimize(obj_expression);
     } else {
@@ -261,25 +290,21 @@ void MpsDriver::ToSmt2(std::ostream &os) const {
   os << "(set-logic QF_LRA)\n";
   if (!context_.GetInfo(":status").empty()) os << "(set-info :status " << context_.GetInfo(":status") << ")\n";
   for (const auto &[name, column] : columns_) {
-    os << "(declare-const " << column << " Real)\n";
+    os << "(declare-const " << name << " Real)\n";
   }
-  for (const auto &[name, bound] : bounds_) {
-    if (bound.EqualTo(Formula::True())) continue;
-    os << "(assert " << bound.to_smt2_string() << ")\n";
+  for (const auto &f : context_.assertions()) {
+    if (f.EqualTo(Formula::True())) continue;
+    os << "(assert " << f.to_smt2_string() << ")\n";
   }
-  for (const auto &[name, row] : rhs_) {
-    if (row.EqualTo(Formula::True())) continue;
-    os << "(assert " << row.to_smt2_string() << ")\n";
-  }
-  if (!obj_row_.empty()) {
-    Expression obj_expression = ExpressionAddFactory{0, rows_.at(obj_row_)}.GetExpression();
+  if (!obj_row_.empty() && !obj_.empty()) {
+    const Expression obj_expression = ExpressionAddFactory{0, obj_}.GetExpression();
     if (is_min_)
       os << "(minimize (+ " << obj_expression.to_smt2_string() << "))\n";
     else
       os << "(maximize (+ " << obj_expression.to_smt2_string() << "))\n";
   }
   os << "(check-sat)\n";
-  if (!obj_row_.empty()) os << "(get-objectives)\n";
+  if (!obj_row_.empty() && !obj_.empty()) os << "(get-objectives)\n";
 }
 
 }  // namespace dlinear::mps

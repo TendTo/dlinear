@@ -18,6 +18,8 @@
 #include "dlinear/libs/libgmp.h"
 #include "dlinear/parser/Driver.h"
 #include "dlinear/parser/mps/BoundType.h"
+#include "dlinear/parser/mps/Column.h"
+#include "dlinear/parser/mps/Row.h"
 #include "dlinear/parser/mps/Sense.h"
 #include "dlinear/parser/mps/scanner.h"
 #include "dlinear/solver/Context.h"
@@ -214,8 +216,8 @@ class MpsDriver : public Driver {
    * @param b new value of the strict mps mode
    */
   void set_strict_mps(bool b) { strict_mps_ = b; }
-  /** @getter{number of assertions, MpsDriver} */
-  [[nodiscard]] std::size_t n_assertions() const { return rhs_.size() + bounds_.size(); }
+  /** @getter{size of the problem in terms of columns and rows, MpsDriver} */
+  [[nodiscard]] std::size_t size() const { return rows_.size() + columns_.size(); }
   /** @checker{enabled, minimization} */
   [[nodiscard]] bool is_min() const { return is_min_; }
   /** @getter{objective row name, MpsDriver} */
@@ -227,7 +229,7 @@ class MpsDriver : public Driver {
    * Print the problem in the smt2 format.
    * @param os output stream
    */
-  void ToSmt2(std::ostream &os) const;
+  void ToSmt2(std::ostream &os = std::cout) const;
 
  private:
   /**
@@ -260,15 +262,9 @@ class MpsDriver : public Driver {
    * assertion.
    */
   // TODO: store additional mapping from row to int [idx] and col to int [idx] and use vectors for everything else
-  std::unordered_map<std::string, std::map<Expression, mpq_class>> rows_;
-  std::unordered_map<std::string, Sense> row_senses_;       ///< The sense of each row.
-  std::unordered_map<std::string, Variable> columns_;       ///< The columns of the problem. Contains the variables.
-  std::unordered_map<std::string, bool> skip_lower_bound_;  ///< True if there is no need to manually add the lb 0 <= V.
-  std::unordered_map<std::string, mpq_class> rhs_values_;   ///< The values of the hand side of the problem.
-
-  // TODO(TendTo): Could be optimized by using unordered_map.
-  std::map<std::string, Formula> rhs_;     ///< Assertions built by combining the rows and the rhs.
-  std::map<std::string, Formula> bounds_;  ///< Assertions built by combining the columns and the bounds.
+  std::unordered_map<std::string, Row> rows_;
+  std::unordered_map<std::string, Column> columns_;  ///< The columns of the problem. Contains the variables.
+  std::map<Expression, mpq_class> obj_;              ///< The objective function.
 
   std::string rhs_name_;    ///< The name of the first rhs found. Used if strict_mps_ is true.
   std::string bound_name_;  ///< The name of the first bound found. Used if strict_mps_ is true.
