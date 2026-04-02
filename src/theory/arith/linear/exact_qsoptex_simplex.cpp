@@ -447,10 +447,7 @@ class ExactQsoptexEpsilon : public ExactQsoptex
 
   external::Solution extractSolution(bool mip) override;
 
-  ArithRatPairVec heuristicOptCoeffs() const override
-  {
-    return ExternalSimplex::heuristicOptCoeffs(d_vars, d_rowToArithVar);
-  }
+  ArithRatPairVec heuristicOptCoeffs() const override { return {}; }
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */

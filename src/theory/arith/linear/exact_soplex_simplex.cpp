@@ -170,10 +170,7 @@ class ExactSoplexEpsilon : public ExactSoplex
 
   void setOptCoeffs(const ArithRatPairVec& ref) override;
 
-  ArithRatPairVec heuristicOptCoeffs() const override
-  {
-    return ExternalSimplex::heuristicOptCoeffs(d_vars, d_rowToArithVar);
-  }
+  ArithRatPairVec heuristicOptCoeffs() const override { return {}; }
 
  private:
   /** UTILITIES FOR DEALING WITH ESTIMATES */
