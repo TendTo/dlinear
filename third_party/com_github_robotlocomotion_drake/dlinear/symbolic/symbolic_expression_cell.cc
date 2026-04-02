@@ -49,7 +49,7 @@ std::string mpq_to_string(const mpq_class &value) {
   if (value.get_den() == 1) {
     ret += std::to_string(std::abs(value.get_num().get_si()));
   } else {
-    ret += std::to_string(std::abs(value.get_d()));
+    ret += "(/ " + std::to_string(value.get_num().get_ui()) + " " + std::to_string(value.get_den().get_ui()) + ")";
   }
   if (value < 0) ret += ")";
   return ret;

@@ -153,6 +153,37 @@ TEST_F(TestMpsDriver, SimpleBoundsPositive) {
                                                           "(check-sat)"));
 }
 
+TEST_F(TestMpsDriver, SimpleBoundsPositiveRational) {
+  ASSERT_TRUE(
+      driver_.ParseString("ROWS\n"
+                          " L  R1\n"
+                          " G  R2\n"
+                          " E  R3\n"
+                          " E  R4\n"  // ignored row
+                          " N  Ob\n"  // only used for  objective
+                          "COLUMNS\n"
+                          " X1 R1 1/2\n"
+                          " X2 R2 2/3\n"
+                          " X3 R3 3/4\n"
+                          "BOUNDS\n"
+                          " FR BND X1\n"
+                          " FR BND X2\n"
+                          " FR BND X3\n"
+                          "RHS\n"
+                          " R1 11/12\n"
+                          " R2 22/23 R3 33/34\n"
+                          "ENDATA"));
+  driver_.ToSmt2(ss_);
+  EXPECT_THAT(split(ss_), ::testing::UnorderedElementsAre("(set-logic QF_LRA)",                      //
+                                                          "(declare-const X3 Real)",                 //
+                                                          "(declare-const X2 Real)",                 //
+                                                          "(declare-const X1 Real)",                 //
+                                                          "(assert (= (* (/ 3 4) X3) (/ 33 34)))",   //
+                                                          "(assert (>= (* (/ 2 3) X2) (/ 22 23)))",  //
+                                                          "(assert (<= (* (/ 1 2) X1) (/ 11 12)))",  //
+                                                          "(check-sat)"));
+}
+
 TEST_F(TestMpsDriver, SimpleBoundsNegative) {
   ASSERT_TRUE(
       driver_.ParseString("ROWS\n"
@@ -181,6 +212,37 @@ TEST_F(TestMpsDriver, SimpleBoundsNegative) {
                                                           "(assert (= (* (- 3) X3) 33))",   //
                                                           "(assert (>= (* (- 2) X2) 22))",  //
                                                           "(assert (<= (* (- 1) X1) 11))",  //
+                                                          "(check-sat)"));
+}
+
+TEST_F(TestMpsDriver, SimpleBoundsNegativeRational) {
+  ASSERT_TRUE(
+      driver_.ParseString("ROWS\n"
+                          " L  R1\n"
+                          " G  R2\n"
+                          " E  R3\n"
+                          " E  R4\n"  // ignored row
+                          " N  Ob\n"  // only used for  objective
+                          "COLUMNS\n"
+                          " X1 R1 -1/2\n"
+                          " X2 R2 -2/3\n"
+                          " X3 R3 -3/4\n"
+                          "BOUNDS\n"
+                          " FR BND X1\n"
+                          " FR BND X2\n"
+                          " FR BND X3\n"
+                          "RHS\n"
+                          " R1 11/12\n"
+                          " R2 22/23 R3 33/34\n"
+                          "ENDATA"));
+  driver_.ToSmt2(ss_);
+  EXPECT_THAT(split(ss_), ::testing::UnorderedElementsAre("(set-logic QF_LRA)",                      //
+                                                          "(declare-const X3 Real)",                 //
+                                                          "(declare-const X2 Real)",                 //
+                                                          "(declare-const X1 Real)",                 //
+                                                          "(assert (= (* (- (/ 3 4)) X3) (/ 33 34)))",   //
+                                                          "(assert (>= (* (- (/ 2 3)) X2) (/ 22 23)))",  //
+                                                          "(assert (<= (* (- (/ 1 2)) X1) (/ 11 12)))",  //
                                                           "(check-sat)"));
 }
 

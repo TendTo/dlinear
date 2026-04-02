@@ -132,6 +132,34 @@ TEST_F(TestMpsDriver, SimpleBoundsPositive) {
                                                                                     3 * x(3) == 33}));
 }
 
+TEST_F(TestMpsDriver, SimpleBoundsPositiveRational) {
+  ASSERT_TRUE(
+      driver_.ParseString("ROWS\n"
+                          " L  R1\n"
+                          " G  R2\n"
+                          " E  R3\n"
+                          " E  R4\n"  // ignored row
+                          " N  Ob\n"  // only used for  objective
+                          "COLUMNS\n"
+                          " X1 R1 1/2\n"
+                          " X2 R2 2/3\n"
+                          " X3 R3 3/4\n"
+                          "BOUNDS\n"
+                          " FR BND X1\n"
+                          " FR BND X2\n"
+                          " FR BND X3\n"
+                          "RHS\n"
+                          " R1 11/12\n"
+                          " R2 22/23 R3 33/34\n"
+                          "ENDATA"));
+  ASSERT_EQ(driver_.context().box().size(), 3u);
+
+  EXPECT_THAT(driver_.context().assertions(),
+              ::testing::UnorderedPointwise(FEq(), {mpq_class{1, 2} * x(1) <= mpq_class{11, 12},  //
+                                                    mpq_class{2, 3} * x(2) >= mpq_class{22, 23},  //
+                                                    mpq_class{3, 4} * x(3) == mpq_class{33, 34}}));
+}
+
 TEST_F(TestMpsDriver, SimpleBoundsNegative) {
   ASSERT_TRUE(
       driver_.ParseString("ROWS\n"
