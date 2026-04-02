@@ -16,15 +16,24 @@
 #include "dlinear/parser/smt2/Driver.h"
 
 int mps_to_smt2(int argc, char* argv[]) {
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " <filename> [optional output file]" << std::endl;
     return 1;
   }
+  std::ofstream out;
+  if (argc >= 3) {
+    out.open(argv[2]);
+    if (!out.is_open()) {
+      std::cerr << "Error: Could not open output file " << argv[2] << std::endl;
+      return 1;
+    }
+  }
+
   dlinear::Config config{std::string{argv[1]}};
   dlinear::Context context{config};
   dlinear::mps::MpsDriver driver{context};
   driver.ParseFile(config.filename());
-  driver.ToSmt2(std::cout);
+  driver.ToSmt2(out.is_open() ? out : std::cout);
 
   return 0;
 }
