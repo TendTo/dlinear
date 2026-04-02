@@ -65,7 +65,11 @@ void MpsDriver::ObjectiveName(const std::string &row) {
 
 void MpsDriver::AddRow(const Sense sense, const std::string &row) {
   DLINEAR_TRACE_FMT("Driver::AddRow {} {}", sense, row);
-  if (sense == Sense::N && obj_row_.empty()) {
+  if (sense == Sense::N) {
+    if (!obj_row_.empty()) {
+      DLINEAR_WARN_FMT("Objective row name already set to '{}', ignoring new objective row '{}'", obj_row_, row);
+      return;
+    }
     DLINEAR_DEBUG("Objective row name not found. Adding the first row with sense N as objective row");
     obj_row_ = row;
     return;
@@ -90,8 +94,11 @@ void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq
     DLINEAR_TRACE_FMT("Updated obj function {}", row);
     return;
   }
-  rows_.at(row).addends.emplace(it->second.var, std::move(value));
-  DLINEAR_TRACE_FMT("Updated row {}", row);
+  const auto row_it = rows_.find(row);
+  if (row_it != rows_.end()) {
+    row_it->second.addends.emplace(it->second.var, std::move(value));
+    DLINEAR_TRACE_FMT("Updated row {}", row);
+  }
 }
 
 void MpsDriver::AddRhs(const std::string &rhs, const std::string &row, mpq_class value) {

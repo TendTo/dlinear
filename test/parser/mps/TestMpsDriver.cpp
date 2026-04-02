@@ -77,6 +77,34 @@ TEST_F(TestMpsDriver, Rows) {
                                                                                     x(4) >= 0}));
 }
 
+TEST_F(TestMpsDriver, MultipleObjectives) {
+  ASSERT_TRUE(
+      driver_.ParseString("ROWS\n"
+                          " L  R1\n"
+                          " G  R2\n"
+                          " E  R3\n"
+                          " E  R4\n"  // ignored row
+                          " N  Ob\n"  // only used for objective
+                          " N  Er\n"  // erroneous objective function
+                          "COLUMNS\n"
+                          " X1 R1 1.\n"
+                          " X2 R2 2.\n"
+                          " X3 R3 3.\n"
+                          " X4 Ob 4.\n"
+                          " X1 Er 5.\n"
+                          " X2 Er 6.\n"
+                          "BOUNDS\n"
+                          " FR BND X1\n"
+                          " FR BND X2\n"
+                          " FR BND X3\n"
+                          "ENDATA"));
+  ASSERT_EQ(driver_.context().box().size(), 4u);
+  EXPECT_THAT(driver_.context().assertions(), ::testing::UnorderedPointwise(FEq(), {x(1) <= 0,      //
+                                                                                    2 * x(2) >= 0,  //
+                                                                                    3 * x(3) == 0,  //
+                                                                                    x(4) >= 0}));
+}
+
 TEST_F(TestMpsDriver, SimpleBoundsPositive) {
   ASSERT_TRUE(
       driver_.ParseString("ROWS\n"

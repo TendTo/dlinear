@@ -86,6 +86,42 @@ TEST_F(TestMpsDriver, Rows) {
                                                           "(get-objectives)"));
 }
 
+TEST_F(TestMpsDriver, MultipleObjectives) {
+  ASSERT_TRUE(
+      driver_.ParseString("ROWS\n"
+                          " L  R1\n"
+                          " G  R2\n"
+                          " E  R3\n"
+                          " E  R4\n"  // ignored row
+                          " N  Ob\n"  // only used for objective
+                          " N  Er\n"  // erroneous objective function
+                          "COLUMNS\n"
+                          " X1 R1 1.\n"
+                          " X2 R2 2.\n"
+                          " X3 R3 3.\n"
+                          " X4 Ob 4.\n"
+                          " X1 Er 5.\n"
+                          " X2 Er 6.\n"
+                          "BOUNDS\n"
+                          " FR BND X1\n"
+                          " FR BND X2\n"
+                          " FR BND X3\n"
+                          "ENDATA"));
+  driver_.ToSmt2(ss_);
+  EXPECT_THAT(split(ss_), ::testing::UnorderedElementsAre("(set-logic QF_LRA)",        //
+                                                          "(declare-const X4 Real)",   //
+                                                          "(declare-const X3 Real)",   //
+                                                          "(declare-const X2 Real)",   //
+                                                          "(declare-const X1 Real)",   //
+                                                          "(assert (>= X4 0))",        //
+                                                          "(assert (= (* 3 X3) 0))",   //
+                                                          "(assert (>= (* 2 X2) 0))",  //
+                                                          "(assert (<= X1 0))",        //
+                                                          "(minimize (+ (* 4 X4)))",   //
+                                                          "(check-sat)",               //
+                                                          "(get-objectives)"));
+}
+
 TEST_F(TestMpsDriver, SimpleBoundsPositive) {
   ASSERT_TRUE(
       driver_.ParseString("ROWS\n"
