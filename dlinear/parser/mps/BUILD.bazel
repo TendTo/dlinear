@@ -32,7 +32,7 @@ gen_yacc(
 )
 
 dlinear_cc_library(
-    name = "mps_data",
+    name = "mps_types",
     srcs = [
         "BoundType.cpp",
         "Sense.cpp",
@@ -43,6 +43,25 @@ dlinear_cc_library(
     ],
     implementation_deps = ["//dlinear/util:error"],
     deps = ["//dlinear/util:logging"],
+)
+
+dlinear_cc_library(
+    name = "mps_data",
+    srcs = [
+        "Column.cpp",
+        "Row.cpp",
+    ],
+    hdrs = [
+        "Column.h",
+        "Row.h",
+    ],
+    implementation_deps = ["//dlinear/util:error"],
+    deps = [
+        ":mps_types",
+        "//dlinear/libs:gmp",
+        "//dlinear/symbolic",
+        "//dlinear/util:logging",
+    ],
 )
 
 dlinear_cc_library(
@@ -63,6 +82,7 @@ dlinear_cc_library(
     ],
     deps = [
         ":mps_data",
+        ":mps_types",
         "//dlinear/libs:gmp",
         "//dlinear/parser:driver",
         "//dlinear/solver:context",
