@@ -406,7 +406,7 @@ private:
   SimplexDecisionProcedure* d_pass1SDP;
   SimplexDecisionProcedure* d_otherSDP;
   /* Sets d_qflraStatus */
-  void importSolution(const external::Solution& solution);
+  void importSolution(const external::Solution& solution, Theory::Effort effortLevel);
   bool solveRelaxationOrPanic(Theory::Effort effortLevel);
   context::CDO<int> d_lastContextIntegerAttempted;
   bool replayLog(external::ExternalSimplex* approx);

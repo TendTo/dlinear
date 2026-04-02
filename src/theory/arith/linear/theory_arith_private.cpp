@@ -3246,7 +3246,7 @@ void TheoryArithPrivate::solveInteger(Theory::Effort effortLevel)
 
           external::Solution mipSolution;
           mipSolution = approx->extractMIP();
-          importSolution(mipSolution);
+          importSolution(mipSolution, effortLevel);
           solveRelaxationOrPanic(effortLevel);
 
           if (d_qflraStatus == Result::SAT)
@@ -3373,7 +3373,7 @@ SimplexDecisionProcedure& TheoryArithPrivate::selectSimplex(bool pass1)
   }
 }
 
-void TheoryArithPrivate::importSolution(const external::Solution& solution)
+void TheoryArithPrivate::importSolution(const external::Solution& solution, CVC5_UNUSED const Theory::Effort effortLevel)
 {
   if (TraceIsOn("arith::importSolution"))
   {
@@ -3392,6 +3392,7 @@ void TheoryArithPrivate::importSolution(const external::Solution& solution)
     d_partialModel.printEntireModel(Trace("arith::importSolution"));
   }
 
+  // TODO: does it need to be full effort?
   if (options().arith.delta >= 0 && solution.linResult == LinResult::LinFeasible)
   {
     // If we are working with a delta result, after applying the assignment,
@@ -3563,7 +3564,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         ++d_statistics.d_relaxLinFeas;
         externalSolution = externalSolver->extractRelaxation();
         externalSolution.linResult = externalResult;
-        importSolution(externalSolution);
+        importSolution(externalSolution, effortLevel);
         if (d_qflraStatus != Result::SAT)
         {
           ++d_statistics.d_relaxLinFeasFailures;
@@ -3574,7 +3575,7 @@ bool TheoryArithPrivate::solveRealRelaxation(Theory::Effort effortLevel)
         ++d_statistics.d_relaxLinInfeas;
         externalSolution = externalSolver->extractRelaxation();
         externalSolution.linResult = externalResult;
-        importSolution(externalSolution);
+        importSolution(externalSolution, effortLevel);
         if (d_qflraStatus != Result::UNSAT)
         {
           ++d_statistics.d_relaxLinInfeasFailures;
