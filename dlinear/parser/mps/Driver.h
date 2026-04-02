@@ -181,6 +181,22 @@ class MpsDriver : public Driver {
   void AddBound(BoundType type, const std::string &bound, const std::string &column);
 
   /**
+   * Called when the parser has reached the `MARKER` section.
+   * A marker is a string that can be used to alter the interpretation of the lines below.
+   * The most common one is the 'INTORG' marker, which indicates that the following columns represent integer variables.
+   * It must be terminated by an 'INTEND' marker.
+   * If the mps file, a marker line is defined by:
+   *
+   *  | Field1 | Field2      | Field3   | Field4               | Field5 | Field6 |
+   *  | ------ | ----------- | -------- | -------------------- | ------ | ------ |
+   *  |        | Marker Name | 'MARKER' | 'INTORG' or 'INTEND' |        |        |
+   *
+   * @param name name of the marker
+   * @param keyword keyword of the marker. Usually 'INTORG' or 'INTEND'
+   */
+  void SetMarker(const std::string &name, const std::string &keyword);
+
+  /**
    * Called when the parser has reached the ENDATA section.
    * It finalizes the assertions, adding the default lower bound
    * if needed, and launches the solver.
@@ -234,7 +250,8 @@ class MpsDriver : public Driver {
   bool is_min_{true};             ///< True if the problem is a minimization problem.
   std::string obj_row_;           ///< The name of the objective row.
   MpsScanner *scanner_{nullptr};  ///< The scanner producing the tokens for the parser.
-  bool strict_mps_{false};  ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
+  bool strict_mps_{false};       ///< If true, the parser will check that all rhs, ranges and bounds have the same name.
+  bool integer_columns_{false};  ///< True if we are in the middle of the integer columns section.
 
   /**
    * The rows of the problem. Contains a map between each variable, stored as an expression, and the

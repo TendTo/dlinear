@@ -74,15 +74,18 @@ void MpsDriver::AddRow(Sense sense, const std::string &row) {
 
 void MpsDriver::AddColumn(const std::string &column, const std::string &row, mpq_class value) {
   DLINEAR_TRACE_FMT("Driver::AddColumn {} {} {}", row, column, value);
-  if (columns_.find(column) == columns_.end()) {
+  auto it = columns_.find(column);
+  if (it == columns_.end()) {
     DLINEAR_TRACE_FMT("Added column {}", column);
     // TODO(tend): choose if the name of the variable should be the column name or index
-    const Variable var{"x" + std::to_string(columns_.size())};
-    columns_[column] = var;  // If not already in the map, add the variable
+    // const Variable var{"x" + std::to_string(columns_.size())};
+    const Variable var{column};
+    auto [insert_it, added] = columns_.emplace(column, var);  // If not already in the map, add the variable
     context_.DeclareVariable(var);
+    it = insert_it;
   }
   if (!context_.config().optimize() && row == obj_row_) return;
-  rows_[row].emplace(columns_[column], value);
+  rows_[row].emplace(it->second, value);
   DLINEAR_TRACE_FMT("Updated row {}", row);
 }
 
@@ -160,7 +163,7 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
         skip_lower_bound_[column] = true;
         break;
       case BoundType::FX:
-        bounds_[column] &= (columns_.at(column) >= value) && (columns_.at(column) <= value);
+        bounds_[column] &= columns_.at(column) == value;
         skip_lower_bound_[column] = true;
         break;
       default:
@@ -197,6 +200,21 @@ void MpsDriver::AddBound(BoundType bound_type, const std::string &bound, const s
   }
 
   DLINEAR_TRACE_FMT("Updated bound {}", bounds_[column]);
+}
+
+void MpsDriver::SetMarker([[maybe_unused]] const std::string &name, const std::string &keyword) {
+  DLINEAR_TRACE_FMT("Driver::SetMarker({} {})", name, keyword);
+  if (keyword == "INTORG") {
+    DLINEAR_DEBUG("Integers start");
+    integer_columns_ = true;
+    return;
+  }
+  if (keyword == "INTEND") {
+    DLINEAR_DEBUG("Integers end");
+    integer_columns_ = false;
+    return;
+  }
+  DLINEAR_WARN_FMT("Unknown marker '{}'. Ignoring", keyword);
 }
 
 void MpsDriver::End() {

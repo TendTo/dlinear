@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -24,8 +23,7 @@ using dlinear::gmp::StringToMpq;
 /* Require bison 2.3 or later */
 %require "3.2"
 
-/* add debug output code to generated parser. disable this for release
- * versions. */
+/* add debug output code to generated parser. disable this for release versions. */
 %define parse.trace
 
 /* start symbol is named "script" */
@@ -119,7 +117,7 @@ section: name_section
     | end_section
     ;
 
-name_section: NAME_DECLARATION SYMBOL '\n' { 
+name_section: NAME_DECLARATION SYMBOL '\n' {
         driver.m_problem_name() = $2;
     }
     | NAME_DECLARATION '\n' { driver.m_problem_name() = "unnamed"; }
@@ -160,14 +158,16 @@ columns: columns column
         Field 5: Row identifier (optional)
         Field 6: Value of matrix coefficient specified by Fields 2 and 5 (optional)
     */
-column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+column: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddColumn($1, $2, mpq_class{StringToMpq($3)});
         driver.AddColumn($1, $4, mpq_class{StringToMpq($5)});
     }
-    | SYMBOL SYMBOL SYMBOL '\n' { 
+    | SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddColumn($1, $2, mpq_class{StringToMpq($3)});
     }
-    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' { }
+    | SYMBOL QUOTED_SYMBOL QUOTED_SYMBOL '\n' {
+        if ( $2 == "MARKER") driver.SetMarker($1, $3);
+    }
     | command
     | '\n'
     ;
@@ -187,18 +187,18 @@ rhs: rhs rhs_row
         Field 5: Row identifier (optional)
         Field 6: Value of RHS coefficient specified by Field 2 and 5 (optional)
     */
-rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+rhs_row: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddRhs($1, $2, mpq_class{StringToMpq($3)});
         driver.AddRhs($1, $4, mpq_class{StringToMpq($5)});
     }
-    | SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+    | SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddRhs("", $1, mpq_class{StringToMpq($2)});
         driver.AddRhs("", $3, mpq_class{StringToMpq($4)});
     }
-    | SYMBOL SYMBOL SYMBOL '\n' { 
+    | SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddRhs($1, $2, mpq_class{StringToMpq($3)});
     }
-    | SYMBOL SYMBOL '\n' { 
+    | SYMBOL SYMBOL '\n' {
         driver.AddRhs("", $1, mpq_class{StringToMpq($2)});
     }
     | command
@@ -220,11 +220,11 @@ ranges: ranges range
         Field 5: Row identifier (optional)
         Field 6: Value of the range applied to row specified by Field 5 (optional)
     */
-range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' { 
+range: SYMBOL SYMBOL SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddRange($1, $2, mpq_class{StringToMpq($3)});
         driver.AddRange($1, $4, mpq_class{StringToMpq($5)});
     }
-    | SYMBOL SYMBOL SYMBOL '\n' { 
+    | SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddRange($1, $2, mpq_class{StringToMpq($3)});
     }
     | command
@@ -251,16 +251,16 @@ bounds: bounds bound
         Field 4: Value of the specified bound
         Fields 5 and 6 are not used in the BOUNDS section.
     */
-bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' { 
+bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddBound($1, $2, $3, mpq_class{StringToMpq($4)});
     }
-    | BOUND_TYPE SYMBOL SYMBOL '\n' { 
+    | BOUND_TYPE SYMBOL SYMBOL '\n' {
         driver.AddBound($1, "", $2, mpq_class{StringToMpq($3)});
     }
-    | BOUND_TYPE_SINGLE SYMBOL SYMBOL SYMBOL '\n' { 
+    | BOUND_TYPE_SINGLE SYMBOL SYMBOL SYMBOL '\n' {
         driver.AddBound($1, $2, $3);
     }
-    | BOUND_TYPE_SINGLE SYMBOL SYMBOL '\n' { 
+    | BOUND_TYPE_SINGLE SYMBOL SYMBOL '\n' {
         driver.AddBound($1, $2, $3);
     }
     | command
@@ -268,7 +268,7 @@ bound: BOUND_TYPE SYMBOL SYMBOL SYMBOL '\n' {
     ;
 
 end_section: ENDATA {
-        driver.End(); 
+        driver.End();
         YYACCEPT;
     }
     ;
